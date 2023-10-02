@@ -5,7 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from .api import PtxboaAPI
+from ptxboa.api import PtxboaAPI
 
 
 def cache_func_PtxboaAPI(obj: PtxboaAPI) -> int:
