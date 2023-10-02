@@ -21,4 +21,4 @@ dependencies:
   - faker~=18.9
   - conda-forge::mkdocs~=1.5
   - conda-forge::mkdocs-material~=9.4
-  - conda-forge::mkdocstrings~=0.23
+  - conda-forge::mkdocstrings-python~=1.7
