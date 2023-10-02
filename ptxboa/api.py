@@ -34,10 +34,9 @@ class PtxboaAPI:
 
         Returns
         -------
-            dict: mapping keys identifying the dimension and values holding the
-            data as :class:`pd.DataFrame`.
-
-            The following dimension keys are available:
+        : dict
+            mapping keys identifying the dimension and values holding the data as
+            :class:`pd.DataFrame`. The following dimension keys are available:
                 - 'scenario'
                 - 'secproc_co2'
                 - 'secproc_water'
@@ -80,7 +79,8 @@ class PtxboaAPI:
 
         Returns
         -------
-        dict: mapping of parameter names to data frames
+        : dict
+            mapping of parameter names to data frames
 
         """
         return {}
@@ -129,7 +129,8 @@ class PtxboaAPI:
 
         Returns
         -------
-        result (dict): keys are name of variables:
+        result : dict
+            keys are name of variables
 
 
         TODO: keys required in result dict
