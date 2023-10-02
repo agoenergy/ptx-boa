@@ -5,7 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from .api import PtxboaAPI, load_context_data
+from .api import PtxboaAPI
 
 
 def cache_func_PtxboaAPI(obj: PtxboaAPI) -> int:
@@ -283,19 +283,19 @@ def create_scatter_plot(df_res, settings: dict):
     st.write(df_res)
 
 
-def content_context_data():
+def content_context_data(api):
     st.subheader(
         "What regulations and/or standards are relevant "
         "for which PTX BOA demand countries?"
     )
-    data_countries = load_context_data("context_cs_countries")
+    data_countries = api.load_context_data("context_cs_countries")
     st.dataframe(data_countries, use_container_width=True)
     st.subheader("Are the following criteria considered in this scheme?")
-    data_scope = load_context_data("context_cs_scope")
+    data_scope = api.load_context_data("context_cs_scope")
     st.dataframe(data_scope, use_container_width=True)
 
 
-def content_dashboard(res_costs: dict, settings: pd.DataFrame):
+def content_dashboard(api, res_costs: dict, settings: pd.DataFrame):
     st.markdown("Welcome to our dashboard!")
     st.markdown(
         "Here you will find your central selection options, "
@@ -305,7 +305,7 @@ def content_dashboard(res_costs: dict, settings: pd.DataFrame):
 
     c_1, c_2 = st.columns([1, 2])
     with c_1:
-        create_infobox(settings)
+        create_infobox(api, settings)
 
     with c_2:
         create_world_map(settings, res_costs)
@@ -342,8 +342,8 @@ def content_market_scanning(res_costs: dict, settings: pd.DataFrame):
     )
 
 
-def create_infobox(settings: dict):
-    data = load_context_data("_context_data_infobox")
+def create_infobox(api, settings: dict):
+    data = api.load_context_data("_context_data_infobox")
     st.markdown(f"**Key information on {settings['sel_country_name']}:**")
     demand = data.at[settings["sel_country_name"], "Projected H2 demand [2030]"]
     info1 = data.at[settings["sel_country_name"], "key_info_1"]

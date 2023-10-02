@@ -52,7 +52,7 @@ res_costs = get_results(settings)
 
 # dashboard:
 with t_dashboard:
-    pf.content_dashboard(res_costs, settings)
+    pf.content_dashboard(api, res_costs, settings)
 
 with t_market_scanning:
     st.markdown("**Market Scanning**")
