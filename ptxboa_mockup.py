@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-from faker import Faker
 from PIL import Image
 
 import app.ptxboa_functions as pf
@@ -56,8 +55,11 @@ with t_dashboard:
 
 with t_market_scanning:
     st.markdown("**Market Scanning**")
-    st.markdown(Faker().text())
-    st.markdown(Faker().text())
+    st.markdown(
+        """This is the markt scanning sheet. It will contain scatter plots
+        that allows users to compare regions by total cost, transportation
+        distance and H2 demand."""
+    )
     [c1, c2] = st.columns(2)
     with c1:
         fig = px.scatter(
@@ -80,8 +82,11 @@ with t_market_scanning:
 
 with t_costs_by_region:
     st.markdown("**Costs by region**")
-    st.markdown(Faker().text())
-    st.markdown(Faker().text())
+    st.markdown(
+        """On this sheet, users can analyze total cost and cost components for
+          different supply countries. Data is represented as a bar chart and
+            in tabular form. \n\n Data can be filterend and sorted."""
+    )
     df_res = res_costs.copy()
     sort_ascending = st.toggle("Sort by total costs?", value=True)
     if sort_ascending:
@@ -93,12 +98,20 @@ with t_costs_by_region:
 
 with t_context_data:
     st.markdown("**Context data**")
-    st.markdown(Faker().text())
-    st.markdown(Faker().text())
+    st.markdown(
+        """This sheet shows context data: Country fact sheet, certification
+          schemes and sustainability issues. We might need to use more than
+            one sheet to accomodate this data.
+
+Unlike in the excel tool, we propose to structure data as text (similar to the
+ infobox in the dashboard) instead of using tables."""
+    )
 
 with t_disclaimer:
     st.markdown("**Disclaimer**")
-    st.markdown(Faker().text())
-    st.markdown(Faker().text())
+    st.markdown(
+        """This is the disclaimer.
+        Images can be imported directly as image files."""
+    )
     st.image(Image.open("static/disclaimer.png"))
     st.image(Image.open("static/disclaimer_2.png"))
