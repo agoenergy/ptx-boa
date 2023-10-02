@@ -30,9 +30,10 @@ class PtxboaAPI:
         }
 
     def get_dimensions(self) -> Dict[str, pd.DataFrame]:
-        """Returns dimension elements to populate app dropdowns.
+        """Return dimension elements to populate app dropdowns.
 
-        Returns:
+        Returns
+        -------
             dict: mapping keys identifying the dimension and values holding the
             data as :class:`pd.DataFrame`.
 
@@ -64,18 +65,22 @@ class PtxboaAPI:
         scenario: str,
         user_data: dict = None,
     ) -> dict:
-        """Returns scenario data.
+        """Return scenario data.
 
         if user data is defined, specified values will be replaced with those.
         if global defaults for countries exists, we return expanded data
         for all countries.
 
-        Args:
-            scenario (str): name of data scenario
-            user_data (dict, optional): user data that overrides scenario data
+        Parameters
+        ----------
+        scenario : str
+            name of data scenario
+        user_data : dict, optional
+            user data that overrides scenario data
 
-        Returns:
-            dict: mapping of parameter names to data frames
+        Returns
+        -------
+        dict: mapping of parameter names to data frames
 
         """
         return {}
@@ -96,22 +101,35 @@ class PtxboaAPI:
     ) -> dict:
         """Calculate results based on user selection.
 
-        Args:
-            scenario (str): name of data scenario
-            secproc_co2 (str): name of secondary process for CO2
-            secproc_water (str): name of secondary process for H2O
-            chain (str): name of product chain
-            res_gen (str): name of renewable technology
-            region (str): name of region
-            country (str): name of destination country
-            transport (str): mode of transportation
-            ship_own_fuel (bool): `True` if ship uses product as fuel
-            output_unit (str, optional): output unit
-            user_data (dict, optional): user data that overrides scenario data
+        Parameters
+        ----------
+        scenario : str
+            name of data scenario
+        secproc_co2 : str
+            name of secondary process for CO2
+        secproc_water : str
+            name of secondary process for H2O
+        chain : str
+            name of product chain
+        res_gen : str
+            name of renewable technology
+        region : str
+            name of region
+        country : str
+            name of destination country
+        transport : str
+            mode of transportation
+        ship_own_fuel : bool
+            `True` if ship uses product as fuel
+        output_unit : str, optional
+            output unit
+        user_data: dict
+            user data that overrides scenario data
 
 
-        Returns:
-            result (dict): keys are name of variables:
+        Returns
+        -------
+        result (dict): keys are name of variables:
 
 
         TODO: keys required in result dict

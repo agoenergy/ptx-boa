@@ -5,31 +5,10 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from ptxboa.api import PtxboaAPI
 
-
-def cache_func_PtxboaAPI(obj: PtxboaAPI) -> int:
-    """
-    Hashing callbach for the :class:`PtxboaAPI` class within the st.cache_data
-    decorator.
-
-    For reference, see:
-    https://docs.streamlit.io/library/advanced-features/caching#example-1-hashing-a-custom-class  # noqa
-
-    There will be only one PtxboaAPI instance and its attributes will stay the
-    same, i.e. results do not depend on a state of instances of this class.
-    Therefore, we can return a constant integer for the cache_func in order
-    to tell streamlit, that it does not need to reload the instance.
-    This integer could later maybe replaced with a version string or something like
-    that.
-    """
-    return 1
-
-
-@st.cache_data(hash_funcs={PtxboaAPI: cache_func_PtxboaAPI})
-def calculate_results_single(_api, settings):
+def calculate_results_single(api, settings):
     """Calculate results for single country pair."""
-    res = _api.calculate(
+    res = api.calculate(
         scenario=settings["sel_scenario"],
         secproc_co2=settings["sel_secproc_co2"],
         secproc_water=settings["sel_secproc_water"],
@@ -45,7 +24,6 @@ def calculate_results_single(_api, settings):
     return res
 
 
-@st.cache_data(hash_funcs={PtxboaAPI: cache_func_PtxboaAPI})
 def calculate_results(api, settings):
     # calculate results for all source regions:
     results_list = []

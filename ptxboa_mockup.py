@@ -7,7 +7,7 @@ import streamlit as st
 from faker import Faker
 from PIL import Image
 
-import ptxboa_functions as pf
+import app.ptxboa_functions as pf
 from ptxboa.api import PtxboaAPI
 
 # app layout:

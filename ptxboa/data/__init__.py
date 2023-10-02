@@ -14,7 +14,10 @@ def load_data(name: str) -> pd.DataFrame:
 
 
 def load_context_data(name: str) -> pd.DataFrame:
-    """This is just a mockup, eventually, we won't be reading from xlsx."""
+    """Just a mockup.
+
+    Eventually, we won't be reading from xlsx.
+    """
     filepath = f"{DATA_DIR}/context_data.xlsx"
 
     if name == "context_cs_countries":
