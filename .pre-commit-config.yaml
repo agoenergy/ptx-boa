@@ -7,6 +7,7 @@ repos:
     rev: v4.4.0
     hooks:
       - id: check-added-large-files
+        args: ['--maxkb=5000'] # we need some data files and images in the repository
       - id: check-merge-conflict
       - id: end-of-file-fixer
       - id: fix-encoding-pragma
@@ -49,6 +50,6 @@ repos:
         args:
           [
             "--max-line-length=88",
-            "--extend-ignore=E203,DAR101,DAR201,I001,I005,D101,D103,D105,DAR401,B023,S603,S608,S101,S310,E402",
-            "--docstring-convention=numpy",
+            "--extend-ignore=E203,DAR101,DAR201,I001,I005,D101,D103,D105,DAR401,B023,S603,S608,S101,S310,E402,DAR103",
+            "--docstring-convention=google",
           ]
