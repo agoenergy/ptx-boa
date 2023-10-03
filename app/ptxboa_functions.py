@@ -185,7 +185,7 @@ def create_world_map(settings: dict, res_costs: pd.DataFrame):
 
 
 def create_bar_chart_costs(res_costs: pd.DataFrame):
-    fig = px.bar(res_costs, x=res_costs.index, y=res_costs.columns[:-1])
+    fig = px.bar(res_costs, x=res_costs.index, y=res_costs.columns[:-1], height=500)
 
     # Add the dot markers for the "total" column using plotly.graph_objects
     scatter_trace = go.Scatter(
@@ -239,6 +239,7 @@ def create_box_plot(res_costs: pd.DataFrame, settings: dict):
         title="Cost distribution for all supply countries",
         xaxis={"title": ""},
         yaxis={"title": settings["selOutputUnit"]},
+        height=500,
     )
 
     st.plotly_chart(fig, use_container_width=True)
@@ -295,7 +296,8 @@ def content_dashboard(api, res_costs: dict, settings: pd.DataFrame):
     with c_3:
         create_box_plot(res_costs, settings)
     with c_4:
-        create_bar_chart_costs(res_costs)
+        filtered_data = res_costs[res_costs.index == "Argentina"]
+        create_bar_chart_costs(filtered_data)
 
     st.write("Chosen settings:")
     st.write(settings)

@@ -39,7 +39,12 @@ settings = pf.create_sidebar(api)
 def get_results(settings):
     res_costs = pd.DataFrame(
         index=api.get_dimensions()["region"].index,
-        columns=["A", "B", "C", "D"],
+        columns=[
+            "Electricity generation",
+            "Electrolysis",
+            "Derivate production",
+            "Transport",
+        ],
         data=np.random.rand(len(api.get_dimensions()["region"].index), 4),
     )
     res_costs["Total"] = res_costs.sum(axis=1)
@@ -64,21 +69,20 @@ with t_market_scanning:
     with c1:
         fig = px.scatter(
             res_costs,
-            x="A",
-            y="B",
-            text=res_costs.index,
+            x="Transport",
+            y="Total",
             title="Costs and transportation distances",
+            height=600,
         )
-        st.plotly_chart(fig)
-    with c2:
-        fig = px.scatter(
-            res_costs,
-            x="A",
-            y="B",
-            text=res_costs.index,
-            title="Transportation distances 2",
+        # Add text above markers
+        fig.update_traces(
+            text=api.get_dimensions()["region"]["region_code"],
+            textposition="top center",
+            mode="markers+text",
         )
+
         st.plotly_chart(fig)
+
 
 with t_costs_by_region:
     st.markdown("**Costs by region**")
@@ -87,7 +91,19 @@ with t_costs_by_region:
           different supply countries. Data is represented as a bar chart and
             in tabular form. \n\n Data can be filterend and sorted."""
     )
+    # filter data:
     df_res = res_costs.copy()
+    show_which_data = st.radio(
+        "Select regions to display:", ["All", "Ten cheapest", "Manual select"], index=0
+    )
+    if show_which_data == "Ten cheapest":
+        df_res = df_res.nsmallest(10, "Total")
+    elif show_which_data == "Manual select":
+        ind_select = st.multiselect(
+            "Select regions:", df_res.index.values, default=df_res.index.values
+        )
+        df_res = df_res.loc[ind_select]
+
     sort_ascending = st.toggle("Sort by total costs?", value=True)
     if sort_ascending:
         df_res = df_res.sort_values(["Total"], ascending=True)
