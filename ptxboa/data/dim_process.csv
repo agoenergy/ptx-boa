@@ -1,0 +1,53 @@
+process_name,process_code,main_flow_code_out,main_flow_code_in,is_transformation,is_re_generation,is_transport,is_secondary,process_class,is_secondary_all,is_deprecated,is_ely,is_deriv
+AEL electrolysis,AEL-EL,H2-G,EL,True,False,False,False,ELEC,False,False,True,False
+Autothermal-Reactor (Blue Hydrogen),ATR,H2-G,CH4-G,True,False,True,False,TRANSP-P,False,False,False,False
+Methanol reconversion,CH3OHREC,H2-G,CH3OH-L,True,False,False,False,PROC,False,False,False,False
+Methanol ship (own fuel consumption),CH3OH-S,CH3OH-L,CH3OH-L,False,False,True,False,TRANSP-S,False,False,False,False
+Methanol ship (bunker fuel consumption),CH3OH-SB,CH3OH-L,CH3OH-L,False,False,True,False,TRANSP-S,False,False,False,False
+Methanol Synthesis,CH3OHSYN,CH3OH-L,H2-G,True,False,False,False,PROC,False,False,False,True
+Methane compression,CH4-COMP,CH4-G,CH4-G,True,False,True,False,TRANSP-P,False,False,False,False
+Methane Liquefaction,CH4-LIQ,CH4-L,CH4-G,True,False,True,False,TRANSP-S,False,False,False,False
+Methane land pipeline new,CH4-P-L,CH4-G,CH4-G,False,False,True,False,TRANSP-P,False,False,False,False
+Methane land pipeline retrofitted,CH4-P-LR,CH4-G,CH4-G,False,False,True,False,TRANSP-P,False,False,False,False
+Methane sea pipeline,CH4-P-S,CH4-G,CH4-G,False,False,True,False,TRANSP-P,False,False,False,False
+Methane sea pipeline retrofitted,CH4-P-SR,CH4-G,CH4-G,False,False,True,False,TRANSP-P,False,False,False,False
+Methane Regasification,CH4-RGAS,CH4-G,CH4-L,True,False,True,False,TRANSP-S,False,False,False,False
+LNG ship (own fuel consumption),CH4-S,CH4-L,CH4-L,False,False,True,False,TRANSP-S,False,False,False,False
+LNG ship (bunker fuel consumption),CH4-SB,CH4-L,CH4-L,False,False,True,False,TRANSP-S,False,False,False,False
+Methane Synthesis,CH4SYN,CH4-G,H2-G,True,False,False,False,PROC,False,False,False,True
+Direct Air Capture,DAC,CO2-G,,False,False,False,True,PROV_C,True,False,False,False
+Sea Water desalination,DESAL,H2O-L,,False,False,False,True,PROV_H2O,True,False,False,False
+Green iron reduction,DRI,DRI-S,H2-G,True,False,False,False,PROC,False,False,False,True
+Green iron ship,DRI-S,DRI-S,DRI-S,False,False,True,False,TRANSP-S,False,True,False,False
+Green iron ship (bunker fuel consumption),DRI-SB,DRI-S,DRI-S,False,False,True,False,TRANSP-S,False,False,False,False
+FT e-fuels Synthesis (Fischer-Tropsch),EFUELSYN,CHX-L,H2-G,True,False,False,False,PROC,False,False,False,True
+electricity storage,EL-STR,EL,EL,False,False,True,False,PROC,False,True,False,False
+electricity transmission,EL-TRANS,EL,EL,False,False,True,False,TRANSP,False,True,False,False
+Hydrogen compression,H2-COMP,H2-G,H2-G,True,False,True,False,TRANSP-P,False,False,False,False
+Hydrogen Liquification,H2-LIQ,H2-L,H2-G,True,False,True,False,TRANSP-S,False,False,False,False
+Hydrogen land pipeline new,H2-P-L,H2-G,H2-G,False,False,True,False,TRANSP-P,False,False,False,False
+Hydrogen land pipeline retrofitted,H2-P-LR,H2-G,H2-G,False,False,True,False,TRANSP-P,False,False,False,False
+Hydrogen sea pipeline,H2-P-S,H2-G,H2-G,False,False,True,False,TRANSP-P,False,False,False,False
+Hydrogen sea pipeline retrofitted,H2-P-SR,H2-G,H2-G,False,False,True,False,TRANSP-P,False,False,False,False
+Hydrogen Regasification,H2-RGAS,H2-G,H2-L,True,False,True,False,TRANSP-S,False,False,False,False
+Hydrogen ship (own fuel consumption),H2-S,H2-L,H2-L,False,False,True,False,TRANSP-S,False,False,False,False
+Hydrogen ship (bunker fuel consumption),H2-SB,H2-L,H2-L,False,False,True,False,TRANSP-S,False,False,False,False
+Hydrogen storage,H2-STR,H2-G,H2-G,False,False,True,False,PROC,False,True,False,False
+LOHC conversion,LOHC-CON,LOHC-L,H2-G,True,False,True,False,TRANSP-S,False,False,False,False
+LOHC reconversion,LOHC-REC,H2-G,LOHC-L,True,False,True,False,TRANSP-S,False,False,False,False
+LOHC ship (own fuel consumption),LOHC-S,LOHC-L,LOHC-L,False,False,True,False,TRANSP-S,False,False,False,False
+LOHC ship (bunker fuel consumption),LOHC-SB,LOHC-L,LOHC-L,False,False,True,False,TRANSP-S,False,False,False,False
+Ammonia reconversion,NH3-REC,H2-G,NH3-L,True,False,True,False,TRANSP,False,False,False,False
+Ammonia ship (own fuel consumption),NH3-S,NH3-L,NH3-L,False,False,True,False,TRANSP-S,False,False,False,False
+Ammonia ship (bunker fuel consumption),NH3-SB,NH3-L,NH3-L,False,False,True,False,TRANSP-S,False,False,False,False
+Ammonia Synthesis (Haber-Bosch),NH3SYN,NH3-L,H2-G,True,False,False,False,PROC,False,False,False,True
+PEM electrolysis,PEM-EL,H2-G,EL,True,False,False,False,ELEC,False,False,True,False
+PV tilted,PV-FIX,EL,,False,True,False,False,RE-GEN,False,False,False,False
+PV tracking,PV-TRK,EL,,False,True,False,False,RE-GEN,False,False,False,False
+Autothermal-Reactor (Blue Hydrogen) incl. Regasification,REGASATR,H2-G,CH4-L,True,False,True,False,TRANSP-S,False,False,False,False
+Wind-PV-Hybrid,RES-HYBR,EL,,False,True,False,False,RE-GEN,False,False,False,False
+SOEC (high-temp) electrolysis,SOEC-EL,H2-G,EL,True,False,False,False,ELEC,False,False,True,False
+FT e-fuels ship (own fuel consumption),SYN-S,CHX-L,CHX-L,False,False,True,False,TRANSP-S,False,False,False,False
+FT e-fuels ship (bunker fuel consumption),SYN-SB,CHX-L,CHX-L,False,False,True,False,TRANSP-S,False,False,False,False
+Wind Offshore,WIND-OFF,EL,,False,True,False,False,RE-GEN,False,False,False,False
+Wind Onshore,WIND-ON,EL,,False,True,False,False,RE-GEN,False,False,False,False

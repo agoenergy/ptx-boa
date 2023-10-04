@@ -1,0 +1,40 @@
+site_name: PTXBOA_API
+
+# Configuration
+theme:
+  name: readthedocs
+  locale: en
+  features:
+    #- navigation.tabs
+    #- navigation.tabs.sticky
+    #- navigation.sections
+    #- navigation.indexes
+    #- navigation.path
+    #- navigation.tracking
+    #- navigation.footer
+    #- navigation.top
+    #- toc.follow
+    #- search.suggest
+    #- search.share
+
+# Extensions
+markdown_extensions:
+  #- admonition
+  #- attr_list
+  #- def_list
+  #- md_in_html
+  #- pymdownx.details
+  #- pymdownx.superfences
+
+plugins:
+  #- mkdocs-jupyter:
+  #    execute: false
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: false
+            docstring_style: numpy
+
+  - search:
+      lang: en
