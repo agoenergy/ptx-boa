@@ -48,9 +48,7 @@ def calculate_results(api, settings):
     res_costs["Total"] = res_costs.sum(axis=1)
 
     # replace region codes with region names:
-    index_mapping = api.get_dimensions()["region"].set_index("region_code")[
-        "region_name"
-    ]
+    index_mapping = api.get_dimension("region").set_index("region_code")["region_name"]
     res_costs.index = res_costs.index.map(index_mapping)
     return res_costs
 
@@ -58,7 +56,6 @@ def calculate_results(api, settings):
 # Settings:
 def create_sidebar(api):
     st.sidebar.subheader("Main settings:")
-    dimensions = api.get_dimensions()
     settings = {}
     settings["sel_region"] = st.sidebar.selectbox(
         "Supply country / region:",
@@ -73,7 +70,7 @@ def create_sidebar(api):
     )
     settings["sel_country_name"] = st.sidebar.selectbox(
         "Demand country:",
-        dimensions["country"].index,
+        api.get_dimension("country").index,
         help=(
             "The country you aim to export to. Some key info on the demand country you "
             "choose here are displayed in the info box."
@@ -81,7 +78,7 @@ def create_sidebar(api):
     )
     settings["sel_chain"] = st.sidebar.selectbox(
         "Product (electrolyzer type):",
-        dimensions["chain"].index,
+        api.get_dimension("chain").index,
         help=(
             "The product you want to export including the electrolyzer technology "
             "to use."
@@ -89,7 +86,7 @@ def create_sidebar(api):
     )
     settings["sel_res_gen_name"] = st.sidebar.selectbox(
         "Renewable electricity source (for selected supply region):",
-        dimensions["res_gen"].index,
+        api.get_dimension("res_gen").index,
         help=(
             "The source of electricity for the selected source country. For all "
             "other countries Wind-PV hybrid systems will be used (an optimized mixture "
@@ -98,7 +95,7 @@ def create_sidebar(api):
     )
     settings["sel_scenario"] = st.sidebar.selectbox(
         "Data year (cost reduction pathway):",
-        dimensions["scenario"].index,
+        api.get_dimension("scenario").index,
         help=(
             "To cover parameter uncertainty and development over time, we provide "
             "cost reduction pathways (high / medium / low) for 2030 and 2040."
@@ -108,19 +105,19 @@ def create_sidebar(api):
     st.sidebar.subheader("Additional settings:")
     settings["sel_secproc_co2"] = st.sidebar.radio(
         "Carbon source:",
-        dimensions["secproc_co2"].index,
+        api.get_dimension("secproc_co2").index,
         horizontal=True,
         help="Help text",
     )
     settings["sel_secproc_water"] = st.sidebar.radio(
         "Water source:",
-        dimensions["secproc_water"].index,
+        api.get_dimension("secproc_water").index,
         horizontal=True,
         help="Help text",
     )
     settings["sel_transport"] = st.sidebar.radio(
         "Mode of transportation (for selected supply country):",
-        dimensions["transport"].index,
+        api.get_dimension("transport").index,
         horizontal=True,
         help="Help text",
     )
@@ -131,18 +128,17 @@ def create_sidebar(api):
         )
     settings["selOutputUnit"] = st.sidebar.radio(
         "Unit for delivered costs:",
-        dimensions["output_unit"].index,
+        api.get_dimension("output_unit").index,
         horizontal=True,
         help="Help text",
     )
 
     st.sidebar.subheader("Dev:")
+    region = api.get_dimension("region")
     settings["num_regions"] = st.sidebar.slider(
         "number of regions to calculate:",
         1,
-        len(
-            dimensions["region"][dimensions["region"]["subregion_code"].isna()],
-        ),
+        len(region[region["subregion_code"].isna()]),
         value=5,
     )
     return settings
