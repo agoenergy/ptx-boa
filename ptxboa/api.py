@@ -2,7 +2,6 @@
 """Api for calculations for webapp."""
 
 from itertools import product
-from typing import Dict
 
 import numpy as np
 import pandas as pd
@@ -29,14 +28,13 @@ class PtxboaAPI:
             )
         }
 
-    def get_dimensions(self) -> Dict[str, pd.DataFrame]:
-        """Return dimension elements to populate app dropdowns.
+    def get_dimension(self, dim: str) -> pd.DataFrame:
+        """Return a dimension element to populate app dropdowns.
 
-        Returns
-        -------
-        : dict
-            mapping keys identifying the dimension and values holding the data as
-            :class:`pd.DataFrame`. The following dimension keys are available:
+        Parameters
+        ----------
+        dim : str
+            Dimesion name. The following dimensions are available:
                 - 'scenario'
                 - 'secproc_co2'
                 - 'secproc_water'
@@ -46,18 +44,24 @@ class PtxboaAPI:
                 - 'country'
                 - 'transport'
                 - 'output_unit'
+
+        Returns
+        -------
+        : pd.DataFrame
+            The dimension the data as
         """
-        return {
-            "scenario": self._get_scenario_dimension(),
-            "secproc_co2": self._get_secproc_co2_dimension(),
-            "secproc_water": self._get_secproc_water_dimension(),
-            "chain": self._get_chain_dimension(),
-            "res_gen": self._get_res_gen_dimension(),
-            "region": self._get_region_dimension(),
-            "country": self._get_country_dimension(),
-            "transport": self._get_transport_dimension(),
-            "output_unit": self._get_output_unit_dimension(),
+        _dimensions = {
+            "scenario": self._get_scenario_dimension,
+            "secproc_co2": self._get_secproc_co2_dimension,
+            "secproc_water": self._get_secproc_water_dimension,
+            "chain": self._get_chain_dimension,
+            "res_gen": self._get_res_gen_dimension,
+            "region": self._get_region_dimension,
+            "country": self._get_country_dimension,
+            "transport": self._get_transport_dimension,
+            "output_unit": self._get_output_unit_dimension,
         }
+        return _dimensions[dim]()
 
     def get_input_data(
         self,

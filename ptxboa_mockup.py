@@ -38,14 +38,14 @@ settings = pf.create_sidebar(api)
 @st.cache_data()
 def get_results(settings):
     res_costs = pd.DataFrame(
-        index=api.get_dimensions()["region"].index,
+        index=api.get_dimension("region").index,
         columns=[
             "Electricity generation",
             "Electrolysis",
             "Derivate production",
             "Transport",
         ],
-        data=np.random.rand(len(api.get_dimensions()["region"].index), 4),
+        data=np.random.rand(len(api.get_dimension("region").index), 4),
     )
     res_costs["Total"] = res_costs.sum(axis=1)
     return res_costs
@@ -76,7 +76,7 @@ with t_market_scanning:
         )
         # Add text above markers
         fig.update_traces(
-            text=api.get_dimensions()["region"]["region_code"],
+            text=api.get_dimension("region")["region_code"],
             textposition="top center",
             mode="markers+text",
         )
