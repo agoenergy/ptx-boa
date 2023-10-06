@@ -23,7 +23,13 @@ st.title("PtX Business Opportunity Analyzer Mockup")
     t_demand_countries,
     t_disclaimer,
 ) = st.tabs(
-    ["Dashboard", "Market scanning", "Costs by region", "Context data", "Disclaimer"]
+    [
+        "Dashboard",
+        "Market scanning",
+        "Costs by region",
+        "Demand countries",
+        "Disclaimer",
+    ]
 )
 
 # TODO: cache this instance
