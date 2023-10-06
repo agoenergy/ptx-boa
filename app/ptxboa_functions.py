@@ -4,6 +4,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+from PIL import Image
 
 
 def calculate_results_single(api, settings):
@@ -462,3 +463,36 @@ def create_fact_sheet_certification_schemes(context_data: dict):
 
     st.markdown("**Sources:**")
     st.markdown(data["sources"])
+
+
+def create_content_sustainability(context_data: dict):
+    """Display information on sustainability issues."""
+    df = context_data["sustainability"]
+    st.image(Image.open("static/sustainability.png"))
+    captiontext = (
+        "Source: https://ptx-hub.org/wp-content/uploads/2022/05/"
+        "PtX-Hub-PtX.Sustainability-Dimensions-and-Concerns-Scoping-Paper.pdf"
+    )
+    st.caption(captiontext)
+
+    c1, c2 = st.columns(2)
+    with c1:
+        helptext = "helptext"
+        dimension = st.selectbox(
+            "Select dimension:", df["dimension"].unique(), help=helptext
+        )
+    with c2:
+        helptext = "helptext"
+        question_type = st.radio(
+            "Guardrails or goals?",
+            ["Guardrails", "Goals"],
+            help=helptext,
+            horizontal=True,
+        )
+        data = df.loc[(df["dimension"] == dimension) & (df["type"] == question_type)]
+
+    for topic in data["topic"].unique():
+        st.markdown(f"**{topic}:**")
+        data_select = data.loc[data["topic"] == topic]
+        for _ind, row in data_select.iterrows():
+            st.markdown(f"- {row['question']}")
