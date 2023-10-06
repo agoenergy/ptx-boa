@@ -336,3 +336,73 @@ def create_infobox(api, settings: dict):
     write_info(info2)
     write_info(info3)
     write_info(info4)
+
+
+def import_context_data():
+    """Import context data from excel file."""
+    filename = "data/context_data.xlsx"
+    cd = {}
+    cd["demand_countries"] = pd.read_excel(
+        filename, sheet_name="demand_countries", skiprows=1
+    )
+    return cd
+
+
+def create_fact_sheet_demand_country(context_data: dict, country_name: str):
+    """Display information on a chosen demand country."""
+    df = context_data["demand_countries"]
+    data = df.loc[df["country_name"] == country_name].iloc[0].to_dict()
+
+    flags_to_country_names = {
+        "France": ":flag-fr:",
+        "Germany": ":flag-de:",
+        "Netherlands": ":flag-nl:",
+        "Spain": ":flag-es:",
+        "China": ":flag-cn:",
+        "India": ":flag-in:",
+        "Japan": ":flag-jp:",
+        "South Korea": ":flag-kr:",
+        "USA": ":flag-us:",
+    }
+
+    st.subheader(
+        f"{flags_to_country_names[country_name]} Fact sheet for {country_name}"
+    )
+    st.markdown(
+        """This page contains detailed information
+         and a collection of links for further reading."""
+    )
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.markdown("**Projected H2 demand in 2030:**")
+        st.markdown(data["h2_demand_2030"])
+        st.markdown(f"*Source: {data['source_h2_demand_2030']}*")
+    with c2:
+        st.markdown("**Targeted sectors (main):**")
+        st.markdown(data["demand_targeted_sectors_main"])
+        st.markdown(f"*Source: {data['source_targeted_sectors_main']}*")
+    with c3:
+        st.markdown("**Targeted sectors (secondary):**")
+        st.markdown(data["demand_targeted_sectors_secondary"])
+        st.markdown(f"*Source: {data['source_targeted_sectors_secondary']}*")
+    st.markdown("**Hydrogen strategy documents:**")
+    st.markdown(data["h2_strategy_documents"])
+
+    st.markdown("**Hydrogen strategy authorities:**")
+    st.markdown(data["h2_strategy_authorities"])
+
+    st.markdown("**Information on certification schemes:**")
+    st.markdown(data["certification_info"])
+    st.markdown(f"*Source: {data['source_certification_info']}*")
+
+    st.markdown("**H2 trade characteristics:**")
+    st.markdown(data["h2_trade_characteristics"])
+    st.markdown(f"*Source: {data['source_h2_trade_characteristics']}*")
+
+    st.markdown("**LNG import terminals:**")
+    st.markdown(data["lng_import_terminals"])
+    st.markdown(f"*Source: {data['source_lng_import_terminals']}*")
+
+    st.markdown("**H2 pipeline projects:**")
+    st.markdown(data["h2_pipeline_projects"])
+    st.markdown(f"*Source: {data['source_h2_pipeline_projects']}*")
