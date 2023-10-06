@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Utility functions for streamlit app."""
+from urllib.parse import urlparse
+
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -490,3 +492,32 @@ def create_content_sustainability(context_data: dict):
         data_select = data.loc[data["topic"] == topic]
         for _ind, row in data_select.iterrows():
             st.markdown(f"- {row['question']}")
+
+
+def is_valid_url(url: str) -> bool:
+    """Check if a string is a valid url."""
+    if not isinstance(url, str):
+        return False
+
+    try:
+        result = urlparse(url)
+        # Check if result.scheme and result.netloc are non-empty
+        return all([result.scheme, result.netloc])
+    except ValueError:
+        return False
+
+
+def create_content_literature(context_data: dict):
+    """Display list of references."""
+    df = context_data["literature"]
+    markdown_text = ""
+    for _ind, row in df.iterrows():
+        if is_valid_url(row["url"]):
+            text = (
+                f"- **{row['short_name']}**: {row['long_name']} [Link]({row['url']})\n"
+            )
+        else:
+            text = f"- **{row['short_name']}**: {row['long_name']}\n"
+        markdown_text = markdown_text + text
+
+    st.markdown(markdown_text)

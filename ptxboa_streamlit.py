@@ -23,6 +23,7 @@ st.title("PtX Business Opportunity Analyzer Mockup")
     t_demand_countries,
     t_certification_schemes,
     t_sustainability,
+    t_literature,
     t_disclaimer,
 ) = st.tabs(
     [
@@ -32,6 +33,7 @@ st.title("PtX Business Opportunity Analyzer Mockup")
         "Demand countries",
         "Certification schemes",
         "Sustainability",
+        "Literature",
         "Disclaimer",
     ]
 )
@@ -133,6 +135,9 @@ with t_certification_schemes:
 
 with t_sustainability:
     pf.create_content_sustainability(cd)
+
+with t_literature:
+    pf.create_content_literature(cd)
 
 with t_disclaimer:
     st.markdown("**Disclaimer**")
