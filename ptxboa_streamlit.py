@@ -20,7 +20,7 @@ st.title("PtX Business Opportunity Analyzer Mockup")
     t_dashboard,
     t_market_scanning,
     t_costs_by_region,
-    t_demand_countries,
+    t_country_fact_sheets,
     t_certification_schemes,
     t_sustainability,
     t_literature,
@@ -30,7 +30,7 @@ st.title("PtX Business Opportunity Analyzer Mockup")
         "Dashboard",
         "Market scanning",
         "Costs by region",
-        "Demand countries",
+        "Country fact sheets",
         "Certification schemes",
         "Sustainability",
         "Literature",
@@ -127,8 +127,10 @@ with t_costs_by_region:
     st.subheader("Costs as data frame:")
     st.dataframe(res_costs, use_container_width=True)
 
-with t_demand_countries:
+with t_country_fact_sheets:
     pf.create_fact_sheet_demand_country(cd, settings["sel_country_name"])
+    st.divider()
+    pf.create_fact_sheet_supply_country(cd, settings["sel_region"])
 
 with t_certification_schemes:
     pf.create_fact_sheet_certification_schemes(cd)

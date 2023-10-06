@@ -420,6 +420,34 @@ def create_fact_sheet_demand_country(context_data: dict, country_name: str):
     st.markdown(f"*Source: {data['source_h2_pipeline_projects']}*")
 
 
+def create_fact_sheet_supply_country(context_data: dict, country_name: str):
+    """Display information on a chosen supply country."""
+    df = context_data["supply"]
+    data = df.loc[df["country_name"] == country_name].iloc[0].to_dict()
+
+    st.subheader(f"Fact sheet for {country_name}")
+    text = (
+        "**Technical potential for renewable electricity generation:**\n"
+        f"- {data['source_re_tech_pot_EWI']}: "
+        f"\t{data['re_tech_pot_EWI']:.0f} TWh/a\n"
+        f"- {data['source_re_tech_pot_PTXAtlas']}: "
+        f"\t{data['re_tech_pot_PTXAtlas']:.0f} TWh/a\n"
+    )
+
+    st.markdown(text)
+
+    text = (
+        "**LNG infrastructure:**\n"
+        f"- {data['lng_export']} export terminals\n"
+        f"- {data['lng_import']} import terminals.\n\n"
+        f"*Source: {data['source_lng']}*"
+    )
+
+    st.markdown(text)
+
+    st.write("TODO: CCS pot, elec prices, H2 strategy")
+
+
 def create_fact_sheet_certification_schemes(context_data: dict):
     """Display information on a chosen certification scheme."""
     df = context_data["certification_schemes"]
