@@ -425,43 +425,37 @@ def create_fact_sheet_certification_schemes(context_data: dict):
     scheme_id = st.selectbox("Select scheme:", df["ID"], help=helptext)
     data = df.loc[df["ID"] == scheme_id].iloc[0].to_dict()
 
-    st.subheader(data["name"])
-    st.markdown(f"**Type:** {data['type']}")
+    st.header(data["name"])
 
-    st.markdown("**Description:**")
     st.markdown(data["description"])
 
-    st.markdown("**Relation to other standards:**")
-    st.markdown(data["relation_to_other_standards"])
+    st.subheader("Characteristics")
 
-    st.markdown("**Geographic scope:**")
-    st.markdown(data["geographic_scope"])
+    st.markdown(
+        f"- **Relation to other standards:** {data['relation_to_other_standards']}"
+    )
+    st.markdown(f"- **Geographic scope:** {data['geographic_scope']}")
+    st.markdown(f"- **PTXBOA demand countries:** {data['ptxboa_demand_countries']}")
+    st.markdown(f"- **Labels:** {data['label']}")
+    st.markdown(f"- **Lifecycle scope:** {data['lifecycle_scope']}")
 
-    st.markdown("**PTXBOA demand countries:**")
-    st.markdown(data["ptxboa_demand_countries"])
-
-    st.markdown("**Lifecycle scope:**")
-    st.markdown(data["lifecycle_scope"])
-
-    st.markdown("**Label:**")
-    st.markdown(data["label"])
-
-    st.markdown("**Scope (emissions):**")
+    st.subheader("Scope")
+    st.markdown("- **Emissions:**")
     st.markdown(data["scope_emissions"])
 
-    st.markdown("**Scope (electricity):**")
+    st.markdown("- **Electricity:**")
     st.markdown(data["scope_electricity"])
 
-    st.markdown("**Scope (water):**")
+    st.markdown("- **Water:**")
     st.markdown(data["scope_water"])
 
-    st.markdown("**Scope (biodiversity):**")
+    st.markdown("- **Biodiversity:**")
     st.markdown(data["scope_biodiversity"])
 
-    st.markdown("**Scope (other):**")
+    st.markdown("- **Other:**")
     st.markdown(data["scope_other"])
 
-    st.markdown("**Sources:**")
+    st.subheader("Sources")
     st.markdown(data["sources"])
 
 
