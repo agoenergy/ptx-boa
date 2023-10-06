@@ -21,6 +21,7 @@ st.title("PtX Business Opportunity Analyzer Mockup")
     t_market_scanning,
     t_costs_by_region,
     t_demand_countries,
+    t_certification_schemes,
     t_disclaimer,
 ) = st.tabs(
     [
@@ -28,6 +29,7 @@ st.title("PtX Business Opportunity Analyzer Mockup")
         "Market scanning",
         "Costs by region",
         "Demand countries",
+        "Certification schemes",
         "Disclaimer",
     ]
 )
@@ -124,6 +126,8 @@ with t_costs_by_region:
 with t_demand_countries:
     pf.create_fact_sheet_demand_country(cd, settings["sel_country_name"])
 
+with t_certification_schemes:
+    st.write("tbd")
 
 with t_disclaimer:
     st.markdown("**Disclaimer**")
