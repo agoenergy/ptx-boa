@@ -127,7 +127,7 @@ with t_demand_countries:
     pf.create_fact_sheet_demand_country(cd, settings["sel_country_name"])
 
 with t_certification_schemes:
-    st.write("tbd")
+    pf.create_fact_sheet_certification_schemes(cd)
 
 with t_disclaimer:
     st.markdown("**Disclaimer**")
