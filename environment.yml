@@ -1,24 +1,11 @@
 name: ptx-boa
 channels:
-  - defaults
-  - conda-forge
+  - defaults  
 dependencies:
-  - black==23.1.0
-  - flake8==5.0.4
-  - ipython==8.9.0
-  - isort==5.12.0
-  - pip==22.3.1
-  - pre-commit==2.20.0
-  - pylint==2.17.3
-  - pytest==7.1.2
   - python==3.10.8
-  - conda-forge::bumpversion~=0.5
   - pandas~=2.1
   - numpy~=1.25
   - streamlit~=1.26
   - openpyxl~=3.1
   - plotly~=5.16
   - faker~=18.9
-  - conda-forge::mkdocs~=1.5
-  - conda-forge::mkdocs-material~=9.4
-  - conda-forge::mkdocstrings-python~=1.7
