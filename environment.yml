@@ -2,6 +2,7 @@ name: ptx-boa
 channels:
   - defaults  
 dependencies:
+  - python~=3.10
   - pip
-    - pip:
-      - -r file:requirements.txt
+  - pip:
+    - -r file:requirements.txt
