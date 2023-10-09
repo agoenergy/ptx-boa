@@ -1,6 +1,6 @@
-pandas
-numpy
-streamlit
-openpyxl
-plotly-express
-faker
+pandas~=2.1
+numpy~=1.25
+streamlit~=1.26
+openpyxl~=3.1
+plotly~=5.16
+faker~=18.9
