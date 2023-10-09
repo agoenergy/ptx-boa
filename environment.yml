@@ -6,5 +6,5 @@ dependencies:
   - numpy
   - streamlit
   - openpyxl
-  - plotly-express
+  - plotly_express
   - faker
