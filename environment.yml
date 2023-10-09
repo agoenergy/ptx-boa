@@ -2,10 +2,10 @@ name: ptx-boa
 channels:
   - defaults  
 dependencies:
-  - python==3.10.8
-  - pandas~=2.1
-  - numpy~=1.25
-  - streamlit~=1.26
-  - openpyxl~=3.1
-  - plotly~=5.16
-  - faker~=18.9
+  - python==3.10
+  - pandas==2.1
+  - numpy==1.25
+  - streamlit==1.26
+  - openpyxl==3.1
+  - plotly==5.16
+  - faker==18.9
