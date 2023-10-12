@@ -492,7 +492,7 @@ def create_fact_sheet_certification_schemes(context_data: dict):
 def create_content_sustainability(context_data: dict):
     """Display information on sustainability issues."""
     df = context_data["sustainability"]
-    st.image(Image.open("static/sustainability.png"))
+    st.image("static/sustainability.png")
     captiontext = (
         "Source: https://ptx-hub.org/wp-content/uploads/2022/05/"
         "PtX-Hub-PtX.Sustainability-Dimensions-and-Concerns-Scoping-Paper.pdf"
