@@ -71,7 +71,7 @@ cd = pf.import_context_data()
 
 # dashboard:
 with t_dashboard:
-    pf.content_dashboard(api, res_costs, settings)
+    pf.content_dashboard(api, res_costs, cd, settings)
 
 with t_market_scanning:
     st.markdown("**Market Scanning**")
