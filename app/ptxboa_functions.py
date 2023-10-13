@@ -76,14 +76,47 @@ def create_sidebar(api):
             "choose here are displayed in the info box."
         ),
     )
-    settings["sel_chain"] = st.sidebar.selectbox(
-        "Product (electrolyzer type):",
-        api.get_dimension("chain").index,
-        help=(
-            "The product you want to export including the electrolyzer technology "
-            "to use."
-        ),
-    )
+    # get chain as combination of product, electrolyzer type and reconversion option:
+    c1, c2 = st.sidebar.columns(2)
+    with c1:
+        product = st.selectbox(
+            "Product:",
+            [
+                "Ammonia",
+                "Green Iron",
+                "Hydrogen",
+                "LOHC",
+                "Methane",
+                "Methanol",
+                "Ft e-fuels",
+            ],
+            help="The product you want to export.",
+        )
+    with c2:
+        ely = st.selectbox(
+            "Electrolyzer type:",
+            [
+                "AEL",
+                "PEM",
+                "SEOC",
+            ],
+            help="The electrolyzer type you wish to use.",
+        )
+    if product in ["Ammonia", "Methane"]:
+        use_reconversion = st.sidebar.toggle(
+            "Include reconversion to H2",
+            help=(
+                "If activated, account for costs of ",
+                "reconverting product to H2 in demand country.",
+            ),
+        )
+    else:
+        use_reconversion = False
+
+    settings["sel_chain"] = f"{product} ({ely})"
+    if use_reconversion:
+        settings["sel_chain"] = settings["sel_chain"] + " + reconv. to H2"
+
     settings["sel_res_gen_name"] = st.sidebar.selectbox(
         "Renewable electricity source (for selected supply region):",
         api.get_dimension("res_gen").index,
