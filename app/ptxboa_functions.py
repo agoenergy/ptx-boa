@@ -93,14 +93,32 @@ def create_sidebar(api):
             "of PV and wind onshore plants)"
         ),
     )
-    settings["sel_scenario"] = st.sidebar.selectbox(
-        "Data year (cost reduction pathway):",
-        api.get_dimension("scenario").index,
-        help=(
-            "To cover parameter uncertainty and development over time, we provide "
-            "cost reduction pathways (high / medium / low) for 2030 and 2040."
-        ),
-    )
+
+    # get scenario as combination of year and cost assumption:
+    c1, c2 = st.sidebar.columns(2)
+    with c1:
+        data_year = st.radio(
+            "Data year:",
+            [2030, 2040],
+            index=1,
+            help=(
+                "To cover parameter uncertainty and development over time, we provide "
+                "cost reduction pathways (high / medium / low) for 2030 and 2040."
+            ),
+            horizontal=True,
+        )
+    with c2:
+        cost_scenario = st.radio(
+            "Cost assumptions:",
+            ["high", "medium", "low"],
+            index=1,
+            help=(
+                "To cover parameter uncertainty and development over time, we provide "
+                "cost reduction pathways (high / medium / low) for 2030 and 2040."
+            ),
+            horizontal=True,
+        )
+    settings["sel_scenario"] = f"{data_year} ({cost_scenario})"
 
     st.sidebar.subheader("Additional settings:")
     settings["sel_secproc_co2"] = st.sidebar.radio(
