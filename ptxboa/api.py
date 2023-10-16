@@ -6,6 +6,7 @@ from itertools import product
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
+from pandas.api.types import CategoricalDtype
 
 from .data import load_context_data, load_data
 
@@ -89,6 +90,129 @@ class PtxboaAPI:
         """
         return {}
 
+    def _create_random_output_data(
+        self,
+        scenario: str,
+        secproc_co2: str,
+        secproc_water: str,
+        chain: str,
+        res_gen: str,
+        region: str,
+        country: str,
+        transport: str,
+    ) -> pd.DataFrame:
+        """
+        Create random output data as a long format dataframe.
+
+        The output contains the used setting as categorical "index" columns and one
+        "values" column with randomly generated results.
+        """
+        settings = {
+            "scenario": scenario,
+            "secproc_co2": secproc_co2,
+            "secproc_water": secproc_water,
+            "chain": chain,
+            "res_gen": res_gen,
+            "region": region,
+            "country": country,
+            "transport": transport,
+        }
+
+        # all process_subtypes are listed for each process_type
+        process_subtypes_mapping = {
+            "Water": [
+                "ely_h2o",
+                "ely_fl_h2o",
+                "deriv_h2o",
+                "deriv_fl_h2o",
+                "deriv_h2o_fl_h2o",
+                "deriv_h2o_fl_el",
+                "ely_h2o_fl_el",
+            ],
+            "Electrolysis": ["ely", "ely_fl_el"],
+            "Electricity generation": ["res"],
+            "Transportation (Pipeline)": [
+                "tr_pre_ppl",
+                "tr_ppl",
+                "tr_pplx",
+                "tr_ppls",
+                "tr_pplr",
+                "tr_post_ppl_fl_el",
+                "tr_pre_ppl_fl_el",
+                "tr_post_ppl",
+            ],
+            "Transportation (Ship)": [
+                "tr_shp",
+                "tr_pre_shp",
+                "tr_post_shp",
+                "tr_post_shp_fl_el",
+                "tr_pre_shp_fl_el",
+                "tr_shp_fl_bfuel",
+            ],
+            "Carbon": ["deriv_fl_co2", "deriv_co2", "deriv_co2_fl_el"],
+            "Derivate production": ["deriv", "deriv_fl_el", "deriv_fl_n2"],
+            "Heat": [
+                "ely_h2o_fl_heat",
+                "deriv_h2o_fl_heat",
+                "deriv_co2_fl_heat",
+                "deriv_fl_heat",
+                "tr_post_ppl_fl_heat",
+                "tr_post_shp_fl_heat",
+            ],
+        }
+
+        process_types = list(process_subtypes_mapping.keys())
+        process_subtypes = [
+            value for values in process_subtypes_mapping.values() for value in values
+        ]
+        cost_types = ["CAPEX", "OPEX", "FLOW", "LC"]
+
+        df = (
+            pd.MultiIndex.from_product(
+                [process_subtypes, cost_types], names=["process_subtype", "cost_type"]
+            )
+            .to_frame()
+            .reset_index(drop=True)
+        )
+
+        df["process_subtype"] = df["process_subtype"].astype(
+            CategoricalDtype(categories=process_subtypes)
+        )
+        df["cost_type"] = df["cost_type"].astype(
+            CategoricalDtype(categories=cost_types)
+        )
+        df["process_type"] = (
+            df["process_subtype"]
+            .map(
+                {
+                    value: key
+                    for key, values in process_subtypes_mapping.items()
+                    for value in values
+                }
+            )
+            .astype(CategoricalDtype(categories=process_types))
+        )
+
+        for dim in [
+            "scenario",
+            "secproc_co2",
+            "secproc_water",
+            "chain",
+            "res_gen",
+            "region",
+            "country",
+            "transport",
+        ]:
+            # initialize categorical columns with all possible category values for each
+            # dimension
+            df[dim] = pd.Categorical(
+                [settings[dim]] * len(df),
+                categories=self.get_dimension(dim).index.tolist(),
+            )
+
+        df["values"] = np.random.rand(len(df))
+        return df
+
     def calculate(
         self,
         scenario: str,
@@ -102,7 +226,7 @@ class PtxboaAPI:
         ship_own_fuel: bool,
         output_unit="USD/MWh",
         user_data: dict = None,
-    ) -> dict:
+    ) -> pd.DataFrame:
         """Calculate results based on user selection.
 
         Parameters
@@ -140,7 +264,16 @@ class PtxboaAPI:
         TODO: keys required in result dict
 
         """
-        return {}
+        return self._create_random_output_data(
+            scenario,
+            secproc_co2,
+            secproc_water,
+            chain,
+            res_gen,
+            region,
+            country,
+            transport,
+        )
 
     def _get_scenario_dimension(self) -> DataFrame:
         """Availible items for this class.
