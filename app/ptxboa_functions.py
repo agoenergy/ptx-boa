@@ -272,7 +272,7 @@ def content_context_data(api):
     st.dataframe(data_scope, use_container_width=True)
 
 
-def content_dashboard(api, res_costs: dict, cd: dict, settings: pd.DataFrame):
+def content_dashboard(api, res_costs: dict, context_data: dict, settings: pd.DataFrame):
     st.markdown("Welcome to our dashboard!")
     st.markdown(
         "Here you will find your central selection options, "
@@ -282,7 +282,7 @@ def content_dashboard(api, res_costs: dict, cd: dict, settings: pd.DataFrame):
 
     c_1, c_2 = st.columns([1, 2])
     with c_1:
-        create_infobox(cd, settings)
+        create_infobox(context_data, settings)
 
     with c_2:
         create_world_map(settings, res_costs)
@@ -320,8 +320,8 @@ def content_market_scanning(res_costs: dict, settings: pd.DataFrame):
     )
 
 
-def create_infobox(cd: dict, settings: dict):
-    data = cd["infobox"]
+def create_infobox(context_data: dict, settings: dict):
+    data = context_data["infobox"]
     st.markdown(f"**Key information on {settings['sel_country_name']}:**")
     demand = data.at[settings["sel_country_name"], "Projected H2 demand [2030]"]
     info1 = data.at[settings["sel_country_name"], "key_info_1"]
