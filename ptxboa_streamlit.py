@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Mockup streamlit app."""
-import numpy as np
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -47,23 +46,32 @@ settings = pf.create_sidebar(api)
 # calculate results:
 
 
-@st.cache_data()
-def get_results(settings):
-    res_costs = pd.DataFrame(
-        index=api.get_dimension("region").index,
-        columns=[
-            "Electricity generation",
-            "Electrolysis",
-            "Derivate production",
-            "Transport",
-        ],
-        data=np.random.rand(len(api.get_dimension("region").index), 4),
-    )
-    res_costs["Total"] = res_costs.sum(axis=1)
-    return res_costs
+def calculate_results(api: PtxboaAPI, settings: dict) -> pd.DataFrame:
+    """Calculate results for all source regions."""
+    res_list = []
+
+    for region in api._get_region_dimension()["region_name"]:
+        res_single = api.calculate(
+            scenario=settings["sel_scenario"],
+            secproc_co2=settings["sel_secproc_co2"],
+            secproc_water=settings["sel_secproc_water"],
+            chain=settings["sel_chain"],
+            res_gen=settings["sel_res_gen_name"],
+            region=region,
+            country=settings["sel_country_name"],
+            transport=settings["sel_transport"],
+            ship_own_fuel=settings["sel_ship_own_fuel"],
+            output_unit=settings["selOutputUnit"],
+        )
+        res_list.append(res_single)
+    res = pd.concat(res_list)
+    return res
 
 
-res_costs = get_results(settings)
+res_costs = calculate_results(api, settings)
+
+st.write(res_costs)
+
 
 # import context data:
 cd = pf.import_context_data()
