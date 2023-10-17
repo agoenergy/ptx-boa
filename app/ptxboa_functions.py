@@ -50,6 +50,21 @@ def calculate_results(api, settings: dict) -> pd.DataFrame:
     return res
 
 
+def aggregate_costs(res_details: pd.DataFrame) -> pd.DataFrame:
+    """Aggregate detailed costs."""
+    # Exclude levelized costs:
+    res = res_details.loc[res_details["cost_type"] != "LC"]
+    res = res.pivot_table(
+        index="region", columns="process_type", values="values", aggfunc=sum
+    )
+    # calculate total costs:
+    res["Total"] = res.sum(axis=1)
+
+    # TODO exclude countries with total costs of 0 - maybe remove later:
+    res = res.loc[res["Total"] != 0]
+    return res
+
+
 # Settings:
 def create_sidebar(api):
     st.sidebar.subheader("Main settings:")
