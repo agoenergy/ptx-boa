@@ -50,7 +50,8 @@ def calculate_results(api: PtxboaAPI, settings: dict) -> pd.DataFrame:
     """Calculate results for all source regions."""
     res_list = []
 
-    for region in api._get_region_dimension()["region_name"]:
+    for region in ["Argentina", "Morocco", "South Africa"]:
+        # for region in api._get_region_dimension()["region_name"]:
         res_single = api.calculate(
             scenario=settings["sel_scenario"],
             secproc_co2=settings["sel_secproc_co2"],
@@ -68,10 +69,32 @@ def calculate_results(api: PtxboaAPI, settings: dict) -> pd.DataFrame:
     return res
 
 
-res_costs = calculate_results(api, settings)
+res_details = calculate_results(api, settings)
+
+st.write(res_details)
+res_details.columns
+
+
+def aggregate_costs(res_details: pd.DataFrame) -> pd.DataFrame:
+    """Aggregate detailed costs."""
+    res = res_details.loc[res_details["cost_type"] != "LC"]
+    res = res.drop(columns=["process_subtype"])
+    res = (
+        res.groupby(
+            list(res.columns.difference(["values"])),
+            observed=True,
+        )
+        .sum()
+        .reset_index()
+    )
+
+    return res
+
+
+res_costs = aggregate_costs(res_details)
+
 
 st.write(res_costs)
-
 
 # import context data:
 cd = pf.import_context_data()
