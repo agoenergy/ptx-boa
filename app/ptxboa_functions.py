@@ -7,6 +7,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
+from ptxboa.api import PtxboaAPI
+
 
 def calculate_results_single(api, settings):
     """Calculate results for single country pair."""
@@ -26,9 +28,14 @@ def calculate_results_single(api, settings):
     return res
 
 
-def calculate_results(api, settings: dict, region_list: list) -> pd.DataFrame:
+def calculate_results(
+    api: PtxboaAPI, settings: dict, region_list: list = None
+) -> pd.DataFrame:
     """Calculate results for all source regions."""
     res_list = []
+
+    if region_list is None:
+        region_list = api.get_dimension("region")["region_name"]
 
     for region in region_list:
         res_single = api.calculate(
