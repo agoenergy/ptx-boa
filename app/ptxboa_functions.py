@@ -108,8 +108,8 @@ def create_sidebar(api):
         use_reconversion = st.sidebar.toggle(
             "Include reconversion to H2",
             help=(
-                "If activated, account for costs of ",
-                "reconverting product to H2 in demand country.",
+                "If activated, account for costs of "
+                "reconverting product to H2 in demand country."
             ),
         )
     else:
