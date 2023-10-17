@@ -20,10 +20,22 @@ st.title("PtX Business Opportunity Analyzer Mockup")
     t_dashboard,
     t_market_scanning,
     t_costs_by_region,
-    t_context_data,
+    t_country_fact_sheets,
+    t_certification_schemes,
+    t_sustainability,
+    t_literature,
     t_disclaimer,
 ) = st.tabs(
-    ["Dashboard", "Market scanning", "Costs by region", "Context data", "Disclaimer"]
+    [
+        "Dashboard",
+        "Market scanning",
+        "Costs by region",
+        "Country fact sheets",
+        "Certification schemes",
+        "Sustainability",
+        "Literature",
+        "Disclaimer",
+    ]
 )
 
 # TODO: cache this instance
@@ -53,10 +65,13 @@ def get_results(settings):
 
 res_costs = get_results(settings)
 
+# import context data:
+cd = pf.import_context_data()
+
 
 # dashboard:
 with t_dashboard:
-    pf.content_dashboard(api, res_costs, settings)
+    pf.content_dashboard(api, res_costs, cd, settings)
 
 with t_market_scanning:
     st.markdown("**Market Scanning**")
@@ -112,16 +127,19 @@ with t_costs_by_region:
     st.subheader("Costs as data frame:")
     st.dataframe(res_costs, use_container_width=True)
 
-with t_context_data:
-    st.markdown("**Context data**")
-    st.markdown(
-        """This sheet shows context data: Country fact sheet, certification
-          schemes and sustainability issues. We might need to use more than
-            one sheet to accomodate this data.
+with t_country_fact_sheets:
+    pf.create_fact_sheet_demand_country(cd, settings["sel_country_name"])
+    st.divider()
+    pf.create_fact_sheet_supply_country(cd, settings["sel_region"])
 
-Unlike in the excel tool, we propose to structure data as text (similar to the
- infobox in the dashboard) instead of using tables."""
-    )
+with t_certification_schemes:
+    pf.create_fact_sheet_certification_schemes(cd)
+
+with t_sustainability:
+    pf.create_content_sustainability(cd)
+
+with t_literature:
+    pf.create_content_literature(cd)
 
 with t_disclaimer:
     st.markdown("**Disclaimer**")

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Utility functions for streamlit app."""
+from urllib.parse import urlparse
+
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -321,7 +323,7 @@ def content_context_data(api):
     st.dataframe(data_scope, use_container_width=True)
 
 
-def content_dashboard(api, res_costs: dict, settings: pd.DataFrame):
+def content_dashboard(api, res_costs: dict, context_data: dict, settings: pd.DataFrame):
     st.markdown("Welcome to our dashboard!")
     st.markdown(
         "Here you will find your central selection options, "
@@ -331,7 +333,7 @@ def content_dashboard(api, res_costs: dict, settings: pd.DataFrame):
 
     c_1, c_2 = st.columns([1, 2])
     with c_1:
-        create_infobox(api, settings)
+        create_infobox(context_data, settings)
 
     with c_2:
         create_world_map(settings, res_costs)
@@ -369,8 +371,8 @@ def content_market_scanning(res_costs: dict, settings: pd.DataFrame):
     )
 
 
-def create_infobox(api, settings: dict):
-    data = api.load_context_data("_context_data_infobox")
+def create_infobox(context_data: dict, settings: dict):
+    data = context_data["infobox"]
     st.markdown(f"**Key information on {settings['sel_country_name']}:**")
     demand = data.at[settings["sel_country_name"], "Projected H2 demand [2030]"]
     info1 = data.at[settings["sel_country_name"], "key_info_1"]
@@ -387,3 +389,219 @@ def create_infobox(api, settings: dict):
     write_info(info2)
     write_info(info3)
     write_info(info4)
+
+
+def import_context_data():
+    """Import context data from excel file."""
+    filename = "data/context_data.xlsx"
+    cd = {}
+    cd["demand_countries"] = pd.read_excel(
+        filename, sheet_name="demand_countries", skiprows=1
+    )
+    cd["certification_schemes_countries"] = pd.read_excel(
+        filename, sheet_name="certification_schemes_countries"
+    )
+    cd["certification_schemes"] = pd.read_excel(
+        filename, sheet_name="certification_schemes", skiprows=1
+    )
+    cd["sustainability"] = pd.read_excel(filename, sheet_name="sustainability")
+    cd["supply"] = pd.read_excel(filename, sheet_name="supply", skiprows=1)
+    cd["literature"] = pd.read_excel(filename, sheet_name="literature")
+    cd["infobox"] = pd.read_excel(
+        filename,
+        sheet_name="infobox",
+        usecols="A:F",
+        skiprows=1,
+    ).set_index("country_name")
+    return cd
+
+
+def create_fact_sheet_demand_country(context_data: dict, country_name: str):
+    """Display information on a chosen demand country."""
+    df = context_data["demand_countries"]
+    data = df.loc[df["country_name"] == country_name].iloc[0].to_dict()
+
+    flags_to_country_names = {
+        "France": ":flag-fr:",
+        "Germany": ":flag-de:",
+        "Netherlands": ":flag-nl:",
+        "Spain": ":flag-es:",
+        "China": ":flag-cn:",
+        "India": ":flag-in:",
+        "Japan": ":flag-jp:",
+        "South Korea": ":flag-kr:",
+        "USA": ":flag-us:",
+    }
+
+    st.subheader(
+        f"{flags_to_country_names[country_name]} Fact sheet for {country_name}"
+    )
+    st.markdown(
+        """This page contains detailed information
+         and a collection of links for further reading."""
+    )
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.markdown("**Projected H2 demand in 2030:**")
+        st.markdown(data["h2_demand_2030"])
+        st.markdown(f"*Source: {data['source_h2_demand_2030']}*")
+    with c2:
+        st.markdown("**Targeted sectors (main):**")
+        st.markdown(data["demand_targeted_sectors_main"])
+        st.markdown(f"*Source: {data['source_targeted_sectors_main']}*")
+    with c3:
+        st.markdown("**Targeted sectors (secondary):**")
+        st.markdown(data["demand_targeted_sectors_secondary"])
+        st.markdown(f"*Source: {data['source_targeted_sectors_secondary']}*")
+    st.markdown("**Hydrogen strategy documents:**")
+    st.markdown(data["h2_strategy_documents"])
+
+    st.markdown("**Hydrogen strategy authorities:**")
+    st.markdown(data["h2_strategy_authorities"])
+
+    st.markdown("**Information on certification schemes:**")
+    st.markdown(data["certification_info"])
+    st.markdown(f"*Source: {data['source_certification_info']}*")
+
+    st.markdown("**H2 trade characteristics:**")
+    st.markdown(data["h2_trade_characteristics"])
+    st.markdown(f"*Source: {data['source_h2_trade_characteristics']}*")
+
+    st.markdown("**LNG import terminals:**")
+    st.markdown(data["lng_import_terminals"])
+    st.markdown(f"*Source: {data['source_lng_import_terminals']}*")
+
+    st.markdown("**H2 pipeline projects:**")
+    st.markdown(data["h2_pipeline_projects"])
+    st.markdown(f"*Source: {data['source_h2_pipeline_projects']}*")
+
+
+def create_fact_sheet_supply_country(context_data: dict, country_name: str):
+    """Display information on a chosen supply country."""
+    df = context_data["supply"]
+    data = df.loc[df["country_name"] == country_name].iloc[0].to_dict()
+
+    st.subheader(f"Fact sheet for {country_name}")
+    text = (
+        "**Technical potential for renewable electricity generation:**\n"
+        f"- {data['source_re_tech_pot_EWI']}: "
+        f"\t{data['re_tech_pot_EWI']:.0f} TWh/a\n"
+        f"- {data['source_re_tech_pot_PTXAtlas']}: "
+        f"\t{data['re_tech_pot_PTXAtlas']:.0f} TWh/a\n"
+    )
+
+    st.markdown(text)
+
+    text = (
+        "**LNG infrastructure:**\n"
+        f"- {data['lng_export']} export terminals\n"
+        f"- {data['lng_import']} import terminals.\n\n"
+        f"*Source: {data['source_lng']}*"
+    )
+
+    st.markdown(text)
+
+    st.write("TODO: CCS pot, elec prices, H2 strategy")
+
+
+def create_fact_sheet_certification_schemes(context_data: dict):
+    """Display information on a chosen certification scheme."""
+    df = context_data["certification_schemes"]
+    helptext = "Select the certification scheme you want to know more about."
+    scheme_id = st.selectbox("Select scheme:", df["ID"], help=helptext)
+    data = df.loc[df["ID"] == scheme_id].iloc[0].to_dict()
+
+    st.header(data["name"])
+
+    st.markdown(data["description"])
+
+    st.subheader("Characteristics")
+
+    st.markdown(
+        f"- **Relation to other standards:** {data['relation_to_other_standards']}"
+    )
+    st.markdown(f"- **Geographic scope:** {data['geographic_scope']}")
+    st.markdown(f"- **PTXBOA demand countries:** {data['ptxboa_demand_countries']}")
+    st.markdown(f"- **Labels:** {data['label']}")
+    st.markdown(f"- **Lifecycle scope:** {data['lifecycle_scope']}")
+
+    st.subheader("Scope")
+    st.markdown("- **Emissions:**")
+    st.markdown(data["scope_emissions"])
+
+    st.markdown("- **Electricity:**")
+    st.markdown(data["scope_electricity"])
+
+    st.markdown("- **Water:**")
+    st.markdown(data["scope_water"])
+
+    st.markdown("- **Biodiversity:**")
+    st.markdown(data["scope_biodiversity"])
+
+    st.markdown("- **Other:**")
+    st.markdown(data["scope_other"])
+
+    st.subheader("Sources")
+    st.markdown(data["sources"])
+
+
+def create_content_sustainability(context_data: dict):
+    """Display information on sustainability issues."""
+    df = context_data["sustainability"]
+    st.image("static/sustainability.png")
+    captiontext = (
+        "Source: https://ptx-hub.org/wp-content/uploads/2022/05/"
+        "PtX-Hub-PtX.Sustainability-Dimensions-and-Concerns-Scoping-Paper.pdf"
+    )
+    st.caption(captiontext)
+
+    c1, c2 = st.columns(2)
+    with c1:
+        helptext = "helptext"
+        dimension = st.selectbox(
+            "Select dimension:", df["dimension"].unique(), help=helptext
+        )
+    with c2:
+        helptext = "helptext"
+        question_type = st.radio(
+            "Guardrails or goals?",
+            ["Guardrails", "Goals"],
+            help=helptext,
+            horizontal=True,
+        )
+        data = df.loc[(df["dimension"] == dimension) & (df["type"] == question_type)]
+
+    for topic in data["topic"].unique():
+        st.markdown(f"**{topic}:**")
+        data_select = data.loc[data["topic"] == topic]
+        for _ind, row in data_select.iterrows():
+            st.markdown(f"- {row['question']}")
+
+
+def is_valid_url(url: str) -> bool:
+    """Check if a string is a valid url."""
+    if not isinstance(url, str):
+        return False
+
+    try:
+        result = urlparse(url)
+        # Check if result.scheme and result.netloc are non-empty
+        return all([result.scheme, result.netloc])
+    except ValueError:
+        return False
+
+
+def create_content_literature(context_data: dict):
+    """Display list of references."""
+    df = context_data["literature"]
+    markdown_text = ""
+    for _ind, row in df.iterrows():
+        if is_valid_url(row["url"]):
+            text = (
+                f"- **{row['short_name']}**: {row['long_name']} [Link]({row['url']})\n"
+            )
+        else:
+            text = f"- **{row['short_name']}**: {row['long_name']}\n"
+        markdown_text = markdown_text + text
+
+    st.markdown(markdown_text)

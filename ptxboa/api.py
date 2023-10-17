@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from pandas import DataFrame
 
-from .data import load_context_data, load_data
+from .data import load_data
 
 
 class PtxboaAPI:
@@ -244,7 +244,3 @@ class PtxboaAPI:
         return DataFrame([{"unit_name": "USD/MWh"}, {"unit_name": "USD/t"}]).set_index(
             "unit_name", drop=False
         )
-
-    def load_context_data(self, name: str) -> pd.DataFrame:
-        """Load context data."""
-        return load_context_data(name)
