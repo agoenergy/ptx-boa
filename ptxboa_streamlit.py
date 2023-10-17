@@ -43,9 +43,8 @@ api = PtxboaAPI()
 # create sidebar:
 settings = pf.create_sidebar(api)
 
+
 # calculate results:
-
-
 def calculate_results(api: PtxboaAPI, settings: dict) -> pd.DataFrame:
     """Calculate results for all source regions."""
     res_list = []
@@ -90,7 +89,6 @@ def aggregate_costs(res_details: pd.DataFrame) -> pd.DataFrame:
 
 res_costs = aggregate_costs(res_details)
 
-st.write(res_costs)
 
 # import context data:
 cd = pf.import_context_data()
@@ -111,7 +109,7 @@ with t_market_scanning:
     with c1:
         fig = px.scatter(
             res_costs,
-            x="Transport",
+            x="Transportation (Pipeline)",
             y="Total",
             title="Costs and transportation distances",
             height=600,
