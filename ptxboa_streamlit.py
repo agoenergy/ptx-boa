@@ -45,31 +45,9 @@ settings = pf.create_sidebar(api)
 
 
 # calculate results:
-def calculate_results(api: PtxboaAPI, settings: dict) -> pd.DataFrame:
-    """Calculate results for all source regions."""
-    res_list = []
-
-    # TODO: use all regions later:
-    # for region in api._get_region_dimension()["region_name"]:
-    for region in ["Argentina", "Morocco", "South Africa"]:
-        res_single = api.calculate(
-            scenario=settings["sel_scenario"],
-            secproc_co2=settings["sel_secproc_co2"],
-            secproc_water=settings["sel_secproc_water"],
-            chain=settings["sel_chain"],
-            res_gen=settings["sel_res_gen_name"],
-            region=region,
-            country=settings["sel_country_name"],
-            transport=settings["sel_transport"],
-            ship_own_fuel=settings["sel_ship_own_fuel"],
-            output_unit=settings["selOutputUnit"],
-        )
-        res_list.append(res_single)
-    res = pd.concat(res_list)
-    return res
 
 
-res_details = calculate_results(api, settings)
+res_details = pf.calculate_results(api, settings)
 
 
 def aggregate_costs(res_details: pd.DataFrame) -> pd.DataFrame:

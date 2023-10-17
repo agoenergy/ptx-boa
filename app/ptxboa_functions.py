@@ -26,33 +26,28 @@ def calculate_results_single(api, settings):
     return res
 
 
-def calculate_results(api, settings):
-    # calculate results for all source regions:
-    results_list = []
-    for region in settings["region_list"]:
-        settings2 = settings.copy()
-        settings2["sel_region"] = region
-        result_single = pd.DataFrame.from_dict(
-            calculate_results_single(api, settings2)
-        ).reset_index(drop=True)
-        results_list.append(result_single)
+def calculate_results(api, settings: dict) -> pd.DataFrame:
+    """Calculate results for all source regions."""
+    res_list = []
 
-    results = pd.concat(results_list, ignore_index=True)[
-        ["source", "variable", "process_class", "value"]
-    ]
-
-    # aggregate costs (without LC):
-    res_costs = results.loc[results["variable"] != "LC"].pivot_table(
-        index="source", columns="process_class", values="value", aggfunc=sum
-    )
-
-    # Calculate total costs:
-    res_costs["Total"] = res_costs.sum(axis=1)
-
-    # replace region codes with region names:
-    index_mapping = api.get_dimension("region").set_index("region_code")["region_name"]
-    res_costs.index = res_costs.index.map(index_mapping)
-    return res_costs
+    # TODO: use all regions later:
+    # for region in api._get_region_dimension()["region_name"]:
+    for region in ["Argentina", "Morocco", "South Africa"]:
+        res_single = api.calculate(
+            scenario=settings["sel_scenario"],
+            secproc_co2=settings["sel_secproc_co2"],
+            secproc_water=settings["sel_secproc_water"],
+            chain=settings["sel_chain"],
+            res_gen=settings["sel_res_gen_name"],
+            region=region,
+            country=settings["sel_country_name"],
+            transport=settings["sel_transport"],
+            ship_own_fuel=settings["sel_ship_own_fuel"],
+            output_unit=settings["selOutputUnit"],
+        )
+        res_list.append(res_single)
+    res = pd.concat(res_list)
+    return res
 
 
 # Settings:
