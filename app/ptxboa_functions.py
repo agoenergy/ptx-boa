@@ -108,8 +108,8 @@ def create_sidebar(api):
         use_reconversion = st.sidebar.toggle(
             "Include reconversion to H2",
             help=(
-                "If activated, account for costs of ",
-                "reconverting product to H2 in demand country.",
+                "If activated, account for costs of "
+                "reconverting product to H2 in demand country."
             ),
         )
     else:
@@ -117,7 +117,7 @@ def create_sidebar(api):
 
     settings["sel_chain"] = f"{product} ({ely})"
     if use_reconversion:
-        settings["sel_chain"] = f"{settings["sel_chain"]} + reconv. to H2"
+        settings["sel_chain"] = f"{settings['sel_chain']} + reconv. to H2"
 
     settings["sel_res_gen_name"] = st.sidebar.selectbox(
         "Renewable electricity source (for selected supply region):",
