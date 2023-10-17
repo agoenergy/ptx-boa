@@ -44,7 +44,9 @@ api = PtxboaAPI()
 settings = pf.create_sidebar(api)
 
 # calculate results:
-res_details = pf.calculate_results(api, settings)
+res_details = pf.calculate_results(
+    api, settings, region_list=["Argentina", "South Africa", "Morocco"]
+)
 res_costs = pf.aggregate_costs(res_details)
 
 # import context data:

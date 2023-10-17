@@ -26,13 +26,11 @@ def calculate_results_single(api, settings):
     return res
 
 
-def calculate_results(api, settings: dict) -> pd.DataFrame:
+def calculate_results(api, settings: dict, region_list: list) -> pd.DataFrame:
     """Calculate results for all source regions."""
     res_list = []
 
-    # TODO: use all regions later:
-    # for region in api._get_region_dimension()["region_name"]:
-    for region in ["Argentina", "Morocco", "South Africa"]:
+    for region in region_list:
         res_single = api.calculate(
             scenario=settings["sel_scenario"],
             secproc_co2=settings["sel_secproc_co2"],
