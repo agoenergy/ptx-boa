@@ -10,7 +10,7 @@ import streamlit as st
 from ptxboa.api import PtxboaAPI
 
 
-def calculate_results_single(api, settings):
+def calculate_results_single(api: PtxboaAPI, settings):
     """Calculate results for single country pair."""
     res = api.calculate(
         scenario=settings["sel_scenario"],
@@ -71,7 +71,7 @@ def aggregate_costs(res_details: pd.DataFrame) -> pd.DataFrame:
 
 
 # Settings:
-def create_sidebar(api):
+def create_sidebar(api: PtxboaAPI):
     st.sidebar.subheader("Main settings:")
     settings = {}
     settings["sel_region"] = st.sidebar.selectbox(
@@ -316,18 +316,6 @@ def create_scatter_plot(df_res, settings: dict):
     fig.update_traces(texttemplate="%{text}", textposition="top center")
     st.plotly_chart(fig)
     st.write(df_res)
-
-
-def content_context_data(api):
-    st.subheader(
-        "What regulations and/or standards are relevant "
-        "for which PTX BOA demand countries?"
-    )
-    data_countries = api.load_context_data("context_cs_countries")
-    st.dataframe(data_countries, use_container_width=True)
-    st.subheader("Are the following criteria considered in this scheme?")
-    data_scope = api.load_context_data("context_cs_scope")
-    st.dataframe(data_scope, use_container_width=True)
 
 
 def content_dashboard(api, res_costs: dict, context_data: dict, settings: pd.DataFrame):
