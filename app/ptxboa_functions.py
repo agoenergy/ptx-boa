@@ -194,14 +194,6 @@ def create_sidebar(api):
         help="Help text",
     )
 
-    st.sidebar.subheader("Dev:")
-    region = api.get_dimension("region")
-    settings["num_regions"] = st.sidebar.slider(
-        "number of regions to calculate:",
-        1,
-        len(region[region["subregion_code"].isna()]),
-        value=5,
-    )
     return settings
 
 
