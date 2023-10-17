@@ -117,7 +117,7 @@ def create_sidebar(api):
 
     settings["sel_chain"] = f"{product} ({ely})"
     if use_reconversion:
-        settings["sel_chain"] = f"{settings["sel_chain"]} + reconv. to H2"
+        settings["sel_chain"] = f"{settings['sel_chain']} + reconv. to H2"
 
     settings["sel_res_gen_name"] = st.sidebar.selectbox(
         "Renewable electricity source (for selected supply region):",
