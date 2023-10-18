@@ -60,32 +60,7 @@ with t_market_scanning:
     pf.content_market_scanning(api, res_costs, settings)
 
 with t_costs_by_region:
-    st.markdown("**Costs by region**")
-    st.markdown(
-        """On this sheet, users can analyze total cost and cost components for
-          different supply countries. Data is represented as a bar chart and
-            in tabular form. \n\n Data can be filterend and sorted."""
-    )
-    # filter data:
-    df_res = res_costs.copy()
-    show_which_data = st.radio(
-        "Select regions to display:", ["All", "Ten cheapest", "Manual select"], index=0
-    )
-    if show_which_data == "Ten cheapest":
-        df_res = df_res.nsmallest(10, "Total")
-    elif show_which_data == "Manual select":
-        ind_select = st.multiselect(
-            "Select regions:", df_res.index.values, default=df_res.index.values
-        )
-        df_res = df_res.loc[ind_select]
-
-    sort_ascending = st.toggle("Sort by total costs?", value=True)
-    if sort_ascending:
-        df_res = df_res.sort_values(["Total"], ascending=True)
-    pf.create_bar_chart_costs(df_res)
-
-    st.subheader("Costs as data frame:")
-    st.dataframe(res_costs, use_container_width=True)
+    pf.content_costs_by_region(res_costs)
 
 with t_country_fact_sheets:
     pf.create_fact_sheet_demand_country(cd, settings["sel_country_name"])
