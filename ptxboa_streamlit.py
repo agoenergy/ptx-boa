@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Mockup streamlit app."""
-import numpy as np
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -45,29 +44,14 @@ api = PtxboaAPI()
 settings = pf.create_sidebar(api)
 
 # calculate results:
-
-
-@st.cache_data()
-def get_results(settings):
-    res_costs = pd.DataFrame(
-        index=api.get_dimension("region").index,
-        columns=[
-            "Electricity generation",
-            "Electrolysis",
-            "Derivate production",
-            "Transport",
-        ],
-        data=np.random.rand(len(api.get_dimension("region").index), 4),
-    )
-    res_costs["Total"] = res_costs.sum(axis=1)
-    return res_costs
-
-
-res_costs = get_results(settings)
+res_details = pf.calculate_results(
+    api,
+    settings,
+)
+res_costs = pf.aggregate_costs(res_details)
 
 # import context data:
 cd = pf.import_context_data()
-
 
 # dashboard:
 with t_dashboard:
@@ -84,7 +68,7 @@ with t_market_scanning:
     with c1:
         fig = px.scatter(
             res_costs,
-            x="Transport",
+            x="Transportation (Pipeline)",
             y="Total",
             title="Costs and transportation distances",
             height=600,

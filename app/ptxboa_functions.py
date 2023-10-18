@@ -7,8 +7,10 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
+from ptxboa.api import PtxboaAPI
 
-def calculate_results_single(api, settings):
+
+def calculate_results_single(api: PtxboaAPI, settings):
     """Calculate results for single country pair."""
     res = api.calculate(
         scenario=settings["sel_scenario"],
@@ -26,37 +28,67 @@ def calculate_results_single(api, settings):
     return res
 
 
-def calculate_results(api, settings):
-    # calculate results for all source regions:
-    results_list = []
-    for region in settings["region_list"]:
-        settings2 = settings.copy()
-        settings2["sel_region"] = region
-        result_single = pd.DataFrame.from_dict(
-            calculate_results_single(api, settings2)
-        ).reset_index(drop=True)
-        results_list.append(result_single)
+def calculate_results(
+    api: PtxboaAPI, settings: dict, region_list: list = None
+) -> pd.DataFrame:
+    """Calculate results for source regions and one selected target country.
 
-    results = pd.concat(results_list, ignore_index=True)[
-        ["source", "variable", "process_class", "value"]
-    ]
+    Parameters
+    ----------
+    api : :class:`~ptxboa.api.PtxboaAPI`
+        an instance of the api class
+    settings : dict
+        settings from the streamlit app. An example can be obtained with the
+        return value from :func:`ptxboa_functions.create_sidebar`.
+    region_list : list or None
+        The regions for which the results are calculated. If None, all regions
+        available in the API will be used.
 
-    # aggregate costs (without LC):
-    res_costs = results.loc[results["variable"] != "LC"].pivot_table(
-        index="source", columns="process_class", values="value", aggfunc=sum
+    Returns
+    -------
+    pd.DataFrame
+        same format as for :meth:`~ptxboa.api.PtxboaAPI.calculate()`
+    """
+    res_list = []
+
+    if region_list is None:
+        region_list = api.get_dimension("region")["region_name"]
+
+    for region in region_list:
+        res_single = api.calculate(
+            scenario=settings["sel_scenario"],
+            secproc_co2=settings["sel_secproc_co2"],
+            secproc_water=settings["sel_secproc_water"],
+            chain=settings["sel_chain"],
+            res_gen=settings["sel_res_gen_name"],
+            region=region,
+            country=settings["sel_country_name"],
+            transport=settings["sel_transport"],
+            ship_own_fuel=settings["sel_ship_own_fuel"],
+            output_unit=settings["selOutputUnit"],
+        )
+        res_list.append(res_single)
+    res = pd.concat(res_list)
+    return res
+
+
+def aggregate_costs(res_details: pd.DataFrame) -> pd.DataFrame:
+    """Aggregate detailed costs."""
+    # Exclude levelized costs:
+    res = res_details.loc[res_details["cost_type"] != "LC"]
+    res = res.pivot_table(
+        index="region", columns="process_type", values="values", aggfunc="sum"
     )
+    # calculate total costs:
+    res["Total"] = res.sum(axis=1)
 
-    # Calculate total costs:
-    res_costs["Total"] = res_costs.sum(axis=1)
-
-    # replace region codes with region names:
-    index_mapping = api.get_dimension("region").set_index("region_code")["region_name"]
-    res_costs.index = res_costs.index.map(index_mapping)
-    return res_costs
+    # TODO exclude countries with total costs of 0 - maybe remove later:
+    res = res.loc[res["Total"] != 0]
+    return res
 
 
 # Settings:
-def create_sidebar(api):
+def create_sidebar(api: PtxboaAPI):
     st.sidebar.subheader("Main settings:")
     settings = {}
     settings["sel_region"] = st.sidebar.selectbox(
@@ -186,14 +218,6 @@ def create_sidebar(api):
         help="Help text",
     )
 
-    st.sidebar.subheader("Dev:")
-    region = api.get_dimension("region")
-    settings["num_regions"] = st.sidebar.slider(
-        "number of regions to calculate:",
-        1,
-        len(region[region["subregion_code"].isna()]),
-        value=5,
-    )
     return settings
 
 
@@ -309,18 +333,6 @@ def create_scatter_plot(df_res, settings: dict):
     fig.update_traces(texttemplate="%{text}", textposition="top center")
     st.plotly_chart(fig)
     st.write(df_res)
-
-
-def content_context_data(api):
-    st.subheader(
-        "What regulations and/or standards are relevant "
-        "for which PTX BOA demand countries?"
-    )
-    data_countries = api.load_context_data("context_cs_countries")
-    st.dataframe(data_countries, use_container_width=True)
-    st.subheader("Are the following criteria considered in this scheme?")
-    data_scope = api.load_context_data("context_cs_scope")
-    st.dataframe(data_scope, use_container_width=True)
 
 
 def content_dashboard(api, res_costs: dict, context_data: dict, settings: pd.DataFrame):
