@@ -69,7 +69,7 @@ class PtxboaAPI:
         scenario: str,
         long_names: bool = True,
         user_data: dict = None,
-    ) -> dict:
+    ) -> pd.DataFrame:
         """Return scenario data.
 
         if user data is defined, specified values will be replaced with those.
