@@ -60,7 +60,7 @@ def aggregate_costs(res_details: pd.DataFrame) -> pd.DataFrame:
     # Exclude levelized costs:
     res = res_details.loc[res_details["cost_type"] != "LC"]
     res = res.pivot_table(
-        index="region", columns="process_type", values="values", aggfunc=sum
+        index="region", columns="process_type", values="values", aggfunc="sum"
     )
     # calculate total costs:
     res["Total"] = res.sum(axis=1)
