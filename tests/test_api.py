@@ -1,5 +1,6 @@
 # coding: utf-8
 import unittest
+import numpy as np
 
 from ptxboa.api import PtxboaAPI
 
@@ -46,11 +47,11 @@ class TestTemplate(unittest.TestCase):
         }
         self._test_api_call(settings)
 
-    def test_api_get_input_data(self):
+    def test_api_get_input_data_output_format(self):
         # test wrong scenario
         self.assertRaises(ValueError, self.api.get_input_data, scenario="invalid")
         # test output structure of data
-        res = self.api.get_input_data("2030 (high)")
+        res = self.api.get_input_data("2030 (high)", long_names=False)
         self.assertEqual(
             set(res.columns),
             set(
@@ -66,3 +67,17 @@ class TestTemplate(unittest.TestCase):
                 ]
             ),
         )
+
+    def test_get_input_data_nan_consistency(self):
+        # test nans are at same place
+        changed_columns = [
+            "parameter_code",
+            "process_code",
+            "flow_code",
+            "source_region_code",
+            "target_country_code",
+        ]
+        for scenario in ["2030 (low)", "2030 (medium)", "2030 (high)", "2040 (low)", "2040 (medium)", "2040 (high)"]:
+            left = self.api.get_input_data(scenario, long_names=False)[changed_columns].values == ""
+            right = self.api.get_input_data(scenario, long_names=True)[changed_columns].values == ""
+            self.assertTrue(np.all(left == right))
