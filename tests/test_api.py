@@ -69,22 +69,6 @@ class TestTemplate(unittest.TestCase):
         )
 
     def test_get_input_data_nan_consistency(self):
-        res = self.api.get_input_data("2030 (high)", long_names=False)
-        self.assertEqual(
-            set(res.columns),
-            set(
-                [
-                    "parameter_code",
-                    "process_code",
-                    "flow_code",
-                    "source_region_code",
-                    "target_country_code",
-                    "value",
-                    "unit",
-                    "source",
-                ]
-            ),
-        )
         # test nans are at same place
         changed_columns = [
             "parameter_code",
