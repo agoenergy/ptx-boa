@@ -122,6 +122,7 @@ class PtxboaAPI:
                 scenario_data[column_name] = scenario_data[column_name].map(
                     mapping, na_action="ignore"
                 )
+            scenario_data = scenario_data.replace(np.nan, "")
 
         if user_data is not None:
             # TODO: modify values based on user_data
