@@ -31,7 +31,24 @@ def calculate_results_single(api: PtxboaAPI, settings):
 def calculate_results(
     api: PtxboaAPI, settings: dict, region_list: list = None
 ) -> pd.DataFrame:
-    """Calculate results for all source regions."""
+    """Calculate results for source regions and one selected target country.
+
+    Parameters
+    ----------
+    api : :class:`~ptxboa.api.PtxboaAPI`
+        an instance of the api class
+    settings : dict
+        settings from the streamlit app. An example can be obtained with the
+        return value from :func:`ptxboa_functions.create_sidebar`.
+    region_list : list or None
+        The regions for which the results are calculated. If None, all regions
+        available in the API will be used.
+
+    Returns
+    -------
+    pd.DataFrame
+        same format as for :meth:`~ptxboa.api.PtxboaAPI.calculate()`
+    """
     res_list = []
 
     if region_list is None:
