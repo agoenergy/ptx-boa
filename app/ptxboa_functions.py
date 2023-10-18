@@ -450,7 +450,7 @@ def content_market_scanning(
     st.dataframe(df_plot, use_container_width=True)
 
 
-def content_costs_by_region(res_costs: pd.DataFrame) -> None:
+def content_costs_by_region(res_costs: pd.DataFrame, settings: dict) -> None:
     """Create content for the "costs by region" sheet.
 
     Parameters
@@ -466,25 +466,33 @@ def content_costs_by_region(res_costs: pd.DataFrame) -> None:
           different supply countries. Data is represented as a bar chart and
             in tabular form. \n\n Data can be filterend and sorted."""
     )
-    # filter data:
-    df_res = res_costs.copy()
-    show_which_data = st.radio(
-        "Select regions to display:", ["All", "Ten cheapest", "Manual select"], index=0
-    )
-    if show_which_data == "Ten cheapest":
-        df_res = df_res.nsmallest(10, "Total")
-    elif show_which_data == "Manual select":
-        ind_select = st.multiselect(
-            "Select regions:", df_res.index.values, default=df_res.index.values
+    c1, c2 = st.columns([1, 5])
+    with c1:
+        # filter data:
+        df_res = res_costs.copy()
+        show_which_data = st.radio(
+            "Select regions to display:",
+            ["All", "Ten cheapest", "Manual select"],
+            index=0,
         )
-        df_res = df_res.loc[ind_select]
+        if show_which_data == "Ten cheapest":
+            df_res = df_res.nsmallest(10, "Total")
+        elif show_which_data == "Manual select":
+            ind_select = st.multiselect(
+                "Select regions:",
+                df_res.index.values,
+                default=[settings["sel_region"]],
+            )
+            df_res = df_res.loc[ind_select]
 
-    sort_ascending = st.toggle("Sort by total costs?", value=True)
-    if sort_ascending:
-        df_res = df_res.sort_values(["Total"], ascending=True)
-    create_bar_chart_costs(df_res)
+        sort_ascending = st.toggle("Sort by total costs?", value=True)
+        if sort_ascending:
+            df_res = df_res.sort_values(["Total"], ascending=True)
+    with c2:
+        # create graph:
+        create_bar_chart_costs(df_res)
 
-    st.subheader("Costs as data frame:")
+    st.subheader("Data:")
     st.dataframe(res_costs, use_container_width=True)
 
 
