@@ -45,3 +45,24 @@ class TestTemplate(unittest.TestCase):
             "ship_own_fuel": False,
         }
         self._test_api_call(settings)
+
+    def test_api_get_input_data(self):
+        # test wrong scenario
+        self.assertRaises(ValueError, self.api.get_input_data, scenario="invalid")
+        # test output structure of data
+        res = self.api.get_input_data("2030 (high)")
+        self.assertEqual(
+            set(res.columns),
+            set(
+                [
+                    "parameter_code",
+                    "process_code",
+                    "flow_code",
+                    "source_region_code",
+                    "target_country_code",
+                    "value",
+                    "unit",
+                    "source",
+                ]
+            ),
+        )
