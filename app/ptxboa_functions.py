@@ -492,6 +492,8 @@ def content_costs_by_region(
     with c1:
         # filter data:
         df_res = res_costs.copy()
+        # remove subregions:
+        df_res = remove_subregions(api, df_res, settings)
 
         # select filter:
         show_which_data = st.radio(
@@ -510,9 +512,6 @@ def content_costs_by_region(
                 default=[settings["sel_region"]],
             )
             df_res = df_res.loc[ind_select]
-
-        # remove subregions:
-        df_res = remove_subregions(api, df_res, settings)
 
         # sort:
         sort_ascending = st.toggle("Sort by total costs?", value=True)
