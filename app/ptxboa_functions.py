@@ -526,6 +526,24 @@ def content_costs_by_region(
     st.dataframe(df_res, use_container_width=True)
 
 
+def content_input_data(api: PtxboaAPI, settings: dict) -> None:
+    """Create content for the "input data" sheet.
+
+    Parameters
+    ----------
+    api : :class:`~ptxboa.api.PtxboaAPI`
+        an instance of the api class
+    settings : dict
+        settings from the streamlit app. An example can be obtained with the
+        return value from :func:`ptxboa_functions.create_sidebar`.
+
+    Output
+    ------
+    None
+    """
+    st.markdown("**Input data**")
+
+
 def create_infobox(context_data: dict, settings: dict):
     data = context_data["infobox"]
     st.markdown(f"**Key information on {settings['sel_country_name']}:**")
