@@ -408,17 +408,7 @@ def content_market_scanning(
     df_plot = df_plot.merge(distances, left_index=True, right_index=True)
 
     # do not show subregions:
-    region_list_without_subregions = (
-        api.get_dimension("region")
-        .loc[api.get_dimension("region")["subregion_code"].isna()]
-        .index.to_list()
-    )
-
-    # ensure that target country is not in list of regions:
-    if settings["sel_country_name"] in region_list_without_subregions:
-        region_list_without_subregions.remove(settings["sel_country_name"])
-
-    df_plot = df_plot.loc[region_list_without_subregions]
+    df_plot = remove_subregions(api, df_plot, settings)
 
     # create plot:
     [c1, c2] = st.columns([1, 5])
@@ -438,7 +428,7 @@ def content_market_scanning(
         )
         # Add text above markers
         fig.update_traces(
-            text=region_list_without_subregions,
+            text=df_plot.index,
             textposition="top center",
             mode="markers+text",
         )
@@ -450,7 +440,39 @@ def content_market_scanning(
     st.dataframe(df_plot, use_container_width=True)
 
 
-def content_costs_by_region(res_costs: pd.DataFrame, settings: dict) -> None:
+def remove_subregions(api: PtxboaAPI, df: pd.DataFrame, settings: dict):
+    """Remove subregions from a dataframe.
+
+    Parameters
+    ----------
+    api : :class:`~ptxboa.api.PtxboaAPI`
+        an instance of the api class
+
+    df : pandas DataFrame with list of regions as index.
+
+    Returns
+    -------
+    pandas DataFrame with subregions removed from index.
+    """
+    # do not show subregions:
+    region_list_without_subregions = (
+        api.get_dimension("region")
+        .loc[api.get_dimension("region")["subregion_code"].isna()]
+        .index.to_list()
+    )
+
+    # ensure that target country is not in list of regions:
+    if settings["sel_country_name"] in region_list_without_subregions:
+        region_list_without_subregions.remove(settings["sel_country_name"])
+
+    df = df.loc[region_list_without_subregions]
+
+    return df
+
+
+def content_costs_by_region(
+    api: PtxboaAPI, res_costs: pd.DataFrame, settings: dict
+) -> None:
     """Create content for the "costs by region" sheet.
 
     Parameters
@@ -470,11 +492,15 @@ def content_costs_by_region(res_costs: pd.DataFrame, settings: dict) -> None:
     with c1:
         # filter data:
         df_res = res_costs.copy()
+
+        # select filter:
         show_which_data = st.radio(
             "Select regions to display:",
             ["All", "Ten cheapest", "Manual select"],
             index=0,
         )
+
+        # apply filter:
         if show_which_data == "Ten cheapest":
             df_res = df_res.nsmallest(10, "Total")
         elif show_which_data == "Manual select":
@@ -485,6 +511,10 @@ def content_costs_by_region(res_costs: pd.DataFrame, settings: dict) -> None:
             )
             df_res = df_res.loc[ind_select]
 
+        # remove subregions:
+        df_res = remove_subregions(api, df_res, settings)
+
+        # sort:
         sort_ascending = st.toggle("Sort by total costs?", value=True)
         if sort_ascending:
             df_res = df_res.sort_values(["Total"], ascending=True)
@@ -492,8 +522,8 @@ def content_costs_by_region(res_costs: pd.DataFrame, settings: dict) -> None:
         # create graph:
         create_bar_chart_costs(df_res)
 
-    st.subheader("Data:")
-    st.dataframe(res_costs, use_container_width=True)
+    st.write("**Data:**")
+    st.dataframe(df_res, use_container_width=True)
 
 
 def create_infobox(context_data: dict, settings: dict):

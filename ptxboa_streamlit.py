@@ -60,7 +60,7 @@ with t_market_scanning:
     pf.content_market_scanning(api, res_costs, settings)
 
 with t_costs_by_region:
-    pf.content_costs_by_region(res_costs, settings)
+    pf.content_costs_by_region(api, res_costs, settings)
 
 with t_country_fact_sheets:
     pf.create_fact_sheet_demand_country(cd, settings["sel_country_name"])
