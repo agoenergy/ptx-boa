@@ -67,6 +67,7 @@ class PtxboaAPI:
     def get_input_data(
         self,
         scenario: str,
+        long_names: bool = True,
         user_data: dict = None,
     ) -> dict:
         """Return scenario data.
@@ -78,17 +79,56 @@ class PtxboaAPI:
         Parameters
         ----------
         scenario : str
-            name of data scenario
+            name of data scenario. Possible values:
+                - '2030 (low)'
+                - '2030 (medium)'
+                - '2030 (high)'
+                - '2040 (low)'
+                - '2040 (medium)'
+                - '2040 (high)'
+        long_names : bool, optional
+            if True, will replace the codes used internally with long names that are
+            used in the frontend.
         user_data : dict, optional
             user data that overrides scenario data
 
         Returns
         -------
-        : dict
-            mapping of parameter names to data frames
+        : pd.DataFrame
+            columns are 'parameter_code', 'process_code', 'flow_code',
+            'source_region_code', 'target_country_code', 'value', 'unit', 'source'
 
         """
-        return {}
+        if scenario not in self.data_scenarios.keys():
+            raise ValueError(
+                f"No valid data scenario '{scenario}'. Possible values "
+                f"are\n{list(self.data_scenarios.keys())}"
+            )
+
+        scenario_data = self.data_scenarios[scenario].copy()
+
+        if long_names:
+            for dim in ["parameter", "process", "flow", "region", "country"]:
+                mapping = pd.Series(
+                    self.dims[dim][f"{dim}_name"].to_list(),
+                    index=self.dims[dim][f"{dim}_code"],
+                )
+                if dim not in ["region", "country"]:
+                    column_name = f"{dim}_code"
+                elif dim == "region":
+                    column_name = "source_region_code"
+                elif dim == "country":
+                    column_name = "target_country_code"
+                scenario_data[column_name] = scenario_data[column_name].map(
+                    mapping, na_action="ignore"
+                )
+            scenario_data = scenario_data.replace(np.nan, "")
+
+        if user_data is not None:
+            # TODO: modify values based on user_data
+            pass
+
+        return scenario_data
 
     def _create_random_output_data(
         self,
