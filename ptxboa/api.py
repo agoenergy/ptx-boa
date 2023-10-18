@@ -78,17 +78,36 @@ class PtxboaAPI:
         Parameters
         ----------
         scenario : str
-            name of data scenario
+            name of data scenario. Possible values:
+                - '2030 (low)'
+                - '2030 (medium)'
+                - '2030 (high)'
+                - '2040 (low)'
+                - '2040 (medium)'
+                - '2040 (high)'
         user_data : dict, optional
             user data that overrides scenario data
 
         Returns
         -------
-        : dict
-            mapping of parameter names to data frames
+        : pd.DataFrame
+            columns are 'parameter_code', 'process_code', 'flow_code',
+            'source_region_code', 'target_country_code', 'value', 'unit', 'source'
 
         """
-        return {}
+        if scenario not in self.data_scenarios.keys():
+            raise ValueError(
+                f"No valid data scenario '{scenario}'. Possible values "
+                f"are\n{list(self.data_scenarios.keys())}"
+            )
+
+        scenario_data = self.data_scenarios[scenario].copy()
+
+        if user_data is not None:
+            # TODO: modify values based on user_data
+            pass
+
+        return scenario_data
 
     def _create_random_output_data(
         self,
