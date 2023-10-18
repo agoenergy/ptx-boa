@@ -543,6 +543,19 @@ def content_input_data(api: PtxboaAPI, settings: dict) -> None:
     """
     st.markdown("**Input data**")
 
+    # get input data:
+    input_data = api.get_input_data(settings["sel_scenario"])
+
+    parameter_code = ["CAPEX"]
+    process_code = ["Wind Onshore", "Wind Offshore", "PV tilted", "Wind-PV-Hybrid"]
+
+    ind1 = input_data["parameter_code"].isin(parameter_code)
+    ind2 = input_data["process_code"].isin(process_code)
+    df = input_data.loc[ind1 & ind2]
+
+    fig = px.box(df, x="process_code", y="value")
+    st.plotly_chart(fig)
+
 
 def create_infobox(context_data: dict, settings: dict):
     data = context_data["infobox"]
