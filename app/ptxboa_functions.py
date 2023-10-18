@@ -364,23 +364,90 @@ def content_dashboard(api, res_costs: dict, context_data: dict, settings: pd.Dat
     st.write(settings)
 
 
-def content_market_scanning(res_costs: dict, settings: pd.DataFrame):
+def content_market_scanning(
+    api: PtxboaAPI, res_costs: pd.DataFrame, settings: dict
+) -> None:
+    """Create content for the "market scanning" sheet.
+
+    Parameters
+    ----------
+    api : :class:`~ptxboa.api.PtxboaAPI`
+        an instance of the api class
+    settings : dict
+        settings from the streamlit app. An example can be obtained with the
+        return value from :func:`ptxboa_functions.create_sidebar`.
+    res_costs : pd.DataFrame
+        Results.
+    """
+    st.markdown("**Market Scanning**")
     st.markdown(
-        "Get an overview of competing PTX BOA supply countries"
-        "and potential demand countries"
+        """This is the markt scanning sheet. It will contain scatter plots
+        that allows users to compare regions by total cost, transportation
+        distance and H2 demand."""
     )
-    st.markdown(
-        "This sheet will help you to better evaluate your country's competitive "
-        "position as well as your options on the emerging global H2 market. "
-        "\n"
-        "\n"
-        "The left diagram shows you how your country ranks compared to other supply"
-        "countries that target the same demand country market."
-        "\n"
-        "The diagrams on the right show transport distances between your country "
-        "and potential PTX BOA demand countries "
-        "as well as their projected H2 demands"
+
+    # get input data:
+    input_data = api.get_input_data(settings["sel_scenario"])
+
+    # filter shipping and pipeline distances:
+    distances = input_data.loc[
+        (input_data["parameter_code"].isin(["shipping distance", "pipeline distance"]))
+        & (input_data["target_country_code"] == settings["sel_country_name"]),
+        ["source_region_code", "parameter_code", "value"],
+    ]
+    distances = distances.pivot_table(
+        index="source_region_code",
+        columns="parameter_code",
+        values="value",
+        aggfunc="sum",
     )
+
+    # merge costs and distances:
+    df_plot = pd.DataFrame()
+    df_plot["total costs"] = res_costs["Total"]
+    df_plot = df_plot.merge(distances, left_index=True, right_index=True)
+
+    # do not show subregions:
+    region_list_without_subregions = (
+        api.get_dimension("region")
+        .loc[api.get_dimension("region")["subregion_code"].isna()]
+        .index.to_list()
+    )
+
+    # ensure that target country is not in list of regions:
+    if settings["sel_country_name"] in region_list_without_subregions:
+        region_list_without_subregions.remove(settings["sel_country_name"])
+
+    df_plot = df_plot.loc[region_list_without_subregions]
+
+    # create plot:
+    [c1, c2] = st.columns([1, 5])
+    with c1:
+        # select which distance to show:
+        selected_distance = st.radio(
+            "Select parameter:",
+            ["shipping distance", "pipeline distance"],
+        )
+    with c2:
+        fig = px.scatter(
+            df_plot,
+            x=selected_distance,
+            y="total costs",
+            title="Costs and transportation distances",
+            height=600,
+        )
+        # Add text above markers
+        fig.update_traces(
+            text=region_list_without_subregions,
+            textposition="top center",
+            mode="markers+text",
+        )
+
+        st.plotly_chart(fig)
+
+    # show data in tabular form:
+    st.markdown("**Data:**")
+    st.dataframe(df_plot, use_container_width=True)
 
 
 def create_infobox(context_data: dict, settings: dict):

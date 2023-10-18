@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Mockup streamlit app."""
 import pandas as pd
-import plotly.express as px
 import streamlit as st
 from PIL import Image
 
@@ -58,30 +57,7 @@ with t_dashboard:
     pf.content_dashboard(api, res_costs, cd, settings)
 
 with t_market_scanning:
-    st.markdown("**Market Scanning**")
-    st.markdown(
-        """This is the markt scanning sheet. It will contain scatter plots
-        that allows users to compare regions by total cost, transportation
-        distance and H2 demand."""
-    )
-    [c1, c2] = st.columns(2)
-    with c1:
-        fig = px.scatter(
-            res_costs,
-            x="Transportation (Pipeline)",
-            y="Total",
-            title="Costs and transportation distances",
-            height=600,
-        )
-        # Add text above markers
-        fig.update_traces(
-            text=api.get_dimension("region")["region_code"],
-            textposition="top center",
-            mode="markers+text",
-        )
-
-        st.plotly_chart(fig)
-
+    pf.content_market_scanning(api, res_costs, settings)
 
 with t_costs_by_region:
     st.markdown("**Costs by region**")
