@@ -1,5 +1,5 @@
 default_stages: [commit]
-exclude: ^(data|tests|archive)/
+exclude: ^(data|archive)/
 
 repos:
   # ============== PRE-COMMIT HOOKS ===============
@@ -44,8 +44,7 @@ repos:
             flake8-comprehensions,
             flake8-docstrings,
             flake8-eradicate,
-            flake8-isort,
-            flake8-pytest-style,
+            flake8-isort            
           ]
         args:
           [

@@ -1,24 +1,18 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
+"""Unittests for ptxboa api module."""
+
 import unittest
+
 import numpy as np
 
 from ptxboa.api import PtxboaAPI
 
 
 class TestTemplate(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     @classmethod
     def setUpClass(cls):
+        """Set up code for class."""
         cls.api = PtxboaAPI()
-
-    @classmethod
-    def tearDownClass(cls):
-        pass
 
     def _test_api_call(self, settings):
         res = self.api.calculate(**settings)
@@ -27,13 +21,23 @@ class TestTemplate(unittest.TestCase):
             if k in ["ship_own_fuel"]:  # skip some
                 continue
             self.assertEqual(
-                set(res[k].unique()), set([v]), f"wrong data in dimension column: {k}"
+                set(res[k].unique()), {v}, f"wrong data in dimension column: {k}"
             )
         # test expected output columns
-        for k in ["values"]:
+        for k in [
+            "process_type",
+            "res_gen",
+            "process_subtype",
+            "secproc_water",
+            "country",
+            "transport",
+        ]:
             self.assertTrue(k in res.columns)
 
+        print(set(res.columns))
+
     def test_example_api_call(self):
+        """Test output structure of api.calculate()."""
         settings = {
             "region": "Argentina",
             "country": "China",
@@ -48,28 +52,27 @@ class TestTemplate(unittest.TestCase):
         self._test_api_call(settings)
 
     def test_api_get_input_data_output_format(self):
+        """Test output structure of api.get_input_data()."""
         # test wrong scenario
         self.assertRaises(ValueError, self.api.get_input_data, scenario="invalid")
         # test output structure of data
         res = self.api.get_input_data("2030 (high)", long_names=False)
         self.assertEqual(
             set(res.columns),
-            set(
-                [
-                    "parameter_code",
-                    "process_code",
-                    "flow_code",
-                    "source_region_code",
-                    "target_country_code",
-                    "value",
-                    "unit",
-                    "source",
-                ]
-            ),
+            {
+                "parameter_code",
+                "process_code",
+                "flow_code",
+                "source_region_code",
+                "target_country_code",
+                "value",
+                "unit",
+                "source",
+            },
         )
 
     def test_get_input_data_nan_consistency(self):
-        # test nans are at same place
+        """Test nans are at same place."""
         changed_columns = [
             "parameter_code",
             "process_code",
@@ -77,7 +80,24 @@ class TestTemplate(unittest.TestCase):
             "source_region_code",
             "target_country_code",
         ]
-        for scenario in ["2030 (low)", "2030 (medium)", "2030 (high)", "2040 (low)", "2040 (medium)", "2040 (high)"]:
-            left = self.api.get_input_data(scenario, long_names=False)[changed_columns].values == ""
-            right = self.api.get_input_data(scenario, long_names=True)[changed_columns].values == ""
+        for scenario in [
+            "2030 (low)",
+            "2030 (medium)",
+            "2030 (high)",
+            "2040 (low)",
+            "2040 (medium)",
+            "2040 (high)",
+        ]:
+            left = (
+                self.api.get_input_data(scenario, long_names=False)[
+                    changed_columns
+                ].values
+                == ""
+            )
+            right = (
+                self.api.get_input_data(scenario, long_names=True)[
+                    changed_columns
+                ].values
+                == ""
+            )
             self.assertTrue(np.all(left == right))
