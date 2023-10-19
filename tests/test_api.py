@@ -23,18 +23,14 @@ class TestTemplate(unittest.TestCase):
             self.assertEqual(
                 set(res[k].unique()), {v}, f"wrong data in dimension column: {k}"
             )
-        # test expected output columns
+        # test expected additional output columns
         for k in [
+            "values",
             "process_type",
-            "res_gen",
             "process_subtype",
-            "secproc_water",
-            "country",
-            "transport",
+            "cost_type",
         ]:
             self.assertTrue(k in res.columns)
-
-        print(set(res.columns))
 
     def test_example_api_call(self):
         """Test output structure of api.calculate()."""

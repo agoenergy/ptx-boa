@@ -10,6 +10,54 @@ from pandas.api.types import CategoricalDtype
 
 from .data import load_data
 
+COST_TYPES = ["CAPEX", "OPEX", "FLOW", "LC"]
+PROCESS_SUBTYPES_MAPPING = {
+    "Water": [
+        "ely_h2o",
+        "ely_fl_h2o",
+        "deriv_h2o",
+        "deriv_fl_h2o",
+        "deriv_h2o_fl_h2o",
+        "deriv_h2o_fl_el",
+        "ely_h2o_fl_el",
+    ],
+    "Electrolysis": ["ely", "ely_fl_el"],
+    "Electricity generation": ["res"],
+    "Transportation (Pipeline)": [
+        "tr_pre_ppl",
+        "tr_ppl",
+        "tr_pplx",
+        "tr_ppls",
+        "tr_pplr",
+        "tr_post_ppl_fl_el",
+        "tr_pre_ppl_fl_el",
+        "tr_post_ppl",
+    ],
+    "Transportation (Ship)": [
+        "tr_shp",
+        "tr_pre_shp",
+        "tr_post_shp",
+        "tr_post_shp_fl_el",
+        "tr_pre_shp_fl_el",
+        "tr_shp_fl_bfuel",
+    ],
+    "Carbon": ["deriv_fl_co2", "deriv_co2", "deriv_co2_fl_el"],
+    "Derivate production": ["deriv", "deriv_fl_el", "deriv_fl_n2"],
+    "Heat": [
+        "ely_h2o_fl_heat",
+        "deriv_h2o_fl_heat",
+        "deriv_co2_fl_heat",
+        "deriv_fl_heat",
+        "tr_post_ppl_fl_heat",
+        "tr_post_shp_fl_heat",
+    ],
+}
+
+# all types from mapping
+PROCESS_TYPES = list(PROCESS_SUBTYPES_MAPPING)
+# all subtypes from mapping
+PROCESS_SUBTYPES = list({t for tst in PROCESS_SUBTYPES_MAPPING.values() for t in tst})
+
 
 class PtxboaAPI:
     def __init__(self):
@@ -159,57 +207,15 @@ class PtxboaAPI:
         }
 
         # all process_subtypes are listed for each process_type
-        process_subtypes_mapping = {
-            "Water": [
-                "ely_h2o",
-                "ely_fl_h2o",
-                "deriv_h2o",
-                "deriv_fl_h2o",
-                "deriv_h2o_fl_h2o",
-                "deriv_h2o_fl_el",
-                "ely_h2o_fl_el",
-            ],
-            "Electrolysis": ["ely", "ely_fl_el"],
-            "Electricity generation": ["res"],
-            "Transportation (Pipeline)": [
-                "tr_pre_ppl",
-                "tr_ppl",
-                "tr_pplx",
-                "tr_ppls",
-                "tr_pplr",
-                "tr_post_ppl_fl_el",
-                "tr_pre_ppl_fl_el",
-                "tr_post_ppl",
-            ],
-            "Transportation (Ship)": [
-                "tr_shp",
-                "tr_pre_shp",
-                "tr_post_shp",
-                "tr_post_shp_fl_el",
-                "tr_pre_shp_fl_el",
-                "tr_shp_fl_bfuel",
-            ],
-            "Carbon": ["deriv_fl_co2", "deriv_co2", "deriv_co2_fl_el"],
-            "Derivate production": ["deriv", "deriv_fl_el", "deriv_fl_n2"],
-            "Heat": [
-                "ely_h2o_fl_heat",
-                "deriv_h2o_fl_heat",
-                "deriv_co2_fl_heat",
-                "deriv_fl_heat",
-                "tr_post_ppl_fl_heat",
-                "tr_post_shp_fl_heat",
-            ],
-        }
 
-        process_types = list(process_subtypes_mapping.keys())
+        process_types = list(PROCESS_SUBTYPES_MAPPING.keys())
         process_subtypes = [
-            value for values in process_subtypes_mapping.values() for value in values
+            value for values in PROCESS_SUBTYPES_MAPPING.values() for value in values
         ]
-        cost_types = ["CAPEX", "OPEX", "FLOW", "LC"]
 
         df = (
             pd.MultiIndex.from_product(
-                [process_subtypes, cost_types], names=["process_subtype", "cost_type"]
+                [process_subtypes, COST_TYPES], names=["process_subtype", "cost_type"]
             )
             .to_frame()
             .reset_index(drop=True)
@@ -219,14 +225,14 @@ class PtxboaAPI:
             CategoricalDtype(categories=process_subtypes)
         )
         df["cost_type"] = df["cost_type"].astype(
-            CategoricalDtype(categories=cost_types)
+            CategoricalDtype(categories=COST_TYPES)
         )
         df["process_type"] = (
             df["process_subtype"]
             .map(
                 {
                     value: key
-                    for key, values in process_subtypes_mapping.items()
+                    for key, values in PROCESS_SUBTYPES_MAPPING.items()
                     for value in values
                 }
             )
@@ -297,11 +303,13 @@ class PtxboaAPI:
 
         Returns
         -------
-        result : dict
-            keys are name of variables
+        result : DataFrame
+            columns are: most of the settings arguments of this function, and:
 
-
-        TODO: keys required in result dict
+            * `values`: numerical value (usually cost)
+            * `process_type`: one of PROCESS_TYPES
+            * `process_subtype`: one of PROCESS_SUBTYPES
+            * `cost_type`: one of COST_TYPES
 
         """
         return self._create_random_output_data(
