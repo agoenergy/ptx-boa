@@ -543,6 +543,55 @@ def content_deep_dive_countries(
     """
     st.markdown("**Deep-dive countries.**")
 
+    ddc = st.radio(
+        "Select country:", ["Argentina", "Morocco", "South Africa"], horizontal=True
+    )
+
+    # get input data:
+
+    input_data = api.get_input_data(settings["sel_scenario"])
+
+    # filter data:
+    # get list of subregions:
+    region_list = (
+        api.get_dimension("region")
+        .loc[api.get_dimension("region")["region_name"].str.startswith(ddc)]
+        .index.to_list()
+    )
+
+    list_data_types = ["full load hours", "total costs"]
+    data_selection = st.radio(
+        "Select data type",
+        list_data_types,
+        horizontal=True,
+        key="sel_data_ddc",
+    )
+    if data_selection == "full load hours":
+        ind_1 = input_data["source_region_code"].isin(region_list)
+        ind_2 = input_data["parameter_code"] == "full load hours"
+        ind_3 = input_data["process_code"].isin(
+            [
+                "Wind Onshore",
+                "Wind Offshore",
+                "PV tilted",
+                "Wind-PV-Hybrid",
+            ]
+        )
+        x = "process_code"
+        y = "value"
+
+        df = input_data.loc[ind_1 & ind_2 & ind_3]
+    if data_selection == "total costs":
+        df = res_costs.copy()
+        df = res_costs.loc[region_list].rename({"Total": data_selection}, axis=1)
+        df = df.rename_axis("source_region_code", axis=0)
+        x = None
+        y = data_selection
+        st.markdown("TODO: fix surplus countries in data table")
+
+    # create plot:
+    create_box_plot_with_data(df, x=x, y=y)
+
 
 def content_input_data(api: PtxboaAPI, settings: dict) -> None:
     """Create content for the "input data" sheet.
@@ -605,15 +654,20 @@ def content_input_data(api: PtxboaAPI, settings: dict) -> None:
         df = input_data.loc[ind1]
         x = "parameter_code"
 
+    # create plot:
+    create_box_plot_with_data(df, x)
+
+
+def create_box_plot_with_data(df, x, y="value"):
     c1, c2 = st.columns(2, gap="medium")
     with c1:
         st.markdown("**Figure:**")
-        fig = px.box(df, x=x, y="value")
+        fig = px.box(df, x=x, y=y)
         st.plotly_chart(fig, use_container_width=True)
     with c2:
         # show data as table:
         df_tab = df.pivot_table(
-            index="source_region_code", columns=x, values="value", aggfunc="sum"
+            index="source_region_code", columns=x, values=y, aggfunc="sum"
         )
         st.markdown("**Data:**")
         st.dataframe(df_tab, use_container_width=True)
