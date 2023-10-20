@@ -19,6 +19,7 @@ st.title("PtX Business Opportunity Analyzer Mockup")
     t_market_scanning,
     t_costs_by_region,
     t_input_data,
+    t_deep_dive_countries,
     t_country_fact_sheets,
     t_certification_schemes,
     t_sustainability,
@@ -30,6 +31,7 @@ st.title("PtX Business Opportunity Analyzer Mockup")
         "Market scanning",
         "Costs by region",
         "Input data",
+        "Deep-dive countries",
         "Country fact sheets",
         "Certification schemes",
         "Sustainability",
@@ -66,6 +68,9 @@ with t_costs_by_region:
 
 with t_input_data:
     pf.content_input_data(api, settings)
+
+with t_deep_dive_countries:
+    pf.content_deep_dive_countries(api, res_costs, settings)
 
 with t_country_fact_sheets:
     pf.create_fact_sheet_demand_country(cd, settings["sel_country_name"])

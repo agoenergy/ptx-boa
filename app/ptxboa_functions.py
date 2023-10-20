@@ -525,6 +525,25 @@ def content_costs_by_region(
     st.dataframe(df_res, use_container_width=True)
 
 
+def content_deep_dive_countries(
+    api: PtxboaAPI, res_costs: pd.DataFrame, settings: dict
+) -> None:
+    """Create content for the "costs by region" sheet.
+
+    Parameters
+    ----------
+    api : :class:`~ptxboa.api.PtxboaAPI`
+        an instance of the api class
+    res_costs : pd.DataFrame
+        Results.
+
+    Output
+    ------
+    None
+    """
+    st.markdown("**Deep-dive countries.**")
+
+
 def content_input_data(api: PtxboaAPI, settings: dict) -> None:
     """Create content for the "input data" sheet.
 
