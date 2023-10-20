@@ -545,55 +545,59 @@ def content_input_data(api: PtxboaAPI, settings: dict) -> None:
     # get input data:
     input_data = api.get_input_data(settings["sel_scenario"])
 
-    c1, c2 = st.columns([1, 5])
-
-    with c1:
-        # filter data:
-
-        region_list_without_subregions = (
-            api.get_dimension("region")
-            .loc[api.get_dimension("region")["subregion_code"].isna()]
-            .index.to_list()
-        )
-        input_data = input_data.loc[
-            input_data["source_region_code"].isin(region_list_without_subregions)
+    # filter data:
+    region_list_without_subregions = (
+        api.get_dimension("region")
+        .loc[api.get_dimension("region")["subregion_code"].isna()]
+        .index.to_list()
+    )
+    input_data = input_data.loc[
+        input_data["source_region_code"].isin(region_list_without_subregions)
+    ]
+    list_data_types = ["CAPEX", "full load hours", "WACC"]
+    data_selection = st.radio("Select data type", list_data_types, horizontal=True)
+    if data_selection == "CAPEX":
+        parameter_code = ["CAPEX"]
+        process_code = [
+            "Wind Onshore",
+            "Wind Offshore",
+            "PV tilted",
+            "Wind-PV-Hybrid",
         ]
-        list_data_types = ["CAPEX", "full load hours", "WACC"]
-        data_selection = st.radio("Select data type", list_data_types)
-        if data_selection == "CAPEX":
-            parameter_code = ["CAPEX"]
-            process_code = [
-                "Wind Onshore",
-                "Wind Offshore",
-                "PV tilted",
-                "Wind-PV-Hybrid",
-            ]
-            ind1 = input_data["parameter_code"].isin(parameter_code)
-            ind2 = input_data["process_code"].isin(process_code)
-            df = input_data.loc[ind1 & ind2]
-            x = "process_code"
-        if data_selection == "full load hours":
-            parameter_code = ["full load hours"]
-            process_code = [
-                "Wind Onshore",
-                "Wind Offshore",
-                "PV tilted",
-                "Wind-PV-Hybrid",
-            ]
-            ind1 = input_data["parameter_code"].isin(parameter_code)
-            ind2 = input_data["process_code"].isin(process_code)
-            df = input_data.loc[ind1 & ind2]
-            x = "process_code"
-        if data_selection == "WACC":
-            parameter_code = ["interest rate"]
-            ind1 = input_data["parameter_code"].isin(parameter_code)
-            df = input_data.loc[ind1]
-            x = "parameter_code"
-    with c2:
+        ind1 = input_data["parameter_code"].isin(parameter_code)
+        ind2 = input_data["process_code"].isin(process_code)
+        df = input_data.loc[ind1 & ind2]
+        x = "process_code"
+    if data_selection == "full load hours":
+        parameter_code = ["full load hours"]
+        process_code = [
+            "Wind Onshore",
+            "Wind Offshore",
+            "PV tilted",
+            "Wind-PV-Hybrid",
+        ]
+        ind1 = input_data["parameter_code"].isin(parameter_code)
+        ind2 = input_data["process_code"].isin(process_code)
+        df = input_data.loc[ind1 & ind2]
+        x = "process_code"
+    if data_selection == "WACC":
+        parameter_code = ["interest rate"]
+        ind1 = input_data["parameter_code"].isin(parameter_code)
+        df = input_data.loc[ind1]
+        x = "parameter_code"
+
+    c1, c2 = st.columns(2, gap="medium")
+    with c1:
+        st.markdown("**Figure:**")
         fig = px.box(df, x=x, y="value")
-        st.plotly_chart(fig)
-    st.write(df)
-    st.write(input_data)
+        st.plotly_chart(fig, use_container_width=True)
+    with c2:
+        # show data as table:
+        df_tab = df.pivot_table(
+            index="source_region_code", columns=x, values="value", aggfunc="sum"
+        )
+        st.markdown("**Data:**")
+        st.dataframe(df_tab, use_container_width=True)
 
 
 def create_infobox(context_data: dict, settings: dict):
