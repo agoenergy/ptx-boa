@@ -12,7 +12,7 @@ from ptxboa.api import PtxboaAPI
 pd.set_option("display.float_format", "{:.2f}".format)
 
 st.set_page_config(layout="wide")
-st.title("PtX Business Opportunity Analyzer Mockup")
+st.title("PtX Business Opportunity Analyzer :red[draft version, please do not quote!]")
 (
     t_dashboard,
     t_market_scanning,
