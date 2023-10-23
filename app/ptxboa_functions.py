@@ -13,16 +13,16 @@ from ptxboa.api import PtxboaAPI
 def calculate_results_single(api: PtxboaAPI, settings):
     """Calculate results for single country pair."""
     res = api.calculate(
-        scenario=settings["sel_scenario"],
-        secproc_co2=settings["sel_secproc_co2"],
-        secproc_water=settings["sel_secproc_water"],
-        chain=settings["sel_chain"],
-        res_gen=settings["sel_res_gen_name"],
-        region=settings["sel_region"],
-        country=settings["sel_country_name"],
-        transport=settings["sel_transport"],
-        ship_own_fuel=settings["sel_ship_own_fuel"],
-        output_unit=settings["selOutputUnit"],
+        scenario=settings["scenario"],
+        secproc_co2=settings["secproc_co2"],
+        secproc_water=settings["secproc_water"],
+        chain=settings["chain"],
+        res_gen=settings["res_gen"],
+        region=settings["region"],
+        country=settings["country"],
+        transport=settings["transport"],
+        ship_own_fuel=settings["ship_own_fuel"],
+        output_unit=settings["output_unit"],
     )
 
     return res
@@ -56,16 +56,16 @@ def calculate_results(
 
     for region in region_list:
         res_single = api.calculate(
-            scenario=settings["sel_scenario"],
-            secproc_co2=settings["sel_secproc_co2"],
-            secproc_water=settings["sel_secproc_water"],
-            chain=settings["sel_chain"],
-            res_gen=settings["sel_res_gen_name"],
+            scenario=settings["scenario"],
+            secproc_co2=settings["secproc_co2"],
+            secproc_water=settings["secproc_water"],
+            chain=settings["chain"],
+            res_gen=settings["res_gen"],
             region=region,
-            country=settings["sel_country_name"],
-            transport=settings["sel_transport"],
-            ship_own_fuel=settings["sel_ship_own_fuel"],
-            output_unit=settings["selOutputUnit"],
+            country=settings["country"],
+            transport=settings["transport"],
+            ship_own_fuel=settings["ship_own_fuel"],
+            output_unit=settings["output_unit"],
         )
         res_list.append(res_single)
     res = pd.concat(res_list)
@@ -91,7 +91,7 @@ def aggregate_costs(res_details: pd.DataFrame) -> pd.DataFrame:
 def create_sidebar(api: PtxboaAPI):
     st.sidebar.subheader("Main settings:")
     settings = {}
-    settings["sel_region"] = st.sidebar.selectbox(
+    settings["region"] = st.sidebar.selectbox(
         "Supply country / region:",
         # TODO: replace with complete list of regions once calculation time is reduced:
         ("Argentina", "Morocco", "South Africa"),
@@ -102,7 +102,7 @@ def create_sidebar(api: PtxboaAPI):
             "default settings will be used."
         ),
     )
-    settings["sel_country_name"] = st.sidebar.selectbox(
+    settings["country"] = st.sidebar.selectbox(
         "Demand country:",
         api.get_dimension("country").index,
         help=(
@@ -147,11 +147,11 @@ def create_sidebar(api: PtxboaAPI):
     else:
         use_reconversion = False
 
-    settings["sel_chain"] = f"{product} ({ely})"
+    settings["chain"] = f"{product} ({ely})"
     if use_reconversion:
-        settings["sel_chain"] = f"{settings['sel_chain']} + reconv. to H2"
+        settings["chain"] = f"{settings['chain']} + reconv. to H2"
 
-    settings["sel_res_gen_name"] = st.sidebar.selectbox(
+    settings["res_gen"] = st.sidebar.selectbox(
         "Renewable electricity source (for selected supply region):",
         api.get_dimension("res_gen").index,
         help=(
@@ -185,33 +185,33 @@ def create_sidebar(api: PtxboaAPI):
             ),
             horizontal=True,
         )
-    settings["sel_scenario"] = f"{data_year} ({cost_scenario})"
+    settings["scenario"] = f"{data_year} ({cost_scenario})"
 
     st.sidebar.subheader("Additional settings:")
-    settings["sel_secproc_co2"] = st.sidebar.radio(
+    settings["secproc_co2"] = st.sidebar.radio(
         "Carbon source:",
         api.get_dimension("secproc_co2").index,
         horizontal=True,
         help="Help text",
     )
-    settings["sel_secproc_water"] = st.sidebar.radio(
+    settings["secproc_water"] = st.sidebar.radio(
         "Water source:",
         api.get_dimension("secproc_water").index,
         horizontal=True,
         help="Help text",
     )
-    settings["sel_transport"] = st.sidebar.radio(
+    settings["transport"] = st.sidebar.radio(
         "Mode of transportation (for selected supply country):",
         api.get_dimension("transport").index,
         horizontal=True,
         help="Help text",
     )
-    if settings["sel_transport"] == "Ship":
-        settings["sel_ship_own_fuel"] = st.sidebar.toggle(
+    if settings["transport"] == "Ship":
+        settings["ship_own_fuel"] = st.sidebar.toggle(
             "For shipping option: Use the product as own fuel?",
             help="Help text",
         )
-    settings["selOutputUnit"] = st.sidebar.radio(
+    settings["output_unit"] = st.sidebar.radio(
         "Unit for delivered costs:",
         api.get_dimension("output_unit").index,
         horizontal=True,
@@ -226,8 +226,8 @@ def create_world_map(settings: dict, res_costs: pd.DataFrame):
         "Select cost component:", res_costs.columns, index=len(res_costs.columns) - 1
     )
     title_string = (
-        f"{parameter_to_show_on_map} cost of exporting {settings['sel_chain']} to "
-        f"{settings['sel_country_name']}"
+        f"{parameter_to_show_on_map} cost of exporting {settings['chain']} to "
+        f"{settings['country']}"
     )
     # Create a choropleth world map using Plotly Express
     fig = px.choropleth(
@@ -250,7 +250,7 @@ def create_world_map(settings: dict, res_costs: pd.DataFrame):
         oceancolor="lightblue",  # Set ocean color
     )
 
-    fig.update_layout(coloraxis_colorbar={"title": settings["selOutputUnit"]})
+    fig.update_layout(coloraxis_colorbar={"title": settings["output_unit"]})
 
     # Display the map using st.plotly_chart
     st.plotly_chart(fig, use_container_width=True)
@@ -287,7 +287,7 @@ def create_box_plot(res_costs: pd.DataFrame, settings: dict):
     fig = go.Figure()
 
     # Specify the row index of the data point you want to highlight
-    highlighted_row_index = settings["sel_region"]
+    highlighted_row_index = settings["region"]
 
     # Extract the value from the specified row and column
     highlighted_value = res_costs.at[highlighted_row_index, "Total"]
@@ -311,7 +311,7 @@ def create_box_plot(res_costs: pd.DataFrame, settings: dict):
     fig.update_layout(
         title="Cost distribution for all supply countries",
         xaxis={"title": ""},
-        yaxis={"title": settings["selOutputUnit"]},
+        yaxis={"title": settings["output_unit"]},
         height=500,
     )
 
@@ -320,7 +320,7 @@ def create_box_plot(res_costs: pd.DataFrame, settings: dict):
 
 def create_scatter_plot(df_res, settings: dict):
     df_res["Country"] = "Other countries"
-    df_res.at[settings["sel_region"], "Country"] = settings["sel_region"]
+    df_res.at[settings["region"], "Country"] = settings["region"]
 
     fig = px.scatter(
         df_res,
@@ -387,12 +387,12 @@ def content_market_scanning(
     )
 
     # get input data:
-    input_data = api.get_input_data(settings["sel_scenario"])
+    input_data = api.get_input_data(settings["scenario"])
 
     # filter shipping and pipeline distances:
     distances = input_data.loc[
         (input_data["parameter_code"].isin(["shipping distance", "pipeline distance"]))
-        & (input_data["target_country_code"] == settings["sel_country_name"]),
+        & (input_data["target_country_code"] == settings["country"]),
         ["source_region_code", "parameter_code", "value"],
     ]
     distances = distances.pivot_table(
@@ -462,8 +462,8 @@ def remove_subregions(api: PtxboaAPI, df: pd.DataFrame, settings: dict):
     )
 
     # ensure that target country is not in list of regions:
-    if settings["sel_country_name"] in region_list_without_subregions:
-        region_list_without_subregions.remove(settings["sel_country_name"])
+    if settings["country"] in region_list_without_subregions:
+        region_list_without_subregions.remove(settings["country"])
 
     df = df.loc[region_list_without_subregions]
 
@@ -509,7 +509,7 @@ def content_costs_by_region(
             ind_select = st.multiselect(
                 "Select regions:",
                 df_res.index.values,
-                default=[settings["sel_region"]],
+                default=[settings["region"]],
             )
             df_res = df_res.loc[ind_select]
 
@@ -551,7 +551,7 @@ def content_deep_dive_countries(
 
     # get input data:
 
-    input_data = api.get_input_data(settings["sel_scenario"])
+    input_data = api.get_input_data(settings["scenario"])
 
     # filter data:
     # get list of subregions:
@@ -613,7 +613,7 @@ def content_input_data(api: PtxboaAPI, settings: dict) -> None:
     st.markdown("**Input data**")
 
     # get input data:
-    input_data = api.get_input_data(settings["sel_scenario"])
+    input_data = api.get_input_data(settings["scenario"])
 
     # filter data:
     region_list_without_subregions = (
@@ -677,12 +677,12 @@ def create_box_plot_with_data(df, x, y="value"):
 
 def create_infobox(context_data: dict, settings: dict):
     data = context_data["infobox"]
-    st.markdown(f"**Key information on {settings['sel_country_name']}:**")
-    demand = data.at[settings["sel_country_name"], "Projected H2 demand [2030]"]
-    info1 = data.at[settings["sel_country_name"], "key_info_1"]
-    info2 = data.at[settings["sel_country_name"], "key_info_2"]
-    info3 = data.at[settings["sel_country_name"], "key_info_3"]
-    info4 = data.at[settings["sel_country_name"], "key_info_4"]
+    st.markdown(f"**Key information on {settings['country']}:**")
+    demand = data.at[settings["country"], "Projected H2 demand [2030]"]
+    info1 = data.at[settings["country"], "key_info_1"]
+    info2 = data.at[settings["country"], "key_info_2"]
+    info3 = data.at[settings["country"], "key_info_3"]
+    info4 = data.at[settings["country"], "key_info_4"]
     st.markdown(f"* Projected H2 demand in 2030: {demand}")
 
     def write_info(info):

@@ -73,9 +73,9 @@ with t_deep_dive_countries:
     pf.content_deep_dive_countries(api, res_costs, settings)
 
 with t_country_fact_sheets:
-    pf.create_fact_sheet_demand_country(cd, settings["sel_country_name"])
+    pf.create_fact_sheet_demand_country(cd, settings["country"])
     st.divider()
-    pf.create_fact_sheet_supply_country(cd, settings["sel_region"])
+    pf.create_fact_sheet_supply_country(cd, settings["region"])
 
 with t_certification_schemes:
     pf.create_fact_sheet_certification_schemes(cd)
