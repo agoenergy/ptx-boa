@@ -336,12 +336,18 @@ def create_scatter_plot(df_res, settings: dict):
 
 
 def content_dashboard(api, res_costs: dict, context_data: dict, settings: pd.DataFrame):
-    st.markdown("Welcome to our dashboard!")
-    st.markdown(
-        "Here you will find your central selection options, "
-        "a first look at your results and links to more detailed result sheets."
-    )
-    st.divider()
+    with st.expander("What is this?"):
+        st.markdown(
+            """
+This is the dashboard. It shows key results according to your settings:
+- a map and a box plot that show the spread and the
+regional distribution of total costs across supply regions
+- a split-up of costs by category for your chosen supply region
+- key information on your chosen demand country.
+
+Switch to other tabs to explore data and results in more detail!
+            """
+        )
 
     c_1, c_2 = st.columns([1, 2])
     with c_1:
@@ -379,12 +385,17 @@ def content_market_scanning(
     res_costs : pd.DataFrame
         Results.
     """
-    st.markdown("**Market Scanning**")
-    st.markdown(
-        """This is the markt scanning sheet. It will contain scatter plots
-        that allows users to compare regions by total cost, transportation
-        distance and H2 demand."""
-    )
+    with st.expander("What is this?"):
+        st.markdown(
+            """
+**Market scanning: Get an overview of competing PTX BOA supply countries
+ and potential demand countries.**
+
+This sheet helps you to better evaluate your country's competitive position
+ as well as your options on the emerging global H2 market.
+
+            """
+        )
 
     # get input data:
     input_data = api.get_input_data(settings["sel_scenario"])
@@ -482,12 +493,17 @@ def content_costs_by_region(
     res_costs : pd.DataFrame
         Results.
     """
-    st.markdown("**Costs by region**")
-    st.markdown(
-        """On this sheet, users can analyze total cost and cost components for
-          different supply countries. Data is represented as a bar chart and
-            in tabular form. \n\n Data can be filterend and sorted."""
-    )
+    with st.expander("What is this?"):
+        st.markdown(
+            """
+**Costs by region**
+
+On this sheet, users can analyze total cost and cost components for
+different supply countries. Data is represented as a bar chart and
+in tabular form. \n\n Data can be filterend and sorted.
+            """
+        )
+
     c1, c2 = st.columns([1, 5])
     with c1:
         # filter data:
@@ -541,7 +557,19 @@ def content_deep_dive_countries(
     ------
     None
     """
-    st.markdown("**Deep-dive countries.**")
+    with st.expander("What is this?"):
+        st.markdown(
+            """
+**Deep-dive countries: Data on country and regional level**
+
+For the three deep-dive countries (Argentina, Morocco and South Africa)
+this tab shows full load hours of renewable generation and total costs
+in regional details.
+
+The box plots show median, 1st and 3rd quartile as well as the total spread of values.
+They also show the data for your selected supply country or region for comparison.
+            """
+        )
 
     st.markdown("TODO: add country map")
 
@@ -610,7 +638,19 @@ def content_input_data(api: PtxboaAPI, settings: dict) -> None:
     ------
     None
     """
-    st.markdown("**Input data**")
+    with st.expander("What is this?"):
+        st.markdown(
+            """
+**Input data**
+
+This tab gives you an overview of model input data that is country-specific.
+This includes full load hours (FLH) and capital expenditures (CAPEX)
+of renewable generation technologies, weighted average cost of capital (WACC),
+as well as shipping and pipeline distances to the chosen demand country.
+The box plots show median, 1st and 3rd quartile as well as the total spread of values.
+They also show the data for your country for comparison.
+            """
+        )
 
     # get input data:
     input_data = api.get_input_data(settings["sel_scenario"])
@@ -721,7 +761,21 @@ def import_context_data():
 
 
 def create_fact_sheet_demand_country(context_data: dict, country_name: str):
-    """Display information on a chosen demand country."""
+    with st.expander("What is this?"):
+        st.markdown(
+            """
+**Country fact sheets**
+
+This sheet provides you with an overview of additional interformation relevant
+for the production of H2 and derivatives
+across all PTX BOA supply countries.
+
+We cover the following aspects: country-specific renewable energy technical potential
+(based on different data sources),
+LNG export and import infrastructure, CCS potentials, availability of a H2 strategy and
+wholesale electricity prices.
+            """
+        )
     df = context_data["demand_countries"]
     data = df.loc[df["country_name"] == country_name].iloc[0].to_dict()
 
@@ -809,7 +863,15 @@ def create_fact_sheet_supply_country(context_data: dict, country_name: str):
 
 
 def create_fact_sheet_certification_schemes(context_data: dict):
-    """Display information on a chosen certification scheme."""
+    with st.expander("What is this?"):
+        st.markdown(
+            """
+**Get supplementary information on H2-relevant certification frameworks **
+
+This sheet provides you with an overview of current governmental regulations
+and voluntary standards for H2 products.
+            """
+        )
     df = context_data["certification_schemes"]
     helptext = "Select the certification scheme you want to know more about."
     scheme_id = st.selectbox("Select scheme:", df["ID"], help=helptext)
@@ -850,7 +912,22 @@ def create_fact_sheet_certification_schemes(context_data: dict):
 
 
 def create_content_sustainability(context_data: dict):
-    """Display information on sustainability issues."""
+    with st.expander("What is this?"):
+        st.markdown(
+            """
+**Get supplementary information on PTX-relevant sustainability issues**
+
+Hydrogen is not sustainable by nature.
+And sustainability goes far beyond the CO2-footprint of a product.
+It also includes other environmental as well as socio-economic dimensions.
+
+This is why we provide you with a set of questions that will help you assess your plans
+for PTX production and export from a comprehensive sustainability perspective.
+The compliation is based on frameworks by the PtX Hub as well as the Oeko-Institute.
+Please note that this list does not claim to be exhaustive,
+but only serves for an orientation on the topic.
+            """
+        )
     df = context_data["sustainability"]
     st.image("static/sustainability.png")
     captiontext = (
@@ -896,7 +973,14 @@ def is_valid_url(url: str) -> bool:
 
 
 def create_content_literature(context_data: dict):
-    """Display list of references."""
+    with st.expander("What is this?"):
+        st.markdown(
+            """
+**List of references**
+
+This tab contains a list of references used in this app.
+            """
+        )
     df = context_data["literature"]
     markdown_text = ""
     for _ind, row in df.iterrows():
