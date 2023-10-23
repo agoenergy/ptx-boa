@@ -2,7 +2,6 @@
 """Mockup streamlit app."""
 import pandas as pd
 import streamlit as st
-from PIL import Image
 
 import app.ptxboa_functions as pf
 from ptxboa.api import PtxboaAPI
@@ -13,7 +12,7 @@ from ptxboa.api import PtxboaAPI
 pd.set_option("display.float_format", "{:.2f}".format)
 
 st.set_page_config(layout="wide")
-st.title("PtX Business Opportunity Analyzer Mockup")
+st.title("PtX Business Opportunity Analyzer :red[draft version, please do not quote!]")
 (
     t_dashboard,
     t_market_scanning,
@@ -87,10 +86,4 @@ with t_literature:
     pf.create_content_literature(cd)
 
 with t_disclaimer:
-    st.markdown("**Disclaimer**")
-    st.markdown(
-        """This is the disclaimer.
-        Images can be imported directly as image files."""
-    )
-    st.image(Image.open("static/disclaimer.png"))
-    st.image(Image.open("static/disclaimer_2.png"))
+    pf.content_disclaimer()
