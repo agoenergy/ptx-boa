@@ -947,10 +947,10 @@ Maybe it could be combined with the content of the "What is this?" expander abov
         data = df.loc[(df["dimension"] == dimension) & (df["type"] == question_type)]
 
     for topic in data["topic"].unique():
-        st.markdown(f"**{topic}:**")
-        data_select = data.loc[data["topic"] == topic]
-        for _ind, row in data_select.iterrows():
-            st.markdown(f"- {row['question']}")
+        with st.expander(f"**{topic}**"):
+            data_select = data.loc[data["topic"] == topic]
+            for _ind, row in data_select.iterrows():
+                st.markdown(f"- {row['question']}")
 
 
 def is_valid_url(url: str) -> bool:
