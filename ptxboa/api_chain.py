@@ -6,6 +6,7 @@ import pandas as pd
 
 class Chain:
     def __init__(self, get_parameter_value, process_codes, subprocesses):
+        # create process instances from strings
         self.processes = [
             GenericProcess.create_process(
                 code,
@@ -33,20 +34,22 @@ class Chain:
         value = input_value
         results = []
         for p in self.processes:
-            value, results_ = p(value)
-            results += results_
+            value, results_from_process = p(value)
+            results += results_from_process
 
         # convert results in Dataframe (maybe aggregate some?)
         results = pd.DataFrame(
             results, columns=["process_type", "process_subtype", "cost_type", "values"]
         )
 
-        # aggregate over all key columns
+        # TODO: maybe not required: aggregate over all key columns
+        # in case some processes create data with the same categories
         results = (
             results.groupby(["process_type", "process_subtype", "cost_type"])
             .sum()
             .reset_index()
         )
+
         # TODO: rescale results correctly (using `value`)
         return results
 
@@ -54,6 +57,7 @@ class Chain:
         return "->".join(str(p) for p in self.processes)
 
 
+# TODO: too complicated: just create a mapping of codes to classes
 class ProcessMeta(type):
     """Register all subclasses by process codes using metaclass."""
 
@@ -83,15 +87,15 @@ class ProcessMeta(type):
 
 
 class GenericProcess(metaclass=ProcessMeta):
-    codes = ()
-    flows = ()
-    parameters = ()
-    main_flow_in = None
-    main_flow_out = None
-    process_type = None
-    process_subtype = None
+    codes = ()  # Tuple[str]: process codes applicable for this class
+    flows = ()  # Tuple[str]: flows required bya process of this class
+    parameters = ()  # Tuple[str]: parameters required by this process
+    main_flow_in = None  # str
+    main_flow_out = None  # str
+    process_type = None  # str for output
+    process_subtype = None  # str for output
 
-    def __init__(self, code, get_parameter_value, subprocesses):
+    def __init__(self, code, get_parameter_value, secondary_processes):
         self.code = code
         self.flow_procs = {}
         self.param_values = {}
@@ -102,9 +106,9 @@ class GenericProcess(metaclass=ProcessMeta):
             )
 
         for flow in self.flows:
-            if flow in subprocesses:
+            if flow in secondary_processes:
                 self.flow_procs[flow] = ProcessSecondary.create_process(
-                    self, subprocesses[flow], get_parameter_value
+                    self, secondary_processes[flow], get_parameter_value
                 )
                 # TODO: check that flow matches
                 # assert self.flow_procs[flow].main_flow_out == flow # noqa
@@ -125,6 +129,13 @@ class GenericProcess(metaclass=ProcessMeta):
         Parameter
         ---------
         input_value: float
+
+        Returns
+        -------
+        : tuple[float, tuple]
+            (output_value, list of result tuples)
+
+
         """
         output_value = self._calculate_output_value(input_value)
 
@@ -132,8 +143,8 @@ class GenericProcess(metaclass=ProcessMeta):
         results = self._calculate_results(output_value)
 
         for fp in self.flow_procs.values():
-            _, results_ = fp(output_value)
-            results += results_
+            _, results_from_sec_processes = fp(output_value)
+            results += results_from_sec_processes
 
         return output_value, results
 
