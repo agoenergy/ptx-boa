@@ -680,6 +680,58 @@ They also show the data for your country for comparison.
     create_box_plot_with_data(df, x)
 
 
+def edit_input_data(api: PtxboaAPI, settings: dict) -> dict:
+    """Display input data and allow users to change it.
+
+    Parameters
+    ----------
+    api : :class:`~ptxboa.api.PtxboaAPI`
+        an instance of the api class
+    settings : dict
+        settings from the streamlit app. An example can be obtained with the
+        return value from :func:`ptxboa_functions.create_sidebar`.
+
+    Output
+    ------
+    dict
+        a dictionary with user-defined data.
+        it contains only the data points that deviate from the default data set.
+    """
+    user_data = {}
+    return user_data
+
+
+def content_edit_input_data(api: PtxboaAPI, settings: dict) -> dict:
+    """Create content for the "Edit input data" sheet.
+
+    Parameters
+    ----------
+    api : :class:`~ptxboa.api.PtxboaAPI`
+        an instance of the api class
+    settings : dict
+        settings from the streamlit app. An example can be obtained with the
+        return value from :func:`ptxboa_functions.create_sidebar`.
+
+    Output
+    ------
+    dict
+        a dictionary with user-defined data.
+        it contains only the data points that deviate from the default data set.
+    """
+    with st.expander("What is this?"):
+        st.markdown(
+            """
+**Edit input data**
+
+Here you can modify model input data.
+            """
+        )
+
+    st.markdown("**TODO**")
+    user_data = edit_input_data(api, settings)
+    st.write(user_data)
+
+
 def create_box_plot_with_data(df, x, y="value"):
     c1, c2 = st.columns(2, gap="medium")
     with c1:
