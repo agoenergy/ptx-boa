@@ -993,3 +993,16 @@ This tab contains a list of references used in this app.
         markdown_text = markdown_text + text
 
     st.markdown(markdown_text)
+
+
+def content_disclaimer():
+    with st.expander("What is this?"):
+        st.markdown(
+            """
+**Disclaimer**
+
+TODO: add explanatory text
+            """
+        )
+    st.image("static/disclaimer.png")
+    st.image("static/disclaimer_2.png")
