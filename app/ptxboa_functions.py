@@ -909,12 +909,26 @@ but only serves for an orientation on the topic.
             """
         )
     df = context_data["sustainability"]
-    st.image("static/sustainability.png")
-    captiontext = (
-        "Source: https://ptx-hub.org/wp-content/uploads/2022/05/"
-        "PtX-Hub-PtX.Sustainability-Dimensions-and-Concerns-Scoping-Paper.pdf"
-    )
-    st.caption(captiontext)
+
+    c1, c2 = st.columns([2, 1])
+    with c1:
+        st.image("static/sustainability.png")
+        captiontext = (
+            "Source: https://ptx-hub.org/wp-content/uploads/2022/05/"
+            "PtX-Hub-PtX.Sustainability-Dimensions-and-Concerns-Scoping-Paper.pdf"
+        )
+        st.caption(captiontext)
+    with c2:
+        st.markdown(
+            """
+**Dimensions of sustainability**
+
+This text should explain the diagram and how the content of this tab is structured.
+
+Maybe it could be combined with the content of the "What is this?" expander above.
+                    """
+        )
+    st.divider()
 
     c1, c2 = st.columns(2)
     with c1:
