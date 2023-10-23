@@ -12,18 +12,7 @@ from ptxboa.api import PtxboaAPI
 
 def calculate_results_single(api: PtxboaAPI, settings):
     """Calculate results for single country pair."""
-    res = api.calculate(
-        scenario=settings["scenario"],
-        secproc_co2=settings["secproc_co2"],
-        secproc_water=settings["secproc_water"],
-        chain=settings["chain"],
-        res_gen=settings["res_gen"],
-        region=settings["region"],
-        country=settings["country"],
-        transport=settings["transport"],
-        ship_own_fuel=settings["ship_own_fuel"],
-        output_unit=settings["output_unit"],
-    )
+    res = api.calculate(**settings)
 
     return res
 
@@ -55,18 +44,9 @@ def calculate_results(
         region_list = api.get_dimension("region")["region_name"]
 
     for region in region_list:
-        res_single = api.calculate(
-            scenario=settings["scenario"],
-            secproc_co2=settings["secproc_co2"],
-            secproc_water=settings["secproc_water"],
-            chain=settings["chain"],
-            res_gen=settings["res_gen"],
-            region=region,
-            country=settings["country"],
-            transport=settings["transport"],
-            ship_own_fuel=settings["ship_own_fuel"],
-            output_unit=settings["output_unit"],
-        )
+        settings2 = settings.copy()
+        settings2["region"] = region
+        res_single = api.calculate(**settings2)
         res_list.append(res_single)
     res = pd.concat(res_list)
     return res
