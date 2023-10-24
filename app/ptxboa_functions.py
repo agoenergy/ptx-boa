@@ -600,7 +600,7 @@ They also show the data for your selected supply country or region for compariso
         st.markdown("**Data:**")
         df = display_and_edit_data_table(
             input_data=input_data,
-            x=x,
+            columns=x,
             source_region_code=region_list,
             parameter_code=parameter_code,
             process_code=process_code,
@@ -692,7 +692,7 @@ They also show the data for your country for comparison.
         )
         df = display_and_edit_data_table(
             input_data=input_data,
-            x=x,
+            columns=x,
             source_region_code=region_list_without_subregions,
             parameter_code=parameter_code,
             process_code=process_code,
@@ -709,28 +709,25 @@ They also show the data for your country for comparison.
 
 def reset_user_changes():
     """Reset all user changes."""
-    if "user_changes" in st.session_state.keys():
-        del st.session_state["user_changes"]
+    if "user_changes_df" in st.session_state.keys():
+        del st.session_state["user_changes_df"]
 
 
 def display_user_changes():
     """Display input data changes made by user."""
-    st.write(st.session_state)
-    if "user_changes" in st.session_state.keys():
+    if "user_changes_df" in st.session_state.keys():
         st.write("**Input data has been modified:**")
-        st.button("Reset data", on_click=reset_user_changes())
-        if "user_changes" in st.session_state.keys():
-            st.write(st.session_state["user_changes"])
+        st.write(st.session_state["user_changes_df"])
 
 
 def display_and_edit_data_table(
     input_data: pd.DataFrame,
-    x: str,
     source_region_code: list,
     parameter_code: list,
     process_code: list,
     index: str = "source_region_code",
-    y: str = "value",
+    columns: str = "process_code",
+    values: str = "value",
     edit_data: bool = False,
 ) -> pd.DataFrame:
     """Display selected input data as 2D table, which can also be edited."""
@@ -738,7 +735,7 @@ def display_and_edit_data_table(
     ind2 = input_data["parameter_code"].isin(parameter_code)
     ind3 = input_data["process_code"].isin(process_code)
     df = input_data.loc[ind1 & ind2 & ind3]
-    df_tab = df.pivot_table(index=index, columns=x, values=y, aggfunc="sum")
+    df_tab = df.pivot_table(index=index, columns=columns, values=values, aggfunc="sum")
 
     if edit_data:
         disabled = [index]
@@ -757,9 +754,33 @@ def display_and_edit_data_table(
     # store changes in session_state:
     if edit_data:
         if len(st.session_state[key]["edited_rows"]) > 0:
+            # convert session state dict to dataframe:
+            # Create a list of dictionaries
+            data_dict = st.session_state[key]["edited_rows"]
+            data_list = []
+
+            for k, v in data_dict.items():
+                for c_name, value in v.items():
+                    data_list.append({index: k, columns: c_name, values: value})
+
+            # Convert the list to a DataFrame
+            res = pd.DataFrame(data_list)
+            res["parameter_code"] = parameter_code[0]
+
+            # Replace the 'id' values with the corresponding index elements from df_tab
+            res[index] = res[index].map(lambda x: df_tab.index[x])
+
             if "user_changes" not in st.session_state:
                 st.session_state["user_changes"] = {}
-            st.session_state["user_changes"][key] = st.session_state[key]["edited_rows"]
+            st.session_state["user_changes"][parameter_code[0]] = st.session_state[key][
+                "edited_rows"
+            ]
+            if "user_changes_df" not in st.session_state:
+                st.session_state["user_changes_df"] = pd.DataFrame()
+            st.session_state["user_changes_df"] = pd.concat(
+                [st.session_state["user_changes_df"], res]
+            ).drop_duplicates()
+
         del st.session_state[key]
 
     return df_tab
