@@ -600,7 +600,7 @@ They also show the data for your selected supply country or region for compariso
         st.markdown("TODO: fix surplus countries in data table")
 
     # create plot:
-    create_box_plot_with_data(df, x=x, y=y)
+    create_box_plot_with_data(df, x=x, y=y, data_type=data_selection)
 
 
 def content_input_data(api: PtxboaAPI, settings: dict) -> None:
@@ -677,10 +677,11 @@ They also show the data for your country for comparison.
         x = "parameter_code"
 
     # create plot:
-    create_box_plot_with_data(df, x)
+    user_changes = create_box_plot_with_data(df, x, data_selection)
+    st.write(user_changes)
 
 
-def create_box_plot_with_data(df, x, y="value"):
+def create_box_plot_with_data(df, x, data_type: str, y="value") -> dict:
     c1, c2 = st.columns(2, gap="medium")
     with c1:
         st.markdown("**Figure:**")
@@ -692,7 +693,17 @@ def create_box_plot_with_data(df, x, y="value"):
             index="source_region_code", columns=x, values=y, aggfunc="sum"
         )
         st.markdown("**Data:**")
-        st.dataframe(df_tab, use_container_width=True)
+        key = f"edit_input_data_{data_type}"
+        st.data_editor(
+            df_tab.reset_index(),
+            use_container_width=True,
+            key=key,
+            num_rows="fixed",
+            hide_index=True,
+            disabled=["source_region_code"],
+        )
+        user_changes = st.session_state[key]
+    return user_changes
 
 
 def create_infobox(context_data: dict, settings: dict):
