@@ -3,7 +3,6 @@
 
 import pprint
 from itertools import product
-from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -66,45 +65,6 @@ PARAMETER_DIMENSIONS = {
     },
 }
 
-ParameterCode = Literal[
-    "CALOR",
-    "CAPEX",
-    "CAP-T",
-    "CONV",
-    "DST-S-C",
-    "DST-S-D",
-    "DST-S-DP",
-    "EFF",
-    "FLH",
-    "LIFETIME",
-    "LOSS-T",
-    "OPEX-F",
-    "OPEX-T",
-    "RE-POT",
-    "SEASHARE",
-    "SPECCOST",
-    "WACC",
-]
-ScenarioCode = Literal[
-    "2030 (low)",
-    "2030 (medium)",
-    "2030 (high)",
-    "2040 (low)",
-    "2040 (medium)",
-    "2040 (high)",
-]
-DimensionCode = Literal[
-    "scenario",
-    "secproc_co2",
-    "secproc_water",
-    "chain",
-    "res_gen",
-    "region",
-    "country",
-    "transport",
-    "output_unit",
-]
-
 
 class PtxData:
     def __init__(self):
@@ -125,7 +85,7 @@ class PtxData:
 
     def get_input_data(
         self,
-        scenario: ScenarioCode,
+        scenario: str,
         long_names: bool = True,
         user_data: dict = None,
     ) -> pd.DataFrame:
@@ -148,8 +108,9 @@ class PtxData:
         long_names : bool, optional
             if True, will replace the codes used internally with long names that are
             used in the frontend.
-        user_data : dict, optional
-            user data that overrides scenario data
+        user_data : pd.DataFrame | None, optional
+            user data that overrides scenario data. DataFrame needs the columns
+            ["source_region_code", "process_code", "parameter_code",  "value"]
 
         Returns
         -------
@@ -158,177 +119,92 @@ class PtxData:
             'source_region_code', 'target_country_code', 'value', 'unit', 'source'
 
         """
-        self._check_valid_scenario(scenario)
+        self.check_valid_scenario_id(scenario)
 
         scenario_data = self.scenario_data[scenario].copy()
 
-        if long_names:
-            for dim in ["parameter", "process", "flow", "region", "country"]:
-                mapping = pd.Series(
-                    self.dimensions[dim][f"{dim}_name"].to_list(),
-                    index=self.dimensions[dim][f"{dim}_code"],
-                )
-                if dim not in ["region", "country"]:
-                    column_name = f"{dim}_code"
-                elif dim == "region":
-                    column_name = "source_region_code"
-                elif dim == "country":
-                    column_name = "target_country_code"
-                scenario_data[column_name] = scenario_data[column_name].map(
-                    mapping, na_action="ignore"
-                )
-            scenario_data = scenario_data.replace(np.nan, "")
-
         if user_data is not None:
-            # TODO: modify values based on user_data
-            pass
+            scenario_data = self._update_scenario_data_with_user_data(
+                scenario_data, user_data
+            )
+
+        if long_names:
+            scenario_data = self._map_names_and_codes(
+                scenario_data, mapping_direction="code_to_name"
+            )
 
         return scenario_data
 
-    def get_parameter_value(
-        self,
-        scenario: ScenarioCode,
-        parameter_code: ParameterCode,
-        process_code: str = None,
-        flow_code: str = None,
-        source_region_code: str = None,
-        target_country_code: str = None,
-        process_code_res: str = None,
-        process_code_ely: str = None,
-        process_code_deriv: str = None,
-    ) -> float:
+    def _map_names_and_codes(self, scenario_data, mapping_direction):
+        if mapping_direction not in ["code_to_name", "name_to_code"]:
+            raise ValueError(
+                "mapping direction needs to be 'name_to_code' or 'code_to_name'"
+            )
+        in_type = mapping_direction.split("_")[0]
+        out_type = mapping_direction.split("_")[-1]
+
+        for dim in ["parameter", "process", "flow", "region", "country"]:
+            mapping = pd.Series(
+                self.dimensions[dim][f"{dim}_{out_type}"].to_list(),
+                index=self.dimensions[dim][f"{dim}_{in_type}"],
+            )
+            if dim not in ["region", "country"]:
+                column_name = f"{dim}_code"
+            elif dim == "region":
+                column_name = "source_region_code"
+            elif dim == "country":
+                column_name = "target_country_code"
+            scenario_data[column_name] = scenario_data[column_name].map(
+                mapping, na_action="ignore"
+            )
+        scenario_data = scenario_data.replace(np.nan, "")
+        return scenario_data
+
+    def _update_scenario_data_with_user_data(
+        self, scenario_data: pd.DataFrame, user_data: pd.DataFrame
+    ):
         """
-        Get a parameter value for a process.
+        Update scenario_data with custom user_data.
 
         Parameters
         ----------
-        scenario : str
-            data scenario string
-        parameter_code : ParameterCode
-            parameter category. Must be one of:
-                - 'CALOR',
-                - 'CAPEX'
-                - 'CAP-T'
-                - 'CONV'
-                - 'DST-S-C'
-                - 'DST-S-D'
-                - 'DST-S-DP'
-                - 'EFF'
-                - 'FLH'
-                - 'LIFETIME'
-                - 'LOSS-T'
-                - 'OPEX-F'
-                - 'OPEX-T'
-                - 'RE-POT'
-                - 'SEASHARE'
-                - 'SPECCOST'
-                - 'WACC'
-        process_code : str, optional
-            Code for the process, by default None. Must be set for the following
-            parameters:
-                - CAPEX
-                - CONV
-                - EFF
-                - FLH
-                - LIFETIME
-                - LOSS-T
-                - OPEX-F
-                - OPEX-T
-                - RE-POT
-                - WACC
-        flow_code : str, optional
-            Code for the flow, by default None. Must be set for the following
-            parameters:
-                - CALOR
-                - CONV
-                - SPECCOST
-        source_region_code : str, optional
-            Code for the source region, by default None. Must be set for the
-            following parameters:
-                - CAPEX
-                - CAP-T
-                - DST-S-C
-                - DST-S-D
-                - DST-S-DP
-                - FLH
-                - OPEX-F
-                - RE-POT
-                - SEASHARE
-                - SPECCOST
-                - WACC
-        target_country_code : str, optional
-            Code for the target country, by default None. Must be set for the
-            following parameters:
-                - CAP-T
-                - DST-S-D
-                - DST-S-DP
-                - SEASHARE
-        process_code_res : str, optional
-            Code for the process_code_res, by default None. Must be set for the
-            following parameters:
-                - FLH
-        process_code_ely : str, optional
-            Code for the process_code_ely, by default None. Must be set for the
-            following parameters:
-                - FLH
-        process_code_deriv : str, optional
-            Code for the process_code_deriv, by default None. Must be set for the
-            following parameters:
-                - FLH
-
-        Returns
-        -------
-        float
-            the parameter value
-
-        Raises
-        ------
-        ValueError
-            if multiple values are found for a parameter combination.
-        ValueError
-            if no value is found for a parameter combination.
+        scenario_data : pd.DataFrame
+            the (unmodfied) scenario data
+        user_data : pd.DataFrame
+            user data containing only rows of scenario_data that have been modified.
+            The ids in the received user data from frontend are long names and need to
+            be mapped to codes first.
         """
-        self._check_required_kwargs(
-            parameter_code,
-            process_code=process_code,
-            flow_code=flow_code,
-            source_region_code=source_region_code,
-            target_country_code=target_country_code,
-            process_code_res=process_code_res,
-            process_code_ely=process_code_ely,
-            process_code_deriv=process_code_deriv,
+        user_data = user_data.copy().fillna("")
+        scenario_data = scenario_data.copy()
+        # user data from frontend only has columns
+        # "source_region_code", "process_code", "value" and "parameter_code"
+        for missing_dim in ["flow_code", "target_country_code"]:
+            user_data[missing_dim] = ""
+
+        # user data comes with long names from frontend
+        user_data = self._map_names_and_codes(
+            user_data, mapping_direction="name_to_code"
         )
-        self._check_valid_scenario(scenario)
 
-        if parameter_code == "FLH":
-            df = self.flh
+        # we only can user DataFrame.update with matching index values
+        # but we do not want tu use "key"
+        for row in user_data.itertuples():
             selector = (
-                (df["region"] == source_region_code)
-                & (df["process_res"] == process_code_res)
-                & (df["process_ely"] == process_code_ely)
-                & (df["process_deriv"] == process_code_deriv)
-                & (df["process_flh"] == process_code)
+                (scenario_data["parameter_code"] == row.parameter_code)
+                & (scenario_data["process_code"] == row.process_code)
+                & (scenario_data["flow_code"] == row.flow_code)
+                & (scenario_data["source_region_code"] == row.source_region_code)
+                & (scenario_data["target_country_code"] == row.target_country_code)
             )
-        else:
-            df = self.scenario_data[scenario]
-            selector = df["parameter_code"] == parameter_code
-            if process_code is not None:
-                selector &= df["process_code"] == process_code
-            if flow_code is not None:
-                selector &= df["flow_code"] == flow_code
-            if source_region_code is not None:
-                selector &= df["source_region_code"] == source_region_code
-            if target_country_code is not None:
-                selector &= df["target_country_code"] == target_country_code
+            if len(scenario_data.loc[selector]) == 0:
+                raise ValueError(
+                    f"could not replace user_parameterin scenario_data\n{row}"
+                )
+            scenario_data.loc[selector, "value"] = row.value
+        return scenario_data
 
-        row = df[selector]
-        if len(row) == 0:
-            raise ValueError("did not find a parameter value")
-        if len(row) > 1:
-            raise ValueError("found more than one parameter value")
-        return row.squeeze().at["value"]
-
-    def get_dimension(self, dim: DimensionCode) -> pd.DataFrame:
+    def get_dimension(self, dim: str) -> pd.DataFrame:
         """Return a dimension element to populate app dropdowns.
 
         Parameters
@@ -466,40 +342,7 @@ class PtxData:
             [{"unit_name": "USD/MWh"}, {"unit_name": "USD/t"}]
         ).set_index("unit_name", drop=False)
 
-    def _check_required_kwargs(
-        self,
-        parameter_code: str,
-        **kwargs,
-    ):
-        """
-        Check parameters passed to `self.get_parameter_value()`.
-
-        Check that required parameter dimensions are not None and that
-        unused dimensions are None.
-
-        Parameters
-        ----------
-        parameter_code : str
-        kwargs :
-            keyword arguments passed to `self.get_parameter_value()`
-        """
-        required_param_names = PARAMETER_DIMENSIONS[parameter_code]["required"]
-        for p in required_param_names:
-            required_value = kwargs.pop(p)
-            if required_value is None:
-                raise ValueError(
-                    f"'{parameter_code}': the following parameters must be "
-                    f"defined\n{required_param_names}"
-                )
-
-        # check that remaining unused kwargs are not defined
-        if not all(value is None for value in kwargs.values()):
-            raise ValueError(
-                f"'{parameter_code}': irrelevant parameters"
-                f" must be None but are currently\n{pprint.pformat(kwargs)}"
-            )
-
-    def _check_valid_scenario(self, scenario):
+    def check_valid_scenario_id(self, scenario):
         """Check if a scenario key is valid."""
         if scenario not in self.scenario_data.keys():
             raise ValueError(
@@ -516,20 +359,52 @@ class DataHandler:
     combine it with set user data.
     """
 
-    def __init__(self, scenario, user_data):
-        pass
+    def __init__(
+        self, ptxdata: PtxData, scenario: str, user_data: None | pd.DataFrame = None
+    ):
+        ptxdata.check_valid_scenario_id(scenario)
+        self.scenario = scenario
+        self.user_data = user_data
+        self.scenario_data = ptxdata.get_input_data(
+            scenario, long_names=False, user_data=user_data
+        )
+        self.ptxdata = ptxdata
+
+    def get_input_data(self, long_names):
+        """Return scenario data.
+
+        If user data is defined, specified values will be replaced with those.
+
+        Parameters
+        ----------
+        long_names : bool, optional
+            if True, will replace the codes used internally with long names that are
+            used in the frontend.
+
+        Returns
+        -------
+        : pd.DataFrame
+            columns are 'parameter_code', 'process_code', 'flow_code',
+            'source_region_code', 'target_country_code', 'value', 'unit', 'source'
+
+        """
+        return self.ptxdata.get_input_data(
+            scenario=self.scenario,
+            long_names=long_names,
+            user_data=self.user_data,
+        )
 
     def get_parameter_value(
         self,
-        parameter_code,
-        process_code=None,
-        flow_code=None,
-        source_region_code=None,
-        target_country_code=None,
-        process_code_res=None,
-        process_code_ely=None,
-        process_code_deriv=None,
-    ):
+        parameter_code: str,
+        process_code: str = None,
+        flow_code: str = None,
+        source_region_code: str = None,
+        target_country_code: str = None,
+        process_code_res: str = None,
+        process_code_ely: str = None,
+        process_code_deriv: str = None,
+    ) -> float:
         """
         Get a parameter value for a process.
 
@@ -613,5 +488,83 @@ class DataHandler:
         -------
         float
             the parameter value
+
+        Raises
+        ------
+        ValueError
+            if multiple values are found for a parameter combination.
+        ValueError
+            if no value is found for a parameter combination.
         """
-        pass
+        self._check_required_parameter_value_kwargs(
+            parameter_code,
+            process_code=process_code,
+            flow_code=flow_code,
+            source_region_code=source_region_code,
+            target_country_code=target_country_code,
+            process_code_res=process_code_res,
+            process_code_ely=process_code_ely,
+            process_code_deriv=process_code_deriv,
+        )
+
+        if parameter_code == "FLH":
+            # FLH not changed by user_data
+            df = self.ptxdata.flh
+            selector = (
+                (df["region"] == source_region_code)
+                & (df["process_res"] == process_code_res)
+                & (df["process_ely"] == process_code_ely)
+                & (df["process_deriv"] == process_code_deriv)
+                & (df["process_flh"] == process_code)
+            )
+        else:
+            df = self.scenario_data
+            selector = df["parameter_code"] == parameter_code
+            if process_code is not None:
+                selector &= df["process_code"] == process_code
+            if flow_code is not None:
+                selector &= df["flow_code"] == flow_code
+            if source_region_code is not None:
+                selector &= df["source_region_code"] == source_region_code
+            if target_country_code is not None:
+                selector &= df["target_country_code"] == target_country_code
+
+        row = df[selector]
+        if len(row) == 0:
+            raise ValueError("did not find a parameter value")
+        if len(row) > 1:
+            raise ValueError("found more than one parameter value")
+        return row.squeeze().at["value"]
+
+    def _check_required_parameter_value_kwargs(
+        self,
+        parameter_code: str,
+        **kwargs,
+    ):
+        """
+        Check parameters passed to `self.get_parameter_value()`.
+
+        Check that required parameter dimensions are not None and that
+        unused dimensions are None.
+
+        Parameters
+        ----------
+        parameter_code : str
+        kwargs :
+            keyword arguments passed to `self.get_parameter_value()`
+        """
+        required_param_names = PARAMETER_DIMENSIONS[parameter_code]["required"]
+        for p in required_param_names:
+            required_value = kwargs.pop(p)
+            if required_value is None:
+                raise ValueError(
+                    f"'{parameter_code}': the following parameters must be "
+                    f"defined\n{required_param_names}"
+                )
+
+        # check that remaining unused kwargs are not defined
+        if not all(value is None for value in kwargs.values()):
+            raise ValueError(
+                f"'{parameter_code}': irrelevant parameters"
+                f" must be None but are currently\n{pprint.pformat(kwargs)}"
+            )

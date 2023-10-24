@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import CategoricalDtype
 
-from .api_data import PtxData
+from .api_data import DataHandler, PtxData
 
 COST_TYPES = ["CAPEX", "OPEX", "FLOW", "LC"]
 PROCESS_SUBTYPES_MAPPING = {
@@ -110,8 +110,10 @@ class PtxboaAPI:
         long_names : bool, optional
             if True, will replace the codes used internally with long names that are
             used in the frontend.
-        user_data : dict, optional
+        user_data : pd.DataFrame | None, optional
             user data that overrides scenario data
+            contains only rows of scenario_data that have been modified.
+            ids are expected to come as long names
 
         Returns
         -------
@@ -120,7 +122,8 @@ class PtxboaAPI:
             'source_region_code', 'target_country_code', 'value', 'unit', 'source'
 
         """
-        return self.data.get_input_data(scenario, long_names, user_data)
+        handler = DataHandler(self.data, scenario, user_data)
+        return handler.get_input_data(long_names)
 
     def _create_random_output_data(
         self,
@@ -241,8 +244,10 @@ class PtxboaAPI:
             `True` if ship uses product as fuel
         output_unit : str, optional
             output unit
-        user_data: dict
+        user_data: pd.DataFrame
             user data that overrides scenario data
+            contains only rows of scenario_data that have been modified.
+            ids are expected to come as long names
 
 
         Returns
@@ -256,6 +261,9 @@ class PtxboaAPI:
             * `cost_type`: one of COST_TYPES
 
         """
+        data_handler = DataHandler(self.data, scenario, user_data)
+        data_handler.get_parameter_value
+
         return self._create_random_output_data(
             scenario,
             secproc_co2,
