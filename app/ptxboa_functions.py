@@ -695,17 +695,15 @@ They also show the data for your country for comparison.
     with c2:
         # show data:
         st.markdown("**Data:**")
-        changed_data = display_and_edit_data_table(df, x, data_selection)
+        display_and_edit_data_table(df, x, data_selection)
     with c1:
         # create plot:
         st.markdown("**Figure:**")
-        fig = px.box(changed_data)
+        fig = px.box(df, x=x, y="value")
         st.plotly_chart(fig, use_container_width=True)
 
-    key = f"edit_input_data_{data_selection}"
-    user_changes = st.session_state[key]
     st.write("**Data changed by user:**")
-    st.write(user_changes)
+    st.write(st.session_state["user_changes"])
     st.write("**Session state:**")
     st.write(st.session_state)
 
@@ -725,6 +723,11 @@ def display_and_edit_data_table(df: pd.DataFrame, x, data_type: str, y="value"):
         hide_index=True,
         disabled=["source_region_code"],
     )
+
+    # store changes in session_state:
+    if "user_changes" not in st.session_state:
+        st.session_state["user_changes"] = {}
+    st.session_state["user_changes"][key] = st.session_state[key]["edited_rows"]
 
 
 def create_infobox(context_data: dict, settings: dict):
