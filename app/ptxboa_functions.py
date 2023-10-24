@@ -569,7 +569,8 @@ They also show the data for your selected supply country or region for compariso
         .index.to_list()
     )
 
-    list_data_types = ["full load hours", "total costs"]
+    # TODO: implement display of total costs
+    list_data_types = ["full load hours"]
     data_selection = st.radio(
         "Select data type",
         list_data_types,
@@ -577,39 +578,37 @@ They also show the data for your selected supply country or region for compariso
         key="sel_data_ddc",
     )
     if data_selection == "full load hours":
-        ind_1 = input_data["source_region_code"].isin(region_list)
-        ind_2 = input_data["parameter_code"] == "full load hours"
-        ind_3 = input_data["process_code"].isin(
-            [
-                "Wind Onshore",
-                "Wind Offshore",
-                "PV tilted",
-                "Wind-PV-Hybrid",
-            ]
-        )
+        parameter_code = ["full load hours"]
+        process_code = [
+            "Wind Onshore",
+            "Wind Offshore",
+            "PV tilted",
+            "Wind-PV-Hybrid",
+        ]
         x = "process_code"
-        y = "value"
 
-        df = input_data.loc[ind_1 & ind_2 & ind_3]
     if data_selection == "total costs":
         df = res_costs.copy()
         df = res_costs.loc[region_list].rename({"Total": data_selection}, axis=1)
         df = df.rename_axis("source_region_code", axis=0)
         x = None
-        y = data_selection
         st.markdown("TODO: fix surplus countries in data table")
 
     c1, c2 = st.columns(2, gap="medium")
     with c2:
         # show data:
         st.markdown("**Data:**")
-        user_changes = display_and_edit_data_table(
-            df, x, f"{data_selection}_{ddc}", y=y
+        df = display_and_edit_data_table(
+            input_data=input_data,
+            x=x,
+            source_region_code=region_list,
+            parameter_code=parameter_code,
+            process_code=process_code,
         )
     with c1:
         # create plot:
         st.markdown("**Figure:**")
-        fig = px.box(df, x=x, y=y)
+        fig = px.box(df)
         st.plotly_chart(fig, use_container_width=True)
 
     key = f"edit_input_data_{data_selection}_{ddc}"
@@ -659,7 +658,8 @@ They also show the data for your country for comparison.
     input_data = input_data.loc[
         input_data["source_region_code"].isin(region_list_without_subregions)
     ]
-    list_data_types = ["CAPEX", "full load hours", "WACC"]
+
+    list_data_types = ["CAPEX", "full load hours", "interest rate"]
     data_selection = st.radio("Select data type", list_data_types, horizontal=True)
     if data_selection == "CAPEX":
         parameter_code = ["CAPEX"]
@@ -669,9 +669,6 @@ They also show the data for your country for comparison.
             "PV tilted",
             "Wind-PV-Hybrid",
         ]
-        ind1 = input_data["parameter_code"].isin(parameter_code)
-        ind2 = input_data["process_code"].isin(process_code)
-        df = input_data.loc[ind1 & ind2]
         x = "process_code"
     if data_selection == "full load hours":
         parameter_code = ["full load hours"]
@@ -681,25 +678,27 @@ They also show the data for your country for comparison.
             "PV tilted",
             "Wind-PV-Hybrid",
         ]
-        ind1 = input_data["parameter_code"].isin(parameter_code)
-        ind2 = input_data["process_code"].isin(process_code)
-        df = input_data.loc[ind1 & ind2]
         x = "process_code"
-    if data_selection == "WACC":
+    if data_selection == "interest rate":
         parameter_code = ["interest rate"]
-        ind1 = input_data["parameter_code"].isin(parameter_code)
-        df = input_data.loc[ind1]
+        process_code = [""]
         x = "parameter_code"
 
     c1, c2 = st.columns(2, gap="medium")
     with c2:
         # show data:
         st.markdown("**Data:**")
-        display_and_edit_data_table(df, x, data_selection)
+        df = display_and_edit_data_table(
+            input_data=input_data,
+            x=x,
+            source_region_code=region_list_without_subregions,
+            parameter_code=parameter_code,
+            process_code=process_code,
+        )
     with c1:
         # create plot:
         st.markdown("**Figure:**")
-        fig = px.box(df, x=x, y="value")
+        fig = px.box(df)
         st.plotly_chart(fig, use_container_width=True)
 
     st.write("**Data changed by user:**")
@@ -708,26 +707,38 @@ They also show the data for your country for comparison.
     st.write(st.session_state)
 
 
-def display_and_edit_data_table(df: pd.DataFrame, x, data_type: str, y="value"):
+def display_and_edit_data_table(
+    input_data: pd.DataFrame,
+    x,
+    source_region_code: list,
+    parameter_code: list,
+    process_code: list,
+    index="source_region_code",
+    y="value",
+) -> pd.DataFrame:
     """Display selected input data as 2D table, which can also be edited."""
-    df_tab = df.pivot_table(
-        index="source_region_code", columns=x, values=y, aggfunc="sum"
-    )
+    ind1 = input_data["source_region_code"].isin(source_region_code)
+    ind2 = input_data["parameter_code"].isin(parameter_code)
+    ind3 = input_data["process_code"].isin(process_code)
+    df = input_data.loc[ind1 & ind2 & ind3]
+    df_tab = df.pivot_table(index=index, columns=x, values=y, aggfunc="sum")
 
-    key = f"edit_input_data_{data_type}"
+    key = f"edit_input_data_{parameter_code}"
     st.data_editor(
-        df_tab.reset_index(),
+        df_tab,
         use_container_width=True,
         key=key,
         num_rows="fixed",
         hide_index=True,
-        disabled=["source_region_code"],
+        disabled=[index],
     )
 
     # store changes in session_state:
     if "user_changes" not in st.session_state:
         st.session_state["user_changes"] = {}
     st.session_state["user_changes"][key] = st.session_state[key]["edited_rows"]
+
+    return df_tab
 
 
 def create_infobox(context_data: dict, settings: dict):
