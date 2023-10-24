@@ -611,6 +611,10 @@ They also show the data for your selected supply country or region for compariso
         st.markdown("**Figure:**")
         fig = px.box(df, x=x, y=y)
         st.plotly_chart(fig, use_container_width=True)
+
+    key = f"edit_input_data_{data_selection}_{ddc}"
+    user_changes = st.session_state[key]
+    st.write("**Data changed by user:**")
     st.write(user_changes)
 
 
@@ -691,16 +695,22 @@ They also show the data for your country for comparison.
     with c2:
         # show data:
         st.markdown("**Data:**")
-        user_changes = display_and_edit_data_table(df, x, data_selection)
+        changed_data = display_and_edit_data_table(df, x, data_selection)
     with c1:
         # create plot:
         st.markdown("**Figure:**")
-        fig = px.box(df, x=x, y="value")
+        fig = px.box(changed_data)
         st.plotly_chart(fig, use_container_width=True)
+
+    key = f"edit_input_data_{data_selection}"
+    user_changes = st.session_state[key]
+    st.write("**Data changed by user:**")
     st.write(user_changes)
+    st.write("**Session state:**")
+    st.write(st.session_state)
 
 
-def display_and_edit_data_table(df: pd.DataFrame, x, data_type: str, y="value") -> dict:
+def display_and_edit_data_table(df: pd.DataFrame, x, data_type: str, y="value"):
     """Display selected input data as 2D table, which can also be edited."""
     df_tab = df.pivot_table(
         index="source_region_code", columns=x, values=y, aggfunc="sum"
@@ -715,8 +725,6 @@ def display_and_edit_data_table(df: pd.DataFrame, x, data_type: str, y="value") 
         hide_index=True,
         disabled=["source_region_code"],
     )
-    user_changes = st.session_state[key]
-    return user_changes
 
 
 def create_infobox(context_data: dict, settings: dict):
