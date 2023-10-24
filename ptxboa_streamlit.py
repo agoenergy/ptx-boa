@@ -18,7 +18,6 @@ st.title("PtX Business Opportunity Analyzer :red[draft version, please do not qu
     t_market_scanning,
     t_costs_by_region,
     t_input_data,
-    t_edit_input_data,
     t_deep_dive_countries,
     t_country_fact_sheets,
     t_certification_schemes,
@@ -31,7 +30,6 @@ st.title("PtX Business Opportunity Analyzer :red[draft version, please do not qu
         "Market scanning",
         "Costs by region",
         "Input data",
-        "Edit input data",
         "Deep-dive countries",
         "Country fact sheets",
         "Certification schemes",
@@ -69,9 +67,6 @@ with t_costs_by_region:
 
 with t_input_data:
     pf.content_input_data(api, settings)
-
-with t_edit_input_data:
-    pf.content_edit_input_data(api, settings)
 
 with t_deep_dive_countries:
     pf.content_deep_dive_countries(api, res_costs, settings)
