@@ -604,17 +604,13 @@ They also show the data for your selected supply country or region for compariso
             source_region_code=region_list,
             parameter_code=parameter_code,
             process_code=process_code,
+            edit_data=False,
         )
     with c1:
         # create plot:
         st.markdown("**Figure:**")
         fig = px.box(df)
         st.plotly_chart(fig, use_container_width=True)
-
-    key = f"edit_input_data_{data_selection}_{ddc}"
-    user_changes = st.session_state[key]
-    st.write("**Data changed by user:**")
-    st.write(user_changes)
 
 
 def content_input_data(api: PtxboaAPI, settings: dict) -> None:
@@ -708,10 +704,23 @@ They also show the data for your country for comparison.
         fig = px.box(df)
         st.plotly_chart(fig, use_container_width=True)
 
-    st.write("**Data changed by user:**")
-    st.write(st.session_state["user_changes"])
-    st.write("**Session state:**")
+    display_user_changes()
+
+
+def reset_user_changes():
+    """Reset all user changes."""
+    if "user_changes" in st.session_state.keys():
+        del st.session_state["user_changes"]
+
+
+def display_user_changes():
+    """Display input data changes made by user."""
     st.write(st.session_state)
+    if "user_changes" in st.session_state.keys():
+        st.write("**Input data has been modified:**")
+        st.button("Reset data", on_click=reset_user_changes())
+        if "user_changes" in st.session_state.keys():
+            st.write(st.session_state["user_changes"])
 
 
 def display_and_edit_data_table(
@@ -731,11 +740,12 @@ def display_and_edit_data_table(
     df = input_data.loc[ind1 & ind2 & ind3]
     df_tab = df.pivot_table(index=index, columns=x, values=y, aggfunc="sum")
 
-    key = f"edit_input_data_{parameter_code}"
     if edit_data:
         disabled = [index]
+        key = f"edit_input_data_{parameter_code}"
     else:
         disabled = True
+        key = None
     st.data_editor(
         df_tab,
         use_container_width=True,
@@ -745,9 +755,12 @@ def display_and_edit_data_table(
     )
 
     # store changes in session_state:
-    if "user_changes" not in st.session_state:
-        st.session_state["user_changes"] = {}
-    st.session_state["user_changes"][key] = st.session_state[key]["edited_rows"]
+    if edit_data:
+        if len(st.session_state[key]["edited_rows"]) > 0:
+            if "user_changes" not in st.session_state:
+                st.session_state["user_changes"] = {}
+            st.session_state["user_changes"][key] = st.session_state[key]["edited_rows"]
+        del st.session_state[key]
 
     return df_tab
 
