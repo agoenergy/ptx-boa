@@ -688,12 +688,19 @@ They also show the data for your country for comparison.
     with c2:
         # show data:
         st.markdown("**Data:**")
+        edit_data = st.toggle(
+            "Edit data",
+            help="""Activate this to make the table editable.
+            Currently, your changes will be stored, but they will not be
+            used in calculation and they will not be displayed in figures. """,
+        )
         df = display_and_edit_data_table(
             input_data=input_data,
             x=x,
             source_region_code=region_list_without_subregions,
             parameter_code=parameter_code,
             process_code=process_code,
+            edit_data=edit_data,
         )
     with c1:
         # create plot:
@@ -709,12 +716,13 @@ They also show the data for your country for comparison.
 
 def display_and_edit_data_table(
     input_data: pd.DataFrame,
-    x,
+    x: str,
     source_region_code: list,
     parameter_code: list,
     process_code: list,
-    index="source_region_code",
-    y="value",
+    index: str = "source_region_code",
+    y: str = "value",
+    edit_data: bool = False,
 ) -> pd.DataFrame:
     """Display selected input data as 2D table, which can also be edited."""
     ind1 = input_data["source_region_code"].isin(source_region_code)
@@ -724,13 +732,16 @@ def display_and_edit_data_table(
     df_tab = df.pivot_table(index=index, columns=x, values=y, aggfunc="sum")
 
     key = f"edit_input_data_{parameter_code}"
+    if edit_data:
+        disabled = [index]
+    else:
+        disabled = True
     st.data_editor(
         df_tab,
         use_container_width=True,
         key=key,
         num_rows="fixed",
-        hide_index=True,
-        disabled=[index],
+        disabled=disabled,
     )
 
     # store changes in session_state:
