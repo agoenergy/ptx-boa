@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 """Api for calculations for webapp."""
 
-from itertools import product
 
 import numpy as np
 import pandas as pd
-from pandas import DataFrame
 from pandas.api.types import CategoricalDtype
 
-from .data import load_data
+from .api_data import PtxData
 
 COST_TYPES = ["CAPEX", "OPEX", "FLOW", "LC"]
 PROCESS_SUBTYPES_MAPPING = {
@@ -61,21 +59,7 @@ PROCESS_SUBTYPES = list({t for tst in PROCESS_SUBTYPES_MAPPING.values() for t in
 
 class PtxboaAPI:
     def __init__(self):
-        """Instance creation loads all data from local files."""
-        self.dims = {
-            dim: load_data(name=f"dim_{dim}")
-            for dim in ["country", "flow", "parameter", "process", "region"]
-        }
-        self.df_data_flh = load_data(name="flh").set_index("key").replace(np.nan, "")
-        self.df_chains = load_data(name="chains").set_index("chain").replace(np.nan, "")
-        self.data_scenarios = {
-            f"{year} ({parameter_range})": load_data(name=f"{year}_{parameter_range}")
-            .set_index("key")
-            .replace(np.nan, "")
-            for year, parameter_range in product(
-                [2030, 2040], ["low", "medium", "high"]
-            )
-        }
+        self.data = PtxData()
 
     def get_dimension(self, dim: str) -> pd.DataFrame:
         """Return a dimension element to populate app dropdowns.
@@ -99,18 +83,7 @@ class PtxboaAPI:
         : pd.DataFrame
             The dimension the data as
         """
-        _dimensions = {
-            "scenario": self._get_scenario_dimension,
-            "secproc_co2": self._get_secproc_co2_dimension,
-            "secproc_water": self._get_secproc_water_dimension,
-            "chain": self._get_chain_dimension,
-            "res_gen": self._get_res_gen_dimension,
-            "region": self._get_region_dimension,
-            "country": self._get_country_dimension,
-            "transport": self._get_transport_dimension,
-            "output_unit": self._get_output_unit_dimension,
-        }
-        return _dimensions[dim]()
+        return self.data.get_dimension(dim)
 
     def get_input_data(
         self,
@@ -147,36 +120,7 @@ class PtxboaAPI:
             'source_region_code', 'target_country_code', 'value', 'unit', 'source'
 
         """
-        if scenario not in self.data_scenarios.keys():
-            raise ValueError(
-                f"No valid data scenario '{scenario}'. Possible values "
-                f"are\n{list(self.data_scenarios.keys())}"
-            )
-
-        scenario_data = self.data_scenarios[scenario].copy()
-
-        if long_names:
-            for dim in ["parameter", "process", "flow", "region", "country"]:
-                mapping = pd.Series(
-                    self.dims[dim][f"{dim}_name"].to_list(),
-                    index=self.dims[dim][f"{dim}_code"],
-                )
-                if dim not in ["region", "country"]:
-                    column_name = f"{dim}_code"
-                elif dim == "region":
-                    column_name = "source_region_code"
-                elif dim == "country":
-                    column_name = "target_country_code"
-                scenario_data[column_name] = scenario_data[column_name].map(
-                    mapping, na_action="ignore"
-                )
-            scenario_data = scenario_data.replace(np.nan, "")
-
-        if user_data is not None:
-            # TODO: modify values based on user_data
-            pass
-
-        return scenario_data
+        return self.data.get_input_data(scenario, long_names, user_data)
 
     def _create_random_output_data(
         self,
@@ -321,107 +265,4 @@ class PtxboaAPI:
             region,
             country,
             transport,
-        )
-
-    def _get_scenario_dimension(self) -> DataFrame:
-        """Availible items for this class.
-
-        Use index for dropdown selections
-        """
-        return DataFrame(
-            [
-                {
-                    "year": year,
-                    "parameter_range": parameter_range,
-                    "scenario_name": f"{year} ({parameter_range})",
-                }
-                for year, parameter_range in product(
-                    [2030, 2040], ["low", "medium", "high"]
-                )
-            ]
-        ).set_index("scenario_name")
-
-    def _get_secproc_co2_dimension(self) -> DataFrame:
-        """Availible items for this class.
-
-        Use index for dropdown selections
-        """
-        df_proc = (
-            self.dims["process"]
-            .loc[self.dims["process"]["process_class"] == "PROV_C"]
-            .copy()
-        )
-        df_proc = pd.concat(
-            [df_proc, pd.DataFrame([{"process_name": "Specific costs"}])]
-        )
-        return df_proc.set_index("process_name", drop=False)
-
-    def _get_secproc_water_dimension(self) -> DataFrame:
-        """Availible items for this class.
-
-        Use index for dropdown selections
-        """
-        df_proc = (
-            self.dims["process"]
-            .loc[self.dims["process"]["process_class"] == "PROV_H2O"]
-            .copy()
-        )
-        df_proc = pd.concat(
-            [df_proc, pd.DataFrame([{"process_name": "Specific costs"}])]
-        )
-        return df_proc.set_index("process_name", drop=False)
-
-    def _get_chain_dimension(self) -> DataFrame:
-        """Availible items for this class.
-
-        Use index for dropdown selections
-        """
-        return self.df_chains.copy()
-
-    def _get_res_gen_dimension(self) -> DataFrame:
-        """Availible items for this class.
-
-        Use index for dropdown selections
-        """
-        return (
-            self.dims["process"]
-            .loc[self.dims["process"]["process_class"] == "RE-GEN"]
-            .copy()
-            .set_index("process_name", drop=False)
-        )
-
-    def _get_region_dimension(self) -> DataFrame:
-        """Availible items for this class.
-
-        Use index for dropdown selections
-        """
-        return self.dims["region"].set_index("region_name", drop=False)
-
-    def _get_country_dimension(self) -> DataFrame:
-        """Availible items for this class.
-
-        Use index for dropdown selections
-        """
-        return (
-            self.dims["country"]
-            .loc[self.dims["country"]["is_import"]]
-            .set_index("country_name", drop=False)
-        )
-
-    def _get_transport_dimension(self) -> DataFrame:
-        """Availible items for this class.
-
-        Use index for dropdown selections
-        """
-        return DataFrame(
-            [{"transport_name": "Ship"}, {"transport_name": "Pipeline"}]
-        ).set_index("transport_name", drop=False)
-
-    def _get_output_unit_dimension(self) -> DataFrame:
-        """Availible items for this class.
-
-        Use index for dropdown selections
-        """
-        return DataFrame([{"unit_name": "USD/MWh"}, {"unit_name": "USD/t"}]).set_index(
-            "unit_name", drop=False
         )
