@@ -71,15 +71,31 @@ def aggregate_costs(res_details: pd.DataFrame) -> pd.DataFrame:
 def create_sidebar(api: PtxboaAPI):
     st.sidebar.subheader("Main settings:")
     settings = {}
+    include_subregions = False
+    if include_subregions:
+        region_list = api.get_dimension("region").index
+    else:
+        region_list = (
+            api.get_dimension("region")
+            .loc[api.get_dimension("region")["subregion_code"].isna()]
+            .index
+        )
     settings["region"] = st.sidebar.selectbox(
         "Supply country / region:",
-        # TODO: replace with complete list of regions once calculation time is reduced:
-        ("Argentina", "Morocco", "South Africa"),
+        region_list,
         help=(
-            "One supply country or region can be selected here, and detailed settings "
-            "can be selected for this region below "
+            "One supply country or region can be selected here, "
+            " and detailed settings can be selected for this region below "
             "(RE source, mode of transportation). For other regions, "
             "default settings will be used."
+        ),
+    )
+    include_subregions = st.sidebar.toggle(
+        "Include subregions",
+        help=(
+            "For three deep-dive countries (Argentina, Morocco, and South Africa) "
+            "the app calculates costs for subregions as well. Activate this switch"
+            "if you want to chose one of these subregions as a supply region. "
         ),
     )
     settings["country"] = st.sidebar.selectbox(
