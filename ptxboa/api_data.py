@@ -3,6 +3,7 @@
 
 import pprint
 from itertools import product
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -65,6 +66,45 @@ PARAMETER_DIMENSIONS = {
     },
 }
 
+ParameterCode = Literal[
+    "CALOR",
+    "CAPEX",
+    "CAP-T",
+    "CONV",
+    "DST-S-C",
+    "DST-S-D",
+    "DST-S-DP",
+    "EFF",
+    "FLH",
+    "LIFETIME",
+    "LOSS-T",
+    "OPEX-F",
+    "OPEX-T",
+    "RE-POT",
+    "SEASHARE",
+    "SPECCOST",
+    "WACC",
+]
+ScenarioCode = Literal[
+    "2030 (low)",
+    "2030 (medium)",
+    "2030 (high)",
+    "2040 (low)",
+    "2040 (medium)",
+    "2040 (high)",
+]
+DimensionCode = Literal[
+    "scenario",
+    "secproc_co2",
+    "secproc_water",
+    "chain",
+    "res_gen",
+    "region",
+    "country",
+    "transport",
+    "output_unit",
+]
+
 
 class PtxData:
     def __init__(self):
@@ -85,7 +125,7 @@ class PtxData:
 
     def get_input_data(
         self,
-        scenario: str,
+        scenario: ScenarioCode,
         long_names: bool = True,
         user_data: dict = None,
     ) -> pd.DataFrame:
@@ -147,18 +187,107 @@ class PtxData:
 
     def get_parameter_value(
         self,
-        scenario,
-        parameter_code,
-        process_code=None,  # process_flh for flh
-        flow_code=None,
-        source_region_code=None,
-        target_country_code=None,
-        # only relevant for parameter FLH
-        process_code_res=None,
-        process_code_ely=None,
-        process_code_deriv=None,
+        scenario: ScenarioCode,
+        parameter_code: ParameterCode,
+        process_code: str = None,
+        flow_code: str = None,
+        source_region_code: str = None,
+        target_country_code: str = None,
+        process_code_res: str = None,
+        process_code_ely: str = None,
+        process_code_deriv: str = None,
     ) -> float:
-        """Get parameter value for processes."""
+        """
+        Get a parameter value for a process.
+
+        Parameters
+        ----------
+        scenario : str
+            data scenario string
+        parameter_code : ParameterCode
+            parameter category. Must be one of:
+                - 'CALOR',
+                - 'CAPEX'
+                - 'CAP-T'
+                - 'CONV'
+                - 'DST-S-C'
+                - 'DST-S-D'
+                - 'DST-S-DP'
+                - 'EFF'
+                - 'FLH'
+                - 'LIFETIME'
+                - 'LOSS-T'
+                - 'OPEX-F'
+                - 'OPEX-T'
+                - 'RE-POT'
+                - 'SEASHARE'
+                - 'SPECCOST'
+                - 'WACC'
+        process_code : str, optional
+            Code for the process, by default None. Must be set for the following
+            parameters:
+                - CAPEX
+                - CONV
+                - EFF
+                - FLH
+                - LIFETIME
+                - LOSS-T
+                - OPEX-F
+                - OPEX-T
+                - RE-POT
+                - WACC
+        flow_code : str, optional
+            Code for the flow, by default None. Must be set for the following
+            parameters:
+                - CALOR
+                - CONV
+                - SPECCOST
+        source_region_code : str, optional
+            Code for the source region, by default None. Must be set for the
+            following parameters:
+                - CAPEX
+                - CAP-T
+                - DST-S-C
+                - DST-S-D
+                - DST-S-DP
+                - FLH
+                - OPEX-F
+                - RE-POT
+                - SEASHARE
+                - SPECCOST
+                - WACC
+        target_country_code : str, optional
+            Code for the target country, by default None. Must be set for the
+            following parameters:
+                - CAP-T
+                - DST-S-D
+                - DST-S-DP
+                - SEASHARE
+        process_code_res : str, optional
+            Code for the process_code_res, by default None. Must be set for the
+            following parameters:
+                - FLH
+        process_code_ely : str, optional
+            Code for the process_code_ely, by default None. Must be set for the
+            following parameters:
+                - FLH
+        process_code_deriv : str, optional
+            Code for the process_code_deriv, by default None. Must be set for the
+            following parameters:
+                - FLH
+
+        Returns
+        -------
+        float
+            the parameter value
+
+        Raises
+        ------
+        ValueError
+            if multiple values are found for a parameter combination.
+        ValueError
+            if no value is found for a parameter combination.
+        """
         self._check_required_kwargs(
             parameter_code,
             process_code=process_code,
@@ -199,7 +328,7 @@ class PtxData:
             raise ValueError("found more than one parameter value")
         return row.squeeze().at["value"]
 
-    def get_dimension(self, dim: str) -> pd.DataFrame:
+    def get_dimension(self, dim: DimensionCode) -> pd.DataFrame:
         """Return a dimension element to populate app dropdowns.
 
         Parameters
@@ -371,6 +500,7 @@ class PtxData:
             )
 
     def _check_valid_scenario(self, scenario):
+        """Check if a scenario key is valid."""
         if scenario not in self.scenario_data.keys():
             raise ValueError(
                 f"No valid data scenario '{scenario}'. Possible values "
@@ -379,5 +509,109 @@ class PtxData:
 
 
 class DataHandler:
+    """
+    Handler class for parameter retrieval.
+
+    Instances of this class can be used to retrieve data from a single scenario and
+    combine it with set user data.
+    """
+
     def __init__(self, scenario, user_data):
+        pass
+
+    def get_parameter_value(
+        self,
+        parameter_code,
+        process_code=None,
+        flow_code=None,
+        source_region_code=None,
+        target_country_code=None,
+        process_code_res=None,
+        process_code_ely=None,
+        process_code_deriv=None,
+    ):
+        """
+        Get a parameter value for a process.
+
+        Parameters
+        ----------
+        scenario : str
+            data scenario string
+        parameter_code : ParameterCode
+            parameter category. Must be one of:
+                - 'CALOR',
+                - 'CAPEX'
+                - 'CAP-T'
+                - 'CONV'
+                - 'DST-S-C'
+                - 'DST-S-D'
+                - 'DST-S-DP'
+                - 'EFF'
+                - 'FLH'
+                - 'LIFETIME'
+                - 'LOSS-T'
+                - 'OPEX-F'
+                - 'OPEX-T'
+                - 'RE-POT'
+                - 'SEASHARE'
+                - 'SPECCOST'
+                - 'WACC'
+        process_code : str, optional
+            Code for the process, by default None. Must be set for the following
+            parameters:
+                - CAPEX
+                - CONV
+                - EFF
+                - FLH
+                - LIFETIME
+                - LOSS-T
+                - OPEX-F
+                - OPEX-T
+                - RE-POT
+                - WACC
+        flow_code : str, optional
+            Code for the flow, by default None. Must be set for the following
+            parameters:
+                - CALOR
+                - CONV
+                - SPECCOST
+        source_region_code : str, optional
+            Code for the source region, by default None. Must be set for the
+            following parameters:
+                - CAPEX
+                - CAP-T
+                - DST-S-C
+                - DST-S-D
+                - DST-S-DP
+                - FLH
+                - OPEX-F
+                - RE-POT
+                - SEASHARE
+                - SPECCOST
+                - WACC
+        target_country_code : str, optional
+            Code for the target country, by default None. Must be set for the
+            following parameters:
+                - CAP-T
+                - DST-S-D
+                - DST-S-DP
+                - SEASHARE
+        process_code_res : str, optional
+            Code for the process_code_res, by default None. Must be set for the
+            following parameters:
+                - FLH
+        process_code_ely : str, optional
+            Code for the process_code_ely, by default None. Must be set for the
+            following parameters:
+                - FLH
+        process_code_deriv : str, optional
+            Code for the process_code_deriv, by default None. Must be set for the
+            following parameters:
+                - FLH
+
+        Returns
+        -------
+        float
+            the parameter value
+        """
         pass
