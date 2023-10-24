@@ -599,8 +599,19 @@ They also show the data for your selected supply country or region for compariso
         y = data_selection
         st.markdown("TODO: fix surplus countries in data table")
 
-    # create plot:
-    create_box_plot_with_data(df, x=x, y=y, data_type=data_selection)
+    c1, c2 = st.columns(2, gap="medium")
+    with c2:
+        # show data:
+        st.markdown("**Data:**")
+        user_changes = display_and_edit_data_table(
+            df, x, f"{data_selection}_{ddc}", y=y
+        )
+    with c1:
+        # create plot:
+        st.markdown("**Figure:**")
+        fig = px.box(df, x=x, y=y)
+        st.plotly_chart(fig, use_container_width=True)
+    st.write(user_changes)
 
 
 def content_input_data(api: PtxboaAPI, settings: dict) -> None:
@@ -676,33 +687,35 @@ They also show the data for your country for comparison.
         df = input_data.loc[ind1]
         x = "parameter_code"
 
-    # create plot:
-    user_changes = create_box_plot_with_data(df, x, data_selection)
+    c1, c2 = st.columns(2, gap="medium")
+    with c2:
+        # show data:
+        st.markdown("**Data:**")
+        user_changes = display_and_edit_data_table(df, x, data_selection)
+    with c1:
+        # create plot:
+        st.markdown("**Figure:**")
+        fig = px.box(df, x=x, y="value")
+        st.plotly_chart(fig, use_container_width=True)
     st.write(user_changes)
 
 
-def create_box_plot_with_data(df, x, data_type: str, y="value") -> dict:
-    c1, c2 = st.columns(2, gap="medium")
-    with c1:
-        st.markdown("**Figure:**")
-        fig = px.box(df, x=x, y=y)
-        st.plotly_chart(fig, use_container_width=True)
-    with c2:
-        # show data as table:
-        df_tab = df.pivot_table(
-            index="source_region_code", columns=x, values=y, aggfunc="sum"
-        )
-        st.markdown("**Data:**")
-        key = f"edit_input_data_{data_type}"
-        st.data_editor(
-            df_tab.reset_index(),
-            use_container_width=True,
-            key=key,
-            num_rows="fixed",
-            hide_index=True,
-            disabled=["source_region_code"],
-        )
-        user_changes = st.session_state[key]
+def display_and_edit_data_table(df: pd.DataFrame, x, data_type: str, y="value") -> dict:
+    """Display selected input data as 2D table, which can also be edited."""
+    df_tab = df.pivot_table(
+        index="source_region_code", columns=x, values=y, aggfunc="sum"
+    )
+
+    key = f"edit_input_data_{data_type}"
+    st.data_editor(
+        df_tab.reset_index(),
+        use_container_width=True,
+        key=key,
+        num_rows="fixed",
+        hide_index=True,
+        disabled=["source_region_code"],
+    )
+    user_changes = st.session_state[key]
     return user_changes
 
 
