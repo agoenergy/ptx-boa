@@ -7,7 +7,7 @@ import pandas as pd
 from pandas.api.types import CategoricalDtype
 
 from .api_calc import PtxCalc
-from .api_data import DataHandler, PtxData
+from .api_data import DataHandler, DimensionCode, PtxData, ScenarioCode
 
 COST_TYPES = ["CAPEX", "OPEX", "FLOW", "LC"]
 PROCESS_SUBTYPES_MAPPING = {
@@ -62,7 +62,7 @@ class PtxboaAPI:
     def __init__(self):
         self.data = PtxData()
 
-    def get_dimension(self, dim: str) -> pd.DataFrame:
+    def get_dimension(self, dim: DimensionCode) -> pd.DataFrame:
         """Return a dimension element to populate app dropdowns.
 
         Parameters
@@ -88,7 +88,7 @@ class PtxboaAPI:
 
     def get_input_data(
         self,
-        scenario: str,
+        scenario: ScenarioCode,
         long_names: bool = True,
         user_data: dict = None,
     ) -> pd.DataFrame:
@@ -128,7 +128,7 @@ class PtxboaAPI:
 
     def _create_random_output_data(
         self,
-        scenario: str,
+        scenario: ScenarioCode,
         secproc_co2: str,
         secproc_water: str,
         chain: str,
@@ -209,7 +209,7 @@ class PtxboaAPI:
 
     def calculate(
         self,
-        scenario: str,
+        scenario: ScenarioCode,
         secproc_co2: str,
         secproc_water: str,
         chain: str,

@@ -3,6 +3,7 @@
 
 import pprint
 from itertools import product
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -65,6 +66,45 @@ PARAMETER_DIMENSIONS = {
     },
 }
 
+ParameterCode = Literal[
+    "CALOR",
+    "CAPEX",
+    "CAP-T",
+    "CONV",
+    "DST-S-C",
+    "DST-S-D",
+    "DST-S-DP",
+    "EFF",
+    "FLH",
+    "LIFETIME",
+    "LOSS-T",
+    "OPEX-F",
+    "OPEX-T",
+    "RE-POT",
+    "SEASHARE",
+    "SPECCOST",
+    "WACC",
+]
+ScenarioCode = Literal[
+    "2030 (low)",
+    "2030 (medium)",
+    "2030 (high)",
+    "2040 (low)",
+    "2040 (medium)",
+    "2040 (high)",
+]
+DimensionCode = Literal[
+    "scenario",
+    "secproc_co2",
+    "secproc_water",
+    "chain",
+    "res_gen",
+    "region",
+    "country",
+    "transport",
+    "output_unit",
+]
+
 
 class PtxData:
     def __init__(self):
@@ -85,7 +125,7 @@ class PtxData:
 
     def get_input_data(
         self,
-        scenario: str,
+        scenario: ScenarioCode,
         long_names: bool = True,
         user_data: dict = None,
     ) -> pd.DataFrame:
@@ -204,7 +244,7 @@ class PtxData:
             scenario_data.loc[selector, "value"] = row.value
         return scenario_data
 
-    def get_dimension(self, dim: str) -> pd.DataFrame:
+    def get_dimension(self, dim: DimensionCode) -> pd.DataFrame:
         """Return a dimension element to populate app dropdowns.
 
         Parameters
@@ -360,7 +400,10 @@ class DataHandler:
     """
 
     def __init__(
-        self, ptxdata: PtxData, scenario: str, user_data: None | pd.DataFrame = None
+        self,
+        ptxdata: PtxData,
+        scenario: ScenarioCode,
+        user_data: None | pd.DataFrame = None,
     ):
         ptxdata.check_valid_scenario_id(scenario)
         self.scenario = scenario
@@ -396,7 +439,7 @@ class DataHandler:
 
     def get_parameter_value(
         self,
-        parameter_code: str,
+        parameter_code: ParameterCode,
         process_code: str = None,
         flow_code: str = None,
         source_region_code: str = None,
@@ -410,8 +453,6 @@ class DataHandler:
 
         Parameters
         ----------
-        scenario : str
-            data scenario string
         parameter_code : ParameterCode
             parameter category. Must be one of:
                 - 'CALOR',
@@ -542,7 +583,7 @@ class DataHandler:
 
     def _check_required_parameter_value_kwargs(
         self,
-        parameter_code: str,
+        parameter_code: ParameterCode,
         **kwargs,
     ):
         """
