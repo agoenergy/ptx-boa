@@ -364,23 +364,315 @@ def content_dashboard(api, res_costs: dict, context_data: dict, settings: pd.Dat
     st.write(settings)
 
 
-def content_market_scanning(res_costs: dict, settings: pd.DataFrame):
+def content_market_scanning(
+    api: PtxboaAPI, res_costs: pd.DataFrame, settings: dict
+) -> None:
+    """Create content for the "market scanning" sheet.
+
+    Parameters
+    ----------
+    api : :class:`~ptxboa.api.PtxboaAPI`
+        an instance of the api class
+    settings : dict
+        settings from the streamlit app. An example can be obtained with the
+        return value from :func:`ptxboa_functions.create_sidebar`.
+    res_costs : pd.DataFrame
+        Results.
+    """
+    st.markdown("**Market Scanning**")
     st.markdown(
-        "Get an overview of competing PTX BOA supply countries"
-        "and potential demand countries"
+        """This is the markt scanning sheet. It will contain scatter plots
+        that allows users to compare regions by total cost, transportation
+        distance and H2 demand."""
     )
+
+    # get input data:
+    input_data = api.get_input_data(settings["sel_scenario"])
+
+    # filter shipping and pipeline distances:
+    distances = input_data.loc[
+        (input_data["parameter_code"].isin(["shipping distance", "pipeline distance"]))
+        & (input_data["target_country_code"] == settings["sel_country_name"]),
+        ["source_region_code", "parameter_code", "value"],
+    ]
+    distances = distances.pivot_table(
+        index="source_region_code",
+        columns="parameter_code",
+        values="value",
+        aggfunc="sum",
+    )
+
+    # merge costs and distances:
+    df_plot = pd.DataFrame()
+    df_plot["total costs"] = res_costs["Total"]
+    df_plot = df_plot.merge(distances, left_index=True, right_index=True)
+
+    # do not show subregions:
+    df_plot = remove_subregions(api, df_plot, settings)
+
+    # create plot:
+    [c1, c2] = st.columns([1, 5])
+    with c1:
+        # select which distance to show:
+        selected_distance = st.radio(
+            "Select parameter:",
+            ["shipping distance", "pipeline distance"],
+        )
+    with c2:
+        fig = px.scatter(
+            df_plot,
+            x=selected_distance,
+            y="total costs",
+            title="Costs and transportation distances",
+            height=600,
+        )
+        # Add text above markers
+        fig.update_traces(
+            text=df_plot.index,
+            textposition="top center",
+            mode="markers+text",
+        )
+
+        st.plotly_chart(fig)
+
+    # show data in tabular form:
+    st.markdown("**Data:**")
+    st.dataframe(df_plot, use_container_width=True)
+
+
+def remove_subregions(api: PtxboaAPI, df: pd.DataFrame, settings: dict):
+    """Remove subregions from a dataframe.
+
+    Parameters
+    ----------
+    api : :class:`~ptxboa.api.PtxboaAPI`
+        an instance of the api class
+
+    df : pandas DataFrame with list of regions as index.
+
+    Returns
+    -------
+    pandas DataFrame with subregions removed from index.
+    """
+    # do not show subregions:
+    region_list_without_subregions = (
+        api.get_dimension("region")
+        .loc[api.get_dimension("region")["subregion_code"].isna()]
+        .index.to_list()
+    )
+
+    # ensure that target country is not in list of regions:
+    if settings["sel_country_name"] in region_list_without_subregions:
+        region_list_without_subregions.remove(settings["sel_country_name"])
+
+    df = df.loc[region_list_without_subregions]
+
+    return df
+
+
+def content_costs_by_region(
+    api: PtxboaAPI, res_costs: pd.DataFrame, settings: dict
+) -> None:
+    """Create content for the "costs by region" sheet.
+
+    Parameters
+    ----------
+    api : :class:`~ptxboa.api.PtxboaAPI`
+        an instance of the api class
+    res_costs : pd.DataFrame
+        Results.
+    """
+    st.markdown("**Costs by region**")
     st.markdown(
-        "This sheet will help you to better evaluate your country's competitive "
-        "position as well as your options on the emerging global H2 market. "
-        "\n"
-        "\n"
-        "The left diagram shows you how your country ranks compared to other supply"
-        "countries that target the same demand country market."
-        "\n"
-        "The diagrams on the right show transport distances between your country "
-        "and potential PTX BOA demand countries "
-        "as well as their projected H2 demands"
+        """On this sheet, users can analyze total cost and cost components for
+          different supply countries. Data is represented as a bar chart and
+            in tabular form. \n\n Data can be filterend and sorted."""
     )
+    c1, c2 = st.columns([1, 5])
+    with c1:
+        # filter data:
+        df_res = res_costs.copy()
+        # remove subregions:
+        df_res = remove_subregions(api, df_res, settings)
+
+        # select filter:
+        show_which_data = st.radio(
+            "Select regions to display:",
+            ["All", "Ten cheapest", "Manual select"],
+            index=0,
+        )
+
+        # apply filter:
+        if show_which_data == "Ten cheapest":
+            df_res = df_res.nsmallest(10, "Total")
+        elif show_which_data == "Manual select":
+            ind_select = st.multiselect(
+                "Select regions:",
+                df_res.index.values,
+                default=[settings["sel_region"]],
+            )
+            df_res = df_res.loc[ind_select]
+
+        # sort:
+        sort_ascending = st.toggle("Sort by total costs?", value=True)
+        if sort_ascending:
+            df_res = df_res.sort_values(["Total"], ascending=True)
+    with c2:
+        # create graph:
+        create_bar_chart_costs(df_res)
+
+    st.write("**Data:**")
+    st.dataframe(df_res, use_container_width=True)
+
+
+def content_deep_dive_countries(
+    api: PtxboaAPI, res_costs: pd.DataFrame, settings: dict
+) -> None:
+    """Create content for the "costs by region" sheet.
+
+    Parameters
+    ----------
+    api : :class:`~ptxboa.api.PtxboaAPI`
+        an instance of the api class
+    res_costs : pd.DataFrame
+        Results.
+
+    Output
+    ------
+    None
+    """
+    st.markdown("**Deep-dive countries.**")
+
+    st.markdown("TODO: add country map")
+
+    ddc = st.radio(
+        "Select country:", ["Argentina", "Morocco", "South Africa"], horizontal=True
+    )
+
+    # get input data:
+
+    input_data = api.get_input_data(settings["sel_scenario"])
+
+    # filter data:
+    # get list of subregions:
+    region_list = (
+        api.get_dimension("region")
+        .loc[api.get_dimension("region")["region_name"].str.startswith(ddc)]
+        .index.to_list()
+    )
+
+    list_data_types = ["full load hours", "total costs"]
+    data_selection = st.radio(
+        "Select data type",
+        list_data_types,
+        horizontal=True,
+        key="sel_data_ddc",
+    )
+    if data_selection == "full load hours":
+        ind_1 = input_data["source_region_code"].isin(region_list)
+        ind_2 = input_data["parameter_code"] == "full load hours"
+        ind_3 = input_data["process_code"].isin(
+            [
+                "Wind Onshore",
+                "Wind Offshore",
+                "PV tilted",
+                "Wind-PV-Hybrid",
+            ]
+        )
+        x = "process_code"
+        y = "value"
+
+        df = input_data.loc[ind_1 & ind_2 & ind_3]
+    if data_selection == "total costs":
+        df = res_costs.copy()
+        df = res_costs.loc[region_list].rename({"Total": data_selection}, axis=1)
+        df = df.rename_axis("source_region_code", axis=0)
+        x = None
+        y = data_selection
+        st.markdown("TODO: fix surplus countries in data table")
+
+    # create plot:
+    create_box_plot_with_data(df, x=x, y=y)
+
+
+def content_input_data(api: PtxboaAPI, settings: dict) -> None:
+    """Create content for the "input data" sheet.
+
+    Parameters
+    ----------
+    api : :class:`~ptxboa.api.PtxboaAPI`
+        an instance of the api class
+    settings : dict
+        settings from the streamlit app. An example can be obtained with the
+        return value from :func:`ptxboa_functions.create_sidebar`.
+
+    Output
+    ------
+    None
+    """
+    st.markdown("**Input data**")
+
+    # get input data:
+    input_data = api.get_input_data(settings["sel_scenario"])
+
+    # filter data:
+    region_list_without_subregions = (
+        api.get_dimension("region")
+        .loc[api.get_dimension("region")["subregion_code"].isna()]
+        .index.to_list()
+    )
+    input_data = input_data.loc[
+        input_data["source_region_code"].isin(region_list_without_subregions)
+    ]
+    list_data_types = ["CAPEX", "full load hours", "WACC"]
+    data_selection = st.radio("Select data type", list_data_types, horizontal=True)
+    if data_selection == "CAPEX":
+        parameter_code = ["CAPEX"]
+        process_code = [
+            "Wind Onshore",
+            "Wind Offshore",
+            "PV tilted",
+            "Wind-PV-Hybrid",
+        ]
+        ind1 = input_data["parameter_code"].isin(parameter_code)
+        ind2 = input_data["process_code"].isin(process_code)
+        df = input_data.loc[ind1 & ind2]
+        x = "process_code"
+    if data_selection == "full load hours":
+        parameter_code = ["full load hours"]
+        process_code = [
+            "Wind Onshore",
+            "Wind Offshore",
+            "PV tilted",
+            "Wind-PV-Hybrid",
+        ]
+        ind1 = input_data["parameter_code"].isin(parameter_code)
+        ind2 = input_data["process_code"].isin(process_code)
+        df = input_data.loc[ind1 & ind2]
+        x = "process_code"
+    if data_selection == "WACC":
+        parameter_code = ["interest rate"]
+        ind1 = input_data["parameter_code"].isin(parameter_code)
+        df = input_data.loc[ind1]
+        x = "parameter_code"
+
+    # create plot:
+    create_box_plot_with_data(df, x)
+
+
+def create_box_plot_with_data(df, x, y="value"):
+    c1, c2 = st.columns(2, gap="medium")
+    with c1:
+        st.markdown("**Figure:**")
+        fig = px.box(df, x=x, y=y)
+        st.plotly_chart(fig, use_container_width=True)
+    with c2:
+        # show data as table:
+        df_tab = df.pivot_table(
+            index="source_region_code", columns=x, values=y, aggfunc="sum"
+        )
+        st.markdown("**Data:**")
+        st.dataframe(df_tab, use_container_width=True)
 
 
 def create_infobox(context_data: dict, settings: dict):

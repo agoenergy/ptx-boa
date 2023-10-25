@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Mockup streamlit app."""
 import pandas as pd
-import plotly.express as px
 import streamlit as st
 from PIL import Image
 
@@ -19,6 +18,8 @@ st.title("PtX Business Opportunity Analyzer Mockup")
     t_dashboard,
     t_market_scanning,
     t_costs_by_region,
+    t_input_data,
+    t_deep_dive_countries,
     t_country_fact_sheets,
     t_certification_schemes,
     t_sustainability,
@@ -29,6 +30,8 @@ st.title("PtX Business Opportunity Analyzer Mockup")
         "Dashboard",
         "Market scanning",
         "Costs by region",
+        "Input data",
+        "Deep-dive countries",
         "Country fact sheets",
         "Certification schemes",
         "Sustainability",
@@ -58,58 +61,16 @@ with t_dashboard:
     pf.content_dashboard(api, res_costs, cd, settings)
 
 with t_market_scanning:
-    st.markdown("**Market Scanning**")
-    st.markdown(
-        """This is the markt scanning sheet. It will contain scatter plots
-        that allows users to compare regions by total cost, transportation
-        distance and H2 demand."""
-    )
-    [c1, c2] = st.columns(2)
-    with c1:
-        fig = px.scatter(
-            res_costs,
-            x="Transportation (Pipeline)",
-            y="Total",
-            title="Costs and transportation distances",
-            height=600,
-        )
-        # Add text above markers
-        fig.update_traces(
-            text=api.get_dimension("region")["region_code"],
-            textposition="top center",
-            mode="markers+text",
-        )
-
-        st.plotly_chart(fig)
-
+    pf.content_market_scanning(api, res_costs, settings)
 
 with t_costs_by_region:
-    st.markdown("**Costs by region**")
-    st.markdown(
-        """On this sheet, users can analyze total cost and cost components for
-          different supply countries. Data is represented as a bar chart and
-            in tabular form. \n\n Data can be filterend and sorted."""
-    )
-    # filter data:
-    df_res = res_costs.copy()
-    show_which_data = st.radio(
-        "Select regions to display:", ["All", "Ten cheapest", "Manual select"], index=0
-    )
-    if show_which_data == "Ten cheapest":
-        df_res = df_res.nsmallest(10, "Total")
-    elif show_which_data == "Manual select":
-        ind_select = st.multiselect(
-            "Select regions:", df_res.index.values, default=df_res.index.values
-        )
-        df_res = df_res.loc[ind_select]
+    pf.content_costs_by_region(api, res_costs, settings)
 
-    sort_ascending = st.toggle("Sort by total costs?", value=True)
-    if sort_ascending:
-        df_res = df_res.sort_values(["Total"], ascending=True)
-    pf.create_bar_chart_costs(df_res)
+with t_input_data:
+    pf.content_input_data(api, settings)
 
-    st.subheader("Costs as data frame:")
-    st.dataframe(res_costs, use_container_width=True)
+with t_deep_dive_countries:
+    pf.content_deep_dive_countries(api, res_costs, settings)
 
 with t_country_fact_sheets:
     pf.create_fact_sheet_demand_country(cd, settings["sel_country_name"])
