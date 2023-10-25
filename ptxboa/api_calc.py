@@ -143,8 +143,8 @@ class GenericProcess(metaclass=ProcessMeta):
     def _calculate_results(self, output_value) -> list:
         return []
 
-    def _create_result_row(self, cost_category, value) -> list:
-        return (self.result_process_type, self.__class__.__name__, cost_category, value)
+    def _create_result_row(self, cost_type, value) -> list:
+        return (self.result_process_type, self.__class__.__name__, cost_type, value)
 
     def __call__(self, input_value):
         """Calculate results.
@@ -178,7 +178,7 @@ class GenericProcess(metaclass=ProcessMeta):
 class ProcessMain(GenericProcess):
     """Process in main chain."""
 
-    parameters = ("EFF",)
+    parameters = ("EFF", "WACC", "FLH")
 
     def _calculate_output_value(self, input_value) -> float:
         return input_value * self.param_values["EFF"]
@@ -352,22 +352,18 @@ class PtxCalc:
             value, results_from_process = process(value)
             results += results_from_process
 
+        # TODO: fist one should be renamed to result_process_type
+        dim_columns = ["process_type", "process_subtype", "cost_type"]
         # convert results in Dataframe (maybe aggregate some?)
         results = pd.DataFrame(
             results,
-            columns=["result_process_type", "process_subtype", "cost_type", "values"],
+            columns=dim_columns + ["values"],
         )
 
         # TODO: maybe not required: aggregate over all key columns
         # in case some processes create data with the same categories
-        results = (
-            results.groupby(["result_process_type", "process_subtype", "cost_type"])
-            .sum()
-            .reset_index()
-        )
+        results = results.groupby(dim_columns).sum().reset_index()
 
         # TODO: apply output_unit conversion on
-
-        logging.warning(results)
 
         return results

@@ -2,9 +2,7 @@
 """Api for calculations for webapp."""
 
 
-import numpy as np
 import pandas as pd
-from pandas.api.types import CategoricalDtype
 
 from .api_calc import PtxCalc
 from .api_data import DataHandler, DimensionCode, PtxData, ScenarioCode
@@ -126,87 +124,6 @@ class PtxboaAPI:
         handler = DataHandler(self.data, scenario, user_data)
         return handler.get_input_data(long_names)
 
-    def _create_random_output_data(
-        self,
-        scenario: ScenarioCode,
-        secproc_co2: str,
-        secproc_water: str,
-        chain: str,
-        res_gen: str,
-        region: str,
-        country: str,
-        transport: str,
-    ) -> pd.DataFrame:
-        """
-        Create random output data as a long format dataframe.
-
-        The output contains the used setting as categorical "index" columns and one
-        "values" column with randomly generated results.
-        """
-        settings = {
-            "scenario": scenario,
-            "secproc_co2": secproc_co2,
-            "secproc_water": secproc_water,
-            "chain": chain,
-            "res_gen": res_gen,
-            "region": region,
-            "country": country,
-            "transport": transport,
-        }
-
-        # all process_subtypes are listed for each process_type
-
-        process_types = list(PROCESS_SUBTYPES_MAPPING.keys())
-        process_subtypes = [
-            value for values in PROCESS_SUBTYPES_MAPPING.values() for value in values
-        ]
-
-        df = (
-            pd.MultiIndex.from_product(
-                [process_subtypes, COST_TYPES], names=["process_subtype", "cost_type"]
-            )
-            .to_frame()
-            .reset_index(drop=True)
-        )
-
-        df["process_subtype"] = df["process_subtype"].astype(
-            CategoricalDtype(categories=process_subtypes)
-        )
-        df["cost_type"] = df["cost_type"].astype(
-            CategoricalDtype(categories=COST_TYPES)
-        )
-        df["process_type"] = (
-            df["process_subtype"]
-            .map(
-                {
-                    value: key
-                    for key, values in PROCESS_SUBTYPES_MAPPING.items()
-                    for value in values
-                }
-            )
-            .astype(CategoricalDtype(categories=process_types))
-        )
-
-        for dim in [
-            "scenario",
-            "secproc_co2",
-            "secproc_water",
-            "chain",
-            "res_gen",
-            "region",
-            "country",
-            "transport",
-        ]:
-            # initialize categorical columns with all possible category values for each
-            # dimension
-            df[dim] = pd.Categorical(
-                [settings[dim]] * len(df),
-                categories=self.get_dimension(dim).index.tolist(),
-            )
-
-        df["values"] = np.random.rand(len(df))
-        return df
-
     def calculate(
         self,
         scenario: ScenarioCode,
@@ -273,7 +190,7 @@ class PtxboaAPI:
             df = self.data.get_dimension(dim)
             return df.loc[df[dim_name + "_name"] == name, dim_name + "_code"].iloc[0]
 
-        calculator.calculate(
+        result_df = calculator.calculate(
             secproc_co2_code=name_to_code_bad("secproc_co2", "process", secproc_co2),
             secproc_water_code=name_to_code_bad(
                 "secproc_water", "process", secproc_water
@@ -287,13 +204,14 @@ class PtxboaAPI:
             output_unit=output_unit,
         )
 
-        return self._create_random_output_data(
-            scenario,
-            secproc_co2,
-            secproc_water,
-            chain,
-            res_gen,
-            region,
-            country,
-            transport,
-        )
+        # add user settings
+        result_df["scenario"] = scenario
+        result_df["secproc_co2"] = secproc_co2
+        result_df["secproc_water"] = secproc_water
+        result_df["chain"] = chain
+        result_df["res_gen"] = res_gen
+        result_df["region"] = region
+        result_df["country"] = country
+        result_df["transport"] = transport
+
+        return result_df
