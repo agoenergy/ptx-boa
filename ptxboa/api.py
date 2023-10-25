@@ -7,53 +7,17 @@ import pandas as pd
 from .api_calc import PtxCalc
 from .api_data import DataHandler, DimensionCode, PtxData, ScenarioCode
 
-COST_TYPES = ["CAPEX", "OPEX", "FLOW", "LC"]
-PROCESS_SUBTYPES_MAPPING = {
-    "Water": [
-        "ely_h2o",
-        "ely_fl_h2o",
-        "deriv_h2o",
-        "deriv_fl_h2o",
-        "deriv_h2o_fl_h2o",
-        "deriv_h2o_fl_el",
-        "ely_h2o_fl_el",
-    ],
-    "Electrolysis": ["ely", "ely_fl_el"],
-    "Electricity generation": ["res"],
-    "Transportation (Pipeline)": [
-        "tr_pre_ppl",
-        "tr_ppl",
-        "tr_pplx",
-        "tr_ppls",
-        "tr_pplr",
-        "tr_post_ppl_fl_el",
-        "tr_pre_ppl_fl_el",
-        "tr_post_ppl",
-    ],
-    "Transportation (Ship)": [
-        "tr_shp",
-        "tr_pre_shp",
-        "tr_post_shp",
-        "tr_post_shp_fl_el",
-        "tr_pre_shp_fl_el",
-        "tr_shp_fl_bfuel",
-    ],
-    "Carbon": ["deriv_fl_co2", "deriv_co2", "deriv_co2_fl_el"],
-    "Derivate production": ["deriv", "deriv_fl_el", "deriv_fl_n2"],
-    "Heat": [
-        "ely_h2o_fl_heat",
-        "deriv_h2o_fl_heat",
-        "deriv_co2_fl_heat",
-        "deriv_fl_heat",
-        "tr_post_ppl_fl_heat",
-        "tr_post_shp_fl_heat",
-    ],
-}
-
-# all types from mapping
-PROCESS_TYPES = list(PROCESS_SUBTYPES_MAPPING)
-# all subtypes from mapping
-PROCESS_SUBTYPES = list({t for tst in PROCESS_SUBTYPES_MAPPING.values() for t in tst})
+RESULT_COST_TYPES = ["CAPEX", "OPEX", "FLOW", "LC"]
+RESULT_PROCESS_TYPES = [
+    "Water",
+    "Electrolysis",
+    "Electricity generation",
+    "Transportation (Pipeline)",
+    "Transportation (Ship)",
+    "Carbon",
+    "Derivate production",
+    "Heat",
+]
 
 
 class PtxboaAPI:
@@ -174,9 +138,9 @@ class PtxboaAPI:
             columns are: most of the settings arguments of this function, and:
 
             * `values`: numerical value (usually cost)
-            * `process_type`: one of PROCESS_TYPES
-            * `process_subtype`: one of PROCESS_SUBTYPES
-            * `cost_type`: one of COST_TYPES
+            * `process_type`: one of {RESULT_PROCESS_TYPES}
+            * `process_subtype`: arbitrary string
+            * `cost_type`: one of {RESULT_COST_TYPES}
 
         """
         data_handler = DataHandler(self.data, scenario, user_data)
