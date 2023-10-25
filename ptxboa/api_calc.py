@@ -6,20 +6,22 @@ import logging
 import pandas as pd
 
 
-def get_from_dict(dct, key, dct_name="data"):
+def get_from_dict(dct, key, msg=None):
     """Raise detailed KeyError."""
     try:
         return dct[key]
     except KeyError:
-        raise KeyError(f"`{key}` not in {dct_name}. Must be one of {list(dct)}")
+        msg = f"{msg}: " if msg else ""
+        raise KeyError(f"{msg}'{key}' not in {list(dct)}.")
 
 
-def get_from_df(df, key, df_name="data"):
+def get_from_df(df, key, msg=None):
     """Raise detailed KeyError."""
     try:
         return df.loc[key]
     except KeyError:
-        raise KeyError(f"`{key}` not in {df_name}. Must be one of {list(df.index)}")
+        msg = f"{msg}: " if msg else ""
+        raise KeyError(f"{msg}'{key}' not in {list(df.index)}.")
 
 
 # TODO: too complicated: just create a mapping of codes to classes
@@ -35,7 +37,7 @@ class ProcessMeta(type):
         cls._classes[name] = cls
 
     @classmethod
-    def create_process(cls, class_name: str, *args, **kwargs):
+    def create_process(cls, class_name: str, **kwargs):
         """Get process instance by code.
 
         Parameters
@@ -46,8 +48,8 @@ class ProcessMeta(type):
         -------
         Process class instance
         """
-        process_class = get_from_dict(cls._classes, class_name, "process classes")
-        return process_class(class_name, *args, **kwargs)
+        process_class = get_from_dict(cls._classes, class_name, "process class_name")
+        return process_class(**kwargs)
 
 
 class GenericProcess(metaclass=ProcessMeta):
@@ -60,6 +62,8 @@ class GenericProcess(metaclass=ProcessMeta):
         self,
         process_code,
         data_handler,
+        result_process_type,
+        flow_code_to_result_process_type=None,
         secondary_processes=None,
         region_code="",
         country_code="",
@@ -67,8 +71,13 @@ class GenericProcess(metaclass=ProcessMeta):
         process_code_ely="",
         process_code_deriv="",
         flow_code="",
+        **kwargs,
     ):
         secondary_processes = secondary_processes or {}
+        flow_code_to_result_process_type = flow_code_to_result_process_type or {}
+
+        self.data_handler = data_handler
+        self.result_process_type = result_process_type
         self.process_code = process_code
         self.flow_procs = {}
         self.param_values = {}
@@ -104,7 +113,17 @@ class GenericProcess(metaclass=ProcessMeta):
                 # TODO: check that flow matches
                 # assert self.flow_procs[flow].main_flow_out == flow # noqa
             else:
+                # result_process_type can also come from flow,
+                # otherwise: parent process result_process_type
+
+                result_process_type = (
+                    flow_code_to_result_process_type.get(flow_code)
+                    or self.result_process_type
+                )
+
                 self.flow_procs[flow_code] = ProcessMarketFlow(
+                    process_code="",
+                    result_process_type=result_process_type,
                     flow_code=flow_code,
                     data_handler=data_handler,
                     source_region_code=region_code,
@@ -124,6 +143,9 @@ class GenericProcess(metaclass=ProcessMeta):
     def _calculate_results(self, output_value) -> list:
         return []
 
+    def _create_result_row(self, cost_category, value) -> list:
+        return (self.result_process_type, self.__class__.__name__, cost_category, value)
+
     def __call__(self, input_value):
         """Calculate results.
 
@@ -140,11 +162,11 @@ class GenericProcess(metaclass=ProcessMeta):
         """
         output_value = self._calculate_output_value(input_value)
 
-        # adding tuple (process_type, process_subtype, cost_type, values)
+        # adding tuple (result_process_type, process_subtype, cost_type, values)
         results = self._calculate_results(output_value)
 
         for fp in self.flow_procs.values():
-            _, results_from_sec_processes = fp(main_output_value=output_value)
+            _, results_from_sec_processes = fp(output_value)
             results += results_from_sec_processes
 
         return output_value, results
@@ -163,12 +185,9 @@ class ProcessMain(GenericProcess):
 
     def _calculate_results(self, main_output_value) -> list:
         results = super()._calculate_results(main_output_value)
-        subprocess_type = self.__class__.__name__
         # DUMMY factors
-        results += [
-            (self.process_type, subprocess_type, "CAPEX", main_output_value * 0.1),
-            (self.process_type, subprocess_type, "OPEX", main_output_value * 0.1),
-        ]
+        results.append(self._create_result_row("CAPEX", main_output_value * 0.1))
+        results.append(self._create_result_row("OPEX", main_output_value * 0.1))
         return results
 
 
@@ -177,6 +196,10 @@ class ProcessPassthrough(GenericProcess):
 
     def _calculate_output_value(self, input_value) -> float:
         return input_value
+
+
+class ProcessTransport(ProcessPassthrough):
+    pass
 
 
 class ProcessSecondary(GenericProcess):
@@ -192,29 +215,24 @@ class ProcessSecondary(GenericProcess):
 class ProcessMarketFlow(ProcessSecondary):
     """Dummy process to buy required flows at market cost."""
 
-    parameters = ("SPECCOST",)
-
-    def __init__(self, parent_process_type, **kwargs):
-        super().__init__(**kwargs)
-        self.process_type = parent_process_type
+    parameters = (
+        "CONV",
+        "SPECCOST",
+    )
 
     def _calculate_results(self, output_value) -> list:
-        results = []  # no need for super
-        subprocess_type = self.__class__.__name__
-        results += [
-            (
-                self.process_type,
-                subprocess_type,
-                "FLOW",
-                output_value * self.param_values["SPECCOST"],
-            ),
+        # no need for super()
+        results = [
+            self._create_result_row(
+                "FLOW", output_value * self.param_values["SPECCOST"]
+            )
         ]
         return results
 
 
-class ProcessReGen(ProcessMain):
+class ProcessRenewableGeneration(ProcessMain):
     main_flow_out = "EL"
-    process_type = "Electricity generation"
+    result_process_type = "Electricity generation"
     parameters = ()
 
     def _calculate_output_value(self, input_value) -> float:
@@ -224,14 +242,14 @@ class ProcessReGen(ProcessMain):
 class ProcessElectrolysis(ProcessMain):
     main_flow_in = "EL"
     main_flow_out = "H2-G"
-    process_type = "Electrolysis"
+    result_process_type = "Electrolysis"
     flows = ("HEAT",)
 
 
-class ProcessDerivateNH3(ProcessMain):
+class ProcessDerivate(ProcessMain):
     main_flow_in = "H2-G"
     main_flow_out = "NH3-L"
-    process_type = "Derivate production"
+    result_process_type = "Derivate production"
     flows = ("CO2-G", "HEAT")
 
 
@@ -257,12 +275,20 @@ class PtxCalc:
         """Calculate results."""
         # get process codes for selected chain
         chain_dim = self.data_handler.get_dimension("chain")
+        process_dim = self.data_handler.get_dimension("process")
         chain_attrs = get_from_df(chain_dim, chain, "chains")
         main_flow_out = chain_attrs["FLOW_OUT"]
         can_pipeline = chain_attrs["CAN_PIPELINE"]
         process_codes = [process_code_res]
         process_code_ely = chain_attrs["ELY"]
         process_code_deriv = chain_attrs["DERIV"]
+
+        # some flows are grouped into their own output category (but not all)
+        # so we load the mapping from the data
+        flow_dim = self.data_handler.get_dimension("flow")
+        flow_code_to_result_process_type = dict(
+            flow_dim.loc[flow_dim["result_process_type"] != "", "result_process_type"]
+        )
 
         for c in [
             "ELY",
@@ -279,6 +305,8 @@ class PtxCalc:
             "PPLR",
         ]:
             process_code = chain_attrs[c]
+            if not process_code:
+                continue
             process_codes.append(process_code)
         secondary_processes = {}
         if secproc_water_code:
@@ -286,8 +314,14 @@ class PtxCalc:
         elif secproc_co2_code:
             secondary_processes["CO2-G"] = secproc_co2_code
 
-        processes = [
-            GenericProcess.create_process(
+        processes = []
+        for process_code in process_codes:
+            proc_attrs = get_from_df(process_dim, process_code, "process")
+            print()
+            process = GenericProcess.create_process(
+                class_name=proc_attrs["class_name"],
+                result_process_type=proc_attrs["result_process_type"],
+                flow_code_to_result_process_type=flow_code_to_result_process_type,
                 process_code=process_code,
                 data_handler=self.data_handler,
                 secondary_processes=secondary_processes,
@@ -301,8 +335,8 @@ class PtxCalc:
                 process_code_deriv=process_code_deriv,
                 process_code_res=process_code_res,
             )
-            for process_code in process_codes
-        ]
+            processes.append(process)
+
         # TODO:optionally: check that chain is valid (flows)
         # assert self.processes[0].main_flow_in is None # noqa
         # for i in range(1, len(self.processes)): # noqa
@@ -320,17 +354,20 @@ class PtxCalc:
 
         # convert results in Dataframe (maybe aggregate some?)
         results = pd.DataFrame(
-            results, columns=["process_type", "process_subtype", "cost_type", "values"]
+            results,
+            columns=["result_process_type", "process_subtype", "cost_type", "values"],
         )
 
         # TODO: maybe not required: aggregate over all key columns
         # in case some processes create data with the same categories
         results = (
-            results.groupby(["process_type", "process_subtype", "cost_type"])
+            results.groupby(["result_process_type", "process_subtype", "cost_type"])
             .sum()
             .reset_index()
         )
 
         # TODO: apply output_unit conversion on
+
+        logging.warning(results)
 
         return results

@@ -10,4 +10,8 @@ DATA_DIR = dirname(__file__)
 
 def load_data(name: str) -> pd.DataFrame:
     filepath = f"{DATA_DIR}/{name}.csv"
-    return pd.read_csv(filepath)
+    df = pd.read_csv(filepath)
+    # numerical columns should never be empty, dimension columns
+    # maybe empty and will be filled with ""
+    df = df.fillna("")
+    return df

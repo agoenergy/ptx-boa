@@ -260,6 +260,8 @@ class PtxData:
                 - 'country'
                 - 'transport'
                 - 'output_unit'
+                - 'process'
+                - 'flow'
 
         Returns
         -------
@@ -276,8 +278,18 @@ class PtxData:
             "country": self._get_country_dimension,
             "transport": self._get_transport_dimension,
             "output_unit": self._get_output_unit_dimension,
+            "process": self._get_process_dimension,
+            "flow": self._get_output_flow_dimension,
         }
         return _dimensions[dim]()
+
+    def _get_process_dimension(self) -> pd.DataFrame:
+        """Availible items for this class."""
+        return self.dimensions["process"].set_index("process_code", drop=False)
+
+    def _get_output_flow_dimension(self) -> pd.DataFrame:
+        """Availible items for this class."""
+        return self.dimensions["flow"].set_index("flow_code", drop=False)
 
     def _get_scenario_dimension(self) -> pd.DataFrame:
         """Availible items for this class.

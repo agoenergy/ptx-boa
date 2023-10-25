@@ -271,7 +271,7 @@ class PtxboaAPI:
         # self.data.map_code_to_name(name, code) # noqa
         def name_to_code_bad(dim, dim_name, name):
             df = self.data.get_dimension(dim)
-            return df.loc[df[dim_name + "_name"] == name, dim_name + "_code"][0]
+            return df.loc[df[dim_name + "_name"] == name, dim_name + "_code"].iloc[0]
 
         calculator.calculate(
             secproc_co2_code=name_to_code_bad("secproc_co2", "process", secproc_co2),
