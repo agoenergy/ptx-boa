@@ -507,7 +507,11 @@ class DataHandler:
             process_code_deriv=process_code_deriv,
         )
 
-        if parameter_code == "FLH":
+        if (
+            parameter_code == "FLH"
+            and process_code
+            not in self.ptxdata.get_dimension("res_gen")["process_code"].to_list()
+        ):
             # FLH not changed by user_data
             df = self.ptxdata.flh
             selector = (
