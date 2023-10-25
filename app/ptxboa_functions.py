@@ -12,18 +12,7 @@ from ptxboa.api import PtxboaAPI
 
 def calculate_results_single(api: PtxboaAPI, settings):
     """Calculate results for single country pair."""
-    res = api.calculate(
-        scenario=settings["sel_scenario"],
-        secproc_co2=settings["sel_secproc_co2"],
-        secproc_water=settings["sel_secproc_water"],
-        chain=settings["sel_chain"],
-        res_gen=settings["sel_res_gen_name"],
-        region=settings["sel_region"],
-        country=settings["sel_country_name"],
-        transport=settings["sel_transport"],
-        ship_own_fuel=settings["sel_ship_own_fuel"],
-        output_unit=settings["selOutputUnit"],
-    )
+    res = api.calculate(**settings)
 
     return res
 
@@ -55,18 +44,9 @@ def calculate_results(
         region_list = api.get_dimension("region")["region_name"]
 
     for region in region_list:
-        res_single = api.calculate(
-            scenario=settings["sel_scenario"],
-            secproc_co2=settings["sel_secproc_co2"],
-            secproc_water=settings["sel_secproc_water"],
-            chain=settings["sel_chain"],
-            res_gen=settings["sel_res_gen_name"],
-            region=region,
-            country=settings["sel_country_name"],
-            transport=settings["sel_transport"],
-            ship_own_fuel=settings["sel_ship_own_fuel"],
-            output_unit=settings["selOutputUnit"],
-        )
+        settings2 = settings.copy()
+        settings2["region"] = region
+        res_single = api.calculate(**settings2)
         res_list.append(res_single)
     res = pd.concat(res_list)
     return res
@@ -91,18 +71,34 @@ def aggregate_costs(res_details: pd.DataFrame) -> pd.DataFrame:
 def create_sidebar(api: PtxboaAPI):
     st.sidebar.subheader("Main settings:")
     settings = {}
-    settings["sel_region"] = st.sidebar.selectbox(
+    include_subregions = False
+    if include_subregions:
+        region_list = api.get_dimension("region").index
+    else:
+        region_list = (
+            api.get_dimension("region")
+            .loc[api.get_dimension("region")["subregion_code"].isna()]
+            .index
+        )
+    settings["region"] = st.sidebar.selectbox(
         "Supply country / region:",
-        # TODO: replace with complete list of regions once calculation time is reduced:
-        ("Argentina", "Morocco", "South Africa"),
+        region_list,
         help=(
-            "One supply country or region can be selected here, and detailed settings "
-            "can be selected for this region below "
+            "One supply country or region can be selected here, "
+            " and detailed settings can be selected for this region below "
             "(RE source, mode of transportation). For other regions, "
             "default settings will be used."
         ),
     )
-    settings["sel_country_name"] = st.sidebar.selectbox(
+    include_subregions = st.sidebar.toggle(
+        "Include subregions",
+        help=(
+            "For three deep-dive countries (Argentina, Morocco, and South Africa) "
+            "the app calculates costs for subregions as well. Activate this switch"
+            "if you want to chose one of these subregions as a supply region. "
+        ),
+    )
+    settings["country"] = st.sidebar.selectbox(
         "Demand country:",
         api.get_dimension("country").index,
         help=(
@@ -147,11 +143,11 @@ def create_sidebar(api: PtxboaAPI):
     else:
         use_reconversion = False
 
-    settings["sel_chain"] = f"{product} ({ely})"
+    settings["chain"] = f"{product} ({ely})"
     if use_reconversion:
-        settings["sel_chain"] = f"{settings['sel_chain']} + reconv. to H2"
+        settings["chain"] = f"{settings['chain']} + reconv. to H2"
 
-    settings["sel_res_gen_name"] = st.sidebar.selectbox(
+    settings["res_gen"] = st.sidebar.selectbox(
         "Renewable electricity source (for selected supply region):",
         api.get_dimension("res_gen").index,
         help=(
@@ -185,33 +181,33 @@ def create_sidebar(api: PtxboaAPI):
             ),
             horizontal=True,
         )
-    settings["sel_scenario"] = f"{data_year} ({cost_scenario})"
+    settings["scenario"] = f"{data_year} ({cost_scenario})"
 
     st.sidebar.subheader("Additional settings:")
-    settings["sel_secproc_co2"] = st.sidebar.radio(
+    settings["secproc_co2"] = st.sidebar.radio(
         "Carbon source:",
         api.get_dimension("secproc_co2").index,
         horizontal=True,
         help="Help text",
     )
-    settings["sel_secproc_water"] = st.sidebar.radio(
+    settings["secproc_water"] = st.sidebar.radio(
         "Water source:",
         api.get_dimension("secproc_water").index,
         horizontal=True,
         help="Help text",
     )
-    settings["sel_transport"] = st.sidebar.radio(
+    settings["transport"] = st.sidebar.radio(
         "Mode of transportation (for selected supply country):",
         api.get_dimension("transport").index,
         horizontal=True,
         help="Help text",
     )
-    if settings["sel_transport"] == "Ship":
-        settings["sel_ship_own_fuel"] = st.sidebar.toggle(
+    if settings["transport"] == "Ship":
+        settings["ship_own_fuel"] = st.sidebar.toggle(
             "For shipping option: Use the product as own fuel?",
             help="Help text",
         )
-    settings["selOutputUnit"] = st.sidebar.radio(
+    settings["output_unit"] = st.sidebar.radio(
         "Unit for delivered costs:",
         api.get_dimension("output_unit").index,
         horizontal=True,
@@ -226,8 +222,8 @@ def create_world_map(settings: dict, res_costs: pd.DataFrame):
         "Select cost component:", res_costs.columns, index=len(res_costs.columns) - 1
     )
     title_string = (
-        f"{parameter_to_show_on_map} cost of exporting {settings['sel_chain']} to "
-        f"{settings['sel_country_name']}"
+        f"{parameter_to_show_on_map} cost of exporting {settings['chain']} to "
+        f"{settings['country']}"
     )
     # Create a choropleth world map using Plotly Express
     fig = px.choropleth(
@@ -250,7 +246,7 @@ def create_world_map(settings: dict, res_costs: pd.DataFrame):
         oceancolor="lightblue",  # Set ocean color
     )
 
-    fig.update_layout(coloraxis_colorbar={"title": settings["selOutputUnit"]})
+    fig.update_layout(coloraxis_colorbar={"title": settings["output_unit"]})
 
     # Display the map using st.plotly_chart
     st.plotly_chart(fig, use_container_width=True)
@@ -287,7 +283,7 @@ def create_box_plot(res_costs: pd.DataFrame, settings: dict):
     fig = go.Figure()
 
     # Specify the row index of the data point you want to highlight
-    highlighted_row_index = settings["sel_region"]
+    highlighted_row_index = settings["region"]
 
     # Extract the value from the specified row and column
     highlighted_value = res_costs.at[highlighted_row_index, "Total"]
@@ -311,7 +307,7 @@ def create_box_plot(res_costs: pd.DataFrame, settings: dict):
     fig.update_layout(
         title="Cost distribution for all supply countries",
         xaxis={"title": ""},
-        yaxis={"title": settings["selOutputUnit"]},
+        yaxis={"title": settings["output_unit"]},
         height=500,
     )
 
@@ -320,7 +316,7 @@ def create_box_plot(res_costs: pd.DataFrame, settings: dict):
 
 def create_scatter_plot(df_res, settings: dict):
     df_res["Country"] = "Other countries"
-    df_res.at[settings["sel_region"], "Country"] = settings["sel_region"]
+    df_res.at[settings["region"], "Country"] = settings["region"]
 
     fig = px.scatter(
         df_res,
@@ -336,12 +332,18 @@ def create_scatter_plot(df_res, settings: dict):
 
 
 def content_dashboard(api, res_costs: dict, context_data: dict, settings: pd.DataFrame):
-    st.markdown("Welcome to our dashboard!")
-    st.markdown(
-        "Here you will find your central selection options, "
-        "a first look at your results and links to more detailed result sheets."
-    )
-    st.divider()
+    with st.expander("What is this?"):
+        st.markdown(
+            """
+This is the dashboard. It shows key results according to your settings:
+- a map and a box plot that show the spread and the
+regional distribution of total costs across supply regions
+- a split-up of costs by category for your chosen supply region
+- key information on your chosen demand country.
+
+Switch to other tabs to explore data and results in more detail!
+            """
+        )
 
     c_1, c_2 = st.columns([1, 2])
     with c_1:
@@ -379,20 +381,25 @@ def content_market_scanning(
     res_costs : pd.DataFrame
         Results.
     """
-    st.markdown("**Market Scanning**")
-    st.markdown(
-        """This is the markt scanning sheet. It will contain scatter plots
-        that allows users to compare regions by total cost, transportation
-        distance and H2 demand."""
-    )
+    with st.expander("What is this?"):
+        st.markdown(
+            """
+**Market scanning: Get an overview of competing PTX BOA supply countries
+ and potential demand countries.**
+
+This sheet helps you to better evaluate your country's competitive position
+ as well as your options on the emerging global H2 market.
+
+            """
+        )
 
     # get input data:
-    input_data = api.get_input_data(settings["sel_scenario"])
+    input_data = api.get_input_data(settings["scenario"])
 
     # filter shipping and pipeline distances:
     distances = input_data.loc[
         (input_data["parameter_code"].isin(["shipping distance", "pipeline distance"]))
-        & (input_data["target_country_code"] == settings["sel_country_name"]),
+        & (input_data["target_country_code"] == settings["country"]),
         ["source_region_code", "parameter_code", "value"],
     ]
     distances = distances.pivot_table(
@@ -462,8 +469,8 @@ def remove_subregions(api: PtxboaAPI, df: pd.DataFrame, settings: dict):
     )
 
     # ensure that target country is not in list of regions:
-    if settings["sel_country_name"] in region_list_without_subregions:
-        region_list_without_subregions.remove(settings["sel_country_name"])
+    if settings["country"] in region_list_without_subregions:
+        region_list_without_subregions.remove(settings["country"])
 
     df = df.loc[region_list_without_subregions]
 
@@ -482,12 +489,17 @@ def content_costs_by_region(
     res_costs : pd.DataFrame
         Results.
     """
-    st.markdown("**Costs by region**")
-    st.markdown(
-        """On this sheet, users can analyze total cost and cost components for
-          different supply countries. Data is represented as a bar chart and
-            in tabular form. \n\n Data can be filterend and sorted."""
-    )
+    with st.expander("What is this?"):
+        st.markdown(
+            """
+**Costs by region**
+
+On this sheet, users can analyze total cost and cost components for
+different supply countries. Data is represented as a bar chart and
+in tabular form. \n\n Data can be filterend and sorted.
+            """
+        )
+
     c1, c2 = st.columns([1, 5])
     with c1:
         # filter data:
@@ -509,7 +521,7 @@ def content_costs_by_region(
             ind_select = st.multiselect(
                 "Select regions:",
                 df_res.index.values,
-                default=[settings["sel_region"]],
+                default=[settings["region"]],
             )
             df_res = df_res.loc[ind_select]
 
@@ -541,7 +553,19 @@ def content_deep_dive_countries(
     ------
     None
     """
-    st.markdown("**Deep-dive countries.**")
+    with st.expander("What is this?"):
+        st.markdown(
+            """
+**Deep-dive countries: Data on country and regional level**
+
+For the three deep-dive countries (Argentina, Morocco and South Africa)
+this tab shows full load hours of renewable generation and total costs
+in regional details.
+
+The box plots show median, 1st and 3rd quartile as well as the total spread of values.
+They also show the data for your selected supply country or region for comparison.
+            """
+        )
 
     st.markdown("TODO: add country map")
 
@@ -551,7 +575,7 @@ def content_deep_dive_countries(
 
     # get input data:
 
-    input_data = api.get_input_data(settings["sel_scenario"])
+    input_data = api.get_input_data(settings["scenario"])
 
     # filter data:
     # get list of subregions:
@@ -610,10 +634,22 @@ def content_input_data(api: PtxboaAPI, settings: dict) -> None:
     ------
     None
     """
-    st.markdown("**Input data**")
+    with st.expander("What is this?"):
+        st.markdown(
+            """
+**Input data**
+
+This tab gives you an overview of model input data that is country-specific.
+This includes full load hours (FLH) and capital expenditures (CAPEX)
+of renewable generation technologies, weighted average cost of capital (WACC),
+as well as shipping and pipeline distances to the chosen demand country.
+The box plots show median, 1st and 3rd quartile as well as the total spread of values.
+They also show the data for your country for comparison.
+            """
+        )
 
     # get input data:
-    input_data = api.get_input_data(settings["sel_scenario"])
+    input_data = api.get_input_data(settings["scenario"])
 
     # filter data:
     region_list_without_subregions = (
@@ -677,12 +713,12 @@ def create_box_plot_with_data(df, x, y="value"):
 
 def create_infobox(context_data: dict, settings: dict):
     data = context_data["infobox"]
-    st.markdown(f"**Key information on {settings['sel_country_name']}:**")
-    demand = data.at[settings["sel_country_name"], "Projected H2 demand [2030]"]
-    info1 = data.at[settings["sel_country_name"], "key_info_1"]
-    info2 = data.at[settings["sel_country_name"], "key_info_2"]
-    info3 = data.at[settings["sel_country_name"], "key_info_3"]
-    info4 = data.at[settings["sel_country_name"], "key_info_4"]
+    st.markdown(f"**Key information on {settings['country']}:**")
+    demand = data.at[settings["country"], "Projected H2 demand [2030]"]
+    info1 = data.at[settings["country"], "key_info_1"]
+    info2 = data.at[settings["country"], "key_info_2"]
+    info3 = data.at[settings["country"], "key_info_3"]
+    info4 = data.at[settings["country"], "key_info_4"]
     st.markdown(f"* Projected H2 demand in 2030: {demand}")
 
     def write_info(info):
@@ -721,7 +757,21 @@ def import_context_data():
 
 
 def create_fact_sheet_demand_country(context_data: dict, country_name: str):
-    """Display information on a chosen demand country."""
+    with st.expander("What is this?"):
+        st.markdown(
+            """
+**Country fact sheets**
+
+This sheet provides you with an overview of additional interformation relevant
+for the production of H2 and derivatives
+across all PTX BOA supply countries.
+
+We cover the following aspects: country-specific renewable energy technical potential
+(based on different data sources),
+LNG export and import infrastructure, CCS potentials, availability of a H2 strategy and
+wholesale electricity prices.
+            """
+        )
     df = context_data["demand_countries"]
     data = df.loc[df["country_name"] == country_name].iloc[0].to_dict()
 
@@ -809,7 +859,15 @@ def create_fact_sheet_supply_country(context_data: dict, country_name: str):
 
 
 def create_fact_sheet_certification_schemes(context_data: dict):
-    """Display information on a chosen certification scheme."""
+    with st.expander("What is this?"):
+        st.markdown(
+            """
+**Get supplementary information on H2-relevant certification frameworks **
+
+This sheet provides you with an overview of current governmental regulations
+and voluntary standards for H2 products.
+            """
+        )
     df = context_data["certification_schemes"]
     helptext = "Select the certification scheme you want to know more about."
     scheme_id = st.selectbox("Select scheme:", df["ID"], help=helptext)
@@ -850,14 +908,43 @@ def create_fact_sheet_certification_schemes(context_data: dict):
 
 
 def create_content_sustainability(context_data: dict):
-    """Display information on sustainability issues."""
+    with st.expander("What is this?"):
+        st.markdown(
+            """
+**Get supplementary information on PTX-relevant sustainability issues**
+
+Hydrogen is not sustainable by nature.
+And sustainability goes far beyond the CO2-footprint of a product.
+It also includes other environmental as well as socio-economic dimensions.
+
+This is why we provide you with a set of questions that will help you assess your plans
+for PTX production and export from a comprehensive sustainability perspective.
+The compliation is based on frameworks by the PtX Hub as well as the Oeko-Institute.
+Please note that this list does not claim to be exhaustive,
+but only serves for an orientation on the topic.
+            """
+        )
     df = context_data["sustainability"]
-    st.image("static/sustainability.png")
-    captiontext = (
-        "Source: https://ptx-hub.org/wp-content/uploads/2022/05/"
-        "PtX-Hub-PtX.Sustainability-Dimensions-and-Concerns-Scoping-Paper.pdf"
-    )
-    st.caption(captiontext)
+
+    c1, c2 = st.columns([2, 1])
+    with c1:
+        st.image("static/sustainability.png")
+        captiontext = (
+            "Source: https://ptx-hub.org/wp-content/uploads/2022/05/"
+            "PtX-Hub-PtX.Sustainability-Dimensions-and-Concerns-Scoping-Paper.pdf"
+        )
+        st.caption(captiontext)
+    with c2:
+        st.markdown(
+            """
+**Dimensions of sustainability**
+
+This text should explain the diagram and how the content of this tab is structured.
+
+Maybe it could be combined with the content of the "What is this?" expander above.
+                    """
+        )
+    st.divider()
 
     c1, c2 = st.columns(2)
     with c1:
@@ -876,10 +963,10 @@ def create_content_sustainability(context_data: dict):
         data = df.loc[(df["dimension"] == dimension) & (df["type"] == question_type)]
 
     for topic in data["topic"].unique():
-        st.markdown(f"**{topic}:**")
-        data_select = data.loc[data["topic"] == topic]
-        for _ind, row in data_select.iterrows():
-            st.markdown(f"- {row['question']}")
+        with st.expander(f"**{topic}**"):
+            data_select = data.loc[data["topic"] == topic]
+            for _ind, row in data_select.iterrows():
+                st.markdown(f"- {row['question']}")
 
 
 def is_valid_url(url: str) -> bool:
@@ -896,7 +983,14 @@ def is_valid_url(url: str) -> bool:
 
 
 def create_content_literature(context_data: dict):
-    """Display list of references."""
+    with st.expander("What is this?"):
+        st.markdown(
+            """
+**List of references**
+
+This tab contains a list of references used in this app.
+            """
+        )
     df = context_data["literature"]
     markdown_text = ""
     for _ind, row in df.iterrows():
@@ -909,3 +1003,16 @@ def create_content_literature(context_data: dict):
         markdown_text = markdown_text + text
 
     st.markdown(markdown_text)
+
+
+def content_disclaimer():
+    with st.expander("What is this?"):
+        st.markdown(
+            """
+**Disclaimer**
+
+TODO: add explanatory text
+            """
+        )
+    st.image("static/disclaimer.png")
+    st.image("static/disclaimer_2.png")
