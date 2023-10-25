@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import CategoricalDtype
 
+from .api_calc import PtxCalc
 from .api_data import DataHandler, PtxData
 
 COST_TYPES = ["CAPEX", "OPEX", "FLOW", "LC"]
@@ -262,7 +263,29 @@ class PtxboaAPI:
 
         """
         data_handler = DataHandler(self.data, scenario, user_data)
-        data_handler.get_parameter_value
+
+        calculator = PtxCalc(data_handler)
+
+        # TODO: better way to map dimension names to codes
+        # self.data.map_name_to_code(dim, name) # noqa
+        # self.data.map_code_to_name(name, code) # noqa
+        def name_to_code_bad(dim, dim_name, name):
+            df = self.data.get_dimension(dim)
+            return df.loc[df[dim_name + "_name"] == name, dim_name + "_code"][0]
+
+        calculator.calculate(
+            secproc_co2_code=name_to_code_bad("secproc_co2", "process", secproc_co2),
+            secproc_water_code=name_to_code_bad(
+                "secproc_water", "process", secproc_water
+            ),
+            chain=chain,
+            process_code_res=name_to_code_bad("res_gen", "process", res_gen),
+            region_code=name_to_code_bad("region", "region", region),
+            country_code=name_to_code_bad("country", "country", country),
+            transport=transport,
+            ship_own_fuel=ship_own_fuel,
+            output_unit=output_unit,
+        )
 
         return self._create_random_output_data(
             scenario,

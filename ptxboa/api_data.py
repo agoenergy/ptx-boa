@@ -572,3 +572,7 @@ class DataHandler:
                 f"'{parameter_code}': irrelevant parameters"
                 f" must be None but are currently\n{pprint.pformat(kwargs)}"
             )
+
+    def get_dimension(self, dim: str) -> pd.DataFrame:
+        """Delegate get_dimension to underlying data class."""
+        return self.ptxdata.get_dimension(dim=dim)

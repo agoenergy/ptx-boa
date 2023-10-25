@@ -40,8 +40,8 @@ st.title("PtX Business Opportunity Analyzer Mockup")
     ]
 )
 
-# TODO: cache this instance
-api = PtxboaAPI()
+
+api = st.cache_resource(PtxboaAPI)()
 
 # create sidebar:
 settings = pf.create_sidebar(api)
@@ -54,7 +54,7 @@ res_details = pf.calculate_results(
 res_costs = pf.aggregate_costs(res_details)
 
 # import context data:
-cd = pf.import_context_data()
+cd = st.cache_resource(pf.import_context_data)()
 
 # dashboard:
 with t_dashboard:

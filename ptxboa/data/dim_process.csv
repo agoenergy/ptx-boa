@@ -1,4 +1,4 @@
-process_name,process_code,main_flow_code_out,main_flow_code_in,is_transformation,is_re_generation,is_transport,is_secondary,process_class,is_secondary_all,is_deprecated,is_ely,is_deriv
+process_name,process_code,main_flow_code_out,main_flow_code_in,is_transformation,is_re_generation,is_transport,is_secondary,process_class,is_secondary_all,is_deprecated,is_ely,is_deriv,process_type
 AEL electrolysis,AEL-EL,H2-G,EL,True,False,False,False,ELEC,False,False,True,False
 Autothermal-Reactor (Blue Hydrogen),ATR,H2-G,CH4-G,True,False,True,False,TRANSP-P,False,False,False,False
 Methanol reconversion,CH3OHREC,H2-G,CH3OH-L,True,False,False,False,PROC,False,False,False,False
