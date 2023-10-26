@@ -654,8 +654,9 @@ class DataHandler:
                 )
 
         # check that remaining unused kwargs are not defined
-        if not all(value is None for value in kwargs.values()):
+        if any(kwargs.values()):
             raise ValueError(
                 f"'{parameter_code}': irrelevant parameters"
-                f" must be None but are currently\n{pprint.pformat(kwargs)}"
+                f" must be None on or empty string but are "
+                f"currently\n{pprint.pformat(kwargs)}"
             )
