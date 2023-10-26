@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Handle data queries for api calculation."""
 
+import logging
 import pprint
 from itertools import product
 from typing import Literal
@@ -9,6 +10,8 @@ import numpy as np
 import pandas as pd
 
 from .data import load_data
+
+logger = logging.getLogger(__name__)
 
 PARAMETER_DIMENSIONS = {
     "CALOR": {"required": ["flow_code"], "global_default": False},
@@ -576,22 +579,65 @@ class DataHandler:
             )
         else:
             df = self.scenario_data
-            selector = df["parameter_code"] == parameter_code
-            if process_code is not None:
-                selector &= df["process_code"] == process_code
-            if flow_code is not None:
-                selector &= df["flow_code"] == flow_code
-            if source_region_code is not None:
-                selector &= df["source_region_code"] == source_region_code
-            if target_country_code is not None:
-                selector &= df["target_country_code"] == target_country_code
+            selector = self._construct_selector(
+                df,
+                parameter_code,
+                process_code,
+                flow_code,
+                source_region_code,
+                target_country_code,
+            )
 
         row = df[selector]
+
+        if len(row) == 0 and PARAMETER_DIMENSIONS[parameter_code]["global_default"]:
+            # make query with empty "source_region_code"
+            logger.info("searching global default")
+            selector = self._construct_selector(
+                df,
+                parameter_code=parameter_code,
+                process_code=process_code,
+                flow_code=flow_code,
+                source_region_code="",
+                target_country_code=target_country_code,
+            )
+            row = df[selector]
+
         if len(row) == 0:
             raise ValueError("did not find a parameter value")
         if len(row) > 1:
             raise ValueError("found more than one parameter value")
         return row.squeeze().at["value"]
+
+    def _construct_selector(
+        self,
+        df: pd.DataFrame,
+        parameter_code: ParameterCode,
+        process_code: str,
+        flow_code: str,
+        source_region_code: str,
+        target_country_code: str,
+    ) -> pd.Series:
+        """
+        Create a boolean index object which can be used to filter df.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            needs to have columns "parameter_code", "process_code", "flow_code",
+            "source_region_code", and "target_country_code"
+        """
+        kwargs = {
+            "process_code": process_code or "",
+            "flow_code": flow_code or "",
+            "source_region_code": source_region_code or "",
+            "target_country_code": target_country_code or "",
+        }
+        selector = df["parameter_code"] == parameter_code
+        for param in PARAMETER_DIMENSIONS[parameter_code]["required"]:
+            selector &= df[param] == kwargs[param]
+
+        return selector
 
     def _check_required_parameter_value_kwargs(
         self,
@@ -620,10 +666,11 @@ class DataHandler:
                 )
 
         # check that remaining unused kwargs are not defined
-        if not all(value is None for value in kwargs.values()):
+        if any(kwargs.values()):
             raise ValueError(
                 f"'{parameter_code}': irrelevant parameters"
-                f" must be None but are currently\n{pprint.pformat(kwargs)}"
+                f" must be None on or empty string but are "
+                f"currently\n{pprint.pformat(kwargs)}"
             )
 
     def get_dimension(self, dim: str) -> pd.DataFrame:
