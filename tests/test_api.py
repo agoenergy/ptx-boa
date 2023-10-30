@@ -6,9 +6,10 @@ import unittest
 import numpy as np
 
 from ptxboa.api import PtxboaAPI
+from ptxboa.api_data import DataHandler
 
 
-class TestTemplate(unittest.TestCase):
+class TestApi(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Set up code for class."""
@@ -97,3 +98,34 @@ class TestTemplate(unittest.TestCase):
                 == ""
             )
             self.assertTrue(np.all(left == right))
+
+    def test_datahandler(self):
+        """Test functionality for DataHandler.get_parameter_value."""
+        data_handler = DataHandler(self.api.data, scenario="2030 (low)", user_data=None)
+
+        expected_val = 0.0503
+
+        # WACC without source_region_code (this is NOT fine)
+        self.assertRaises(
+            Exception, data_handler.get_parameter_value, parameter_code="WACC"
+        )
+
+        # WACC with process_code="" (this is fine)
+        pval = data_handler.get_parameter_value(
+            parameter_code="WACC", process_code="", source_region_code="AUS"
+        )
+        self.assertAlmostEqual(pval, expected_val)
+
+        # WACC without process_code (this is fine)
+        pval = data_handler.get_parameter_value(
+            parameter_code="WACC", source_region_code="AUS"
+        )
+        self.assertAlmostEqual(pval, expected_val)
+
+        # WACC without additional,non required field (this is fine)
+        pval = data_handler.get_parameter_value(
+            parameter_code="WACC",
+            source_region_code="AUS",
+            target_country_code="XYZ",
+        )
+        self.assertAlmostEqual(pval, expected_val)

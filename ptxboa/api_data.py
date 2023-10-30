@@ -64,7 +64,7 @@ PARAMETER_DIMENSIONS = {
         "global_default": True,
     },
     "WACC": {
-        "required": ["process_code", "source_region_code"],
+        "required": ["source_region_code"],
         "global_default": True,
     },
 }
