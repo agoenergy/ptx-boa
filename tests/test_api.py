@@ -129,3 +129,20 @@ class TestApi(unittest.TestCase):
             target_country_code="XYZ",
         )
         self.assertAlmostEqual(pval, expected_val)
+
+        # FLH for other
+        pval = data_handler.get_parameter_value(
+            parameter_code="FLH",
+            source_region_code="MAR-GUE",
+            process_code="PEM-EL",
+            process_code_res="WIND-OFF",
+            process_code_ely="PEM-EL",
+            process_code_deriv="LOHC-CON",
+        )
+        self.assertAlmostEqual(pval, 5436.92426314625)
+
+        # FLH for RES
+        pval = data_handler.get_parameter_value(
+            parameter_code="FLH", source_region_code="ARG", process_code="PV-FIX"
+        )
+        self.assertAlmostEqual(pval, 1494.0)

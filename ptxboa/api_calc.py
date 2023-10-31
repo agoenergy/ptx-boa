@@ -65,13 +65,16 @@ class GenericProcess(metaclass=ProcessMeta):
         result_process_type,
         flow_code_to_result_process_type=None,
         secondary_processes=None,
-        region_code="",
-        country_code="",
+        source_region_code="",
+        target_country_code="",
         process_code_res="",
         process_code_ely="",
         process_code_deriv="",
         flow_code="",
-        **kwargs,
+        transport=None,
+        can_pipeline=None,
+        ship_own_fuel=None,
+        main_flow_out=None,
     ):
         secondary_processes = secondary_processes or {}
         flow_code_to_result_process_type = flow_code_to_result_process_type or {}
@@ -83,23 +86,15 @@ class GenericProcess(metaclass=ProcessMeta):
         self.param_values = {}
 
         for parameter_code in self.parameters:
-            if parameter_code != "FLH":
-                value = self._get_parameter_value(
-                    parameter_code=parameter_code,
-                    process_code=process_code,
-                    flow_code=flow_code,
-                    source_region_code=region_code,
-                    target_country_code=country_code,
-                )
-            else:
-                value = self._get_parameter_value(
-                    parameter_code=parameter_code,
-                    process_code=process_code,
-                    source_region_code=region_code,
-                    process_code_res=process_code_res,
-                    process_code_ely=process_code_ely,
-                    process_code_deriv=process_code_deriv,
-                )
+            value = self._get_parameter_value(
+                parameter_code=parameter_code,
+                process_code=process_code,
+                flow_code=flow_code,
+                source_region_code=source_region_code,
+                process_code_res=process_code_res,
+                process_code_ely=process_code_ely,
+                process_code_deriv=process_code_deriv,
+            )
             self.param_values[parameter_code] = value
 
         for flow_code in self.flows:
@@ -107,8 +102,9 @@ class GenericProcess(metaclass=ProcessMeta):
                 flow_proc_code = secondary_processes[flow_code]
                 self.flow_procs[flow_code] = ProcessSecondary.create_process(
                     process_code=flow_proc_code,
+                    flow_code=flow_code,
                     data_handler=data_handler,
-                    source_region_code=region_code,
+                    source_region_code=source_region_code,
                 )
                 # TODO: check that flow matches
                 # assert self.flow_procs[flow].main_flow_out == flow # noqa
@@ -122,20 +118,23 @@ class GenericProcess(metaclass=ProcessMeta):
                 )
 
                 self.flow_procs[flow_code] = ProcessMarketFlow(
-                    process_code="",
+                    process_code=process_code,
                     result_process_type=result_process_type,
                     flow_code=flow_code,
                     data_handler=data_handler,
-                    source_region_code=region_code,
+                    source_region_code=source_region_code,
                 )
 
-    def _get_parameter_value(self, *args, **kwargs):
+    def _get_parameter_value(self, **kwargs):
         """Temporarily ignore data errors."""
         try:
-            return self.data_handler.get_parameter_value(*args, **kwargs)
+            return self.data_handler.get_parameter_value(**kwargs)
         except ValueError as err:
-            logging.error(err)
-            return 1.0
+            # TODO: mayve add in dat?: some CONV are missing == 0
+            if kwargs["parameter_code"] == "CONV":
+                logging.warning(err)
+                return 0
+            raise
 
     def _calculate_output_value(self, input_value) -> float:
         raise NotImplementedError()
@@ -172,7 +171,7 @@ class GenericProcess(metaclass=ProcessMeta):
         return output_value, results
 
     def __str__(self):
-        return self.process_code
+        return f"{self.__class__.__name__}({self.process_code})"
 
 
 class ProcessMain(GenericProcess):
@@ -209,7 +208,7 @@ class ProcessSecondary(GenericProcess):
 
     def _calculate_output_value(self, main_output_value) -> float:
         # NOTE: when calledwe pass the main_output_value, (not input_value)
-        return main_output_value / self.param_values["CONV"]
+        return main_output_value * self.param_values["CONV"]
 
 
 class ProcessMarketFlow(ProcessSecondary):
@@ -317,7 +316,6 @@ class PtxCalc:
         processes = []
         for process_code in process_codes:
             proc_attrs = get_from_df(process_dim, process_code, "process")
-            print()
             process = GenericProcess.create_process(
                 class_name=proc_attrs["class_name"],
                 result_process_type=proc_attrs["result_process_type"],
@@ -325,8 +323,8 @@ class PtxCalc:
                 process_code=process_code,
                 data_handler=self.data_handler,
                 secondary_processes=secondary_processes,
-                region_code=region_code,
-                country_code=country_code,
+                source_region_code=region_code,
+                target_country_code=country_code,
                 transport=transport,
                 main_flow_out=main_flow_out,
                 can_pipeline=can_pipeline,
