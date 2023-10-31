@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """Classes for main process chain calculation."""
 
-import logging
-
 import pandas as pd
 
 
@@ -129,12 +127,10 @@ class GenericProcess(metaclass=ProcessMeta):
         """Temporarily ignore data errors."""
         try:
             return self.data_handler.get_parameter_value(**kwargs)
-        except ValueError as err:
-            # TODO: mayve add in dat?: some CONV are missing == 0
-            if kwargs["parameter_code"] == "CONV":
-                logging.warning(err)
-                return 0
-            raise
+        except ValueError:
+            # TODO: mayve add in data?: some CONV are missing == 0
+            # or maybe: parameter defaults?
+            return 0
 
     def _calculate_output_value(self, input_value) -> float:
         raise NotImplementedError()
@@ -174,19 +170,35 @@ class GenericProcess(metaclass=ProcessMeta):
         return f"{self.__class__.__name__}({self.process_code})"
 
 
+def pmt(r, n, v):
+    if r == 0:
+        return v / n
+    else:
+        return v * r / (1 - (1 / (1 + r) ** n))
+
+
 class ProcessMain(GenericProcess):
     """Process in main chain."""
 
-    parameters = ("EFF", "WACC", "FLH")
+    parameters = ("EFF", "WACC", "FLH", "LIFETIME", "CAPEX", "OPEX-F", "OPEX-O")
 
     def _calculate_output_value(self, input_value) -> float:
         return input_value * self.param_values["EFF"]
 
     def _calculate_results(self, main_output_value) -> list:
         results = super()._calculate_results(main_output_value)
-        # DUMMY factors
-        results.append(self._create_result_row("CAPEX", main_output_value * 0.1))
-        results.append(self._create_result_row("OPEX", main_output_value * 0.1))
+
+        # installed capacity
+        capacity = main_output_value / self.param_values["FLH"]
+        capex = capacity * self.param_values["CAPEX"]
+        capex_ann = pmt(self.param_values["WACC"], self.param_values["LIFETIME"], capex)
+        opex = (
+            self.param_values["OPEX-F"] * capacity
+            + self.param_values["OPEX-O"] * main_output_value
+        )
+
+        results.append(self._create_result_row("CAPEX", capex_ann))
+        results.append(self._create_result_row("OPEX", opex))
         return results
 
 
@@ -232,7 +244,6 @@ class ProcessMarketFlow(ProcessSecondary):
 class ProcessRenewableGeneration(ProcessMain):
     main_flow_out = "EL"
     result_process_type = "Electricity generation"
-    parameters = ()
 
     def _calculate_output_value(self, input_value) -> float:
         return input_value
@@ -363,5 +374,7 @@ class PtxCalc:
         results = results.groupby(dim_columns).sum().reset_index()
 
         # TODO: apply output_unit conversion on
+        # simple sacling (TODO: EL, UNIT)
+        results["values"] = results["values"] / value
 
         return results

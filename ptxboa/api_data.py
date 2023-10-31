@@ -50,6 +50,10 @@ PARAMETER_DIMENSIONS = {
         "required": ["process_code", "source_region_code"],
         "global_default": True,
     },
+    "OPEX-O": {
+        "required": ["process_code", "source_region_code"],
+        "global_default": True,
+    },
     "OPEX-T": {"required": ["process_code"], "global_default": False},
     "RE-POT": {
         "required": ["process_code", "source_region_code"],

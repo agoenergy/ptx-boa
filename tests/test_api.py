@@ -6,6 +6,7 @@ import unittest
 import numpy as np
 
 from ptxboa.api import PtxboaAPI
+from ptxboa.api_calc import pmt
 from ptxboa.api_data import DataHandler
 
 
@@ -146,3 +147,14 @@ class TestApi(unittest.TestCase):
             parameter_code="FLH", source_region_code="ARG", process_code="PV-FIX"
         )
         self.assertAlmostEqual(pval, 1494.0)
+
+    def test_pmt(self):
+        """Test if pmt function."""
+        self.assertAlmostEqual(pmt(0, 100, 1), 0.01)
+        self.assertAlmostEqual(pmt(0.1, 100, 1), 0.100007257098207)
+        self.assertAlmostEqual(pmt(0.5, 100, 1), 0.5)
+        self.assertAlmostEqual(pmt(1, 100, 1), 1)
+
+        self.assertAlmostEqual(pmt(0.1, 10, 1), 0.162745394882512)
+        self.assertAlmostEqual(pmt(0.5, 10, 1), 0.5088237828522)
+        self.assertAlmostEqual(pmt(1, 10, 1), 1.0009775171)
