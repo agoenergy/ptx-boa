@@ -77,9 +77,10 @@ def create_sidebar(api: PtxboaAPI):
     else:
         region_list = (
             api.get_dimension("region")
-            .loc[api.get_dimension("region")["subregion_code"].isna()]
+            .loc[api.get_dimension("region")["subregion_code"] == ""]
             .index
         )
+
     settings["region"] = st.sidebar.selectbox(
         "Supply country / region:",
         region_list,
@@ -254,6 +255,9 @@ def create_world_map(settings: dict, res_costs: pd.DataFrame):
 
 
 def create_bar_chart_costs(res_costs: pd.DataFrame):
+    if res_costs.empty:  # nodata to plot (FIXME: migth not be required later)
+        return
+
     fig = px.bar(res_costs, x=res_costs.index, y=res_costs.columns[:-1], height=500)
 
     # Add the dot markers for the "total" column using plotly.graph_objects
@@ -284,9 +288,12 @@ def create_box_plot(res_costs: pd.DataFrame, settings: dict):
 
     # Specify the row index of the data point you want to highlight
     highlighted_row_index = settings["region"]
-
     # Extract the value from the specified row and column
-    highlighted_value = res_costs.at[highlighted_row_index, "Total"]
+
+    if highlighted_row_index:
+        highlighted_value = res_costs.at[highlighted_row_index, "Total"]
+    else:
+        highlighted_value = 0
 
     # Add the box plot to the subplot
     fig.add_trace(go.Box(y=res_costs["Total"], name="Cost distribution"))

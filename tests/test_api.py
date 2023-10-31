@@ -6,9 +6,11 @@ import unittest
 import numpy as np
 
 from ptxboa.api import PtxboaAPI
+from ptxboa.api_calc import pmt
+from ptxboa.api_data import DataHandler
 
 
-class TestTemplate(unittest.TestCase):
+class TestApi(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Set up code for class."""
@@ -97,3 +99,62 @@ class TestTemplate(unittest.TestCase):
                 == ""
             )
             self.assertTrue(np.all(left == right))
+
+    def test_datahandler(self):
+        """Test functionality for DataHandler.get_parameter_value."""
+        data_handler = DataHandler(self.api.data, scenario="2030 (low)", user_data=None)
+
+        expected_val = 0.0503
+
+        # WACC without source_region_code (this is NOT fine)
+        self.assertRaises(
+            Exception, data_handler.get_parameter_value, parameter_code="WACC"
+        )
+
+        # WACC with process_code="" (this is fine)
+        pval = data_handler.get_parameter_value(
+            parameter_code="WACC", process_code="", source_region_code="AUS"
+        )
+        self.assertAlmostEqual(pval, expected_val)
+
+        # WACC without process_code (this is fine)
+        pval = data_handler.get_parameter_value(
+            parameter_code="WACC", source_region_code="AUS"
+        )
+        self.assertAlmostEqual(pval, expected_val)
+
+        # WACC without additional,non required field (this is fine)
+        pval = data_handler.get_parameter_value(
+            parameter_code="WACC",
+            source_region_code="AUS",
+            target_country_code="XYZ",
+        )
+        self.assertAlmostEqual(pval, expected_val)
+
+        # FLH for other
+        pval = data_handler.get_parameter_value(
+            parameter_code="FLH",
+            source_region_code="MAR-GUE",
+            process_code="PEM-EL",
+            process_code_res="WIND-OFF",
+            process_code_ely="PEM-EL",
+            process_code_deriv="LOHC-CON",
+        )
+        self.assertAlmostEqual(pval, 5436.92426314625)
+
+        # FLH for RES
+        pval = data_handler.get_parameter_value(
+            parameter_code="FLH", source_region_code="ARG", process_code="PV-FIX"
+        )
+        self.assertAlmostEqual(pval, 1494.0)
+
+    def test_pmt(self):
+        """Test if pmt function."""
+        self.assertAlmostEqual(pmt(0, 100, 1), 0.01)
+        self.assertAlmostEqual(pmt(0.1, 100, 1), 0.100007257098207)
+        self.assertAlmostEqual(pmt(0.5, 100, 1), 0.5)
+        self.assertAlmostEqual(pmt(1, 100, 1), 1)
+
+        self.assertAlmostEqual(pmt(0.1, 10, 1), 0.162745394882512)
+        self.assertAlmostEqual(pmt(0.5, 10, 1), 0.5088237828522)
+        self.assertAlmostEqual(pmt(1, 10, 1), 1.0009775171)

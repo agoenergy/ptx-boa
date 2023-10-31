@@ -2,7 +2,6 @@
 """Handle data queries for api calculation."""
 
 import logging
-import pprint
 from itertools import product
 from typing import Literal
 
@@ -38,15 +37,20 @@ PARAMETER_DIMENSIONS = {
         "required": [
             "process_code",
             "source_region_code",
-            "process_code_res",
-            "process_code_ely",
-            "process_code_deriv",
+            # the following are not required for RES:
+            # "process_code_res",
+            # "process_code_ely",
+            # "process_code_deriv",
         ],
         "global_default": False,
     },
     "LIFETIME": {"required": ["process_code"], "global_default": False},
     "LOSS-T": {"required": ["process_code"], "global_default": False},
     "OPEX-F": {
+        "required": ["process_code", "source_region_code"],
+        "global_default": True,
+    },
+    "OPEX-O": {
         "required": ["process_code", "source_region_code"],
         "global_default": True,
     },
@@ -64,7 +68,7 @@ PARAMETER_DIMENSIONS = {
         "global_default": True,
     },
     "WACC": {
-        "required": ["process_code", "source_region_code"],
+        "required": ["source_region_code"],
         "global_default": True,
     },
 }
@@ -282,7 +286,8 @@ class PtxData:
             "transport": self._get_transport_dimension,
             "output_unit": self._get_output_unit_dimension,
             "process": self._get_process_dimension,
-            "flow": self._get_output_flow_dimension,
+            "flow": self._get_flow_dimension,
+            "parameter": self._get_parameter_dimension,
         }
         return _dimensions[dim]()
 
@@ -290,9 +295,13 @@ class PtxData:
         """Availible items for this class."""
         return self.dimensions["process"].set_index("process_code", drop=False)
 
-    def _get_output_flow_dimension(self) -> pd.DataFrame:
+    def _get_flow_dimension(self) -> pd.DataFrame:
         """Availible items for this class."""
         return self.dimensions["flow"].set_index("flow_code", drop=False)
+
+    def _get_parameter_dimension(self) -> pd.DataFrame:
+        """Availible items for this class."""
+        return self.dimensions["parameter"].set_index("parameter_code", drop=False)
 
     def _get_scenario_dimension(self) -> pd.DataFrame:
         """Availible items for this class.
@@ -552,6 +561,16 @@ class DataHandler:
         ValueError
             if no value is found for a parameter combination.
         """
+        # convert missing codes tom empty strings
+        # for data matching
+        process_code = process_code or ""
+        flow_code = flow_code or ""
+        source_region_code = source_region_code or ""
+        target_country_code = target_country_code or ""
+        process_code_res = process_code_res or ""
+        process_code_ely = process_code_ely or ""
+        process_code_deriv = process_code_deriv or ""
+
         self._check_required_parameter_value_kwargs(
             parameter_code,
             process_code=process_code,
@@ -603,10 +622,21 @@ class DataHandler:
             )
             row = df[selector]
 
-        if len(row) == 0:
-            raise ValueError("did not find a parameter value")
         if len(row) > 1:
             raise ValueError("found more than one parameter value")
+        elif len(row) == 0:
+            raise ValueError(
+                f"""did not find a parameter value for:
+                parameter_code={parameter_code},
+                process_code={process_code},
+                flow_code={flow_code},
+                source_region_code={source_region_code},
+                target_country_code={target_country_code},
+                process_code_res={process_code_res},
+                process_code_ely={process_code_ely},
+                process_code_deriv={process_code_deriv},
+            """
+            )
         return row.squeeze().at["value"]
 
     def _construct_selector(
@@ -657,21 +687,15 @@ class DataHandler:
             keyword arguments passed to `self.get_parameter_value()`
         """
         required_param_names = PARAMETER_DIMENSIONS[parameter_code]["required"]
+
         for p in required_param_names:
             required_value = kwargs.pop(p)
-            if required_value is None:
+            if not required_value:
                 raise ValueError(
                     f"'{parameter_code}': the following parameters must be "
-                    f"defined\n{required_param_names}"
+                    f"defined\n{required_param_names}\n"
+                    f"Got: {kwargs}"
                 )
-
-        # check that remaining unused kwargs are not defined
-        if any(kwargs.values()):
-            raise ValueError(
-                f"'{parameter_code}': irrelevant parameters"
-                f" must be None on or empty string but are "
-                f"currently\n{pprint.pformat(kwargs)}"
-            )
 
     def get_dimension(self, dim: str) -> pd.DataFrame:
         """Delegate get_dimension to underlying data class."""
