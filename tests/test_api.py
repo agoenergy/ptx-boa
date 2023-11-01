@@ -37,9 +37,9 @@ class TestApi(unittest.TestCase):
     def test_example_api_call(self):
         """Test output structure of api.calculate()."""
         settings = {
-            "region": "Argentina",
-            "country": "China",
-            "chain": "Ammonia (AEL)",
+            "region": "United Arab Emirates",
+            "country": "Germany",
+            "chain": "Methane (AEL)",
             "res_gen": "PV tilted",
             "scenario": "2040 (medium)",
             "secproc_co2": "Direct Air Capture",
@@ -147,6 +147,15 @@ class TestApi(unittest.TestCase):
             parameter_code="FLH", source_region_code="ARG", process_code="PV-FIX"
         )
         self.assertAlmostEqual(pval, 1494.0)
+
+        # test distances
+        # FLH for RES
+        pval = data_handler.get_parameter_value(
+            parameter_code="DST-S-DP",
+            source_region_code="ARE",
+            target_country_code="DEU",
+        )
+        self.assertAlmostEqual(pval, 5500)
 
     def test_pmt(self):
         """Test if pmt function."""

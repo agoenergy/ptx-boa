@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Classes for main process chain calculation."""
+import logging
 
 import pandas as pd
 
@@ -31,7 +32,6 @@ class ProcessMeta(type):
     def __init__(cls, name, bases, attrs):
         super().__init__(name, bases, attrs)
         assert name not in cls._classes  # no duplicates
-        # print(f"register {code} -> {cls.__name__}") # noqa
         cls._classes[name] = cls
 
     @classmethod
@@ -53,8 +53,6 @@ class ProcessMeta(type):
 class GenericProcess(metaclass=ProcessMeta):
     flows = ()  # Tuple[str]: flows required by a process of this class
     parameters = ()  # Tuple[str]: parameters required by this process
-    main_flow_in = None  # str
-    main_flow_out = None  # str
 
     def __init__(
         self,
@@ -69,10 +67,9 @@ class GenericProcess(metaclass=ProcessMeta):
         process_code_ely="",
         process_code_deriv="",
         flow_code="",
-        transport=None,
-        can_pipeline=None,
+        use_ship=True,
         ship_own_fuel=None,
-        main_flow_out=None,
+        # main_flow_out=None, # TODO?
     ):
         secondary_processes = secondary_processes or {}
         flow_code_to_result_process_type = flow_code_to_result_process_type or {}
@@ -83,22 +80,35 @@ class GenericProcess(metaclass=ProcessMeta):
         self.flow_procs = {}
         self.param_values = {}
 
+        # TODO: not nice
+        if isinstance(self, ProcessTransport):
+            self.use_ship = use_ship
+            self.ship_own_fuel = ship_own_fuel
+
         for parameter_code in self.parameters:
             value = self._get_parameter_value(
                 parameter_code=parameter_code,
                 process_code=process_code,
                 flow_code=flow_code,
                 source_region_code=source_region_code,
+                target_country_code=target_country_code,
                 process_code_res=process_code_res,
                 process_code_ely=process_code_ely,
                 process_code_deriv=process_code_deriv,
             )
             self.param_values[parameter_code] = value
+            logging.debug("%s.%s = %s", self, parameter_code, value)
+
+        process_dim = self.data_handler.get_dimension("process")  # TODO: better lookup
 
         for flow_code in self.flows:
             if flow_code in secondary_processes:
                 flow_proc_code = secondary_processes[flow_code]
+                # TODO: better lookup
+                proc_attrs = get_from_df(process_dim, flow_proc_code, "process")
                 self.flow_procs[flow_code] = ProcessSecondary.create_process(
+                    class_name=proc_attrs["class_name"],
+                    result_process_type=proc_attrs["result_process_type"],
                     process_code=flow_proc_code,
                     flow_code=flow_code,
                     data_handler=data_handler,
@@ -139,7 +149,8 @@ class GenericProcess(metaclass=ProcessMeta):
         return []
 
     def _create_result_row(self, cost_type, value) -> list:
-        return (self.result_process_type, self.__class__.__name__, cost_type, value)
+        res = (self.result_process_type, self.__class__.__name__, cost_type, value)
+        return res
 
     def __call__(self, input_value):
         """Calculate results.
@@ -209,14 +220,83 @@ class ProcessPassthrough(GenericProcess):
         return input_value
 
 
-class ProcessTransport(ProcessPassthrough):
-    pass
+class ProcessTransportPrePost(ProcessPassthrough):
+    """Process that does not do anything."""
+
+
+class ProcessTransport(GenericProcess):
+    def _calculate_output_value(self, input_value) -> float:
+        dist = self._get_distance()
+        eff = 1 - self.param_values["LOSS-T"] * dist
+        return input_value * eff
+
+    def _get_distance(self):
+        raise NotImplementedError()
+
+
+class ProcessTransportPipeline(ProcessTransport):
+    parameters = ("LOSS-T", "DST-S-DP", "SEASHARE", "CAP-T")
+
+    def _get_distance(self):
+        # TODO: user can override to use ship insetad
+        if self.use_ship:
+            return 0
+
+        # if existing pipeline: only retrofit (if not, only new)
+        if bool(self.param_values["CAP-T"]) != self._is_retrofit():
+            return 0
+
+        dist = self.param_values["DST-S-DP"]
+        share = self.param_values["SEASHARE"]
+        if self._is_land():
+            share = 1 - share
+
+        dist = share * dist
+        return dist
+
+    def _is_land(self):
+        code = self.process_code.split("-")[-1]
+        assert code in {"S", "L", "SR", "LR"}, self.process_code
+        return code in {"L", "LR"}
+
+    def _is_retrofit(self):
+        code = self.process_code.split("-")[-1]
+        assert code in {"S", "L", "SR", "LR"}, self.process_code
+        return code in {"SR", "LR"}
+
+
+class ProcessTransportShip(ProcessTransport):
+    parameters = (
+        "DST-S-D",
+        "DST-S-DP",
+        "LOSS-T",
+    )
+    flows = ("BFUEL-L",)
+
+    def _get_distance(self):
+        # if possible pipeline: use that instead of ship
+        if self.param_values["DST-S-DP"] and not self.use_ship:
+            return 0
+
+        if self.ship_own_fuel != self._use_own_fuel():
+            return 0
+
+        dist = self.param_values["DST-S-D"]
+        return dist
+
+    def _use_own_fuel(self):
+        code = self.process_code.split("-")[-1]
+        assert code in {"S", "SB"}, self.process_code
+        return code in {"SB"}
+
+        return self.process_code.split("-")[-1] == "OWN"
 
 
 class ProcessSecondary(GenericProcess):
     """Secondary process to generate required flows."""
 
     parameters = ("CONV",)
+    flows = ("HEAT", "EL")
 
     def _calculate_output_value(self, main_output_value) -> float:
         # NOTE: when calledwe pass the main_output_value, (not input_value)
@@ -225,6 +305,8 @@ class ProcessSecondary(GenericProcess):
 
 class ProcessMarketFlow(ProcessSecondary):
     """Dummy process to buy required flows at market cost."""
+
+    flows = ()  # Important: no further flows
 
     parameters = (
         "CONV",
@@ -242,25 +324,16 @@ class ProcessMarketFlow(ProcessSecondary):
 
 
 class ProcessRenewableGeneration(ProcessMain):
-    main_flow_out = "EL"
-    result_process_type = "Electricity generation"
-
     def _calculate_output_value(self, input_value) -> float:
         return input_value
 
 
 class ProcessElectrolysis(ProcessMain):
-    main_flow_in = "EL"
-    main_flow_out = "H2-G"
-    result_process_type = "Electrolysis"
-    flows = ("HEAT",)
+    flows = ("H2O-L", "EL")
 
 
 class ProcessDerivate(ProcessMain):
-    main_flow_in = "H2-G"
-    main_flow_out = "NH3-L"
-    result_process_type = "Derivate production"
-    flows = ("CO2-G", "HEAT")
+    flows = ("H2O-L", "CO2-G", "EL", "HEAT", "N2-G")
 
 
 class PtxCalc:
@@ -278,7 +351,7 @@ class PtxCalc:
         process_code_res,
         region_code,
         country_code,
-        transport,
+        use_ship,
         ship_own_fuel,
         output_unit,
     ):
@@ -287,8 +360,6 @@ class PtxCalc:
         chain_dim = self.data_handler.get_dimension("chain")
         process_dim = self.data_handler.get_dimension("process")
         chain_attrs = get_from_df(chain_dim, chain, "chains")
-        main_flow_out = chain_attrs["FLOW_OUT"]
-        can_pipeline = chain_attrs["CAN_PIPELINE"]
         process_codes = [process_code_res]
         process_code_ely = chain_attrs["ELY"]
         process_code_deriv = chain_attrs["DERIV"]
@@ -320,13 +391,15 @@ class PtxCalc:
             process_codes.append(process_code)
         secondary_processes = {}
         if secproc_water_code:
-            secondary_processes["H20-L"] = secproc_water_code
-        elif secproc_co2_code:
+            secondary_processes["H2O-L"] = secproc_water_code
+        if secproc_co2_code:
             secondary_processes["CO2-G"] = secproc_co2_code
 
         processes = []
         for process_code in process_codes:
-            proc_attrs = get_from_df(process_dim, process_code, "process")
+            proc_attrs = get_from_df(
+                process_dim, process_code, "process"
+            )  # TODO: better lookup
             process = GenericProcess.create_process(
                 class_name=proc_attrs["class_name"],
                 result_process_type=proc_attrs["result_process_type"],
@@ -336,20 +409,13 @@ class PtxCalc:
                 secondary_processes=secondary_processes,
                 source_region_code=region_code,
                 target_country_code=country_code,
-                transport=transport,
-                main_flow_out=main_flow_out,
-                can_pipeline=can_pipeline,
+                use_ship=use_ship,
                 ship_own_fuel=ship_own_fuel,
                 process_code_ely=process_code_ely,
                 process_code_deriv=process_code_deriv,
                 process_code_res=process_code_res,
             )
             processes.append(process)
-
-        # TODO:optionally: check that chain is valid (flows)
-        # assert self.processes[0].main_flow_in is None # noqa
-        # for i in range(1, len(self.processes)): # noqa
-        #    assert self.processes[i].main_flow_in == self.processes[i + 1].main_flow_out # noqa
 
         # iterate over main chain, update the value in the main flow
         # and accumulate result data from each process
@@ -371,10 +437,14 @@ class PtxCalc:
 
         # TODO: maybe not required: aggregate over all key columns
         # in case some processes create data with the same categories
+
+        # remove negatives
+        results = results.loc[results["values"] > 0]
+
         results = results.groupby(dim_columns).sum().reset_index()
 
         # TODO: apply output_unit conversion on
         # simple sacling (TODO: EL, UNIT)
-        results["values"] = results["values"] / value
+        results["values"] = results["values"] / value * 1000  # kwh => MWh
 
         return results

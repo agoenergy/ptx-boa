@@ -2,6 +2,8 @@
 """Api for calculations for webapp."""
 
 
+import logging
+
 import pandas as pd
 
 from .api_calc import PtxCalc
@@ -154,6 +156,10 @@ class PtxboaAPI:
             df = self.data.get_dimension(dim)
             return df.loc[df[dim_name + "_name"] == name, dim_name + "_code"].iloc[0]
 
+        if transport not in {"Ship", "Pipeline"}:
+            logging.error("Invalid choice for transport")
+        use_ship = transport == "Ship"
+
         result_df = calculator.calculate(
             secproc_co2_code=name_to_code_bad("secproc_co2", "process", secproc_co2),
             secproc_water_code=name_to_code_bad(
@@ -163,7 +169,7 @@ class PtxboaAPI:
             process_code_res=name_to_code_bad("res_gen", "process", res_gen),
             region_code=name_to_code_bad("region", "region", region),
             country_code=name_to_code_bad("country", "country", country),
-            transport=transport,
+            use_ship=use_ship,
             ship_own_fuel=ship_own_fuel,
             output_unit=output_unit,
         )

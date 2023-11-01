@@ -23,7 +23,6 @@ PARAMETER_DIMENSIONS = {
         "global_default": False,
     },
     "CONV": {"required": ["flow_code", "process_code"], "global_default": False},
-    "DST-S-C": {"required": ["source_region_code"], "global_default": False},
     "DST-S-D": {
         "required": ["source_region_code", "target_country_code"],
         "global_default": False,
