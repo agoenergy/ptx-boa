@@ -94,6 +94,7 @@ ParameterCode = Literal[
     "SEASHARE",
     "SPECCOST",
     "WACC",
+    "STR-CF",
 ]
 ScenarioCode = Literal[
     "2030 (low)",
