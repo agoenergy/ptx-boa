@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Unittests for ptxboa api module."""
 
+import logging
 import unittest
 
 import numpy as np
@@ -8,6 +9,12 @@ import numpy as np
 from ptxboa.api import PtxboaAPI
 from ptxboa.api_calc import pmt
 from ptxboa.api_data import DataHandler
+
+logging.basicConfig(
+    format="[%(asctime)s %(levelname)7s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    level=logging.INFO,
+)
 
 
 class TestApi(unittest.TestCase):
@@ -20,7 +27,7 @@ class TestApi(unittest.TestCase):
         res = self.api.calculate(**settings)
         # test that settings are in results
         for k, v in settings.items():
-            if k in ["ship_own_fuel"]:  # skip some
+            if k in ["ship_own_fuel", "output_unit"]:  # skip some
                 continue
             self.assertEqual(
                 set(res[k].unique()), {v}, f"wrong data in dimension column: {k}"
@@ -34,20 +41,55 @@ class TestApi(unittest.TestCase):
         ]:
             self.assertTrue(k in res.columns)
 
+        return res
+
     def test_example_api_call(self):
         """Test output structure of api.calculate()."""
         settings = {
-            "region": "Argentina",
-            "country": "China",
-            "chain": "Ammonia (AEL)",
+            "region": "United Arab Emirates",
+            "country": "Germany",
+            "chain": "Methane (AEL)",
             "res_gen": "PV tilted",
             "scenario": "2040 (medium)",
             "secproc_co2": "Direct Air Capture",
             "secproc_water": "Sea Water desalination",
             "transport": "Ship",
             "ship_own_fuel": False,
+            "output_unit": "USD/t",
         }
-        self._test_api_call(settings)
+        res = self._test_api_call(settings)
+        # test result categories
+        res_values = res.groupby(["process_type", "cost_type"]).sum("values")["values"]
+        for k, v in {
+            ("Water", "CAPEX"): 1.13421722706732,
+            ("Water", "OPEX"): 0.539157778349926,
+            ("Water", "FLOW"): 1.19598821058383,
+            ("Electrolysis", "CAPEX"): 290.29664931801,
+            ("Electrolysis", "OPEX"): 68.9972312065034,
+            ("Electrolysis", "FLOW"): 0,
+            ("Electricity generation", "CAPEX"): 927.443473756068,
+            ("Electricity generation", "OPEX"): 308.606539951669,
+            ("Electricity generation", "FLOW"): 0,
+            ("Transportation (Pipeline)", "CAPEX"): 0,
+            ("Transportation (Pipeline)", "OPEX"): 0,
+            ("Transportation (Pipeline)", "FLOW"): 0,
+            ("Transportation (Ship)", "CAPEX"): 61.3537645039656,
+            ("Transportation (Ship)", "OPEX"): 71.154090224582,
+            ("Transportation (Ship)", "FLOW"): 106.247433353769,
+            ("Carbon", "CAPEX"): 196.816576798637,
+            ("Carbon", "OPEX"): 113.573515102545,
+            ("Carbon", "FLOW"): 100.573971083243,
+            ("Derivate production", "CAPEX"): 90.5089566868282,
+            ("Derivate production", "OPEX"): 39.171320804334,
+            ("Derivate production", "FLOW"): 0,
+            ("Heat", "CAPEX"): 0,
+            ("Heat", "OPEX"): 0,
+            ("Heat", "FLOW"): 277.330219266086,
+            ("Electricity and H2 storage", "CAPEX"): 0,
+            ("Electricity and H2 storage", "OPEX"): 176.381710654865,
+            ("Electricity and H2 storage", "FLOW"): 0,
+        }.items():
+            self.assertAlmostEqual(res_values.get(k, 0), v, places=3, msg=k)
 
     def test_api_get_input_data_output_format(self):
         """Test output structure of api.get_input_data()."""
@@ -147,6 +189,15 @@ class TestApi(unittest.TestCase):
             parameter_code="FLH", source_region_code="ARG", process_code="PV-FIX"
         )
         self.assertAlmostEqual(pval, 1494.0)
+
+        # test distances
+        # FLH for RES
+        pval = data_handler.get_parameter_value(
+            parameter_code="DST-S-DP",
+            source_region_code="ARE",
+            target_country_code="DEU",
+        )
+        self.assertAlmostEqual(pval, 5500)
 
     def test_pmt(self):
         """Test if pmt function."""
