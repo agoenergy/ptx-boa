@@ -70,6 +70,10 @@ PARAMETER_DIMENSIONS = {
         "required": ["source_region_code"],
         "global_default": True,
     },
+    "STR-CF": {
+        "required": [],
+        "global_default": False,
+    },
 }
 
 ParameterCode = Literal[
@@ -119,6 +123,9 @@ class PtxData:
             for dim in ["country", "flow", "parameter", "process", "region"]
         }
         self.flh = load_data(name="flh").set_index("key").replace(np.nan, "")
+        self.storage_cost_factor = (
+            load_data(name="storage_cost_factor").set_index("key").replace(np.nan, "")
+        )
         self.chains = load_data(name="chains").set_index("chain").replace(np.nan, "")
         self.scenario_data = {
             f"{year} ({parameter_range})": load_data(name=f"{year}_{parameter_range}")
@@ -595,6 +602,14 @@ class DataHandler:
                 & (df["process_deriv"] == process_code_deriv)
                 & (df["process_flh"] == process_code)
             )
+        elif parameter_code == "STR-CF":
+            # Storage cost factor not changedbyuser (and currently in separate file)
+            df = self.ptxdata.storage_cost_factor
+            selector = (
+                (df["process_res"] == process_code_res)
+                & (df["process_ely"] == process_code_ely)
+                & (df["process_deriv"] == process_code_deriv)
+            )
         else:
             df = self.scenario_data
             selector = self._construct_selector(
@@ -610,7 +625,7 @@ class DataHandler:
 
         if len(row) == 0 and PARAMETER_DIMENSIONS[parameter_code]["global_default"]:
             # make query with empty "source_region_code"
-            logger.info("searching global default")
+            logger.debug("searching global default")
             selector = self._construct_selector(
                 df,
                 parameter_code=parameter_code,

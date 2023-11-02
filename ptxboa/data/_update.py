@@ -33,6 +33,19 @@ if __name__ == "__main__":
         ],
         "flh.csv",
     )
+    update_csv(
+        "ptxboa_data_storage_factor",
+        [
+            "key",
+            "process_res",
+            "process_ely",
+            "process_deriv",
+            "value",
+            "source",
+        ],
+        "storage_cost_factor.csv",
+    )
+
     for year in [2030, 2040]:
         for rng in ["high", "medium", "low"]:
             update_csv(

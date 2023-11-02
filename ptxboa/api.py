@@ -100,7 +100,7 @@ class PtxboaAPI:
         region: str,
         country: str,
         transport: str,
-        ship_own_fuel: bool,
+        ship_own_fuel: bool = False,  # TODO: no correctly passed by app
         output_unit="USD/MWh",
         user_data: dict = None,
     ) -> pd.DataFrame:
@@ -167,8 +167,8 @@ class PtxboaAPI:
             ),
             chain=chain,
             process_code_res=name_to_code_bad("res_gen", "process", res_gen),
-            region_code=name_to_code_bad("region", "region", region),
-            country_code=name_to_code_bad("country", "country", country),
+            source_region_code=name_to_code_bad("region", "region", region),
+            target_country_code=name_to_code_bad("country", "country", country),
             use_ship=use_ship,
             ship_own_fuel=ship_own_fuel,
             output_unit=output_unit,
