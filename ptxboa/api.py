@@ -154,10 +154,14 @@ class PtxboaAPI:
         # self.data.map_code_to_name(name, code) # noqa
         def name_to_code_bad(dim, dim_name, name):
             df = self.data.get_dimension(dim)
-            return df.loc[df[dim_name + "_name"] == name, dim_name + "_code"].iloc[0]
+            return (
+                df.fillna("")
+                .loc[df[dim_name + "_name"] == name, dim_name + "_code"]
+                .iloc[0]
+            )
 
         if transport not in {"Ship", "Pipeline"}:
-            logging.error("Invalid choice for transport")
+            logging.error(f"Invalid choice for transport: {transport}")
         use_ship = transport == "Ship"
 
         result_df = calculator.calculate(

@@ -116,10 +116,10 @@ class PtxCalc:
 
         if dist_pipeline and not use_ship:
             use_ship = False
-            seashare_pipeline = get_parameter_value("SEASHARE")
+            seashare_pipeline = get_parameter_value("SEASHARE", default=0)
             dist_transport_sea = dist_pipeline * seashare_pipeline
             dist_transport_land = dist_pipeline * (1 - seashare_pipeline)
-            existing_pipeline_cap = get_parameter_value("CAP-T")
+            existing_pipeline_cap = get_parameter_value("CAP-T", default=0)
             if existing_pipeline_cap > 0:
                 use_retrofitted_pipeline = True
         else:
