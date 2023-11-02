@@ -188,7 +188,69 @@ class PtxData:
 
         return scenario_data
 
-    def _map_names_and_codes(self, scenario_data, mapping_direction):
+    def get_dimensions_parameter_code(
+        self,
+        dimension: Literal[
+            "res_gen", "secproc_co2", "secproc_water", "region", "country"
+        ],
+        parameter_name: str,
+    ) -> str:
+        """
+        Get the internal code for a paremeter within a certain dimension.
+
+        Used to translate long name parameters from frontend to codes.
+
+        Parameters
+        ----------
+        dimension : str
+        parameter_name : str
+
+        Returns
+        -------
+        str
+        """
+        # mapping of different parameter dimension names depending on "dimension"
+        dimension_parameter_mapping = {
+            "res_gen": "process",
+            "secproc_co2": "process",
+            "secproc_water": "process",
+            "region": "region",
+            "country": "country",
+        }
+        target_dim_name = dimension_parameter_mapping.get(dimension)
+        df = self.get_dimension(dimension)
+        return df.loc[
+            df[target_dim_name + "_name"] == parameter_name, target_dim_name + "_code"
+        ].iloc[0]
+
+    def _map_names_and_codes(
+        self,
+        scenario_data: pd.DataFrame,
+        mapping_direction: Literal["code_to_name", "name_to_code"],
+    ):
+        """
+        Map codes in scenario data to long names and vice versa.
+
+        Mapping is done for data points in the dimensions "parameter", "process",
+        "flow", "region", and "country".
+
+        Parameters
+        ----------
+        scenario_data : pd.DataFrame
+        mapping_direction : str in {"code_to_name", "name_to_code"}
+
+
+        Returns
+        -------
+        : pd.DataFrame
+            Same size as input `scenario_data` but with replaced names/codes
+            as a copy of the original data.
+
+        Raises
+        ------
+        ValueError
+            on invalid `mapping_direction` arguments
+        """
         if mapping_direction not in ["code_to_name", "name_to_code"]:
             raise ValueError(
                 "mapping direction needs to be 'name_to_code' or 'code_to_name'"
