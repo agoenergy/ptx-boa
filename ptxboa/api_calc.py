@@ -76,8 +76,11 @@ def calculate(
     # iterate over main chain, update the value in the main flow
     # and accumulate result data from each process
 
+    # get general parameters
     wacc = get_parameter_value_w_default("WACC")
+    storage_factor = get_parameter_value_w_default("STR-CF")
 
+    # get transport distances and options
     dist_pipeline = get_parameter_value_w_default(
         "DST-S-DP",
         default=0,
@@ -105,6 +108,7 @@ def calculate(
             # TODO:
             dist_transport_sea = dist_ship
 
+    # start main chain calculation
     main_output_value = 1  # start with normalized value of 1
     main_flow_code_out = ""
     sum_el = main_output_value
@@ -205,8 +209,6 @@ def calculate(
         main_input_value = main_output_value
         main_output_value = main_input_value * eff
 
-        logger.info((process_code, main_output_value, dist_transport))
-
         result_process_type = ds_process["result_process_type"]
 
         opex_o = get_parameter_value_w_default(
@@ -235,6 +237,24 @@ def calculate(
             results.append((result_process_type, process_code, "CAPEX", capex_ann))
             results.append((result_process_type, process_code, "OPEX", opex))
 
+            if not (is_shipping or is_pipeline):
+                results.append(
+                    (
+                        "Electricity and H2 storage",
+                        process_code,
+                        "OPEX",  # NOTE: in old app,storage is always OPEX
+                        capex_ann * storage_factor,
+                    )
+                )
+                results.append(
+                    (
+                        "Electricity and H2 storage",
+                        process_code,
+                        "OPEX",
+                        opex * storage_factor,
+                    )
+                )
+
         else:
             opex_t = get_parameter_value_w_default(
                 "OPEX-T", process_code=process_code, default=0
@@ -242,6 +262,16 @@ def calculate(
             opex_ot = opex_t * dist_transport
             opex = (opex_o + opex_ot) * main_output_value
             results.append((result_process_type, process_code, "OPEX", opex))
+
+            if not (is_shipping or is_pipeline):
+                results.append(
+                    (
+                        "Electricity and H2 storage",
+                        process_code,
+                        "OPEX",
+                        opex * storage_factor,
+                    )
+                )
 
         secondary_flows = ds_process["secondary_flows"].split("/")
         for flow_code in secondary_flows:
@@ -254,6 +284,7 @@ def calculate(
             if conv <= 0:
                 continue
             flow_value = main_output_value * conv
+
             sec_process_code = secondary_processes.get(flow_code)
             if sec_process_code:
                 sec_process_attrs = df_processes.loc[sec_process_code]
@@ -285,6 +316,23 @@ def calculate(
                 results.append(
                     (sec_result_process_type, sec_process_code, "OPEX", opex)
                 )
+                if not (is_shipping or is_pipeline):
+                    results.append(
+                        (
+                            "Electricity and H2 storage",
+                            sec_process_code,
+                            "OPEX",  # NOTE: in old app,storage is always OPEX
+                            capex_ann * storage_factor,
+                        )
+                    )
+                    results.append(
+                        (
+                            "Electricity and H2 storage",
+                            sec_process_code,
+                            "OPEX",
+                            opex * storage_factor,
+                        )
+                    )
 
                 sec_secondary_flows = sec_process_attrs["secondary_flows"].split("/")
                 for sec_flow_code in sec_secondary_flows:
@@ -319,6 +367,15 @@ def calculate(
                             sec_flow_cost,
                         )
                     )
+                    if not (is_shipping or is_pipeline):
+                        results.append(
+                            (
+                                "Electricity and H2 storage",
+                                sec_process_code,
+                                "OPEX",  # NOTE: in old app,storage is always OPEX
+                                sec_flow_cost * storage_factor,
+                            )
+                        )
 
             else:
                 speccost = get_parameter_value_w_default(
@@ -339,16 +396,25 @@ def calculate(
                 )
 
                 results.append((result_process_type, process_code, "FLOW", flow_cost))
+                if not (is_shipping or is_pipeline):
+                    results.append(
+                        (
+                            "Electricity and H2 storage",
+                            process_code,
+                            "OPEX",  # NOTE: in old app,storage is always OPEX
+                            flow_cost * storage_factor,
+                        )
+                    )
+
+    chain_flow_code_out = chain["FLOW_OUT"]
+    if chain_flow_code_out != main_flow_code_out:
+        logger.error(
+            "chain should end with flow %s instead of %s",
+            chain_flow_code_out,
+            main_flow_code_out,
+        )
 
     # add additional storage cost
-    cost_wo_storage = sum(
-        r[3]
-        for r in results
-        if r[0] not in {"Transportation (Pipeline)", "Transportation (Ship)"}
-    )
-    storage_factor = get_parameter_value_w_default("STR-CF")
-    cost_storage = cost_wo_storage * storage_factor
-    results.append(("Electricity and H2 storage", "Storage", "OPEX", cost_storage))
 
     # convert to DataFrame
     # TODO: fist one should be renamed to result_process_type

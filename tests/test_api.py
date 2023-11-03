@@ -41,6 +41,9 @@ class TestApi(unittest.TestCase):
         ]:
             self.assertTrue(k in res.columns)
 
+        # aggregate:
+        res = res.groupby(["process_type", "cost_type"]).sum(["values"])
+
         return res
 
     def test_example_api_call_1_ship(self):
