@@ -6,7 +6,7 @@ import logging
 
 import pandas as pd
 
-from .api_calc import PtxCalc
+from .api_calc import calculate
 from .api_data import DataHandler, DimensionCode, PtxData, ScenarioCode
 
 RESULT_COST_TYPES = ["CAPEX", "OPEX", "FLOW", "LC"]
@@ -19,6 +19,7 @@ RESULT_PROCESS_TYPES = [
     "Carbon",
     "Derivate production",
     "Heat",
+    "Electricity and H2 storage",
 ]
 
 
@@ -147,36 +148,55 @@ class PtxboaAPI:
         """
         data_handler = DataHandler(self.data, scenario, user_data)
 
-        calculator = PtxCalc(data_handler)
-
-        # TODO: better way to map dimension names to codes
-        # self.data.map_name_to_code(dim, name) # noqa
-        # self.data.map_code_to_name(name, code) # noqa
-        def name_to_code_bad(dim, dim_name, name):
-            df = self.data.get_dimension(dim)
-            return (
-                df.fillna("")
-                .loc[df[dim_name + "_name"] == name, dim_name + "_code"]
-                .iloc[0]
-            )
+        # prepare / convert user settings to internal codes
+        df_chain = data_handler.get_dimension("chain")
+        df_process_by_name = data_handler.get_dimension("process").set_index(
+            "process_name", drop=False
+        )
+        df_region_by_name = data_handler.get_dimension("region").set_index(
+            "region_name", drop=False
+        )
+        df_country_by_name = data_handler.get_dimension("country").set_index(
+            "country_name", drop=False
+        )
+        dct_chain = dict(df_chain.loc[chain])
 
         if transport not in {"Ship", "Pipeline"}:
             logging.error(f"Invalid choice for transport: {transport}")
         use_ship = transport == "Ship"
 
-        result_df = calculator.calculate(
-            secproc_co2_code=name_to_code_bad("secproc_co2", "process", secproc_co2),
-            secproc_water_code=name_to_code_bad(
-                "secproc_water", "process", secproc_water
-            ),
-            chain=chain,
-            process_code_res=name_to_code_bad("res_gen", "process", res_gen),
-            source_region_code=name_to_code_bad("region", "region", region),
-            target_country_code=name_to_code_bad("country", "country", country),
+        secondary_processes = {
+            "H2O-L": df_process_by_name.at[secproc_water, "process_code"]
+            if secproc_water != "Specific costs"
+            else None,
+            "CO2-G": df_process_by_name.at[secproc_co2, "process_code"]
+            if secproc_co2 != "Specific costs"
+            else None,
+        }
+
+        # actual calculation
+        result_df = calculate(
+            data_handler,
+            secondary_processes=secondary_processes,
+            chain=dct_chain,
+            process_code_res=df_process_by_name.at[res_gen, "process_code"],
+            source_region_code=df_region_by_name.at[region, "region_code"],
+            target_country_code=df_country_by_name.at[country, "country_code"],
             use_ship=use_ship,
             ship_own_fuel=ship_own_fuel,
-            output_unit=output_unit,
         )
+
+        # conversion to output unit
+        if output_unit not in {"USD/MWh", "USD/t"}:
+            logging.error(f"Invalid choice for output_unit: {output_unit}")
+        conversion = 1000
+        if output_unit == "USD/t":
+            chain_flow_out = dct_chain["FLOW_OUT"]
+            calor = data_handler.get_parameter_value(
+                parameter_code="CALOR", flow_code=chain_flow_out
+            )
+            conversion *= calor
+        result_df["values"] = result_df["values"] * conversion
 
         # add user settings
         result_df["scenario"] = scenario

@@ -7,7 +7,7 @@ import unittest
 import numpy as np
 
 from ptxboa.api import PtxboaAPI
-from ptxboa.api_calc import pmt
+from ptxboa.api_calc import annuity
 from ptxboa.api_data import DataHandler
 
 logging.basicConfig(
@@ -249,11 +249,11 @@ class TestApi(unittest.TestCase):
 
     def test_pmt(self):
         """Test if pmt function."""
-        self.assertAlmostEqual(pmt(0, 100, 1), 0.01)
-        self.assertAlmostEqual(pmt(0.1, 100, 1), 0.100007257098207)
-        self.assertAlmostEqual(pmt(0.5, 100, 1), 0.5)
-        self.assertAlmostEqual(pmt(1, 100, 1), 1)
+        self.assertAlmostEqual(annuity(0, 100, 1), 0.01)
+        self.assertAlmostEqual(annuity(0.1, 100, 1), 0.100007257098207)
+        self.assertAlmostEqual(annuity(0.5, 100, 1), 0.5)
+        self.assertAlmostEqual(annuity(1, 100, 1), 1)
 
-        self.assertAlmostEqual(pmt(0.1, 10, 1), 0.162745394882512)
-        self.assertAlmostEqual(pmt(0.5, 10, 1), 0.5088237828522)
-        self.assertAlmostEqual(pmt(1, 10, 1), 1.0009775171)
+        self.assertAlmostEqual(annuity(0.1, 10, 1), 0.162745394882512)
+        self.assertAlmostEqual(annuity(0.5, 10, 1), 0.5088237828522)
+        self.assertAlmostEqual(annuity(1, 10, 1), 1.0009775171)
