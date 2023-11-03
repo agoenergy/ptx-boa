@@ -43,7 +43,7 @@ class TestApi(unittest.TestCase):
 
         return res
 
-    def test_example_api_call_1(self):
+    def test_example_api_call_1_ship(self):
         """Test output structure of api.calculate()."""
         settings = {
             "region": "United Arab Emirates",
@@ -91,12 +91,108 @@ class TestApi(unittest.TestCase):
         }.items():
             self.assertAlmostEqual(res_values.get(k, 0), v, places=3, msg=k)
 
-    def test_example_api_call_2(self):
+    def test_example_api_call_2_ship_own_fuel(self):
         """Test output structure of api.calculate()."""
         settings = {
-            "region": "United Arab Emirates",
+            "region": "Argentina (Chaco)",
+            "country": "Japan",
+            "chain": "Methanol (SEOC)",
+            "res_gen": "Wind Onshore",
+            "scenario": "2040 (high)",
+            "secproc_co2": "Specific costs",
+            "secproc_water": "Sea Water desalination",
+            "transport": "Ship",
+            "ship_own_fuel": True,
+            "output_unit": "USD/t",
+        }
+        res = self._test_api_call(settings)
+        # test result categories
+        res_values = res.groupby(["process_type", "cost_type"]).sum("values")["values"]
+        for k, v in {
+            ("Water", "CAPEX"): 0.851121000523744,
+            ("Water", "OPEX"): 0.21273242859187,
+            ("Water", "FLOW"): 0.471894289243873,
+            ("Electrolysis", "CAPEX"): 457.961998700237,
+            ("Electrolysis", "OPEX"): 85.8485762832237,
+            ("Electrolysis", "FLOW"): 0,
+            ("Electricity generation", "CAPEX"): 838.948883158942,
+            ("Electricity generation", "OPEX"): 146.78305821183,
+            ("Electricity generation", "FLOW"): 0,
+            ("Transportation (Pipeline)", "CAPEX"): 0,
+            ("Transportation (Pipeline)", "OPEX"): 0,
+            ("Transportation (Pipeline)", "FLOW"): 0,
+            ("Transportation (Ship)", "CAPEX"): 0,
+            ("Transportation (Ship)", "OPEX"): 12.2061245592688,
+            ("Transportation (Ship)", "FLOW"): 0,
+            ("Carbon", "CAPEX"): 0,
+            ("Carbon", "OPEX"): 0,
+            ("Carbon", "FLOW"): 61.3694736856213,
+            ("Derivate production", "CAPEX"): 188.204220208377,
+            ("Derivate production", "OPEX"): 37.0003810701601,
+            ("Derivate production", "FLOW"): 16.8369286421993,
+            ("Heat", "CAPEX"): 0,
+            ("Heat", "OPEX"): 0,
+            ("Heat", "FLOW"): 0,
+            ("Electricity and H2 storage", "CAPEX"): 0,
+            ("Electricity and H2 storage", "OPEX"): 40.7256617424727,
+            ("Electricity and H2 storage", "FLOW"): 0,
+        }.items():
+            self.assertAlmostEqual(res_values.get(k, 0), v, places=3, msg=k)
+
+    def test_example_api_call_3_pipeline_sea_land(self):
+        """Test output structure of api.calculate()."""
+        settings = {
+            "region": "Tunisia",
             "country": "Germany",
-            "chain": "Hydrogen (SEOC)",
+            "chain": "Hydrogen (PEM)",
+            "res_gen": "Wind Offshore",
+            "scenario": "2030 (high)",
+            "secproc_co2": "Specific costs",
+            "secproc_water": "Sea Water desalination",
+            "transport": "Pipeline",
+            "ship_own_fuel": False,
+            "output_unit": "USD/MWh",
+        }
+        res = self._test_api_call(settings)
+        # test result categories
+        res_values = res.groupby(["process_type", "cost_type"]).sum("values")["values"]
+        for k, v in {
+            ("Water", "CAPEX"): 0.0977824074951808,
+            ("Water", "OPEX"): 0.0301895762734038,
+            ("Water", "FLOW"): 0.0669681098101092,
+            ("Electrolysis", "CAPEX"): 31.2688873439588,
+            ("Electrolysis", "OPEX"): 4.82701583872048,
+            ("Electrolysis", "FLOW"): 0,
+            ("Electricity generation", "CAPEX"): 222.352936388606,
+            ("Electricity generation", "OPEX"): 58.3523144804189,
+            ("Electricity generation", "FLOW"): 0,
+            ("Transportation (Pipeline)", "CAPEX"): 5.31254358823649,
+            ("Transportation (Pipeline)", "OPEX"): 24.678148029682,
+            ("Transportation (Pipeline)", "FLOW"): 2.97636043600485,
+            ("Transportation (Ship)", "CAPEX"): 0,
+            ("Transportation (Ship)", "OPEX"): 0,
+            ("Transportation (Ship)", "FLOW"): 0,
+            ("Carbon", "CAPEX"): 0,
+            ("Carbon", "OPEX"): 0,
+            ("Carbon", "FLOW"): 0,
+            ("Derivate production", "CAPEX"): 0,
+            ("Derivate production", "OPEX"): 0,
+            ("Derivate production", "FLOW"): 0,
+            ("Heat", "CAPEX"): 0,
+            ("Heat", "OPEX"): 0,
+            ("Heat", "FLOW"): 0,
+            ("Electricity and H2 storage", "CAPEX"): 0,
+            ("Electricity and H2 storage", "OPEX"): 2.06047461194434,
+            ("Electricity and H2 storage", "FLOW"): 0,
+        }.items():
+            self.assertAlmostEqual(res_values.get(k, 0), v, places=3, msg=k)
+
+    def test_example_api_call_4_pipeline_retrofitted(self):
+        """Test output structure of api.calculate()."""
+        settings = {
+            "region": "Norway",
+            "country": "Germany",
+            "chain": "Hydrogen (PEM)",
             "res_gen": "Wind-PV-Hybrid",
             "scenario": "2030 (low)",
             "secproc_co2": "Specific costs",
@@ -111,16 +207,16 @@ class TestApi(unittest.TestCase):
         for k, v in {
             ("Water", "CAPEX"): 0,
             ("Water", "OPEX"): 0,
-            ("Water", "FLOW"): 0.396531191524486,
-            ("Electrolysis", "CAPEX"): 67.4074610340947,
-            ("Electrolysis", "OPEX"): 24.0319420751454,
+            ("Water", "FLOW"): 0.362589872395495,
+            ("Electrolysis", "CAPEX"): 14.2650799104866,
+            ("Electrolysis", "OPEX"): 3.54646178752143,
             ("Electrolysis", "FLOW"): 0,
-            ("Electricity generation", "CAPEX"): 46.3682103901355,
-            ("Electricity generation", "OPEX"): 11.0207201510455,
+            ("Electricity generation", "CAPEX"): 26.5069838853876,
+            ("Electricity generation", "OPEX"): 6.58993893072181,
             ("Electricity generation", "FLOW"): 0,
-            ("Transportation (Pipeline)", "CAPEX"): 1.46647787621866,
-            ("Transportation (Pipeline)", "OPEX"): 49.8598277020594,
-            ("Transportation (Pipeline)", "FLOW"): 0.777209097255392,
+            ("Transportation (Pipeline)", "CAPEX"): 1.28198337785859,
+            ("Transportation (Pipeline)", "OPEX"): 2.55172143395481,
+            ("Transportation (Pipeline)", "FLOW"): 0.710683430261875,
             ("Transportation (Ship)", "CAPEX"): 0,
             ("Transportation (Ship)", "OPEX"): 0,
             ("Transportation (Ship)", "FLOW"): 0,
@@ -134,7 +230,7 @@ class TestApi(unittest.TestCase):
             ("Heat", "OPEX"): 0,
             ("Heat", "FLOW"): 0,
             ("Electricity and H2 storage", "CAPEX"): 0,
-            ("Electricity and H2 storage", "OPEX"): 6.43159167468785,
+            ("Electricity and H2 storage", "OPEX"): 1.9688084884421,
             ("Electricity and H2 storage", "FLOW"): 0,
         }.items():
             self.assertAlmostEqual(res_values.get(k, 0), v, places=3, msg=k)

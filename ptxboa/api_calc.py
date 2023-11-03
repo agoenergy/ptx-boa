@@ -7,6 +7,8 @@ import pandas as pd
 
 from ptxboa.api_data import DataHandler
 
+logger = logging.getLogger()
+
 
 def annuity(rate: float, periods: int, value: float) -> float:
     """Calculate annuity.
@@ -37,6 +39,8 @@ def calculate(
     secondary_processes: dict,
     chain: dict,
     process_code_res: str,
+    process_code_ely: str,
+    process_code_deriv: str,
     source_region_code: str,
     target_country_code: str,
     use_ship: bool,
@@ -46,9 +50,6 @@ def calculate(
     # get process codes for selected chain
     df_processes = data_handler.get_dimension("process")
     df_flows = data_handler.get_dimension("flow")
-
-    process_code_ely = chain["ELY"]
-    process_code_deriv = chain["DERIV"]
 
     def get_parameter_value_w_default(
         parameter_code, process_code="", flow_code="", default=None
@@ -103,29 +104,6 @@ def calculate(
             dist_ship = get_parameter_value_w_default("DST-S-D", default=0)
             # TODO:
             dist_transport_sea = dist_ship
-
-    def create_capex_opex_sec(result_process_type, process_code, main_output_value):
-        # no FLH
-        liefetime = get_parameter_value_w_default(
-            "LIFETIME", process_code=process_code, default=20  # TODO
-        )
-        capex = get_parameter_value_w_default(
-            "CAPEX", process_code=process_code, default=0
-        )  # TODO
-        opex_f = get_parameter_value_w_default(
-            "OPEX-F", process_code=process_code, default=0
-        )
-        opex_o = get_parameter_value_w_default(
-            "OPEX-O", process_code=process_code, default=0
-        )
-
-        capacity = main_output_value  # no FLH
-        capex = capacity * capex
-        capex_ann = annuity(wacc, liefetime, capex)
-        opex = opex_f * capacity + opex_o * main_output_value
-
-        results.append((result_process_type, process_code, "CAPEX", capex_ann))
-        results.append((result_process_type, process_code, "OPEX", opex))
 
     main_output_value = 1  # start with normalized value of 1
     main_flow_code_out = ""
@@ -208,6 +186,7 @@ def calculate(
             loss_t = get_parameter_value_w_default("LOSS-T", process_code=process_code)
             eff = 1 - loss_t * dist_transport
         else:
+            dist_transport = 0
             eff = get_parameter_value_w_default(
                 "EFF", process_code=process_code, default=1
             )
@@ -216,7 +195,7 @@ def calculate(
         ds_process = df_processes.loc[process_code]
         main_flow_code_in = ds_process["main_flow_code_in"]
         if main_flow_code_in != main_flow_code_out:
-            logging.error(
+            logger.error(
                 f"process {process_step}={process_code} has "
                 f"main_flow_code_in {main_flow_code_in}, "
                 f"last output was {main_flow_code_out}"
@@ -225,6 +204,9 @@ def calculate(
 
         main_input_value = main_output_value
         main_output_value = main_input_value * eff
+
+        logger.info((process_code, main_output_value, dist_transport))
+
         result_process_type = ds_process["result_process_type"]
 
         opex_o = get_parameter_value_w_default(

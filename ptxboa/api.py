@@ -9,6 +9,8 @@ import pandas as pd
 from .api_calc import calculate
 from .api_data import DataHandler, DimensionCode, PtxData, ScenarioCode
 
+logger = logging.getLogger()
+
 RESULT_COST_TYPES = ["CAPEX", "OPEX", "FLOW", "LC"]
 RESULT_PROCESS_TYPES = [
     "Water",
@@ -24,8 +26,21 @@ RESULT_PROCESS_TYPES = [
 
 
 class PtxboaAPI:
+    """Singleton class for data and calculation api."""
+
+    _inst = None
+
+    def __new__(cls, *args, **kwargs):
+        """Make sure class is only instantiated once."""
+        if not cls._inst:
+            cls._inst = super(PtxboaAPI, cls).__new__(cls, *args, **kwargs)
+        else:
+            logger.warning("Api should only be instantiated once")
+        return cls._inst
+
     def __init__(self):
         self.data = PtxData()
+        self._calc_counter = 0  # temporary counter for calls of calculate()
 
     def get_dimension(self, dim: DimensionCode) -> pd.DataFrame:
         """Return a dimension element to populate app dropdowns.
@@ -162,7 +177,7 @@ class PtxboaAPI:
         dct_chain = dict(df_chain.loc[chain])
 
         if transport not in {"Ship", "Pipeline"}:
-            logging.error(f"Invalid choice for transport: {transport}")
+            logger.error(f"Invalid choice for transport: {transport}")
         use_ship = transport == "Ship"
 
         secondary_processes = {
@@ -173,22 +188,37 @@ class PtxboaAPI:
             if secproc_co2 != "Specific costs"
             else None,
         }
+        process_code_res = df_process_by_name.at[res_gen, "process_code"]
+        source_region_code = df_region_by_name.at[region, "region_code"]
+        target_country_code = df_country_by_name.at[country, "country_code"]
+        process_code_ely = dct_chain["ELY"]
+        process_code_deriv = dct_chain["DERIV"]
+
+        self._calc_counter += 1
+        logger.info(
+            "calculate #%s: %s=>%s",
+            self._calc_counter,
+            source_region_code,
+            target_country_code,
+        )
 
         # actual calculation
         result_df = calculate(
             data_handler,
             secondary_processes=secondary_processes,
             chain=dct_chain,
-            process_code_res=df_process_by_name.at[res_gen, "process_code"],
-            source_region_code=df_region_by_name.at[region, "region_code"],
-            target_country_code=df_country_by_name.at[country, "country_code"],
+            process_code_res=process_code_res,
+            source_region_code=source_region_code,
+            target_country_code=target_country_code,
+            process_code_ely=process_code_ely,
+            process_code_deriv=process_code_deriv,
             use_ship=use_ship,
             ship_own_fuel=ship_own_fuel,
         )
 
         # conversion to output unit
         if output_unit not in {"USD/MWh", "USD/t"}:
-            logging.error(f"Invalid choice for output_unit: {output_unit}")
+            logger.error(f"Invalid choice for output_unit: {output_unit}")
         conversion = 1000
         if output_unit == "USD/t":
             chain_flow_out = dct_chain["FLOW_OUT"]
