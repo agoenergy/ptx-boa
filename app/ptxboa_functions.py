@@ -198,6 +198,19 @@ def create_sidebar(api: PtxboaAPI):
         help="Help text",
     )
 
+    st.sidebar.toggle(
+        "Edit input data",
+        help="""Activate this to enable editing of input data.
+Currently, your changes will be stored, but they will not be
+used in calculation and they will not be displayed in figures.
+
+Disable this setting to reset user data to default values.""",
+        value=False,
+        key="edit_input_data",
+    )
+
+    if st.session_state["edit_input_data"] is False:
+        reset_user_changes()
     return settings
 
 
@@ -604,7 +617,6 @@ They also show the data for your selected supply country or region for compariso
             source_region_code=region_list,
             parameter_code=parameter_code,
             process_code=process_code,
-            edit_data=False,
         )
     with c1:
         # create plot:
@@ -684,19 +696,12 @@ They also show the data for your country for comparison.
     with c2:
         # show data:
         st.markdown("**Data:**")
-        edit_data = st.toggle(
-            "Edit data",
-            help="""Activate this to make the table editable.
-            Currently, your changes will be stored, but they will not be
-            used in calculation and they will not be displayed in figures. """,
-        )
         df = display_and_edit_data_table(
             input_data=input_data,
             columns=x,
             source_region_code=region_list_without_subregions,
             parameter_code=parameter_code,
             process_code=process_code,
-            edit_data=edit_data,
         )
     with c1:
         # create plot:
@@ -710,6 +715,7 @@ They also show the data for your country for comparison.
 def reset_user_changes():
     """Reset all user changes."""
     if "user_changes_df" in st.session_state.keys():
+        del st.session_state["user_changes"]
         del st.session_state["user_changes_df"]
 
 
@@ -728,7 +734,6 @@ def display_and_edit_data_table(
     index: str = "source_region_code",
     columns: str = "process_code",
     values: str = "value",
-    edit_data: bool = False,
 ) -> pd.DataFrame:
     """Display selected input data as 2D table, which can also be edited."""
     ind1 = input_data["source_region_code"].isin(source_region_code)
@@ -737,7 +742,7 @@ def display_and_edit_data_table(
     df = input_data.loc[ind1 & ind2 & ind3]
     df_tab = df.pivot_table(index=index, columns=columns, values=values, aggfunc="sum")
 
-    if edit_data:
+    if st.session_state["edit_input_data"]:
         disabled = [index]
         key = f"edit_input_data_{parameter_code}"
     else:
@@ -752,7 +757,7 @@ def display_and_edit_data_table(
     )
 
     # store changes in session_state:
-    if edit_data:
+    if st.session_state["edit_input_data"]:
         if len(st.session_state[key]["edited_rows"]) > 0:
             # convert session state dict to dataframe:
             # Create a list of dictionaries
