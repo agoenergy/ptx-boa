@@ -1,10 +1,10 @@
 default_stages: [commit]
-exclude: ^(data|tests|archive)/
+exclude: ^(data|archive)/
 
 repos:
   # ============== PRE-COMMIT HOOKS ===============
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v4.5.0
     hooks:
       - id: check-added-large-files
         args: ['--maxkb=5000'] # we need some data files and images in the repository
@@ -16,7 +16,7 @@ repos:
 
   # ==================== BLACK ====================
   - repo: https://github.com/psf/black
-    rev: 23.1.0
+    rev: 23.10.1
     hooks:
       - id: black
         args: ["--line-length", "88"]
@@ -32,24 +32,22 @@ repos:
 
   # =================== FLAKE8 ====================
   - repo: https://github.com/pycqa/flake8
-    rev: 5.0.4
+    rev: 6.1.0
     hooks:
       - id: flake8
         additional_dependencies:
           [
-            darglint,
             flake8-bandit,
             flake8-bugbear,
             flake8-builtins,
             flake8-comprehensions,
             flake8-docstrings,
             flake8-eradicate,
-            flake8-isort,
-            flake8-pytest-style,
+            flake8-isort            
           ]
         args:
           [
             "--max-line-length=88",
-            "--extend-ignore=E203,DAR101,DAR201,I001,I005,D101,D103,D105,DAR401,B023,S603,S608,S101,S310,E402,DAR103",
+            "--extend-ignore=E203,I001,I005,D101,D103,D105,B023,S603,S608,S101,S310,E402",
             "--docstring-convention=numpy",
           ]

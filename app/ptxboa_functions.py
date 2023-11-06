@@ -71,15 +71,32 @@ def aggregate_costs(res_details: pd.DataFrame) -> pd.DataFrame:
 def create_sidebar(api: PtxboaAPI):
     st.sidebar.subheader("Main settings:")
     settings = {}
+    include_subregions = False
+    if include_subregions:
+        region_list = api.get_dimension("region").index
+    else:
+        region_list = (
+            api.get_dimension("region")
+            .loc[api.get_dimension("region")["subregion_code"] == ""]
+            .index
+        )
+
     settings["region"] = st.sidebar.selectbox(
         "Supply country / region:",
-        # TODO: replace with complete list of regions once calculation time is reduced:
-        ("Argentina", "Morocco", "South Africa"),
+        region_list,
         help=(
-            "One supply country or region can be selected here, and detailed settings "
-            "can be selected for this region below "
+            "One supply country or region can be selected here, "
+            " and detailed settings can be selected for this region below "
             "(RE source, mode of transportation). For other regions, "
             "default settings will be used."
+        ),
+    )
+    include_subregions = st.sidebar.toggle(
+        "Include subregions",
+        help=(
+            "For three deep-dive countries (Argentina, Morocco, and South Africa) "
+            "the app calculates costs for subregions as well. Activate this switch"
+            "if you want to chose one of these subregions as a supply region. "
         ),
     )
     settings["country"] = st.sidebar.selectbox(
@@ -251,6 +268,9 @@ def create_world_map(settings: dict, res_costs: pd.DataFrame):
 
 
 def create_bar_chart_costs(res_costs: pd.DataFrame):
+    if res_costs.empty:  # nodata to plot (FIXME: migth not be required later)
+        return
+
     fig = px.bar(res_costs, x=res_costs.index, y=res_costs.columns[:-1], height=500)
 
     # Add the dot markers for the "total" column using plotly.graph_objects
@@ -281,9 +301,12 @@ def create_box_plot(res_costs: pd.DataFrame, settings: dict):
 
     # Specify the row index of the data point you want to highlight
     highlighted_row_index = settings["region"]
-
     # Extract the value from the specified row and column
-    highlighted_value = res_costs.at[highlighted_row_index, "Total"]
+
+    if highlighted_row_index:
+        highlighted_value = res_costs.at[highlighted_row_index, "Total"]
+    else:
+        highlighted_value = 0
 
     # Add the box plot to the subplot
     fig.add_trace(go.Box(y=res_costs["Total"], name="Cost distribution"))
@@ -1005,12 +1028,26 @@ but only serves for an orientation on the topic.
             """
         )
     df = context_data["sustainability"]
-    st.image("static/sustainability.png")
-    captiontext = (
-        "Source: https://ptx-hub.org/wp-content/uploads/2022/05/"
-        "PtX-Hub-PtX.Sustainability-Dimensions-and-Concerns-Scoping-Paper.pdf"
-    )
-    st.caption(captiontext)
+
+    c1, c2 = st.columns([2, 1])
+    with c1:
+        st.image("static/sustainability.png")
+        captiontext = (
+            "Source: https://ptx-hub.org/wp-content/uploads/2022/05/"
+            "PtX-Hub-PtX.Sustainability-Dimensions-and-Concerns-Scoping-Paper.pdf"
+        )
+        st.caption(captiontext)
+    with c2:
+        st.markdown(
+            """
+**Dimensions of sustainability**
+
+This text should explain the diagram and how the content of this tab is structured.
+
+Maybe it could be combined with the content of the "What is this?" expander above.
+                    """
+        )
+    st.divider()
 
     c1, c2 = st.columns(2)
     with c1:
@@ -1029,10 +1066,10 @@ but only serves for an orientation on the topic.
         data = df.loc[(df["dimension"] == dimension) & (df["type"] == question_type)]
 
     for topic in data["topic"].unique():
-        st.markdown(f"**{topic}:**")
-        data_select = data.loc[data["topic"] == topic]
-        for _ind, row in data_select.iterrows():
-            st.markdown(f"- {row['question']}")
+        with st.expander(f"**{topic}**"):
+            data_select = data.loc[data["topic"] == topic]
+            for _ind, row in data_select.iterrows():
+                st.markdown(f"- {row['question']}")
 
 
 def is_valid_url(url: str) -> bool:
