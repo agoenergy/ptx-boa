@@ -701,6 +701,9 @@ They also show the data for your country for comparison.
             "Wind-PV-Hybrid",
         ]
         x = "process_code"
+        column_config = st.column_config.NumberColumn(
+            format="%.0f USD/kW",
+        )
     if data_selection == "full load hours":
         parameter_code = ["full load hours"]
         process_code = [
@@ -710,10 +713,16 @@ They also show the data for your country for comparison.
             "Wind-PV-Hybrid",
         ]
         x = "process_code"
+        column_config = st.column_config.NumberColumn(
+            format="%.0f h/a",
+        )
     if data_selection == "interest rate":
         parameter_code = ["interest rate"]
         process_code = [""]
         x = "parameter_code"
+        column_config = st.column_config.NumberColumn(
+            format="%.3f",
+        )
 
     c1, c2 = st.columns(2, gap="medium")
     with c2:
@@ -725,7 +734,9 @@ They also show the data for your country for comparison.
             source_region_code=region_list_without_subregions,
             parameter_code=parameter_code,
             process_code=process_code,
+            column_config=column_config,
         )
+
     with c1:
         # create plot:
         st.markdown("**Figure:**")
@@ -757,6 +768,7 @@ def display_and_edit_data_table(
     index: str = "source_region_code",
     columns: str = "process_code",
     values: str = "value",
+    column_config=None,
 ) -> pd.DataFrame:
     """Display selected input data as 2D table, which can also be edited."""
     ind1 = input_data["source_region_code"].isin(source_region_code)
@@ -774,11 +786,14 @@ def display_and_edit_data_table(
         key = None
 
     # configure columns for display:
-    column_config = {}
+    column_config_all = {}
     for c in df_tab.columns:
-        column_config[c] = st.column_config.NumberColumn(
-            format="%.2f",
-        )
+        if column_config is not None:
+            column_config_all[c] = column_config
+        else:
+            column_config_all[c] = st.column_config.NumberColumn(
+                format="%.2f",
+            )
 
     # display data:
     st.data_editor(
@@ -787,8 +802,10 @@ def display_and_edit_data_table(
         key=key,
         num_rows="fixed",
         disabled=disabled,
-        column_config=column_config,
+        column_config=column_config_all,
     )
+    if st.session_state["edit_input_data"]:
+        st.markdown("You can edit data directly in the table!")
 
     # store changes in session_state:
     if st.session_state["edit_input_data"]:
