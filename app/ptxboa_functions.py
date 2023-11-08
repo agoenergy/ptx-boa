@@ -683,7 +683,7 @@ They also show the data for your country for comparison.
     # filter data:
     region_list_without_subregions = (
         api.get_dimension("region")
-        .loc[api.get_dimension("region")["subregion_code"].isna()]
+        .loc[api.get_dimension("region")["subregion_code"] == ""]
         .index.to_list()
     )
     input_data = input_data.loc[
