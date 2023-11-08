@@ -464,7 +464,7 @@ This sheet helps you to better evaluate your country's competitive position
 
     # show data in tabular form:
     st.markdown("**Data:**")
-    st.dataframe(df_plot, use_container_width=True)
+    st.dataframe(df_plot.style.format(precision=2), use_container_width=True)
 
 
 def remove_subregions(api: PtxboaAPI, df: pd.DataFrame, settings: dict):
@@ -554,7 +554,7 @@ in tabular form. \n\n Data can be filterend and sorted.
         create_bar_chart_costs(df_res)
 
     st.write("**Data:**")
-    st.dataframe(df_res, use_container_width=True)
+    st.dataframe(df_res.style.format(precision=2), use_container_width=True)
 
 
 def content_deep_dive_countries(
@@ -765,18 +765,29 @@ def display_and_edit_data_table(
     df = input_data.loc[ind1 & ind2 & ind3]
     df_tab = df.pivot_table(index=index, columns=columns, values=values, aggfunc="sum")
 
+    # if editing is enabled, store modifications in session_state:
     if st.session_state["edit_input_data"]:
         disabled = [index]
         key = f"edit_input_data_{parameter_code}"
     else:
         disabled = True
         key = None
+
+    # configure columns for display:
+    column_config = {}
+    for c in df_tab.columns:
+        column_config[c] = st.column_config.NumberColumn(
+            format="%.2f",
+        )
+
+    # display data:
     st.data_editor(
-        df_tab,
+        df_tab.style.format(precision=2),
         use_container_width=True,
         key=key,
         num_rows="fixed",
         disabled=disabled,
+        column_config=column_config,
     )
 
     # store changes in session_state:
