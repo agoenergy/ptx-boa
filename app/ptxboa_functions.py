@@ -215,6 +215,19 @@ def create_sidebar(api: PtxboaAPI):
         help="Help text",
     )
 
+    st.sidebar.toggle(
+        "Edit input data",
+        help="""Activate this to enable editing of input data.
+Currently, your changes will be stored, but they will not be
+used in calculation and they will not be displayed in figures.
+
+Disable this setting to reset user data to default values.""",
+        value=False,
+        key="edit_input_data",
+    )
+
+    if st.session_state["edit_input_data"] is False:
+        reset_user_changes()
     return settings
 
 
@@ -592,7 +605,8 @@ They also show the data for your selected supply country or region for compariso
         .index.to_list()
     )
 
-    list_data_types = ["full load hours", "total costs"]
+    # TODO: implement display of total costs
+    list_data_types = ["full load hours"]
     data_selection = st.radio(
         "Select data type",
         list_data_types,
@@ -600,30 +614,38 @@ They also show the data for your selected supply country or region for compariso
         key="sel_data_ddc",
     )
     if data_selection == "full load hours":
-        ind_1 = input_data["source_region_code"].isin(region_list)
-        ind_2 = input_data["parameter_code"] == "full load hours"
-        ind_3 = input_data["process_code"].isin(
-            [
-                "Wind Onshore",
-                "Wind Offshore",
-                "PV tilted",
-                "Wind-PV-Hybrid",
-            ]
-        )
+        parameter_code = ["full load hours"]
+        process_code = [
+            "Wind Onshore",
+            "Wind Offshore",
+            "PV tilted",
+            "Wind-PV-Hybrid",
+        ]
         x = "process_code"
-        y = "value"
 
-        df = input_data.loc[ind_1 & ind_2 & ind_3]
     if data_selection == "total costs":
         df = res_costs.copy()
         df = res_costs.loc[region_list].rename({"Total": data_selection}, axis=1)
         df = df.rename_axis("source_region_code", axis=0)
         x = None
-        y = data_selection
         st.markdown("TODO: fix surplus countries in data table")
 
-    # create plot:
-    create_box_plot_with_data(df, x=x, y=y)
+    c1, c2 = st.columns(2, gap="medium")
+    with c2:
+        # show data:
+        st.markdown("**Data:**")
+        df = display_and_edit_data_table(
+            input_data=input_data,
+            columns=x,
+            source_region_code=region_list,
+            parameter_code=parameter_code,
+            process_code=process_code,
+        )
+    with c1:
+        # create plot:
+        st.markdown("**Figure:**")
+        fig = px.box(df)
+        st.plotly_chart(fig, use_container_width=True)
 
 
 def content_input_data(api: PtxboaAPI, settings: dict) -> None:
@@ -667,7 +689,8 @@ They also show the data for your country for comparison.
     input_data = input_data.loc[
         input_data["source_region_code"].isin(region_list_without_subregions)
     ]
-    list_data_types = ["CAPEX", "full load hours", "WACC"]
+
+    list_data_types = ["CAPEX", "full load hours", "interest rate"]
     data_selection = st.radio("Select data type", list_data_types, horizontal=True)
     if data_selection == "CAPEX":
         parameter_code = ["CAPEX"]
@@ -677,9 +700,6 @@ They also show the data for your country for comparison.
             "PV tilted",
             "Wind-PV-Hybrid",
         ]
-        ind1 = input_data["parameter_code"].isin(parameter_code)
-        ind2 = input_data["process_code"].isin(process_code)
-        df = input_data.loc[ind1 & ind2]
         x = "process_code"
     if data_selection == "full load hours":
         parameter_code = ["full load hours"]
@@ -689,33 +709,109 @@ They also show the data for your country for comparison.
             "PV tilted",
             "Wind-PV-Hybrid",
         ]
-        ind1 = input_data["parameter_code"].isin(parameter_code)
-        ind2 = input_data["process_code"].isin(process_code)
-        df = input_data.loc[ind1 & ind2]
         x = "process_code"
-    if data_selection == "WACC":
+    if data_selection == "interest rate":
         parameter_code = ["interest rate"]
-        ind1 = input_data["parameter_code"].isin(parameter_code)
-        df = input_data.loc[ind1]
+        process_code = [""]
         x = "parameter_code"
 
-    # create plot:
-    create_box_plot_with_data(df, x)
-
-
-def create_box_plot_with_data(df, x, y="value"):
     c1, c2 = st.columns(2, gap="medium")
-    with c1:
-        st.markdown("**Figure:**")
-        fig = px.box(df, x=x, y=y)
-        st.plotly_chart(fig, use_container_width=True)
     with c2:
-        # show data as table:
-        df_tab = df.pivot_table(
-            index="source_region_code", columns=x, values=y, aggfunc="sum"
-        )
+        # show data:
         st.markdown("**Data:**")
-        st.dataframe(df_tab, use_container_width=True)
+        df = display_and_edit_data_table(
+            input_data=input_data,
+            columns=x,
+            source_region_code=region_list_without_subregions,
+            parameter_code=parameter_code,
+            process_code=process_code,
+        )
+    with c1:
+        # create plot:
+        st.markdown("**Figure:**")
+        fig = px.box(df)
+        st.plotly_chart(fig, use_container_width=True)
+
+    display_user_changes()
+
+
+def reset_user_changes():
+    """Reset all user changes."""
+    if "user_changes_df" in st.session_state.keys():
+        del st.session_state["user_changes"]
+        del st.session_state["user_changes_df"]
+
+
+def display_user_changes():
+    """Display input data changes made by user."""
+    if "user_changes_df" in st.session_state.keys():
+        st.write("**Input data has been modified:**")
+        st.write(st.session_state["user_changes_df"])
+
+
+def display_and_edit_data_table(
+    input_data: pd.DataFrame,
+    source_region_code: list,
+    parameter_code: list,
+    process_code: list,
+    index: str = "source_region_code",
+    columns: str = "process_code",
+    values: str = "value",
+) -> pd.DataFrame:
+    """Display selected input data as 2D table, which can also be edited."""
+    ind1 = input_data["source_region_code"].isin(source_region_code)
+    ind2 = input_data["parameter_code"].isin(parameter_code)
+    ind3 = input_data["process_code"].isin(process_code)
+    df = input_data.loc[ind1 & ind2 & ind3]
+    df_tab = df.pivot_table(index=index, columns=columns, values=values, aggfunc="sum")
+
+    if st.session_state["edit_input_data"]:
+        disabled = [index]
+        key = f"edit_input_data_{parameter_code}"
+    else:
+        disabled = True
+        key = None
+    st.data_editor(
+        df_tab,
+        use_container_width=True,
+        key=key,
+        num_rows="fixed",
+        disabled=disabled,
+    )
+
+    # store changes in session_state:
+    if st.session_state["edit_input_data"]:
+        if len(st.session_state[key]["edited_rows"]) > 0:
+            # convert session state dict to dataframe:
+            # Create a list of dictionaries
+            data_dict = st.session_state[key]["edited_rows"]
+            data_list = []
+
+            for k, v in data_dict.items():
+                for c_name, value in v.items():
+                    data_list.append({index: k, columns: c_name, values: value})
+
+            # Convert the list to a DataFrame
+            res = pd.DataFrame(data_list)
+            res["parameter_code"] = parameter_code[0]
+
+            # Replace the 'id' values with the corresponding index elements from df_tab
+            res[index] = res[index].map(lambda x: df_tab.index[x])
+
+            if "user_changes" not in st.session_state:
+                st.session_state["user_changes"] = {}
+            st.session_state["user_changes"][parameter_code[0]] = st.session_state[key][
+                "edited_rows"
+            ]
+            if "user_changes_df" not in st.session_state:
+                st.session_state["user_changes_df"] = pd.DataFrame()
+            st.session_state["user_changes_df"] = pd.concat(
+                [st.session_state["user_changes_df"], res]
+            ).drop_duplicates()
+
+        del st.session_state[key]
+
+    return df_tab
 
 
 def create_infobox(context_data: dict, settings: dict):
