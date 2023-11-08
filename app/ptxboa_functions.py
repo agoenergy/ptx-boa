@@ -379,7 +379,7 @@ Switch to other tabs to explore data and results in more detail!
     with c_3:
         create_box_plot(res_costs, settings)
     with c_4:
-        filtered_data = res_costs[res_costs.index == "Argentina"]
+        filtered_data = res_costs[res_costs.index == settings["region"]]
         create_bar_chart_costs(filtered_data)
 
     st.write("Chosen settings:")
