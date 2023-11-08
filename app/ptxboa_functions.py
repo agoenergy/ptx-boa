@@ -464,7 +464,8 @@ This sheet helps you to better evaluate your country's competitive position
 
     # show data in tabular form:
     st.markdown("**Data:**")
-    st.dataframe(df_plot.style.format(precision=2), use_container_width=True)
+    column_config = config_number_columns(df_plot, format="%.1f")
+    st.dataframe(df_plot, use_container_width=True, column_config=column_config)
 
 
 def remove_subregions(api: PtxboaAPI, df: pd.DataFrame, settings: dict):
@@ -554,7 +555,11 @@ in tabular form. \n\n Data can be filterend and sorted.
         create_bar_chart_costs(df_res)
 
     st.write("**Data:**")
-    st.dataframe(df_res.style.format(precision=2), use_container_width=True)
+
+    column_config = config_number_columns(
+        df_res, format=f"%.1f {settings['output_unit']}"
+    )
+    st.dataframe(df_res, use_container_width=True, column_config=column_config)
 
 
 def content_deep_dive_countries(
@@ -622,6 +627,7 @@ They also show the data for your selected supply country or region for compariso
             "Wind-PV-Hybrid",
         ]
         x = "process_code"
+        column_config = {"format": "%.0f h/a", "min_value": 0, "max_value": 8760}
 
     if data_selection == "total costs":
         df = res_costs.copy()
@@ -640,6 +646,7 @@ They also show the data for your selected supply country or region for compariso
             source_region_code=region_list,
             parameter_code=parameter_code,
             process_code=process_code,
+            column_config=column_config,
         )
     with c1:
         # create plot:
@@ -701,9 +708,8 @@ They also show the data for your country for comparison.
             "Wind-PV-Hybrid",
         ]
         x = "process_code"
-        column_config = st.column_config.NumberColumn(
-            format="%.0f USD/kW",
-        )
+        column_config = {"format": "%.0f USD/kW", "min_value": 0}
+
     if data_selection == "full load hours":
         parameter_code = ["full load hours"]
         process_code = [
@@ -713,16 +719,13 @@ They also show the data for your country for comparison.
             "Wind-PV-Hybrid",
         ]
         x = "process_code"
-        column_config = st.column_config.NumberColumn(
-            format="%.0f h/a",
-        )
+        column_config = {"format": "%.0f h/a", "min_value": 0, "max_value": 8760}
+
     if data_selection == "interest rate":
         parameter_code = ["interest rate"]
         process_code = [""]
         x = "parameter_code"
-        column_config = st.column_config.NumberColumn(
-            format="%.3f",
-        )
+        column_config = {"format": "%.3f", "min_value": 0, "max_value": 1}
 
     c1, c2 = st.columns(2, gap="medium")
     with c2:
@@ -768,7 +771,7 @@ def display_and_edit_data_table(
     index: str = "source_region_code",
     columns: str = "process_code",
     values: str = "value",
-    column_config=None,
+    column_config: dict = None,
 ) -> pd.DataFrame:
     """Display selected input data as 2D table, which can also be edited."""
     ind1 = input_data["source_region_code"].isin(source_region_code)
@@ -786,18 +789,14 @@ def display_and_edit_data_table(
         key = None
 
     # configure columns for display:
-    column_config_all = {}
-    for c in df_tab.columns:
-        if column_config is not None:
-            column_config_all[c] = column_config
-        else:
-            column_config_all[c] = st.column_config.NumberColumn(
-                format="%.2f",
-            )
+    if column_config is None:
+        column_config_all = None
+    else:
+        column_config_all = config_number_columns(df_tab, **column_config)
 
     # display data:
     st.data_editor(
-        df_tab.style.format(precision=2),
+        df_tab,
         use_container_width=True,
         key=key,
         num_rows="fixed",
@@ -1147,3 +1146,14 @@ TODO: add explanatory text
         )
     st.image("static/disclaimer.png")
     st.image("static/disclaimer_2.png")
+
+
+def config_number_columns(df: pd.DataFrame, **kwargs) -> {}:
+    """Create number column config info for st.dataframe() or st.data_editor."""
+    column_config_all = {}
+    for c in df.columns:
+        column_config_all[c] = st.column_config.NumberColumn(
+            **kwargs,
+        )
+
+    return column_config_all
