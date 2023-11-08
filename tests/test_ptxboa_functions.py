@@ -42,7 +42,7 @@ class TestPtxboaFunctions(unittest.TestCase):
         # output is dataframe:
         self.assertIsInstance(df_out, pd.DataFrame)
 
-        # regions including subregions: 34
+        # regions without subregions: 34
         self.assertEqual(len(df_out), 34)
         # Argentina should be in:
         self.assertTrue("Argentina" in df_out["region_name"])
