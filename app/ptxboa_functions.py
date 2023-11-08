@@ -640,6 +640,7 @@ They also show the data for your selected supply country or region for compariso
             source_region_code=region_list,
             parameter_code=parameter_code,
             process_code=process_code,
+            key_suffix="_ddc",
         )
     with c1:
         # create plot:
@@ -757,6 +758,7 @@ def display_and_edit_data_table(
     index: str = "source_region_code",
     columns: str = "process_code",
     values: str = "value",
+    key_suffix: str = "",
 ) -> pd.DataFrame:
     """Display selected input data as 2D table, which can also be edited."""
     ind1 = input_data["source_region_code"].isin(source_region_code)
@@ -767,7 +769,7 @@ def display_and_edit_data_table(
 
     if st.session_state["edit_input_data"]:
         disabled = [index]
-        key = f"edit_input_data_{parameter_code}"
+        key = f"edit_input_data_{parameter_code}{key_suffix}"
     else:
         disabled = True
         key = None
