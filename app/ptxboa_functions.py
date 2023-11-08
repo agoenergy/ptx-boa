@@ -243,12 +243,28 @@ def create_world_map(settings: dict, res_costs: pd.DataFrame):
         (1, "rgb(208, 110, 162)"),  # Ending color at the maximum data value
     ]
 
+    # Create custom hover text:
+    custom_hover_data = res_costs.apply(
+        lambda x: f"<b>{x.name}</b><br><br>"
+        + "<br>".join(
+            [
+                f"<b>{col}</b>: {x[col]:.1f} {settings['output_unit']}"
+                for col in res_costs.columns[:-1]
+            ]
+            + [
+                f"──────────<br><b>{res_costs.columns[-1]}</b>: "
+                f"{x[res_costs.columns[-1]]:.1f} {settings['output_unit']}"
+            ]
+        ),
+        axis=1,
+    )
+
     # Create a choropleth world map:
     fig = px.choropleth(
         locations=res_costs.index,  # List of country codes or names
         locationmode="country names",  # Use country names as locations
         color=res_costs[parameter_to_show_on_map],  # Color values for the countries
-        hover_name=res_costs.index,  # Names to display on hover
+        custom_data=[custom_hover_data],  # Pass custom data for hover information
         color_continuous_scale=color_scale,  # Choose a color scale
         title=title_string,
     )
@@ -256,9 +272,9 @@ def create_world_map(settings: dict, res_costs: pd.DataFrame):
     # update layout:
     fig.update_geos(
         showcountries=True,  # Show country borders
-        showcoastlines=False,  # Hide coastlines for a cleaner look
+        showcoastlines=True,  # Show coastlines
         countrycolor="black",  # Set default border color for other countries
-        countrywidth=0.5,  # Set border width; adjust as needed for 'thin' appearance
+        countrywidth=0.5,  # Set border width
         showland=True,
         landcolor="#f3f4f5",  # Set land color to light gray
         oceancolor="#e3e4ea",  # Optionally, set ocean color to light blue
@@ -269,6 +285,9 @@ def create_world_map(settings: dict, res_costs: pd.DataFrame):
         height=600,
         margin={"t": 20, "b": 20, "l": 20, "r": 20},
     )
+
+    # Set the hover template to use the custom data
+    fig.update_traces(hovertemplate="%{customdata}<extra></extra>")  # Custom data
 
     # Display the map:
     st.plotly_chart(fig, use_container_width=True)
