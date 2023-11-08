@@ -471,7 +471,7 @@ def remove_subregions(api: PtxboaAPI, df: pd.DataFrame, settings: dict):
     # do not show subregions:
     region_list_without_subregions = (
         api.get_dimension("region")
-        .loc[api.get_dimension("region")["subregion_code"].isna()]
+        .loc[api.get_dimension("region")["subregion_code"] == ""]
         .index.to_list()
     )
 
