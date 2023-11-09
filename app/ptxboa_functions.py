@@ -277,10 +277,14 @@ def create_world_map(settings: dict, res_costs: pd.DataFrame):
         showcountries=True,  # Show country borders
         showcoastlines=True,  # Show coastlines
         countrycolor="black",  # Set default border color for other countries
-        countrywidth=0.5,  # Set border width
+        countrywidth=0.2,  # Set border width
+        coastlinewidth=0.2,  # coastline width
+        coastlinecolor="black",  # coastline color
         showland=True,  # show land areas
         landcolor="#f3f4f5",  # Set land color to light gray
         oceancolor="#e3e4ea",  # Optionally, set ocean color slightly darker gray
+        showocean=True,  # show ocean areas
+        framewidth=0.2,  # width of frame around map
     )
 
     fig.update_layout(
