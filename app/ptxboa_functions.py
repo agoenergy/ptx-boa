@@ -232,7 +232,10 @@ Disable this setting to reset user data to default values.""",
 
 
 def create_world_map(settings: dict, res_costs: pd.DataFrame):
+    """Create world map."""
     parameter_to_show_on_map = "Total"
+
+    # define title:
     title_string = (
         f"{parameter_to_show_on_map} cost of exporting {settings['chain']} to "
         f"{settings['country']}"
@@ -266,7 +269,7 @@ def create_world_map(settings: dict, res_costs: pd.DataFrame):
         color=res_costs[parameter_to_show_on_map],  # Color values for the countries
         custom_data=[custom_hover_data],  # Pass custom data for hover information
         color_continuous_scale=color_scale,  # Choose a color scale
-        title=title_string,
+        title=title_string,  # set title
     )
 
     # update layout:
@@ -275,15 +278,15 @@ def create_world_map(settings: dict, res_costs: pd.DataFrame):
         showcoastlines=True,  # Show coastlines
         countrycolor="black",  # Set default border color for other countries
         countrywidth=0.5,  # Set border width
-        showland=True,
+        showland=True,  # show land areas
         landcolor="#f3f4f5",  # Set land color to light gray
-        oceancolor="#e3e4ea",  # Optionally, set ocean color to light blue
+        oceancolor="#e3e4ea",  # Optionally, set ocean color slightly darker gray
     )
 
     fig.update_layout(
-        coloraxis_colorbar={"title": settings["output_unit"]},
-        height=600,
-        margin={"t": 20, "b": 20, "l": 20, "r": 20},
+        coloraxis_colorbar={"title": settings["output_unit"]},  # colorbar
+        height=600,  # height of figure
+        margin={"t": 20, "b": 20, "l": 20, "r": 20},  # reduce margin around figure
     )
 
     # Set the hover template to use the custom data
