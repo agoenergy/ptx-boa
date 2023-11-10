@@ -1010,15 +1010,13 @@ and voluntary standards for H2 products.
         )
     df = context_data["certification_schemes"]
     helptext = "Select the certification scheme you want to know more about."
-    scheme_id = st.selectbox("Select scheme:", df["ID"], help=helptext)
-    data = df.loc[df["ID"] == scheme_id].iloc[0].to_dict()
+    scheme_name = st.selectbox("Select scheme:", df["name"], help=helptext)
+    data = df.loc[df["name"] == scheme_name].iloc[0].to_dict()
 
     # replace na with "not specified":
     for key in data:
         if data[key] is np.nan:
             data[key] = "not specified"
-
-    st.header(data["name"])
 
     st.markdown(data["description"])
 
