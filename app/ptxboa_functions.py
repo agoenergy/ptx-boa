@@ -902,14 +902,25 @@ def create_fact_sheet_demand_country(context_data: dict, country_name: str):
             """
 **Country fact sheets**
 
-This sheet provides you with an overview of additional interformation relevant
-for the production of H2 and derivatives
-across all PTX BOA supply countries.
+This sheet provides you with additional information on the production and import of
+ hydrogen and derivatives in all PTX BOA supply and demand countries.
+For each selected supply and demand country pair, you will find detailed
+ country profiles.
 
-We cover the following aspects: country-specific renewable energy technical potential
-(based on different data sources),
-LNG export and import infrastructure, CCS potentials, availability of a H2 strategy and
-wholesale electricity prices.
+ For demand countries, we cover the following aspects:
+ country-specific projected hydrogen demand,
+ target sectors for hydrogen use,
+ hydrogen-relevant policies and competent authorities,
+ certification and regulatory frameworks,
+ and country-specific characteristics as defined in the demand countries'
+ hydrogen strategies.
+
+ For the supplying countries, we cover the country-specific technical potential
+ for renewables (based on various data sources),
+ LNG export and import infrastructure,
+ CCS potentials,
+ availability of an H2 strategy
+ and wholesale electricity prices.
             """
         )
     df = context_data["demand_countries"]
@@ -930,44 +941,45 @@ wholesale electricity prices.
     st.subheader(
         f"{flags_to_country_names[country_name]} Fact sheet for {country_name}"
     )
-    st.markdown(
-        """This page contains detailed information
-         and a collection of links for further reading."""
-    )
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.markdown("**Projected H2 demand in 2030:**")
-        st.markdown(data["h2_demand_2030"])
-        st.markdown(f"*Source: {data['source_h2_demand_2030']}*")
-    with c2:
-        st.markdown("**Targeted sectors (main):**")
-        st.markdown(data["demand_targeted_sectors_main"])
-        st.markdown(f"*Source: {data['source_targeted_sectors_main']}*")
-    with c3:
-        st.markdown("**Targeted sectors (secondary):**")
-        st.markdown(data["demand_targeted_sectors_secondary"])
-        st.markdown(f"*Source: {data['source_targeted_sectors_secondary']}*")
-    st.markdown("**Hydrogen strategy documents:**")
-    st.markdown(data["h2_strategy_documents"])
+    with st.expander("**Demand**"):
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            st.markdown("**Projected H2 demand in 2030:**")
+            st.markdown(data["h2_demand_2030"])
+            st.markdown(f"*Source: {data['source_h2_demand_2030']}*")
+        with c2:
+            st.markdown("**Targeted sectors (main):**")
+            st.markdown(data["demand_targeted_sectors_main"])
+            st.markdown(f"*Source: {data['source_targeted_sectors_main']}*")
+        with c3:
+            st.markdown("**Targeted sectors (secondary):**")
+            st.markdown(data["demand_targeted_sectors_secondary"])
+            st.markdown(f"*Source: {data['source_targeted_sectors_secondary']}*")
 
-    st.markdown("**Hydrogen strategy authorities:**")
-    st.markdown(data["h2_strategy_authorities"])
+    with st.expander("**Hydrogen strategy**"):
+        st.markdown("**Documents:**")
+        st.markdown(data["h2_strategy_documents"])
 
-    st.markdown("**Information on certification schemes:**")
-    st.markdown(data["certification_info"])
-    st.markdown(f"*Source: {data['source_certification_info']}*")
+        st.markdown("**Authorities:**")
+        st.markdown(data["h2_strategy_authorities"])
 
-    st.markdown("**H2 trade characteristics:**")
-    st.markdown(data["h2_trade_characteristics"])
-    st.markdown(f"*Source: {data['source_h2_trade_characteristics']}*")
+    with st.expander("**Hydrogen trade characteristics**"):
+        st.markdown(data["h2_trade_characteristics"])
+        st.markdown(f"*Source: {data['source_h2_trade_characteristics']}*")
 
-    st.markdown("**LNG import terminals:**")
-    st.markdown(data["lng_import_terminals"])
-    st.markdown(f"*Source: {data['source_lng_import_terminals']}*")
+    with st.expander("**Infrastructure**"):
+        st.markdown("**LNG import terminals:**")
+        st.markdown(data["lng_import_terminals"])
+        st.markdown(f"*Source: {data['source_lng_import_terminals']}*")
 
-    st.markdown("**H2 pipeline projects:**")
-    st.markdown(data["h2_pipeline_projects"])
-    st.markdown(f"*Source: {data['source_h2_pipeline_projects']}*")
+        st.markdown("**H2 pipeline projects:**")
+        st.markdown(data["h2_pipeline_projects"])
+        st.markdown(f"*Source: {data['source_h2_pipeline_projects']}*")
+
+    if data["certification_info"] != "":
+        with st.expander("**Certification schemes**"):
+            st.markdown(data["certification_info"])
+            st.markdown(f"*Source: {data['source_certification_info']}*")
 
 
 def create_fact_sheet_supply_country(context_data: dict, country_name: str):
