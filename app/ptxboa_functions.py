@@ -1134,11 +1134,9 @@ This tab contains a list of references used in this app.
     markdown_text = ""
     for _ind, row in df.iterrows():
         if is_valid_url(row["url"]):
-            text = (
-                f"- **{row['short_name']}**: {row['long_name']} [Link]({row['url']})\n"
-            )
+            text = f"- {row['long_name']}: [Link]({row['url']})\n"
         else:
-            text = f"- **{row['short_name']}**: {row['long_name']}\n"
+            text = f"- {row['long_name']}\n"
         markdown_text = markdown_text + text
 
     st.markdown(markdown_text)
