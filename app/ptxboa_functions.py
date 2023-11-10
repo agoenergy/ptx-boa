@@ -760,7 +760,7 @@ def display_user_changes():
     """Display input data changes made by user."""
     if "user_changes_df" in st.session_state.keys():
         st.write("**Input data has been modified:**")
-        st.write(st.session_state["user_changes_df"])
+        st.dataframe(st.session_state["user_changes_df"].style.format(precision=3))
 
 
 def display_and_edit_data_table(
