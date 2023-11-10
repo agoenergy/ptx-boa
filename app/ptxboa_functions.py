@@ -1058,7 +1058,6 @@ It also includes other environmental as well as socio-economic dimensions.
 
 This is why we provide you with a set of questions that will help you assess your plans
 for PTX production and export from a comprehensive sustainability perspective.
-The compliation is based on frameworks by the PtX Hub as well as the Oeko-Institute.
 Please note that this list does not claim to be exhaustive,
 but only serves for an orientation on the topic.
             """
@@ -1078,9 +1077,30 @@ but only serves for an orientation on the topic.
             """
 **Dimensions of sustainability**
 
-This text should explain the diagram and how the content of this tab is structured.
+**What sustainability aspects should be considered for PTX products,
+ production and policies?**
 
-Maybe it could be combined with the content of the "What is this?" expander above.
+**What questions should be asked before and during project development?**
+
+In this tab we aim to provide a basic approach to these questions.
+ To the left, you can see the framework along which the compilation
+ of sustainability aspects in this tab is structured. It is based on the EESG framework
+ as elaborated by the PtX Hub and sustainability criteria developed by the Öko-Institut.
+
+**The framework distinguishes four key sustainability dimensions - Environmental,
+ Economic, Social and Governance - from which you can select below.**
+
+ Within each of these dimensions there are different clusters of sustainability aspects
+ that we address in a set of questions. We differentiate between questions indicating
+ guardrails and questions suggesting goals.
+
+With this compilation, we aim to provide a general overview of the sustainability
+ issues that may be relevant in the context of PTX production. Of course,
+ different aspects are more or less important depending on the project,
+ product and country.
+
+**Take a look for yourself to see which dimensions are most important
+ from where you are coming from.**
                     """
         )
     st.divider()
@@ -1092,7 +1112,15 @@ Maybe it could be combined with the content of the "What is this?" expander abov
             "Select dimension:", df["dimension"].unique(), help=helptext
         )
     with c2:
-        helptext = "helptext"
+        helptext = """
+We understand **guardrails** as guidelines which can help you to produce green
+PTX products that are sustainable also beyond their greenhouse gas emission intensity.
+
+**Goals** are guidelines which can help link PTX production to improving local
+ ecological and socio-economic circumstances in the supply country.
+They act as additional to guardrails which should be fulfilled in the first place
+ to meet basic sustainability needs.
+"""
         question_type = st.radio(
             "Guardrails or goals?",
             ["Guardrails", "Goals"],
