@@ -1150,7 +1150,8 @@ def content_disclaimer():
             """
 **Disclaimer**
 
-TODO: add explanatory text
+Information on product details of the PTX Business Opportunity Analyser
+ including a citation suggestion of the tool.
             """
         )
     st.image("static/disclaimer.png")
