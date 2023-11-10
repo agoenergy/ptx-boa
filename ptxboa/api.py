@@ -149,26 +149,27 @@ class PtxboaAPI:
 
         calculator = PtxCalc(data_handler)
 
-        # TODO: better way to map dimension names to codes
-        # self.data.map_name_to_code(dim, name) # noqa
-        # self.data.map_code_to_name(name, code) # noqa
-        def name_to_code_bad(dim, dim_name, name):
-            df = self.data.get_dimension(dim)
-            return df.loc[df[dim_name + "_name"] == name, dim_name + "_code"].iloc[0]
-
         if transport not in {"Ship", "Pipeline"}:
             logging.error("Invalid choice for transport")
         use_ship = transport == "Ship"
 
         result_df = calculator.calculate(
-            secproc_co2_code=name_to_code_bad("secproc_co2", "process", secproc_co2),
-            secproc_water_code=name_to_code_bad(
-                "secproc_water", "process", secproc_water
+            secproc_co2_code=self.data.get_dimensions_parameter_code(
+                "secproc_co2", secproc_co2
+            ),
+            secproc_water_code=self.data.get_dimensions_parameter_code(
+                "secproc_water", secproc_water
             ),
             chain=chain,
-            process_code_res=name_to_code_bad("res_gen", "process", res_gen),
-            source_region_code=name_to_code_bad("region", "region", region),
-            target_country_code=name_to_code_bad("country", "country", country),
+            process_code_res=self.data.get_dimensions_parameter_code(
+                "res_gen", res_gen
+            ),
+            source_region_code=self.data.get_dimensions_parameter_code(
+                "region", region
+            ),
+            target_country_code=self.data.get_dimensions_parameter_code(
+                "country", country
+            ),
             use_ship=use_ship,
             ship_own_fuel=ship_own_fuel,
             output_unit=output_unit,

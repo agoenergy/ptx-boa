@@ -232,37 +232,71 @@ Disable this setting to reset user data to default values.""",
 
 
 def create_world_map(settings: dict, res_costs: pd.DataFrame):
-    parameter_to_show_on_map = st.selectbox(
-        "Select cost component:", res_costs.columns, index=len(res_costs.columns) - 1
-    )
+    """Create world map."""
+    parameter_to_show_on_map = "Total"
+
+    # define title:
     title_string = (
         f"{parameter_to_show_on_map} cost of exporting {settings['chain']} to "
         f"{settings['country']}"
     )
-    # Create a choropleth world map using Plotly Express
+    # define color scale:
+    color_scale = [
+        (0, "rgb(60, 194, 204)"),  # Starting color at the minimum data value
+        (1, "rgb(208, 110, 162)"),  # Ending color at the maximum data value
+    ]
+
+    # Create custom hover text:
+    custom_hover_data = res_costs.apply(
+        lambda x: f"<b>{x.name}</b><br><br>"
+        + "<br>".join(
+            [
+                f"<b>{col}</b>: {x[col]:.1f} {settings['output_unit']}"
+                for col in res_costs.columns[:-1]
+            ]
+            + [
+                f"──────────<br><b>{res_costs.columns[-1]}</b>: "
+                f"{x[res_costs.columns[-1]]:.1f} {settings['output_unit']}"
+            ]
+        ),
+        axis=1,
+    )
+
+    # Create a choropleth world map:
     fig = px.choropleth(
         locations=res_costs.index,  # List of country codes or names
         locationmode="country names",  # Use country names as locations
         color=res_costs[parameter_to_show_on_map],  # Color values for the countries
-        hover_name=res_costs.index,  # Names to display on hover
-        color_continuous_scale="Turbo",  # Choose a color scale
-        title=title_string,
+        custom_data=[custom_hover_data],  # Pass custom data for hover information
+        color_continuous_scale=color_scale,  # Choose a color scale
+        title=title_string,  # set title
     )
 
-    # Add black borders to the map
+    # update layout:
     fig.update_geos(
         showcountries=True,  # Show country borders
-        showcoastlines=False,  # Hide coastlines for a cleaner look
-        bgcolor="lightgray",  # Set background color
-        countrycolor="white",  # Set default border color for other countries
-        showland=True,
-        landcolor="white",  # Set land color
-        oceancolor="lightblue",  # Set ocean color
+        showcoastlines=True,  # Show coastlines
+        countrycolor="black",  # Set default border color for other countries
+        countrywidth=0.2,  # Set border width
+        coastlinewidth=0.2,  # coastline width
+        coastlinecolor="black",  # coastline color
+        showland=True,  # show land areas
+        landcolor="#f3f4f5",  # Set land color to light gray
+        oceancolor="#e3e4ea",  # Optionally, set ocean color slightly darker gray
+        showocean=True,  # show ocean areas
+        framewidth=0.2,  # width of frame around map
     )
 
-    fig.update_layout(coloraxis_colorbar={"title": settings["output_unit"]})
+    fig.update_layout(
+        coloraxis_colorbar={"title": settings["output_unit"]},  # colorbar
+        height=600,  # height of figure
+        margin={"t": 20, "b": 20, "l": 20, "r": 20},  # reduce margin around figure
+    )
 
-    # Display the map using st.plotly_chart
+    # Set the hover template to use the custom data
+    fig.update_traces(hovertemplate="%{customdata}<extra></extra>")  # Custom data
+
+    # Display the map:
     st.plotly_chart(fig, use_container_width=True)
     return
 
@@ -365,11 +399,11 @@ Switch to other tabs to explore data and results in more detail!
             """
         )
 
-    c_1, c_2 = st.columns([1, 2])
-    with c_1:
+    c_1, c_2 = st.columns([2, 1])
+    with c_2:
         create_infobox(context_data, settings)
 
-    with c_2:
+    with c_1:
         create_world_map(settings, res_costs)
 
     st.divider()
@@ -647,6 +681,7 @@ They also show the data for your selected supply country or region for compariso
             parameter_code=parameter_code,
             process_code=process_code,
             column_config=column_config,
+            key_suffix="_ddc",
         )
     with c1:
         # create plot:
@@ -772,6 +807,7 @@ def display_and_edit_data_table(
     columns: str = "process_code",
     values: str = "value",
     column_config: dict = None,
+    key_suffix: str = "",
 ) -> pd.DataFrame:
     """Display selected input data as 2D table, which can also be edited."""
     ind1 = input_data["source_region_code"].isin(source_region_code)
@@ -783,7 +819,7 @@ def display_and_edit_data_table(
     # if editing is enabled, store modifications in session_state:
     if st.session_state["edit_input_data"]:
         disabled = [index]
-        key = f"edit_input_data_{parameter_code}"
+        key = f"edit_input_data_{parameter_code}{key_suffix}"
     else:
         disabled = True
         key = None
