@@ -2,6 +2,7 @@
 """Utility functions for streamlit app."""
 from urllib.parse import urlparse
 
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -1012,38 +1013,47 @@ and voluntary standards for H2 products.
     scheme_id = st.selectbox("Select scheme:", df["ID"], help=helptext)
     data = df.loc[df["ID"] == scheme_id].iloc[0].to_dict()
 
+    # replace na with "not specified":
+    for key in data:
+        if data[key] is np.nan:
+            data[key] = "not specified"
+
     st.header(data["name"])
 
     st.markdown(data["description"])
 
-    st.subheader("Characteristics")
+    with st.expander("**Characteristics**"):
+        st.markdown(
+            f"- **Relation to other standards:** {data['relation_to_other_standards']}"
+        )
+        st.markdown(f"- **Geographic scope:** {data['geographic_scope']}")
+        st.markdown(f"- **PTXBOA demand countries:** {data['ptxboa_demand_countries']}")
+        st.markdown(f"- **Labels:** {data['label']}")
+        st.markdown(f"- **Lifecycle scope:** {data['lifecycle_scope']}")
 
-    st.markdown(
-        f"- **Relation to other standards:** {data['relation_to_other_standards']}"
-    )
-    st.markdown(f"- **Geographic scope:** {data['geographic_scope']}")
-    st.markdown(f"- **PTXBOA demand countries:** {data['ptxboa_demand_countries']}")
-    st.markdown(f"- **Labels:** {data['label']}")
-    st.markdown(f"- **Lifecycle scope:** {data['lifecycle_scope']}")
+    with st.expander("**Scope**"):
+        if data["scope_emissions"] != "not specified":
+            st.markdown("- **Emissions:**")
+            st.markdown(data["scope_emissions"])
 
-    st.subheader("Scope")
-    st.markdown("- **Emissions:**")
-    st.markdown(data["scope_emissions"])
+        if data["scope_electricity"] != "not specified":
+            st.markdown("- **Electricity:**")
+            st.markdown(data["scope_electricity"])
 
-    st.markdown("- **Electricity:**")
-    st.markdown(data["scope_electricity"])
+        if data["scope_water"] != "not specified":
+            st.markdown("- **Water:**")
+            st.markdown(data["scope_water"])
 
-    st.markdown("- **Water:**")
-    st.markdown(data["scope_water"])
+        if data["scope_biodiversity"] != "not specified":
+            st.markdown("- **Biodiversity:**")
+            st.markdown(data["scope_biodiversity"])
 
-    st.markdown("- **Biodiversity:**")
-    st.markdown(data["scope_biodiversity"])
+        if data["scope_other"] != "not specified":
+            st.markdown("- **Other:**")
+            st.markdown(data["scope_other"])
 
-    st.markdown("- **Other:**")
-    st.markdown(data["scope_other"])
-
-    st.subheader("Sources")
-    st.markdown(data["sources"])
+    with st.expander("**Sources**"):
+        st.markdown(data["sources"])
 
 
 def create_content_sustainability(context_data: dict):
