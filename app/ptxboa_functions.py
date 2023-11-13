@@ -37,6 +37,8 @@ def calculate_results(
 ) -> pd.DataFrame:
     """Calculate results for source regions and one selected target country.
 
+    TODO: This function will eventually be replaced by ``calculate_results_list()``.
+
     Parameters
     ----------
     api : :class:`~ptxboa.api.PtxboaAPI`
@@ -67,8 +69,64 @@ def calculate_results(
     return res
 
 
+def calculate_results_list(
+    api: PtxboaAPI,
+    settings: dict,
+    parameter_to_change: str,
+    parameter_list: list = None,
+) -> pd.DataFrame:
+    """Calculate results for source regions and one selected target country.
+
+    Parameters
+    ----------
+    _api : :class:`~ptxboa.api.PtxboaAPI`
+        an instance of the api class
+    settings : dict
+        settings from the streamlit app. An example can be obtained with the
+        return value from :func:`ptxboa_functions.create_sidebar`.
+    parameter_to_change : str
+        element of settings for which a list of values is to be used.
+    parameter_list : list or None
+        The values of ``parameter_to_change`` for which the results are calculated.
+        If None, all values available in the API will be used.
+
+    Returns
+    -------
+    pd.DataFrame
+        same format as for :meth:`~ptxboa.api.PtxboaAPI.calculate()`
+    """
+    res_list = []
+
+    if parameter_list is None:
+        parameter_list = api.get_dimension(parameter_to_change).index
+
+    for parameter in parameter_list:
+        settings2 = settings.copy()
+        settings2[parameter_to_change] = parameter
+        res_single = calculate_results_single(api, settings2)
+        res_list.append(res_single)
+    res_details = pd.concat(res_list)
+
+    # Exclude levelized costs:
+    res = res_details.loc[res_details["cost_type"] != "LC"]
+    res = res.pivot_table(
+        index=parameter_to_change,
+        columns="process_type",
+        values="values",
+        aggfunc="sum",
+    )
+    # calculate total costs:
+    res["Total"] = res.sum(axis=1)
+
+    return res
+
+
+@st.cache_data()
 def aggregate_costs(res_details: pd.DataFrame) -> pd.DataFrame:
-    """Aggregate detailed costs."""
+    """Aggregate detailed costs.
+
+    TODO: This function will eventually be replaced by ``calculate_results_list``
+    """
     # Exclude levelized costs:
     res = res_details.loc[res_details["cost_type"] != "LC"]
     res = res.pivot_table(
