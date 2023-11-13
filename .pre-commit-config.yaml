@@ -4,7 +4,7 @@ exclude: ^(data|tests|archive)/
 repos:
   # ============== PRE-COMMIT HOOKS ===============
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v4.5.0
     hooks:
       - id: check-added-large-files
       - id: check-merge-conflict
@@ -15,7 +15,7 @@ repos:
 
   # ==================== BLACK ====================
   - repo: https://github.com/psf/black
-    rev: 23.1.0
+    rev: 23.11.0
     hooks:
       - id: black
         args: ["--line-length", "88"]
@@ -31,7 +31,7 @@ repos:
 
   # =================== FLAKE8 ====================
   - repo: https://github.com/pycqa/flake8
-    rev: 5.0.4
+    rev: 6.1.0
     hooks:
       - id: flake8
         additional_dependencies:
