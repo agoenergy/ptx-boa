@@ -2,6 +2,7 @@
 """Utility functions for streamlit app."""
 from urllib.parse import urlparse
 
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -299,6 +300,11 @@ Disable this setting to reset user data to default values.""",
 
     if st.session_state["edit_input_data"] is False:
         reset_user_changes()
+
+    # import agora color scale:
+    if "colors" not in st.session_state:
+        colors = pd.read_csv("data/Agora_Industry_Colours.csv")
+        st.session_state["colors"] = colors["Hex Code"].to_list()
     return settings
 
 
@@ -313,8 +319,9 @@ def create_world_map(settings: dict, res_costs: pd.DataFrame):
     )
     # define color scale:
     color_scale = [
-        (0, "rgb(60, 194, 204)"),  # Starting color at the minimum data value
-        (1, "rgb(208, 110, 162)"),  # Ending color at the maximum data value
+        (0, st.session_state["colors"][0]),  # Starting color at the minimum data value
+        (0.5, st.session_state["colors"][6]),
+        (1, st.session_state["colors"][9]),  # Ending color at the maximum data value
     ]
 
     # Create custom hover text:
@@ -376,7 +383,13 @@ def create_bar_chart_costs(res_costs: pd.DataFrame):
     if res_costs.empty:  # nodata to plot (FIXME: migth not be required later)
         return
 
-    fig = px.bar(res_costs, x=res_costs.index, y=res_costs.columns[:-1], height=500)
+    fig = px.bar(
+        res_costs,
+        x=res_costs.index,
+        y=res_costs.columns[:-1],
+        height=500,
+        color_discrete_sequence=st.session_state["colors"],
+    )
 
     # Add the dot markers for the "total" column using plotly.graph_objects
     scatter_trace = go.Scatter(
@@ -991,14 +1004,25 @@ def create_fact_sheet_demand_country(context_data: dict, country_name: str):
             """
 **Country fact sheets**
 
-This sheet provides you with an overview of additional interformation relevant
-for the production of H2 and derivatives
-across all PTX BOA supply countries.
+This sheet provides you with additional information on the production and import of
+ hydrogen and derivatives in all PTX BOA supply and demand countries.
+For each selected supply and demand country pair, you will find detailed
+ country profiles.
 
-We cover the following aspects: country-specific renewable energy technical potential
-(based on different data sources),
-LNG export and import infrastructure, CCS potentials, availability of a H2 strategy and
-wholesale electricity prices.
+ For demand countries, we cover the following aspects:
+ country-specific projected hydrogen demand,
+ target sectors for hydrogen use,
+ hydrogen-relevant policies and competent authorities,
+ certification and regulatory frameworks,
+ and country-specific characteristics as defined in the demand countries'
+ hydrogen strategies.
+
+ For the supplying countries, we cover the country-specific technical potential
+ for renewables (based on various data sources),
+ LNG export and import infrastructure,
+ CCS potentials,
+ availability of an H2 strategy
+ and wholesale electricity prices.
             """
         )
     df = context_data["demand_countries"]
@@ -1019,44 +1043,45 @@ wholesale electricity prices.
     st.subheader(
         f"{flags_to_country_names[country_name]} Fact sheet for {country_name}"
     )
-    st.markdown(
-        """This page contains detailed information
-         and a collection of links for further reading."""
-    )
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.markdown("**Projected H2 demand in 2030:**")
-        st.markdown(data["h2_demand_2030"])
-        st.markdown(f"*Source: {data['source_h2_demand_2030']}*")
-    with c2:
-        st.markdown("**Targeted sectors (main):**")
-        st.markdown(data["demand_targeted_sectors_main"])
-        st.markdown(f"*Source: {data['source_targeted_sectors_main']}*")
-    with c3:
-        st.markdown("**Targeted sectors (secondary):**")
-        st.markdown(data["demand_targeted_sectors_secondary"])
-        st.markdown(f"*Source: {data['source_targeted_sectors_secondary']}*")
-    st.markdown("**Hydrogen strategy documents:**")
-    st.markdown(data["h2_strategy_documents"])
+    with st.expander("**Demand**"):
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            st.markdown("**Projected H2 demand in 2030:**")
+            st.markdown(data["h2_demand_2030"])
+            st.markdown(f"*Source: {data['source_h2_demand_2030']}*")
+        with c2:
+            st.markdown("**Targeted sectors (main):**")
+            st.markdown(data["demand_targeted_sectors_main"])
+            st.markdown(f"*Source: {data['source_targeted_sectors_main']}*")
+        with c3:
+            st.markdown("**Targeted sectors (secondary):**")
+            st.markdown(data["demand_targeted_sectors_secondary"])
+            st.markdown(f"*Source: {data['source_targeted_sectors_secondary']}*")
 
-    st.markdown("**Hydrogen strategy authorities:**")
-    st.markdown(data["h2_strategy_authorities"])
+    with st.expander("**Hydrogen strategy**"):
+        st.markdown("**Documents:**")
+        st.markdown(data["h2_strategy_documents"])
 
-    st.markdown("**Information on certification schemes:**")
-    st.markdown(data["certification_info"])
-    st.markdown(f"*Source: {data['source_certification_info']}*")
+        st.markdown("**Authorities:**")
+        st.markdown(data["h2_strategy_authorities"])
 
-    st.markdown("**H2 trade characteristics:**")
-    st.markdown(data["h2_trade_characteristics"])
-    st.markdown(f"*Source: {data['source_h2_trade_characteristics']}*")
+    with st.expander("**Hydrogen trade characteristics**"):
+        st.markdown(data["h2_trade_characteristics"])
+        st.markdown(f"*Source: {data['source_h2_trade_characteristics']}*")
 
-    st.markdown("**LNG import terminals:**")
-    st.markdown(data["lng_import_terminals"])
-    st.markdown(f"*Source: {data['source_lng_import_terminals']}*")
+    with st.expander("**Infrastructure**"):
+        st.markdown("**LNG import terminals:**")
+        st.markdown(data["lng_import_terminals"])
+        st.markdown(f"*Source: {data['source_lng_import_terminals']}*")
 
-    st.markdown("**H2 pipeline projects:**")
-    st.markdown(data["h2_pipeline_projects"])
-    st.markdown(f"*Source: {data['source_h2_pipeline_projects']}*")
+        st.markdown("**H2 pipeline projects:**")
+        st.markdown(data["h2_pipeline_projects"])
+        st.markdown(f"*Source: {data['source_h2_pipeline_projects']}*")
+
+    if data["certification_info"] != "":
+        with st.expander("**Certification schemes**"):
+            st.markdown(data["certification_info"])
+            st.markdown(f"*Source: {data['source_certification_info']}*")
 
 
 def create_fact_sheet_supply_country(context_data: dict, country_name: str):
@@ -1091,7 +1116,7 @@ def create_fact_sheet_certification_schemes(context_data: dict):
     with st.expander("What is this?"):
         st.markdown(
             """
-**Get supplementary information on H2-relevant certification frameworks **
+**Get supplementary information on H2-relevant certification frameworks**
 
 This sheet provides you with an overview of current governmental regulations
 and voluntary standards for H2 products.
@@ -1099,41 +1124,65 @@ and voluntary standards for H2 products.
         )
     df = context_data["certification_schemes"]
     helptext = "Select the certification scheme you want to know more about."
-    scheme_id = st.selectbox("Select scheme:", df["ID"], help=helptext)
-    data = df.loc[df["ID"] == scheme_id].iloc[0].to_dict()
+    scheme_name = st.selectbox("Select scheme:", df["name"], help=helptext)
+    data = df.loc[df["name"] == scheme_name].iloc[0].to_dict()
 
-    st.header(data["name"])
+    # replace na with "not specified":
+    for key in data:
+        if data[key] is np.nan:
+            data[key] = "not specified"
 
     st.markdown(data["description"])
 
-    st.subheader("Characteristics")
+    with st.expander("**Characteristics**"):
+        st.markdown(
+            f"- **Relation to other standards:** {data['relation_to_other_standards']}"
+        )
+        st.markdown(f"- **Geographic scope:** {data['geographic_scope']}")
+        st.markdown(f"- **PTXBOA demand countries:** {data['ptxboa_demand_countries']}")
+        st.markdown(f"- **Labels:** {data['label']}")
+        st.markdown(f"- **Lifecycle scope:** {data['lifecycle_scope']}")
 
-    st.markdown(
-        f"- **Relation to other standards:** {data['relation_to_other_standards']}"
-    )
-    st.markdown(f"- **Geographic scope:** {data['geographic_scope']}")
-    st.markdown(f"- **PTXBOA demand countries:** {data['ptxboa_demand_countries']}")
-    st.markdown(f"- **Labels:** {data['label']}")
-    st.markdown(f"- **Lifecycle scope:** {data['lifecycle_scope']}")
+        st.markdown(
+            """
+**Explanations:**
 
-    st.subheader("Scope")
-    st.markdown("- **Emissions:**")
-    st.markdown(data["scope_emissions"])
+- Info on "Geographical scope":
+  - This field provides an answer to the question: if you want to address a specific
+ country of demand, which regulations and/or standards exist in this country
+   that require or allow proof of a specific product property?
+- Info on "Lifecycle scope":
+  - Well-to-gate: GHG emissions are calculated up to production.
+  - Well-to-wheel: GHG emissions are calculated up to the time of use.
+  - Further information on the life cycle scopes can be found in
+IRENA & RMI (2023): Creating a global hydrogen market: certification to enable trade,
+ pp. 15-19
+"""
+        )
 
-    st.markdown("- **Electricity:**")
-    st.markdown(data["scope_electricity"])
+    with st.expander("**Scope**"):
+        if data["scope_emissions"] != "not specified":
+            st.markdown("- **Emissions:**")
+            st.markdown(data["scope_emissions"])
 
-    st.markdown("- **Water:**")
-    st.markdown(data["scope_water"])
+        if data["scope_electricity"] != "not specified":
+            st.markdown("- **Electricity:**")
+            st.markdown(data["scope_electricity"])
 
-    st.markdown("- **Biodiversity:**")
-    st.markdown(data["scope_biodiversity"])
+        if data["scope_water"] != "not specified":
+            st.markdown("- **Water:**")
+            st.markdown(data["scope_water"])
 
-    st.markdown("- **Other:**")
-    st.markdown(data["scope_other"])
+        if data["scope_biodiversity"] != "not specified":
+            st.markdown("- **Biodiversity:**")
+            st.markdown(data["scope_biodiversity"])
 
-    st.subheader("Sources")
-    st.markdown(data["sources"])
+        if data["scope_other"] != "not specified":
+            st.markdown("- **Other:**")
+            st.markdown(data["scope_other"])
+
+    with st.expander("**Sources**"):
+        st.markdown(data["sources"])
 
 
 def create_content_sustainability(context_data: dict):
@@ -1148,7 +1197,6 @@ It also includes other environmental as well as socio-economic dimensions.
 
 This is why we provide you with a set of questions that will help you assess your plans
 for PTX production and export from a comprehensive sustainability perspective.
-The compliation is based on frameworks by the PtX Hub as well as the Oeko-Institute.
 Please note that this list does not claim to be exhaustive,
 but only serves for an orientation on the topic.
             """
@@ -1168,9 +1216,30 @@ but only serves for an orientation on the topic.
             """
 **Dimensions of sustainability**
 
-This text should explain the diagram and how the content of this tab is structured.
+**What sustainability aspects should be considered for PTX products,
+ production and policies?**
 
-Maybe it could be combined with the content of the "What is this?" expander above.
+**What questions should be asked before and during project development?**
+
+In this tab we aim to provide a basic approach to these questions.
+ To the left, you can see the framework along which the compilation
+ of sustainability aspects in this tab is structured. It is based on the EESG framework
+ as elaborated by the PtX Hub and sustainability criteria developed by the Öko-Institut.
+
+**The framework distinguishes four key sustainability dimensions - Environmental,
+ Economic, Social and Governance - from which you can select below.**
+
+ Within each of these dimensions there are different clusters of sustainability aspects
+ that we address in a set of questions. We differentiate between questions indicating
+ guardrails and questions suggesting goals.
+
+With this compilation, we aim to provide a general overview of the sustainability
+ issues that may be relevant in the context of PTX production. Of course,
+ different aspects are more or less important depending on the project,
+ product and country.
+
+**Take a look for yourself to see which dimensions are most important
+ from where you are coming from.**
                     """
         )
     st.divider()
@@ -1182,7 +1251,15 @@ Maybe it could be combined with the content of the "What is this?" expander abov
             "Select dimension:", df["dimension"].unique(), help=helptext
         )
     with c2:
-        helptext = "helptext"
+        helptext = """
+We understand **guardrails** as guidelines which can help you to produce green
+PTX products that are sustainable also beyond their greenhouse gas emission intensity.
+
+**Goals** are guidelines which can help link PTX production to improving local
+ ecological and socio-economic circumstances in the supply country.
+They act as additional to guardrails which should be fulfilled in the first place
+ to meet basic sustainability needs.
+"""
         question_type = st.radio(
             "Guardrails or goals?",
             ["Guardrails", "Goals"],
@@ -1224,11 +1301,9 @@ This tab contains a list of references used in this app.
     markdown_text = ""
     for _ind, row in df.iterrows():
         if is_valid_url(row["url"]):
-            text = (
-                f"- **{row['short_name']}**: {row['long_name']} [Link]({row['url']})\n"
-            )
+            text = f"- {row['long_name']}: [Link]({row['url']})\n"
         else:
-            text = f"- **{row['short_name']}**: {row['long_name']}\n"
+            text = f"- {row['long_name']}\n"
         markdown_text = markdown_text + text
 
     st.markdown(markdown_text)
@@ -1240,7 +1315,8 @@ def content_disclaimer():
             """
 **Disclaimer**
 
-TODO: add explanatory text
+Information on product details of the PTX Business Opportunity Analyser
+ including a citation suggestion of the tool.
             """
         )
     st.image("static/disclaimer.png")
