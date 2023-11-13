@@ -62,8 +62,6 @@ def aggregate_costs(res_details: pd.DataFrame) -> pd.DataFrame:
     # calculate total costs:
     res["Total"] = res.sum(axis=1)
 
-    # TODO exclude countries with total costs of 0 - maybe remove later:
-    res = res.loc[res["Total"] != 0]
     return res
 
 
