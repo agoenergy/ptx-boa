@@ -379,7 +379,7 @@ def create_world_map(settings: dict, res_costs: pd.DataFrame):
     return
 
 
-def create_bar_chart_costs(res_costs: pd.DataFrame):
+def create_bar_chart_costs(res_costs: pd.DataFrame, settings: dict):
     if res_costs.empty:  # nodata to plot (FIXME: migth not be required later)
         return
 
@@ -407,8 +407,7 @@ def create_bar_chart_costs(res_costs: pd.DataFrame):
     fig.add_trace(scatter_trace)
 
     fig.update_layout(
-        title="Total cost by region",
-        yaxis_title="USD/kWh",
+        yaxis_title=settings["output_unit"],
     )
     st.plotly_chart(fig, use_container_width=True)
 
@@ -498,7 +497,7 @@ Switch to other tabs to explore data and results in more detail!
         create_box_plot(res_costs, settings)
     with c_4:
         filtered_data = res_costs[res_costs.index == settings["region"]]
-        create_bar_chart_costs(filtered_data)
+        create_bar_chart_costs(filtered_data, settings)
 
     st.write("Chosen settings:")
     st.write(settings)
@@ -676,7 +675,7 @@ Data can be filterend and sorted.
                 df_res = df_res.sort_values(["Total"], ascending=True)
         with c2:
             # create graph:
-            create_bar_chart_costs(df_res)
+            create_bar_chart_costs(df_res, settings)
 
         with st.expander("**Data**"):
             st.dataframe(df_res.style.format(precision=1), use_container_width=True)
