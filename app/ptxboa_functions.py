@@ -243,6 +243,11 @@ Disable this setting to reset user data to default values.""",
 
     if st.session_state["edit_input_data"] is False:
         reset_user_changes()
+
+    # import agora color scale:
+    if "colors" not in st.session_state:
+        colors = pd.read_csv("data/Agora_Industry_Colours.csv")
+        st.session_state["colors"] = colors["Hex Code"].to_list()
     return settings
 
 
@@ -257,8 +262,9 @@ def create_world_map(settings: dict, res_costs: pd.DataFrame):
     )
     # define color scale:
     color_scale = [
-        (0, "rgb(60, 194, 204)"),  # Starting color at the minimum data value
-        (1, "rgb(208, 110, 162)"),  # Ending color at the maximum data value
+        (0, st.session_state["colors"][0]),  # Starting color at the minimum data value
+        (0.5, st.session_state["colors"][6]),
+        (1, st.session_state["colors"][9]),  # Ending color at the maximum data value
     ]
 
     # Create custom hover text:
@@ -320,7 +326,13 @@ def create_bar_chart_costs(res_costs: pd.DataFrame):
     if res_costs.empty:  # nodata to plot (FIXME: migth not be required later)
         return
 
-    fig = px.bar(res_costs, x=res_costs.index, y=res_costs.columns[:-1], height=500)
+    fig = px.bar(
+        res_costs,
+        x=res_costs.index,
+        y=res_costs.columns[:-1],
+        height=500,
+        color_discrete_sequence=st.session_state["colors"],
+    )
 
     # Add the dot markers for the "total" column using plotly.graph_objects
     scatter_trace = go.Scatter(
