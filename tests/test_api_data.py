@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Unittests for ptxboa api_data module."""
+from pathlib import Path
 
 import pandas as pd
 import pytest
@@ -24,7 +25,19 @@ def user_data_01():
 
 
 @pytest.fixture()
-def ptxdata_instance():
+def ptxdata_static():
+    """Instance with static copy of the data, this dataset will never change."""
+    return PtxData(data_dir=Path(__file__).parent / "test_data")
+
+
+@pytest.fixture()
+def ptxdata_live():
+    """
+    Instance with live data as used in deployment.
+
+    This dataset could change and we might use this fixture to see if updates work
+    correctly.
+    """
     return PtxData()
 
 
@@ -85,8 +98,9 @@ def ptxdata_instance():
         ),
     ),
 )
+@pytest.mark.parametrize("ptxdata", ("ptxdata_static", "ptxdata_live"))
 def test_get_parameter_value(
-    ptxdata_instance,
+    ptxdata,
     scenario,
     parameter_code,
     process_code,
@@ -100,6 +114,8 @@ def test_get_parameter_value(
     expected,
     request,
 ):
+    ptxdata_instance = request.getfixturevalue(ptxdata)
+
     if user_data is not None:
         user_data = request.getfixturevalue(user_data)
 
