@@ -661,6 +661,25 @@ in tabular form. \n\n Data can be filterend and sorted.
     st.write("**Data:**")
     st.dataframe(df_res, use_container_width=True)
 
+    # Display costs by scenario:
+    res_scenario = calculate_results_list(api, settings, "scenario")
+    create_bar_chart_costs(res_scenario)
+    st.dataframe(res_scenario, use_container_width=True)
+
+    # Display costs by RE generation:
+    st.write(api.get_dimension("res_gen"))
+
+    # TODO: remove PV tracking manually, this needs to be fixed in data
+    list_res_gen = api.get_dimension("res_gen").index.to_list()
+    list_res_gen.remove("PV tracking")
+    res_res_gen = calculate_results_list(
+        api, settings, "res_gen", parameter_list=list_res_gen
+    )
+    create_bar_chart_costs(res_res_gen)
+    st.dataframe(res_res_gen, use_container_width=True)
+
+    # TODO: display costs by chain
+
 
 def content_deep_dive_countries(
     api: PtxboaAPI, res_costs: pd.DataFrame, settings: dict
