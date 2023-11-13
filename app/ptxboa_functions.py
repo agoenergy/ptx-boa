@@ -10,9 +10,24 @@ import streamlit as st
 from ptxboa.api import PtxboaAPI
 
 
-def calculate_results_single(api: PtxboaAPI, settings):
-    """Calculate results for single country pair."""
-    res = api.calculate(**settings)
+@st.cache_data()
+def calculate_results_single(_api: PtxboaAPI, settings: dict) -> pd.DataFrame:
+    """Calculate results for a single set of settings.
+
+    Parameters
+    ----------
+    api : :class:`~ptxboa.api.PtxboaAPI`
+        an instance of the api class
+    settings : dict
+        settings from the streamlit app. An example can be obtained with the
+        return value from :func:`ptxboa_functions.create_sidebar`.
+
+    Returns
+    -------
+    pd.DataFrame
+        same format as for :meth:`~ptxboa.api.PtxboaAPI.calculate()`
+    """
+    res = _api.calculate(**settings)
 
     return res
 
@@ -46,7 +61,7 @@ def calculate_results(
     for region in region_list:
         settings2 = settings.copy()
         settings2["region"] = region
-        res_single = api.calculate(**settings2)
+        res_single = calculate_results_single(api, settings2)
         res_list.append(res_single)
     res = pd.concat(res_list)
     return res
