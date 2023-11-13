@@ -615,10 +615,10 @@ def remove_subregions(api: PtxboaAPI, df: pd.DataFrame, settings: dict):
     return df
 
 
-def content_costs_by_region(
+def content_compare_costs(
     api: PtxboaAPI, res_costs: pd.DataFrame, settings: dict
 ) -> None:
-    """Create content for the "costs by region" sheet.
+    """Create content for the "compare costs" sheet.
 
     Parameters
     ----------
@@ -630,66 +630,72 @@ def content_costs_by_region(
     with st.expander("What is this?"):
         st.markdown(
             """
-**Costs by region**
+**Compare costs**
 
 On this sheet, users can analyze total cost and cost components for
-different supply countries. Data is represented as a bar chart and
-in tabular form. \n\n Data can be filterend and sorted.
+different supply countries, scenarios, renewable electricity sources and process chains.
+Data is represented as a bar chart and in tabular form.
+
+Data can be filterend and sorted.
             """
         )
 
-    c1, c2 = st.columns([1, 5])
-    with c1:
-        # filter data:
-        df_res = res_costs.copy()
-        # remove subregions:
-        df_res = remove_subregions(api, df_res, settings)
+    def display_costs(df_costs: pd.DataFrame, titlestring: str, settings: dict):
+        """Display costs as table and bar chart."""
+        st.subheader(titlestring)
+        c1, c2 = st.columns([1, 5])
+        with c1:
+            # filter data:
+            df_res = df_costs.copy()
 
-        # select filter:
-        show_which_data = st.radio(
-            "Select regions to display:",
-            ["All", "Ten cheapest", "Manual select"],
-            index=0,
-        )
-
-        # apply filter:
-        if show_which_data == "Ten cheapest":
-            df_res = df_res.nsmallest(10, "Total")
-        elif show_which_data == "Manual select":
-            ind_select = st.multiselect(
-                "Select regions:",
-                df_res.index.values,
-                default=[settings["region"]],
+            # select filter:
+            show_which_data = st.radio(
+                "Select elements to display:",
+                ["All", "Ten cheapest", "Manual select"],
+                index=0,
+                key=f"show_which_data_{titlestring}",
             )
-            df_res = df_res.loc[ind_select]
 
-        # sort:
-        sort_ascending = st.toggle("Sort by total costs?", value=True)
-        if sort_ascending:
-            df_res = df_res.sort_values(["Total"], ascending=True)
-    with c2:
-        # create graph:
-        create_bar_chart_costs(df_res)
+            # apply filter:
+            if show_which_data == "Ten cheapest":
+                df_res = df_res.nsmallest(10, "Total")
+            elif show_which_data == "Manual select":
+                ind_select = st.multiselect(
+                    "Select regions:",
+                    df_res.index.values,
+                    default=df_res.index.values,
+                    key=f"select_data_{titlestring}",
+                )
+                df_res = df_res.loc[ind_select]
 
-    st.write("**Data:**")
-    st.dataframe(df_res, use_container_width=True)
+            # sort:
+            sort_ascending = st.toggle(
+                "Sort by total costs?", value=True, key=f"sort_data_{titlestring}"
+            )
+            if sort_ascending:
+                df_res = df_res.sort_values(["Total"], ascending=True)
+        with c2:
+            # create graph:
+            create_bar_chart_costs(df_res)
+
+        with st.expander("**Data**"):
+            st.dataframe(df_res.style.format(precision=1), use_container_width=True)
+
+    res_costs_without_subregions = remove_subregions(api, res_costs, settings)
+    display_costs(res_costs_without_subregions, "Costs by region:", settings)
 
     # Display costs by scenario:
     res_scenario = calculate_results_list(api, settings, "scenario")
-    create_bar_chart_costs(res_scenario)
-    st.dataframe(res_scenario, use_container_width=True)
+    display_costs(res_scenario, "Costs by data scenario:", settings)
 
     # Display costs by RE generation:
-    st.write(api.get_dimension("res_gen"))
-
     # TODO: remove PV tracking manually, this needs to be fixed in data
     list_res_gen = api.get_dimension("res_gen").index.to_list()
     list_res_gen.remove("PV tracking")
     res_res_gen = calculate_results_list(
         api, settings, "res_gen", parameter_list=list_res_gen
     )
-    create_bar_chart_costs(res_res_gen)
-    st.dataframe(res_res_gen, use_container_width=True)
+    display_costs(res_res_gen, "Costs by renewable electricity source:", settings)
 
     # TODO: display costs by chain
 
