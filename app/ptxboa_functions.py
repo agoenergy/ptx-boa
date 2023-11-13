@@ -17,15 +17,14 @@ def calculate_results_single(api: PtxboaAPI, settings):
     return res
 
 
-@st.cache_data()
 def calculate_results(
-    _api: PtxboaAPI, settings: dict, region_list: list = None
+    api: PtxboaAPI, settings: dict, region_list: list = None
 ) -> pd.DataFrame:
     """Calculate results for source regions and one selected target country.
 
     Parameters
     ----------
-    _api : :class:`~ptxboa.api.PtxboaAPI`
+    api : :class:`~ptxboa.api.PtxboaAPI`
         an instance of the api class
     settings : dict
         settings from the streamlit app. An example can be obtained with the
@@ -42,12 +41,12 @@ def calculate_results(
     res_list = []
 
     if region_list is None:
-        region_list = _api.get_dimension("region")["region_name"]
+        region_list = api.get_dimension("region")["region_name"]
 
     for region in region_list:
         settings2 = settings.copy()
         settings2["region"] = region
-        res_single = _api.calculate(**settings2)
+        res_single = api.calculate(**settings2)
         res_list.append(res_single)
     res = pd.concat(res_list)
     return res
