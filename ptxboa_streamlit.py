@@ -16,7 +16,7 @@ st.title("PtX Business Opportunity Analyzer :red[draft version, please do not qu
 (
     t_dashboard,
     t_market_scanning,
-    t_costs_by_region,
+    t_compare_costs,
     t_input_data,
     t_deep_dive_countries,
     t_country_fact_sheets,
@@ -28,7 +28,7 @@ st.title("PtX Business Opportunity Analyzer :red[draft version, please do not qu
     [
         "Dashboard",
         "Market scanning",
-        "Costs by region",
+        "Compare costs",
         "Input data",
         "Deep-dive countries",
         "Country fact sheets",
@@ -46,11 +46,7 @@ api = st.cache_resource(PtxboaAPI)()
 settings = pf.create_sidebar(api)
 
 # calculate results:
-res_details = pf.calculate_results(
-    api,
-    settings,
-)
-res_costs = pf.aggregate_costs(res_details)
+res_costs = pf.calculate_results_list(api, settings, "region")
 
 # import context data:
 cd = st.cache_resource(pf.import_context_data)()
@@ -62,8 +58,8 @@ with t_dashboard:
 with t_market_scanning:
     pf.content_market_scanning(api, res_costs, settings)
 
-with t_costs_by_region:
-    pf.content_costs_by_region(api, res_costs, settings)
+with t_compare_costs:
+    pf.content_compare_costs(api, res_costs, settings)
 
 with t_input_data:
     pf.content_input_data(api, settings)

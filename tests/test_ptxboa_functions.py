@@ -56,3 +56,32 @@ class TestPtxboaFunctions(unittest.TestCase):
         df_out = pf.remove_subregions(api, df_in, settings)
         self.assertEqual(len(df_out), 33)
         self.assertFalse("China" in df_out["region_name"])
+
+    def test_calculate_results_list(self):
+        """Test calculate_results_list function."""
+        settings = {
+            "region": "United Arab Emirates",
+            "country": "Germany",
+            "chain": "Methane (AEL)",
+            "res_gen": "PV tilted",
+            "scenario": "2040 (medium)",
+            "secproc_co2": "Direct Air Capture",
+            "secproc_water": "Sea Water desalination",
+            "transport": "Ship",
+            "ship_own_fuel": False,
+            "output_unit": "USD/t",
+        }
+        api = PtxboaAPI()
+
+        # old way of calculating results:
+        res_details = pf.calculate_results(
+            api,
+            settings,
+        )
+        res_costs = pf.aggregate_costs(res_details)
+
+        # new way of calculating results:
+        res_by_region = pf.calculate_results_list(api, settings, "region")
+
+        # assert that both ways yield identical results:
+        pd.testing.assert_frame_equal(res_costs, res_by_region)

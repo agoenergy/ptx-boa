@@ -38,6 +38,8 @@ def calculate_results(
 ) -> pd.DataFrame:
     """Calculate results for source regions and one selected target country.
 
+    TODO: This function will eventually be replaced by ``calculate_results_list()``.
+
     Parameters
     ----------
     api : :class:`~ptxboa.api.PtxboaAPI`
@@ -68,8 +70,64 @@ def calculate_results(
     return res
 
 
+def calculate_results_list(
+    api: PtxboaAPI,
+    settings: dict,
+    parameter_to_change: str,
+    parameter_list: list = None,
+) -> pd.DataFrame:
+    """Calculate results for source regions and one selected target country.
+
+    Parameters
+    ----------
+    _api : :class:`~ptxboa.api.PtxboaAPI`
+        an instance of the api class
+    settings : dict
+        settings from the streamlit app. An example can be obtained with the
+        return value from :func:`ptxboa_functions.create_sidebar`.
+    parameter_to_change : str
+        element of settings for which a list of values is to be used.
+    parameter_list : list or None
+        The values of ``parameter_to_change`` for which the results are calculated.
+        If None, all values available in the API will be used.
+
+    Returns
+    -------
+    pd.DataFrame
+        same format as for :meth:`~ptxboa.api.PtxboaAPI.calculate()`
+    """
+    res_list = []
+
+    if parameter_list is None:
+        parameter_list = api.get_dimension(parameter_to_change).index
+
+    for parameter in parameter_list:
+        settings2 = settings.copy()
+        settings2[parameter_to_change] = parameter
+        res_single = calculate_results_single(api, settings2)
+        res_list.append(res_single)
+    res_details = pd.concat(res_list)
+
+    # Exclude levelized costs:
+    res = res_details.loc[res_details["cost_type"] != "LC"]
+    res = res.pivot_table(
+        index=parameter_to_change,
+        columns="process_type",
+        values="values",
+        aggfunc="sum",
+    )
+    # calculate total costs:
+    res["Total"] = res.sum(axis=1)
+
+    return res
+
+
+@st.cache_data()
 def aggregate_costs(res_details: pd.DataFrame) -> pd.DataFrame:
-    """Aggregate detailed costs."""
+    """Aggregate detailed costs.
+
+    TODO: This function will eventually be replaced by ``calculate_results_list``
+    """
     # Exclude levelized costs:
     res = res_details.loc[res_details["cost_type"] != "LC"]
     res = res.pivot_table(
@@ -78,8 +136,6 @@ def aggregate_costs(res_details: pd.DataFrame) -> pd.DataFrame:
     # calculate total costs:
     res["Total"] = res.sum(axis=1)
 
-    # TODO exclude countries with total costs of 0 - maybe remove later:
-    res = res.loc[res["Total"] != 0]
     return res
 
 
@@ -323,7 +379,20 @@ def create_world_map(settings: dict, res_costs: pd.DataFrame):
     return
 
 
-def create_bar_chart_costs(res_costs: pd.DataFrame):
+def create_bar_chart_costs(
+    res_costs: pd.DataFrame, settings: dict, current_selection: str = None
+):
+    """Create bar plot for costs by components, and dots for total costs.
+
+    Parameters
+    ----------
+    res_costs : pd.DataFrame
+        data for plotting
+    settings : dict
+        settings dictionary, like output from create_sidebar()
+    current_selection : str
+        bar to highlight with an arrow. must be an element of res_costs.index
+    """
     if res_costs.empty:  # nodata to plot (FIXME: migth not be required later)
         return
 
@@ -350,9 +419,21 @@ def create_bar_chart_costs(res_costs: pd.DataFrame):
 
     fig.add_trace(scatter_trace)
 
+    # add highlight for current selection:
+    if current_selection is not None and current_selection in res_costs.index:
+        fig.add_annotation(
+            x=current_selection,
+            y=1.2 * res_costs.at[current_selection, "Total"],
+            text="current selection",
+            showarrow=True,
+            arrowhead=2,
+            arrowsize=1,
+            arrowwidth=2,
+            ax=0,
+            ay=-50,
+        )
     fig.update_layout(
-        title="Total cost by region",
-        yaxis_title="USD/kWh",
+        yaxis_title=settings["output_unit"],
     )
     st.plotly_chart(fig, use_container_width=True)
 
@@ -442,7 +523,7 @@ Switch to other tabs to explore data and results in more detail!
         create_box_plot(res_costs, settings)
     with c_4:
         filtered_data = res_costs[res_costs.index == settings["region"]]
-        create_bar_chart_costs(filtered_data)
+        create_bar_chart_costs(filtered_data, settings)
 
     st.write("Chosen settings:")
     st.write(settings)
@@ -560,10 +641,10 @@ def remove_subregions(api: PtxboaAPI, df: pd.DataFrame, settings: dict):
     return df
 
 
-def content_costs_by_region(
+def content_compare_costs(
     api: PtxboaAPI, res_costs: pd.DataFrame, settings: dict
 ) -> None:
-    """Create content for the "costs by region" sheet.
+    """Create content for the "compare costs" sheet.
 
     Parameters
     ----------
@@ -575,53 +656,86 @@ def content_costs_by_region(
     with st.expander("What is this?"):
         st.markdown(
             """
-**Costs by region**
+**Compare costs**
 
 On this sheet, users can analyze total cost and cost components for
-different supply countries. Data is represented as a bar chart and
-in tabular form. \n\n Data can be filterend and sorted.
+different supply countries, scenarios, renewable electricity sources and process chains.
+Data is represented as a bar chart and in tabular form.
+
+Data can be filterend and sorted.
             """
         )
 
-    c1, c2 = st.columns([1, 5])
-    with c1:
-        # filter data:
-        df_res = res_costs.copy()
-        # remove subregions:
-        df_res = remove_subregions(api, df_res, settings)
+    def display_costs(
+        df_costs: pd.DataFrame, key: str, titlestring: str, settings: dict
+    ):
+        """Display costs as table and bar chart."""
+        st.subheader(titlestring)
+        c1, c2 = st.columns([1, 5])
+        with c1:
+            # filter data:
+            df_res = df_costs.copy()
 
-        # select filter:
-        show_which_data = st.radio(
-            "Select regions to display:",
-            ["All", "Ten cheapest", "Manual select"],
-            index=0,
-        )
+            # select filter:
+            if titlestring == "region":
+                option_list = ["All", "Ten cheapest", "Manual select"]
+            else:
+                option_list = ["All", "Manual select"]
 
-        # apply filter:
-        if show_which_data == "Ten cheapest":
-            df_res = df_res.nsmallest(10, "Total")
-        elif show_which_data == "Manual select":
-            ind_select = st.multiselect(
-                "Select regions:",
-                df_res.index.values,
-                default=[settings["region"]],
+            show_which_data = st.radio(
+                "Select elements to display:",
+                option_list,
+                index=0,
+                key=f"show_which_data_{key}",
             )
-            df_res = df_res.loc[ind_select]
 
-        # sort:
-        sort_ascending = st.toggle("Sort by total costs?", value=True)
-        if sort_ascending:
-            df_res = df_res.sort_values(["Total"], ascending=True)
-    with c2:
-        # create graph:
-        create_bar_chart_costs(df_res)
+            # apply filter:
+            if show_which_data == "Ten cheapest":
+                df_res = df_res.nsmallest(10, "Total")
+            elif show_which_data == "Manual select":
+                ind_select = st.multiselect(
+                    "Select regions:",
+                    df_res.index.values,
+                    default=df_res.index.values,
+                    key=f"select_data_{key}",
+                )
+                df_res = df_res.loc[ind_select]
 
-    st.write("**Data:**")
+            # sort:
+            sort_ascending = st.toggle(
+                "Sort by total costs?", value=True, key=f"sort_data_{key}"
+            )
+            if sort_ascending:
+                df_res = df_res.sort_values(["Total"], ascending=True)
+        with c2:
+            # create graph:
+            create_bar_chart_costs(df_res, settings, current_selection=settings[key])
 
-    column_config = config_number_columns(
-        df_res, format=f"%.1f {settings['output_unit']}"
+        with st.expander("**Data**"):
+            column_config = config_number_columns(
+                df_res, format=f"%.1f {settings['output_unit']}"
+            )
+            st.dataframe(df_res, use_container_width=True, column_config=column_config)
+
+    res_costs_without_subregions = remove_subregions(api, res_costs, settings)
+    display_costs(res_costs_without_subregions, "region", "Costs by region:", settings)
+
+    # Display costs by scenario:
+    res_scenario = calculate_results_list(api, settings, "scenario")
+    display_costs(res_scenario, "scenario", "Costs by data scenario:", settings)
+
+    # Display costs by RE generation:
+    # TODO: remove PV tracking manually, this needs to be fixed in data
+    list_res_gen = api.get_dimension("res_gen").index.to_list()
+    list_res_gen.remove("PV tracking")
+    res_res_gen = calculate_results_list(
+        api, settings, "res_gen", parameter_list=list_res_gen
     )
-    st.dataframe(df_res, use_container_width=True, column_config=column_config)
+    display_costs(
+        res_res_gen, "res_gen", "Costs by renewable electricity source:", settings
+    )
+
+    # TODO: display costs by chain
 
 
 def content_deep_dive_countries(
