@@ -938,10 +938,27 @@ They also show the data for your country for comparison.
         fig = px.box(df)
         st.plotly_chart(fig, use_container_width=True)
 
+    st.divider()
     st.subheader("Data that is identical for all regions:")
 
     input_data_global = input_data.loc[input_data["source_region_code"] == ""]
 
+    # filter processes:
+    # TODO I would like to filter by process type, where do i get this inforation from?
+    list_processes_all = input_data_global["process_code"].unique().tolist()
+
+    list_processes_transport = [
+        element
+        for element in list_processes_all
+        if ("ship" in element or "pipeline" in element)
+    ]
+
+    list_processes_not_transport = [
+        element
+        for element in list_processes_all
+        if element not in list_processes_transport
+    ]
+    st.markdown("**Conversion processes:**")
     df = display_and_edit_data_table(
         input_data_global,
         missing_index_name="source_region_code",
@@ -952,6 +969,23 @@ They also show the data for your country for comparison.
             "lifetime / amortization period",
             "efficiency",
         ],
+        process_code=list_processes_not_transport,
+        index="process_code",
+        columns="parameter_code",
+    )
+    st.markdown("**Transportation processes:**")
+    st.markdown("TODO: fix data")
+    df = display_and_edit_data_table(
+        input_data_global,
+        missing_index_name="source_region_code",
+        missing_index_value=None,
+        parameter_code=[
+            "losses (own fuel, transport)",
+            "levelized costs",
+            "lifetime / amortization period",
+            # FIXME: add bunker fuel consumption
+        ],
+        process_code=list_processes_transport,
         index="process_code",
         columns="parameter_code",
     )
