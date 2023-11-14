@@ -865,6 +865,7 @@ They also show the data for your country for comparison.
             """
         )
 
+    st.subheader("Region specific data:")
     # get input data:
     input_data = api.get_input_data(
         settings["scenario"], user_data=st.session_state["user_changes_df"]
@@ -876,7 +877,7 @@ They also show the data for your country for comparison.
         .loc[api.get_dimension("region")["subregion_code"] == ""]
         .index.to_list()
     )
-    input_data = input_data.loc[
+    input_data_without_subregions = input_data.loc[
         input_data["source_region_code"].isin(region_list_without_subregions)
     ]
 
@@ -921,6 +922,7 @@ They also show the data for your country for comparison.
         # show data:
         st.markdown("**Data:**")
         df = display_and_edit_data_table(
+            input_data=input_data_without_subregions,
             missing_index_name=missing_index_name,
             missing_index_value=missing_index_value,
             columns=x,
@@ -935,6 +937,24 @@ They also show the data for your country for comparison.
         st.markdown("**Figure:**")
         fig = px.box(df)
         st.plotly_chart(fig, use_container_width=True)
+
+    st.subheader("Data that is identical for all regions:")
+
+    input_data_global = input_data.loc[input_data["source_region_code"] == ""]
+
+    df = display_and_edit_data_table(
+        input_data_global,
+        missing_index_name="source_region_code",
+        missing_index_value=None,
+        parameter_code=[
+            "CAPEX",
+            "OPEX (fix)",
+            "lifetime / amortization period",
+            "efficiency",
+        ],
+        index="process_code",
+        columns="parameter_code",
+    )
 
     # If there are user changes, display them:
     display_user_changes()
