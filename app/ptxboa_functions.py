@@ -12,7 +12,11 @@ from ptxboa.api import PtxboaAPI
 
 
 @st.cache_data()
-def calculate_results_single(_api: PtxboaAPI, settings: dict) -> pd.DataFrame:
+def calculate_results_single(
+    _api: PtxboaAPI,
+    settings: dict,
+    user_data: pd.DataFrame | None = None,
+) -> pd.DataFrame:
     """Calculate results for a single set of settings.
 
     Parameters
@@ -28,7 +32,7 @@ def calculate_results_single(_api: PtxboaAPI, settings: dict) -> pd.DataFrame:
     pd.DataFrame
         same format as for :meth:`~ptxboa.api.PtxboaAPI.calculate()`
     """
-    res = _api.calculate(**settings)
+    res = _api.calculate(user_data=user_data, **settings)
 
     return res
 
@@ -75,6 +79,7 @@ def calculate_results_list(
     settings: dict,
     parameter_to_change: str,
     parameter_list: list = None,
+    user_data: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
     """Calculate results for source regions and one selected target country.
 
@@ -104,7 +109,7 @@ def calculate_results_list(
     for parameter in parameter_list:
         settings2 = settings.copy()
         settings2[parameter_to_change] = parameter
-        res_single = calculate_results_single(api, settings2)
+        res_single = calculate_results_single(api, settings2, user_data=user_data)
         res_list.append(res_single)
     res_details = pd.concat(res_list)
 
@@ -308,7 +313,7 @@ Disable this setting to reset user data to default values.""",
     return settings
 
 
-def create_world_map(settings: dict, res_costs: pd.DataFrame):
+def create_world_map(api: PtxboaAPI, settings: dict, res_costs: pd.DataFrame):
     """Create world map."""
     parameter_to_show_on_map = "Total"
 
@@ -323,6 +328,9 @@ def create_world_map(settings: dict, res_costs: pd.DataFrame):
         (0.5, st.session_state["colors"][6]),
         (1, st.session_state["colors"][9]),  # Ending color at the maximum data value
     ]
+
+    # remove subregions from deep dive countries (otherwise colorscale is not correct)
+    res_costs = remove_subregions(api, res_costs, settings)
 
     # Create custom hover text:
     custom_hover_data = res_costs.apply(
@@ -513,7 +521,7 @@ Switch to other tabs to explore data and results in more detail!
         create_infobox(context_data, settings)
 
     with c_1:
-        create_world_map(settings, res_costs)
+        create_world_map(api, settings, res_costs)
 
     st.divider()
 
@@ -527,6 +535,9 @@ Switch to other tabs to explore data and results in more detail!
 
     st.write("Chosen settings:")
     st.write(settings)
+
+    st.write("res_cost")
+    st.write(res_costs)
 
 
 def content_market_scanning(
@@ -714,7 +725,9 @@ Data can be filterend and sorted.
     display_costs(res_costs_without_subregions, "region", "Costs by region:", settings)
 
     # Display costs by scenario:
-    res_scenario = calculate_results_list(api, settings, "scenario")
+    res_scenario = calculate_results_list(
+        api, settings, "scenario", user_data=st.session_state["user_changes_df"]
+    )
     display_costs(res_scenario, "scenario", "Costs by data scenario:", settings)
 
     # Display costs by RE generation:
@@ -722,7 +735,11 @@ Data can be filterend and sorted.
     list_res_gen = api.get_dimension("res_gen").index.to_list()
     list_res_gen.remove("PV tracking")
     res_res_gen = calculate_results_list(
-        api, settings, "res_gen", parameter_list=list_res_gen
+        api,
+        settings,
+        "res_gen",
+        parameter_list=list_res_gen,
+        user_data=st.session_state["user_changes_df"],
     )
     display_costs(
         res_res_gen, "res_gen", "Costs by renewable electricity source:", settings

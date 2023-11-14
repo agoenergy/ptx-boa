@@ -54,7 +54,7 @@ class PtxboaAPI:
         self,
         scenario: ScenarioCode,
         long_names: bool = True,
-        user_data: dict = None,
+        user_data: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         """Return scenario data.
 
@@ -78,7 +78,8 @@ class PtxboaAPI:
         user_data : pd.DataFrame | None, optional
             user data that overrides scenario data
             contains only rows of scenario_data that have been modified.
-            ids are expected to come as long names
+            ids are expected to come as long names. Needs to have the columns
+            ["source_region_code", "process_code", "parameter_code", "value"].
 
         Returns
         -------
@@ -102,7 +103,7 @@ class PtxboaAPI:
         transport: str,
         ship_own_fuel: bool = False,  # TODO: no correctly passed by app
         output_unit="USD/MWh",
-        user_data: dict = None,
+        user_data: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         """Calculate results based on user selection.
 
@@ -128,10 +129,11 @@ class PtxboaAPI:
             `True` if ship uses product as fuel
         output_unit : str, optional
             output unit
-        user_data: pd.DataFrame
+        user_data : pd.DataFrame | None, optional
             user data that overrides scenario data
             contains only rows of scenario_data that have been modified.
-            ids are expected to come as long names
+            ids are expected to come as long names. Needs to have the columns
+            ["source_region_code", "process_code", "parameter_code", "value"].
 
 
         Returns
