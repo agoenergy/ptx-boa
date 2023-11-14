@@ -936,8 +936,13 @@ They also show the data for your country for comparison.
         fig = px.box(df)
         st.plotly_chart(fig, use_container_width=True)
 
+    # If there are user changes, display them:
     display_user_changes()
-    st.write(st.session_state)
+
+    st.write("**Debug: Session state**")
+    st.write(
+        st.session_state
+    )  # FIXME this is debugging output, remove when it is not needed anymore
 
 
 def reset_user_changes():
@@ -949,7 +954,8 @@ def reset_user_changes():
 def display_user_changes():
     """Display input data changes made by user."""
     if st.session_state["user_changes_df"] is not None:
-        st.write("**Input data has been modified:**")
+        st.subheader("Data modifications:")
+        st.write("**Input data has been modified!**")
         st.dataframe(
             st.session_state["user_changes_df"].style.format(precision=3),
             hide_index=True,
