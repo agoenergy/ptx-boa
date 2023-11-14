@@ -748,7 +748,9 @@ They also show the data for your country for comparison.
         )
 
     # get input data:
-    input_data = api.get_input_data(settings["scenario"])
+    input_data = api.get_input_data(
+        settings["scenario"], user_data=st.session_state["user_changes_df"]
+    )
 
     # filter data:
     region_list_without_subregions = (
@@ -810,20 +812,23 @@ They also show the data for your country for comparison.
         st.plotly_chart(fig, use_container_width=True)
 
     display_user_changes()
+    st.write(st.session_state)
 
 
 def reset_user_changes():
     """Reset all user changes."""
-    if "user_changes_df" in st.session_state.keys():
-        del st.session_state["user_changes"]
-        del st.session_state["user_changes_df"]
+    if st.session_state["user_changes_df"] is not None:
+        st.session_state["user_changes_df"] = None
 
 
 def display_user_changes():
     """Display input data changes made by user."""
-    if "user_changes_df" in st.session_state.keys():
+    if st.session_state["user_changes_df"] is not None:
         st.write("**Input data has been modified:**")
-        st.dataframe(st.session_state["user_changes_df"].style.format(precision=3))
+        st.dataframe(
+            st.session_state["user_changes_df"].style.format(precision=3),
+            hide_index=True,
+        )
 
 
 def display_and_edit_data_table(
@@ -847,7 +852,9 @@ def display_and_edit_data_table(
     # if editing is enabled, store modifications in session_state:
     if st.session_state["edit_input_data"]:
         disabled = [index]
-        key = f"edit_input_data_{parameter_code}{key_suffix}"
+        key = (
+            f"edit_input_data_{'_'.join(parameter_code).replace(' ', '_')}{key_suffix}"
+        )
     else:
         disabled = True
         key = None
@@ -866,43 +873,54 @@ def display_and_edit_data_table(
         num_rows="fixed",
         disabled=disabled,
         column_config=column_config_all,
+        on_change=register_user_changes,
+        kwargs={
+            "parameter_code": parameter_code,
+            "index": index,
+            "columns": columns,
+            "values": values,
+            "df_tab": df_tab,
+            "key": key,
+        },
     )
     if st.session_state["edit_input_data"]:
         st.markdown("You can edit data directly in the table!")
-
-    # store changes in session_state:
-    if st.session_state["edit_input_data"]:
-        if len(st.session_state[key]["edited_rows"]) > 0:
-            # convert session state dict to dataframe:
-            # Create a list of dictionaries
-            data_dict = st.session_state[key]["edited_rows"]
-            data_list = []
-
-            for k, v in data_dict.items():
-                for c_name, value in v.items():
-                    data_list.append({index: k, columns: c_name, values: value})
-
-            # Convert the list to a DataFrame
-            res = pd.DataFrame(data_list)
-            res["parameter_code"] = parameter_code[0]
-
-            # Replace the 'id' values with the corresponding index elements from df_tab
-            res[index] = res[index].map(lambda x: df_tab.index[x])
-
-            if "user_changes" not in st.session_state:
-                st.session_state["user_changes"] = {}
-            st.session_state["user_changes"][parameter_code[0]] = st.session_state[key][
-                "edited_rows"
-            ]
-            if "user_changes_df" not in st.session_state:
-                st.session_state["user_changes_df"] = pd.DataFrame()
-            st.session_state["user_changes_df"] = pd.concat(
-                [st.session_state["user_changes_df"], res]
-            ).drop_duplicates()
-
-        del st.session_state[key]
-
     return df_tab
+
+
+def register_user_changes(parameter_code, index, columns, values, df_tab, key):
+    """
+    Register all user changes in the session state variable "user_changes_df".
+
+    If a change already has been recorded, use the lastest value.
+    """
+    # convert session state dict to dataframe:
+    # Create a list of dictionaries
+    data_dict = st.session_state[key]["edited_rows"]
+    data_list = []
+
+    for k, v in data_dict.items():
+        for c_name, value in v.items():
+            data_list.append({index: k, columns: c_name, values: value})
+
+        # Convert the list to a DataFrame
+    res = pd.DataFrame(data_list)
+    res["parameter_code"] = parameter_code[0]
+
+    # Replace the 'id' values with the corresponding index elements from df_tab
+    res[index] = res[index].map(lambda x: df_tab.index[x])
+
+    if st.session_state["user_changes_df"] is None:
+        st.session_state["user_changes_df"] = pd.DataFrame(
+            columns=["source_region_code", "process_code", "parameter_code", "value"]
+        )
+
+    # only track the last changes if a duplicate entry is found.
+    st.session_state["user_changes_df"] = pd.concat(
+        [st.session_state["user_changes_df"], res]
+    ).drop_duplicates(
+        subset=["source_region_code", "process_code", "parameter_code"], keep="last"
+    )
 
 
 def create_infobox(context_data: dict, settings: dict):
