@@ -944,20 +944,15 @@ They also show the data for your country for comparison.
     input_data_global = input_data.loc[input_data["source_region_code"] == ""]
 
     # filter processes:
-    # TODO I would like to filter by process type, where do i get this inforation from?
-    list_processes_all = input_data_global["process_code"].unique().tolist()
+    processes = api.get_dimension("process")
 
-    list_processes_transport = [
-        element
-        for element in list_processes_all
-        if ("ship" in element or "pipeline" in element)
-    ]
+    list_processes_transport = processes.loc[
+        processes["is_transport"], "process_name"
+    ].to_list()
 
-    list_processes_not_transport = [
-        element
-        for element in list_processes_all
-        if element not in list_processes_transport
-    ]
+    list_processes_not_transport = processes.loc[
+        ~processes["is_transport"], "process_name"
+    ].to_list()
     st.markdown("**Conversion processes:**")
     df = display_and_edit_data_table(
         input_data_global,
