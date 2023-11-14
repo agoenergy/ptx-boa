@@ -49,7 +49,9 @@ api = st.cache_resource(PtxboaAPI)()
 settings = pf.create_sidebar(api)
 
 # calculate results:
-res_costs = pf.calculate_results_list(api, settings, "region")
+res_costs = pf.calculate_results_list(
+    api, settings, "region", user_data=st.session_state["user_changes_df"]
+)
 
 # import context data:
 cd = st.cache_resource(pf.import_context_data)()
