@@ -926,7 +926,6 @@ They also show the data for your country for comparison.
         st.plotly_chart(fig, use_container_width=True)
 
     display_user_changes()
-    st.write(st.session_state)
 
 
 def reset_user_changes():
