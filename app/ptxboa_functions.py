@@ -732,7 +732,9 @@ Data can be filterend and sorted.
     display_costs(res_costs_without_subregions, "region", "Costs by region:", settings)
 
     # Display costs by scenario:
-    res_scenario = calculate_results_list(api, settings, "scenario")
+    res_scenario = calculate_results_list(
+        api, settings, "scenario", user_data=st.session_state["user_changes_df"]
+    )
     display_costs(res_scenario, "scenario", "Costs by data scenario:", settings)
 
     # Display costs by RE generation:
@@ -740,7 +742,11 @@ Data can be filterend and sorted.
     list_res_gen = api.get_dimension("res_gen").index.to_list()
     list_res_gen.remove("PV tracking")
     res_res_gen = calculate_results_list(
-        api, settings, "res_gen", parameter_list=list_res_gen
+        api,
+        settings,
+        "res_gen",
+        parameter_list=list_res_gen,
+        user_data=st.session_state["user_changes_df"],
     )
     display_costs(
         res_res_gen, "res_gen", "Costs by renewable electricity source:", settings
