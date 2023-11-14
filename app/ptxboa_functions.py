@@ -1048,7 +1048,13 @@ def display_and_edit_data_table(
 
 
 def register_user_changes(
-    missing_index_name, missing_index_value, index, columns, values, df_tab, key
+    missing_index_name: str,
+    missing_index_value: str,
+    index: str,
+    columns: str,
+    values: str,
+    df_tab: pd.DataFrame,
+    key: str,
 ):
     """
     Register all user changes in the session state variable "user_changes_df".
