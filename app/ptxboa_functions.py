@@ -803,6 +803,8 @@ They also show the data for your selected supply country or region for compariso
             "Wind-PV-Hybrid",
         ]
         x = "process_code"
+        missing_index_name = "parameter_code"
+        missing_index_value = "full load hours"
         column_config = {"format": "%.0f h/a", "min_value": 0, "max_value": 8760}
 
     if data_selection == "total costs":
@@ -818,6 +820,8 @@ They also show the data for your selected supply country or region for compariso
         st.markdown("**Data:**")
         df = display_and_edit_data_table(
             input_data=input_data,
+            missing_index_name=missing_index_name,
+            missing_index_value=missing_index_value,
             columns=x,
             source_region_code=region_list,
             parameter_code=parameter_code,
@@ -887,6 +891,8 @@ They also show the data for your country for comparison.
             "Wind-PV-Hybrid",
         ]
         x = "process_code"
+        missing_index_name = "parameter_code"
+        missing_index_value = "CAPEX"
         column_config = {"format": "%.0f USD/kW", "min_value": 0}
 
     if data_selection == "full load hours":
@@ -898,6 +904,8 @@ They also show the data for your country for comparison.
             "Wind-PV-Hybrid",
         ]
         x = "process_code"
+        missing_index_name = "parameter_code"
+        missing_index_value = "full load hours"
         column_config = {"format": "%.0f h/a", "min_value": 0, "max_value": 8760}
 
     if data_selection == "interest rate":
@@ -905,13 +913,16 @@ They also show the data for your country for comparison.
         process_code = [""]
         x = "parameter_code"
         column_config = {"format": "%.3f", "min_value": 0, "max_value": 1}
+        missing_index_name = "parameter_code"
+        missing_index_value = "interest rate"
 
     c1, c2 = st.columns(2, gap="medium")
     with c2:
         # show data:
         st.markdown("**Data:**")
         df = display_and_edit_data_table(
-            input_data=input_data,
+            missing_index_name=missing_index_name,
+            missing_index_value=missing_index_value,
             columns=x,
             source_region_code=region_list_without_subregions,
             parameter_code=parameter_code,
@@ -947,6 +958,8 @@ def display_user_changes():
 
 def display_and_edit_data_table(
     input_data: pd.DataFrame,
+    missing_index_name: str,
+    missing_index_value: str,
     source_region_code: list = None,
     parameter_code: list = None,
     process_code: list = None,
@@ -994,7 +1007,8 @@ def display_and_edit_data_table(
         column_config=column_config_all,
         on_change=register_user_changes,
         kwargs={
-            "parameter_code": parameter_code,
+            "missing_index_name": missing_index_name,
+            "missing_index_value": missing_index_value,
             "index": index,
             "columns": columns,
             "values": values,
@@ -1007,7 +1021,9 @@ def display_and_edit_data_table(
     return df_tab
 
 
-def register_user_changes(parameter_code, index, columns, values, df_tab, key):
+def register_user_changes(
+    missing_index_name, missing_index_value, index, columns, values, df_tab, key
+):
     """
     Register all user changes in the session state variable "user_changes_df".
 
@@ -1022,9 +1038,11 @@ def register_user_changes(parameter_code, index, columns, values, df_tab, key):
         for c_name, value in v.items():
             data_list.append({index: k, columns: c_name, values: value})
 
-        # Convert the list to a DataFrame
+    # Convert the list to a DataFrame
     res = pd.DataFrame(data_list)
-    res["parameter_code"] = parameter_code[0]
+
+    # add missing key (the info that is not contained in the 2D table):
+    res[missing_index_name] = missing_index_value
 
     # Replace the 'id' values with the corresponding index elements from df_tab
     res[index] = res[index].map(lambda x: df_tab.index[x])
