@@ -379,7 +379,20 @@ def create_world_map(settings: dict, res_costs: pd.DataFrame):
     return
 
 
-def create_bar_chart_costs(res_costs: pd.DataFrame, settings: dict):
+def create_bar_chart_costs(
+    res_costs: pd.DataFrame, settings: dict, current_selection: str = None
+):
+    """Create bar plot for costs by components, and dots for total costs.
+
+    Parameters
+    ----------
+    res_costs : pd.DataFrame
+        data for plotting
+    settings : dict
+        settings dictionary, like output from create_sidebar()
+    current_selection : str
+        bar to highlight with an arrow. must be an element of res_costs.index
+    """
     if res_costs.empty:  # nodata to plot (FIXME: migth not be required later)
         return
 
@@ -406,6 +419,19 @@ def create_bar_chart_costs(res_costs: pd.DataFrame, settings: dict):
 
     fig.add_trace(scatter_trace)
 
+    # add highlight for current selection:
+    if current_selection is not None and current_selection in res_costs.index:
+        fig.add_annotation(
+            x=current_selection,
+            y=1.2 * res_costs.at[current_selection, "Total"],
+            text="current selection",
+            showarrow=True,
+            arrowhead=2,
+            arrowsize=1,
+            arrowwidth=2,
+            ax=0,
+            ay=-50,
+        )
     fig.update_layout(
         yaxis_title=settings["output_unit"],
     )
@@ -640,7 +666,9 @@ Data can be filterend and sorted.
             """
         )
 
-    def display_costs(df_costs: pd.DataFrame, titlestring: str, settings: dict):
+    def display_costs(
+        df_costs: pd.DataFrame, key: str, titlestring: str, settings: dict
+    ):
         """Display costs as table and bar chart."""
         st.subheader(titlestring)
         c1, c2 = st.columns([1, 5])
@@ -681,7 +709,7 @@ Data can be filterend and sorted.
                 df_res = df_res.sort_values(["Total"], ascending=True)
         with c2:
             # create graph:
-            create_bar_chart_costs(df_res, settings)
+            create_bar_chart_costs(df_res, settings, current_selection=settings[key])
 
         with st.expander("**Data**"):
             column_config = config_number_columns(
@@ -690,11 +718,11 @@ Data can be filterend and sorted.
             st.dataframe(df_res, use_container_width=True, column_config=column_config)
 
     res_costs_without_subregions = remove_subregions(api, res_costs, settings)
-    display_costs(res_costs_without_subregions, "Costs by region:", settings)
+    display_costs(res_costs_without_subregions, "region", "Costs by region:", settings)
 
     # Display costs by scenario:
     res_scenario = calculate_results_list(api, settings, "scenario")
-    display_costs(res_scenario, "Costs by data scenario:", settings)
+    display_costs(res_scenario, "scenario", "Costs by data scenario:", settings)
 
     # Display costs by RE generation:
     # TODO: remove PV tracking manually, this needs to be fixed in data
@@ -703,7 +731,9 @@ Data can be filterend and sorted.
     res_res_gen = calculate_results_list(
         api, settings, "res_gen", parameter_list=list_res_gen
     )
-    display_costs(res_res_gen, "Costs by renewable electricity source:", settings)
+    display_costs(
+        res_res_gen, "res_gen", "Costs by renewable electricity source:", settings
+    )
 
     # TODO: display costs by chain
 
