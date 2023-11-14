@@ -649,9 +649,14 @@ Data can be filterend and sorted.
             df_res = df_costs.copy()
 
             # select filter:
+            if titlestring == "Costs by region:":
+                option_list = ["All", "Ten cheapest", "Manual select"]
+            else:
+                option_list = ["All", "Manual select"]
+
             show_which_data = st.radio(
                 "Select elements to display:",
-                ["All", "Ten cheapest", "Manual select"],
+                option_list,
                 index=0,
                 key=f"show_which_data_{titlestring}",
             )
