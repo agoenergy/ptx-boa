@@ -947,9 +947,9 @@ def display_user_changes():
 
 def display_and_edit_data_table(
     input_data: pd.DataFrame,
-    source_region_code: list,
-    parameter_code: list,
-    process_code: list,
+    source_region_code: list = None,
+    parameter_code: list = None,
+    process_code: list = None,
     index: str = "source_region_code",
     columns: str = "process_code",
     values: str = "value",
@@ -957,10 +957,15 @@ def display_and_edit_data_table(
     key_suffix: str = "",
 ) -> pd.DataFrame:
     """Display selected input data as 2D table, which can also be edited."""
-    ind1 = input_data["source_region_code"].isin(source_region_code)
-    ind2 = input_data["parameter_code"].isin(parameter_code)
-    ind3 = input_data["process_code"].isin(process_code)
-    df = input_data.loc[ind1 & ind2 & ind3]
+    # filter data:
+    df = input_data.copy()
+    if source_region_code is not None:
+        df = df.loc[df["source_region_code"].isin(source_region_code)]
+    if parameter_code is not None:
+        df = df.loc[df["parameter_code"].isin(parameter_code)]
+    if process_code is not None:
+        df = df.loc[df["process_code"].isin(process_code)]
+
     df_tab = df.pivot_table(index=index, columns=columns, values=values, aggfunc="sum")
 
     # if editing is enabled, store modifications in session_state:
