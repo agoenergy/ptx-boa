@@ -677,7 +677,7 @@ Data can be filterend and sorted.
             df_res = df_costs.copy()
 
             # select filter:
-            if titlestring == "Costs by region:":
+            if titlestring == "region":
                 option_list = ["All", "Ten cheapest", "Manual select"]
             else:
                 option_list = ["All", "Manual select"]
@@ -686,7 +686,7 @@ Data can be filterend and sorted.
                 "Select elements to display:",
                 option_list,
                 index=0,
-                key=f"show_which_data_{titlestring}",
+                key=f"show_which_data_{key}",
             )
 
             # apply filter:
@@ -697,13 +697,13 @@ Data can be filterend and sorted.
                     "Select regions:",
                     df_res.index.values,
                     default=df_res.index.values,
-                    key=f"select_data_{titlestring}",
+                    key=f"select_data_{key}",
                 )
                 df_res = df_res.loc[ind_select]
 
             # sort:
             sort_ascending = st.toggle(
-                "Sort by total costs?", value=True, key=f"sort_data_{titlestring}"
+                "Sort by total costs?", value=True, key=f"sort_data_{key}"
             )
             if sort_ascending:
                 df_res = df_res.sort_values(["Total"], ascending=True)
