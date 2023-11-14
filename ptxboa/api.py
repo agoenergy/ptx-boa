@@ -42,6 +42,8 @@ class PtxboaAPI:
                 - 'country'
                 - 'transport'
                 - 'output_unit'
+                - 'process'
+                - 'flow'
 
         Returns
         -------
