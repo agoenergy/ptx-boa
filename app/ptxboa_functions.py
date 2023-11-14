@@ -813,6 +813,8 @@ They also show the data for your selected supply country or region for compariso
             "Wind-PV-Hybrid",
         ]
         x = "process_code"
+        missing_index_name = "parameter_code"
+        missing_index_value = "full load hours"
         column_config = {"format": "%.0f h/a", "min_value": 0, "max_value": 8760}
 
     if data_selection == "total costs":
@@ -828,6 +830,8 @@ They also show the data for your selected supply country or region for compariso
         st.markdown("**Data:**")
         df = display_and_edit_data_table(
             input_data=input_data,
+            missing_index_name=missing_index_name,
+            missing_index_value=missing_index_value,
             columns=x,
             source_region_code=region_list,
             parameter_code=parameter_code,
@@ -871,6 +875,7 @@ They also show the data for your country for comparison.
             """
         )
 
+    st.subheader("Region specific data:")
     # get input data:
     input_data = api.get_input_data(
         settings["scenario"], user_data=st.session_state["user_changes_df"]
@@ -882,7 +887,7 @@ They also show the data for your country for comparison.
         .loc[api.get_dimension("region")["subregion_code"] == ""]
         .index.to_list()
     )
-    input_data = input_data.loc[
+    input_data_without_subregions = input_data.loc[
         input_data["source_region_code"].isin(region_list_without_subregions)
     ]
 
@@ -897,6 +902,8 @@ They also show the data for your country for comparison.
             "Wind-PV-Hybrid",
         ]
         x = "process_code"
+        missing_index_name = "parameter_code"
+        missing_index_value = "CAPEX"
         column_config = {"format": "%.0f USD/kW", "min_value": 0}
 
     if data_selection == "full load hours":
@@ -908,6 +915,8 @@ They also show the data for your country for comparison.
             "Wind-PV-Hybrid",
         ]
         x = "process_code"
+        missing_index_name = "parameter_code"
+        missing_index_value = "full load hours"
         column_config = {"format": "%.0f h/a", "min_value": 0, "max_value": 8760}
 
     if data_selection == "interest rate":
@@ -915,13 +924,17 @@ They also show the data for your country for comparison.
         process_code = [""]
         x = "parameter_code"
         column_config = {"format": "%.3f", "min_value": 0, "max_value": 1}
+        missing_index_name = "parameter_code"
+        missing_index_value = "interest rate"
 
     c1, c2 = st.columns(2, gap="medium")
     with c2:
         # show data:
         st.markdown("**Data:**")
         df = display_and_edit_data_table(
-            input_data=input_data,
+            input_data=input_data_without_subregions,
+            missing_index_name=missing_index_name,
+            missing_index_value=missing_index_value,
             columns=x,
             source_region_code=region_list_without_subregions,
             parameter_code=parameter_code,
@@ -935,8 +948,60 @@ They also show the data for your country for comparison.
         fig = px.box(df)
         st.plotly_chart(fig, use_container_width=True)
 
+    st.divider()
+    st.subheader("Data that is identical for all regions:")
+
+    input_data_global = input_data.loc[input_data["source_region_code"] == ""]
+
+    # filter processes:
+    processes = api.get_dimension("process")
+
+    list_processes_transport = processes.loc[
+        processes["is_transport"], "process_name"
+    ].to_list()
+
+    list_processes_not_transport = processes.loc[
+        ~processes["is_transport"], "process_name"
+    ].to_list()
+    st.markdown("**Conversion processes:**")
+    df = display_and_edit_data_table(
+        input_data_global,
+        missing_index_name="source_region_code",
+        missing_index_value=None,
+        parameter_code=[
+            "CAPEX",
+            "OPEX (fix)",
+            "lifetime / amortization period",
+            "efficiency",
+        ],
+        process_code=list_processes_not_transport,
+        index="process_code",
+        columns="parameter_code",
+    )
+    st.markdown("**Transportation processes:**")
+    st.markdown("TODO: fix data")
+    df = display_and_edit_data_table(
+        input_data_global,
+        missing_index_name="source_region_code",
+        missing_index_value=None,
+        parameter_code=[
+            "losses (own fuel, transport)",
+            "levelized costs",
+            "lifetime / amortization period",
+            # FIXME: add bunker fuel consumption
+        ],
+        process_code=list_processes_transport,
+        index="process_code",
+        columns="parameter_code",
+    )
+
+    # If there are user changes, display them:
     display_user_changes()
-    st.write(st.session_state)
+
+    st.write("**Debug: Session state**")
+    st.write(
+        st.session_state
+    )  # FIXME this is debugging output, remove when it is not needed anymore
 
 
 def reset_user_changes():
@@ -948,7 +1013,8 @@ def reset_user_changes():
 def display_user_changes():
     """Display input data changes made by user."""
     if st.session_state["user_changes_df"] is not None:
-        st.write("**Input data has been modified:**")
+        st.subheader("Data modifications:")
+        st.write("**Input data has been modified!**")
         st.dataframe(
             st.session_state["user_changes_df"].style.format(precision=3),
             hide_index=True,
@@ -957,9 +1023,11 @@ def display_user_changes():
 
 def display_and_edit_data_table(
     input_data: pd.DataFrame,
-    source_region_code: list,
-    parameter_code: list,
-    process_code: list,
+    missing_index_name: str,
+    missing_index_value: str,
+    source_region_code: list = None,
+    parameter_code: list = None,
+    process_code: list = None,
     index: str = "source_region_code",
     columns: str = "process_code",
     values: str = "value",
@@ -967,10 +1035,15 @@ def display_and_edit_data_table(
     key_suffix: str = "",
 ) -> pd.DataFrame:
     """Display selected input data as 2D table, which can also be edited."""
-    ind1 = input_data["source_region_code"].isin(source_region_code)
-    ind2 = input_data["parameter_code"].isin(parameter_code)
-    ind3 = input_data["process_code"].isin(process_code)
-    df = input_data.loc[ind1 & ind2 & ind3]
+    # filter data:
+    df = input_data.copy()
+    if source_region_code is not None:
+        df = df.loc[df["source_region_code"].isin(source_region_code)]
+    if parameter_code is not None:
+        df = df.loc[df["parameter_code"].isin(parameter_code)]
+    if process_code is not None:
+        df = df.loc[df["process_code"].isin(process_code)]
+
     df_tab = df.pivot_table(index=index, columns=columns, values=values, aggfunc="sum")
 
     # if editing is enabled, store modifications in session_state:
@@ -999,7 +1072,8 @@ def display_and_edit_data_table(
         column_config=column_config_all,
         on_change=register_user_changes,
         kwargs={
-            "parameter_code": parameter_code,
+            "missing_index_name": missing_index_name,
+            "missing_index_value": missing_index_value,
             "index": index,
             "columns": columns,
             "values": values,
@@ -1012,7 +1086,15 @@ def display_and_edit_data_table(
     return df_tab
 
 
-def register_user_changes(parameter_code, index, columns, values, df_tab, key):
+def register_user_changes(
+    missing_index_name: str,
+    missing_index_value: str,
+    index: str,
+    columns: str,
+    values: str,
+    df_tab: pd.DataFrame,
+    key: str,
+):
     """
     Register all user changes in the session state variable "user_changes_df".
 
@@ -1027,9 +1109,11 @@ def register_user_changes(parameter_code, index, columns, values, df_tab, key):
         for c_name, value in v.items():
             data_list.append({index: k, columns: c_name, values: value})
 
-        # Convert the list to a DataFrame
+    # Convert the list to a DataFrame
     res = pd.DataFrame(data_list)
-    res["parameter_code"] = parameter_code[0]
+
+    # add missing key (the info that is not contained in the 2D table):
+    res[missing_index_name] = missing_index_value
 
     # Replace the 'id' values with the corresponding index elements from df_tab
     res[index] = res[index].map(lambda x: df_tab.index[x])

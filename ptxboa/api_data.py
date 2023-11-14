@@ -114,6 +114,8 @@ DimensionCode = Literal[
     "country",
     "transport",
     "output_unit",
+    "process",
+    "flow",
 ]
 
 
