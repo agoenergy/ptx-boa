@@ -11,6 +11,9 @@ from ptxboa.api import PtxboaAPI
 # Set the pandas display option to format floats with 2 decimal places
 pd.set_option("display.float_format", "{:.2f}".format)
 
+if "user_changes_df" not in st.session_state:
+    st.session_state["user_changes_df"] = None
+
 st.set_page_config(layout="wide")
 st.title("PtX Business Opportunity Analyzer :red[draft version, please do not quote!]")
 (
