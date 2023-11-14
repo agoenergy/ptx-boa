@@ -677,22 +677,15 @@ Data can be filterend and sorted.
             df_res = df_costs.copy()
 
             # select filter:
-            if titlestring == "region":
-                option_list = ["All", "Ten cheapest", "Manual select"]
-            else:
-                option_list = ["All", "Manual select"]
-
             show_which_data = st.radio(
                 "Select elements to display:",
-                option_list,
+                ["All", "Manual select"],
                 index=0,
                 key=f"show_which_data_{key}",
             )
 
             # apply filter:
-            if show_which_data == "Ten cheapest":
-                df_res = df_res.nsmallest(10, "Total")
-            elif show_which_data == "Manual select":
+            if show_which_data == "Manual select":
                 ind_select = st.multiselect(
                     "Select regions:",
                     df_res.index.values,
