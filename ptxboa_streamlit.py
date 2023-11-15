@@ -11,6 +11,7 @@ from app.tab_compare_costs import content_compare_costs
 from app.tab_country_fact_sheets import content_country_fact_sheets
 from app.tab_dashboard import content_dashboard
 from app.tab_disclaimer import content_disclaimer
+from app.tab_input_data import content_input_data
 from app.tab_literature import content_literature
 from app.tab_market_scanning import content_market_scanning
 from app.tab_sustainability import content_sustainability
@@ -85,7 +86,7 @@ with t_compare_costs:
     content_compare_costs(api, res_costs)
 
 with t_input_data:
-    pf.content_input_data(api)
+    content_input_data(api)
 
 with t_deep_dive_countries:
     pf.content_deep_dive_countries(api, res_costs)
