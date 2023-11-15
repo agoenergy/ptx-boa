@@ -7,6 +7,7 @@ import app.ptxboa_functions as pf
 from app.context_data import load_context_data
 from app.sidebar import make_sidebar
 from app.tab_certification_schemes import content_certification_schemes
+from app.tab_compare_costs import content_compare_costs
 from app.tab_country_fact_sheets import content_country_fact_sheets
 from app.tab_dashboard import content_dashboard
 from app.tab_disclaimer import content_disclaimer
@@ -81,7 +82,7 @@ with t_market_scanning:
     content_market_scanning(api, res_costs)
 
 with t_compare_costs:
-    pf.content_compare_costs(api, res_costs)
+    content_compare_costs(api, res_costs)
 
 with t_input_data:
     pf.content_input_data(api)
