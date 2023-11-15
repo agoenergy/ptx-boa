@@ -85,3 +85,23 @@ class TestPtxboaFunctions(unittest.TestCase):
 
         # assert that both ways yield identical results:
         pd.testing.assert_frame_equal(res_costs, res_by_region)
+
+    def test_calculate_results_list_by_chain(self):
+        """Test calculate_results_list bvy chain function."""
+        settings = {
+            "region": "United Arab Emirates",
+            "country": "Germany",
+            "chain": "Methane (AEL)",
+            "res_gen": "PV tilted",
+            "scenario": "2040 (medium)",
+            "secproc_co2": "Direct Air Capture",
+            "secproc_water": "Sea Water desalination",
+            "transport": "Ship",
+            "ship_own_fuel": False,
+            "output_unit": "USD/t",
+        }
+        api = PtxboaAPI()
+
+        # new way of calculating results:
+        # currently throws an error
+        pf.calculate_results_list(api, settings, "chain")

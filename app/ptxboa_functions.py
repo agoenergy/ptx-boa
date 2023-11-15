@@ -746,6 +746,12 @@ Data can be filterend and sorted.
     )
 
     # TODO: display costs by chain
+    # Display costs by chain:
+    # FIXME: currently not working
+    res_scenario = calculate_results_list(
+        api, settings, "chain", user_data=st.session_state["user_changes_df"]
+    )
+    display_costs(res_scenario, "chain", "Costs by process chain:", settings)
 
 
 def content_deep_dive_countries(
