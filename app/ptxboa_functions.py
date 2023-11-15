@@ -38,9 +38,7 @@ def calculate_results_single(
     return res
 
 
-def calculate_results(
-    api: PtxboaAPI, settings: dict, region_list: list = None
-) -> pd.DataFrame:
+def calculate_results(api: PtxboaAPI, region_list: list = None) -> pd.DataFrame:
     """Calculate results for source regions and one selected target country.
 
     TODO: This function will eventually be replaced by ``calculate_results_list()``.
@@ -49,9 +47,6 @@ def calculate_results(
     ----------
     api : :class:`~ptxboa.api.PtxboaAPI`
         an instance of the api class
-    settings : dict
-        settings from the streamlit app. An example can be obtained with the
-        return value from :func:`ptxboa_functions.create_sidebar`.
     region_list : list or None
         The regions for which the results are calculated. If None, all regions
         available in the API will be used.
@@ -67,7 +62,7 @@ def calculate_results(
         region_list = api.get_dimension("region")["region_name"]
 
     for region in region_list:
-        settings2 = settings.copy()
+        settings2 = st.session_state["settings"].copy()
         settings2["region"] = region
         res_single = calculate_results_single(api, settings2)
         res_list.append(res_single)
@@ -77,7 +72,6 @@ def calculate_results(
 
 def calculate_results_list(
     api: PtxboaAPI,
-    settings: dict,
     parameter_to_change: str,
     parameter_list: list = None,
     user_data: pd.DataFrame | None = None,
@@ -108,7 +102,7 @@ def calculate_results_list(
         parameter_list = api.get_dimension(parameter_to_change).index
 
     for parameter in parameter_list:
-        settings2 = settings.copy()
+        settings2 = st.session_state["settings"].copy()
         settings2[parameter_to_change] = parameter
         res_single = calculate_results_single(api, settings2, user_data=user_data)
         res_list.append(res_single)
@@ -147,8 +141,10 @@ def aggregate_costs(res_details: pd.DataFrame) -> pd.DataFrame:
 
 # Settings:
 def create_sidebar(api: PtxboaAPI):
+    if "settings" not in st.session_state:
+        st.session_state["settings"] = {}
+
     st.sidebar.subheader("Main settings:")
-    settings = {}
     include_subregions = False
     if include_subregions:
         region_list = api.get_dimension("region").index
@@ -159,7 +155,7 @@ def create_sidebar(api: PtxboaAPI):
             .index
         )
 
-    settings["region"] = st.sidebar.selectbox(
+    st.session_state["settings"]["region"] = st.sidebar.selectbox(
         "Supply country / region:",
         region_list,
         help=(
@@ -177,7 +173,7 @@ def create_sidebar(api: PtxboaAPI):
             "if you want to chose one of these subregions as a supply region. "
         ),
     )
-    settings["country"] = st.sidebar.selectbox(
+    st.session_state["settings"]["country"] = st.sidebar.selectbox(
         "Demand country:",
         api.get_dimension("country").index,
         help=(
@@ -222,11 +218,13 @@ def create_sidebar(api: PtxboaAPI):
     else:
         use_reconversion = False
 
-    settings["chain"] = f"{product} ({ely})"
+    st.session_state["settings"]["chain"] = f"{product} ({ely})"
     if use_reconversion:
-        settings["chain"] = f"{settings['chain']} + reconv. to H2"
+        st.session_state["settings"][
+            "chain"
+        ] = f"{st.session_state['settings']['chain']} + reconv. to H2"
 
-    settings["res_gen"] = st.sidebar.selectbox(
+    st.session_state["settings"]["res_gen"] = st.sidebar.selectbox(
         "Renewable electricity source (for selected supply region):",
         api.get_dimension("res_gen").index,
         help=(
@@ -260,33 +258,33 @@ def create_sidebar(api: PtxboaAPI):
             ),
             horizontal=True,
         )
-    settings["scenario"] = f"{data_year} ({cost_scenario})"
+    st.session_state["settings"]["scenario"] = f"{data_year} ({cost_scenario})"
 
     st.sidebar.subheader("Additional settings:")
-    settings["secproc_co2"] = st.sidebar.radio(
+    st.session_state["settings"]["secproc_co2"] = st.sidebar.radio(
         "Carbon source:",
         api.get_dimension("secproc_co2").index,
         horizontal=True,
         help="Help text",
     )
-    settings["secproc_water"] = st.sidebar.radio(
+    st.session_state["settings"]["secproc_water"] = st.sidebar.radio(
         "Water source:",
         api.get_dimension("secproc_water").index,
         horizontal=True,
         help="Help text",
     )
-    settings["transport"] = st.sidebar.radio(
+    st.session_state["settings"]["transport"] = st.sidebar.radio(
         "Mode of transportation (for selected supply country):",
         api.get_dimension("transport").index,
         horizontal=True,
         help="Help text",
     )
-    if settings["transport"] == "Ship":
-        settings["ship_own_fuel"] = st.sidebar.toggle(
+    if st.session_state["settings"]["transport"] == "Ship":
+        st.session_state["settings"]["ship_own_fuel"] = st.sidebar.toggle(
             "For shipping option: Use the product as own fuel?",
             help="Help text",
         )
-    settings["output_unit"] = st.sidebar.radio(
+    st.session_state["settings"]["output_unit"] = st.sidebar.radio(
         "Unit for delivered costs:",
         api.get_dimension("output_unit").index,
         horizontal=True,
@@ -311,17 +309,18 @@ Disable this setting to reset user data to default values.""",
     if "colors" not in st.session_state:
         colors = pd.read_csv("data/Agora_Industry_Colours.csv")
         st.session_state["colors"] = colors["Hex Code"].to_list()
-    return settings
+    return
 
 
-def create_world_map(api: PtxboaAPI, settings: dict, res_costs: pd.DataFrame):
+def create_world_map(api: PtxboaAPI, res_costs: pd.DataFrame):
     """Create world map."""
     parameter_to_show_on_map = "Total"
 
     # define title:
     title_string = (
-        f"{parameter_to_show_on_map} cost of exporting {settings['chain']} to "
-        f"{settings['country']}"
+        f"{parameter_to_show_on_map} cost of exporting"
+        f"{st.session_state['settings']['chain']} to "
+        f"{st.session_state['settings']['country']}"
     )
     # define color scale:
     color_scale = [
@@ -331,19 +330,21 @@ def create_world_map(api: PtxboaAPI, settings: dict, res_costs: pd.DataFrame):
     ]
 
     # remove subregions from deep dive countries (otherwise colorscale is not correct)
-    res_costs = remove_subregions(api, res_costs, settings)
+    res_costs = remove_subregions(api, res_costs)
 
     # Create custom hover text:
     custom_hover_data = res_costs.apply(
         lambda x: f"<b>{x.name}</b><br><br>"
         + "<br>".join(
             [
-                f"<b>{col}</b>: {x[col]:.1f} {settings['output_unit']}"
+                f"<b>{col}</b>: {x[col]:.1f}"
+                f"{st.session_state['settings']['output_unit']}"
                 for col in res_costs.columns[:-1]
             ]
             + [
                 f"──────────<br><b>{res_costs.columns[-1]}</b>: "
-                f"{x[res_costs.columns[-1]]:.1f} {settings['output_unit']}"
+                f"{x[res_costs.columns[-1]]:.1f}"
+                f"{st.session_state['settings']['output_unit']}"
             ]
         ),
         axis=1,
@@ -375,7 +376,9 @@ def create_world_map(api: PtxboaAPI, settings: dict, res_costs: pd.DataFrame):
     )
 
     fig.update_layout(
-        coloraxis_colorbar={"title": settings["output_unit"]},  # colorbar
+        coloraxis_colorbar={
+            "title": st.session_state["settings"]["output_unit"]
+        },  # colorbar
         height=600,  # height of figure
         margin={"t": 20, "b": 20, "l": 20, "r": 20},  # reduce margin around figure
     )
@@ -388,9 +391,7 @@ def create_world_map(api: PtxboaAPI, settings: dict, res_costs: pd.DataFrame):
     return
 
 
-def create_bar_chart_costs(
-    res_costs: pd.DataFrame, settings: dict, current_selection: str = None
-):
+def create_bar_chart_costs(res_costs: pd.DataFrame, current_selection: str = None):
     """Create bar plot for costs by components, and dots for total costs.
 
     Parameters
@@ -447,12 +448,12 @@ def create_bar_chart_costs(
             ay=-50,
         )
     fig.update_layout(
-        yaxis_title=settings["output_unit"],
+        yaxis_title=st.session_state["settings"]["output_unit"],
     )
     return fig
 
 
-def create_box_plot(res_costs: pd.DataFrame, settings: dict):
+def create_box_plot(res_costs: pd.DataFrame):
     """Create a subplot with one row and one column.
 
     Parameters
@@ -470,7 +471,7 @@ def create_box_plot(res_costs: pd.DataFrame, settings: dict):
     fig = go.Figure()
 
     # Specify the row index of the data point you want to highlight
-    highlighted_row_index = settings["region"]
+    highlighted_row_index = st.session_state["settings"]["region"]
     # Extract the value from the specified row and column
 
     if highlighted_row_index:
@@ -497,7 +498,7 @@ def create_box_plot(res_costs: pd.DataFrame, settings: dict):
     fig.update_layout(
         title="Cost distribution for all supply countries",
         xaxis={"title": ""},
-        yaxis={"title": settings["output_unit"]},
+        yaxis={"title": st.session_state["settings"]["output_unit"]},
         height=500,
     )
 
@@ -506,7 +507,9 @@ def create_box_plot(res_costs: pd.DataFrame, settings: dict):
 
 def create_scatter_plot(df_res, settings: dict):
     df_res["Country"] = "Other countries"
-    df_res.at[settings["region"], "Country"] = settings["region"]
+    df_res.at[st.session_state["settings"]["region"], "Country"] = st.session_state[
+        "settings"
+    ]["region"]
 
     fig = px.scatter(
         df_res,
@@ -521,7 +524,7 @@ def create_scatter_plot(df_res, settings: dict):
     st.write(df_res)
 
 
-def content_dashboard(api, res_costs: dict, context_data: dict, settings: pd.DataFrame):
+def content_dashboard(api, res_costs: dict, context_data: dict):
     with st.expander("What is this?"):
         st.markdown(
             """
@@ -538,13 +541,15 @@ Switch to other tabs to explore data and results in more detail!
     c_1, c_2 = st.columns([2, 1])
 
     with c_1:
-        create_world_map(api, settings, res_costs)
+        create_world_map(api, res_costs)
 
     with c_2:
         # create box plot and bar plot:
-        fig1 = create_box_plot(res_costs, settings)
-        filtered_data = res_costs[res_costs.index == settings["region"]]
-        fig2 = create_bar_chart_costs(filtered_data, settings)
+        fig1 = create_box_plot(res_costs)
+        filtered_data = res_costs[
+            res_costs.index == st.session_state["settings"]["region"]
+        ]
+        fig2 = create_bar_chart_costs(filtered_data)
         doublefig = make_subplots(rows=1, cols=2, shared_yaxes=True)
 
         for trace in fig1.data:
@@ -557,27 +562,22 @@ Switch to other tabs to explore data and results in more detail!
         doublefig.update_layout(title_text="Cost distribution and details:")
         st.plotly_chart(doublefig, use_container_width=True)
 
-        create_infobox(context_data, settings)
+        create_infobox(context_data)
 
     st.write("Chosen settings:")
-    st.write(settings)
+    st.write(st.session_state["settings"])
 
     st.write("res_cost")
     st.write(res_costs)
 
 
-def content_market_scanning(
-    api: PtxboaAPI, res_costs: pd.DataFrame, settings: dict
-) -> None:
+def content_market_scanning(api: PtxboaAPI, res_costs: pd.DataFrame) -> None:
     """Create content for the "market scanning" sheet.
 
     Parameters
     ----------
     api : :class:`~ptxboa.api.PtxboaAPI`
         an instance of the api class
-    settings : dict
-        settings from the streamlit app. An example can be obtained with the
-        return value from :func:`ptxboa_functions.create_sidebar`.
     res_costs : pd.DataFrame
         Results.
     """
@@ -594,12 +594,14 @@ This sheet helps you to better evaluate your country's competitive position
         )
 
     # get input data:
-    input_data = api.get_input_data(settings["scenario"])
+    input_data = api.get_input_data(st.session_state["settings"]["scenario"])
 
     # filter shipping and pipeline distances:
     distances = input_data.loc[
         (input_data["parameter_code"].isin(["shipping distance", "pipeline distance"]))
-        & (input_data["target_country_code"] == settings["country"]),
+        & (
+            input_data["target_country_code"] == st.session_state["settings"]["country"]
+        ),
         ["source_region_code", "parameter_code", "value"],
     ]
     distances = distances.pivot_table(
@@ -615,7 +617,7 @@ This sheet helps you to better evaluate your country's competitive position
     df_plot = df_plot.merge(distances, left_index=True, right_index=True)
 
     # do not show subregions:
-    df_plot = remove_subregions(api, df_plot, settings)
+    df_plot = remove_subregions(api, df_plot)
 
     # create plot:
     [c1, c2] = st.columns([1, 5])
@@ -648,7 +650,7 @@ This sheet helps you to better evaluate your country's competitive position
     st.dataframe(df_plot, use_container_width=True, column_config=column_config)
 
 
-def remove_subregions(api: PtxboaAPI, df: pd.DataFrame, settings: dict):
+def remove_subregions(api: PtxboaAPI, df: pd.DataFrame):
     """Remove subregions from a dataframe.
 
     Parameters
@@ -670,17 +672,15 @@ def remove_subregions(api: PtxboaAPI, df: pd.DataFrame, settings: dict):
     )
 
     # ensure that target country is not in list of regions:
-    if settings["country"] in region_list_without_subregions:
-        region_list_without_subregions.remove(settings["country"])
+    if st.session_state["settings"]["country"] in region_list_without_subregions:
+        region_list_without_subregions.remove(st.session_state["settings"]["country"])
 
     df = df.loc[region_list_without_subregions]
 
     return df
 
 
-def content_compare_costs(
-    api: PtxboaAPI, res_costs: pd.DataFrame, settings: dict
-) -> None:
+def content_compare_costs(api: PtxboaAPI, res_costs: pd.DataFrame) -> None:
     """Create content for the "compare costs" sheet.
 
     Parameters
@@ -703,9 +703,7 @@ Data can be filterend and sorted.
             """
         )
 
-    def display_costs(
-        df_costs: pd.DataFrame, key: str, titlestring: str, settings: dict
-    ):
+    def display_costs(df_costs: pd.DataFrame, key: str, titlestring: str):
         """Display costs as table and bar chart."""
         st.subheader(titlestring)
         c1, c2 = st.columns([1, 5])
@@ -740,24 +738,25 @@ Data can be filterend and sorted.
         with c2:
             # create graph:
             fig = create_bar_chart_costs(
-                df_res, settings, current_selection=settings[key]
+                df_res,
+                current_selection=st.session_state["settings"][key],
             )
             st.plotly_chart(fig, use_container_width=True)
 
         with st.expander("**Data**"):
             column_config = config_number_columns(
-                df_res, format=f"%.1f {settings['output_unit']}"
+                df_res, format=f"%.1f {st.session_state['settings']['output_unit']}"
             )
             st.dataframe(df_res, use_container_width=True, column_config=column_config)
 
-    res_costs_without_subregions = remove_subregions(api, res_costs, settings)
-    display_costs(res_costs_without_subregions, "region", "Costs by region:", settings)
+    res_costs_without_subregions = remove_subregions(api, res_costs)
+    display_costs(res_costs_without_subregions, "region", "Costs by region:")
 
     # Display costs by scenario:
     res_scenario = calculate_results_list(
-        api, settings, "scenario", user_data=st.session_state["user_changes_df"]
+        api, "scenario", user_data=st.session_state["user_changes_df"]
     )
-    display_costs(res_scenario, "scenario", "Costs by data scenario:", settings)
+    display_costs(res_scenario, "scenario", "Costs by data scenario:")
 
     # Display costs by RE generation:
     # TODO: remove PV tracking manually, this needs to be fixed in data
@@ -765,21 +764,16 @@ Data can be filterend and sorted.
     list_res_gen.remove("PV tracking")
     res_res_gen = calculate_results_list(
         api,
-        settings,
         "res_gen",
         parameter_list=list_res_gen,
         user_data=st.session_state["user_changes_df"],
     )
-    display_costs(
-        res_res_gen, "res_gen", "Costs by renewable electricity source:", settings
-    )
+    display_costs(res_res_gen, "res_gen", "Costs by renewable electricity source:")
 
     # TODO: display costs by chain
 
 
-def content_deep_dive_countries(
-    api: PtxboaAPI, res_costs: pd.DataFrame, settings: dict
-) -> None:
+def content_deep_dive_countries(api: PtxboaAPI, res_costs: pd.DataFrame) -> None:
     """Create content for the "costs by region" sheet.
 
     Parameters
@@ -815,7 +809,7 @@ They also show the data for your selected supply country or region for compariso
 
     # get input data:
 
-    input_data = api.get_input_data(settings["scenario"])
+    input_data = api.get_input_data(st.session_state["settings"]["scenario"])
 
     # filter data:
     # get list of subregions:
@@ -875,16 +869,13 @@ They also show the data for your selected supply country or region for compariso
         st.plotly_chart(fig, use_container_width=True)
 
 
-def content_input_data(api: PtxboaAPI, settings: dict) -> None:
+def content_input_data(api: PtxboaAPI) -> None:
     """Create content for the "input data" sheet.
 
     Parameters
     ----------
     api : :class:`~ptxboa.api.PtxboaAPI`
         an instance of the api class
-    settings : dict
-        settings from the streamlit app. An example can be obtained with the
-        return value from :func:`ptxboa_functions.create_sidebar`.
 
     Output
     ------
@@ -907,7 +898,8 @@ They also show the data for your country for comparison.
     st.subheader("Region specific data:")
     # get input data:
     input_data = api.get_input_data(
-        settings["scenario"], user_data=st.session_state["user_changes_df"]
+        st.session_state["settings"]["scenario"],
+        user_data=st.session_state["user_changes_df"],
     )
 
     # filter data:
@@ -1160,14 +1152,16 @@ def register_user_changes(
     )
 
 
-def create_infobox(context_data: dict, settings: dict):
+def create_infobox(context_data: dict):
     data = context_data["infobox"]
-    st.markdown(f"**Key information on {settings['country']}:**")
-    demand = data.at[settings["country"], "Projected H2 demand [2030]"]
-    info1 = data.at[settings["country"], "key_info_1"]
-    info2 = data.at[settings["country"], "key_info_2"]
-    info3 = data.at[settings["country"], "key_info_3"]
-    info4 = data.at[settings["country"], "key_info_4"]
+    st.markdown(f"**Key information on {st.session_state['settings']['country']}:**")
+    demand = data.at[
+        st.session_state["settings"]["country"], "Projected H2 demand [2030]"
+    ]
+    info1 = data.at[st.session_state["settings"]["country"], "key_info_1"]
+    info2 = data.at[st.session_state["settings"]["country"], "key_info_2"]
+    info3 = data.at[st.session_state["settings"]["country"], "key_info_3"]
+    info4 = data.at[st.session_state["settings"]["country"], "key_info_4"]
     st.markdown(f"* Projected H2 demand in 2030: {demand}")
 
     def write_info(info):
@@ -1205,7 +1199,9 @@ def import_context_data():
     return cd
 
 
-def create_fact_sheet_demand_country(context_data: dict, country_name: str):
+def create_fact_sheet_demand_country(context_data: dict):
+    # select country:
+    country_name = st.session_state["settings"]["country"]
     with st.expander("What is this?"):
         st.markdown(
             """
@@ -1291,8 +1287,10 @@ For each selected supply and demand country pair, you will find detailed
             st.markdown(f"*Source: {data['source_certification_info']}*")
 
 
-def create_fact_sheet_supply_country(context_data: dict, country_name: str):
+def create_fact_sheet_supply_country(context_data: dict):
     """Display information on a chosen supply country."""
+    # select country:
+    country_name = st.session_state["settings"]["region"]
     df = context_data["supply"]
     data = df.loc[df["country_name"] == country_name].iloc[0].to_dict()
 

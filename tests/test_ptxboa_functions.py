@@ -5,6 +5,7 @@ import logging
 import unittest
 
 import pandas as pd
+import streamlit as st
 
 import app.ptxboa_functions as pf
 from ptxboa.api import PtxboaAPI
@@ -19,7 +20,7 @@ logging.basicConfig(
 class TestPtxboaFunctions(unittest.TestCase):
     def test_remove_subregions(self):
         """Test remove_subregions function."""
-        settings = {
+        st.session_state["settings"] = {
             "region": "United Arab Emirates",
             "country": "Germany",
             "chain": "Methane (AEL)",
@@ -37,7 +38,7 @@ class TestPtxboaFunctions(unittest.TestCase):
         # regions including subregions: 79
         self.assertEqual(len(df_in), 79)
 
-        df_out = pf.remove_subregions(api, df_in, settings)
+        df_out = pf.remove_subregions(api, df_in)
 
         # output is dataframe:
         self.assertIsInstance(df_out, pd.DataFrame)
@@ -52,14 +53,14 @@ class TestPtxboaFunctions(unittest.TestCase):
         # if target country is also a source region, it needs to be removed
         # from the source region list:
 
-        settings["country"] = "China"
-        df_out = pf.remove_subregions(api, df_in, settings)
+        st.session_state["settings"]["country"] = "China"
+        df_out = pf.remove_subregions(api, df_in)
         self.assertEqual(len(df_out), 33)
         self.assertFalse("China" in df_out["region_name"])
 
     def test_calculate_results_list(self):
         """Test calculate_results_list function."""
-        settings = {
+        st.session_state["settings"] = {
             "region": "United Arab Emirates",
             "country": "Germany",
             "chain": "Methane (AEL)",
@@ -74,14 +75,11 @@ class TestPtxboaFunctions(unittest.TestCase):
         api = PtxboaAPI()
 
         # old way of calculating results:
-        res_details = pf.calculate_results(
-            api,
-            settings,
-        )
+        res_details = pf.calculate_results(api)
         res_costs = pf.aggregate_costs(res_details)
 
         # new way of calculating results:
-        res_by_region = pf.calculate_results_list(api, settings, "region")
+        res_by_region = pf.calculate_results_list(api, "region")
 
         # assert that both ways yield identical results:
         pd.testing.assert_frame_equal(res_costs, res_by_region)
