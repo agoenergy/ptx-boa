@@ -536,12 +536,6 @@ Switch to other tabs to explore data and results in more detail!
 
         create_infobox(context_data)
 
-    st.write("Chosen settings:")
-    st.write(st.session_state)
-
-    st.write("res_cost")
-    st.write(res_costs)
-
 
 def content_market_scanning(api: PtxboaAPI, res_costs: pd.DataFrame) -> None:
     """Create content for the "market scanning" sheet.
@@ -994,11 +988,6 @@ They also show the data for your country for comparison.
 
     # If there are user changes, display them:
     display_user_changes()
-
-    st.write("**Debug: Session state**")
-    st.write(
-        st.session_state
-    )  # FIXME this is debugging output, remove when it is not needed anymore
 
 
 def reset_user_changes():
