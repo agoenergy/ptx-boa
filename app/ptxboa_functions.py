@@ -400,9 +400,14 @@ def create_bar_chart_costs(
         settings dictionary, like output from create_sidebar()
     current_selection : str
         bar to highlight with an arrow. must be an element of res_costs.index
+
+    Output
+    ------
+    fig : plotly.graph_objects.Figure
+        Figure object
     """
     if res_costs.empty:  # nodata to plot (FIXME: migth not be required later)
-        return
+        return go.Figure()
 
     fig = px.bar(
         res_costs,
@@ -443,11 +448,24 @@ def create_bar_chart_costs(
     fig.update_layout(
         yaxis_title=settings["output_unit"],
     )
-    st.plotly_chart(fig, use_container_width=True)
+    return fig
 
 
 def create_box_plot(res_costs: pd.DataFrame, settings: dict):
-    # Create a subplot with one row and one column
+    """Create a subplot with one row and one column.
+
+    Parameters
+    ----------
+    res_costs : pd.DataFrame
+        data for plotting
+    settings : dict
+        settings dictionary, like output from create_sidebar()
+
+    Output
+    ------
+    fig : plotly.graph_objects.Figure
+        Figure object
+    """
     fig = go.Figure()
 
     # Specify the row index of the data point you want to highlight
@@ -482,7 +500,7 @@ def create_box_plot(res_costs: pd.DataFrame, settings: dict):
         height=500,
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    return fig
 
 
 def create_scatter_plot(df_res, settings: dict):
@@ -528,10 +546,12 @@ Switch to other tabs to explore data and results in more detail!
     c_3, c_4 = st.columns(2)
 
     with c_3:
-        create_box_plot(res_costs, settings)
+        fig = create_box_plot(res_costs, settings)
+        st.plotly_chart(fig, use_container_width=True)
     with c_4:
         filtered_data = res_costs[res_costs.index == settings["region"]]
-        create_bar_chart_costs(filtered_data, settings)
+        fig = create_bar_chart_costs(filtered_data, settings)
+        st.plotly_chart(fig, use_container_width=True)
 
     st.write("Chosen settings:")
     st.write(settings)
@@ -713,7 +733,10 @@ Data can be filterend and sorted.
                 df_res = df_res.sort_values(["Total"], ascending=True)
         with c2:
             # create graph:
-            create_bar_chart_costs(df_res, settings, current_selection=settings[key])
+            fig = create_bar_chart_costs(
+                df_res, settings, current_selection=settings[key]
+            )
+            st.plotly_chart(fig, use_container_width=True)
 
         with st.expander("**Data**"):
             column_config = config_number_columns(
