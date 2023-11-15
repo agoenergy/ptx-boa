@@ -20,7 +20,7 @@ logging.basicConfig(
 class TestPtxboaFunctions(unittest.TestCase):
     def test_remove_subregions(self):
         """Test remove_subregions function."""
-        st.session_state["settings"] = {
+        settings = {
             "region": "United Arab Emirates",
             "country": "Germany",
             "chain": "Methane (AEL)",
@@ -38,7 +38,7 @@ class TestPtxboaFunctions(unittest.TestCase):
         # regions including subregions: 79
         self.assertEqual(len(df_in), 79)
 
-        df_out = pf.remove_subregions(api, df_in)
+        df_out = pf.remove_subregions(api, df_in, settings["country"])
 
         # output is dataframe:
         self.assertIsInstance(df_out, pd.DataFrame)
@@ -53,8 +53,8 @@ class TestPtxboaFunctions(unittest.TestCase):
         # if target country is also a source region, it needs to be removed
         # from the source region list:
 
-        st.session_state["settings"]["country"] = "China"
-        df_out = pf.remove_subregions(api, df_in)
+        settings["country"] = "China"
+        df_out = pf.remove_subregions(api, df_in, settings["country"])
         self.assertEqual(len(df_out), 33)
         self.assertFalse("China" in df_out["region_name"])
 

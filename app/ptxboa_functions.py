@@ -330,7 +330,9 @@ def create_world_map(api: PtxboaAPI, res_costs: pd.DataFrame):
     ]
 
     # remove subregions from deep dive countries (otherwise colorscale is not correct)
-    res_costs = remove_subregions(api, res_costs)
+    res_costs = remove_subregions(
+        api, res_costs, st.session_state["settings"]["country"]
+    )
 
     # Create custom hover text:
     custom_hover_data = res_costs.apply(
@@ -617,7 +619,7 @@ This sheet helps you to better evaluate your country's competitive position
     df_plot = df_plot.merge(distances, left_index=True, right_index=True)
 
     # do not show subregions:
-    df_plot = remove_subregions(api, df_plot)
+    df_plot = remove_subregions(api, df_plot, st.session_state["settings"]["country"])
 
     # create plot:
     [c1, c2] = st.columns([1, 5])
@@ -650,7 +652,7 @@ This sheet helps you to better evaluate your country's competitive position
     st.dataframe(df_plot, use_container_width=True, column_config=column_config)
 
 
-def remove_subregions(api: PtxboaAPI, df: pd.DataFrame):
+def remove_subregions(api: PtxboaAPI, df: pd.DataFrame, country_name: str):
     """Remove subregions from a dataframe.
 
     Parameters
@@ -658,7 +660,11 @@ def remove_subregions(api: PtxboaAPI, df: pd.DataFrame):
     api : :class:`~ptxboa.api.PtxboaAPI`
         an instance of the api class
 
-    df : pandas DataFrame with list of regions as index.
+    df : pd.DataFrame
+        pandas DataFrame with list of regions as index.
+
+    country_name : str
+        name of target country. Is removed from region list if it is also in there.
 
     Returns
     -------
@@ -672,8 +678,8 @@ def remove_subregions(api: PtxboaAPI, df: pd.DataFrame):
     )
 
     # ensure that target country is not in list of regions:
-    if st.session_state["settings"]["country"] in region_list_without_subregions:
-        region_list_without_subregions.remove(st.session_state["settings"]["country"])
+    if country_name in region_list_without_subregions:
+        region_list_without_subregions.remove(country_name)
 
     df = df.loc[region_list_without_subregions]
 
@@ -749,7 +755,9 @@ Data can be filterend and sorted.
             )
             st.dataframe(df_res, use_container_width=True, column_config=column_config)
 
-    res_costs_without_subregions = remove_subregions(api, res_costs)
+    res_costs_without_subregions = remove_subregions(
+        api, res_costs, st.session_state["settings"]["country"]
+    )
     display_costs(res_costs_without_subregions, "region", "Costs by region:")
 
     # Display costs by scenario:
