@@ -38,38 +38,6 @@ def calculate_results_single(
     return res
 
 
-def calculate_results(api: PtxboaAPI, region_list: list = None) -> pd.DataFrame:
-    """Calculate results for source regions and one selected target country.
-
-    TODO: This function will eventually be replaced by ``calculate_results_list()``.
-
-    Parameters
-    ----------
-    api : :class:`~ptxboa.api.PtxboaAPI`
-        an instance of the api class
-    region_list : list or None
-        The regions for which the results are calculated. If None, all regions
-        available in the API will be used.
-
-    Returns
-    -------
-    pd.DataFrame
-        same format as for :meth:`~ptxboa.api.PtxboaAPI.calculate()`
-    """
-    res_list = []
-
-    if region_list is None:
-        region_list = api.get_dimension("region")["region_name"]
-
-    for region in region_list:
-        settings2 = st.session_state["settings"].copy()
-        settings2["region"] = region
-        res_single = calculate_results_single(api, settings2)
-        res_list.append(res_single)
-    res = pd.concat(res_list)
-    return res
-
-
 def calculate_results_list(
     api: PtxboaAPI,
     parameter_to_change: str,
