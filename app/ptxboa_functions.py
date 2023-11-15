@@ -7,6 +7,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+from plotly.subplots import make_subplots
 
 from ptxboa.api import PtxboaAPI
 
@@ -535,23 +536,28 @@ Switch to other tabs to explore data and results in more detail!
         )
 
     c_1, c_2 = st.columns([2, 1])
-    with c_2:
-        create_infobox(context_data, settings)
 
     with c_1:
         create_world_map(api, settings, res_costs)
 
-    st.divider()
-
-    c_3, c_4 = st.columns(2)
-
-    with c_3:
-        fig = create_box_plot(res_costs, settings)
-        st.plotly_chart(fig, use_container_width=True)
-    with c_4:
+    with c_2:
+        # create box plot and bar plot:
+        fig1 = create_box_plot(res_costs, settings)
         filtered_data = res_costs[res_costs.index == settings["region"]]
-        fig = create_bar_chart_costs(filtered_data, settings)
-        st.plotly_chart(fig, use_container_width=True)
+        fig2 = create_bar_chart_costs(filtered_data, settings)
+        doublefig = make_subplots(rows=1, cols=2, shared_yaxes=True)
+
+        for trace in fig1.data:
+            trace.showlegend = False
+            doublefig.add_trace(trace, row=1, col=1)
+        for trace in fig2.data:
+            doublefig.add_trace(trace, row=1, col=2)
+
+        doublefig.update_layout(barmode="stack")
+        doublefig.update_layout(title_text="Cost distribution and details:")
+        st.plotly_chart(doublefig, use_container_width=True)
+
+        create_infobox(context_data, settings)
 
     st.write("Chosen settings:")
     st.write(settings)
