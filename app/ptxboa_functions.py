@@ -89,26 +89,11 @@ def calculate_results_list(
         res_list.append(res_single)
     res_details = pd.concat(res_list)
 
-    # Exclude levelized costs:
-    res = res_details.loc[res_details["cost_type"] != "LC"]
-    res = res.pivot_table(
-        index=parameter_to_change,
-        columns="process_type",
-        values="values",
-        aggfunc="sum",
-    )
-    # calculate total costs:
-    res["Total"] = res.sum(axis=1)
-
-    return res
+    return aggregate_costs(res_details)
 
 
-@st.cache_data()
 def aggregate_costs(res_details: pd.DataFrame) -> pd.DataFrame:
-    """Aggregate detailed costs.
-
-    TODO: This function will eventually be replaced by ``calculate_results_list``
-    """
+    """Aggregate detailed costs."""
     # Exclude levelized costs:
     res = res_details.loc[res_details["cost_type"] != "LC"]
     res = res.pivot_table(
