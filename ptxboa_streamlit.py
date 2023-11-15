@@ -11,6 +11,7 @@ from app.tab_country_fact_sheets import content_country_fact_sheets
 from app.tab_dashboard import content_dashboard
 from app.tab_disclaimer import content_disclaimer
 from app.tab_literature import content_literature
+from app.tab_market_scanning import content_market_scanning
 from app.tab_sustainability import content_sustainability
 from ptxboa.api import PtxboaAPI
 
@@ -77,7 +78,7 @@ with t_dashboard:
     content_dashboard(api, res_costs, cd)
 
 with t_market_scanning:
-    pf.content_market_scanning(api, res_costs)
+    content_market_scanning(api, res_costs)
 
 with t_compare_costs:
     pf.content_compare_costs(api, res_costs)
