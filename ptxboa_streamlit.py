@@ -8,6 +8,7 @@ from app.context_data import load_context_data
 from app.sidebar import make_sidebar
 from app.tab_certification_schemes import content_certification_schemes
 from app.tab_country_fact_sheets import content_country_fact_sheets
+from app.tab_dashboard import content_dashboard
 from app.tab_disclaimer import content_disclaimer
 from app.tab_literature import content_literature
 from app.tab_sustainability import content_sustainability
@@ -73,7 +74,7 @@ cd = load_context_data()
 
 # dashboard:
 with t_dashboard:
-    pf.content_dashboard(api, res_costs, cd)
+    content_dashboard(api, res_costs, cd)
 
 with t_market_scanning:
     pf.content_market_scanning(api, res_costs)
