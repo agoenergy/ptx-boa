@@ -33,19 +33,7 @@ def calculate_results_single(
     pd.DataFrame
         same format as for :meth:`~ptxboa.api.PtxboaAPI.calculate()`
     """
-    res = _api.calculate(
-        user_data=user_data,
-        chain=settings["chain"],
-        country=settings["country"],
-        output_unit=settings["output_unit"],
-        region=settings["region"],
-        res_gen=settings["res_gen"],
-        scenario=settings["scenario"],
-        secproc_co2=settings["secproc_co2"],
-        secproc_water=settings["secproc_water"],
-        ship_own_fuel=settings["ship_own_fuel"],
-        transport=settings["transport"],
-    )
+    res = _api.calculate(user_data=user_data, **settings)
 
     return res
 
@@ -81,8 +69,24 @@ def calculate_results_list(
     if parameter_list is None:
         parameter_list = api.get_dimension(parameter_to_change).index
 
+    # copy settings from session_state:
+    settings = {}
+    for key in [
+        "chain",
+        "country",
+        "output_unit",
+        "region",
+        "res_gen",
+        "scenario",
+        "secproc_co2",
+        "secproc_water",
+        "ship_own_fuel",
+        "transport",
+    ]:
+        settings[key] = st.session_state[key]
+
     for parameter in parameter_list:
-        settings2 = st.session_state["settings"].copy()
+        settings2 = settings.copy()
         settings2[parameter_to_change] = parameter
         res_single = calculate_results_single(api, settings2, user_data=user_data)
         res_list.append(res_single)
@@ -197,9 +201,7 @@ def create_sidebar(api: PtxboaAPI):
 
     st.session_state["chain"] = f"{product} ({ely})"
     if use_reconversion:
-        st.session_state[
-            "chain"
-        ] = f"{st.session_state['settings']['chain']} + reconv. to H2"
+        st.session_state["chain"] = f"{st.session_state['chain']} + reconv. to H2"
 
     st.session_state["res_gen"] = st.sidebar.selectbox(
         "Renewable electricity source (for selected supply region):",
@@ -296,8 +298,8 @@ def create_world_map(api: PtxboaAPI, res_costs: pd.DataFrame):
     # define title:
     title_string = (
         f"{parameter_to_show_on_map} cost of exporting"
-        f"{st.session_state['settings']['chain']} to "
-        f"{st.session_state['settings']['country']}"
+        f"{st.session_state['chain']} to "
+        f"{st.session_state['country']}"
     )
     # define color scale:
     color_scale = [
@@ -314,14 +316,13 @@ def create_world_map(api: PtxboaAPI, res_costs: pd.DataFrame):
         lambda x: f"<b>{x.name}</b><br><br>"
         + "<br>".join(
             [
-                f"<b>{col}</b>: {x[col]:.1f}"
-                f"{st.session_state['settings']['output_unit']}"
+                f"<b>{col}</b>: {x[col]:.1f}" f"{st.session_state['output_unit']}"
                 for col in res_costs.columns[:-1]
             ]
             + [
                 f"──────────<br><b>{res_costs.columns[-1]}</b>: "
                 f"{x[res_costs.columns[-1]]:.1f}"
-                f"{st.session_state['settings']['output_unit']}"
+                f"{st.session_state['output_unit']}"
             ]
         ),
         axis=1,
@@ -718,7 +719,7 @@ Data can be filterend and sorted.
 
         with st.expander("**Data**"):
             column_config = config_number_columns(
-                df_res, format=f"%.1f {st.session_state['settings']['output_unit']}"
+                df_res, format=f"%.1f {st.session_state['output_unit']}"
             )
             st.dataframe(df_res, use_container_width=True, column_config=column_config)
 
@@ -1129,7 +1130,7 @@ def register_user_changes(
 
 def create_infobox(context_data: dict):
     data = context_data["infobox"]
-    st.markdown(f"**Key information on {st.session_state['settings']['country']}:**")
+    st.markdown(f"**Key information on {st.session_state['country']}:**")
     demand = data.at[st.session_state["country"], "Projected H2 demand [2030]"]
     info1 = data.at[st.session_state["country"], "key_info_1"]
     info2 = data.at[st.session_state["country"], "key_info_2"]
