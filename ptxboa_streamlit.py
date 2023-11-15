@@ -4,7 +4,13 @@ import pandas as pd
 import streamlit as st
 
 import app.ptxboa_functions as pf
+from app.context_data import load_context_data
 from app.sidebar import make_sidebar
+from app.tab_certification_schemes import content_certification_schemes
+from app.tab_country_fact_sheets import content_country_fact_sheets
+from app.tab_disclaimer import content_disclaimer
+from app.tab_literature import content_literature
+from app.tab_sustainability import content_sustainability
 from ptxboa.api import PtxboaAPI
 
 # app layout:
@@ -63,7 +69,7 @@ res_costs = pf.calculate_results_list(
 )
 
 # import context data:
-cd = st.cache_resource(pf.import_context_data)()
+cd = load_context_data()
 
 # dashboard:
 with t_dashboard:
@@ -82,18 +88,16 @@ with t_deep_dive_countries:
     pf.content_deep_dive_countries(api, res_costs)
 
 with t_country_fact_sheets:
-    pf.create_fact_sheet_demand_country(cd)
-    st.divider()
-    pf.create_fact_sheet_supply_country(cd)
+    content_country_fact_sheets(cd)
 
 with t_certification_schemes:
-    pf.create_fact_sheet_certification_schemes(cd)
+    content_certification_schemes(cd)
 
 with t_sustainability:
-    pf.create_content_sustainability(cd)
+    content_sustainability(cd)
 
 with t_literature:
-    pf.create_content_literature(cd)
+    content_literature(cd)
 
 with t_disclaimer:
-    pf.content_disclaimer()
+    content_disclaimer()
