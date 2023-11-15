@@ -4,6 +4,7 @@ import pandas as pd
 import streamlit as st
 
 import app.ptxboa_functions as pf
+from app.sidebar import make_sidebar
 from ptxboa.api import PtxboaAPI
 
 # app layout:
@@ -46,7 +47,15 @@ st.title("PtX Business Opportunity Analyzer :red[draft version, please do not qu
 api = st.cache_resource(PtxboaAPI)()
 
 # create sidebar:
-pf.create_sidebar(api)
+make_sidebar(api)
+
+if st.session_state["edit_input_data"] is False:
+    pf.reset_user_changes()
+
+# import agora color scale:
+if "colors" not in st.session_state:
+    colors = pd.read_csv("data/Agora_Industry_Colours.csv")
+    st.session_state["colors"] = colors["Hex Code"].to_list()
 
 # calculate results:
 res_costs = pf.calculate_results_list(
