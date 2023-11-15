@@ -46,11 +46,11 @@ st.title("PtX Business Opportunity Analyzer :red[draft version, please do not qu
 api = st.cache_resource(PtxboaAPI)()
 
 # create sidebar:
-settings = pf.create_sidebar(api)
+pf.create_sidebar(api)
 
 # calculate results:
 res_costs = pf.calculate_results_list(
-    api, settings, "region", user_data=st.session_state["user_changes_df"]
+    api, "region", user_data=st.session_state["user_changes_df"]
 )
 
 # import context data:
@@ -58,24 +58,24 @@ cd = st.cache_resource(pf.import_context_data)()
 
 # dashboard:
 with t_dashboard:
-    pf.content_dashboard(api, res_costs, cd, settings)
+    pf.content_dashboard(api, res_costs, cd)
 
 with t_market_scanning:
-    pf.content_market_scanning(api, res_costs, settings)
+    pf.content_market_scanning(api, res_costs)
 
 with t_compare_costs:
-    pf.content_compare_costs(api, res_costs, settings)
+    pf.content_compare_costs(api, res_costs)
 
 with t_input_data:
-    pf.content_input_data(api, settings)
+    pf.content_input_data(api)
 
 with t_deep_dive_countries:
-    pf.content_deep_dive_countries(api, res_costs, settings)
+    pf.content_deep_dive_countries(api, res_costs)
 
 with t_country_fact_sheets:
-    pf.create_fact_sheet_demand_country(cd, settings["country"])
+    pf.create_fact_sheet_demand_country(cd)
     st.divider()
-    pf.create_fact_sheet_supply_country(cd, settings["region"])
+    pf.create_fact_sheet_supply_country(cd)
 
 with t_certification_schemes:
     pf.create_fact_sheet_certification_schemes(cd)
