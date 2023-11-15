@@ -3,11 +3,7 @@
 import streamlit as st
 from plotly.subplots import make_subplots
 
-from app.ptxboa_functions import (
-    create_bar_chart_costs,
-    create_box_plot,
-    create_world_map,
-)
+from app.plot_functions import create_bar_chart_costs, create_box_plot, create_world_map
 
 
 def _create_infobox(context_data: dict):

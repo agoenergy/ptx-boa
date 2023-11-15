@@ -3,10 +3,10 @@
 import pandas as pd
 import streamlit as st
 
+from app.plot_functions import create_bar_chart_costs
 from app.ptxboa_functions import (
     calculate_results_list,
     config_number_columns,
-    create_bar_chart_costs,
     remove_subregions,
 )
 from ptxboa.api import PtxboaAPI
