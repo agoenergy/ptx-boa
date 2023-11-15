@@ -377,16 +377,16 @@ def display_and_edit_data_table(
     key_suffix: str = "",
 ) -> pd.DataFrame:
     """Display selected input data as 2D table, which can also be edited."""
-    # filter data:
-    df = input_data.copy()
-    if source_region_code is not None:
-        df = df.loc[df["source_region_code"].isin(source_region_code)]
-    if parameter_code is not None:
-        df = df.loc[df["parameter_code"].isin(parameter_code)]
-    if process_code is not None:
-        df = df.loc[df["process_code"].isin(process_code)]
-
-    df_tab = df.pivot_table(index=index, columns=columns, values=values, aggfunc="sum")
+    # filter data and reshape to wide format.
+    df_tab = subset_and_pivot_input_data(
+        input_data,
+        source_region_code,
+        parameter_code,
+        process_code,
+        index,
+        columns,
+        values,
+    )
 
     # if editing is enabled, store modifications in session_state:
     if st.session_state["edit_input_data"]:
@@ -426,6 +426,55 @@ def display_and_edit_data_table(
     if st.session_state["edit_input_data"]:
         st.markdown("You can edit data directly in the table!")
     return df_tab
+
+
+def subset_and_pivot_input_data(
+    input_data: pd.DataFrame,
+    source_region_code: list = None,
+    parameter_code: list = None,
+    process_code: list = None,
+    index: str = "source_region_code",
+    columns: str = "process_code",
+    values: str = "value",
+):
+    """
+    Reshapes and subsets input data.
+
+    Parameters
+    ----------
+    input_data : pd.DataFrame
+        obtained with :meth:`~ptxboa.api.PtxboaAPI.get_input_data`
+    source_region_code : list, optional
+        list for subsetting source regions, by default None
+    parameter_code : list, optional
+        list for subsetting parameter_codes, by default None
+    process_code : list, optional
+        list for subsetting process_codes, by default None
+    index : str, optional
+        index for `pivot_table()`, by default "source_region_code"
+    columns : str, optional
+        column for generating new columns in pivot_table, by default "process_code"
+    values : str, optional
+        values for `pivot_table()` , by default "value"
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
+    if source_region_code is not None:
+        input_data = input_data.loc[
+            input_data["source_region_code"].isin(source_region_code)
+        ]
+    if parameter_code is not None:
+        input_data = input_data.loc[input_data["parameter_code"].isin(parameter_code)]
+    if process_code is not None:
+        input_data = input_data.loc[input_data["process_code"].isin(process_code)]
+
+    reshaped = input_data.pivot_table(
+        index=index, columns=columns, values=values, aggfunc="sum"
+    )
+    return reshaped
 
 
 def register_user_changes(
