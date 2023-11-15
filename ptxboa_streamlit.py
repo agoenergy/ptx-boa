@@ -10,6 +10,7 @@ from app.tab_certification_schemes import content_certification_schemes
 from app.tab_compare_costs import content_compare_costs
 from app.tab_country_fact_sheets import content_country_fact_sheets
 from app.tab_dashboard import content_dashboard
+from app.tab_deep_dive_countries import content_deep_dive_countries
 from app.tab_disclaimer import content_disclaimer
 from app.tab_input_data import content_input_data
 from app.tab_literature import content_literature
@@ -89,7 +90,7 @@ with t_input_data:
     content_input_data(api)
 
 with t_deep_dive_countries:
-    pf.content_deep_dive_countries(api, res_costs)
+    content_deep_dive_countries(api, res_costs)
 
 with t_country_fact_sheets:
     content_country_fact_sheets(cd)
