@@ -4,6 +4,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+from app.plot_functions import plot_costs_on_map
 from app.ptxboa_functions import display_and_edit_data_table
 from ptxboa.api import PtxboaAPI
 
@@ -36,11 +37,12 @@ They also show the data for your selected supply country or region for compariso
             """
         )
 
-    st.markdown("TODO: add country map")
-
     ddc = st.radio(
         "Select country:", ["Argentina", "Morocco", "South Africa"], horizontal=True
     )
+
+    fig_map = plot_costs_on_map(api, res_costs, scope=ddc, cost_component="Total")
+    st.plotly_chart(fig_map, use_container_width=True)
 
     # get input data:
 
