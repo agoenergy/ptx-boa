@@ -31,10 +31,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements-dev.txt
         pip install flake8-bandit flake8-bugbear flake8-builtins flake8-comprehensions flake8-docstrings flake8-eradicate flake8-isort
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names, this will be obsolete when we have pre-commit.ci
-        flake8 . --max-line-length=88 --extend-ignore=E203,I001,I005,D101,D103,D105,B023,S603,S608,S101,S310,E402 --docstring-convention=numpy
     - name: Test with pytest
       run: |
         # run tests with pytest (unittest tests will be collected as well)
