@@ -34,4 +34,4 @@ jobs:
     - name: Test with pytest
       run: |
         # run tests with pytest (unittest tests will be collected as well)
-        pytest
+        pytest -vv
