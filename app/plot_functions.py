@@ -73,9 +73,11 @@ def create_world_map(api: PtxboaAPI, res_costs: pd.DataFrame):
 
     fig.update_layout(
         coloraxis_colorbar={"title": st.session_state["output_unit"]},  # colorbar
-        height=600,  # height of figure
         margin={"t": 20, "b": 20, "l": 20, "r": 20},  # reduce margin around figure
     )
+
+    # reduce height of the colorbar:
+    fig.update_layout(coloraxis_colorbar={"len": 0.5})
 
     # Set the hover template to use the custom data
     fig.update_traces(hovertemplate="%{customdata}<extra></extra>")  # Custom data
