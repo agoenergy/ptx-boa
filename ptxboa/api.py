@@ -7,7 +7,7 @@ import logging
 import pandas as pd
 
 from .api_calc import PtxCalc
-from .api_data import DataHandler, DimensionCode, PtxData, ScenarioCode
+from .api_data import DATA_DIR, DataHandler, DimensionCode, PtxData, ScenarioCode
 
 RESULT_COST_TYPES = ["CAPEX", "OPEX", "FLOW", "LC"]
 RESULT_PROCESS_TYPES = [
@@ -23,8 +23,8 @@ RESULT_PROCESS_TYPES = [
 
 
 class PtxboaAPI:
-    def __init__(self):
-        self.data = PtxData()
+    def __init__(self, data_dir=DATA_DIR):
+        self.data = PtxData(data_dir=data_dir)
 
     def get_dimension(self, dim: DimensionCode) -> pd.DataFrame:
         """Return a dimension element to populate app dropdowns.

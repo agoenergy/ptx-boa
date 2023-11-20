@@ -3,14 +3,25 @@
 
 import logging
 from itertools import product
+from pathlib import Path
 from typing import Literal
 
 import numpy as np
 import pandas as pd
 
-from .data import load_data
-
 logger = logging.getLogger(__name__)
+
+
+def _load_data(data_dir, name: str) -> pd.DataFrame:
+    filepath = Path(data_dir) / f"{name}.csv"
+    df = pd.read_csv(filepath)
+    # numerical columns should never be empty, dimension columns
+    # maybe empty and will be filled with ""
+    df = df.fillna("")
+    return df
+
+
+DATA_DIR = Path(__file__).parent / "data"
 
 PARAMETER_DIMENSIONS = {
     "CALOR": {"required": ["flow_code"], "global_default": False},
@@ -120,18 +131,24 @@ DimensionCode = Literal[
 
 
 class PtxData:
-    def __init__(self):
+    def __init__(self, data_dir=DATA_DIR):
         self.dimensions = {
-            dim: load_data(name=f"dim_{dim}")
+            dim: _load_data(data_dir, name=f"dim_{dim}")
             for dim in ["country", "flow", "parameter", "process", "region"]
         }
-        self.flh = load_data(name="flh").set_index("key").replace(np.nan, "")
+        self.flh = _load_data(data_dir, name="flh").set_index("key").replace(np.nan, "")
         self.storage_cost_factor = (
-            load_data(name="storage_cost_factor").set_index("key").replace(np.nan, "")
+            _load_data(data_dir, name="storage_cost_factor")
+            .set_index("key")
+            .replace(np.nan, "")
         )
-        self.chains = load_data(name="chains").set_index("chain").replace(np.nan, "")
+        self.chains = (
+            _load_data(data_dir, name="chains").set_index("chain").replace(np.nan, "")
+        )
         self.scenario_data = {
-            f"{year} ({parameter_range})": load_data(name=f"{year}_{parameter_range}")
+            f"{year} ({parameter_range})": _load_data(
+                data_dir, name=f"{year}_{parameter_range}"
+            )
             .set_index("key")
             .replace(np.nan, "")
             for year, parameter_range in product(
