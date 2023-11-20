@@ -3,7 +3,11 @@
 import streamlit as st
 from plotly.subplots import make_subplots
 
-from app.plot_functions import create_bar_chart_costs, create_box_plot, create_world_map
+from app.plot_functions import (
+    create_bar_chart_costs,
+    create_box_plot,
+    plot_costs_on_map,
+)
 
 
 def _create_infobox(context_data: dict):
@@ -43,7 +47,10 @@ Switch to other tabs to explore data and results in more detail!
     c_1, c_2 = st.columns([2, 1])
 
     with c_1:
-        create_world_map(api, res_costs)
+        fig_map = plot_costs_on_map(
+            api, res_costs, scope="world", cost_component="Total"
+        )
+        st.plotly_chart(fig_map, use_container_width=True)
 
     with c_2:
         # create box plot and bar plot:
