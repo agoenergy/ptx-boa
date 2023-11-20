@@ -21,7 +21,7 @@ def _load_data(data_dir, name: str) -> pd.DataFrame:
     return df
 
 
-DATA_DIR = Path(__file__).parent / "data"
+DATA_DIR = Path(__file__).parent.resolve() / "data"
 
 PARAMETER_DIMENSIONS = {
     "CALOR": {"required": ["flow_code"], "global_default": False},
