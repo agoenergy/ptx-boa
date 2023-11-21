@@ -9,7 +9,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from app.ptxboa_functions import remove_subregions
+from app.ptxboa_functions import remove_subregions, subset_and_pivot_input_data
 from ptxboa.api import PtxboaAPI
 
 
@@ -49,7 +49,8 @@ def plot_costs_on_map(
     scope : Literal["world", "Argentina", "Morocco", "South Africa"], optional
         either world or a deep dive country, by default "world"
     cost_component : str, optional
-        one of the columns in 'res_costs', by default "Total"
+        The cost component which should be displayed as color in the map. One of
+        the columns in 'res_costs', by default "Total"
 
     Returns
     -------
@@ -79,7 +80,100 @@ def plot_costs_on_map(
             custom_data_func=_make_costs_hoverdata,
         )
 
-    return _set_map_layout(fig, title=title_string)
+    return _set_map_layout(
+        fig, title=title_string, colorbar_title=st.session_state["output_unit"]
+    )
+
+
+def plot_input_data_on_map(
+    api: PtxboaAPI,
+    data_type: Literal["CAPEX", "full load hours", "interest rate"],
+    color_col: Literal[
+        "PV tilted", "Wind Offshore", "Wind Onshore", "Wind-PV-Hybrid", "interest rate"
+    ],
+    scope: Literal["world", "Argentina", "Morocco", "South Africa"] = "world",
+    title: str = "",
+) -> go.Figure:
+    """
+    Plot input data on a map.
+
+    Parameters
+    ----------
+    api : PtxboaAPI
+    data_type : Literal["CAPEX", "full load hours", "interest rate"]
+        The data type from which a parameter is plotted
+    color_col : Literal[ "PV tilted", "Wind Offshore", "Wind Onshore", "Wind
+        the parameter to plot on the map
+    scope : Literal["world", "Argentina", "Morocco", "South Africa"], optional
+        either the whole world or a deep dive country, by default "world"
+    title : str, optional
+        title of the figure, by default ""
+
+    Returns
+    -------
+    go.Figure
+    """
+    input_data = api.get_input_data(
+        scenario=st.session_state["scenario"],
+        user_data=st.session_state["user_changes_df"],
+    )
+
+    units = {"CAPEX": "USD/kW", "full load hours": "h/a", "interest rate": ""}
+
+    if data_type == "interest rate":
+        assert color_col == "interest rate"
+        columns = "parameter_code"
+        process_code = [""]
+        custom_data_func_kwargs = {"float_precision": 3}
+    else:
+        assert color_col in [
+            "PV tilted",
+            "Wind Offshore",
+            "Wind Onshore",
+            "Wind-PV-Hybrid",
+        ]
+        custom_data_func_kwargs = {"float_precision": 0}
+        columns = "process_code"
+        process_code = [
+            "Wind Onshore",
+            "Wind Offshore",
+            "PV tilted",
+            "Wind-PV-Hybrid",
+        ]
+    custom_data_func_kwargs["unit"] = units[data_type]
+
+    input_data = subset_and_pivot_input_data(
+        input_data=input_data,
+        source_region_code=None,
+        parameter_code=[data_type],
+        process_code=process_code,
+        index="source_region_code",
+        columns=columns,
+        values="value",
+    )
+
+    if scope == "world":
+        # Create a choropleth world map:
+        fig = _choropleth_map_world(
+            api=api,
+            df=input_data,
+            color_col=color_col,
+            custom_data_func=_make_inputs_hoverdata,
+            custom_data_func_kwargs=custom_data_func_kwargs,
+        )
+    else:
+        fig = _choropleth_map_deep_dive_country(
+            api=api,
+            df=input_data,
+            deep_dive_country=scope,
+            color_col=color_col,
+            custom_data_func=_make_inputs_hoverdata,
+            custom_data_func_kwargs=custom_data_func_kwargs,
+        )
+
+    return _set_map_layout(
+        fig, title=title, colorbar_title=custom_data_func_kwargs["unit"]
+    )
 
 
 def _choropleth_map_world(
@@ -87,6 +181,7 @@ def _choropleth_map_world(
     df: pd.DataFrame,
     color_col: str,
     custom_data_func: callable,
+    custom_data_func_kwargs: dict | None = None,
 ):
     """
     Plot a chorpleth map for the whole world and one color for each country.
@@ -105,12 +200,14 @@ def _choropleth_map_world(
     _type_
         _description_
     """
+    if custom_data_func_kwargs is None:
+        custom_data_func_kwargs = {}
     df = remove_subregions(api=api, df=df, country_name=st.session_state["country"])
     fig = px.choropleth(
         locations=df.index,
         locationmode="country names",
         color=df[color_col],
-        custom_data=custom_data_func(df),
+        custom_data=custom_data_func(df, **custom_data_func_kwargs),
         color_continuous_scale=agora_continuous_color_scale(),
     )
     return fig
@@ -122,11 +219,14 @@ def _choropleth_map_deep_dive_country(
     deep_dive_country: Literal["Argentina", "Morocco", "South Africa"],
     color_col: str,
     custom_data_func: callable,
+    custom_data_func_kwargs: dict | None = None,
 ):
+    if custom_data_func_kwargs is None:
+        custom_data_func_kwargs = {}
     # subsetting 'df' for the selected deep dive country
     df = df.copy().loc[df.index.str.startswith(f"{deep_dive_country} ("), :]
     # need to calculate custom data befor is03166 column is appended.
-    hover_data = custom_data_func(df)
+    hover_data = custom_data_func(df, **custom_data_func_kwargs)
     # get dataframe with info about iso 3166-2 codes and map them to res_costs
     ddc_info = api.get_dimension("region")
     df["iso3166_code"] = df.index.map(
@@ -157,7 +257,7 @@ def _choropleth_map_deep_dive_country(
     return fig
 
 
-def _set_map_layout(fig: go.Figure, title: str) -> go.Figure:
+def _set_map_layout(fig: go.Figure, title: str, colorbar_title: str) -> go.Figure:
     """
     Apply a unified layout for all maps used in the app.
 
@@ -167,6 +267,10 @@ def _set_map_layout(fig: go.Figure, title: str) -> go.Figure:
     Parameters
     ----------
     fig : go.Figure
+    title : str
+        the figure title
+    colorbar_title : str
+        the title of the colorbar
 
     Returns
     -------
@@ -190,7 +294,7 @@ def _set_map_layout(fig: go.Figure, title: str) -> go.Figure:
 
     fig.update_layout(
         coloraxis_colorbar={
-            "title": st.session_state["output_unit"],
+            "title": colorbar_title,
             "len": 0.5,
         },  # colorbar
         margin={"t": 20, "b": 20, "l": 20, "r": 20},  # reduce margin around figure
@@ -200,6 +304,17 @@ def _set_map_layout(fig: go.Figure, title: str) -> go.Figure:
     # Set the hover template to use the custom data
     fig.update_traces(hovertemplate="%{customdata}<extra></extra>")  # Custom data
     return fig
+
+
+def _make_inputs_hoverdata(df, unit, float_precision):
+    custom_hover_data = df.apply(
+        lambda x: f"<b>{x.name}</b><br><br>"
+        + "<br>".join(
+            [f"<b>{col}</b>: {x[col]:.{float_precision}f}{unit}" for col in df.columns]
+        ),
+        axis=1,
+    )
+    return [custom_hover_data]
 
 
 def _make_costs_hoverdata(res_costs: pd.DataFrame) -> list[pd.Series]:
