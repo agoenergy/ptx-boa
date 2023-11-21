@@ -96,6 +96,19 @@ def ptxdata_live():
             "user_data_01",  # user_data
             800,  # expected
         ),
+        (
+            "2030 (low)",  # scenario
+            "FLH",  # parameter_code
+            "PV-TRK",  # process_code
+            "",  # flow_code
+            "SWE",  # source_region_code
+            "",  # target_country_code
+            "PEM-EL",  # process_code
+            "",  # process_code_ely
+            "",  # process_code_deriv
+            None,  # user_data
+            None,
+        ),
     ),
 )
 @pytest.mark.parametrize("ptxdata", ("ptxdata_static", "ptxdata_live"))
@@ -120,16 +133,20 @@ def test_get_parameter_value(
         user_data = request.getfixturevalue(user_data)
 
     handler = DataHandler(ptxdata_instance, scenario=scenario, user_data=user_data)
-    result = handler.get_parameter_value(
-        parameter_code=parameter_code,
-        process_code=process_code,
-        flow_code=flow_code,
-        source_region_code=source_region_code,
-        target_country_code=target_country_code,
-        process_code_res=process_code_res,
-        process_code_ely=process_code_ely,
-        process_code_deriv=process_code_deriv,
-    )
+    try:
+        result = handler.get_parameter_value(
+            parameter_code=parameter_code,
+            process_code=process_code,
+            flow_code=flow_code,
+            source_region_code=source_region_code,
+            target_country_code=target_country_code,
+            process_code_res=process_code_res,
+            process_code_ely=process_code_ely,
+            process_code_deriv=process_code_deriv,
+        )
+    except ValueError:  # no data found
+        result = None
+
     assert expected == pytest.approx(result)
 
 
