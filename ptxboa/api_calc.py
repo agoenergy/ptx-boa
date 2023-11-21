@@ -192,7 +192,7 @@ class PtxCalc:
                     else:
                         dist_transport = dist_transport_sea
                 loss_t = get_parameter_value_w_default(
-                    "LOSS-T", process_code=process_code
+                    "LOSS-T", process_code=process_code, default=0
                 )
                 eff = 1 - loss_t * dist_transport
             else:
