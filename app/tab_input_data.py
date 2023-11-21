@@ -3,6 +3,7 @@
 import plotly.express as px
 import streamlit as st
 
+from app.plot_functions import plot_input_data_on_map
 from app.ptxboa_functions import display_and_edit_data_table, display_user_changes
 from ptxboa.api import PtxboaAPI
 
@@ -86,10 +87,24 @@ They also show the data for your country for comparison.
         missing_index_name = "parameter_code"
         missing_index_value = "interest rate"
 
-    c1, c2 = st.columns(2, gap="medium")
-    with c2:
-        # show data:
-        st.markdown("**Data:**")
+    c1, c2 = st.columns([2, 1], gap="large")
+    with c1:
+        st.markdown("**Map of input data values**")
+        if data_selection in ["full load hours", "CAPEX"]:
+            map_parameter = st.selectbox(
+                "Show Parameter on Map", process_code, key="input_data_map_parameter"
+            )
+        else:
+            map_parameter = "interest rate"
+        fig = plot_input_data_on_map(
+            api=api,
+            data_type=data_selection,
+            color_col=map_parameter,
+            scope="world",
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+    with st.expander(f"**Region specific {data_selection} data**"):
         df = display_and_edit_data_table(
             input_data=input_data_without_subregions,
             missing_index_name=missing_index_name,
@@ -100,10 +115,9 @@ They also show the data for your country for comparison.
             process_code=process_code,
             column_config=column_config,
         )
-
-    with c1:
+    with c2:
         # create plot:
-        st.markdown("**Figure:**")
+        st.markdown("**Value Distribution over Source regions:**")
         fig = px.box(df)
         st.plotly_chart(fig, use_container_width=True)
 
