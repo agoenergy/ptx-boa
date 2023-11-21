@@ -6,8 +6,8 @@ import logging
 
 import pandas as pd
 
-from .api_calc import calculate
-from .api_data import DataHandler, DimensionCode, PtxData, ScenarioCode
+from .api_calc import PtxCalc
+from .api_data import DATA_DIR, DataHandler, DimensionCode, PtxData, ScenarioCode
 
 logger = logging.getLogger()
 
@@ -38,8 +38,8 @@ class PtxboaAPI:
             logger.warning("Api should only be instantiated once")
         return cls._inst
 
-    def __init__(self):
-        self.data = PtxData()
+    def __init__(self, data_dir=DATA_DIR):
+        self.data = PtxData(data_dir=data_dir)
         self._calc_counter = 0  # temporary counter for calls of calculate()
 
     def get_dimension(self, dim: DimensionCode) -> pd.DataFrame:
@@ -58,6 +58,8 @@ class PtxboaAPI:
                 - 'country'
                 - 'transport'
                 - 'output_unit'
+                - 'process'
+                - 'flow'
 
         Returns
         -------
@@ -70,7 +72,7 @@ class PtxboaAPI:
         self,
         scenario: ScenarioCode,
         long_names: bool = True,
-        user_data: dict = None,
+        user_data: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         """Return scenario data.
 
@@ -94,7 +96,8 @@ class PtxboaAPI:
         user_data : pd.DataFrame | None, optional
             user data that overrides scenario data
             contains only rows of scenario_data that have been modified.
-            ids are expected to come as long names
+            ids are expected to come as long names. Needs to have the columns
+            ["source_region_code", "process_code", "parameter_code", "value"].
 
         Returns
         -------
@@ -118,7 +121,7 @@ class PtxboaAPI:
         transport: str,
         ship_own_fuel: bool = False,  # TODO: no correctly passed by app
         output_unit="USD/MWh",
-        user_data: dict = None,
+        user_data: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         """Calculate results based on user selection.
 
@@ -144,10 +147,11 @@ class PtxboaAPI:
             `True` if ship uses product as fuel
         output_unit : str, optional
             output unit
-        user_data: pd.DataFrame
+        user_data : pd.DataFrame | None, optional
             user data that overrides scenario data
             contains only rows of scenario_data that have been modified.
-            ids are expected to come as long names
+            ids are expected to come as long names. Needs to have the columns
+            ["source_region_code", "process_code", "parameter_code", "value"].
 
 
         Returns
@@ -164,55 +168,33 @@ class PtxboaAPI:
         data_handler = DataHandler(self.data, scenario, user_data)
 
         # prepare / convert user settings to internal codes
-        df_chain = data_handler.get_dimension("chain")
-        df_process_by_name = data_handler.get_dimension("process").set_index(
-            "process_name", drop=False
-        )
-        df_region_by_name = data_handler.get_dimension("region").set_index(
-            "region_name", drop=False
-        )
-        df_country_by_name = data_handler.get_dimension("country").set_index(
-            "country_name", drop=False
-        )
-        dct_chain = dict(df_chain.loc[chain])
+        dct_chain = dict(data_handler.get_dimension("chain").loc[chain])
 
         if transport not in {"Ship", "Pipeline"}:
             logger.error(f"Invalid choice for transport: {transport}")
-        use_ship = transport == "Ship"
 
-        secondary_processes = {
-            "H2O-L": df_process_by_name.at[secproc_water, "process_code"]
-            if secproc_water != "Specific costs"
-            else None,
-            "CO2-G": df_process_by_name.at[secproc_co2, "process_code"]
-            if secproc_co2 != "Specific costs"
-            else None,
-        }
-        process_code_res = df_process_by_name.at[res_gen, "process_code"]
-        source_region_code = df_region_by_name.at[region, "region_code"]
-        target_country_code = df_country_by_name.at[country, "country_code"]
-        process_code_ely = dct_chain["ELY"]
-        process_code_deriv = dct_chain["DERIV"]
-
-        self._calc_counter += 1
-        logger.info(
-            "calculate #%s: %s=>%s",
-            self._calc_counter,
-            source_region_code,
-            target_country_code,
-        )
-
-        # actual calculation
-        result_df = calculate(
-            data_handler,
-            secondary_processes=secondary_processes,
+        result_df = PtxCalc(data_handler).calculate(
+            secondary_processes={
+                "H2O-L": self.data.get_dimensions_parameter_code(
+                    "secproc_water", secproc_water
+                ),
+                "CO2-G": self.data.get_dimensions_parameter_code(
+                    "secproc_co2", secproc_co2
+                ),
+            },
             chain=dct_chain,
-            process_code_res=process_code_res,
-            source_region_code=source_region_code,
-            target_country_code=target_country_code,
-            process_code_ely=process_code_ely,
-            process_code_deriv=process_code_deriv,
-            use_ship=use_ship,
+            process_code_res=self.data.get_dimensions_parameter_code(
+                "res_gen", res_gen
+            ),
+            source_region_code=self.data.get_dimensions_parameter_code(
+                "region", region
+            ),
+            target_country_code=self.data.get_dimensions_parameter_code(
+                "country", country
+            ),
+            process_code_ely=dct_chain["ELY"],
+            process_code_deriv=dct_chain["DERIV"],
+            use_ship=(transport == "Ship"),
             ship_own_fuel=ship_own_fuel,
         )
 

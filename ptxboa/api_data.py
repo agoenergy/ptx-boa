@@ -3,14 +3,25 @@
 
 import logging
 from itertools import product
+from pathlib import Path
 from typing import Literal
 
 import numpy as np
 import pandas as pd
 
-from .data import load_data
-
 logger = logging.getLogger(__name__)
+
+
+def _load_data(data_dir, name: str) -> pd.DataFrame:
+    filepath = Path(data_dir) / f"{name}.csv"
+    df = pd.read_csv(filepath)
+    # numerical columns should never be empty, dimension columns
+    # maybe empty and will be filled with ""
+    df = df.fillna("")
+    return df
+
+
+DATA_DIR = Path(__file__).parent.resolve() / "data"
 
 PARAMETER_DIMENSIONS = {
     "CALOR": {"required": ["flow_code"], "global_default": False},
@@ -94,6 +105,7 @@ ParameterCode = Literal[
     "SEASHARE",
     "SPECCOST",
     "WACC",
+    "STR-CF",
 ]
 ScenarioCode = Literal[
     "2030 (low)",
@@ -113,22 +125,30 @@ DimensionCode = Literal[
     "country",
     "transport",
     "output_unit",
+    "process",
+    "flow",
 ]
 
 
 class PtxData:
-    def __init__(self):
+    def __init__(self, data_dir=DATA_DIR):
         self.dimensions = {
-            dim: load_data(name=f"dim_{dim}")
+            dim: _load_data(data_dir, name=f"dim_{dim}")
             for dim in ["country", "flow", "parameter", "process", "region"]
         }
-        self.flh = load_data(name="flh").set_index("key").replace(np.nan, "")
+        self.flh = _load_data(data_dir, name="flh").set_index("key").replace(np.nan, "")
         self.storage_cost_factor = (
-            load_data(name="storage_cost_factor").set_index("key").replace(np.nan, "")
+            _load_data(data_dir, name="storage_cost_factor")
+            .set_index("key")
+            .replace(np.nan, "")
         )
-        self.chains = load_data(name="chains").set_index("chain").replace(np.nan, "")
+        self.chains = (
+            _load_data(data_dir, name="chains").set_index("chain").replace(np.nan, "")
+        )
         self.scenario_data = {
-            f"{year} ({parameter_range})": load_data(name=f"{year}_{parameter_range}")
+            f"{year} ({parameter_range})": _load_data(
+                data_dir, name=f"{year}_{parameter_range}"
+            )
             .set_index("key")
             .replace(np.nan, "")
             for year, parameter_range in product(
@@ -188,7 +208,73 @@ class PtxData:
 
         return scenario_data
 
-    def _map_names_and_codes(self, scenario_data, mapping_direction):
+    def get_dimensions_parameter_code(
+        self,
+        dimension: Literal[
+            "res_gen", "secproc_co2", "secproc_water", "region", "country"
+        ],
+        parameter_name: str,
+    ) -> str:
+        """
+        Get the internal code for a paremeter within a certain dimension.
+
+        Used to translate long name parameters from frontend to codes.
+
+        Parameters
+        ----------
+        dimension : str
+        parameter_name : str
+
+        Returns
+        -------
+        str
+        """
+
+        if not parameter_name or parameter_name == "Specific costs":
+            return ""
+
+        # mapping of different parameter dimension names depending on "dimension"
+        dimension_parameter_mapping = {
+            "res_gen": "process",
+            "secproc_co2": "process",
+            "secproc_water": "process",
+            "region": "region",
+            "country": "country",
+        }
+        target_dim_name = dimension_parameter_mapping.get(dimension)
+        df = self.get_dimension(dimension)
+        return df.loc[
+            df[target_dim_name + "_name"] == parameter_name, target_dim_name + "_code"
+        ].iloc[0]
+
+    def _map_names_and_codes(
+        self,
+        scenario_data: pd.DataFrame,
+        mapping_direction: Literal["code_to_name", "name_to_code"],
+    ):
+        """
+        Map codes in scenario data to long names and vice versa.
+
+        Mapping is done for data points in the dimensions "parameter", "process",
+        "flow", "region", and "country".
+
+        Parameters
+        ----------
+        scenario_data : pd.DataFrame
+        mapping_direction : str in {"code_to_name", "name_to_code"}
+
+
+        Returns
+        -------
+        : pd.DataFrame
+            Same size as input `scenario_data` but with replaced names/codes
+            as a copy of the original data.
+
+        Raises
+        ------
+        ValueError
+            on invalid `mapping_direction` arguments
+        """
         if mapping_direction not in ["code_to_name", "name_to_code"]:
             raise ValueError(
                 "mapping direction needs to be 'name_to_code' or 'code_to_name'"
