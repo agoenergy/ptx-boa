@@ -229,6 +229,9 @@ class PtxData:
         -------
         str
         """
+        if not parameter_name or parameter_name == "Specific costs":
+            return ""
+
         # mapping of different parameter dimension names depending on "dimension"
         dimension_parameter_mapping = {
             "res_gen": "process",

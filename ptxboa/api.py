@@ -9,6 +9,8 @@ import pandas as pd
 from .api_calc import PtxCalc
 from .api_data import DATA_DIR, DataHandler, DimensionCode, PtxData, ScenarioCode
 
+logger = logging.getLogger()
+
 RESULT_COST_TYPES = ["CAPEX", "OPEX", "FLOW", "LC"]
 RESULT_PROCESS_TYPES = [
     "Water",
@@ -19,12 +21,26 @@ RESULT_PROCESS_TYPES = [
     "Carbon",
     "Derivate production",
     "Heat",
+    "Electricity and H2 storage",
 ]
 
 
 class PtxboaAPI:
+    """Singleton class for data and calculation api."""
+
+    _inst = None
+
+    def __new__(cls, *args, **kwargs):
+        """Make sure class is only instantiated once."""
+        if not cls._inst:
+            cls._inst = super(PtxboaAPI, cls).__new__(cls, *args, **kwargs)
+        else:
+            logger.warning("Api should only be instantiated once")
+        return cls._inst
+
     def __init__(self, data_dir=DATA_DIR):
         self.data = PtxData(data_dir=data_dir)
+        self._calc_counter = 0  # temporary counter for calls of calculate()
 
     def get_dimension(self, dim: DimensionCode) -> pd.DataFrame:
         """Return a dimension element to populate app dropdowns.
@@ -151,20 +167,22 @@ class PtxboaAPI:
         """
         data_handler = DataHandler(self.data, scenario, user_data)
 
-        calculator = PtxCalc(data_handler)
+        # prepare / convert user settings to internal codes
+        dct_chain = dict(data_handler.get_dimension("chain").loc[chain])
 
         if transport not in {"Ship", "Pipeline"}:
-            logging.error("Invalid choice for transport")
-        use_ship = transport == "Ship"
+            logger.error(f"Invalid choice for transport: {transport}")
 
-        result_df = calculator.calculate(
-            secproc_co2_code=self.data.get_dimensions_parameter_code(
-                "secproc_co2", secproc_co2
-            ),
-            secproc_water_code=self.data.get_dimensions_parameter_code(
-                "secproc_water", secproc_water
-            ),
-            chain=chain,
+        result_df = PtxCalc(data_handler).calculate(
+            secondary_processes={
+                "H2O-L": self.data.get_dimensions_parameter_code(
+                    "secproc_water", secproc_water
+                ),
+                "CO2-G": self.data.get_dimensions_parameter_code(
+                    "secproc_co2", secproc_co2
+                ),
+            },
+            chain=dct_chain,
             process_code_res=self.data.get_dimensions_parameter_code(
                 "res_gen", res_gen
             ),
@@ -174,10 +192,23 @@ class PtxboaAPI:
             target_country_code=self.data.get_dimensions_parameter_code(
                 "country", country
             ),
-            use_ship=use_ship,
+            process_code_ely=dct_chain["ELY"],
+            process_code_deriv=dct_chain["DERIV"],
+            use_ship=(transport == "Ship"),
             ship_own_fuel=ship_own_fuel,
-            output_unit=output_unit,
         )
+
+        # conversion to output unit
+        if output_unit not in {"USD/MWh", "USD/t"}:
+            logger.error(f"Invalid choice for output_unit: {output_unit}")
+        conversion = 1000
+        if output_unit == "USD/t":
+            chain_flow_out = dct_chain["FLOW_OUT"]
+            calor = data_handler.get_parameter_value(
+                parameter_code="CALOR", flow_code=chain_flow_out
+            )
+            conversion *= calor
+        result_df["values"] = result_df["values"] * conversion
 
         # add user settings
         result_df["scenario"] = scenario

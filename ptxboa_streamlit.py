@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 """Mockup streamlit app."""
+# TODO how do I use the treamlit logger?
+import logging
+
 import pandas as pd
 import streamlit as st
 
@@ -17,6 +20,25 @@ from app.tab_literature import content_literature
 from app.tab_market_scanning import content_market_scanning
 from app.tab_sustainability import content_sustainability
 from ptxboa.api import PtxboaAPI
+
+# setup logging
+# level can be changed on strartup with: --logger.level=LEVEL
+loglevel = st.logger.get_logger(__name__).level
+
+
+logger = logging.getLogger()  # do not ude __name__ so we can resue it in submodules
+logger.setLevel(loglevel)
+log_handler = logging.StreamHandler()
+log_handler.setFormatter(
+    logging.Formatter(
+        "[%(asctime)s %(levelname)7s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+    )
+)
+logger.addHandler(log_handler)
+
+
+logger.info("Updating app...")
+
 
 # app layout:
 

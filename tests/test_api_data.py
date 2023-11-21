@@ -131,3 +131,19 @@ def test_get_parameter_value(
         process_code_deriv=process_code_deriv,
     )
     assert expected == pytest.approx(result)
+
+
+@pytest.mark.parametrize(
+    "dimension, parameter_name, expected_code",
+    (
+        ("country", "Germany", "DEU"),
+        ("country", "", ""),
+        ("country", None, ""),
+        ("secproc_water", "Specific costs", ""),
+    ),
+)
+def test_get_dimensions_parameter_code(
+    ptxdata_static, dimension, parameter_name, expected_code
+):
+    out_code = ptxdata_static.get_dimensions_parameter_code(dimension, parameter_name)
+    assert out_code == expected_code

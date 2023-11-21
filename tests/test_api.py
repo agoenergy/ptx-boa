@@ -7,7 +7,7 @@ import unittest
 import numpy as np
 
 from ptxboa.api import PtxboaAPI
-from ptxboa.api_calc import pmt
+from ptxboa.api_calc import annuity
 from ptxboa.api_data import DataHandler
 
 logging.basicConfig(
@@ -41,9 +41,12 @@ class TestApi(unittest.TestCase):
         ]:
             self.assertTrue(k in res.columns)
 
+        # aggregate:
+        res = res.groupby(["process_type", "cost_type"]).sum(["values"])
+
         return res
 
-    def test_example_api_call(self):
+    def test_example_api_call_1_ship(self):
         """Test output structure of api.calculate()."""
         settings = {
             "region": "United Arab Emirates",
@@ -87,6 +90,150 @@ class TestApi(unittest.TestCase):
             ("Heat", "FLOW"): 277.330219266086,
             ("Electricity and H2 storage", "CAPEX"): 0,
             ("Electricity and H2 storage", "OPEX"): 176.381710654865,
+            ("Electricity and H2 storage", "FLOW"): 0,
+        }.items():
+            self.assertAlmostEqual(res_values.get(k, 0), v, places=3, msg=k)
+
+    def test_example_api_call_2_ship_own_fuel(self):
+        """Test output structure of api.calculate()."""
+        settings = {
+            "region": "Argentina (Chaco)",
+            "country": "Japan",
+            "chain": "Methanol (SEOC)",
+            "res_gen": "Wind Onshore",
+            "scenario": "2040 (high)",
+            "secproc_co2": "Specific costs",
+            "secproc_water": "Sea Water desalination",
+            "transport": "Ship",
+            "ship_own_fuel": True,
+            "output_unit": "USD/t",
+        }
+        res = self._test_api_call(settings)
+        # test result categories
+        res_values = res.groupby(["process_type", "cost_type"]).sum("values")["values"]
+        for k, v in {
+            ("Water", "CAPEX"): 0.851121000523744,
+            ("Water", "OPEX"): 0.21273242859187,
+            ("Water", "FLOW"): 0.471894289243873,
+            ("Electrolysis", "CAPEX"): 457.961998700237,
+            ("Electrolysis", "OPEX"): 85.8485762832237,
+            ("Electrolysis", "FLOW"): 0,
+            ("Electricity generation", "CAPEX"): 838.948883158942,
+            ("Electricity generation", "OPEX"): 146.78305821183,
+            ("Electricity generation", "FLOW"): 0,
+            ("Transportation (Pipeline)", "CAPEX"): 0,
+            ("Transportation (Pipeline)", "OPEX"): 0,
+            ("Transportation (Pipeline)", "FLOW"): 0,
+            ("Transportation (Ship)", "CAPEX"): 0,
+            ("Transportation (Ship)", "OPEX"): 12.2061245592688,
+            ("Transportation (Ship)", "FLOW"): 0,
+            ("Carbon", "CAPEX"): 0,
+            ("Carbon", "OPEX"): 0,
+            ("Carbon", "FLOW"): 61.3694736856213,
+            ("Derivate production", "CAPEX"): 188.204220208377,
+            ("Derivate production", "OPEX"): 37.0003810701601,
+            ("Derivate production", "FLOW"): 16.8369286421993,
+            ("Heat", "CAPEX"): 0,
+            ("Heat", "OPEX"): 0,
+            ("Heat", "FLOW"): 0,
+            ("Electricity and H2 storage", "CAPEX"): 0,
+            ("Electricity and H2 storage", "OPEX"): 40.7256617424727,
+            ("Electricity and H2 storage", "FLOW"): 0,
+        }.items():
+            self.assertAlmostEqual(res_values.get(k, 0), v, places=3, msg=k)
+
+    def test_example_api_call_3_pipeline_sea_land(self):
+        """Test output structure of api.calculate()."""
+        settings = {
+            "region": "Tunisia",
+            "country": "Germany",
+            "chain": "Hydrogen (PEM)",
+            "res_gen": "Wind Offshore",
+            "scenario": "2030 (high)",
+            "secproc_co2": "Specific costs",
+            "secproc_water": "Sea Water desalination",
+            "transport": "Pipeline",
+            "ship_own_fuel": False,
+            "output_unit": "USD/MWh",
+        }
+        res = self._test_api_call(settings)
+        # test result categories
+        res_values = res.groupby(["process_type", "cost_type"]).sum("values")["values"]
+        for k, v in {
+            ("Water", "CAPEX"): 0.0977824074951808,
+            ("Water", "OPEX"): 0.0301895762734038,
+            ("Water", "FLOW"): 0.0669681098101092,
+            ("Electrolysis", "CAPEX"): 31.2688873439588,
+            ("Electrolysis", "OPEX"): 4.82701583872048,
+            ("Electrolysis", "FLOW"): 0,
+            ("Electricity generation", "CAPEX"): 222.352936388606,
+            ("Electricity generation", "OPEX"): 58.3523144804189,
+            ("Electricity generation", "FLOW"): 0,
+            ("Transportation (Pipeline)", "CAPEX"): 5.31254358823649,
+            ("Transportation (Pipeline)", "OPEX"): 24.678148029682,
+            ("Transportation (Pipeline)", "FLOW"): 2.97636043600485,
+            ("Transportation (Ship)", "CAPEX"): 0,
+            ("Transportation (Ship)", "OPEX"): 0,
+            ("Transportation (Ship)", "FLOW"): 0,
+            ("Carbon", "CAPEX"): 0,
+            ("Carbon", "OPEX"): 0,
+            ("Carbon", "FLOW"): 0,
+            ("Derivate production", "CAPEX"): 0,
+            ("Derivate production", "OPEX"): 0,
+            ("Derivate production", "FLOW"): 0,
+            ("Heat", "CAPEX"): 0,
+            ("Heat", "OPEX"): 0,
+            ("Heat", "FLOW"): 0,
+            ("Electricity and H2 storage", "CAPEX"): 0,
+            ("Electricity and H2 storage", "OPEX"): 2.06047461194434,
+            ("Electricity and H2 storage", "FLOW"): 0,
+        }.items():
+            self.assertAlmostEqual(res_values.get(k, 0), v, places=3, msg=k)
+
+    def test_example_api_call_4_pipeline_retrofitted(self):
+        """Test output structure of api.calculate()."""
+        settings = {
+            "region": "Norway",
+            "country": "Germany",
+            "chain": "Hydrogen (PEM)",
+            "res_gen": "Wind-PV-Hybrid",
+            "scenario": "2030 (low)",
+            "secproc_co2": "Specific costs",
+            "secproc_water": "Specific costs",
+            "transport": "Pipeline",
+            "ship_own_fuel": False,
+            "output_unit": "USD/MWh",
+        }
+        res = self._test_api_call(settings)
+        # test result categories
+        res_values = res.groupby(["process_type", "cost_type"]).sum("values")["values"]
+        for k, v in {
+            ("Water", "CAPEX"): 0,
+            ("Water", "OPEX"): 0,
+            ("Water", "FLOW"): 0.362589872395495,
+            ("Electrolysis", "CAPEX"): 14.2650799104866,
+            ("Electrolysis", "OPEX"): 3.54646178752143,
+            ("Electrolysis", "FLOW"): 0,
+            ("Electricity generation", "CAPEX"): 26.5069838853876,
+            ("Electricity generation", "OPEX"): 6.58993893072181,
+            ("Electricity generation", "FLOW"): 0,
+            ("Transportation (Pipeline)", "CAPEX"): 1.28198337785859,
+            ("Transportation (Pipeline)", "OPEX"): 2.55172143395481,
+            ("Transportation (Pipeline)", "FLOW"): 0.710683430261875,
+            ("Transportation (Ship)", "CAPEX"): 0,
+            ("Transportation (Ship)", "OPEX"): 0,
+            ("Transportation (Ship)", "FLOW"): 0,
+            ("Carbon", "CAPEX"): 0,
+            ("Carbon", "OPEX"): 0,
+            ("Carbon", "FLOW"): 0,
+            ("Derivate production", "CAPEX"): 0,
+            ("Derivate production", "OPEX"): 0,
+            ("Derivate production", "FLOW"): 0,
+            ("Heat", "CAPEX"): 0,
+            ("Heat", "OPEX"): 0,
+            ("Heat", "FLOW"): 0,
+            ("Electricity and H2 storage", "CAPEX"): 0,
+            ("Electricity and H2 storage", "OPEX"): 1.9688084884421,
             ("Electricity and H2 storage", "FLOW"): 0,
         }.items():
             self.assertAlmostEqual(res_values.get(k, 0), v, places=3, msg=k)
@@ -201,11 +348,11 @@ class TestApi(unittest.TestCase):
 
     def test_pmt(self):
         """Test if pmt function."""
-        self.assertAlmostEqual(pmt(0, 100, 1), 0.01)
-        self.assertAlmostEqual(pmt(0.1, 100, 1), 0.100007257098207)
-        self.assertAlmostEqual(pmt(0.5, 100, 1), 0.5)
-        self.assertAlmostEqual(pmt(1, 100, 1), 1)
+        self.assertAlmostEqual(annuity(0, 100, 1), 0.01)
+        self.assertAlmostEqual(annuity(0.1, 100, 1), 0.100007257098207)
+        self.assertAlmostEqual(annuity(0.5, 100, 1), 0.5)
+        self.assertAlmostEqual(annuity(1, 100, 1), 1)
 
-        self.assertAlmostEqual(pmt(0.1, 10, 1), 0.162745394882512)
-        self.assertAlmostEqual(pmt(0.5, 10, 1), 0.5088237828522)
-        self.assertAlmostEqual(pmt(1, 10, 1), 1.0009775171)
+        self.assertAlmostEqual(annuity(0.1, 10, 1), 0.162745394882512)
+        self.assertAlmostEqual(annuity(0.5, 10, 1), 0.5088237828522)
+        self.assertAlmostEqual(annuity(1, 10, 1), 1.0009775171)
