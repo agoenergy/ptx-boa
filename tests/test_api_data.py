@@ -133,17 +133,17 @@ def test_get_parameter_value(
     assert expected == pytest.approx(result)
 
 
-def test_get_dimensions_parameter_code(ptxdata_static):
-    code = ptxdata_static.get_dimensions_parameter_code("country", "Germany")
-    assert code == "DEU"
-
-    code = ptxdata_static.get_dimensions_parameter_code("country", "")
-    assert code == ""
-
-    code = ptxdata_static.get_dimensions_parameter_code("country", None)
-    assert code == ""
-
-    code = ptxdata_static.get_dimensions_parameter_code(
-        "secproc_water", "Specific costs"
-    )
-    assert code == ""
+@pytest.mark.parametrize(
+    "dimension, parameter_name, expected_code",
+    (
+        ("country", "Germany", "DEU"),
+        ("country", "", ""),
+        ("country", None, ""),
+        ("secproc_water", "Specific costs", ""),
+    ),
+)
+def test_get_dimensions_parameter_code(
+    ptxdata_static, dimension, parameter_name, expected_code
+):
+    out_code = ptxdata_static.get_dimensions_parameter_code(dimension, parameter_name)
+    assert out_code == expected_code
