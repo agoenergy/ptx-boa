@@ -4,7 +4,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from app.plot_functions import plot_costs_on_map
+from app.plot_functions import plot_costs_on_map, plot_input_data_on_map
 from app.ptxboa_functions import display_and_edit_data_table
 from ptxboa.api import PtxboaAPI
 
@@ -84,8 +84,24 @@ They also show the data for your selected supply country or region for compariso
         x = None
         st.markdown("TODO: fix surplus countries in data table")
 
-    c1, c2 = st.columns(2, gap="medium")
-    with c2:
+    st.subheader("Full load hours of renewable generation")
+    c1, c2 = st.columns([2, 1], gap="large")
+    with c1:
+        st.markdown("**Map of input data values**")
+        if data_selection in ["full load hours", "CAPEX"]:
+            map_parameter = st.selectbox(
+                "Show Parameter on Map", process_code, key="ddc_flh_map_parameter"
+            )
+        else:
+            map_parameter = "interest rate"
+        fig = plot_input_data_on_map(
+            api=api,
+            data_type=data_selection,
+            color_col=map_parameter,
+            scope=ddc,
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    with st.expander(f"**Region specific {data_selection} data**"):
         # show data:
         st.markdown("**Data:**")
         df = display_and_edit_data_table(
@@ -99,7 +115,7 @@ They also show the data for your selected supply country or region for compariso
             column_config=column_config,
             key_suffix="_ddc",
         )
-    with c1:
+    with c2:
         # create plot:
         st.markdown("**Figure:**")
         fig = px.box(df)
