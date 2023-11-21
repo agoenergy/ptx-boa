@@ -229,7 +229,6 @@ class PtxData:
         -------
         str
         """
-
         if not parameter_name or parameter_name == "Specific costs":
             return ""
 
