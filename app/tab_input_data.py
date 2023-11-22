@@ -34,7 +34,7 @@ They also show the data for your country for comparison.
             """
         )
 
-    st.subheader("Region specific data:")
+    st.subheader("Region specific data")
     # get input data:
     input_data = api.get_input_data(
         st.session_state["scenario"],
@@ -89,7 +89,7 @@ They also show the data for your country for comparison.
 
     c1, c2 = st.columns([2, 1], gap="large")
     with c1:
-        st.markdown("**Map of input data values**")
+        st.markdown("**Map**")
         if data_selection in ["full load hours", "CAPEX"]:
             map_parameter = st.selectbox(
                 "Show Parameter on Map", process_code, key="input_data_map_parameter"
@@ -104,7 +104,7 @@ They also show the data for your country for comparison.
         )
         st.plotly_chart(fig, use_container_width=True)
 
-    with st.expander(f"**Region specific {data_selection} data**"):
+    with st.expander("**Data**"):
         df = display_and_edit_data_table(
             input_data=input_data_without_subregions,
             missing_index_name=missing_index_name,
@@ -117,12 +117,12 @@ They also show the data for your country for comparison.
         )
     with c2:
         # create plot:
-        st.markdown("**Value Distribution over Source regions:**")
+        st.markdown("**Regional Distribution**")
         fig = px.box(df)
         st.plotly_chart(fig, use_container_width=True)
 
     st.divider()
-    st.subheader("Data that is identical for all regions:")
+    st.subheader("Data that is identical for all regions")
 
     input_data_global = input_data.loc[input_data["source_region_code"] == ""]
 

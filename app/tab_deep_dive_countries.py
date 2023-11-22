@@ -87,7 +87,7 @@ They also show the data for your selected supply country or region for compariso
     st.subheader("Full load hours of renewable generation")
     c1, c2 = st.columns([2, 1], gap="large")
     with c1:
-        st.markdown("**Map of input data values**")
+        st.markdown("**Map**")
         if data_selection in ["full load hours", "CAPEX"]:
             map_parameter = st.selectbox(
                 "Show Parameter on Map", process_code, key="ddc_flh_map_parameter"
@@ -101,9 +101,7 @@ They also show the data for your selected supply country or region for compariso
             scope=ddc,
         )
         st.plotly_chart(fig, use_container_width=True)
-    with st.expander(f"**Region specific {data_selection} data**"):
-        # show data:
-        st.markdown("**Data:**")
+    with st.expander("**Data**"):
         df = display_and_edit_data_table(
             input_data=input_data,
             missing_index_name=missing_index_name,
@@ -117,6 +115,6 @@ They also show the data for your selected supply country or region for compariso
         )
     with c2:
         # create plot:
-        st.markdown("**Figure:**")
+        st.markdown("**Regional Distribution**")
         fig = px.box(df)
         st.plotly_chart(fig, use_container_width=True)
