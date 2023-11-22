@@ -32,6 +32,7 @@ if __name__ == "__main__":
             "source",
         ],
         "flh.csv",
+        where="where value is not null",
     )
     update_csv(
         "ptxboa_data_storage_factor",
@@ -44,6 +45,7 @@ if __name__ == "__main__":
             "source",
         ],
         "storage_cost_factor.csv",
+        where="where value is not null",
     )
 
     for year in [2030, 2040]:
@@ -62,5 +64,9 @@ if __name__ == "__main__":
                     "source",
                 ],
                 f"{year}_{rng}.csv",
-                where=f"""where "year"={year} and "parameter_range"='{rng}'""",
+                where=f"""where
+                "year"={year} and
+                "parameter_range"='{rng}' and
+                value is not null
+                """,
             )

@@ -42,7 +42,7 @@ def ptxdata_live():
 
 
 @pytest.mark.parametrize(
-    "scenario, parameter_code, process_code, flow_code, source_region_code, target_country_code, process_code_res, process_code_ely, process_code_deriv, user_data, expected",  # noqa
+    "scenario, parameter_code, process_code, flow_code, source_region_code, target_country_code, process_code_res, process_code_ely, process_code_deriv, user_data, expected, default",  # noqa
     (
         (
             "2030 (low)",  # scenario
@@ -56,6 +56,7 @@ def ptxdata_live():
             "",  # process_code_deriv
             None,  # user_data
             5.527777777777777,  # expected
+            None,  # default
         ),
         (
             "2030 (low)",  # scenario
@@ -69,6 +70,7 @@ def ptxdata_live():
             "",  # process_code_deriv
             "user_data_01",  # user_data
             5.527777777777777,  # expected
+            None,  # default
         ),
         (
             "2030 (low)",  # scenario
@@ -82,6 +84,7 @@ def ptxdata_live():
             "",  # process_code_deriv
             None,  # user_data
             820.2632050586035,  # expected
+            None,  # default
         ),
         (
             "2030 (low)",  # scenario
@@ -95,6 +98,21 @@ def ptxdata_live():
             "",  # process_code_deriv
             "user_data_01",  # user_data
             800,  # expected
+            None,  # default
+        ),
+        (
+            "2030 (low)",  # scenario
+            "FLH",  # parameter_code
+            "PV-TRK",  # process_code
+            "",  # flow_code
+            "SWE",  # source_region_code
+            "",  # target_country_code
+            "PEM-EL",  # process_code
+            "",  # process_code_ely
+            "",  # process_code_deriv
+            None,  # user_data
+            8760,  # expected: default value
+            8760,  # default
         ),
     ),
 )
@@ -113,6 +131,7 @@ def test_get_parameter_value(
     user_data,
     expected,
     request,
+    default,
 ):
     ptxdata_instance = request.getfixturevalue(ptxdata)
 
@@ -129,7 +148,9 @@ def test_get_parameter_value(
         process_code_res=process_code_res,
         process_code_ely=process_code_ely,
         process_code_deriv=process_code_deriv,
+        default=default,
     )
+
     assert expected == pytest.approx(result)
 
 
