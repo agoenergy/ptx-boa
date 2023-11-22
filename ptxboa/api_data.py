@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 def _load_data(data_dir, name: str) -> pd.DataFrame:
     filepath = Path(data_dir) / f"{name}.csv"
-    df = pd.read_csv(filepath)
+    df = pd.read_csv(filepath).drop(columns="key", errors="ignore")
     # numerical columns should never be empty, dimension columns
     # maybe empty and will be filled with ""
     df = df.fillna("")
@@ -136,21 +136,17 @@ class PtxData:
             dim: _load_data(data_dir, name=f"dim_{dim}")
             for dim in ["country", "flow", "parameter", "process", "region"]
         }
-        self.flh = _load_data(data_dir, name="flh").set_index("key").replace(np.nan, "")
-        self.storage_cost_factor = (
-            _load_data(data_dir, name="storage_cost_factor")
-            .set_index("key")
-            .replace(np.nan, "")
-        )
+        self.flh = _load_data(data_dir, name="flh").replace(np.nan, "")
+        self.storage_cost_factor = _load_data(
+            data_dir, name="storage_cost_factor"
+        ).replace(np.nan, "")
         self.chains = (
             _load_data(data_dir, name="chains").set_index("chain").replace(np.nan, "")
         )
         self.scenario_data = {
             f"{year} ({parameter_range})": _load_data(
                 data_dir, name=f"{year}_{parameter_range}"
-            )
-            .set_index("key")
-            .replace(np.nan, "")
+            ).replace(np.nan, "")
             for year, parameter_range in product(
                 [2030, 2040], ["low", "medium", "high"]
             )
