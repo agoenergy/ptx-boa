@@ -9,8 +9,26 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from app.ptxboa_functions import remove_subregions
+from app.ptxboa_functions import remove_subregions, subset_and_pivot_input_data
 from ptxboa.api import PtxboaAPI
+
+
+def agora_continuous_color_scale() -> list[tuple]:
+    """
+    Get a continuous scale with agora colors.
+
+    We cannot wrap this in a constant, since st.session_state["colors"] is not
+    availabe during import.
+
+    Returns
+    -------
+    list[tuple]
+    """
+    return [
+        (0, st.session_state["colors"][0]),  # Starting color at the minimum data value
+        (0.5, st.session_state["colors"][6]),
+        (1, st.session_state["colors"][9]),  # Ending color at the maximum data value
+    ]
 
 
 def plot_costs_on_map(
@@ -31,7 +49,8 @@ def plot_costs_on_map(
     scope : Literal["world", "Argentina", "Morocco", "South Africa"], optional
         either world or a deep dive country, by default "world"
     cost_component : str, optional
-        one of the columns in 'res_costs', by default "Total"
+        The cost component which should be displayed as color in the map. One of
+        the columns in 'res_costs', by default "Total"
 
     Returns
     -------
@@ -43,64 +62,223 @@ def plot_costs_on_map(
         f"{st.session_state['chain']} to "
         f"{st.session_state['country']}"
     )
-    # define color scale:
-    color_scale = [
-        (0, st.session_state["colors"][0]),  # Starting color at the minimum data value
-        (0.5, st.session_state["colors"][6]),
-        (1, st.session_state["colors"][9]),  # Ending color at the maximum data value
-    ]
 
     if scope == "world":
-        # remove subregions from deep dive countries (otherwise colorscale is not
-        # correct)
-        res_costs = remove_subregions(api, res_costs, st.session_state["country"])
+        # Create a choropleth world map:
+        fig = _choropleth_map_world(
+            api=api,
+            df=res_costs,
+            color_col=cost_component,
+            custom_data_func=_make_costs_hoverdata,
+        )
     else:
-        res_costs = res_costs.copy().loc[
-            res_costs.index.str.startswith(f"{scope} ("), :
-        ]
+        fig = _choropleth_map_deep_dive_country(
+            api=api,
+            df=res_costs,
+            deep_dive_country=scope,
+            color_col=cost_component,
+            custom_data_func=_make_costs_hoverdata,
+        )
 
-    # Create custom hover text:
-    custom_hover_data = res_costs.apply(
-        lambda x: f"<b>{x.name}</b><br><br>"
-        + "<br>".join(
-            [
-                f"<b>{col}</b>: {x[col]:.1f}" f"{st.session_state['output_unit']}"
-                for col in res_costs.columns[:-1]
-            ]
-            + [
-                f"──────────<br><b>{res_costs.columns[-1]}</b>: "
-                f"{x[res_costs.columns[-1]]:.1f}"
-                f"{st.session_state['output_unit']}"
-            ]
-        ),
-        axis=1,
+    return _set_map_layout(
+        fig, title=title_string, colorbar_title=st.session_state["output_unit"]
+    )
+
+
+def plot_input_data_on_map(
+    api: PtxboaAPI,
+    data_type: Literal["CAPEX", "full load hours", "interest rate"],
+    color_col: Literal[
+        "PV tilted", "Wind Offshore", "Wind Onshore", "Wind-PV-Hybrid", "interest rate"
+    ],
+    scope: Literal["world", "Argentina", "Morocco", "South Africa"] = "world",
+    title: str = "",
+) -> go.Figure:
+    """
+    Plot input data on a map.
+
+    Parameters
+    ----------
+    api : PtxboaAPI
+    data_type : Literal["CAPEX", "full load hours", "interest rate"]
+        The data type from which a parameter is plotted
+    color_col : Literal[ "PV tilted", "Wind Offshore", "Wind Onshore", "Wind
+        the parameter to plot on the map
+    scope : Literal["world", "Argentina", "Morocco", "South Africa"], optional
+        either the whole world or a deep dive country, by default "world"
+    title : str, optional
+        title of the figure, by default ""
+
+    Returns
+    -------
+    go.Figure
+    """
+    input_data = api.get_input_data(
+        scenario=st.session_state["scenario"],
+        user_data=st.session_state["user_changes_df"],
+    )
+
+    units = {"CAPEX": "USD/kW", "full load hours": "h/a", "interest rate": ""}
+
+    if data_type == "interest rate":
+        assert color_col == "interest rate"
+        columns = "parameter_code"
+        process_code = [""]
+        custom_data_func_kwargs = {"float_precision": 3}
+    else:
+        assert color_col in [
+            "PV tilted",
+            "Wind Offshore",
+            "Wind Onshore",
+            "Wind-PV-Hybrid",
+        ]
+        custom_data_func_kwargs = {"float_precision": 0}
+        columns = "process_code"
+        process_code = [
+            "Wind Onshore",
+            "Wind Offshore",
+            "PV tilted",
+            "Wind-PV-Hybrid",
+        ]
+    custom_data_func_kwargs["unit"] = units[data_type]
+    custom_data_func_kwargs["data_type"] = data_type
+    custom_data_func_kwargs["map_variable"] = color_col
+
+    input_data = subset_and_pivot_input_data(
+        input_data=input_data,
+        source_region_code=None,
+        parameter_code=[data_type],
+        process_code=process_code,
+        index="source_region_code",
+        columns=columns,
+        values="value",
     )
 
     if scope == "world":
         # Create a choropleth world map:
-        fig = px.choropleth(
-            locations=res_costs.index,  # List of country codes or names
-            locationmode="country names",  # Use country names as locations
-            color=res_costs[cost_component],  # Color values for the countries
-            custom_data=[custom_hover_data],  # Pass custom data for hover information
-            color_continuous_scale=color_scale,  # Choose a color scale
-            title=title_string,
+        fig = _choropleth_map_world(
+            api=api,
+            df=input_data,
+            color_col=color_col,
+            custom_data_func=_make_inputs_hoverdata,
+            custom_data_func_kwargs=custom_data_func_kwargs,
         )
     else:
         fig = _choropleth_map_deep_dive_country(
-            api,
-            res_costs,
-            scope,
-            color=cost_component,
-            custom_data=[custom_hover_data],
-            color_continuous_scale=color_scale,
-            title=title_string,
-        )
-        fig.update_geos(
-            fitbounds="locations",
-            visible=True,
+            api=api,
+            df=input_data,
+            deep_dive_country=scope,
+            color_col=color_col,
+            custom_data_func=_make_inputs_hoverdata,
+            custom_data_func_kwargs=custom_data_func_kwargs,
         )
 
+    return _set_map_layout(
+        fig, title=title, colorbar_title=custom_data_func_kwargs["unit"]
+    )
+
+
+def _choropleth_map_world(
+    api: PtxboaAPI,
+    df: pd.DataFrame,
+    color_col: str,
+    custom_data_func: callable,
+    custom_data_func_kwargs: dict | None = None,
+):
+    """
+    Plot a chorpleth map for the whole world and one color for each country.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        wide formatted dataframe, index needs to be country or region.
+    color_col : str
+        column that should be displayed
+    custom_data : list[pd.Series]
+        custom data used for hovers
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
+    if custom_data_func_kwargs is None:
+        custom_data_func_kwargs = {}
+    df = remove_subregions(api=api, df=df, country_name=st.session_state["country"])
+    fig = px.choropleth(
+        locations=df.index,
+        locationmode="country names",
+        color=df[color_col],
+        custom_data=custom_data_func(df, **custom_data_func_kwargs),
+        color_continuous_scale=agora_continuous_color_scale(),
+    )
+    return fig
+
+
+def _choropleth_map_deep_dive_country(
+    api: PtxboaAPI,
+    df: pd.DataFrame,
+    deep_dive_country: Literal["Argentina", "Morocco", "South Africa"],
+    color_col: str,
+    custom_data_func: callable,
+    custom_data_func_kwargs: dict | None = None,
+):
+    if custom_data_func_kwargs is None:
+        custom_data_func_kwargs = {}
+    # subsetting 'df' for the selected deep dive country
+    df = df.copy().loc[df.index.str.startswith(f"{deep_dive_country} ("), :]
+    # need to calculate custom data befor is03166 column is appended.
+    hover_data = custom_data_func(df, **custom_data_func_kwargs)
+    # get dataframe with info about iso 3166-2 codes and map them to res_costs
+    ddc_info = api.get_dimension("region")
+    df["iso3166_code"] = df.index.map(
+        pd.Series(ddc_info["iso3166_code"], index=ddc_info["region_name"])
+    )
+
+    geojson_file = (
+        Path(__file__).parent.parent.resolve()
+        / "data"
+        / f"{deep_dive_country.lower().replace(' ', '_')}_subregions.geojson"
+    )
+    with geojson_file.open("r", encoding="utf-8") as f:
+        subregion_shapes = json.load(f)
+
+    fig = px.choropleth(
+        locations=df["iso3166_code"],
+        featureidkey="properties.iso_3166_2",
+        color=df[color_col],
+        geojson=subregion_shapes,
+        custom_data=hover_data,
+        color_continuous_scale=agora_continuous_color_scale(),
+    )
+
+    fig.update_geos(
+        fitbounds="locations",
+        visible=True,
+    )
+    return fig
+
+
+def _set_map_layout(fig: go.Figure, title: str, colorbar_title: str) -> go.Figure:
+    """
+    Apply a unified layout for all maps used in the app.
+
+    The px.choropleth plotting function that creates `fig` has to be called with the
+    'custom_data' argument.
+
+    Parameters
+    ----------
+    fig : go.Figure
+    title : str
+        the figure title
+    colorbar_title : str
+        the title of the colorbar
+
+    Returns
+    -------
+    go.Figure
+        same figure with updated geos, layout and hovertemplate.
+    """
     # update layout:
     fig.update_geos(
         showcountries=True,  # Show country borders
@@ -118,53 +296,52 @@ def plot_costs_on_map(
 
     fig.update_layout(
         coloraxis_colorbar={
-            "title": st.session_state["output_unit"],
+            "title": colorbar_title,
             "len": 0.5,
         },  # colorbar
         margin={"t": 20, "b": 20, "l": 20, "r": 20},  # reduce margin around figure
+        title=title,
     )
 
     # Set the hover template to use the custom data
     fig.update_traces(hovertemplate="%{customdata}<extra></extra>")  # Custom data
-
     return fig
 
 
-def _choropleth_map_deep_dive_country(
-    api,
-    res_costs_subset,
-    scope_country,
-    color,
-    custom_data,
-    color_continuous_scale,
-    title,
-):
-    # get dataframe with info about iso 3166-2 codes and map them to res_costs
-    scope_info = api.get_dimension("region").loc[
-        api.get_dimension("region")["region_name"].str.startswith(f"{scope_country} (")
-    ]
-    res_costs_subset["iso3166_code"] = res_costs_subset.index.map(
-        pd.Series(scope_info["iso3166_code"], index=scope_info["region_name"])
-    )
+def _make_inputs_hoverdata(df, data_type, map_variable, unit, float_precision):
+    custom_hover_data = []
+    if data_type == "interest rate":
+        for idx, row in df.iterrows():
+            hover = f"<b>{idx} | {data_type} </b><br><br>{row['interest rate']}"
+            custom_hover_data.append(hover)
+    else:
+        for idx, row in df.iterrows():
+            hover = f"<b>{idx} | {data_type} </b><br>"
+            for i, v in zip(row.index, row):
+                hover += f"<br><b>{i}</b>: {v:.{float_precision}f}{unit}"
+                if i == map_variable:
+                    hover += " (displayed on map)"
+            custom_hover_data.append(hover)
+    return [custom_hover_data]
 
-    geojson_file = (
-        Path(__file__).parent.parent
-        / "data"
-        / f"{scope_country.lower().replace(' ', '_')}_subregions.geojson"
-    )
-    with geojson_file.open("r", encoding="utf-8") as f:
-        subregion_shapes = json.load(f)
 
-    fig = px.choropleth(
-        locations=res_costs_subset["iso3166_code"],
-        featureidkey="properties.iso_3166_2",
-        color=res_costs_subset[color],
-        geojson=subregion_shapes,
-        custom_data=custom_data,
-        color_continuous_scale=color_continuous_scale,
-        title=title,
+def _make_costs_hoverdata(res_costs: pd.DataFrame) -> list[pd.Series]:
+    custom_hover_data = res_costs.apply(
+        lambda x: f"<b>{x.name}</b><br><br>"
+        + "<br>".join(
+            [
+                f"<b>{col}</b>: {x[col]:.1f}" f"{st.session_state['output_unit']}"
+                for col in res_costs.columns[:-1]
+            ]
+            + [
+                f"──────────<br><b>{res_costs.columns[-1]}</b>: "
+                f"{x[res_costs.columns[-1]]:.1f}"
+                f"{st.session_state['output_unit']}"
+            ]
+        ),
+        axis=1,
     )
-    return fig
+    return [custom_hover_data]
 
 
 def create_bar_chart_costs(res_costs: pd.DataFrame, current_selection: str = None):

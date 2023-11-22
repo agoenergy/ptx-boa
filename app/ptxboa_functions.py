@@ -244,7 +244,7 @@ def display_and_edit_data_table(
         column_config_all = config_number_columns(df_tab, **column_config)
 
     # display data:
-    st.data_editor(
+    df_tab = st.data_editor(
         df_tab,
         use_container_width=True,
         key=key,
