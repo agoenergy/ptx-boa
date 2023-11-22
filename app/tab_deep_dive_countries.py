@@ -44,10 +44,8 @@ They also show the data for your selected supply country or region for compariso
     fig_map = plot_costs_on_map(api, res_costs, scope=ddc, cost_component="Total")
     st.plotly_chart(fig_map, use_container_width=True)
 
-    # get input data:
-
+    st.subheader("Full load hours of renewable generation")
     input_data = api.get_input_data(st.session_state["scenario"])
-
     # filter data:
     # get list of subregions:
     region_list = (
@@ -56,51 +54,31 @@ They also show the data for your selected supply country or region for compariso
         .index.to_list()
     )
 
-    # TODO: implement display of total costs
-    list_data_types = ["full load hours"]
-    data_selection = st.radio(
-        "Select data type",
-        list_data_types,
-        horizontal=True,
-        key="sel_data_ddc",
-    )
-    if data_selection == "full load hours":
-        parameter_code = ["full load hours"]
-        process_code = [
-            "Wind Onshore",
-            "Wind Offshore",
-            "PV tilted",
-            "Wind-PV-Hybrid",
-        ]
-        x = "process_code"
-        missing_index_name = "parameter_code"
-        missing_index_value = "full load hours"
-        column_config = {"format": "%.0f h/a", "min_value": 0, "max_value": 8760}
+    parameter_code = ["full load hours"]
+    process_code = [
+        "Wind Onshore",
+        "Wind Offshore",
+        "PV tilted",
+        "Wind-PV-Hybrid",
+    ]
+    x = "process_code"
+    missing_index_name = "parameter_code"
+    missing_index_value = "full load hours"
+    column_config = {"format": "%.0f h/a", "min_value": 0, "max_value": 8760}
 
-    if data_selection == "total costs":
-        df = res_costs.copy()
-        df = res_costs.loc[region_list].rename({"Total": data_selection}, axis=1)
-        df = df.rename_axis("source_region_code", axis=0)
-        x = None
-        st.markdown("TODO: fix surplus countries in data table")
-
-    st.subheader("Full load hours of renewable generation")
     # in order to keep the figures horizontally aligned, we create two st.columns pairs
     # the columns are identified by c_{row}_{column}, zero indexed
     c_0_0, c_0_1 = st.columns([2, 1], gap="large")
     c_1_0, c_1_1 = st.columns([2, 1], gap="large")
     with c_0_0:
         st.markdown("**Map**")
-        if data_selection in ["full load hours", "CAPEX"]:
-            map_parameter = st.selectbox(
-                "Show Parameter on Map", process_code, key="ddc_flh_map_parameter"
-            )
-        else:
-            map_parameter = "interest rate"
+        map_parameter = st.selectbox(
+            "Show Parameter on Map", process_code, key="ddc_flh_map_parameter"
+        )
     with c_1_0:
         fig = plot_input_data_on_map(
             api=api,
-            data_type=data_selection,
+            data_type="full load hours",
             color_col=map_parameter,
             scope=ddc,
         )
