@@ -87,8 +87,11 @@ They also show the data for your country for comparison.
         missing_index_name = "parameter_code"
         missing_index_value = "interest rate"
 
-    c1, c2 = st.columns([2, 1], gap="large")
-    with c1:
+    # in order to keep the figures horizontally aligned, we create two st.columns pairs
+    # the columns are identified by c_{row}_{column}, zero indexed
+    c_0_0, c_0_1 = st.columns([2, 1], gap="large")
+    c_1_0, c_1_1 = st.columns([2, 1], gap="large")
+    with c_0_0:
         st.markdown("**Map**")
         if data_selection in ["full load hours", "CAPEX"]:
             map_parameter = st.selectbox(
@@ -96,6 +99,7 @@ They also show the data for your country for comparison.
             )
         else:
             map_parameter = "interest rate"
+    with c_1_0:
         fig = plot_input_data_on_map(
             api=api,
             data_type=data_selection,
@@ -115,9 +119,10 @@ They also show the data for your country for comparison.
             process_code=process_code,
             column_config=column_config,
         )
-    with c2:
-        # create plot:
+    with c_0_1:
         st.markdown("**Regional Distribution**")
+    with c_1_1:
+        # create plot:
         fig = px.box(df)
         st.plotly_chart(fig, use_container_width=True)
 

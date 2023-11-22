@@ -85,8 +85,11 @@ They also show the data for your selected supply country or region for compariso
         st.markdown("TODO: fix surplus countries in data table")
 
     st.subheader("Full load hours of renewable generation")
-    c1, c2 = st.columns([2, 1], gap="large")
-    with c1:
+    # in order to keep the figures horizontally aligned, we create two st.columns pairs
+    # the columns are identified by c_{row}_{column}, zero indexed
+    c_0_0, c_0_1 = st.columns([2, 1], gap="large")
+    c_1_0, c_1_1 = st.columns([2, 1], gap="large")
+    with c_0_0:
         st.markdown("**Map**")
         if data_selection in ["full load hours", "CAPEX"]:
             map_parameter = st.selectbox(
@@ -94,6 +97,7 @@ They also show the data for your selected supply country or region for compariso
             )
         else:
             map_parameter = "interest rate"
+    with c_1_0:
         fig = plot_input_data_on_map(
             api=api,
             data_type=data_selection,
@@ -113,8 +117,8 @@ They also show the data for your selected supply country or region for compariso
             column_config=column_config,
             key_suffix="_ddc",
         )
-    with c2:
-        # create plot:
+    with c_0_1:
         st.markdown("**Regional Distribution**")
+    with c_1_1:
         fig = px.box(df)
         st.plotly_chart(fig, use_container_width=True)
