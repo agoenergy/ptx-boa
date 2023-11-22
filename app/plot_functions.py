@@ -141,6 +141,8 @@ def plot_input_data_on_map(
             "Wind-PV-Hybrid",
         ]
     custom_data_func_kwargs["unit"] = units[data_type]
+    custom_data_func_kwargs["data_type"] = data_type
+    custom_data_func_kwargs["map_variable"] = color_col
 
     input_data = subset_and_pivot_input_data(
         input_data=input_data,
@@ -306,14 +308,20 @@ def _set_map_layout(fig: go.Figure, title: str, colorbar_title: str) -> go.Figur
     return fig
 
 
-def _make_inputs_hoverdata(df, unit, float_precision):
-    custom_hover_data = df.apply(
-        lambda x: f"<b>{x.name}</b><br><br>"
-        + "<br>".join(
-            [f"<b>{col}</b>: {x[col]:.{float_precision}f}{unit}" for col in df.columns]
-        ),
-        axis=1,
-    )
+def _make_inputs_hoverdata(df, data_type, map_variable, unit, float_precision):
+    custom_hover_data = []
+    if data_type == "interest rate":
+        for idx, row in df.iterrows():
+            hover = f"<b>{idx} | {data_type} </b><br><br>{row['interest rate']}"
+            custom_hover_data.append(hover)
+    else:
+        for idx, row in df.iterrows():
+            hover = f"<b>{idx} | {data_type} </b><br>"
+            for i, v in zip(row.index, row):
+                hover += f"<br><b>{i}</b>: {v:.{float_precision}f}{unit}"
+                if i == map_variable:
+                    hover += " (displayed on map)"
+            custom_hover_data.append(hover)
     return [custom_hover_data]
 
 
