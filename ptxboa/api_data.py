@@ -562,6 +562,7 @@ class DataHandler:
         process_code_res: str = None,
         process_code_ely: str = None,
         process_code_deriv: str = None,
+        default: float = None,
     ) -> float:
         """
         Get a parameter value for a process.
@@ -640,6 +641,10 @@ class DataHandler:
             following parameters:
                 - FLH
 
+        default : float, optional
+            if no data is found, this value is returned.
+            if no data is found and default is not specified, a ValueError is raised.
+
         Returns
         -------
         float
@@ -650,7 +655,7 @@ class DataHandler:
         ValueError
             if multiple values are found for a parameter combination.
         ValueError
-            if no value is found for a parameter combination.
+            if no value is found for a parameter combination and no default is given.
         """
         # convert missing codes tom empty strings
         # for data matching
@@ -724,6 +729,8 @@ class DataHandler:
         if len(row) > 1:
             raise ValueError("found more than one parameter value")
         elif len(row) == 0:
+            if default is not None:
+                return default
             raise ValueError(
                 f"""did not find a parameter value for:
                 parameter_code={parameter_code},

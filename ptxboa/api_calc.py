@@ -58,21 +58,17 @@ class PtxCalc:
         def get_parameter_value_w_default(
             parameter_code, process_code="", flow_code="", default=None
         ):
-            try:
-                return self.data_handler.get_parameter_value(
-                    parameter_code=parameter_code,
-                    process_code=process_code,
-                    flow_code=flow_code,
-                    source_region_code=source_region_code,
-                    target_country_code=target_country_code,
-                    process_code_res=process_code_res,
-                    process_code_ely=process_code_ely,
-                    process_code_deriv=process_code_deriv,
-                )
-            except Exception:
-                if default is not None:
-                    return default
-                raise
+            return self.data_handler.get_parameter_value(
+                parameter_code=parameter_code,
+                process_code=process_code,
+                flow_code=flow_code,
+                source_region_code=source_region_code,
+                target_country_code=target_country_code,
+                process_code_res=process_code_res,
+                process_code_ely=process_code_ely,
+                process_code_deriv=process_code_deriv,
+                default=default,
+            )
 
         # some flows are grouped into their own output category (but not all)
         # so we load the mapping from the data
@@ -280,6 +276,8 @@ class PtxCalc:
                     )
 
             secondary_flows = ds_process["secondary_flows"].split("/")
+            secondary_flows = [f for f in secondary_flows if f]  # only non-empty
+
             for flow_code in secondary_flows:
                 conv = get_parameter_value_w_default(
                     parameter_code="CONV",
