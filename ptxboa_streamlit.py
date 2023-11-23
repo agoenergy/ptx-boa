@@ -10,7 +10,6 @@ import app.ptxboa_functions as pf
 from app.context_data import load_context_data
 from app.sidebar import make_sidebar
 from app.tab_certification_schemes import content_certification_schemes
-from app.tab_compare_costs import content_compare_costs
 from app.tab_country_fact_sheets import content_country_fact_sheets
 from app.tab_dashboard import content_dashboard
 from app.tab_deep_dive_countries import content_deep_dive_countries
@@ -62,7 +61,6 @@ if st.session_state["edit_input_data"]:
 (
     t_dashboard,
     t_market_scanning,
-    t_compare_costs,
     t_input_data,
     t_deep_dive_countries,
     t_country_fact_sheets,
@@ -74,7 +72,6 @@ if st.session_state["edit_input_data"]:
     [
         "Dashboard",
         "Market scanning",
-        "Compare costs",
         "Input data",
         "Deep-dive countries",
         "Country fact sheets",
@@ -130,19 +127,17 @@ cd = load_context_data()
 
 # dashboard:
 with t_dashboard:
-    content_dashboard(api, costs_per_region, cd)
-
-with t_market_scanning:
-    content_market_scanning(api, costs_per_region)
-
-with t_compare_costs:
-    content_compare_costs(
+    content_dashboard(
         api,
         costs_per_region=costs_per_region,
         costs_per_scenario=costs_per_scenario,
         costs_per_res_gen=costs_per_res_gen,
         costs_per_chain=costs_per_chain,
+        context_data=cd,
     )
+
+with t_market_scanning:
+    content_market_scanning(api, costs_per_region)
 
 with t_input_data:
     content_input_data(api)
