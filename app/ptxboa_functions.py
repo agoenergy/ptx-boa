@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Utility functions for streamlit app."""
+from typing import Literal
 
 import pandas as pd
 import streamlit as st
@@ -187,6 +188,27 @@ def remove_subregions(api: PtxboaAPI, df: pd.DataFrame, country_name: str):
 
     df = df.loc[region_list_without_subregions]
 
+    return df
+
+
+def select_subregions(
+    df: pd.DataFrame, deep_dive_country: Literal["Argentina", "Morocco", "South Africa"]
+) -> pd.DataFrame:
+    """
+    Only select rows corresponding to subregions of a deep dive country.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        pandas DataFrame with list of regions as index.
+    deep_dive_country : str in {"Argentina", "Morocco", "South Africa"}
+
+
+    Returns
+    -------
+    pd.DataFrame
+    """
+    df = df.copy().loc[df.index.str.startswith(f"{deep_dive_country} ("), :]
     return df
 
 
