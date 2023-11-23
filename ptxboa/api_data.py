@@ -215,6 +215,7 @@ class PtxData:
         scenario: ScenarioCode,
         long_names: bool = True,
         user_data: dict = None,
+        enforce_copy: bool = True,
     ) -> pd.DataFrame:
         """Return scenario data.
 
@@ -238,6 +239,10 @@ class PtxData:
         user_data : pd.DataFrame | None, optional
             user data that overrides scenario data. DataFrame needs the columns
             ["source_region_code", "process_code", "parameter_code",  "value"]
+        enforce_copy: bool
+            Will always return a copy of the user data when true, when false, only
+            returns a copy when user data is not None. When enforce_copy is False and
+            no user data is given, a view will be returned.
 
         Returns
         -------
@@ -248,7 +253,10 @@ class PtxData:
         """
         self.check_valid_scenario_id(scenario)
 
-        scenario_data = self.scenario_data[scenario].copy()
+        if enforce_copy or user_data is not None:
+            scenario_data = self.scenario_data[scenario].copy()
+        else:
+            scenario_data = self.scenario_data[scenario]
 
         if user_data is not None:
             scenario_data = self._update_scenario_data_with_user_data(
@@ -579,7 +587,10 @@ class DataHandler:
         self.scenario = scenario
         self.user_data = user_data
         self.scenario_data = ptxdata.get_input_data(
-            scenario, long_names=False, user_data=user_data
+            scenario,
+            long_names=False,
+            user_data=user_data,
+            enforce_copy=False,
         )
         self.ptxdata = ptxdata
 
@@ -605,6 +616,7 @@ class DataHandler:
             scenario=self.scenario,
             long_names=long_names,
             user_data=self.user_data,
+            enforce_copy=True,
         )
 
     def get_parameter_value(
