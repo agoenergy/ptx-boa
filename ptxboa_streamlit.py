@@ -106,6 +106,7 @@ costs_per_scenario = pf.calculate_results_list(
 costs_per_res_gen = pf.calculate_results_list(
     api,
     parameter_to_change="res_gen",
+    # TODO: here we remove PV tracking manually, this needs to be fixed in data
     parameter_list=[
         x for x in api.get_dimension("res_gen").index.to_list() if x != "PV tracking"
     ],
@@ -129,7 +130,13 @@ with t_market_scanning:
     content_market_scanning(api, costs_per_region)
 
 with t_compare_costs:
-    content_compare_costs(api, costs_per_region)
+    content_compare_costs(
+        api,
+        costs_per_region=costs_per_region,
+        costs_per_scenario=costs_per_scenario,
+        costs_per_res_gen=costs_per_res_gen,
+        costs_per_chain=costs_per_chain,
+    )
 
 with t_input_data:
     content_input_data(api)
