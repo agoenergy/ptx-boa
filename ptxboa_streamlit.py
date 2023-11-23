@@ -90,9 +90,32 @@ if "colors" not in st.session_state:
     colors = pd.read_csv("data/Agora_Industry_Colours.csv")
     st.session_state["colors"] = colors["Hex Code"].to_list()
 
-# calculate results:
-res_costs = pf.calculate_results_list(
-    api, "region", user_data=st.session_state["user_changes_df"]
+# calculate results over different data dimensions:
+costs_per_region = pf.calculate_results_list(
+    api,
+    parameter_to_change="region",
+    parameter_list=None,
+    user_data=st.session_state["user_changes_df"],
+)
+costs_per_scenario = pf.calculate_results_list(
+    api,
+    parameter_to_change="scenario",
+    parameter_list=None,
+    user_data=st.session_state["user_changes_df"],
+)
+costs_per_res_gen = pf.calculate_results_list(
+    api,
+    parameter_to_change="res_gen",
+    parameter_list=[
+        x for x in api.get_dimension("res_gen").index.to_list() if x != "PV tracking"
+    ],
+    user_data=st.session_state["user_changes_df"],
+)
+costs_per_chain = pf.calculate_results_list(
+    api,
+    parameter_to_change="chain",
+    parameter_list=None,
+    user_data=st.session_state["user_changes_df"],
 )
 
 # import context data:
@@ -100,19 +123,19 @@ cd = load_context_data()
 
 # dashboard:
 with t_dashboard:
-    content_dashboard(api, res_costs, cd)
+    content_dashboard(api, costs_per_region, cd)
 
 with t_market_scanning:
-    content_market_scanning(api, res_costs)
+    content_market_scanning(api, costs_per_region)
 
 with t_compare_costs:
-    content_compare_costs(api, res_costs)
+    content_compare_costs(api, costs_per_region)
 
 with t_input_data:
     content_input_data(api)
 
 with t_deep_dive_countries:
-    content_deep_dive_countries(api, res_costs)
+    content_deep_dive_countries(api, costs_per_region)
 
 with t_country_fact_sheets:
     content_country_fact_sheets(cd)
