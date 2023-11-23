@@ -2,6 +2,7 @@
 """Sidebar creation."""
 import streamlit as st
 
+from app.ptxboa_functions import reset_user_changes
 from ptxboa.api import PtxboaAPI
 
 
@@ -160,6 +161,7 @@ used in calculation and they will not be displayed in figures.
 Disable this setting to reset user data to default values.""",
         value=False,
         key="edit_input_data",
+        on_change=reset_user_changes,
     )
 
     return

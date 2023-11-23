@@ -48,8 +48,17 @@ pd.set_option("display.float_format", "{:.2f}".format)
 if "user_changes_df" not in st.session_state:
     st.session_state["user_changes_df"] = None
 
+if "edit_input_data" not in st.session_state:
+    st.session_state["edit_input_data"] = False
+
 st.set_page_config(layout="wide")
 st.title("PtX Business Opportunity Analyzer :red[draft version, please do not quote!]")
+if st.session_state["edit_input_data"]:
+    st.warning("Data editing on")
+    with st.expander("Modified data"):
+        pf.display_user_changes()
+
+
 (
     t_dashboard,
     t_market_scanning,
@@ -81,9 +90,6 @@ api = st.cache_resource(PtxboaAPI)()
 
 # create sidebar:
 make_sidebar(api)
-
-if st.session_state["edit_input_data"] is False:
-    pf.reset_user_changes()
 
 # import agora color scale:
 if "colors" not in st.session_state:

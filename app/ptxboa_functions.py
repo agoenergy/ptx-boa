@@ -192,19 +192,22 @@ def remove_subregions(api: PtxboaAPI, df: pd.DataFrame, country_name: str):
 
 def reset_user_changes():
     """Reset all user changes."""
-    if st.session_state["user_changes_df"] is not None:
+    if (
+        not st.session_state["edit_input_data"]
+        and st.session_state["user_changes_df"] is not None
+    ):
         st.session_state["user_changes_df"] = None
 
 
 def display_user_changes():
     """Display input data changes made by user."""
     if st.session_state["user_changes_df"] is not None:
-        st.subheader("Data modifications:")
-        st.write("**Input data has been modified!**")
         st.dataframe(
             st.session_state["user_changes_df"].style.format(precision=3),
             hide_index=True,
         )
+    else:
+        st.write("You have not changed any values yet.")
 
 
 def display_and_edit_data_table(

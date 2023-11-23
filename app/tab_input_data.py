@@ -4,7 +4,7 @@ import plotly.express as px
 import streamlit as st
 
 from app.plot_functions import plot_input_data_on_map
-from app.ptxboa_functions import display_and_edit_data_table, display_user_changes
+from app.ptxboa_functions import display_and_edit_data_table
 from ptxboa.api import PtxboaAPI
 
 
@@ -172,6 +172,3 @@ They also show the data for your country for comparison.
         index="process_code",
         columns="parameter_code",
     )
-
-    # If there are user changes, display them:
-    display_user_changes()
