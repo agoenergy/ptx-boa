@@ -55,7 +55,6 @@ st.set_page_config(layout="wide")
 st.title("PtX Business Opportunity Analyzer :red[draft version, please do not quote!]")
 if st.session_state["edit_input_data"]:
     st.warning("Data editing on")
-if st.session_state["user_changes_df"] is not None:
     with st.expander("Modified data"):
         pf.display_user_changes()
 

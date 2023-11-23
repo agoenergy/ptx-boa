@@ -196,10 +196,13 @@ def reset_user_changes():
 
 def display_user_changes():
     """Display input data changes made by user."""
-    st.dataframe(
-        st.session_state["user_changes_df"].style.format(precision=3),
-        hide_index=True,
-    )
+    if st.session_state["user_changes_df"] is not None:
+        st.dataframe(
+            st.session_state["user_changes_df"].style.format(precision=3),
+            hide_index=True,
+        )
+    else:
+        st.write("You have not changed any values yet.")
 
 
 def display_and_edit_data_table(
