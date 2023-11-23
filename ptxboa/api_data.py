@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 def _load_data(data_dir, name: str) -> pd.DataFrame:
     filepath = Path(data_dir) / f"{name}.csv"
-    df = pd.read_csv(filepath)
+    df = pd.read_csv(filepath).drop(columns="key", errors="ignore")
     # numerical columns should never be empty, dimension columns
     # maybe empty and will be filled with ""
     df = df.fillna("")
@@ -136,31 +136,86 @@ class PtxData:
             dim: _load_data(data_dir, name=f"dim_{dim}")
             for dim in ["country", "flow", "parameter", "process", "region"]
         }
-        self.flh = _load_data(data_dir, name="flh").set_index("key").replace(np.nan, "")
-        self.storage_cost_factor = (
-            _load_data(data_dir, name="storage_cost_factor")
-            .set_index("key")
-            .replace(np.nan, "")
-        )
+        self.flh = self._load_flh_data(data_dir)
+        self.storage_cost_factor = self._load_storage_cost_factor_data(data_dir)
         self.chains = (
             _load_data(data_dir, name="chains").set_index("chain").replace(np.nan, "")
         )
         self.scenario_data = {
-            f"{year} ({parameter_range})": _load_data(
-                data_dir, name=f"{year}_{parameter_range}"
+            f"{year} ({parameter_range})": self._load_scenario_table(
+                data_dir, f"{year}_{parameter_range}"
             )
-            .set_index("key")
-            .replace(np.nan, "")
             for year, parameter_range in product(
                 [2030, 2040], ["low", "medium", "high"]
             )
         }
+
+    def _load_scenario_table(
+        self, data_dir: str | Path, scenario: ScenarioCode
+    ) -> pd.DataFrame:
+        df = _load_data(data_dir, scenario).replace(np.nan, "")
+        return self._assign_key_index(df, table_type="scenario")
+
+    def _load_flh_data(self, data_dir: str | Path) -> pd.DataFrame:
+        df = _load_data(data_dir, name="flh").replace(np.nan, "")
+        return self._assign_key_index(df, table_type="flh")
+
+    def _load_storage_cost_factor_data(self, data_dir: str | Path) -> pd.DataFrame:
+        df = _load_data(data_dir, name="storage_cost_factor").replace(np.nan, "")
+        return self._assign_key_index(df, table_type="storage_cost_factor")
+
+    def _assign_key_index(
+        self,
+        df: pd.DataFrame,
+        table_type: Literal["flh", "scenario", "storage_cost_factor"],
+    ) -> pd.DataFrame:
+        """
+        Assing a unique index to a dataframe containing "index" columns.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+        table_type : str in {"flh", "scenario", "storage_cost_factor"}
+
+        Returns
+        -------
+        pd.DataFrame
+
+        Raises
+        ------
+        ValueError
+            if the constructed index is not unique
+        """
+        keys_in_table = {
+            "flh": [
+                "region",
+                "process_res",
+                "process_ely",
+                "process_deriv",
+                "process_flh",
+            ],
+            "scenario": [
+                "parameter_code",
+                "process_code",
+                "flow_code",
+                "source_region_code",
+                "target_country_code",
+            ],
+            "storage_cost_factor": ["process_res", "process_ely", "process_deriv"],
+        }
+        key_columns = keys_in_table[table_type]
+        df[key_columns] = df[key_columns].astype(str)
+        df["key"] = df[key_columns].agg("-".join, axis=1)
+        if not df["key"].is_unique:
+            raise ValueError(f"duplicate keys in storage {table_type} data.")
+        return df.set_index("key")
 
     def get_input_data(
         self,
         scenario: ScenarioCode,
         long_names: bool = True,
         user_data: dict = None,
+        enforce_copy: bool = True,
     ) -> pd.DataFrame:
         """Return scenario data.
 
@@ -184,6 +239,10 @@ class PtxData:
         user_data : pd.DataFrame | None, optional
             user data that overrides scenario data. DataFrame needs the columns
             ["source_region_code", "process_code", "parameter_code",  "value"]
+        enforce_copy: bool
+            Will always return a copy of the user data when true, when false, only
+            returns a copy when user data is not None. When enforce_copy is False and
+            no user data is given, a view will be returned.
 
         Returns
         -------
@@ -194,7 +253,10 @@ class PtxData:
         """
         self.check_valid_scenario_id(scenario)
 
-        scenario_data = self.scenario_data[scenario].copy()
+        if enforce_copy or user_data is not None:
+            scenario_data = self.scenario_data[scenario].copy()
+        else:
+            scenario_data = self.scenario_data[scenario]
 
         if user_data is not None:
             scenario_data = self._update_scenario_data_with_user_data(
@@ -316,7 +378,8 @@ class PtxData:
         user_data = user_data.copy().fillna("")
         scenario_data = scenario_data.copy()
         # user data from frontend only has columns
-        # "source_region_code", "process_code", "value" and "parameter_code"
+        # "source_region_code", "process_code", "value" and "parameter_code", we need
+        # replace missing columns "flow_code" and "target_country_code"
         for missing_dim in ["flow_code", "target_country_code"]:
             user_data[missing_dim] = ""
 
@@ -524,7 +587,10 @@ class DataHandler:
         self.scenario = scenario
         self.user_data = user_data
         self.scenario_data = ptxdata.get_input_data(
-            scenario, long_names=False, user_data=user_data
+            scenario,
+            long_names=False,
+            user_data=user_data,
+            enforce_copy=False,
         )
         self.ptxdata = ptxdata
 
@@ -550,6 +616,7 @@ class DataHandler:
             scenario=self.scenario,
             long_names=long_names,
             user_data=self.user_data,
+            enforce_copy=True,
         )
 
     def get_parameter_value(
@@ -659,13 +726,16 @@ class DataHandler:
         """
         # convert missing codes tom empty strings
         # for data matching
-        process_code = process_code or ""
-        flow_code = flow_code or ""
-        source_region_code = source_region_code or ""
-        target_country_code = target_country_code or ""
-        process_code_res = process_code_res or ""
-        process_code_ely = process_code_ely or ""
-        process_code_deriv = process_code_deriv or ""
+        params = {
+            "parameter_code": parameter_code,
+            "process_code": process_code or "",
+            "flow_code": flow_code or "",
+            "source_region_code": source_region_code or "",
+            "target_country_code": target_country_code or "",
+            "process_code_res": process_code_res or "",
+            "process_code_ely": process_code_ely or "",
+            "process_code_deriv": process_code_deriv or "",
+        }
 
         self._check_required_parameter_value_kwargs(
             parameter_code,
@@ -685,54 +755,59 @@ class DataHandler:
         ):
             # FLH not changed by user_data
             df = self.ptxdata.flh
-            selector = (
-                (df["region"] == source_region_code)
-                & (df["process_res"] == process_code_res)
-                & (df["process_ely"] == process_code_ely)
-                & (df["process_deriv"] == process_code_deriv)
-                & (df["process_flh"] == process_code)
+            key = "-".join(
+                [
+                    params[k]
+                    for k in [
+                        "source_region_code",
+                        "process_code_res",
+                        "process_code_ely",
+                        "process_code_deriv",
+                        "process_code",
+                    ]
+                ]
             )
         elif parameter_code == "STR-CF":
-            # Storage cost factor not changedbyuser (and currently in separate file)
+            # Storage cost factor not changed by user (and currently in separate file)
             df = self.ptxdata.storage_cost_factor
-            selector = (
-                (df["process_res"] == process_code_res)
-                & (df["process_ely"] == process_code_ely)
-                & (df["process_deriv"] == process_code_deriv)
+            key = "-".join(
+                [
+                    params[k]
+                    for k in [
+                        "process_code_res",
+                        "process_code_ely",
+                        "process_code_deriv",
+                    ]
+                ]
             )
         else:
             df = self.scenario_data
-            selector = self._construct_selector(
-                df,
-                parameter_code,
-                process_code,
-                flow_code,
-                source_region_code,
-                target_country_code,
-            )
+            key = self._construct_key_in_scenario_data(params)
 
-        row = df[selector]
-
-        if len(row) == 0 and PARAMETER_DIMENSIONS[parameter_code]["global_default"]:
+        try:
+            row = df.at[key, "value"]
+            empty_result = False
+        except KeyError:
+            empty_result = True
+        if empty_result and PARAMETER_DIMENSIONS[parameter_code]["global_default"]:
             # make query with empty "source_region_code"
-            logger.debug("searching global default")
-            selector = self._construct_selector(
-                df,
-                parameter_code=parameter_code,
-                process_code=process_code,
-                flow_code=flow_code,
-                source_region_code="",
-                target_country_code=target_country_code,
+            logger.debug(
+                f"searching global default, did not find entry for key '{key}'"
             )
-            row = df[selector]
+            params["source_region_code"] = ""
+            params["target_country_code"] = ""
+            key = self._construct_key_in_scenario_data(params)
+            try:
+                row = df.at[key, "value"]
+                empty_result = False
+            except KeyError:
+                empty_result = True
 
-        if len(row) > 1:
-            raise ValueError("found more than one parameter value")
-        elif len(row) == 0:
+        if empty_result:
             if default is not None:
                 return default
             raise ValueError(
-                f"""did not find a parameter value for:
+                f"""did not find a parameter value for key '{key}':
                 parameter_code={parameter_code},
                 process_code={process_code},
                 flow_code={flow_code},
@@ -743,36 +818,33 @@ class DataHandler:
                 process_code_deriv={process_code_deriv},
             """
             )
-        return row.squeeze().at["value"]
+        return row
 
-    def _construct_selector(
+    def _construct_key_in_scenario_data(
         self,
-        df: pd.DataFrame,
-        parameter_code: ParameterCode,
-        process_code: str,
-        flow_code: str,
-        source_region_code: str,
-        target_country_code: str,
+        params: dict,
     ) -> pd.Series:
         """
         Create a boolean index object which can be used to filter df.
 
         Parameters
         ----------
-        df : pd.DataFrame
-            needs to have columns "parameter_code", "process_code", "flow_code",
-            "source_region_code", and "target_country_code"
+        params : dict
+            dictionary which needs to contain the following keys:
+            ["parameter_code", "process_code", "flow_code", "source_region_code",
+            "target_country_code"]
         """
-        kwargs = {
-            "process_code": process_code or "",
-            "flow_code": flow_code or "",
-            "source_region_code": source_region_code or "",
-            "target_country_code": target_country_code or "",
-        }
-        selector = df["parameter_code"] == parameter_code
-        for param in PARAMETER_DIMENSIONS[parameter_code]["required"]:
-            selector &= df[param] == kwargs[param]
-
+        selector = params["parameter_code"]
+        for k in [
+            "process_code",
+            "flow_code",
+            "source_region_code",
+            "target_country_code",
+        ]:
+            if k in PARAMETER_DIMENSIONS[params["parameter_code"]]["required"]:
+                selector += f"-{params[k]}"
+            else:
+                selector += "-"
         return selector
 
     def _check_required_parameter_value_kwargs(
