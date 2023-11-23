@@ -4,19 +4,20 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+from app.layout_elements import display_costs
 from app.plot_functions import plot_costs_on_map, plot_input_data_on_map
-from app.ptxboa_functions import display_and_edit_data_table
+from app.ptxboa_functions import display_and_edit_data_table, select_subregions
 from ptxboa.api import PtxboaAPI
 
 
-def content_deep_dive_countries(api: PtxboaAPI, res_costs: pd.DataFrame) -> None:
+def content_deep_dive_countries(api: PtxboaAPI, costs_per_region: pd.DataFrame) -> None:
     """Create content for the "costs by region" sheet.
 
     Parameters
     ----------
     api : :class:`~ptxboa.api.PtxboaAPI`
         an instance of the api class
-    res_costs : pd.DataFrame
+    costs_per_region : pd.DataFrame
         Results.
 
     Output
@@ -41,8 +42,17 @@ They also show the data for your selected supply country or region for compariso
         "Select country:", ["Argentina", "Morocco", "South Africa"], horizontal=True
     )
 
-    fig_map = plot_costs_on_map(api, res_costs, scope=ddc, cost_component="Total")
+    fig_map = plot_costs_on_map(
+        api, costs_per_region, scope=ddc, cost_component="Total"
+    )
     st.plotly_chart(fig_map, use_container_width=True)
+
+    display_costs(
+        select_subregions(costs_per_region, ddc),
+        key="region",
+        titlestring="Costs per subregion",
+        key_suffix=ddc,
+    )
 
     st.subheader("Full load hours of renewable generation")
     input_data = api.get_input_data(st.session_state["scenario"])
