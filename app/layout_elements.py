@@ -7,8 +7,11 @@ from app.plot_functions import create_bar_chart_costs
 from app.ptxboa_functions import config_number_columns
 
 
-def display_costs(df_costs: pd.DataFrame, key: str, titlestring: str):
+def display_costs(
+    df_costs: pd.DataFrame, key: str, titlestring: str, key_suffix: str = ""
+):
     """Display costs as table and bar chart."""
+    key_suffix = key_suffix.lower().replace(" ", "_")
     st.subheader(titlestring)
     c1, c2 = st.columns([1, 5])
     with c1:
@@ -20,7 +23,7 @@ def display_costs(df_costs: pd.DataFrame, key: str, titlestring: str):
             "Select elements to display:",
             ["All", "Manual select"],
             index=0,
-            key=f"show_which_data_{key}",
+            key=f"show_which_data_{key}_{key_suffix}",
         )
 
         # apply filter:
@@ -29,13 +32,15 @@ def display_costs(df_costs: pd.DataFrame, key: str, titlestring: str):
                 "Select regions:",
                 df_res.index.values,
                 default=df_res.index.values,
-                key=f"select_data_{key}",
+                key=f"select_data_{key}_{key_suffix}",
             )
             df_res = df_res.loc[ind_select]
 
         # sort:
         sort_ascending = st.toggle(
-            "Sort by total costs?", value=True, key=f"sort_data_{key}"
+            "Sort by total costs?",
+            value=True,
+            key=f"sort_data_{key}_{key_suffix}",
         )
         if sort_ascending:
             df_res = df_res.sort_values(["Total"], ascending=True)
