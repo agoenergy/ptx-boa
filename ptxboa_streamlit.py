@@ -98,13 +98,11 @@ costs_per_region = pf.calculate_results_list(
     api,
     parameter_to_change="region",
     parameter_list=None,
-    user_data=st.session_state["user_changes_df"],
 )
 costs_per_scenario = pf.calculate_results_list(
     api,
     parameter_to_change="scenario",
     parameter_list=None,
-    user_data=st.session_state["user_changes_df"],
 )
 costs_per_res_gen = pf.calculate_results_list(
     api,
@@ -113,13 +111,11 @@ costs_per_res_gen = pf.calculate_results_list(
     parameter_list=[
         x for x in api.get_dimension("res_gen").index.to_list() if x != "PV tracking"
     ],
-    user_data=st.session_state["user_changes_df"],
 )
 costs_per_chain = pf.calculate_results_list(
     api,
     parameter_to_change="chain",
     parameter_list=None,
-    user_data=st.session_state["user_changes_df"],
 )
 
 # import context data:

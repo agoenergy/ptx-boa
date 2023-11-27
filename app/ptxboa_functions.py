@@ -84,7 +84,11 @@ def calculate_results_list(
     for parameter in parameter_list:
         settings2 = settings.copy()
         settings2[parameter_to_change] = parameter
-        res_single = calculate_results_single(api, settings2, user_data=user_data)
+        res_single = calculate_results_single(
+            api,
+            settings2,
+            user_data=st.session_state["user_changes_df"],
+        )
         res_list.append(res_single)
     res_details = pd.concat(res_list)
 
