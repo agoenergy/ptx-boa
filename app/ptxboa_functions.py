@@ -160,6 +160,111 @@ def subset_and_pivot_input_data(
     return reshaped
 
 
+def get_data_type_from_input_data(
+    api: PtxboaAPI,
+    data_type: Literal[
+        "conversion_processes",
+        "transportation_processes",
+        "CAPEX",
+        "full load hours",
+        "interest rate",
+    ],
+    scope: Literal[None, "world", "Argentina", "Morocco", "South Africa"],
+) -> pd.DataFrame:
+    """
+    Get a pivoted table from input data based on data type and regional scope.
+
+    This function internally calls :func:`subset_and_pivot_input_data` and makes
+    assumptions on how the input data set should be filtered based on selected
+    data type and scope.
+
+    Parameters
+    ----------
+    api : PtxboaAPI
+        api class instance
+    data_type : str
+        the data type which should be selected. Needs to be one of
+        "conversion_processes", "transportation_processes", "CAPEX", "full load hours",
+        and "interest rate".
+    scope : Literal[None, "world", "Argentina", "Morocco", "South Africa"]
+        The regional scope. Is automatically set to None for data of
+        data type "conversion_processes" and "transportation_processes" which is not
+        region specific.
+
+    Returns
+    -------
+    pd.DataFrame
+    """
+    input_data = api.get_input_data(
+        st.session_state["scenario"],
+        user_data=st.session_state["user_changes_df"],
+    )
+
+    if data_type in ["conversion_processes", "transportation_processes"]:
+        scope = None
+        source_region_code = [""]
+        index = "process_code"
+        columns = "parameter_code"
+        processes = api.get_dimension("process")
+
+    if data_type == "conversion_processes":
+        parameter_code = [
+            "CAPEX",
+            "OPEX (fix)",
+            "lifetime / amortization period",
+            "efficiency",
+        ]
+        process_code = processes.loc[
+            ~processes["is_transport"], "process_name"
+        ].to_list()
+
+    if data_type == "transportation_processes":
+        parameter_code = [
+            "losses (own fuel, transport)",
+            "levelized costs",
+            "lifetime / amortization period",
+            # FIXME: add bunker fuel consumption
+        ]
+        process_code = processes.loc[
+            processes["is_transport"], "process_name"
+        ].to_list()
+
+    if data_type in ["CAPEX", "full load hours", "interest rate"]:
+        source_region_code = None
+        parameter_code = [data_type]
+        index = "source_region_code"
+
+    if data_type == "interest rate":
+        columns = "parameter_code"
+        process_code = [""]
+
+    if data_type in ["CAPEX", "full load hours"]:
+        columns = "process_code"
+        process_code = [
+            "Wind Onshore",
+            "Wind Offshore",
+            "PV tilted",
+            "Wind-PV-Hybrid",
+        ]
+
+    df = subset_and_pivot_input_data(
+        input_data,
+        source_region_code=source_region_code,
+        parameter_code=parameter_code,
+        process_code=process_code,
+        index=index,
+        columns=columns,
+        values="value",
+    )
+
+    if scope == "world":
+        df = remove_subregions(api=api, df=df, country_name=st.session_state["country"])
+    if scope in ["Argentina", "Morocco", "South Africa"]:
+        df = select_subregions(df, scope)
+
+    return df
+
+
 def remove_subregions(api: PtxboaAPI, df: pd.DataFrame, country_name: str):
     """Remove subregions from a dataframe.
 
@@ -235,71 +340,6 @@ def display_user_changes():
         st.write("You have not changed any values yet.")
 
 
-def display_and_edit_data_table(
-    input_data: pd.DataFrame,
-    missing_index_name: str,
-    missing_index_value: str,
-    source_region_code: list = None,
-    parameter_code: list = None,
-    process_code: list = None,
-    index: str = "source_region_code",
-    columns: str = "process_code",
-    values: str = "value",
-    column_config: dict = None,
-    key_suffix: str = "",
-) -> pd.DataFrame:
-    """Display selected input data as 2D table, which can also be edited."""
-    # filter data and reshape to wide format.
-    df_tab = subset_and_pivot_input_data(
-        input_data,
-        source_region_code,
-        parameter_code,
-        process_code,
-        index,
-        columns,
-        values,
-    )
-
-    # if editing is enabled, store modifications in session_state:
-    if st.session_state["edit_input_data"]:
-        disabled = [index]
-        key = (
-            f"edit_input_data_{'_'.join(parameter_code).replace(' ', '_')}{key_suffix}"
-        )
-    else:
-        disabled = True
-        key = None
-
-    # configure columns for display:
-    if column_config is None:
-        column_config_all = None
-    else:
-        column_config_all = config_number_columns(df_tab, **column_config)
-
-    # display data:
-    df_tab = st.data_editor(
-        df_tab,
-        use_container_width=True,
-        key=key,
-        num_rows="fixed",
-        disabled=disabled,
-        column_config=column_config_all,
-        on_change=register_user_changes,
-        kwargs={
-            "missing_index_name": missing_index_name,
-            "missing_index_value": missing_index_value,
-            "index": index,
-            "columns": columns,
-            "values": values,
-            "df_tab": df_tab,
-            "key": key,
-        },
-    )
-    if st.session_state["edit_input_data"]:
-        st.markdown("You can edit data directly in the table!")
-    return df_tab
-
-
 def register_user_changes(
     missing_index_name: str,
     missing_index_value: str,
@@ -317,32 +357,38 @@ def register_user_changes(
     # convert session state dict to dataframe:
     # Create a list of dictionaries
     data_dict = st.session_state[key]["edited_rows"]
-    data_list = []
+    if any(data_dict):
+        data_list = []
 
-    for k, v in data_dict.items():
-        for c_name, value in v.items():
-            data_list.append({index: k, columns: c_name, values: value})
+        for k, v in data_dict.items():
+            for c_name, value in v.items():
+                data_list.append({index: k, columns: c_name, values: value})
 
-    # Convert the list to a DataFrame
-    res = pd.DataFrame(data_list)
+        # Convert the list to a DataFrame
+        res = pd.DataFrame(data_list)
 
-    # add missing key (the info that is not contained in the 2D table):
-    res[missing_index_name] = missing_index_value
+        # add missing key (the info that is not contained in the 2D table):
+        res[missing_index_name] = missing_index_value
 
-    # Replace the 'id' values with the corresponding index elements from df_tab
-    res[index] = res[index].map(lambda x: df_tab.index[x])
+        # Replace the 'id' values with the corresponding index elements from df_tab
+        res[index] = res[index].map(lambda x: df_tab.index[x])
 
-    if st.session_state["user_changes_df"] is None:
-        st.session_state["user_changes_df"] = pd.DataFrame(
-            columns=["source_region_code", "process_code", "parameter_code", "value"]
+        if st.session_state["user_changes_df"] is None:
+            st.session_state["user_changes_df"] = pd.DataFrame(
+                columns=[
+                    "source_region_code",
+                    "process_code",
+                    "parameter_code",
+                    "value",
+                ]
+            )
+
+        # only track the last changes if a duplicate entry is found.
+        st.session_state["user_changes_df"] = pd.concat(
+            [st.session_state["user_changes_df"], res]
+        ).drop_duplicates(
+            subset=["source_region_code", "process_code", "parameter_code"], keep="last"
         )
-
-    # only track the last changes if a duplicate entry is found.
-    st.session_state["user_changes_df"] = pd.concat(
-        [st.session_state["user_changes_df"], res]
-    ).drop_duplicates(
-        subset=["source_region_code", "process_code", "parameter_code"], keep="last"
-    )
 
 
 def config_number_columns(df: pd.DataFrame, **kwargs) -> {}:
@@ -367,95 +413,139 @@ def display_and_edit_input_data(
     ],
     scope: Literal["world", "Argentina", "Morocco", "South Africa"],
     key: str,
-):
-    input_data = api.get_input_data(
-        st.session_state["scenario"],
-        user_data=st.session_state["user_changes_df"],
-    )
+) -> pd.DataFrame:
+    """
+    Display a subset of the input data.
+
+    Data is displayed either as static dataframe or inside a st.form
+    based on session state variable `edit_input_data`.
+
+    Parameters
+    ----------
+    api : PtxboaAPI
+        an instance of the api class
+    data_type : str
+        the data type which should be selected. Needs to be one of
+        "conversion_processes", "transportation_processes", "CAPEX", "full load hours",
+        and "interest rate".
+    scope : Literal[None, "world", "Argentina", "Morocco", "South Africa"]
+        The regional scope. Is automatically set to None for data of
+        data type "conversion_processes" and "transportation_processes" which is not
+        region specific.
+    key : str
+        A key for the data editing streamlit widget. Need to be unique.
+
+    Returns
+    -------
+    pd.DataFrame
+    """
+    df = get_data_type_from_input_data(api, data_type=data_type, scope=scope)
 
     if data_type in ["conversion_processes", "transportation_processes"]:
-        scope = "non_region_specific_data"
-        missing_index_name = "source_region_code"
-        missing_index_value = None
         index = "process_code"
         columns = "parameter_code"
-        processes = api.get_dimension("process")
-        source_region_code = None
-        values = "value"
+        missing_index_name = "source_region_code"
+        missing_index_value = None
         column_config = None
 
-        process_code = processes.loc[
-            ~processes["is_transport"], "process_name"
-        ].to_list()
-
     if data_type == "conversion_processes":
-        parameter_code = [
-            "CAPEX",
-            "OPEX (fix)",
-            "lifetime / amortization period",
-            "efficiency",
-        ]
-        process_code = processes.loc[
-            ~processes["is_transport"], "process_name"
-        ].to_list()
+        column_config = {
+            "CAPEX": st.column_config.NumberColumn(format="%.0f USD/kW", min_value=0),
+            "OPEX (fix)": st.column_config.NumberColumn(
+                format="%.0f USD/kW", min_value=0
+            ),
+            "efficiency": st.column_config.NumberColumn(
+                format="%.2f", min_value=0, max_value=1
+            ),
+            "lifetime / amortization period": st.column_config.NumberColumn(
+                format="%.0f a", min_value=0
+            ),
+        }
 
     if data_type == "transportation_processes":
-        parameter_code = [
-            "losses (own fuel, transport)",
-            "levelized costs",
-            "lifetime / amortization period",
-            # FIXME: add bunker fuel consumption
-        ]
-        process_code = processes.loc[
-            processes["is_transport"], "process_name"
-        ].to_list()
+        column_config = {
+            "levelized_costs": st.column_config.NumberColumn(
+                format="%.0f USD/kW", min_value=0
+            ),
+            "OPEX (fix)": st.column_config.NumberColumn(
+                format="%.0f USD/kW", min_value=0
+            ),
+            "efficiency": st.column_config.NumberColumn(
+                format="%.2f", min_value=0, max_value=1
+            ),
+            "lifetime / amortization period": st.column_config.NumberColumn(
+                format="%.0f a", min_value=0
+            ),
+        }
 
-    if data_type in ["CAPEX", "full load hours", "interest_rate"]:
-        raise NotImplementedError
+    if data_type == "interest rate":
+        index = "source_region_code"
+        columns = "parameter_code"
+        missing_index_name = "parameter_code"
+        missing_index_value = "interest rate"
+        column_config = {
+            c: st.column_config.NumberColumn(format="%.3f", min_value=0, max_value=1)
+            for c in df.columns
+        }
 
-    if scope == "non_region_specific_data":
-        source_region_code = [""]
+    if data_type == "CAPEX":
+        index = "source_region_code"
+        columns = "process_code"
+        missing_index_name = "parameter_code"
+        missing_index_value = "CAPEX"
+        column_config = {
+            c: st.column_config.NumberColumn(format="%.0f USD/kW", min_value=0)
+            for c in df.columns
+        }
 
-    df = subset_and_pivot_input_data(
-        input_data,
-        source_region_code,
-        parameter_code,
-        process_code,
-        index,
-        columns,
-        values,
-    )
+    if data_type == "full load hours":
+        index = "source_region_code"
+        columns = "process_code"
+        missing_index_name = "parameter_code"
+        missing_index_value = "full load hours"
+        column_config = {
+            c: st.column_config.NumberColumn(
+                format="%.0f h/a", min_value=0, max_value=8760
+            )
+            for c in df.columns
+        }
 
     # if editing is enabled, store modifications in session_state:
     if st.session_state["edit_input_data"]:
-        disabled = [index]
+        with st.form(key=f"{key}_form"):
+            st.info(
+                (
+                    "You can edit data directly in the table. When done, click the "
+                    "**Apply Changes** button below to rerun calculations."
+                )
+            )
+            df = st.data_editor(
+                df,
+                use_container_width=True,
+                key=key,
+                num_rows="fixed",
+                disabled=[index],
+                column_config=column_config,
+            )
+            st.form_submit_button(
+                "Apply Changes",
+                type="primary",
+                on_click=register_user_changes,
+                kwargs={
+                    "missing_index_name": missing_index_name,
+                    "missing_index_value": missing_index_value,
+                    "index": index,
+                    "columns": columns,
+                    "values": "value",
+                    "df_tab": df,
+                    "key": key,
+                },
+            )
     else:
-        disabled = True
+        st.dataframe(
+            df,
+            use_container_width=True,
+            column_config=column_config,
+        )
 
-    # configure columns for display:
-    if column_config is None:
-        column_config = None
-    else:
-        column_config = config_number_columns(df, **column_config)
-
-    df = st.data_editor(
-        df,
-        use_container_width=True,
-        key=key,
-        num_rows="fixed",
-        disabled=disabled,
-        column_config=column_config,
-        on_change=register_user_changes,
-        kwargs={
-            "missing_index_name": missing_index_name,
-            "missing_index_value": missing_index_value,
-            "index": index,
-            "columns": columns,
-            "values": values,
-            "df_tab": df,
-            "key": key,
-        },
-    )
-    if st.session_state["edit_input_data"]:
-        st.markdown("You can edit data directly in the table!")
     return df
