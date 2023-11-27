@@ -8,8 +8,9 @@ from ptxboa.api import PtxboaAPI
 
 def make_sidebar(api: PtxboaAPI):
     st.sidebar.subheader("Main settings:")
-    include_subregions = False
-    if include_subregions:
+    if "include_subregions" not in st.session_state:
+        st.session_state["include_subregions"] = False
+    if st.session_state["include_subregions"]:
         region_list = api.get_dimension("region").index
     else:
         region_list = (
@@ -28,13 +29,14 @@ def make_sidebar(api: PtxboaAPI):
             "default settings will be used."
         ),
     )
-    include_subregions = st.sidebar.toggle(
+    st.sidebar.toggle(
         "Include subregions",
         help=(
             "For three deep-dive countries (Argentina, Morocco, and South Africa) "
             "the app calculates costs for subregions as well. Activate this switch"
             "if you want to chose one of these subregions as a supply region. "
         ),
+        key="include_subregions",
     )
     st.session_state["country"] = st.sidebar.selectbox(
         "Demand country:",

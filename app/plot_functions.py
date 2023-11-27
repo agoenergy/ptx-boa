@@ -9,7 +9,11 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from app.ptxboa_functions import remove_subregions, subset_and_pivot_input_data
+from app.ptxboa_functions import (
+    remove_subregions,
+    select_subregions,
+    subset_and_pivot_input_data,
+)
 from ptxboa.api import PtxboaAPI
 
 
@@ -226,7 +230,7 @@ def _choropleth_map_deep_dive_country(
     if custom_data_func_kwargs is None:
         custom_data_func_kwargs = {}
     # subsetting 'df' for the selected deep dive country
-    df = df.copy().loc[df.index.str.startswith(f"{deep_dive_country} ("), :]
+    df = select_subregions(df, deep_dive_country)
     # need to calculate custom data befor is03166 column is appended.
     hover_data = custom_data_func(df, **custom_data_func_kwargs)
     # get dataframe with info about iso 3166-2 codes and map them to res_costs
