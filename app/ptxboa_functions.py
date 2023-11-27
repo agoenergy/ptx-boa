@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Utility functions for streamlit app."""
+from typing import Literal
 
 import pandas as pd
 import streamlit as st
@@ -83,19 +84,28 @@ def calculate_results_list(
     for parameter in parameter_list:
         settings2 = settings.copy()
         settings2[parameter_to_change] = parameter
-        res_single = calculate_results_single(api, settings2, user_data=user_data)
+        res_single = calculate_results_single(
+            api,
+            settings2,
+            user_data=st.session_state["user_changes_df"],
+        )
         res_list.append(res_single)
     res_details = pd.concat(res_list)
 
-    return aggregate_costs(res_details)
+    return aggregate_costs(res_details, parameter_to_change)
 
 
-def aggregate_costs(res_details: pd.DataFrame) -> pd.DataFrame:
+def aggregate_costs(
+    res_details: pd.DataFrame, parameter_to_change: str
+) -> pd.DataFrame:
     """Aggregate detailed costs."""
     # Exclude levelized costs:
     res = res_details.loc[res_details["cost_type"] != "LC"]
     res = res.pivot_table(
-        index="region", columns="process_type", values="values", aggfunc="sum"
+        index=parameter_to_change,
+        columns="process_type",
+        values="values",
+        aggfunc="sum",
     )
     # calculate total costs:
     res["Total"] = res.sum(axis=1)
@@ -182,6 +192,27 @@ def remove_subregions(api: PtxboaAPI, df: pd.DataFrame, country_name: str):
 
     df = df.loc[region_list_without_subregions]
 
+    return df
+
+
+def select_subregions(
+    df: pd.DataFrame, deep_dive_country: Literal["Argentina", "Morocco", "South Africa"]
+) -> pd.DataFrame:
+    """
+    Only select rows corresponding to subregions of a deep dive country.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        pandas DataFrame with list of regions as index.
+    deep_dive_country : str in {"Argentina", "Morocco", "South Africa"}
+
+
+    Returns
+    -------
+    pd.DataFrame
+    """
+    df = df.copy().loc[df.index.str.startswith(f"{deep_dive_country} ("), :]
     return df
 
 

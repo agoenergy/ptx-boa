@@ -10,7 +10,6 @@ import app.ptxboa_functions as pf
 from app.context_data import load_context_data
 from app.sidebar import make_sidebar
 from app.tab_certification_schemes import content_certification_schemes
-from app.tab_compare_costs import content_compare_costs
 from app.tab_country_fact_sheets import content_country_fact_sheets
 from app.tab_dashboard import content_dashboard
 from app.tab_deep_dive_countries import content_deep_dive_countries
@@ -62,7 +61,6 @@ if st.session_state["edit_input_data"]:
 (
     t_dashboard,
     t_market_scanning,
-    t_compare_costs,
     t_input_data,
     t_deep_dive_countries,
     t_country_fact_sheets,
@@ -74,7 +72,6 @@ if st.session_state["edit_input_data"]:
     [
         "Dashboard",
         "Market scanning",
-        "Compare costs",
         "Input data",
         "Deep-dive countries",
         "Country fact sheets",
@@ -96,9 +93,29 @@ if "colors" not in st.session_state:
     colors = pd.read_csv("data/Agora_Industry_Colours.csv")
     st.session_state["colors"] = colors["Hex Code"].to_list()
 
-# calculate results:
-res_costs = pf.calculate_results_list(
-    api, "region", user_data=st.session_state["user_changes_df"]
+# calculate results over different data dimensions:
+costs_per_region = pf.calculate_results_list(
+    api,
+    parameter_to_change="region",
+    parameter_list=None,
+)
+costs_per_scenario = pf.calculate_results_list(
+    api,
+    parameter_to_change="scenario",
+    parameter_list=None,
+)
+costs_per_res_gen = pf.calculate_results_list(
+    api,
+    parameter_to_change="res_gen",
+    # TODO: here we remove PV tracking manually, this needs to be fixed in data
+    parameter_list=[
+        x for x in api.get_dimension("res_gen").index.to_list() if x != "PV tracking"
+    ],
+)
+costs_per_chain = pf.calculate_results_list(
+    api,
+    parameter_to_change="chain",
+    parameter_list=None,
 )
 
 # import context data:
@@ -106,19 +123,23 @@ cd = load_context_data()
 
 # dashboard:
 with t_dashboard:
-    content_dashboard(api, res_costs, cd)
+    content_dashboard(
+        api,
+        costs_per_region=costs_per_region,
+        costs_per_scenario=costs_per_scenario,
+        costs_per_res_gen=costs_per_res_gen,
+        costs_per_chain=costs_per_chain,
+        context_data=cd,
+    )
 
 with t_market_scanning:
-    content_market_scanning(api, res_costs)
-
-with t_compare_costs:
-    content_compare_costs(api, res_costs)
+    content_market_scanning(api, costs_per_region)
 
 with t_input_data:
     content_input_data(api)
 
 with t_deep_dive_countries:
-    content_deep_dive_countries(api, res_costs)
+    content_deep_dive_countries(api, costs_per_region)
 
 with t_country_fact_sheets:
     content_country_fact_sheets(cd)
