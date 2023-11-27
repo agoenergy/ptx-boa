@@ -2,8 +2,6 @@
 """Utility functions for streamlit app."""
 from typing import Literal
 
-from typing import Literal
-
 import pandas as pd
 import streamlit as st
 
@@ -40,7 +38,6 @@ def calculate_results_list(
     api: PtxboaAPI,
     parameter_to_change: str,
     parameter_list: list = None,
-    user_data: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
     """Calculate results for source regions and one selected target country.
 
