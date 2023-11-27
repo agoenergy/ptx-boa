@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Utility functions for streamlit app."""
 
+from typing import Literal
+
 import pandas as pd
 import streamlit as st
 
@@ -324,3 +326,108 @@ def config_number_columns(df: pd.DataFrame, **kwargs) -> {}:
         )
 
     return column_config_all
+
+
+def display_and_edit_input_data(
+    api: PtxboaAPI,
+    data_type: Literal[
+        "conversion_processes",
+        "transportation_processes",
+        "CAPEX",
+        "full load hours",
+        "interest rate",
+    ],
+    scope: Literal["world", "Argentina", "Morocco", "South Africa"],
+    key: str,
+):
+    input_data = api.get_input_data(
+        st.session_state["scenario"],
+        user_data=st.session_state["user_changes_df"],
+    )
+
+    if data_type in ["conversion_processes", "transportation_processes"]:
+        scope = "non_region_specific_data"
+        missing_index_name = "source_region_code"
+        missing_index_value = None
+        index = "process_code"
+        columns = "parameter_code"
+        processes = api.get_dimension("process")
+        source_region_code = None
+        values = "value"
+        column_config = None
+
+        process_code = processes.loc[
+            ~processes["is_transport"], "process_name"
+        ].to_list()
+
+    if data_type == "conversion_processes":
+        parameter_code = [
+            "CAPEX",
+            "OPEX (fix)",
+            "lifetime / amortization period",
+            "efficiency",
+        ]
+        process_code = processes.loc[
+            ~processes["is_transport"], "process_name"
+        ].to_list()
+
+    if data_type == "transportation_processes":
+        parameter_code = [
+            "losses (own fuel, transport)",
+            "levelized costs",
+            "lifetime / amortization period",
+            # FIXME: add bunker fuel consumption
+        ]
+        process_code = processes.loc[
+            processes["is_transport"], "process_name"
+        ].to_list()
+
+    if data_type in ["CAPEX", "full load hours", "interest_rate"]:
+        raise NotImplementedError
+
+    if scope == "non_region_specific_data":
+        source_region_code = [""]
+
+    df = subset_and_pivot_input_data(
+        input_data,
+        source_region_code,
+        parameter_code,
+        process_code,
+        index,
+        columns,
+        values,
+    )
+
+    # if editing is enabled, store modifications in session_state:
+    if st.session_state["edit_input_data"]:
+        disabled = [index]
+    else:
+        disabled = True
+
+    # configure columns for display:
+    if column_config is None:
+        column_config = None
+    else:
+        column_config = config_number_columns(df, **column_config)
+
+    df = st.data_editor(
+        df,
+        use_container_width=True,
+        key=key,
+        num_rows="fixed",
+        disabled=disabled,
+        column_config=column_config,
+        on_change=register_user_changes,
+        kwargs={
+            "missing_index_name": missing_index_name,
+            "missing_index_value": missing_index_value,
+            "index": index,
+            "columns": columns,
+            "values": values,
+            "df_tab": df,
+            "key": key,
+        },
+    )
+    if st.session_state["edit_input_data"]:
+        st.markdown("You can edit data directly in the table!")
+    return df

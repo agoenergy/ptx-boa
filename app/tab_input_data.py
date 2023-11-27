@@ -4,7 +4,10 @@ import plotly.express as px
 import streamlit as st
 
 from app.plot_functions import plot_input_data_on_map
-from app.ptxboa_functions import display_and_edit_data_table
+from app.ptxboa_functions import (
+    display_and_edit_data_table,
+    display_and_edit_input_data,
+)
 from ptxboa.api import PtxboaAPI
 
 
@@ -129,46 +132,19 @@ They also show the data for your country for comparison.
     st.divider()
     st.subheader("Data that is identical for all regions")
 
-    input_data_global = input_data.loc[input_data["source_region_code"] == ""]
-
-    # filter processes:
-    processes = api.get_dimension("process")
-
-    list_processes_transport = processes.loc[
-        processes["is_transport"], "process_name"
-    ].to_list()
-
-    list_processes_not_transport = processes.loc[
-        ~processes["is_transport"], "process_name"
-    ].to_list()
     st.markdown("**Conversion processes:**")
-    df = display_and_edit_data_table(
-        input_data_global,
-        missing_index_name="source_region_code",
-        missing_index_value=None,
-        parameter_code=[
-            "CAPEX",
-            "OPEX (fix)",
-            "lifetime / amortization period",
-            "efficiency",
-        ],
-        process_code=list_processes_not_transport,
-        index="process_code",
-        columns="parameter_code",
+
+    display_and_edit_input_data(
+        api,
+        data_type="conversion_processes",
+        scope="world",
+        key="input_data_conversion_processes",
     )
     st.markdown("**Transportation processes:**")
     st.markdown("TODO: fix data")
-    df = display_and_edit_data_table(
-        input_data_global,
-        missing_index_name="source_region_code",
-        missing_index_value=None,
-        parameter_code=[
-            "losses (own fuel, transport)",
-            "levelized costs",
-            "lifetime / amortization period",
-            # FIXME: add bunker fuel consumption
-        ],
-        process_code=list_processes_transport,
-        index="process_code",
-        columns="parameter_code",
+    display_and_edit_input_data(
+        api,
+        data_type="transportation_processes",
+        scope="world",
+        key="input_data_transportation_processes",
     )
