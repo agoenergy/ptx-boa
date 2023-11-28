@@ -225,11 +225,23 @@ def reset_user_changes():
         st.session_state["user_changes_df"] = None
 
 
-def display_user_changes():
+def display_user_changes(api):
     """Display input data changes made by user."""
     if st.session_state["user_changes_df"] is not None:
+        df = st.session_state["user_changes_df"].copy()
+        parameters = api.get_dimension("parameter")
+        df["Unit"] = df["parameter_code"].map(
+            pd.Series(parameters["unit"].tolist(), index=parameters["parameter_name"])
+        )
         st.dataframe(
-            st.session_state["user_changes_df"].style.format(precision=3),
+            df.rename(
+                columns={
+                    "source_region_code": "Source Region",
+                    "process_code": "Process",
+                    "parameter_code": "Parameter",
+                    "value": "Value",
+                }
+            ).style.format(precision=3),
             hide_index=True,
         )
     else:
