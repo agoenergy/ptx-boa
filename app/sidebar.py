@@ -170,7 +170,7 @@ Disable this setting to reset user data to default values.""",
     with st.sidebar.container():
         if st.session_state["user_changes_df"] is not None:
             download_user_data()
-        with st.expander(label="Reload Modified Data"):
+        with st.expander(label="Upload Modified Data"):
             upload_user_data(api)
 
     return

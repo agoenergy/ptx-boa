@@ -30,7 +30,7 @@ def upload_user_data(api):
         if isinstance(validated, pd.DataFrame):  # validation passed
             st.success("Valid data file.")
             st.button(
-                label="Apply uploaded data",
+                label="Apply Uploaded Data",
                 on_click=apply_uploaded_user_data,
                 args=(validated,),
                 type="primary",
