@@ -50,7 +50,14 @@ if "user_changes_df" not in st.session_state:
 if "edit_input_data" not in st.session_state:
     st.session_state["edit_input_data"] = False
 
-st.set_page_config(layout="wide")
+# https://discuss.streamlit.io/t/can-not-set-page-width-in-streamlit-1-5-0/21522/5
+css = """
+<style>
+    section.main > div {max-width:80rem}
+</style>
+"""
+st.markdown(css, unsafe_allow_html=True)
+
 st.title("PtX Business Opportunity Analyzer :red[draft version, please do not quote!]")
 if st.session_state["edit_input_data"]:
     st.warning("Data editing on")
