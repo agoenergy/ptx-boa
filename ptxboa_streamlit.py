@@ -52,11 +52,14 @@ if "edit_input_data" not in st.session_state:
 st.set_page_config(layout="wide")
 api = st.cache_resource(PtxboaAPI)()
 st.title("PtX Business Opportunity Analyzer :red[draft version, please do not quote!]")
-if st.session_state["edit_input_data"]:
-    st.warning("Data editing on")
-    with st.expander("Modified data"):
-        pf.display_user_changes(api)
 
+with st.container():
+    if st.session_state["edit_input_data"]:
+        st.warning("Data editing on")
+        with st.expander("Modified data"):
+            pf.display_user_changes(api)
+    else:
+        placeholder = st.empty()
 
 (
     t_dashboard,
