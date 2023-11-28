@@ -3,7 +3,7 @@
 import streamlit as st
 
 from app.ptxboa_functions import reset_user_changes
-from app.user_data_persistence import download_user_data, upload_user_data
+from app.user_data_from_file import download_user_data, upload_user_data
 from ptxboa.api import PtxboaAPI
 
 
