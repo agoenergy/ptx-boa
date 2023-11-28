@@ -6,7 +6,11 @@ import streamlit as st
 
 
 def upload_user_data(api):
+    """Create a file upload and download interface."""
     if st.session_state["edit_input_data"]:
+        # we use a file uploader key which is incremented in order to clear the
+        # uploaded file
+        # https://discuss.streamlit.io/t/are-there-any-ways-to-clear-file-uploader-values-without-using-streamlit-form/40903/2  # noqa
         if "file_uploader_key" not in st.session_state:
             st.session_state["file_uploader_key"] = 0
 
@@ -20,10 +24,10 @@ def upload_user_data(api):
         )
         if uploaded_file is not None:
             validated = validate_uploaded_user_data(api, uploaded_file)
-        else:
+        else:  # no file uploaded
             validated = None
 
-        if isinstance(validated, pd.DataFrame):
+        if isinstance(validated, pd.DataFrame):  # validation passed
             st.success("Valid data file.")
             if st.session_state["user_changes_df"] is not None:
                 st.warning(
@@ -35,14 +39,26 @@ def upload_user_data(api):
                 args=(validated,),
             )
 
-        if isinstance(validated, str):
+        if isinstance(validated, str):  # string indicating error in validation
             st.error(f"Uploaded data is not valid: {validated}")
 
         if not isinstance(validated, pd.DataFrame) or uploaded_file is None:
             st.warning("Select data file to be uploaded.")
 
 
-def validate_uploaded_user_data(api, uploaded_file):
+def validate_uploaded_user_data(api, uploaded_file) -> str | pd.DataFrame:
+    """
+    Validate the content of the file uploader.
+
+    Checks:
+        - correct column names.
+        - index combination present in input data.
+
+    Returns
+    -------
+    str or pd.DataFrame
+        a string indicating a validation error or the content of the csv file.
+    """
     try:
         result = pd.read_csv(uploaded_file, keep_default_na=False)
     except:  # noqa
@@ -76,6 +92,7 @@ def validate_uploaded_user_data(api, uploaded_file):
 
 
 def download_user_data():
+    """Dump the user changes from session state to a csv file."""
     data = st.session_state["user_changes_df"].fillna("").to_csv(index=False)
     st.download_button(
         label="Download Modified Data",
@@ -85,6 +102,14 @@ def download_user_data():
     )
 
 
-def apply_uploaded_user_data(uploaded_df):
+def apply_uploaded_user_data(uploaded_df: pd.DataFrame):
+    """
+    Overwrite user changes in session state with uploaded data.
+
+    Parameters
+    ----------
+    uploaded_df : pd.DataFrame
+        validated uploaded user data.
+    """
     st.session_state["user_changes_df"] = uploaded_df
     st.session_state["file_uploader_key"] += 1
