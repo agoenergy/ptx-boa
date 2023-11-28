@@ -29,21 +29,22 @@ def upload_user_data(api):
 
         if isinstance(validated, pd.DataFrame):  # validation passed
             st.success("Valid data file.")
-            if st.session_state["user_changes_df"] is not None:
-                st.warning(
-                    "Applying data loaded from file will override your current changes."
-                )
             st.button(
                 label="Apply uploaded data",
                 on_click=apply_uploaded_user_data,
                 args=(validated,),
+                type="primary",
             )
+            if st.session_state["user_changes_df"] is not None:
+                st.info(
+                    "Applying data loaded from file will override your current changes."
+                )
 
         if isinstance(validated, str):  # string indicating error in validation
             st.error(f"Uploaded data is not valid: {validated}")
 
         if not isinstance(validated, pd.DataFrame) or uploaded_file is None:
-            st.warning("Select data file to be uploaded.")
+            st.info("Select data file to be uploaded.")
 
 
 def validate_uploaded_user_data(api, uploaded_file) -> str | pd.DataFrame:
@@ -99,6 +100,7 @@ def download_user_data():
         data=data,
         file_name="modified_ptxboa_data.csv",
         help="Click to download your current data modifications.",
+        type="primary",
     )
 
 
