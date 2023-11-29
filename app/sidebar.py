@@ -28,6 +28,7 @@ def make_sidebar(api: PtxboaAPI):
             "(RE source, mode of transportation). For other regions, "
             "default settings will be used."
         ),
+        index=region_list.get_loc("Morocco"),  # Morocco as default
     )
     st.sidebar.toggle(
         "Include subregions",
@@ -38,13 +39,16 @@ def make_sidebar(api: PtxboaAPI):
         ),
         key="include_subregions",
     )
+
+    countries = api.get_dimension("country").index
     st.session_state["country"] = st.sidebar.selectbox(
         "Demand country:",
-        api.get_dimension("country").index,
+        countries,
         help=(
             "The country you aim to export to. Some key info on the demand country you "
             "choose here are displayed in the info box."
         ),
+        index=countries.get_loc("Germany"),
     )
     # get chain as combination of product, electrolyzer type and reconversion option:
     c1, c2 = st.sidebar.columns(2)
@@ -61,6 +65,7 @@ def make_sidebar(api: PtxboaAPI):
                 "Ft e-fuels",
             ],
             help="The product you want to export.",
+            index=4,  # Methane as default
         )
     with c2:
         ely = st.selectbox(
@@ -71,6 +76,7 @@ def make_sidebar(api: PtxboaAPI):
                 "SEOC",
             ],
             help="The electrolyzer type you wish to use.",
+            index=0,  # AEL as default
         )
     if product in ["Ammonia", "Methane"]:
         use_reconversion = st.sidebar.toggle(
