@@ -13,44 +13,43 @@ def display_costs(
     """Display costs as table and bar chart."""
     key_suffix = key_suffix.lower().replace(" ", "_")
     st.subheader(titlestring)
-    c1, c2 = st.columns([1, 5])
-    with c1:
-        # filter data:
-        df_res = df_costs.copy()
 
-        # select filter:
-        show_which_data = st.radio(
-            "Select elements to display:",
-            ["All", "Manual select"],
-            index=0,
-            key=f"show_which_data_{key}_{key_suffix}",
-        )
+    # filter data:
+    df_res = df_costs.copy()
 
-        # apply filter:
-        if show_which_data == "Manual select":
-            ind_select = st.multiselect(
-                "Select regions:",
-                df_res.index.values,
-                default=df_res.index.values,
-                key=f"select_data_{key}_{key_suffix}",
-            )
-            df_res = df_res.loc[ind_select]
+    # select filter:
+    show_which_data = st.radio(
+        "Select elements to display:",
+        ["All", "Manual select"],
+        index=0,
+        horizontal=True,
+        key=f"show_which_data_{key}_{key_suffix}",
+    )
 
-        # sort:
-        sort_ascending = st.toggle(
-            "Sort by total costs?",
-            value=True,
-            key=f"sort_data_{key}_{key_suffix}",
+    # apply filter:
+    if show_which_data == "Manual select":
+        ind_select = st.multiselect(
+            "Select regions:",
+            df_res.index.values,
+            default=df_res.index.values,
+            key=f"select_data_{key}_{key_suffix}",
         )
-        if sort_ascending:
-            df_res = df_res.sort_values(["Total"], ascending=True)
-    with c2:
-        # create graph:
-        fig = create_bar_chart_costs(
-            df_res,
-            current_selection=st.session_state[key],
-        )
-        st.plotly_chart(fig, use_container_width=True)
+        df_res = df_res.loc[ind_select]
+
+    # sort:
+    sort_ascending = st.toggle(
+        "Sort by total costs?",
+        value=True,
+        key=f"sort_data_{key}_{key_suffix}",
+    )
+    if sort_ascending:
+        df_res = df_res.sort_values(["Total"], ascending=True)
+    # create graph:
+    fig = create_bar_chart_costs(
+        df_res,
+        current_selection=st.session_state[key],
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
     with st.expander("**Data**"):
         column_config = config_number_columns(
