@@ -154,6 +154,9 @@ def make_sidebar(api: PtxboaAPI):
             "For shipping option: Use the product as own fuel?",
             help="Help text",
         )
+    else:
+        st.session_state["ship_own_fuel"] = False
+
     st.session_state["output_unit"] = st.sidebar.radio(
         "Unit for delivered costs:",
         ["USD/MWh", "USD/t"],
