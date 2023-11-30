@@ -6,7 +6,7 @@ import streamlit as st
 
 from app.layout_elements import display_costs
 from app.plot_functions import plot_costs_on_map, plot_input_data_on_map
-from app.ptxboa_functions import display_and_edit_data_table, select_subregions
+from app.ptxboa_functions import display_and_edit_input_data, select_subregions
 from ptxboa.api import PtxboaAPI
 
 
@@ -55,26 +55,6 @@ They also show the data for your selected supply country or region for compariso
     )
 
     st.subheader("Full load hours of renewable generation")
-    input_data = api.get_input_data(st.session_state["scenario"])
-    # filter data:
-    # get list of subregions:
-    region_list = (
-        api.get_dimension("region")
-        .loc[api.get_dimension("region")["region_name"].str.startswith(ddc)]
-        .index.to_list()
-    )
-
-    parameter_code = ["full load hours"]
-    process_code = [
-        "Wind Onshore",
-        "Wind Offshore",
-        "PV tilted",
-        "Wind-PV-Hybrid",
-    ]
-    x = "process_code"
-    missing_index_name = "parameter_code"
-    missing_index_value = "full load hours"
-    column_config = {"format": "%.0f h/a", "min_value": 0, "max_value": 8760}
 
     # in order to keep the figures horizontally aligned, we create two st.columns pairs
     # the columns are identified by c_{row}_{column}, zero indexed
@@ -83,7 +63,14 @@ They also show the data for your selected supply country or region for compariso
     with c_0_0:
         st.markdown("**Map**")
         map_parameter = st.selectbox(
-            "Show Parameter on Map", process_code, key="ddc_flh_map_parameter"
+            "Show Parameter on Map",
+            [
+                "Wind Onshore",
+                "Wind Offshore",
+                "PV tilted",
+                "Wind-PV-Hybrid",
+            ],
+            key="ddc_flh_map_parameter",
         )
     with c_1_0:
         fig = plot_input_data_on_map(
@@ -94,17 +81,13 @@ They also show the data for your selected supply country or region for compariso
         )
         st.plotly_chart(fig, use_container_width=True)
     with st.expander("**Data**"):
-        df = display_and_edit_data_table(
-            input_data=input_data,
-            missing_index_name=missing_index_name,
-            missing_index_value=missing_index_value,
-            columns=x,
-            source_region_code=region_list,
-            parameter_code=parameter_code,
-            process_code=process_code,
-            column_config=column_config,
-            key_suffix="_ddc",
+        df = display_and_edit_input_data(
+            api,
+            data_type="full load hours",
+            scope=ddc,
+            key="input_data_editor_full_load_hours_ddc",
         )
+
     with c_0_1:
         st.markdown("**Regional Distribution**")
     with c_1_1:
