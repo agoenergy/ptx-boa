@@ -38,7 +38,6 @@ logger.addHandler(log_handler)
 
 logger.info("Updating app...")
 
-
 # app layout:
 
 # Set the pandas display option to format floats with 2 decimal places
@@ -51,12 +50,16 @@ if "edit_input_data" not in st.session_state:
     st.session_state["edit_input_data"] = False
 
 st.set_page_config(layout="wide")
+api = st.cache_resource(PtxboaAPI)()
 st.title("PtX Business Opportunity Analyzer :red[draft version, please do not quote!]")
-if st.session_state["edit_input_data"]:
-    st.warning("Data editing on")
-    with st.expander("Modified data"):
-        pf.display_user_changes()
 
+with st.container():
+    if st.session_state["edit_input_data"]:
+        st.warning("Data editing on")
+        with st.expander("Modified data"):
+            pf.display_user_changes(api)
+    else:
+        placeholder = st.empty()
 
 (
     t_dashboard,
@@ -81,9 +84,6 @@ if st.session_state["edit_input_data"]:
         "Disclaimer",
     ]
 )
-
-
-api = st.cache_resource(PtxboaAPI)()
 
 # create sidebar:
 make_sidebar(api)

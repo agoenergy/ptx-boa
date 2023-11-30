@@ -46,6 +46,24 @@ class TestApi(unittest.TestCase):
 
         return res
 
+    def test_issue_145_undefined_cost_category(self):
+        """See https://github.com/agoenergy/ptx-boa/issues/145."""
+        settings = {
+            "region": "United Arab Emirates",
+            "country": "Germany",
+            "chain": "Ammonia (AEL) + reconv. to H2",
+            "res_gen": "PV tilted",
+            "scenario": "2040 (medium)",
+            "secproc_co2": "Direct Air Capture",
+            "secproc_water": "Sea Water desalination",
+            "transport": "Ship",
+            "ship_own_fuel": False,
+            "output_unit": "USD/t",
+        }
+        res = self._test_api_call(settings)
+        level_cost_category = res.index.levels[0]
+        self.assertFalse("" in level_cost_category, "empty value in cost_category")
+
     def test_example_api_call_1_ship(self):
         """Test output structure of api.calculate()."""
         settings = {

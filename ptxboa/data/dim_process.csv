@@ -21,8 +21,8 @@ Green iron reduction,DRI,DRI-S,H2-G,True,False,False,False,PROC,False,False,Fals
 Green iron ship,DRI-S,DRI-S,DRI-S,False,False,True,False,TRANSP-S,False,True,False,False,ProcessTransportShip,Transportation (Ship)
 Green iron ship (bunker fuel consumption),DRI-SB,DRI-S,DRI-S,False,False,True,False,TRANSP-S,False,False,False,False,ProcessTransportShip,Transportation (Ship),BFUEL-L
 FT e-fuels Synthesis (Fischer-Tropsch),EFUELSYN,CHX-L,H2-G,True,False,False,False,PROC,False,False,False,True,ProcessDerivate,Derivate production,H2O-L/CO2-G/EL/HEAT/N2-G
-electricity storage,EL-STR,EL,EL,False,False,True,False,PROC,False,True,False,False,ProcessDerivate,Derivate production,H2O-L/CO2-G/EL/HEAT/N2-G
-electricity transmission,EL-TRANS,EL,EL,False,False,True,False,TRANSP,False,True,False,False,ProcessPassthrough
+electricity storage,EL-STR,EL,EL,False,False,True,False,PROC,False,True,False,False,ProcessDerivate,Electrolysis,H2O-L/CO2-G/EL/HEAT/N2-G
+electricity transmission,EL-TRANS,EL,EL,False,False,True,False,TRANSP,False,True,False,False,ProcessPassthrough,Electrolysis
 Hydrogen compression,H2-COMP,H2-G,H2-G,True,False,True,False,TRANSP-P,False,False,False,False,ProcessTransportPrePost,Transportation (Pipeline),HEAT/EL
 Hydrogen Liquification,H2-LIQ,H2-L,H2-G,True,False,True,False,TRANSP-S,False,False,False,False,ProcessTransportPrePost,Transportation (Ship),HEAT/EL
 Hydrogen land pipeline new,H2-P-L,H2-G,H2-G,False,False,True,False,TRANSP-P,False,False,False,False,ProcessTransportPipeline,Transportation (Pipeline)
@@ -37,7 +37,7 @@ LOHC conversion,LOHC-CON,LOHC-L,H2-G,True,False,True,False,TRANSP-S,False,False,
 LOHC reconversion,LOHC-REC,H2-G,LOHC-L,True,False,True,False,TRANSP-S,False,False,False,False,ProcessTransportPrePost,Transportation (Ship),HEAT/EL
 LOHC ship (own fuel consumption),LOHC-S,LOHC-L,LOHC-L,False,False,True,False,TRANSP-S,False,False,False,False,ProcessTransportShip,Transportation (Ship)
 LOHC ship (bunker fuel consumption),LOHC-SB,LOHC-L,LOHC-L,False,False,True,False,TRANSP-S,False,False,False,False,ProcessTransportShip,Transportation (Ship),BFUEL-L
-Ammonia reconversion,NH3-REC,H2-G,NH3-L,True,False,True,False,TRANSP,False,False,False,False,ProcessPassthrough
+Ammonia reconversion,NH3-REC,H2-G,NH3-L,True,False,True,False,TRANSP,False,False,False,False,ProcessPassthrough,Transportation (Ship)
 Ammonia ship (own fuel consumption),NH3-S,NH3-L,NH3-L,False,False,True,False,TRANSP-S,False,False,False,False,ProcessTransportShip,Transportation (Ship)
 Ammonia ship (bunker fuel consumption),NH3-SB,NH3-L,NH3-L,False,False,True,False,TRANSP-S,False,False,False,False,ProcessTransportShip,Transportation (Ship),BFUEL-L
 Ammonia Synthesis (Haber-Bosch),NH3SYN,NH3-L,H2-G,True,False,False,False,PROC,False,False,False,True,ProcessDerivate,Derivate production,H2O-L/CO2-G/EL/HEAT/N2-G

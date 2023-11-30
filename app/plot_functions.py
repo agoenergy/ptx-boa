@@ -35,6 +35,21 @@ def agora_continuous_color_scale() -> list[tuple]:
     ]
 
 
+def agora_discrete_colors_cost_categories() -> dict:
+    cost_categories = [
+        "Water",
+        "Transportation (Ship)",
+        "Electrolysis",
+        "Electricity generation",
+        "Electricity and H2 storage",
+        "Derivate production",
+        "Heat",
+        "Carbon",
+        # TODO: add missing category (GH #145)
+    ]
+    return {c: st.session_state["colors"][i] for i, c in enumerate(cost_categories)}
+
+
 def plot_costs_on_map(
     api: PtxboaAPI,
     res_costs: pd.DataFrame,
@@ -373,7 +388,7 @@ def create_bar_chart_costs(res_costs: pd.DataFrame, current_selection: str = Non
         x=res_costs.index,
         y=res_costs.columns[:-1],
         height=500,
-        color_discrete_sequence=st.session_state["colors"],
+        color_discrete_map=agora_discrete_colors_cost_categories(),
     )
 
     # Add the dot markers for the "total" column using plotly.graph_objects
