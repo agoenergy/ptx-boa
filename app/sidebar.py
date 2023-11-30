@@ -3,7 +3,6 @@
 import streamlit as st
 
 from app.ptxboa_functions import reset_user_changes
-from app.user_data_from_file import download_user_data, upload_user_data
 from ptxboa.api import PtxboaAPI
 
 
@@ -177,11 +176,5 @@ Disable this setting to reset user data to default values.""",
         key="edit_input_data",
         on_change=reset_user_changes,
     )
-
-    with st.sidebar.container():
-        if st.session_state["user_changes_df"] is not None:
-            download_user_data()
-        with st.expander(label="Upload Modified Data"):
-            upload_user_data(api)
 
     return

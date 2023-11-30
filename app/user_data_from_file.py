@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Functions for saving user data in a local file."""
 
+import time
+
 import pandas as pd
 import streamlit as st
 
@@ -13,26 +15,27 @@ def upload_user_data(api):
         # https://discuss.streamlit.io/t/are-there-any-ways-to-clear-file-uploader-values-without-using-streamlit-form/40903/2  # noqa
         if "file_uploader_key" not in st.session_state:
             st.session_state["file_uploader_key"] = 0
+        if "upload_validation" not in st.session_state:
+            st.session_state["upload_validation"] = None
 
-        uploaded_file = st.file_uploader(
+        st.file_uploader(
             label="modified data file",
             type="csv",
             accept_multiple_files=False,
             help="Select modified data file downloaded from a previous session.",
             label_visibility="collapsed",
+            on_change=validate_uploaded_user_data,
+            args=(api,),
             key=st.session_state["file_uploader_key"],
         )
-        if uploaded_file is not None:
-            validated = validate_uploaded_user_data(api, uploaded_file)
-        else:  # no file uploaded
-            validated = None
 
-        if isinstance(validated, pd.DataFrame):  # validation passed
+        if isinstance(
+            st.session_state["upload_validation"], pd.DataFrame
+        ):  # validation passed
             st.success("Valid data file.")
             st.button(
                 label="Apply Uploaded Data",
                 on_click=apply_uploaded_user_data,
-                args=(validated,),
                 type="primary",
             )
             if st.session_state["user_changes_df"] is not None:
@@ -40,40 +43,70 @@ def upload_user_data(api):
                     "Applying data loaded from file will override your current changes."
                 )
 
-        if isinstance(validated, str):  # string indicating error in validation
-            st.error(f"Uploaded data is not valid: {validated}")
+        if isinstance(
+            st.session_state["upload_validation"], str
+        ):  # string indicating error in validation
+            error_msg = st.error(
+                f"Uploaded data is not valid: {st.session_state['upload_validation']}"
+            )
+            time.sleep(3)
+            error_msg.empty()
+            st.session_state["upload_validation"] = None
 
-        if not isinstance(validated, pd.DataFrame) or uploaded_file is None:
-            st.info("Select data file to be uploaded.")
 
-
-def validate_uploaded_user_data(api, uploaded_file) -> str | pd.DataFrame:
+def validate_uploaded_user_data(api) -> str | pd.DataFrame:
     """
     Validate the content of the file uploader.
 
+    Used as a  "on_change" callback to the file uploader.
+
+    Writes the result to "upload_validation" session_state variable:
+        - if result is pd.DataFrame: all checks passed, file is valid
+        - if result is str: Error, the string contains the error message.
+
+    Also increments the file uploader key session state variable by 1, this creates a
+    new file uploader and removes the already uploaded file.
+
     Checks:
         - correct column names.
+        - numeric data in "value" column.
         - index combination present in input data.
+        - TODO: correct ranges for certain parameters.
 
     Returns
     -------
-    str or pd.DataFrame
-        a string indicating a validation error or the content of the csv file.
+    None
     """
     try:
-        result = pd.read_csv(uploaded_file, keep_default_na=False)
-    except:  # noqa
-        return "csv parsing error"
+        upload_key = st.session_state["file_uploader_key"]
+        result = pd.read_csv(
+            st.session_state[upload_key], keep_default_na=False, encoding="utf-8"
+        )
+    except Exception as e:  # noqa
+        result = "csv parsing error"
 
-    if set(result.columns) != {
-        "source_region_code",
-        "process_code",
-        "parameter_code",
-        "value",
-    }:
-        return "wrong column names"
+    # check for correct column names:
+    if isinstance(result, pd.DataFrame):
+        result = _validate_correct_column_names(result)
 
-    # check that index column combination is present in input data:
+    # check that only numeric values are given in "value"
+    if isinstance(result, pd.DataFrame):
+        result = _validate_numeric_values(result)
+
+    # check for correct index combinations:
+    if isinstance(result, pd.DataFrame):
+        result = _validate_correct_index_combinations(api, result)
+
+    # we still have no error and the result is a dataframe.
+    if isinstance(result, pd.DataFrame):
+        result = result.replace("", None)
+
+    st.session_state["file_uploader_key"] += 1
+    st.session_state["upload_validation"] = result
+
+
+def _validate_correct_index_combinations(api, result):
+    # check that index-column combination is present in input data:
     input_data = api.get_input_data(st.session_state["scenario"], long_names=True)
     for row in result.itertuples():
         selector = (
@@ -84,17 +117,48 @@ def validate_uploaded_user_data(api, uploaded_file) -> str | pd.DataFrame:
             & (input_data["target_country_code"] == "")
         )
         if len(input_data.loc[selector]) == 0:
-            return (
+            result = (
                 f"invalid index combination '{row.source_region_code} "
                 f"| {row.process_code} | {row.parameter_code}'"
             )
+            break
+    return result
 
-    return result.replace("", None)
+
+def _validate_correct_column_names(result):
+    if set(result.columns) != {
+        "source_region_code",
+        "process_code",
+        "parameter_code",
+        "value",
+    }:
+        result = "wrong column names"
+    return result
+
+
+def _validate_numeric_values(result):
+    error = False
+    values = result["value"].copy()
+    try:
+        values = values.astype(float)
+        if values.isna().any():
+            error = True
+    except ValueError:
+        # could not cast string to float
+        error = True
+
+    if error:
+        result = "non numeric values in 'value' column."
+    return result
 
 
 def download_user_data():
     """Dump the user changes from session state to a csv file."""
-    data = st.session_state["user_changes_df"].fillna("").to_csv(index=False)
+    data = (
+        st.session_state["user_changes_df"]
+        .fillna("")
+        .to_csv(index=False, encoding="utf-8")
+    )
     st.download_button(
         label="Download Modified Data",
         data=data,
@@ -104,14 +168,7 @@ def download_user_data():
     )
 
 
-def apply_uploaded_user_data(uploaded_df: pd.DataFrame):
-    """
-    Overwrite user changes in session state with uploaded data.
-
-    Parameters
-    ----------
-    uploaded_df : pd.DataFrame
-        validated uploaded user data.
-    """
-    st.session_state["user_changes_df"] = uploaded_df
-    st.session_state["file_uploader_key"] += 1
+def apply_uploaded_user_data():
+    """Overwrite user changes in session state with uploaded data."""
+    st.session_state["user_changes_df"] = st.session_state["upload_validation"]
+    st.session_state["upload_validation"] = None
