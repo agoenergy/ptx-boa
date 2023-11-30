@@ -116,6 +116,7 @@ costs_per_chain = pf.calculate_results_list(
     api,
     parameter_to_change="chain",
     parameter_list=None,
+    override_session_state={"output_unit": "USD/MWh"},
 )
 
 # import context data:
