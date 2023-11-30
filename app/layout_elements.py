@@ -8,7 +8,11 @@ from app.ptxboa_functions import config_number_columns
 
 
 def display_costs(
-    df_costs: pd.DataFrame, key: str, titlestring: str, key_suffix: str = ""
+    df_costs: pd.DataFrame,
+    key: str,
+    titlestring: str,
+    key_suffix: str = "",
+    output_unit: str | None = None,
 ):
     """Display costs as table and bar chart."""
     key_suffix = key_suffix.lower().replace(" ", "_")
@@ -49,6 +53,7 @@ def display_costs(
         fig = create_bar_chart_costs(
             df_res,
             current_selection=st.session_state[key],
+            output_unit=output_unit,
         )
         st.plotly_chart(fig, use_container_width=True)
 
