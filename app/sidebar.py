@@ -144,9 +144,10 @@ def make_sidebar(api: PtxboaAPI):
     )
     st.session_state["transport"] = st.sidebar.radio(
         "Mode of transportation (for selected supply country):",
-        api.get_dimension("transport").index,
+        ["Ship", "Pipeline"],
         horizontal=True,
         help="Help text",
+        index=1,  # 'Pipeline' as default
     )
     if st.session_state["transport"] == "Ship":
         st.session_state["ship_own_fuel"] = st.sidebar.toggle(
@@ -155,9 +156,10 @@ def make_sidebar(api: PtxboaAPI):
         )
     st.session_state["output_unit"] = st.sidebar.radio(
         "Unit for delivered costs:",
-        api.get_dimension("output_unit").index,
+        ["USD/MWh", "USD/t"],
         horizontal=True,
         help="Help text",
+        index=1,  # 'USD/t' as default
     )
 
     st.sidebar.toggle(
