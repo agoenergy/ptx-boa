@@ -164,17 +164,20 @@ def make_sidebar(api: PtxboaAPI):
         help="Help text",
         index=1,  # 'USD/t' as default
     )
-
+    st.sidebar.divider()
     st.sidebar.toggle(
         "Edit input data",
         help="""Activate this to enable editing of input data.
-Currently, your changes will be stored, but they will not be
-used in calculation and they will not be displayed in figures.
 
 Disable this setting to reset user data to default values.""",
         value=False,
         key="edit_input_data",
         on_change=reset_user_changes,
     )
+    if (
+        st.session_state["edit_input_data"]
+        and st.session_state["user_changes_df"] is not None
+    ):
+        st.sidebar.info("Modified data is reset when turned **OFF**")
 
     return
