@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 """Functions for saving user data in a local file."""
 
+import logging
 import time
 
+import numpy as np
 import pandas as pd
 import streamlit as st
 
@@ -24,7 +26,7 @@ def upload_user_data(api):
             accept_multiple_files=False,
             help="Select modified data file downloaded from a previous session.",
             label_visibility="collapsed",
-            on_change=validate_uploaded_user_data,
+            on_change=upload_validation_callback,
             args=(api,),
             key=st.session_state["file_uploader_key"],
         )
@@ -46,15 +48,15 @@ def upload_user_data(api):
         if isinstance(
             st.session_state["upload_validation"], str
         ):  # string indicating error in validation
-            error_msg = st.error(
-                f"Uploaded data is not valid: {st.session_state['upload_validation']}"
-            )
+            msg = f"Uploaded data is not valid: {st.session_state['upload_validation']}"
+            error_box = st.error(msg)
+            logging.info(f"Reject uploaded data: {msg}")
             time.sleep(3)
-            error_msg.empty()
+            error_box.empty()
             st.session_state["upload_validation"] = None
 
 
-def validate_uploaded_user_data(api) -> str | pd.DataFrame:
+def upload_validation_callback(api) -> str | pd.DataFrame:
     """
     Validate the content of the file uploader.
 
@@ -71,7 +73,7 @@ def validate_uploaded_user_data(api) -> str | pd.DataFrame:
         - correct column names.
         - numeric data in "value" column.
         - index combination present in input data.
-        - TODO: correct ranges for certain parameters.
+        - correct ranges for certain parameters.
 
     Returns
     -------
@@ -79,12 +81,27 @@ def validate_uploaded_user_data(api) -> str | pd.DataFrame:
     """
     try:
         upload_key = st.session_state["file_uploader_key"]
-        result = pd.read_csv(
-            st.session_state[upload_key], keep_default_na=False, encoding="utf-8"
-        )
+        result = _read_user_data_file(st.session_state[upload_key])
     except Exception as e:  # noqa
         result = "csv parsing error"
 
+    result = _validate_user_dataframe(
+        api=api, scenario=st.session_state["scenario"], result=result
+    )
+
+    # cast empty strings to None in case validation passed
+    if isinstance(result, pd.DataFrame):
+        result = result.replace("", None)
+
+    st.session_state["file_uploader_key"] += 1
+    st.session_state["upload_validation"] = result
+
+
+def _read_user_data_file(filehandle):
+    return pd.read_csv(filehandle, keep_default_na=False, encoding="utf-8")
+
+
+def _validate_user_dataframe(api, scenario, result: str | pd.DataFrame):
     # check for correct column names:
     if isinstance(result, pd.DataFrame):
         result = _validate_correct_column_names(result)
@@ -95,19 +112,18 @@ def validate_uploaded_user_data(api) -> str | pd.DataFrame:
 
     # check for correct index combinations:
     if isinstance(result, pd.DataFrame):
-        result = _validate_correct_index_combinations(api, result)
+        result = _validate_correct_index_combinations(api, scenario, result)
 
-    # we still have no error and the result is a dataframe.
+    # check values are in correct ranges:
     if isinstance(result, pd.DataFrame):
-        result = result.replace("", None)
+        result = _validate_param_in_range(result)
 
-    st.session_state["file_uploader_key"] += 1
-    st.session_state["upload_validation"] = result
+    return result
 
 
-def _validate_correct_index_combinations(api, result):
+def _validate_correct_index_combinations(api, scenario, result):
     # check that index-column combination is present in input data:
-    input_data = api.get_input_data(st.session_state["scenario"], long_names=True)
+    input_data = api.get_input_data(scenario, long_names=True)
     for row in result.itertuples():
         selector = (
             (input_data["parameter_code"] == row.parameter_code)
@@ -126,13 +142,14 @@ def _validate_correct_index_combinations(api, result):
 
 
 def _validate_correct_column_names(result):
-    if set(result.columns) != {
+    required_cols = {
         "source_region_code",
         "process_code",
         "parameter_code",
         "value",
-    }:
-        result = "wrong column names"
+    }
+    if set(result.columns) != required_cols:
+        result = f"column names must be {sorted(required_cols)}"
     return result
 
 
@@ -149,6 +166,31 @@ def _validate_numeric_values(result):
 
     if error:
         result = "non numeric values in 'value' column."
+    return result
+
+
+def _validate_param_in_range(result):
+    param_ranges = {  # entries are (lower_bound, upper_bound)
+        "CAPEX": (0, np.inf),
+        "OPEX (fix)": (0, np.inf),
+        "efficiency": (0, 1),
+        "lifetime / amortization period": (0, np.inf),
+        "interest rate": (0, 1),
+        "full load hours": (0, 8760),
+    }
+    for row in result.itertuples():
+        p = row.parameter_code
+        if p in param_ranges.keys():
+            v = row.value
+            if not param_ranges[p][0] <= v <= param_ranges[p][1]:
+                result = (
+                    f"'{p}' needs to be in range [{param_ranges[p][0]}, "
+                    f"{param_ranges[p][1]}] but is {v}."
+                )
+                break
+        else:
+            logging.warning(f"range not checked for uploaded parameter '{p}'")
+
     return result
 
 
