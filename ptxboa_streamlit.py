@@ -56,7 +56,7 @@ st.title("PtX Business Opportunity Analyzer :red[draft version, please do not qu
 
 with st.container():
     if st.session_state["edit_input_data"]:
-        st.info("Data editing mode on")
+        st.info("Data editing mode **ON**")
         with st.expander("Modified data"):
             if st.session_state["user_changes_df"] is not None:
                 download_user_data()
