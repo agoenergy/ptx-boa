@@ -109,7 +109,40 @@ def aggregate_costs(
     # calculate total costs:
     res["Total"] = res.sum(axis=1)
 
-    return res
+    return sort_cost_type_columns_by_position_in_chain(res)
+
+
+def sort_cost_type_columns_by_position_in_chain(df):
+    """Change cost type column order to match the occurrence in a chain.
+
+    This is necessary for the order of the colors in the stacked barplots (GH #150).
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        columns need to be in 'cost_type_order'
+
+    Returns
+    -------
+    pd.DataFrame
+        same data with changed order of columns.
+    """
+    #
+    cost_type_order = [
+        "Electricity generation",
+        "Electrolysis",
+        "Electricity and H2 storage",
+        "Derivate production",
+        "Heat",
+        "Water",
+        "Carbon",
+        "Transportation (Pipeline)",
+        "Transportation (Ship)",
+        "Total",
+    ]
+    assert [c in cost_type_order for c in df.columns]
+    cols = [c for c in cost_type_order if c in df.columns]
+    return df[cols]
 
 
 def subset_and_pivot_input_data(
