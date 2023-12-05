@@ -130,12 +130,12 @@ def sort_cost_type_columns_by_position_in_chain(df):
     #
     cost_type_order = [
         "Electricity generation",
-        "Heat",
-        "Water",
         "Electrolysis",
         "Electricity and H2 storage",
-        "Carbon",
         "Derivate production",
+        "Heat",
+        "Water",
+        "Carbon",
         "Transportation (Pipeline)",
         "Transportation (Ship)",
         "Total",
