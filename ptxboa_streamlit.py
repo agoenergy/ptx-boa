@@ -81,9 +81,10 @@ tabs = (
     "Disclaimer",
 )
 
-# the tab key is used to identify the sac.tabs element. Whenever a tab is switched
-# programatically (e.g. app.ptxboa.functions.move_to_tab), the "tab_key" entry is
-# incremented by 1.
+# the "tab_key" is used to identify the sac.tabs element. Whenever a tab is switched
+# programatically (e.g. via app.ptxboa.functions.move_to_tab), the "tab_key" entry is
+# incremented by 1. This allows us to set the programatically set tab as the default
+# `index` in `sac.tabs()`.
 if "tab_key" not in st.session_state:
     st.session_state["tab_key"] = "tab_key_0"
 
@@ -146,7 +147,6 @@ if st.session_state[st.session_state["tab_key"]] == "Dashboard":
         costs_per_scenario=costs_per_scenario,
         costs_per_res_gen=costs_per_res_gen,
         costs_per_chain=costs_per_chain,
-        context_data=cd,
     )
 
 if st.session_state[st.session_state["tab_key"]] == "Market scanning":
