@@ -10,28 +10,8 @@ from app.plot_functions import (
     create_box_plot,
     plot_costs_on_map,
 )
-from app.ptxboa_functions import remove_subregions
+from app.ptxboa_functions import move_to_tab, remove_subregions
 from ptxboa.api import PtxboaAPI
-
-
-def _create_infobox(context_data: dict):
-    data = context_data["infobox"]
-    st.markdown(f"**Key information on {st.session_state['country']}:**")
-    demand = data.at[st.session_state["country"], "Projected H2 demand [2030]"]
-    info1 = data.at[st.session_state["country"], "key_info_1"]
-    info2 = data.at[st.session_state["country"], "key_info_2"]
-    info3 = data.at[st.session_state["country"], "key_info_3"]
-    info4 = data.at[st.session_state["country"], "key_info_4"]
-    st.markdown(f"* Projected H2 demand in 2030: {demand}")
-
-    def write_info(info):
-        if isinstance(info, str):
-            st.markdown(f"* {info}")
-
-    write_info(info1)
-    write_info(info2)
-    write_info(info3)
-    write_info(info4)
 
 
 def content_dashboard(
@@ -40,7 +20,6 @@ def content_dashboard(
     costs_per_scenario: pd.DataFrame,
     costs_per_res_gen: pd.DataFrame,
     costs_per_chain: pd.DataFrame,
-    context_data: dict,
 ):
     with st.expander("What is this?"):
         st.markdown(
@@ -84,7 +63,11 @@ Switch to other tabs to explore data and results in more detail!
         doublefig.update_layout(title_text="Cost distribution and details:")
         st.plotly_chart(doublefig, use_container_width=True)
 
-        _create_infobox(context_data)
+    st.button(
+        "More Info on Supply Region and Demand Country",
+        on_click=move_to_tab,
+        args=("Country fact sheets",),
+    )
 
     display_costs(
         remove_subregions(api, costs_per_region, st.session_state["country"]),

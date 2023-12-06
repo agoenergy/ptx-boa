@@ -69,24 +69,36 @@ with st.container():
     else:
         placeholder = st.empty()
 
+tabs = (
+    "Dashboard",
+    "Market scanning",
+    "Input data",
+    "Deep-dive countries",
+    "Country fact sheets",
+    "Certification schemes",
+    "Sustainability",
+    "Literature",
+    "Disclaimer",
+)
+
+# the tab key is used to identify the sac.tabs element. Whenever a tab is switched
+# programatically (e.g. app.ptxboa.functions.move_to_tab), the "tab_key" entry is
+# incremented by 1.
+if "tab_key" not in st.session_state:
+    st.session_state["tab_key"] = "tab_key_0"
+
+# initializing "tab at first round
+if st.session_state["tab_key"] not in st.session_state:
+    st.session_state[st.session_state["tab_key"]] = "Dashboard"
+
+print(st.session_state["tab_key"], st.session_state[st.session_state["tab_key"]])
+
 sac.tabs(
-    [
-        sac.TabsItem(label=i)
-        for i in [
-            "Dashboard",
-            "Market scanning",
-            "Input data",
-            "Deep-dive countries",
-            "Country fact sheets",
-            "Certification schemes",
-            "Sustainability",
-            "Literature",
-            "Disclaimer",
-        ]
-    ],
+    [sac.TabsItem(label=i) for i in tabs],
+    index=tabs.index(st.session_state[st.session_state["tab_key"]]),
     format_func="title",
     align="center",
-    key="tab",
+    key=st.session_state["tab_key"],
 )
 
 # create sidebar:
@@ -127,7 +139,7 @@ costs_per_chain = pf.calculate_results_list(
 cd = load_context_data()
 
 # dashboard:
-if st.session_state["tab"] == "Dashboard":
+if st.session_state[st.session_state["tab_key"]] == "Dashboard":
     content_dashboard(
         api,
         costs_per_region=costs_per_region,
@@ -137,26 +149,26 @@ if st.session_state["tab"] == "Dashboard":
         context_data=cd,
     )
 
-if st.session_state["tab"] == "Market scanning":
+if st.session_state[st.session_state["tab_key"]] == "Market scanning":
     content_market_scanning(api, costs_per_region)
 
-if st.session_state["tab"] == "Input data":
+if st.session_state[st.session_state["tab_key"]] == "Input data":
     content_input_data(api)
 
-if st.session_state["tab"] == "Deep-dive countries":
+if st.session_state[st.session_state["tab_key"]] == "Deep-dive countries":
     content_deep_dive_countries(api, costs_per_region)
 
-if st.session_state["tab"] == "Country fact sheets":
+if st.session_state[st.session_state["tab_key"]] == "Country fact sheets":
     content_country_fact_sheets(cd)
 
-if st.session_state["tab"] == "Certification schemes":
+if st.session_state[st.session_state["tab_key"]] == "Certification schemes":
     content_certification_schemes(cd)
 
-if st.session_state["tab"] == "Sustainability":
+if st.session_state[st.session_state["tab_key"]] == "Sustainability":
     content_sustainability(cd)
 
-if st.session_state["tab"] == "Literature":
+if st.session_state[st.session_state["tab_key"]] == "Literature":
     content_literature(cd)
 
-if st.session_state["tab"] == "Disclaimer":
+if st.session_state[st.session_state["tab_key"]] == "Disclaimer":
     content_disclaimer()
