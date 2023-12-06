@@ -15,6 +15,8 @@ def display_costs(
     output_unit: str | None = None,
 ):
     """Display costs as table and bar chart."""
+    if output_unit is None:
+        output_unit = st.session_state["output_unit"]
     key_suffix = key_suffix.lower().replace(" ", "_")
     st.subheader(titlestring)
 
