@@ -2,7 +2,6 @@
 """Functions for saving user data in a local file."""
 
 import logging
-import time
 
 import numpy as np
 import pandas as pd
@@ -49,11 +48,16 @@ def upload_user_data(api):
             st.session_state["upload_validation"], str
         ):  # string indicating error in validation
             msg = f"Uploaded data is not valid: {st.session_state['upload_validation']}"
-            error_box = st.error(msg)
             logging.info(f"Reject uploaded data: {msg}")
-            time.sleep(3)
-            error_box.empty()
-            st.session_state["upload_validation"] = None
+            c1, c2 = st.columns([0.9, 0.1])
+            with c1:
+                st.error(msg)
+            with c2:
+                st.button("OK", on_click=_empty_upload_validation)
+
+
+def _empty_upload_validation():
+    st.session_state["upload_validation"] = None
 
 
 def upload_validation_callback(api) -> str | pd.DataFrame:
