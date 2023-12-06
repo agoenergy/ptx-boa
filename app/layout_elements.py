@@ -52,12 +52,11 @@ def display_costs(
     fig = create_bar_chart_costs(
         df_res,
         current_selection=st.session_state[key],
+        output_unit=output_unit,
     )
     st.plotly_chart(fig, use_container_width=True)
 
     with st.expander("**Data**"):
-        column_config = config_number_columns(
-            df_res, format=f"%.1f {st.session_state['output_unit']}"
-        )
+        column_config = config_number_columns(df_res, format=f"%.1f {output_unit}")
         st.dataframe(df_res, use_container_width=True, column_config=column_config)
     return None
