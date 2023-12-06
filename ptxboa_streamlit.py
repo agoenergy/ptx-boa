@@ -5,6 +5,7 @@ import logging
 
 import pandas as pd
 import streamlit as st
+import streamlit_antd_components as sac
 
 import app.ptxboa_functions as pf
 from app.context_data import load_context_data
@@ -68,28 +69,24 @@ with st.container():
     else:
         placeholder = st.empty()
 
-(
-    t_dashboard,
-    t_market_scanning,
-    t_input_data,
-    t_deep_dive_countries,
-    t_country_fact_sheets,
-    t_certification_schemes,
-    t_sustainability,
-    t_literature,
-    t_disclaimer,
-) = st.tabs(
+sac.tabs(
     [
-        "Dashboard",
-        "Market scanning",
-        "Input data",
-        "Deep-dive countries",
-        "Country fact sheets",
-        "Certification schemes",
-        "Sustainability",
-        "Literature",
-        "Disclaimer",
-    ]
+        sac.TabsItem(label=i)
+        for i in [
+            "Dashboard",
+            "Market scanning",
+            "Input data",
+            "Deep-dive countries",
+            "Country fact sheets",
+            "Certification schemes",
+            "Sustainability",
+            "Literature",
+            "Disclaimer",
+        ]
+    ],
+    format_func="title",
+    align="center",
+    key="tab",
 )
 
 # create sidebar:
@@ -130,7 +127,7 @@ costs_per_chain = pf.calculate_results_list(
 cd = load_context_data()
 
 # dashboard:
-with t_dashboard:
+if st.session_state["tab"] == "Dashboard":
     content_dashboard(
         api,
         costs_per_region=costs_per_region,
@@ -140,26 +137,26 @@ with t_dashboard:
         context_data=cd,
     )
 
-with t_market_scanning:
+if st.session_state["tab"] == "Market scanning":
     content_market_scanning(api, costs_per_region)
 
-with t_input_data:
+if st.session_state["tab"] == "Input data":
     content_input_data(api)
 
-with t_deep_dive_countries:
+if st.session_state["tab"] == "Deep-dive countries":
     content_deep_dive_countries(api, costs_per_region)
 
-with t_country_fact_sheets:
+if st.session_state["tab"] == "Country fact sheets":
     content_country_fact_sheets(cd)
 
-with t_certification_schemes:
+if st.session_state["tab"] == "Certification schemes":
     content_certification_schemes(cd)
 
-with t_sustainability:
+if st.session_state["tab"] == "Sustainability":
     content_sustainability(cd)
 
-with t_literature:
+if st.session_state["tab"] == "Literature":
     content_literature(cd)
 
-with t_disclaimer:
+if st.session_state["tab"] == "Disclaimer":
     content_disclaimer()
