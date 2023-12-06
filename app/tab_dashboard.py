@@ -98,4 +98,6 @@ Switch to other tabs to explore data and results in more detail!
         costs_per_res_gen, "res_gen", "Costs by renewable electricity source:"
     )
 
-    display_costs(costs_per_chain, "chain", "Costs by supply chain:")
+    display_costs(
+        costs_per_chain, "chain", "Costs by supply chain:", output_unit="USD/MWh"
+    )

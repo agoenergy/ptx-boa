@@ -363,7 +363,11 @@ def _make_costs_hoverdata(res_costs: pd.DataFrame) -> list[pd.Series]:
     return [custom_hover_data]
 
 
-def create_bar_chart_costs(res_costs: pd.DataFrame, current_selection: str = None):
+def create_bar_chart_costs(
+    res_costs: pd.DataFrame,
+    current_selection: str = None,
+    output_unit: str | None = None,
+):
     """Create bar plot for costs by components, and dots for total costs.
 
     Parameters
@@ -419,9 +423,11 @@ def create_bar_chart_costs(res_costs: pd.DataFrame, current_selection: str = Non
             ax=0,
             ay=-50,
         )
-    fig.update_layout(
-        yaxis_title=st.session_state["output_unit"],
-    )
+
+    if output_unit is None:
+        output_unit = st.session_state["output_unit"]
+
+    fig.update_layout(yaxis_title=output_unit)
     return fig
 
 

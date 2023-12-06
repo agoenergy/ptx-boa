@@ -38,35 +38,33 @@ def calculate_results_list(
     api: PtxboaAPI,
     parameter_to_change: str,
     parameter_list: list = None,
+    override_session_state: dict | None = None,
 ) -> pd.DataFrame:
     """Calculate results for source regions and one selected target country.
 
     Parameters
     ----------
-    _api : :class:`~ptxboa.api.PtxboaAPI`
+    api : :class:`~ptxboa.api.PtxboaAPI`
         an instance of the api class
-    settings : dict
-        settings from the streamlit app. An example can be obtained with the
-        return value from :func:`ptxboa_functions.create_sidebar`.
     parameter_to_change : str
         element of settings for which a list of values is to be used.
     parameter_list : list or None
         The values of ``parameter_to_change`` for which the results are calculated.
         If None, all values available in the API will be used.
+    override_session_state : dict or None
+        pass a dict with custom values in order to change the calculation parameters
+        obtained from st.session_state. I None, all parameters are taken from the
+        session state. Keys of the dictionary must in "chain", "country",
+        "output_unit", "region", "res_gen", "scenario", "secproc_co2",
+        "secproc_water", "ship_own_fuel", "transport".
 
     Returns
     -------
     pd.DataFrame
-        same format as for :meth:`~ptxboa.api.PtxboaAPI.calculate()`
+        wide format dataframe with index values from `parameter_to_change` and columns
+        containing the different cost components and a column for total costs "Total".
     """
-    res_list = []
-
-    if parameter_list is None:
-        parameter_list = api.get_dimension(parameter_to_change).index
-
-    # copy settings from session_state:
-    settings = {}
-    for key in [
+    setting_keys = [
         "chain",
         "country",
         "output_unit",
@@ -77,15 +75,30 @@ def calculate_results_list(
         "secproc_water",
         "ship_own_fuel",
         "transport",
-    ]:
-        settings[key] = st.session_state[key]
+    ]
 
+    # copy settings from session_state:
+    settings = {key: st.session_state[key] for key in setting_keys}
+
+    # update settings from session state with custom values
+    if override_session_state is not None:
+        if not set(override_session_state.keys()).issubset(set(setting_keys)):
+            msg = (
+                f"keys in 'override_session_state' must be in dict_keys({setting_keys})"
+                f" but are currently {override_session_state.keys()}"
+            )
+            raise ValueError(msg)
+        settings.update(override_session_state)
+
+    if parameter_list is None:
+        parameter_list = api.get_dimension(parameter_to_change).index
+
+    res_list = []
     for parameter in parameter_list:
-        settings2 = settings.copy()
-        settings2[parameter_to_change] = parameter
+        settings.update({parameter_to_change: parameter})
         res_single = calculate_results_single(
             api,
-            settings2,
+            settings,
             user_data=st.session_state["user_changes_df"],
         )
         res_list.append(res_single)
