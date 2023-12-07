@@ -6,13 +6,41 @@ PtX-BOA is a tool that aims to promote the export of a wide range of PtX molecul
 
 ### Setup
 
-Set up conda environment and install local pre-commit hooks
+After cloning the repository, create a virtual python environment 
+in a subdirectory `.env` and activate it:
 
 ```bash
-conda env create --file environment.yml
-conda activate ptx-boa
-conda env update --prune --file environment.yaml
+$ python -m venv .\.env
+$ .env\Scripts\activate.bat
+```
+
+Install the necessary dependencies:
+
+```bash
+$ python -m pip install --upgrade pip
+$ pip install -r requirements-dev.txt
+```
+
+The code is autoformatted and checked with [pre-commit](https://pre-commit.com/).
+If you make changes to the code that you want to commit back to the repository,
+please install pre-commit with:
+
+```bash
 pre-commit install
+```
+
+If you have pre-commit installed, every file in a commit is checked to match a
+certain style and the commit is stopped if any rules are violated. Before committing,
+you can also check your staged files manually by running:
+
+```bash
+pre-commit run
+```
+
+In order to run the tests locally run [pytest](https://pytest.org) in the root directory:
+
+```bash
+pytest
 ```
 
 ## Deployment
