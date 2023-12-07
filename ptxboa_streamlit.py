@@ -92,8 +92,6 @@ if "tab_key" not in st.session_state:
 if st.session_state["tab_key"] not in st.session_state:
     st.session_state[st.session_state["tab_key"]] = "Dashboard"
 
-print(st.session_state["tab_key"], st.session_state[st.session_state["tab_key"]])
-
 sac.tabs(
     [sac.TabsItem(label=i) for i in tabs],
     index=tabs.index(st.session_state[st.session_state["tab_key"]]),
