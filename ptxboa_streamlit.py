@@ -5,6 +5,7 @@ import logging
 
 import pandas as pd
 import streamlit as st
+import streamlit_antd_components as sac
 
 import app.ptxboa_functions as pf
 from app.context_data import load_context_data
@@ -76,28 +77,35 @@ with st.container():
     else:
         placeholder = st.empty()
 
-(
-    t_dashboard,
-    t_market_scanning,
-    t_input_data,
-    t_deep_dive_countries,
-    t_country_fact_sheets,
-    t_certification_schemes,
-    t_sustainability,
-    t_literature,
-    t_disclaimer,
-) = st.tabs(
-    [
-        "Dashboard",
-        "Market scanning",
-        "Input data",
-        "Deep-dive countries",
-        "Country fact sheets",
-        "Certification schemes",
-        "Sustainability",
-        "Literature",
-        "Disclaimer",
-    ]
+tabs = (
+    "Dashboard",
+    "Market scanning",
+    "Input data",
+    "Deep-dive countries",
+    "Country fact sheets",
+    "Certification schemes",
+    "Sustainability",
+    "Literature",
+    "Disclaimer",
+)
+
+# the "tab_key" is used to identify the sac.tabs element. Whenever a tab is switched
+# programatically (e.g. via app.ptxboa.functions.move_to_tab), the "tab_key" entry is
+# incremented by 1. This allows us to set the programatically set tab as the default
+# `index` in `sac.tabs()`.
+if "tab_key" not in st.session_state:
+    st.session_state["tab_key"] = "tab_key_0"
+
+# initializing "tab at first round
+if st.session_state["tab_key"] not in st.session_state:
+    st.session_state[st.session_state["tab_key"]] = "Dashboard"
+
+sac.tabs(
+    [sac.TabsItem(label=i) for i in tabs],
+    index=tabs.index(st.session_state[st.session_state["tab_key"]]),
+    format_func="title",
+    align="center",
+    key=st.session_state["tab_key"],
 )
 
 # create sidebar:
@@ -138,36 +146,35 @@ costs_per_chain = pf.calculate_results_list(
 cd = load_context_data()
 
 # dashboard:
-with t_dashboard:
+if st.session_state[st.session_state["tab_key"]] == "Dashboard":
     content_dashboard(
         api,
         costs_per_region=costs_per_region,
         costs_per_scenario=costs_per_scenario,
         costs_per_res_gen=costs_per_res_gen,
         costs_per_chain=costs_per_chain,
-        context_data=cd,
     )
 
-with t_market_scanning:
+if st.session_state[st.session_state["tab_key"]] == "Market scanning":
     content_market_scanning(api, costs_per_region)
 
-with t_input_data:
+if st.session_state[st.session_state["tab_key"]] == "Input data":
     content_input_data(api)
 
-with t_deep_dive_countries:
+if st.session_state[st.session_state["tab_key"]] == "Deep-dive countries":
     content_deep_dive_countries(api, costs_per_region)
 
-with t_country_fact_sheets:
+if st.session_state[st.session_state["tab_key"]] == "Country fact sheets":
     content_country_fact_sheets(cd)
 
-with t_certification_schemes:
+if st.session_state[st.session_state["tab_key"]] == "Certification schemes":
     content_certification_schemes(cd)
 
-with t_sustainability:
+if st.session_state[st.session_state["tab_key"]] == "Sustainability":
     content_sustainability(cd)
 
-with t_literature:
+if st.session_state[st.session_state["tab_key"]] == "Literature":
     content_literature(cd)
 
-with t_disclaimer:
+if st.session_state[st.session_state["tab_key"]] == "Disclaimer":
     content_disclaimer()

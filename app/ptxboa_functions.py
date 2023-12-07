@@ -607,3 +607,18 @@ def display_and_edit_input_data(
         )
 
     return df
+
+
+def move_to_tab(tab_name):
+    """
+    Move to a certain tab within a callback.
+
+    Increment the session state variable "tab_key" by 1.
+
+    Parameters
+    ----------
+    tab_name : str
+    """
+    old_tab_key_nb = int(st.session_state["tab_key"].replace("tab_key_", ""))
+    st.session_state["tab_key"] = f"tab_key_{old_tab_key_nb + 1}"
+    st.session_state[st.session_state["tab_key"]] = tab_name
