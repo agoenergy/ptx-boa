@@ -27,6 +27,7 @@ def content_literature(context_data: dict):
 This tab contains a list of references used in this app.
             """
         )
+    st.markdown("## References")
     df = context_data["literature"]
     markdown_text = ""
     for _ind, row in df.iterrows():

@@ -4,19 +4,8 @@ import numpy as np
 import streamlit as st
 
 
-def content_certification_schemes(context_data: dict):
-    with st.expander("What is this?"):
-        st.markdown(
-            """
-**Get supplementary information on H2-relevant certification frameworks**
-
-This sheet provides you with an overview of current governmental regulations
-and voluntary standards for H2 products.
-            """
-        )
+def _render_scheme_info(context_data, scheme_name):
     df = context_data["certification_schemes"]
-    helptext = "Select the certification scheme you want to know more about."
-    scheme_name = st.selectbox("Select scheme:", df["name"], help=helptext)
     data = df.loc[df["name"] == scheme_name].iloc[0].to_dict()
 
     # replace na with "not specified":
@@ -75,3 +64,22 @@ IRENA & RMI (2023): Creating a global hydrogen market: certification to enable t
 
     with st.expander("**Sources**"):
         st.markdown(data["sources"])
+
+
+def content_certification_schemes(context_data: dict):
+    with st.expander("What is this?"):
+        st.markdown(
+            """
+**Get supplementary information on H2-relevant certification frameworks**
+
+This sheet provides you with an overview of current governmental regulations
+and voluntary standards for H2 products.
+            """
+        )
+
+    helptext = "Select the certification scheme you want to know more about."
+    scheme_name = st.selectbox(
+        "Select scheme:", context_data["certification_schemes"]["name"], help=helptext
+    )
+    with st.container(border=True):
+        _render_scheme_info(context_data=context_data, scheme_name=scheme_name)

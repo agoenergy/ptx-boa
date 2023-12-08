@@ -36,51 +36,56 @@ Switch to other tabs to explore data and results in more detail!
             """
         )
 
-    c_1, c_2 = st.columns([2, 1])
+    with st.container(border=True):
+        c_1, c_2 = st.columns([2, 1])
 
-    with c_1:
-        fig_map = plot_costs_on_map(
-            api, costs_per_region, scope="world", cost_component="Total"
+        with c_1:
+            fig_map = plot_costs_on_map(
+                api, costs_per_region, scope="world", cost_component="Total"
+            )
+            st.plotly_chart(fig_map, use_container_width=True)
+
+        with c_2:
+            # create box plot and bar plot:
+            fig1 = create_box_plot(costs_per_region)
+            filtered_data = costs_per_region[
+                costs_per_region.index == st.session_state["region"]
+            ]
+            fig2 = create_bar_chart_costs(filtered_data)
+            doublefig = make_subplots(rows=1, cols=2, shared_yaxes=True)
+
+            for trace in fig1.data:
+                trace.showlegend = False
+                doublefig.add_trace(trace, row=1, col=1)
+            for trace in fig2.data:
+                doublefig.add_trace(trace, row=1, col=2)
+
+            doublefig.update_layout(barmode="stack")
+            doublefig.update_layout(title_text="Cost distribution and details:")
+            st.plotly_chart(doublefig, use_container_width=True)
+
+        st.button(
+            "More Info on Supply Region and Demand Country",
+            on_click=move_to_tab,
+            args=("Country fact sheets",),
         )
-        st.plotly_chart(fig_map, use_container_width=True)
 
-    with c_2:
-        # create box plot and bar plot:
-        fig1 = create_box_plot(costs_per_region)
-        filtered_data = costs_per_region[
-            costs_per_region.index == st.session_state["region"]
-        ]
-        fig2 = create_bar_chart_costs(filtered_data)
-        doublefig = make_subplots(rows=1, cols=2, shared_yaxes=True)
+    with st.container(border=True):
+        display_costs(
+            remove_subregions(api, costs_per_region, st.session_state["country"]),
+            "region",
+            "Costs by region:",
+        )
 
-        for trace in fig1.data:
-            trace.showlegend = False
-            doublefig.add_trace(trace, row=1, col=1)
-        for trace in fig2.data:
-            doublefig.add_trace(trace, row=1, col=2)
+    with st.container(border=True):
+        display_costs(costs_per_scenario, "scenario", "Costs by data scenario:")
 
-        doublefig.update_layout(barmode="stack")
-        doublefig.update_layout(title_text="Cost distribution and details:")
-        st.plotly_chart(doublefig, use_container_width=True)
+    with st.container(border=True):
+        display_costs(
+            costs_per_res_gen, "res_gen", "Costs by renewable electricity source:"
+        )
 
-    st.button(
-        "More Info on Supply Region and Demand Country",
-        on_click=move_to_tab,
-        args=("Country fact sheets",),
-    )
-
-    display_costs(
-        remove_subregions(api, costs_per_region, st.session_state["country"]),
-        "region",
-        "Costs by region:",
-    )
-
-    display_costs(costs_per_scenario, "scenario", "Costs by data scenario:")
-
-    display_costs(
-        costs_per_res_gen, "res_gen", "Costs by renewable electricity source:"
-    )
-
-    display_costs(
-        costs_per_chain, "chain", "Costs by supply chain:", output_unit="USD/MWh"
-    )
+    with st.container(border=True):
+        display_costs(
+            costs_per_chain, "chain", "Costs by supply chain:", output_unit="USD/MWh"
+        )
