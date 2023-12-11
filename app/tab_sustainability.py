@@ -50,20 +50,7 @@ to meet basic sustainability needs.
 
 def content_sustainability(context_data: dict):
     with st.expander("What is this?"):
-        st.markdown(
-            """
-**Get supplementary information on PTX-relevant sustainability issues**
-
-Hydrogen is not sustainable by nature.
-And sustainability goes far beyond the CO2-footprint of a product.
-It also includes other environmental as well as socio-economic dimensions.
-
-This is why we provide you with a set of questions that will help you assess your plans
-for PTX production and export from a comprehensive sustainability perspective.
-Please note that this list does not claim to be exhaustive,
-but only serves for an orientation on the topic.
-            """
-        )
+        st.markdown(read_markdown_file("md/whatisthis_sustainability.md"))
 
     st.markdown("## Dimensions of sustainability")
     with st.container(border=True):

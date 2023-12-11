@@ -4,6 +4,8 @@ from urllib.parse import urlparse
 
 import streamlit as st
 
+from app.ptxboa_functions import read_markdown_file
+
 
 def _is_valid_url(url: str) -> bool:
     """Check if a string is a valid url."""
@@ -20,13 +22,8 @@ def _is_valid_url(url: str) -> bool:
 
 def content_literature(context_data: dict):
     with st.expander("What is this?"):
-        st.markdown(
-            """
-**List of references**
+        st.markdown(read_markdown_file("md/whatisthis_literature.md"))
 
-This tab contains a list of references used in this app.
-            """
-        )
     st.markdown("## References")
     df = context_data["literature"]
     markdown_text = ""

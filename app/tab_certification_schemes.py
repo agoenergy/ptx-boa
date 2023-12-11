@@ -3,6 +3,8 @@
 import numpy as np
 import streamlit as st
 
+from app.ptxboa_functions import read_markdown_file
+
 
 def _render_scheme_info(context_data, scheme_name):
     df = context_data["certification_schemes"]
@@ -68,14 +70,7 @@ IRENA & RMI (2023): Creating a global hydrogen market: certification to enable t
 
 def content_certification_schemes(context_data: dict):
     with st.expander("What is this?"):
-        st.markdown(
-            """
-**Get supplementary information on H2-relevant certification frameworks**
-
-This sheet provides you with an overview of current governmental regulations
-and voluntary standards for H2 products.
-            """
-        )
+        st.markdown(read_markdown_file("md/whatisthis_certification_schemes.md"))
 
     helptext = "Select the certification scheme you want to know more about."
     scheme_name = st.selectbox(

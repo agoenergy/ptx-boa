@@ -10,7 +10,7 @@ from app.plot_functions import (
     create_box_plot,
     plot_costs_on_map,
 )
-from app.ptxboa_functions import move_to_tab, remove_subregions
+from app.ptxboa_functions import move_to_tab, read_markdown_file, remove_subregions
 from ptxboa.api import PtxboaAPI
 
 
@@ -22,19 +22,7 @@ def content_dashboard(
     costs_per_chain: pd.DataFrame,
 ):
     with st.expander("What is this?"):
-        st.markdown(
-            """
-This is the dashboard. It shows key results according to your settings:
-- a map and a box plot that show the spread and the
-regional distribution of total costs across supply regions
-- a split-up of costs by category for your chosen supply region
-- key information on your chosen demand country.
-- total cost and cost components for different supply countries, scenarios,
-renewable electricity sources and process chains.
-
-Switch to other tabs to explore data and results in more detail!
-            """
-        )
+        st.markdown(read_markdown_file("md/whatisthis_dashboard.md"))
 
     with st.container(border=True):
         cost_component = "Total"
