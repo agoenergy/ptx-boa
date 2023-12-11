@@ -603,7 +603,6 @@ def display_and_edit_input_data(
             use_container_width=True,
             column_config=column_config,
         )
-    st.write(column_config)
     return df
 
 
