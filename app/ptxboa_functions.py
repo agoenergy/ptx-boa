@@ -523,8 +523,8 @@ def display_and_edit_input_data(
 
     if data_type == "transportation_processes":
         column_config = {
-            "levelized_costs": st.column_config.NumberColumn(
-                format="%.0f USD/kW", min_value=0
+            "levelized costs": st.column_config.NumberColumn(
+                format="%.2e USD/(kW km)", min_value=0
             ),
             "OPEX (fix)": st.column_config.NumberColumn(
                 format="%.0f USD/kW", min_value=0
@@ -534,6 +534,9 @@ def display_and_edit_input_data(
             ),
             "lifetime / amortization period": st.column_config.NumberColumn(
                 format="%.0f a", min_value=0
+            ),
+            "losses (own fuel, transport)": st.column_config.NumberColumn(
+                format="%.2e fraction per km", min_value=0
             ),
         }
 
@@ -606,7 +609,7 @@ def display_and_edit_input_data(
             use_container_width=True,
             column_config=column_config,
         )
-
+    st.write(column_config)
     return df
 
 
