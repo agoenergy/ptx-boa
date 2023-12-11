@@ -78,24 +78,22 @@ def _create_fact_sheet_supply_country(context_data: dict):
     data = df.loc[df["country_name"] == region_name].iloc[0].to_dict()
 
     st.subheader(f"Fact sheet for {region_name}")
-    text = (
-        "**Technical potential for renewable electricity generation:**\n"
-        f"- {data['source_re_tech_pot_EWI']}: "
-        f"\t{data['re_tech_pot_EWI']:.0f} TWh/a\n"
-        f"- {data['source_re_tech_pot_PTXAtlas']}: "
-        f"\t{data['re_tech_pot_PTXAtlas']:.0f} TWh/a\n"
-    )
+    with st.expander("**Technical potential for renewable electricity generation**"):
+        text = (
+            f"- {data['source_re_tech_pot_EWI']}: "
+            f"\t{data['re_tech_pot_EWI']:.0f} TWh/a\n"
+            f"- {data['source_re_tech_pot_PTXAtlas']}: "
+            f"\t{data['re_tech_pot_PTXAtlas']:.0f} TWh/a\n"
+        )
+        st.markdown(text)
 
-    st.markdown(text)
-
-    text = (
-        "**LNG infrastructure:**\n"
-        f"- {data['lng_export']} export terminals\n"
-        f"- {data['lng_import']} import terminals.\n\n"
-        f"*Source: {data['source_lng']}*"
-    )
-
-    st.markdown(text)
+    with st.expander("**LNG infrastructure**"):
+        text = (
+            f"- {data['lng_export']} export terminals\n"
+            f"- {data['lng_import']} import terminals.\n\n"
+            f"*Source: {data['source_lng']}*"
+        )
+        st.markdown(text)
 
     st.write("TODO: CCS pot, elec prices, H2 strategy")
 
