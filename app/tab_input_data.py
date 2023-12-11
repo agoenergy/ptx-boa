@@ -85,12 +85,19 @@ def content_input_data(api: PtxboaAPI) -> None:
                 scope=None,
                 key="input_data_editor_conversion_processes",
             )
-        st.markdown("**Transportation processes:**")
+        st.markdown("**Transportation (ships and pipelines):**")
         with st.expander("**Data**"):
-            st.markdown("TODO: fix data")
             display_and_edit_input_data(
                 api,
                 data_type="transportation_processes",
                 scope=None,
                 key="input_data_editor_transportation_processes",
+            )
+        st.markdown("**Transportation (compression, liquefication and reconversion):**")
+        with st.expander("**Data**"):
+            display_and_edit_input_data(
+                api,
+                data_type="reconversion_processes",
+                scope=None,
+                key="input_data_editor_reconversion_processes",
             )

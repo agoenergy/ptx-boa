@@ -212,6 +212,7 @@ def get_data_type_from_input_data(
     data_type: Literal[
         "conversion_processes",
         "transportation_processes",
+        "reconversion_processes",
         "CAPEX",
         "full load hours",
         "interest rate",
@@ -231,8 +232,8 @@ def get_data_type_from_input_data(
         api class instance
     data_type : str
         the data type which should be selected. Needs to be one of
-        "conversion_processes", "transportation_processes", "CAPEX", "full load hours",
-        and "interest rate".
+        "conversion_processes", "transportation_processes", "reconversion_processes",
+        "CAPEX", "full load hours", and "interest rate".
     scope : Literal[None, "world", "Argentina", "Morocco", "South Africa"]
         The regional scope. Is automatically set to None for data of
         data type "conversion_processes" and "transportation_processes" which is not
@@ -247,7 +248,11 @@ def get_data_type_from_input_data(
         user_data=st.session_state["user_changes_df"],
     )
 
-    if data_type in ["conversion_processes", "transportation_processes"]:
+    if data_type in [
+        "conversion_processes",
+        "transportation_processes",
+        "reconversion_processes",
+    ]:
         scope = None
         source_region_code = [""]
         index = "process_code"
@@ -273,7 +278,18 @@ def get_data_type_from_input_data(
             # FIXME: add bunker fuel consumption
         ]
         process_code = processes.loc[
-            processes["is_transport"], "process_name"
+            processes["is_transport"] & ~processes["is_transformation"], "process_name"
+        ].to_list()
+
+    if data_type == "reconversion_processes":
+        parameter_code = [
+            "CAPEX",
+            "OPEX (fix)",
+            "lifetime / amortization period",
+            "efficiency",
+        ]
+        process_code = processes.loc[
+            processes["is_transport"] & processes["is_transformation"], "process_name"
         ].to_list()
 
     if data_type in ["CAPEX", "full load hours", "interest rate"]:
@@ -466,7 +482,7 @@ def display_and_edit_input_data(
     data_type: Literal[
         "conversion_processes",
         "transportation_processes",
-        "CAPEX",
+        "reconversion_processes" "CAPEX",
         "full load hours",
         "interest rate",
     ],
@@ -485,8 +501,8 @@ def display_and_edit_input_data(
         an instance of the api class
     data_type : str
         the data type which should be selected. Needs to be one of
-        "conversion_processes", "transportation_processes", "CAPEX", "full load hours",
-        and "interest rate".
+        "conversion_processes", "transportation_processes", "reconversion_processes",
+        "CAPEX", "full load hours", and "interest rate".
     scope : Literal[None, "world", "Argentina", "Morocco", "South Africa"]
         The regional scope. Is automatically set to None for data of
         data type "conversion_processes" and "transportation_processes" which is not
@@ -500,14 +516,18 @@ def display_and_edit_input_data(
     """
     df = get_data_type_from_input_data(api, data_type=data_type, scope=scope)
 
-    if data_type in ["conversion_processes", "transportation_processes"]:
+    if data_type in [
+        "conversion_processes",
+        "transportation_processes",
+        "reconversion_processes",
+    ]:
         index = "process_code"
         columns = "parameter_code"
         missing_index_name = "source_region_code"
         missing_index_value = None
         column_config = None
 
-    if data_type == "conversion_processes":
+    if data_type in ["conversion_processes", "reconversion_processes"]:
         column_config = {
             "CAPEX": st.column_config.NumberColumn(format="%.0f USD/kW", min_value=0),
             "OPEX (fix)": st.column_config.NumberColumn(
