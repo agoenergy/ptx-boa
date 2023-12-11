@@ -526,12 +526,6 @@ def display_and_edit_input_data(
             "levelized costs": st.column_config.NumberColumn(
                 format="%.2e USD/(kW km)", min_value=0
             ),
-            "OPEX (fix)": st.column_config.NumberColumn(
-                format="%.0f USD/kW", min_value=0
-            ),
-            "efficiency": st.column_config.NumberColumn(
-                format="%.2f", min_value=0, max_value=1
-            ),
             "lifetime / amortization period": st.column_config.NumberColumn(
                 format="%.0f a", min_value=0
             ),
