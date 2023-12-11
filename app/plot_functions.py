@@ -307,6 +307,7 @@ def _set_map_layout(fig: go.Figure, colorbar_title: str) -> go.Figure:
             "len": 0.5,
         },  # colorbar
         margin={"t": 20, "b": 20, "l": 20, "r": 20},  # reduce margin around figure
+        height=500,
     )
 
     # Set the hover template to use the custom data

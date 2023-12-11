@@ -70,6 +70,7 @@ Switch to other tabs to explore data and results in more detail!
                 doublefig.add_trace(trace, row=1, col=2)
 
             doublefig.update_layout(barmode="stack")
+            doublefig.update_layout(height=500)
             st.plotly_chart(doublefig, use_container_width=True)
 
         st.button(
