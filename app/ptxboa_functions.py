@@ -210,6 +210,7 @@ def subset_and_pivot_input_data(
 def get_data_type_from_input_data(
     api: PtxboaAPI,
     data_type: Literal[
+        "electricity_generation",
         "conversion_processes",
         "transportation_processes",
         "reconversion_processes",
@@ -232,8 +233,8 @@ def get_data_type_from_input_data(
         api class instance
     data_type : str
         the data type which should be selected. Needs to be one of
-        "conversion_processes", "transportation_processes", "reconversion_processes",
-        "CAPEX", "full load hours", and "interest rate".
+        "electricity_generation", "conversion_processes", "transportation_processes",
+        "reconversion_processes", "CAPEX", "full load hours", and "interest rate".
     scope : Literal[None, "world", "Argentina", "Morocco", "South Africa"]
         The regional scope. Is automatically set to None for data of
         data type "conversion_processes" and "transportation_processes" which is not
@@ -249,6 +250,7 @@ def get_data_type_from_input_data(
     )
 
     if data_type in [
+        "electricity_generation",
         "conversion_processes",
         "transportation_processes",
         "reconversion_processes",
@@ -259,6 +261,17 @@ def get_data_type_from_input_data(
         columns = "parameter_code"
         processes = api.get_dimension("process")
 
+    if data_type == "electricity_generation":
+        parameter_code = [
+            "CAPEX",
+            "OPEX (fix)",
+            "lifetime / amortization period",
+            "efficiency",
+        ]
+        process_code = processes.loc[
+            processes["is_re_generation"], "process_name"
+        ].to_list()
+
     if data_type == "conversion_processes":
         parameter_code = [
             "CAPEX",
@@ -267,7 +280,7 @@ def get_data_type_from_input_data(
             "efficiency",
         ]
         process_code = processes.loc[
-            ~processes["is_transport"], "process_name"
+            ~processes["is_transport"] & ~processes["is_re_generation"], "process_name"
         ].to_list()
 
     if data_type == "transportation_processes":
@@ -480,6 +493,7 @@ def config_number_columns(df: pd.DataFrame, **kwargs) -> {}:
 def display_and_edit_input_data(
     api: PtxboaAPI,
     data_type: Literal[
+        "electricity_generation",
         "conversion_processes",
         "transportation_processes",
         "reconversion_processes" "CAPEX",
@@ -501,8 +515,8 @@ def display_and_edit_input_data(
         an instance of the api class
     data_type : str
         the data type which should be selected. Needs to be one of
-        "conversion_processes", "transportation_processes", "reconversion_processes",
-        "CAPEX", "full load hours", and "interest rate".
+        "electricity_generation", "conversion_processes", "transportation_processes",
+        "reconversion_processes", "CAPEX", "full load hours", and "interest rate".
     scope : Literal[None, "world", "Argentina", "Morocco", "South Africa"]
         The regional scope. Is automatically set to None for data of
         data type "conversion_processes" and "transportation_processes" which is not
@@ -517,6 +531,7 @@ def display_and_edit_input_data(
     df = get_data_type_from_input_data(api, data_type=data_type, scope=scope)
 
     if data_type in [
+        "electricity_generation",
         "conversion_processes",
         "transportation_processes",
         "reconversion_processes",
@@ -527,7 +542,11 @@ def display_and_edit_input_data(
         missing_index_value = None
         column_config = None
 
-    if data_type in ["conversion_processes", "reconversion_processes"]:
+    if data_type in [
+        "electricity_generation",
+        "conversion_processes",
+        "reconversion_processes",
+    ]:
         column_config = {
             "CAPEX": st.column_config.NumberColumn(format="%.0f USD/kW", min_value=0),
             "OPEX (fix)": st.column_config.NumberColumn(

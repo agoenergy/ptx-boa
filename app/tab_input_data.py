@@ -75,9 +75,16 @@ def content_input_data(api: PtxboaAPI) -> None:
             st.plotly_chart(fig, use_container_width=True)
 
     with st.container(border=True):
-        st.subheader("Data that is identical for all regions")
-
-        st.markdown("**Conversion processes:**")
+        st.subheader("Global data")
+        st.markdown("**Electricity generation:**")
+        with st.expander("**Data**"):
+            display_and_edit_input_data(
+                api,
+                data_type="electricity_generation",
+                scope=None,
+                key="input_data_editor_electricity_generation",
+            )
+        st.markdown("**Electrolysis and derivate production:**")
         with st.expander("**Data**"):
             display_and_edit_input_data(
                 api,
