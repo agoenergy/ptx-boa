@@ -7,9 +7,9 @@ from app.ptxboa_functions import read_markdown_file
 
 def content_info():
     with st.container(border=True):
-        st.markdown(read_markdown_file("static/info_intro.md"))
+        st.markdown(read_markdown_file("md/info_intro.md"))
 
-        st.image("static/costs_of_hydrogen.png", width=800)
+        st.image("img/costs_of_hydrogen.png", width=800)
 
     with st.container(border=True):
         st.markdown(
@@ -27,8 +27,8 @@ def content_info():
             ],
             horizontal=True,
         )
-        st.image("static/inout_header.png", width=800)
-        st.image(f"static/inout_{step}.png", width=800)
+        st.image("img/inout_header.png", width=800)
+        st.image(f"img/inout_{step}.png", width=800)
 
         st.markdown(
             """
@@ -41,7 +41,7 @@ def content_info():
         )
 
     with st.container(border=True):
-        st.markdown(read_markdown_file("static/info_disclaimer.md"))
+        st.markdown(read_markdown_file("md/info_disclaimer.md"))
 
     with st.container(border=True):
         c1, c2, c3 = st.columns(3)

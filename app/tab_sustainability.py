@@ -6,13 +6,13 @@ from app.ptxboa_functions import read_markdown_file
 
 
 def _render_figure_and_introduction():
-    st.image("static/sustainability.png")
+    st.image("img/sustainability.png")
     captiontext = (
         "Source: https://ptx-hub.org/wp-content/uploads/2022/05/"
         "PtX-Hub-PtX.Sustainability-Dimensions-and-Concerns-Scoping-Paper.pdf"
     )
     st.caption(captiontext)
-    st.markdown(read_markdown_file("static/sustainability_intro.md"))
+    st.markdown(read_markdown_file("md/sustainability_intro.md"))
 
 
 def _interactive_sustainability_dimension_info(context_data: dict):
