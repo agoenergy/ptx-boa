@@ -391,7 +391,7 @@ def create_bar_chart_costs(
         marker={"size": 10, "color": "black"},
         name="Total",
         text=res_costs["Total"].apply(
-            lambda x: f"{x:.2f}"
+            lambda x: f"{x:.0f}"
         ),  # Use 'total' column values as text labels
         textposition="top center",  # Position of the text label above the marker
     )
