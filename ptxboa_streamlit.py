@@ -14,7 +14,7 @@ from app.tab_certification_schemes import content_certification_schemes
 from app.tab_country_fact_sheets import content_country_fact_sheets
 from app.tab_dashboard import content_dashboard
 from app.tab_deep_dive_countries import content_deep_dive_countries
-from app.tab_disclaimer import content_disclaimer
+from app.tab_info import content_info
 from app.tab_input_data import content_input_data
 from app.tab_literature import content_literature
 from app.tab_market_scanning import content_market_scanning
@@ -86,8 +86,13 @@ tabs = (
     "Certification schemes",
     "Sustainability",
     "Literature",
-    "Disclaimer",
+    "Info",
 )
+
+tabs_icons = {
+    "Dashboard": "house-fill",
+    "Info": "question-circle-fill",
+}
 
 # the "tab_key" is used to identify the sac.tabs element. Whenever a tab is switched
 # programatically (e.g. via app.ptxboa.functions.move_to_tab), the "tab_key" entry is
@@ -101,7 +106,7 @@ if st.session_state["tab_key"] not in st.session_state:
     st.session_state[st.session_state["tab_key"]] = "Dashboard"
 
 sac.tabs(
-    [sac.TabsItem(label=i) for i in tabs],
+    [sac.TabsItem(label=i, icon=tabs_icons.get(i, None)) for i in tabs],
     index=tabs.index(st.session_state[st.session_state["tab_key"]]),
     format_func="title",
     align="center",
@@ -176,5 +181,5 @@ if st.session_state[st.session_state["tab_key"]] == "Sustainability":
 if st.session_state[st.session_state["tab_key"]] == "Literature":
     content_literature(cd)
 
-if st.session_state[st.session_state["tab_key"]] == "Disclaimer":
-    content_disclaimer()
+if st.session_state[st.session_state["tab_key"]] == "Info":
+    content_info()
