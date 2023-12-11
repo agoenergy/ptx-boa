@@ -37,15 +37,24 @@ Switch to other tabs to explore data and results in more detail!
         )
 
     with st.container(border=True):
+        cost_component = "Total"
+        title_string = (
+            f"{cost_component} cost of exporting "
+            f"{st.session_state['chain']} to "
+            f"{st.session_state['country']}:"
+        )
+        st.subheader(title_string)
         c_1, c_2 = st.columns([2, 1])
 
         with c_1:
+            st.markdown("##### Costs by supply country:")
             fig_map = plot_costs_on_map(
-                api, costs_per_region, scope="world", cost_component="Total"
+                api, costs_per_region, scope="world", cost_component=cost_component
             )
             st.plotly_chart(fig_map, use_container_width=True)
 
         with c_2:
+            st.markdown("##### Cost distribution and details:")
             # create box plot and bar plot:
             fig1 = create_box_plot(costs_per_region)
             filtered_data = costs_per_region[
@@ -61,7 +70,6 @@ Switch to other tabs to explore data and results in more detail!
                 doublefig.add_trace(trace, row=1, col=2)
 
             doublefig.update_layout(barmode="stack")
-            doublefig.update_layout(title_text="Cost distribution and details:")
             st.plotly_chart(doublefig, use_container_width=True)
 
         st.button(
