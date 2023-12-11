@@ -82,9 +82,10 @@ def content_info():
         st.markdown("#### Licensing and quotation")
         st.markdown(
             """
-        This tool is licensed under a **TBD: determine license** license.
+        This tool is licensed under the Creative Commons CC-BY-SA license
+        (https://creativecommons.org/licenses/by-sa/4.0/).
 
-        Please cite is as: Oeko-Institut, Agora Energiewende & Agora Industry (2023):
+        Please cite it as: Oeko-Institut, Agora Energiewende & Agora Industry (2023):
         PTX Business Opportunity Analyser
         https://ptx-boa.streamlit.app/
             """
