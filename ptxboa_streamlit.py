@@ -106,10 +106,7 @@ if st.session_state["tab_key"] not in st.session_state:
     st.session_state[st.session_state["tab_key"]] = "Dashboard"
 
 sac.tabs(
-    [
-        sac.TabsItem(label=i, icon=tabs_icons[i] if i in tabs_icons.keys() else None)
-        for i in tabs
-    ],
+    [sac.TabsItem(label=i, icon=tabs_icons.get(i, None)) for i in tabs],
     index=tabs.index(st.session_state[st.session_state["tab_key"]]),
     format_func="title",
     align="center",
