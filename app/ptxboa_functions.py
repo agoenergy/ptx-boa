@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Utility functions for streamlit app."""
+from pathlib import Path
 from typing import Literal
 
 import pandas as pd
@@ -622,3 +623,8 @@ def move_to_tab(tab_name):
     old_tab_key_nb = int(st.session_state["tab_key"].replace("tab_key_", ""))
     st.session_state["tab_key"] = f"tab_key_{old_tab_key_nb + 1}"
     st.session_state[st.session_state["tab_key"]] = tab_name
+
+
+def read_markdown_file(markdown_file: str) -> str:
+    """Import markdown file as string."""
+    return Path(markdown_file).read_text(encoding="UTF-8")
