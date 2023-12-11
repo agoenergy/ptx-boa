@@ -19,7 +19,7 @@ production and policies?**
 **What questions should be asked before and during project development?**
 
 In this tab we aim to provide a basic approach to these questions.
-To the left, you can see the framework along which the compilation
+The diagram shows the framework along which the compilation
 of sustainability aspects in this tab is structured. It is based on the EESG framework
 as elaborated by the PtX Hub and sustainability criteria developed by the Öko-Institut.
 
