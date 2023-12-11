@@ -628,3 +628,13 @@ def move_to_tab(tab_name):
 def read_markdown_file(markdown_file: str) -> str:
     """Import markdown file as string."""
     return Path(markdown_file).read_text(encoding="UTF-8")
+
+
+def get_region_from_subregion(subregion: str) -> str:
+    """
+    For a subregion, get the name of the region it belongs to.
+
+    If subregion is not a subregion, return its own name.
+    """
+    region = subregion.split(" (")[0]
+    return region

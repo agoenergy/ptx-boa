@@ -2,6 +2,8 @@
 """Content of country fact sheets tab and functions to create it."""
 import streamlit as st
 
+from app.ptxboa_functions import get_region_from_subregion
+
 
 def _create_fact_sheet_demand_country(context_data: dict):
     # select country:
@@ -67,12 +69,15 @@ def _create_fact_sheet_demand_country(context_data: dict):
 
 def _create_fact_sheet_supply_country(context_data: dict):
     """Display information on a chosen supply country."""
-    # select country:
+    # select region:
     country_name = st.session_state["region"]
-    df = context_data["supply"]
-    data = df.loc[df["country_name"] == country_name].iloc[0].to_dict()
 
-    st.subheader(f"Fact sheet for {country_name}")
+    # for subregions, select name of region they belong to:
+    region_name = get_region_from_subregion(country_name)
+    df = context_data["supply"]
+    data = df.loc[df["country_name"] == region_name].iloc[0].to_dict()
+
+    st.subheader(f"Fact sheet for {region_name}")
     text = (
         "**Technical potential for renewable electricity generation:**\n"
         f"- {data['source_re_tech_pot_EWI']}: "
