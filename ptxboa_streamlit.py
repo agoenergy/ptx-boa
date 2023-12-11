@@ -89,6 +89,11 @@ tabs = (
     "Info",
 )
 
+tabs_icons = {
+    "Dashboard": "house-fill",
+    "Info": "question-circle-fill",
+}
+
 # the "tab_key" is used to identify the sac.tabs element. Whenever a tab is switched
 # programatically (e.g. via app.ptxboa.functions.move_to_tab), the "tab_key" entry is
 # incremented by 1. This allows us to set the programatically set tab as the default
@@ -101,7 +106,10 @@ if st.session_state["tab_key"] not in st.session_state:
     st.session_state[st.session_state["tab_key"]] = "Dashboard"
 
 sac.tabs(
-    [sac.TabsItem(label=i) for i in tabs],
+    [
+        sac.TabsItem(label=i, icon=tabs_icons[i] if i in tabs_icons.keys() else None)
+        for i in tabs
+    ],
     index=tabs.index(st.session_state[st.session_state["tab_key"]]),
     format_func="title",
     align="center",
