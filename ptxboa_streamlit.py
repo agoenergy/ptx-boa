@@ -62,6 +62,12 @@ st.markdown(css, unsafe_allow_html=True)
 api = st.cache_resource(PtxboaAPI)()
 st.title("PtX Business Opportunity Analyzer :red[draft version, please do not quote!]")
 
+
+with st.container():
+    c1, c2 = st.columns([0.5, 0.5])
+    with c1:
+        st.image("img/logos.png", use_column_width="always")
+
 with st.container():
     if st.session_state["edit_input_data"]:
         st.info("Data editing mode **ON**")

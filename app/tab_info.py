@@ -6,8 +6,6 @@ from app.ptxboa_functions import read_markdown_file
 
 
 def content_info():
-    st.image("img/logos.png")
-
     with st.container(border=True):
         st.markdown(read_markdown_file("md/info_intro.md"))
 
@@ -83,3 +81,5 @@ def content_info():
                 """,
                 unsafe_allow_html=True,
             )
+
+        st.image("img/logos.png")
