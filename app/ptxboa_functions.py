@@ -614,6 +614,14 @@ def display_and_edit_input_data(
                     "**Apply Changes** button below to rerun calculations."
                 )
             )
+
+            if df.isna().any().any():
+                # TODO: remove this warning when input data is fixed.
+                msg = (
+                    "Draft version: Do no edit empty data points (None), this will "
+                    "throw an error. Missing data has to be filled before publishing."
+                )
+                st.warning(msg)
             df = st.data_editor(
                 df,
                 use_container_width=True,
