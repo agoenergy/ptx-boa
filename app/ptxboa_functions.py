@@ -217,6 +217,7 @@ def get_data_type_from_input_data(
         "CAPEX",
         "full load hours",
         "interest rate",
+        "specific_costs",
     ],
     scope: Literal[None, "world", "Argentina", "Morocco", "South Africa"],
 ) -> pd.DataFrame:
@@ -234,7 +235,8 @@ def get_data_type_from_input_data(
     data_type : str
         the data type which should be selected. Needs to be one of
         "electricity_generation", "conversion_processes", "transportation_processes",
-        "reconversion_processes", "CAPEX", "full load hours", and "interest rate".
+        "reconversion_processes", "CAPEX", "full load hours", "interest rate",
+        and "specific costs".
     scope : Literal[None, "world", "Argentina", "Morocco", "South Africa"]
         The regional scope. Is automatically set to None for data of
         data type "conversion_processes" and "transportation_processes" which is not
@@ -260,6 +262,15 @@ def get_data_type_from_input_data(
         index = "process_code"
         columns = "parameter_code"
         processes = api.get_dimension("process")
+
+    if data_type == "specific_costs":
+        scope = None
+        source_region_code = [""]
+        index = "flow_code"
+        columns = "parameter_code"
+        processes = [""]
+        parameter_code = ["specific costs"]
+        process_code = [""]
 
     if data_type == "electricity_generation":
         parameter_code = [
@@ -499,6 +510,7 @@ def display_and_edit_input_data(
         "reconversion_processes" "CAPEX",
         "full load hours",
         "interest rate",
+        "specific_costs",
     ],
     scope: Literal["world", "Argentina", "Morocco", "South Africa"],
     key: str,
@@ -516,7 +528,8 @@ def display_and_edit_input_data(
     data_type : str
         the data type which should be selected. Needs to be one of
         "electricity_generation", "conversion_processes", "transportation_processes",
-        "reconversion_processes", "CAPEX", "full load hours", and "interest rate".
+        "reconversion_processes", "CAPEX", "full load hours", "interest rate",
+        and "specific costs".
     scope : Literal[None, "world", "Argentina", "Morocco", "South Africa"]
         The regional scope. Is automatically set to None for data of
         data type "conversion_processes" and "transportation_processes" which is not
@@ -573,6 +586,13 @@ def display_and_edit_input_data(
             )
             for c in df.columns
         }
+
+    if data_type == "specific_costs":
+        index = "flow_code"
+        columns = "parameter_code"
+        missing_index_name = None
+        missing_index_value = None
+        column_config = get_column_config()
 
     # if editing is enabled, store modifications in session_state:
     if st.session_state["edit_input_data"]:
@@ -660,6 +680,11 @@ def get_column_config() -> dict:
         ),
         "losses (own fuel, transport)": st.column_config.NumberColumn(
             format="%.2e fraction per km", min_value=0
+        ),
+        "specific costs": st.column_config.NumberColumn(
+            format="%.3f [various units]",
+            min_value=0,
+            help=read_markdown_file("md/helptext_columns_specific_costs.md"),
         ),
     }
     return column_config

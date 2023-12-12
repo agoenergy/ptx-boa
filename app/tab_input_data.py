@@ -108,3 +108,11 @@ def content_input_data(api: PtxboaAPI) -> None:
                 scope=None,
                 key="input_data_editor_reconversion_processes",
             )
+        st.markdown("**Specific costs for materials and energy carriers:**")
+        with st.expander("**Data**"):
+            display_and_edit_input_data(
+                api,
+                data_type="specific_costs",
+                scope=None,
+                key="input_data_editor_specific_costs",
+            )
