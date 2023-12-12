@@ -39,6 +39,10 @@ def content_dashboard(
             fig_map = plot_costs_on_map(
                 api, costs_per_region, scope="world", cost_component=cost_component
             )
+            fig_map.update_layout(
+                height=350,
+                margin={"l": 10, "r": 10, "t": 10, "b": 10},
+            )
             st.plotly_chart(fig_map, use_container_width=True)
 
         with c_2:
@@ -60,7 +64,7 @@ def content_dashboard(
             doublefig.update_layout(barmode="stack")
             doublefig.update_layout(
                 height=350,
-                margin=dict(l=10, r=10, t=20, b=20),
+                margin={"l": 10, "r": 10, "t": 20, "b": 20},
             )
 
             st.plotly_chart(doublefig, use_container_width=True)
