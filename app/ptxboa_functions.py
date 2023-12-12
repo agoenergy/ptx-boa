@@ -540,38 +540,7 @@ def display_and_edit_input_data(
         columns = "parameter_code"
         missing_index_name = "source_region_code"
         missing_index_value = None
-        column_config = None
-
-    if data_type in [
-        "electricity_generation",
-        "conversion_processes",
-        "reconversion_processes",
-    ]:
-        column_config = {
-            "CAPEX": st.column_config.NumberColumn(format="%.0f USD/kW", min_value=0),
-            "OPEX (fix)": st.column_config.NumberColumn(
-                format="%.0f USD/kW", min_value=0
-            ),
-            "efficiency": st.column_config.NumberColumn(
-                format="%.2f", min_value=0, max_value=1
-            ),
-            "lifetime / amortization period": st.column_config.NumberColumn(
-                format="%.0f a", min_value=0
-            ),
-        }
-
-    if data_type == "transportation_processes":
-        column_config = {
-            "levelized costs": st.column_config.NumberColumn(
-                format="%.2e USD/(kW km)", min_value=0
-            ),
-            "lifetime / amortization period": st.column_config.NumberColumn(
-                format="%.0f a", min_value=0
-            ),
-            "losses (own fuel, transport)": st.column_config.NumberColumn(
-                format="%.2e fraction per km", min_value=0
-            ),
-        }
+        column_config = get_column_config()
 
     if data_type == "interest rate":
         index = "source_region_code"
@@ -673,3 +642,24 @@ def get_region_from_subregion(subregion: str) -> str:
     """
     region = subregion.split(" (")[0]
     return region
+
+
+def get_column_config() -> dict:
+    """Define column configuration for dataframe display."""
+    column_config = {
+        "CAPEX": st.column_config.NumberColumn(format="%.0f USD/kW", min_value=0),
+        "OPEX (fix)": st.column_config.NumberColumn(format="%.0f USD/kW", min_value=0),
+        "efficiency": st.column_config.NumberColumn(
+            format="%.2f", min_value=0, max_value=1
+        ),
+        "lifetime / amortization period": st.column_config.NumberColumn(
+            format="%.0f a", min_value=0
+        ),
+        "levelized costs": st.column_config.NumberColumn(
+            format="%.2e USD/(kW km)", min_value=0
+        ),
+        "losses (own fuel, transport)": st.column_config.NumberColumn(
+            format="%.2e fraction per km", min_value=0
+        ),
+    }
+    return column_config
