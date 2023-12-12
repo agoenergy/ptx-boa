@@ -63,15 +63,15 @@ def param_above_range_user_data() -> pd.DataFrame:
         ("valid_user_data", "valid_user_data"),
         (
             "wrong_column_name_user_data",
-            "column names must be ['parameter_code', 'process_code', 'source_region_code', 'value']",  # noqa
+            "column names must be ['flow_code', 'parameter_code', 'process_code', 'source_region_code', 'value']",  # noqa
         ),
         (
             "too_many_columns_user_data",
-            "column names must be ['parameter_code', 'process_code', 'source_region_code', 'value']",  # noqa
+            "column names must be ['flow_code', 'parameter_code', 'process_code', 'source_region_code', 'value']",  # noqa
         ),
         (
             "non_existent_index_user_data",
-            "invalid index combination 'India | Ammonia Synthesis (Haber-Bosch) | efficiency'",  # noqa
+            "invalid index combination 'India | Ammonia Synthesis (Haber-Bosch) | efficiency | '",  # noqa
         ),
         (
             "non_numeric_empty_user_data",
