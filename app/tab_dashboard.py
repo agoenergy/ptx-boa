@@ -58,7 +58,11 @@ def content_dashboard(
                 doublefig.add_trace(trace, row=1, col=2)
 
             doublefig.update_layout(barmode="stack")
-            doublefig.update_layout(height=500)
+            doublefig.update_layout(
+                height=350,
+                margin=dict(l=10, r=10, t=20, b=20),
+            )
+
             st.plotly_chart(doublefig, use_container_width=True)
 
         st.button(
