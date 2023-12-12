@@ -30,7 +30,7 @@ def content_info():
             horizontal=True,
         )
         st.image("img/inout_header.png", width=800)
-        st.image(f"img/inout_{step.replace(" ", "_").lower()}.png", width=800)
+        st.image(f"img/inout_{step.replace(' ', '_').lower()}.png", width=800)
 
         st.markdown(
             """
