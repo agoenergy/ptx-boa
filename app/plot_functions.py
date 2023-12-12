@@ -75,13 +75,6 @@ def plot_costs_on_map(
     -------
     go.Figure
     """
-    # define title:
-    title_string = (
-        f"{cost_component} cost of exporting "
-        f"{st.session_state['chain']} to "
-        f"{st.session_state['country']}"
-    )
-
     if scope == "world":
         # Create a choropleth world map:
         fig = _choropleth_map_world(
@@ -99,9 +92,7 @@ def plot_costs_on_map(
             custom_data_func=_make_costs_hoverdata,
         )
 
-    return _set_map_layout(
-        fig, title=title_string, colorbar_title=st.session_state["output_unit"]
-    )
+    return _set_map_layout(fig, colorbar_title=st.session_state["output_unit"])
 
 
 def plot_input_data_on_map(
@@ -111,7 +102,6 @@ def plot_input_data_on_map(
         "PV tilted", "Wind Offshore", "Wind Onshore", "Wind-PV-Hybrid", "interest rate"
     ],
     scope: Literal["world", "Argentina", "Morocco", "South Africa"] = "world",
-    title: str = "",
 ) -> go.Figure:
     """
     Plot input data on a map.
@@ -192,9 +182,7 @@ def plot_input_data_on_map(
             custom_data_func_kwargs=custom_data_func_kwargs,
         )
 
-    return _set_map_layout(
-        fig, title=title, colorbar_title=custom_data_func_kwargs["unit"]
-    )
+    return _set_map_layout(fig, colorbar_title=custom_data_func_kwargs["unit"])
 
 
 def _choropleth_map_world(
@@ -278,7 +266,7 @@ def _choropleth_map_deep_dive_country(
     return fig
 
 
-def _set_map_layout(fig: go.Figure, title: str, colorbar_title: str) -> go.Figure:
+def _set_map_layout(fig: go.Figure, colorbar_title: str) -> go.Figure:
     """
     Apply a unified layout for all maps used in the app.
 
@@ -319,7 +307,7 @@ def _set_map_layout(fig: go.Figure, title: str, colorbar_title: str) -> go.Figur
             "len": 0.5,
         },  # colorbar
         margin={"t": 20, "b": 20, "l": 20, "r": 20},  # reduce margin around figure
-        title=title,
+        height=500,
     )
 
     # Set the hover template to use the custom data
@@ -403,7 +391,7 @@ def create_bar_chart_costs(
         marker={"size": 10, "color": "black"},
         name="Total",
         text=res_costs["Total"].apply(
-            lambda x: f"{x:.2f}"
+            lambda x: f"{x:.0f}"
         ),  # Use 'total' column values as text labels
         textposition="top center",  # Position of the text label above the marker
     )

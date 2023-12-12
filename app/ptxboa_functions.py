@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Utility functions for streamlit app."""
+from pathlib import Path
 from typing import Literal
 
 import pandas as pd
@@ -209,8 +210,10 @@ def subset_and_pivot_input_data(
 def get_data_type_from_input_data(
     api: PtxboaAPI,
     data_type: Literal[
+        "electricity_generation",
         "conversion_processes",
         "transportation_processes",
+        "reconversion_processes",
         "CAPEX",
         "full load hours",
         "interest rate",
@@ -230,8 +233,8 @@ def get_data_type_from_input_data(
         api class instance
     data_type : str
         the data type which should be selected. Needs to be one of
-        "conversion_processes", "transportation_processes", "CAPEX", "full load hours",
-        and "interest rate".
+        "electricity_generation", "conversion_processes", "transportation_processes",
+        "reconversion_processes", "CAPEX", "full load hours", and "interest rate".
     scope : Literal[None, "world", "Argentina", "Morocco", "South Africa"]
         The regional scope. Is automatically set to None for data of
         data type "conversion_processes" and "transportation_processes" which is not
@@ -246,12 +249,28 @@ def get_data_type_from_input_data(
         user_data=st.session_state["user_changes_df"],
     )
 
-    if data_type in ["conversion_processes", "transportation_processes"]:
+    if data_type in [
+        "electricity_generation",
+        "conversion_processes",
+        "transportation_processes",
+        "reconversion_processes",
+    ]:
         scope = None
         source_region_code = [""]
         index = "process_code"
         columns = "parameter_code"
         processes = api.get_dimension("process")
+
+    if data_type == "electricity_generation":
+        parameter_code = [
+            "CAPEX",
+            "OPEX (fix)",
+            "lifetime / amortization period",
+            "efficiency",
+        ]
+        process_code = processes.loc[
+            processes["is_re_generation"], "process_name"
+        ].to_list()
 
     if data_type == "conversion_processes":
         parameter_code = [
@@ -261,7 +280,7 @@ def get_data_type_from_input_data(
             "efficiency",
         ]
         process_code = processes.loc[
-            ~processes["is_transport"], "process_name"
+            ~processes["is_transport"] & ~processes["is_re_generation"], "process_name"
         ].to_list()
 
     if data_type == "transportation_processes":
@@ -272,7 +291,18 @@ def get_data_type_from_input_data(
             # FIXME: add bunker fuel consumption
         ]
         process_code = processes.loc[
-            processes["is_transport"], "process_name"
+            processes["is_transport"] & ~processes["is_transformation"], "process_name"
+        ].to_list()
+
+    if data_type == "reconversion_processes":
+        parameter_code = [
+            "CAPEX",
+            "OPEX (fix)",
+            "lifetime / amortization period",
+            "efficiency",
+        ]
+        process_code = processes.loc[
+            processes["is_transport"] & processes["is_transformation"], "process_name"
         ].to_list()
 
     if data_type in ["CAPEX", "full load hours", "interest rate"]:
@@ -463,9 +493,10 @@ def config_number_columns(df: pd.DataFrame, **kwargs) -> {}:
 def display_and_edit_input_data(
     api: PtxboaAPI,
     data_type: Literal[
+        "electricity_generation",
         "conversion_processes",
         "transportation_processes",
-        "CAPEX",
+        "reconversion_processes" "CAPEX",
         "full load hours",
         "interest rate",
     ],
@@ -484,8 +515,8 @@ def display_and_edit_input_data(
         an instance of the api class
     data_type : str
         the data type which should be selected. Needs to be one of
-        "conversion_processes", "transportation_processes", "CAPEX", "full load hours",
-        and "interest rate".
+        "electricity_generation", "conversion_processes", "transportation_processes",
+        "reconversion_processes", "CAPEX", "full load hours", and "interest rate".
     scope : Literal[None, "world", "Argentina", "Morocco", "South Africa"]
         The regional scope. Is automatically set to None for data of
         data type "conversion_processes" and "transportation_processes" which is not
@@ -499,14 +530,23 @@ def display_and_edit_input_data(
     """
     df = get_data_type_from_input_data(api, data_type=data_type, scope=scope)
 
-    if data_type in ["conversion_processes", "transportation_processes"]:
+    if data_type in [
+        "electricity_generation",
+        "conversion_processes",
+        "transportation_processes",
+        "reconversion_processes",
+    ]:
         index = "process_code"
         columns = "parameter_code"
         missing_index_name = "source_region_code"
         missing_index_value = None
         column_config = None
 
-    if data_type == "conversion_processes":
+    if data_type in [
+        "electricity_generation",
+        "conversion_processes",
+        "reconversion_processes",
+    ]:
         column_config = {
             "CAPEX": st.column_config.NumberColumn(format="%.0f USD/kW", min_value=0),
             "OPEX (fix)": st.column_config.NumberColumn(
@@ -522,17 +562,14 @@ def display_and_edit_input_data(
 
     if data_type == "transportation_processes":
         column_config = {
-            "levelized_costs": st.column_config.NumberColumn(
-                format="%.0f USD/kW", min_value=0
-            ),
-            "OPEX (fix)": st.column_config.NumberColumn(
-                format="%.0f USD/kW", min_value=0
-            ),
-            "efficiency": st.column_config.NumberColumn(
-                format="%.2f", min_value=0, max_value=1
+            "levelized costs": st.column_config.NumberColumn(
+                format="%.2e USD/(kW km)", min_value=0
             ),
             "lifetime / amortization period": st.column_config.NumberColumn(
                 format="%.0f a", min_value=0
+            ),
+            "losses (own fuel, transport)": st.column_config.NumberColumn(
+                format="%.2e fraction per km", min_value=0
             ),
         }
 
@@ -605,7 +642,6 @@ def display_and_edit_input_data(
             use_container_width=True,
             column_config=column_config,
         )
-
     return df
 
 
@@ -622,3 +658,18 @@ def move_to_tab(tab_name):
     old_tab_key_nb = int(st.session_state["tab_key"].replace("tab_key_", ""))
     st.session_state["tab_key"] = f"tab_key_{old_tab_key_nb + 1}"
     st.session_state[st.session_state["tab_key"]] = tab_name
+
+
+def read_markdown_file(markdown_file: str) -> str:
+    """Import markdown file as string."""
+    return Path(markdown_file).read_text(encoding="UTF-8")
+
+
+def get_region_from_subregion(subregion: str) -> str:
+    """
+    For a subregion, get the name of the region it belongs to.
+
+    If subregion is not a subregion, return its own name.
+    """
+    region = subregion.split(" (")[0]
+    return region

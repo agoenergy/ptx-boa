@@ -6,7 +6,11 @@ import streamlit as st
 
 from app.layout_elements import display_costs
 from app.plot_functions import plot_costs_on_map, plot_input_data_on_map
-from app.ptxboa_functions import display_and_edit_input_data, select_subregions
+from app.ptxboa_functions import (
+    display_and_edit_input_data,
+    read_markdown_file,
+    select_subregions,
+)
 from ptxboa.api import PtxboaAPI
 
 
@@ -25,18 +29,7 @@ def content_deep_dive_countries(api: PtxboaAPI, costs_per_region: pd.DataFrame) 
     None
     """
     with st.expander("What is this?"):
-        st.markdown(
-            """
-**Deep-dive countries: Data on country and regional level**
-
-For the three deep-dive countries (Argentina, Morocco and South Africa)
-this tab shows full load hours of renewable generation and total costs
-in regional details.
-
-The box plots show median, 1st and 3rd quartile as well as the total spread of values.
-They also show the data for your selected supply country or region for comparison.
-            """
-        )
+        st.markdown(read_markdown_file("md/whatisthis_deep_dive_countries.md"))
 
     ddc = st.radio(
         "Select country:", ["Argentina", "Morocco", "South Africa"], horizontal=True

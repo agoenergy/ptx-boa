@@ -2,6 +2,8 @@
 """Content of country fact sheets tab and functions to create it."""
 import streamlit as st
 
+from app.ptxboa_functions import get_region_from_subregion, read_markdown_file
+
 
 def _create_fact_sheet_demand_country(context_data: dict):
     # select country:
@@ -67,61 +69,38 @@ def _create_fact_sheet_demand_country(context_data: dict):
 
 def _create_fact_sheet_supply_country(context_data: dict):
     """Display information on a chosen supply country."""
-    # select country:
+    # select region:
     country_name = st.session_state["region"]
+
+    # for subregions, select name of region they belong to:
+    region_name = get_region_from_subregion(country_name)
     df = context_data["supply"]
-    data = df.loc[df["country_name"] == country_name].iloc[0].to_dict()
+    data = df.loc[df["country_name"] == region_name].iloc[0].to_dict()
 
-    st.subheader(f"Fact sheet for {country_name}")
-    text = (
-        "**Technical potential for renewable electricity generation:**\n"
-        f"- {data['source_re_tech_pot_EWI']}: "
-        f"\t{data['re_tech_pot_EWI']:.0f} TWh/a\n"
-        f"- {data['source_re_tech_pot_PTXAtlas']}: "
-        f"\t{data['re_tech_pot_PTXAtlas']:.0f} TWh/a\n"
-    )
+    st.subheader(f"Fact sheet for {region_name}")
+    with st.expander("**Technical potential for renewable electricity generation**"):
+        text = (
+            f"- {data['source_re_tech_pot_EWI']}: "
+            f"\t{data['re_tech_pot_EWI']:.0f} TWh/a\n"
+            f"- {data['source_re_tech_pot_PTXAtlas']}: "
+            f"\t{data['re_tech_pot_PTXAtlas']:.0f} TWh/a\n"
+        )
+        st.markdown(text)
 
-    st.markdown(text)
-
-    text = (
-        "**LNG infrastructure:**\n"
-        f"- {data['lng_export']} export terminals\n"
-        f"- {data['lng_import']} import terminals.\n\n"
-        f"*Source: {data['source_lng']}*"
-    )
-
-    st.markdown(text)
+    with st.expander("**LNG infrastructure**"):
+        text = (
+            f"- {data['lng_export']} export terminals\n"
+            f"- {data['lng_import']} import terminals.\n\n"
+            f"*Source: {data['source_lng']}*"
+        )
+        st.markdown(text)
 
     st.write("TODO: CCS pot, elec prices, H2 strategy")
 
 
 def content_country_fact_sheets(context_data):
     with st.expander("What is this?"):
-        st.markdown(
-            """
-**Country fact sheets**
-
-This sheet provides you with additional information on the production and import of
- hydrogen and derivatives in all PTX BOA supply and demand countries.
-For each selected supply and demand country pair, you will find detailed
- country profiles.
-
- For demand countries, we cover the following aspects:
- country-specific projected hydrogen demand,
- target sectors for hydrogen use,
- hydrogen-relevant policies and competent authorities,
- certification and regulatory frameworks,
- and country-specific characteristics as defined in the demand countries'
- hydrogen strategies.
-
- For the supplying countries, we cover the country-specific technical potential
- for renewables (based on various data sources),
- LNG export and import infrastructure,
- CCS potentials,
- availability of an H2 strategy
- and wholesale electricity prices.
-            """
-        )
+        st.markdown(read_markdown_file("md/whatisthis_country_fact_sheets.md"))
     with st.container(border=True):
         _create_fact_sheet_demand_country(context_data)
     with st.container(border=True):

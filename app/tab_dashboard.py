@@ -10,7 +10,7 @@ from app.plot_functions import (
     create_box_plot,
     plot_costs_on_map,
 )
-from app.ptxboa_functions import move_to_tab, remove_subregions
+from app.ptxboa_functions import move_to_tab, read_markdown_file, remove_subregions
 from ptxboa.api import PtxboaAPI
 
 
@@ -22,30 +22,31 @@ def content_dashboard(
     costs_per_chain: pd.DataFrame,
 ):
     with st.expander("What is this?"):
-        st.markdown(
-            """
-This is the dashboard. It shows key results according to your settings:
-- a map and a box plot that show the spread and the
-regional distribution of total costs across supply regions
-- a split-up of costs by category for your chosen supply region
-- key information on your chosen demand country.
-- total cost and cost components for different supply countries, scenarios,
-renewable electricity sources and process chains.
-
-Switch to other tabs to explore data and results in more detail!
-            """
-        )
+        st.markdown(read_markdown_file("md/whatisthis_dashboard.md"))
 
     with st.container(border=True):
+        cost_component = "Total"
+        title_string = (
+            f"{cost_component} cost of exporting "
+            f"{st.session_state['chain']} to "
+            f"{st.session_state['country']}:"
+        )
+        st.subheader(title_string)
         c_1, c_2 = st.columns([2, 1])
 
         with c_1:
+            st.markdown("##### Costs by supply country:")
             fig_map = plot_costs_on_map(
-                api, costs_per_region, scope="world", cost_component="Total"
+                api, costs_per_region, scope="world", cost_component=cost_component
+            )
+            fig_map.update_layout(
+                height=350,
+                margin={"l": 10, "r": 10, "t": 10, "b": 10},
             )
             st.plotly_chart(fig_map, use_container_width=True)
 
         with c_2:
+            st.markdown("##### Cost distribution and details:")
             # create box plot and bar plot:
             fig1 = create_box_plot(costs_per_region)
             filtered_data = costs_per_region[
@@ -61,7 +62,11 @@ Switch to other tabs to explore data and results in more detail!
                 doublefig.add_trace(trace, row=1, col=2)
 
             doublefig.update_layout(barmode="stack")
-            doublefig.update_layout(title_text="Cost distribution and details:")
+            doublefig.update_layout(
+                height=350,
+                margin={"l": 10, "r": 10, "t": 20, "b": 20},
+            )
+
             st.plotly_chart(doublefig, use_container_width=True)
 
         st.button(
