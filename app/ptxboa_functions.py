@@ -673,13 +673,17 @@ def get_column_config() -> dict:
             format="%.2f", min_value=0, max_value=1
         ),
         "lifetime / amortization period": st.column_config.NumberColumn(
-            format="%.0f a", min_value=0
+            format="%.0f a",
+            min_value=0,
+            help=read_markdown_file("md/helptext_columns_lifetime.md"),
         ),
         "levelized costs": st.column_config.NumberColumn(
             format="%.2e USD/(kW km)", min_value=0
         ),
         "losses (own fuel, transport)": st.column_config.NumberColumn(
-            format="%.2e fraction per km", min_value=0
+            format="%.2e fraction per km",
+            min_value=0,
+            help=read_markdown_file("md/helptext_columns_losses.md"),
         ),
         "specific costs": st.column_config.NumberColumn(
             format="%.3f [various units]",
