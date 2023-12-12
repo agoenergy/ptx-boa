@@ -3,6 +3,7 @@
 from pathlib import Path
 from typing import Literal
 
+import numpy as np
 import pandas as pd
 import streamlit as st
 
@@ -435,7 +436,9 @@ def register_user_changes(
     columns: str,
     values: str,
     df_tab: pd.DataFrame,
+    df_orig: pd.DataFrame,
     key: str,
+    editor_key: str,
 ):
     """
     Register all user changes in the session state variable "user_changes_df".
@@ -444,13 +447,25 @@ def register_user_changes(
     """
     # convert session state dict to dataframe:
     # Create a list of dictionaries
-    data_dict = st.session_state[key]["edited_rows"]
+    data_dict = st.session_state[editor_key]["edited_rows"]
     if any(data_dict):
         data_list = []
 
+        rejected_changes = False
         for k, v in data_dict.items():
             for c_name, value in v.items():
-                data_list.append({index: k, columns: c_name, values: value})
+                if np.isnan(df_orig.iloc[k, :][c_name]):
+                    st.toast("Cannot modify empty value")
+                    rejected_changes = True
+                else:
+                    data_list.append({index: k, columns: c_name, values: value})
+
+        if rejected_changes:
+            # modify key number
+            st.session_state[f"{key}_number"] += 1
+
+        if len(data_list) == 0:
+            return
 
         # Convert the list to a DataFrame
         res = pd.DataFrame(data_list)
@@ -529,6 +544,7 @@ def display_and_edit_input_data(
     pd.DataFrame
     """
     df = get_data_type_from_input_data(api, data_type=data_type, scope=scope)
+    df_orig = df.copy()
 
     if data_type in [
         "electricity_generation",
@@ -605,6 +621,9 @@ def display_and_edit_input_data(
             for c in df.columns
         }
 
+    if f"{key}_number" not in st.session_state:
+        st.session_state[f"{key}_number"] = 0
+    editor_key = f"{key}_{st.session_state[f'{key}_number']}"
     # if editing is enabled, store modifications in session_state:
     if st.session_state["edit_input_data"]:
         with st.form(key=f"{key}_form"):
@@ -625,7 +644,7 @@ def display_and_edit_input_data(
             df = st.data_editor(
                 df,
                 use_container_width=True,
-                key=key,
+                key=editor_key,
                 num_rows="fixed",
                 disabled=[index],
                 column_config=column_config,
@@ -641,7 +660,9 @@ def display_and_edit_input_data(
                     "columns": columns,
                     "values": "value",
                     "df_tab": df,
+                    "df_orig": df_orig,
                     "key": key,
+                    "editor_key": editor_key,
                 },
             )
     else:
