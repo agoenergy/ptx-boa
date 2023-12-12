@@ -430,6 +430,7 @@ def display_user_changes(api):
                     "source_region_code": "Source Region",
                     "process_code": "Process",
                     "parameter_code": "Parameter",
+                    "flow_code": "Carrier/Material",
                     "value": "Value",
                 }
             ).style.format(precision=3),
@@ -467,7 +468,8 @@ def register_user_changes(
         res = pd.DataFrame(data_list)
 
         # add missing key (the info that is not contained in the 2D table):
-        res[missing_index_name] = missing_index_value
+        if missing_index_name is not None or missing_index_value is not None:
+            res[missing_index_name] = missing_index_value
 
         # Replace the 'id' values with the corresponding index elements from df_tab
         res[index] = res[index].map(lambda x: df_tab.index[x])
@@ -478,6 +480,7 @@ def register_user_changes(
                     "source_region_code",
                     "process_code",
                     "parameter_code",
+                    "flow_code",
                     "value",
                 ]
             )
@@ -486,7 +489,13 @@ def register_user_changes(
         st.session_state["user_changes_df"] = pd.concat(
             [st.session_state["user_changes_df"], res]
         ).drop_duplicates(
-            subset=["source_region_code", "process_code", "parameter_code"], keep="last"
+            subset=[
+                "source_region_code",
+                "process_code",
+                "parameter_code",
+                "flow_code",
+            ],
+            keep="last",
         )
 
 
