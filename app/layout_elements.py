@@ -3,6 +3,7 @@
 import pandas as pd
 import streamlit as st
 
+from app.excel_download import prepare_and_download_df_as_excel
 from app.plot_functions import create_bar_chart_costs
 from app.ptxboa_functions import config_number_columns
 
@@ -82,6 +83,9 @@ def display_costs(
     with st.expander("**Data**"):
         column_config = config_number_columns(df_res, format=f"%.1f {output_unit}")
         st.dataframe(df_res, use_container_width=True, column_config=column_config)
+        fn = f"costs_per_{key}_{key_suffix}".strip("_")
+        prepare_and_download_df_as_excel(df_res, filename=fn)
+
     return None
 
 

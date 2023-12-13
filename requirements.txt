@@ -4,3 +4,4 @@ streamlit>=1.29
 openpyxl~=3.1
 plotly~=5.16
 streamlit-antd-components
+XlsxWriter
