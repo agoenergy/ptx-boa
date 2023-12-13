@@ -9,19 +9,7 @@ st.cache_data()
 
 
 def prepare_df_as_excel_stream(df: pd.DataFrame) -> bytes:
-    """
-    Convert a Dataframe to excel bytes stream.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        _description_
-
-    Returns
-    -------
-    pd.DataFrame
-        _description_
-    """
+    """Convert a Dataframe to excel bytes stream."""
     output = BytesIO()
     writer = pd.ExcelWriter(output, engine="xlsxwriter")
     df.to_excel(writer, index=True, sheet_name="Data")
