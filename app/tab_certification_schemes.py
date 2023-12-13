@@ -21,7 +21,6 @@ def _render_scheme_info(context_data, scheme_name):
         st.markdown(
             f"- **Relation to other standards:** {data['relation_to_other_standards']}"
         )
-        st.markdown(f"- **Geographic scope:** {data['geographic_scope']}")
         st.markdown(f"- **PTXBOA demand countries:** {data['ptxboa_demand_countries']}")
         st.markdown(f"- **Labels:** {data['label']}")
         st.markdown(f"- **Lifecycle scope:** {data['lifecycle_scope']}")
