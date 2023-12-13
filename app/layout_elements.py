@@ -9,6 +9,7 @@ from app.ptxboa_functions import config_number_columns
 
 def display_costs(
     df_costs: pd.DataFrame,
+    df_costs_without_user_changes: pd.DataFrame,
     key: str,
     titlestring: str,
     key_suffix: str = "",

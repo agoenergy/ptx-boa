@@ -20,6 +20,10 @@ def content_dashboard(
     costs_per_scenario: pd.DataFrame,
     costs_per_res_gen: pd.DataFrame,
     costs_per_chain: pd.DataFrame,
+    costs_per_region_without_user_changes: pd.DataFrame,
+    costs_per_scenario_without_user_changes: pd.DataFrame,
+    costs_per_res_gen_without_user_changes: pd.DataFrame,
+    costs_per_chain_without_user_changes: pd.DataFrame,
 ):
     with st.expander("What is this?"):
         st.markdown(read_markdown_file("md/whatisthis_dashboard.md"))
@@ -78,19 +82,34 @@ def content_dashboard(
     with st.container(border=True):
         display_costs(
             remove_subregions(api, costs_per_region, st.session_state["country"]),
+            remove_subregions(
+                api, costs_per_region_without_user_changes, st.session_state["country"]
+            ),
             "region",
             "Costs by region:",
         )
 
     with st.container(border=True):
-        display_costs(costs_per_scenario, "scenario", "Costs by data scenario:")
-
-    with st.container(border=True):
         display_costs(
-            costs_per_res_gen, "res_gen", "Costs by renewable electricity source:"
+            costs_per_scenario,
+            costs_per_scenario_without_user_changes,
+            "scenario",
+            "Costs by data scenario:",
         )
 
     with st.container(border=True):
         display_costs(
-            costs_per_chain, "chain", "Costs by supply chain:", output_unit="USD/MWh"
+            costs_per_res_gen,
+            costs_per_res_gen_without_user_changes,
+            "res_gen",
+            "Costs by renewable electricity source:",
+        )
+
+    with st.container(border=True):
+        display_costs(
+            costs_per_chain,
+            costs_per_chain_without_user_changes,
+            "chain",
+            "Costs by supply chain:",
+            output_unit="USD/MWh",
         )
