@@ -72,6 +72,7 @@ def content_input_data(api: PtxboaAPI) -> None:
         with c_1_1:
             # create plot:
             fig = px.box(df)
+            fig.update_layout(xaxis_title=None)
             st.plotly_chart(fig, use_container_width=True)
 
     with st.container(border=True):
