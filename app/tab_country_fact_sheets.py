@@ -79,11 +79,19 @@ def _create_fact_sheet_supply_country(context_data: dict):
 
     st.subheader(f"Fact sheet for {region_name}")
     with st.expander("**Technical potential for renewable electricity generation**"):
+        if isinstance(data["re_tech_pot_EWI"], (int, float)):
+            re_tech_pot_EWI = f"{data['re_tech_pot_EWI']:.0f} TWh/a"
+        else:
+            re_tech_pot_EWI = data["re_tech_pot_EWI"]
+
+        if isinstance(data["re_tech_pot_PTXAtlas"], (int, float)):
+            re_tech_pot_PTXAtlas = f"{data['re_tech_pot_PTXAtlas']:.0f} TWh/a"
+        else:
+            re_tech_pot_PTXAtlas = data["re_tech_pot_PTXAtlas"]
+
         text = (
-            f"- {data['source_re_tech_pot_EWI']}: "
-            f"\t{data['re_tech_pot_EWI']:.0f} TWh/a\n"
-            f"- {data['source_re_tech_pot_PTXAtlas']}: "
-            f"\t{data['re_tech_pot_PTXAtlas']:.0f} TWh/a\n"
+            f"- {data['source_re_tech_pot_EWI']}: \t{re_tech_pot_EWI}\n"
+            f"- {data['source_re_tech_pot_PTXAtlas']}: \t{re_tech_pot_PTXAtlas}\n"
         )
         st.markdown(text)
 
