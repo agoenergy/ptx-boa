@@ -641,6 +641,8 @@ def display_and_edit_input_data(
         missing_index_value = None
         column_config = get_column_config()
 
+    df = change_index_names(df)
+
     # if editing is enabled, store modifications in session_state:
     if st.session_state["edit_input_data"]:
         if f"{key}_number" not in st.session_state:
