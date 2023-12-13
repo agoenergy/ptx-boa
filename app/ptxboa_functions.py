@@ -647,7 +647,7 @@ def display_and_edit_input_data(
             st.session_state[f"{key}_number"] = 0
         editor_key = f"{key}_{st.session_state[f'{key}_number']}"
 
-        with st.form(key=f"{key}_form"):
+        with st.form(key=f"{key}_form", border=False):
             st.info(
                 (
                     "You can edit data directly in the table. When done, click the "
