@@ -10,7 +10,7 @@ def load_context_data():
     filename = "data/context_data.xlsx"
     cd = {}
     cd["demand_countries"] = pd.read_excel(
-        filename, sheet_name="demand_countries", skiprows=1
+        filename, sheet_name="demand_countries", skiprows=1, keep_default_na=False
     )
     cd["certification_schemes"] = pd.read_excel(
         filename, sheet_name="certification_schemes", skiprows=1

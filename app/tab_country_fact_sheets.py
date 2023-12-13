@@ -30,16 +30,30 @@ def _create_fact_sheet_demand_country(context_data: dict):
         c1, c2, c3 = st.columns(3)
         with c1:
             st.markdown("**Projected H2 demand in 2030:**")
-            st.markdown(data["h2_demand_2030"])
-            st.markdown(f"*Source: {data['source_h2_demand_2030']}*")
+            if data["h2_demand_2030"] in ["", "-", "n/a"]:
+                st.markdown("no data")
+            else:
+                st.markdown(data["h2_demand_2030"])
+                st.markdown(f"*Source: {data['source_h2_demand_2030']}*")
         with c2:
             st.markdown("**Targeted sectors (main):**")
-            st.markdown(data["demand_targeted_sectors_main"])
-            st.markdown(f"*Source: {data['source_targeted_sectors_main']}*")
+            if data["demand_targeted_sectors_main"] in ["", "-", "n/a"]:
+                st.markdown("no data")
+            else:
+                st.markdown(data["demand_targeted_sectors_main"])
+                st.markdown(f"*Source: {data['source_targeted_sectors_main']}*")
         with c3:
             st.markdown("**Targeted sectors (secondary):**")
-            st.markdown(data["demand_targeted_sectors_secondary"])
-            st.markdown(f"*Source: {data['source_targeted_sectors_secondary']}*")
+            if data["demand_targeted_sectors_secondary"] in [
+                "",
+                "-",
+                "n/a",
+                " ",
+            ]:
+                st.markdown("no data")
+            else:
+                st.markdown(data["demand_targeted_sectors_secondary"])
+                st.markdown(f"*Source: {data['source_targeted_sectors_secondary']}*")
 
     with st.expander("**Hydrogen strategy**"):
         st.markdown("**Documents:**")
