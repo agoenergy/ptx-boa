@@ -402,14 +402,14 @@ def create_bar_chart_costs(
     if current_selection is not None and current_selection in res_costs.index:
         fig.add_annotation(
             x=current_selection,
-            y=1.2 * res_costs.at[current_selection, "Total"],
+            y=1.2 * max(res_costs["Total"]),
             text="current selection",
             showarrow=True,
             arrowhead=2,
             arrowsize=1,
             arrowwidth=2,
             ax=0,
-            ay=-50,
+            ay=-30,
         )
 
     if output_unit is None:
