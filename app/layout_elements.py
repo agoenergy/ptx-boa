@@ -21,36 +21,55 @@ def display_costs(
     key_suffix = key_suffix.lower().replace(" ", "_")
     st.subheader(titlestring)
 
-    # filter data:
-    df_res = df_costs.copy()
+    c1, c2 = st.columns(2)
 
-    # select filter:
-    show_which_data = st.radio(
-        "Select elements to display:",
-        ["All", "Manual select"],
-        index=0,
-        horizontal=True,
-        key=f"show_which_data_{key}_{key_suffix}",
-    )
+    # select which dataset to display:
+    if st.session_state["user_changes_df"] is not None:
+        with c2:
+            st.info("Input data has been modified. Select which data to display.")
+            select_data = st.radio(
+                "Select data to display",
+                ["with user modifications", "without user modifications", "difference"],
+                horizontal=True,
+                key=f"select_data_{key}_{key_suffix}",
+            )
+        if select_data == "with user modifications":
+            df_res = df_costs
+        if select_data == "without user modifications":
+            df_res = df_costs_without_user_changes
+        if select_data == "difference":
+            df_res = df_costs - df_costs_without_user_changes
+    else:
+        df_res = df_costs.copy()
 
-    # apply filter:
-    if show_which_data == "Manual select":
-        ind_select = st.multiselect(
-            "Select regions:",
-            df_res.index.values,
-            default=df_res.index.values,
-            key=f"select_data_{key}_{key_suffix}",
+    with c1:
+        # select filter:
+        show_which_data = st.radio(
+            "Select elements to display:",
+            ["All", "Manual select"],
+            index=0,
+            horizontal=True,
+            key=f"show_which_data_{key}_{key_suffix}",
         )
-        df_res = df_res.loc[ind_select]
 
-    # sort:
-    sort_ascending = st.toggle(
-        "Sort by total costs?",
-        value=True,
-        key=f"sort_data_{key}_{key_suffix}",
-    )
-    if sort_ascending:
-        df_res = df_res.sort_values(["Total"], ascending=True)
+        # apply filter:
+        if show_which_data == "Manual select":
+            ind_select = st.multiselect(
+                "Select regions:",
+                df_res.index.values,
+                default=df_res.index.values,
+                key=f"select_data_{key}_{key_suffix}",
+            )
+            df_res = df_res.loc[ind_select]
+
+        # sort:
+        sort_ascending = st.toggle(
+            "Sort by total costs?",
+            value=True,
+            key=f"sort_data_{key}_{key_suffix}",
+        )
+        if sort_ascending:
+            df_res = df_res.sort_values(["Total"], ascending=True)
     # create graph:
     fig = create_bar_chart_costs(
         df_res,
