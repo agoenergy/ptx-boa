@@ -3,6 +3,7 @@
 from pathlib import Path
 from typing import Literal
 
+import numpy as np
 import pandas as pd
 import streamlit as st
 
@@ -40,6 +41,7 @@ def calculate_results_list(
     parameter_to_change: str,
     parameter_list: list = None,
     override_session_state: dict | None = None,
+    apply_user_data: bool = True,
 ) -> pd.DataFrame:
     """Calculate results for source regions and one selected target country.
 
@@ -58,6 +60,9 @@ def calculate_results_list(
         session state. Keys of the dictionary must in "chain", "country",
         "output_unit", "region", "res_gen", "scenario", "secproc_co2",
         "secproc_water", "ship_own_fuel", "transport".
+    apply_user_data: bool
+        If true, apply user data modifications (default).
+        If false, use only default scenario data.
 
     Returns
     -------
@@ -100,7 +105,7 @@ def calculate_results_list(
         res_single = calculate_results_single(
             api,
             settings,
-            user_data=st.session_state["user_changes_df"],
+            user_data=st.session_state["user_changes_df"] if apply_user_data else None,
         )
         res_list.append(res_single)
     res_details = pd.concat(res_list)
@@ -217,6 +222,7 @@ def get_data_type_from_input_data(
         "CAPEX",
         "full load hours",
         "interest rate",
+        "specific_costs",
     ],
     scope: Literal[None, "world", "Argentina", "Morocco", "South Africa"],
 ) -> pd.DataFrame:
@@ -234,7 +240,8 @@ def get_data_type_from_input_data(
     data_type : str
         the data type which should be selected. Needs to be one of
         "electricity_generation", "conversion_processes", "transportation_processes",
-        "reconversion_processes", "CAPEX", "full load hours", and "interest rate".
+        "reconversion_processes", "CAPEX", "full load hours", "interest rate",
+        and "specific costs".
     scope : Literal[None, "world", "Argentina", "Morocco", "South Africa"]
         The regional scope. Is automatically set to None for data of
         data type "conversion_processes" and "transportation_processes" which is not
@@ -260,6 +267,15 @@ def get_data_type_from_input_data(
         index = "process_code"
         columns = "parameter_code"
         processes = api.get_dimension("process")
+
+    if data_type == "specific_costs":
+        scope = None
+        source_region_code = [""]
+        index = "flow_code"
+        columns = "parameter_code"
+        processes = [""]
+        parameter_code = ["specific costs"]
+        process_code = [""]
 
     if data_type == "electricity_generation":
         parameter_code = [
@@ -419,6 +435,7 @@ def display_user_changes(api):
                     "source_region_code": "Source Region",
                     "process_code": "Process",
                     "parameter_code": "Parameter",
+                    "flow_code": "Carrier/Material",
                     "value": "Value",
                 }
             ).style.format(precision=3),
@@ -435,7 +452,9 @@ def register_user_changes(
     columns: str,
     values: str,
     df_tab: pd.DataFrame,
+    df_orig: pd.DataFrame,
     key: str,
+    editor_key: str,
 ):
     """
     Register all user changes in the session state variable "user_changes_df".
@@ -444,19 +463,36 @@ def register_user_changes(
     """
     # convert session state dict to dataframe:
     # Create a list of dictionaries
-    data_dict = st.session_state[key]["edited_rows"]
-    if any(data_dict):
+    data_dict = st.session_state[editor_key]["edited_rows"]
+    if any(data_dict.values()):
         data_list = []
 
+        rejected_changes = False
         for k, v in data_dict.items():
             for c_name, value in v.items():
-                data_list.append({index: k, columns: c_name, values: value})
+                if np.isnan(df_orig.iloc[k, :][c_name]):
+                    msg = (
+                        f":exclamation: Cannot modify empty value '{c_name}' "
+                        f"for '{df_orig.index[k]}'"
+                    )
+                    st.toast(msg)
+                    rejected_changes = True
+                else:
+                    data_list.append({index: k, columns: c_name, values: value})
+
+        if rejected_changes:
+            # modify key number
+            st.session_state[f"{key}_number"] += 1
+
+        if len(data_list) == 0:
+            return
 
         # Convert the list to a DataFrame
         res = pd.DataFrame(data_list)
 
         # add missing key (the info that is not contained in the 2D table):
-        res[missing_index_name] = missing_index_value
+        if missing_index_name is not None or missing_index_value is not None:
+            res[missing_index_name] = missing_index_value
 
         # Replace the 'id' values with the corresponding index elements from df_tab
         res[index] = res[index].map(lambda x: df_tab.index[x])
@@ -467,6 +503,7 @@ def register_user_changes(
                     "source_region_code",
                     "process_code",
                     "parameter_code",
+                    "flow_code",
                     "value",
                 ]
             )
@@ -475,7 +512,13 @@ def register_user_changes(
         st.session_state["user_changes_df"] = pd.concat(
             [st.session_state["user_changes_df"], res]
         ).drop_duplicates(
-            subset=["source_region_code", "process_code", "parameter_code"], keep="last"
+            subset=[
+                "source_region_code",
+                "process_code",
+                "parameter_code",
+                "flow_code",
+            ],
+            keep="last",
         )
 
 
@@ -499,6 +542,7 @@ def display_and_edit_input_data(
         "reconversion_processes" "CAPEX",
         "full load hours",
         "interest rate",
+        "specific_costs",
     ],
     scope: Literal["world", "Argentina", "Morocco", "South Africa"],
     key: str,
@@ -516,19 +560,35 @@ def display_and_edit_input_data(
     data_type : str
         the data type which should be selected. Needs to be one of
         "electricity_generation", "conversion_processes", "transportation_processes",
-        "reconversion_processes", "CAPEX", "full load hours", and "interest rate".
+        "reconversion_processes", "CAPEX", "full load hours", "interest rate",
+        and "specific costs".
     scope : Literal[None, "world", "Argentina", "Morocco", "South Africa"]
         The regional scope. Is automatically set to None for data of
         data type "conversion_processes" and "transportation_processes" which is not
         region specific.
     key : str
-        A key for the data editing streamlit widget. Need to be unique.
+        A key for the data editing layout element. Needs to be unique in the app.
+        Several session state variables are derived from this key::
+
+            - st.session_state[f"{key}_number"]:
+                This is initialized with 0 and incremented by 1 whenever any input
+                value got rejected by the callback function
+                :func:`register_user_changes`. This will trigger a re-rendering of the
+                data_editor widget and thus reset modifications on empty values.
+            - st.session_state[f"{key}_form"]:
+                the key for the form the editor lives in
+            - st_session_state[f"{key}_{st.session_state[f'{key}_number']}"]:
+                the name of this session state variable consists of the `key` and the
+                current `{key}_number`. It refers to the st.data_editor widget.
+                Whenever the key_number changes, the editor widget gets a new key and
+                is initialized from scratch.
 
     Returns
     -------
     pd.DataFrame
     """
     df = get_data_type_from_input_data(api, data_type=data_type, scope=scope)
+    df_orig = df.copy()
 
     if data_type in [
         "electricity_generation",
@@ -540,38 +600,7 @@ def display_and_edit_input_data(
         columns = "parameter_code"
         missing_index_name = "source_region_code"
         missing_index_value = None
-        column_config = None
-
-    if data_type in [
-        "electricity_generation",
-        "conversion_processes",
-        "reconversion_processes",
-    ]:
-        column_config = {
-            "CAPEX": st.column_config.NumberColumn(format="%.0f USD/kW", min_value=0),
-            "OPEX (fix)": st.column_config.NumberColumn(
-                format="%.0f USD/kW", min_value=0
-            ),
-            "efficiency": st.column_config.NumberColumn(
-                format="%.2f", min_value=0, max_value=1
-            ),
-            "lifetime / amortization period": st.column_config.NumberColumn(
-                format="%.0f a", min_value=0
-            ),
-        }
-
-    if data_type == "transportation_processes":
-        column_config = {
-            "levelized costs": st.column_config.NumberColumn(
-                format="%.2e USD/(kW km)", min_value=0
-            ),
-            "lifetime / amortization period": st.column_config.NumberColumn(
-                format="%.0f a", min_value=0
-            ),
-            "losses (own fuel, transport)": st.column_config.NumberColumn(
-                format="%.2e fraction per km", min_value=0
-            ),
-        }
+        column_config = get_column_config()
 
     if data_type == "interest rate":
         index = "source_region_code"
@@ -605,8 +634,19 @@ def display_and_edit_input_data(
             for c in df.columns
         }
 
+    if data_type == "specific_costs":
+        index = "flow_code"
+        columns = "parameter_code"
+        missing_index_name = None
+        missing_index_value = None
+        column_config = get_column_config()
+
     # if editing is enabled, store modifications in session_state:
     if st.session_state["edit_input_data"]:
+        if f"{key}_number" not in st.session_state:
+            st.session_state[f"{key}_number"] = 0
+        editor_key = f"{key}_{st.session_state[f'{key}_number']}"
+
         with st.form(key=f"{key}_form"):
             st.info(
                 (
@@ -615,17 +655,10 @@ def display_and_edit_input_data(
                 )
             )
 
-            if df.isna().any().any():
-                # TODO: remove this warning when input data is fixed.
-                msg = (
-                    "Draft version: Do no edit empty data points (None), this will "
-                    "throw an error. Missing data has to be filled before publishing."
-                )
-                st.warning(msg)
             df = st.data_editor(
                 df,
                 use_container_width=True,
-                key=key,
+                key=editor_key,
                 num_rows="fixed",
                 disabled=[index],
                 column_config=column_config,
@@ -641,7 +674,9 @@ def display_and_edit_input_data(
                     "columns": columns,
                     "values": "value",
                     "df_tab": df,
+                    "df_orig": df_orig,
                     "key": key,
+                    "editor_key": editor_key,
                 },
             )
     else:
@@ -681,6 +716,36 @@ def get_region_from_subregion(subregion: str) -> str:
     """
     region = subregion.split(" (")[0]
     return region
+
+
+def get_column_config() -> dict:
+    """Define column configuration for dataframe display."""
+    column_config = {
+        "CAPEX": st.column_config.NumberColumn(format="%.0f USD/kW", min_value=0),
+        "OPEX (fix)": st.column_config.NumberColumn(format="%.0f USD/kW", min_value=0),
+        "efficiency": st.column_config.NumberColumn(
+            format="%.2f", min_value=0, max_value=1
+        ),
+        "lifetime / amortization period": st.column_config.NumberColumn(
+            format="%.0f a",
+            min_value=0,
+            help=read_markdown_file("md/helptext_columns_lifetime.md"),
+        ),
+        "levelized costs": st.column_config.NumberColumn(
+            format="%.2e USD/(kW km)", min_value=0
+        ),
+        "losses (own fuel, transport)": st.column_config.NumberColumn(
+            format="%.2e fraction per km",
+            min_value=0,
+            help=read_markdown_file("md/helptext_columns_losses.md"),
+        ),
+        "specific costs": st.column_config.NumberColumn(
+            format="%.3f [various units]",
+            min_value=0,
+            help=read_markdown_file("md/helptext_columns_specific_costs.md"),
+        ),
+    }
+    return column_config
 
 
 def change_index_names(df: pd.DataFrame, mapping: dict | None = None) -> pd.DataFrame:

@@ -97,7 +97,8 @@ class PtxboaAPI:
             user data that overrides scenario data
             contains only rows of scenario_data that have been modified.
             ids are expected to come as long names. Needs to have the columns
-            ["source_region_code", "process_code", "parameter_code", "value"].
+            "source_region_code", "process_code", "parameter_code", "flow_code", and
+            "value".
 
         Returns
         -------

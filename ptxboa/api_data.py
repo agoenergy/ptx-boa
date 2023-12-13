@@ -238,7 +238,8 @@ class PtxData:
             used in the frontend.
         user_data : pd.DataFrame | None, optional
             user data that overrides scenario data. DataFrame needs the columns
-            ["source_region_code", "process_code", "parameter_code",  "value"]
+            "source_region_code", "process_code", "parameter_code", "flow_code", and
+            "value".
         enforce_copy: bool
             Will always return a copy of the user data when true, when false, only
             returns a copy when user data is not None. When enforce_copy is False and
@@ -378,10 +379,9 @@ class PtxData:
         user_data = user_data.copy().fillna("")
         scenario_data = scenario_data.copy()
         # user data from frontend only has columns
-        # "source_region_code", "process_code", "value" and "parameter_code", we need
-        # replace missing columns "flow_code" and "target_country_code"
-        for missing_dim in ["flow_code", "target_country_code"]:
-            user_data[missing_dim] = ""
+        # "source_region_code", "process_code", "value" and "parameter_code", and
+        # "flow_code" we need to replace missing column "target_country_code"
+        user_data["target_country_code"] = ""
 
         # user data comes with long names from frontend
         user_data = self._map_names_and_codes(

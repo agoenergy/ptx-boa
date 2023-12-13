@@ -1,0 +1,1 @@
+One supply country or region can be selected here,  and detailed settings can be selected for this region below (Renewable electricity sourcea and mode of transportation). For other supply regions, default settings will be used.

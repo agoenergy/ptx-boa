@@ -132,14 +132,14 @@ def _validate_correct_index_combinations(api, scenario, result):
         selector = (
             (input_data["parameter_code"] == row.parameter_code)
             & (input_data["process_code"] == row.process_code)
-            & (input_data["flow_code"] == "")
+            & (input_data["flow_code"] == row.flow_code)
             & (input_data["source_region_code"] == row.source_region_code)
             & (input_data["target_country_code"] == "")
         )
         if len(input_data.loc[selector]) == 0:
             result = (
                 f"invalid index combination '{row.source_region_code} "
-                f"| {row.process_code} | {row.parameter_code}'"
+                f"| {row.process_code} | {row.parameter_code} | {row.flow_code}'"
             )
             break
     return result
@@ -150,6 +150,7 @@ def _validate_correct_column_names(result):
         "source_region_code",
         "process_code",
         "parameter_code",
+        "flow_code",
         "value",
     }
     if set(result.columns) != required_cols:
@@ -181,6 +182,9 @@ def _validate_param_in_range(result):
         "lifetime / amortization period": (0, np.inf),
         "interest rate": (0, 1),
         "full load hours": (0, 8760),
+        "specific costs": (0, np.inf),
+        "losses (own fuel, transport)": (0, np.inf),
+        "levelized costs": (0, np.inf),
     }
     for row in result.itertuples():
         p = row.parameter_code
