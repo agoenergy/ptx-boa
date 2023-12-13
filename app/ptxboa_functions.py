@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
+from app.excel_download import prepare_and_download_df_as_excel
 from ptxboa.api import PtxboaAPI
 
 
@@ -687,6 +688,12 @@ def display_and_edit_input_data(
             use_container_width=True,
             column_config=column_config,
         )
+
+    scenario = st.session_state["scenario"].lower()
+    scenario = scenario.replace(")", "").replace("(", "")
+    fn = f"{key}_{scenario}".replace(" ", "_")
+    prepare_and_download_df_as_excel(df, filename=fn)
+
     return df
 
 
