@@ -94,4 +94,5 @@ def content_deep_dive_countries(
             st.markdown("**Regional Distribution**")
         with c_1_1:
             fig = px.box(df)
+            fig.update_layout(xaxis_title=None)
             st.plotly_chart(fig, use_container_width=True)

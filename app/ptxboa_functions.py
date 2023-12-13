@@ -641,6 +641,8 @@ def display_and_edit_input_data(
         missing_index_value = None
         column_config = get_column_config()
 
+    df = change_index_names(df)
+
     # if editing is enabled, store modifications in session_state:
     if st.session_state["edit_input_data"]:
         if f"{key}_number" not in st.session_state:
@@ -746,3 +748,30 @@ def get_column_config() -> dict:
         ),
     }
     return column_config
+
+
+def change_index_names(df: pd.DataFrame, mapping: dict | None = None) -> pd.DataFrame:
+    """
+    Change the index name of cost results or input data dataframes.
+
+    Only call this just befor you display any data, not before any transformation
+    or pivot actions.
+
+    https://stackoverflow.com/a/19851521
+
+    If mapping is None, default mappings for input_data and cost_results data is
+    used.
+    """
+    if mapping is None:
+        mapping = {
+            "process_code": "Process",
+            "source_region_code": "Source Region",
+            "region": "Source Region",
+            "scenario": "Scenario",
+            "res_gen": "RE Source",
+            "chain": "Chain",
+            "flow_code": "Carrier/Material",
+        }
+    new_idx_names = [mapping.get(i, i) for i in df.index.names]
+    df.index.names = new_idx_names
+    return df
