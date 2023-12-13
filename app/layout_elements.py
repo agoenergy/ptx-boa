@@ -33,11 +33,11 @@ def display_costs(
                 horizontal=True,
                 key=f"select_user_modificatons_data_{key}_{key_suffix}",
             )
-        if select_data == "with user modifications":
+        if select_data == "With Modifications":
             df_res = df_costs
-        if select_data == "without user modifications":
+        if select_data == "Without Modifications":
             df_res = df_costs_without_user_changes
-        if select_data == "difference":
+        if select_data == "Difference":
             df_res = df_costs - df_costs_without_user_changes
     else:
         df_res = df_costs.copy()
