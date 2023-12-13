@@ -31,7 +31,8 @@ def display_costs(
                 "Select data to display",
                 ["with user modifications", "without user modifications", "difference"],
                 horizontal=True,
-                key=f"select_data_{key}_{key_suffix}",
+                key=f"select_user_modificatons_data_{key}_{key_suffix}",
+
             )
         if select_data == "with user modifications":
             df_res = df_costs
