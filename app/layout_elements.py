@@ -69,8 +69,9 @@ def display_costs(
             value=True,
             key=f"sort_data_{key}_{key_suffix}",
         )
-        if sort_ascending:
-            df_res = df_res.sort_values(["Total"], ascending=True)
+    if sort_ascending:
+        df_res = df_res.sort_values(["Total"], ascending=True)
+
     # create graph:
     fig = create_bar_chart_costs(
         df_res,
