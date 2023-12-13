@@ -114,12 +114,31 @@ def _create_fact_sheet_supply_country(context_data: dict):
     with st.expander("**LNG infrastructure**"):
         text = (
             f"- {data['lng_export']} export terminals\n"
-            f"- {data['lng_import']} import terminals.\n\n"
+            f"- {data['lng_import']} import terminals\n\n"
             f"*Source: {data['source_lng']}*"
         )
         st.markdown(text)
 
-    st.write("TODO: CCS pot, elec prices, H2 strategy")
+    with st.expander("**Carbon Capture & Storage (CCS) Potentials**"):
+        value = data["ccs_pot"]
+        source = data["source_ccs1"]
+        if value == "n/a":
+            st.markdown("no data")
+        else:
+            st.markdown(f"**{value}**\n\n*Source: {source}*")
+
+    with st.expander("**Electricity Prices**"):
+        value = data["elec_prices_IEA2020"]
+        source = data["source_elec_prices"]
+        if value == "n/a":
+            st.markdown("no data")
+        else:
+            st.markdown(f"{value:.2f} USD/MWh\n\n*Source: {source}*")
+
+    with st.expander(
+        "**Is there already a hydrogen strategy existing or in planning?**"
+    ):
+        st.markdown(data["h2_strategy"])
 
 
 def content_country_fact_sheets(context_data):
