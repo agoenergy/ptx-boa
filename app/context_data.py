@@ -12,19 +12,11 @@ def load_context_data():
     cd["demand_countries"] = pd.read_excel(
         filename, sheet_name="demand_countries", skiprows=1
     )
-    cd["certification_schemes_countries"] = pd.read_excel(
-        filename, sheet_name="certification_schemes_countries"
-    )
     cd["certification_schemes"] = pd.read_excel(
         filename, sheet_name="certification_schemes", skiprows=1
     )
     cd["sustainability"] = pd.read_excel(filename, sheet_name="sustainability")
     cd["supply"] = pd.read_excel(filename, sheet_name="supply", skiprows=1)
     cd["literature"] = pd.read_excel(filename, sheet_name="literature")
-    cd["infobox"] = pd.read_excel(
-        filename,
-        sheet_name="infobox",
-        usecols="A:F",
-        skiprows=1,
-    ).set_index("country_name")
+
     return cd
