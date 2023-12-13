@@ -460,7 +460,7 @@ def register_user_changes(
     # convert session state dict to dataframe:
     # Create a list of dictionaries
     data_dict = st.session_state[editor_key]["edited_rows"]
-    if any(data_dict):
+    if any(data_dict.values()):
         data_list = []
 
         rejected_changes = False
