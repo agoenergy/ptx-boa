@@ -455,7 +455,11 @@ def register_user_changes(
         for k, v in data_dict.items():
             for c_name, value in v.items():
                 if np.isnan(df_orig.iloc[k, :][c_name]):
-                    st.toast("Cannot modify empty value")
+                    msg = (
+                        f":exclamation: Cannot modify empty value '{c_name}' "
+                        f"for '{df_orig.index[k]}'"
+                    )
+                    st.toast(msg)
                     rejected_changes = True
                 else:
                     data_list.append({index: k, columns: c_name, values: value})
@@ -537,7 +541,21 @@ def display_and_edit_input_data(
         data type "conversion_processes" and "transportation_processes" which is not
         region specific.
     key : str
-        A key for the data editing streamlit widget. Need to be unique.
+        A key for the data editing layout element. Needs to be unique in the app.
+        Several session state variables are derived from this key::
+
+            - st.session_state[f"{key}_number"]:
+                This is initialized with 0 and incremented by 1 whenever any input
+                value got rejected by the callback function
+                :func:`register_user_changes`. This will trigger a re-rendering of the
+                data_editor widget and thus reset modifications on empty values.
+            - st.session_state[f"{key}_form"]:
+                the key for the form the editor lives in
+            - st_session_state[f"{key}_{st.session_state[f'{key}_number']}"]:
+                the name of this session state variable consists of the `key` and the
+                current `{key}_number`. It refers to the st.data_editor widget.
+                Whenever the key_number changes, the editor widget gets a new key and
+                is initialized from scratch.
 
     Returns
     -------
@@ -621,11 +639,12 @@ def display_and_edit_input_data(
             for c in df.columns
         }
 
-    if f"{key}_number" not in st.session_state:
-        st.session_state[f"{key}_number"] = 0
-    editor_key = f"{key}_{st.session_state[f'{key}_number']}"
     # if editing is enabled, store modifications in session_state:
     if st.session_state["edit_input_data"]:
+        if f"{key}_number" not in st.session_state:
+            st.session_state[f"{key}_number"] = 0
+        editor_key = f"{key}_{st.session_state[f'{key}_number']}"
+
         with st.form(key=f"{key}_form"):
             st.info(
                 (
