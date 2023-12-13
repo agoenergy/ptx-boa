@@ -30,7 +30,6 @@ def display_costs(
             select_data = st.radio(
                 "Select data to display",
                 ["With Modifications", "Without Modifications", "Difference"],
-
                 horizontal=True,
                 key=f"select_user_modificatons_data_{key}_{key_suffix}",
             )
