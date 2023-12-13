@@ -4,7 +4,7 @@ import pandas as pd
 import streamlit as st
 
 from app.plot_functions import create_bar_chart_costs
-from app.ptxboa_functions import config_number_columns
+from app.ptxboa_functions import change_index_names, config_number_columns
 
 
 def display_costs(
@@ -50,6 +50,10 @@ def display_costs(
     )
     if sort_ascending:
         df_res = df_res.sort_values(["Total"], ascending=True)
+
+    # fix index names
+    change_index_names(df_res)
+
     # create graph:
     fig = create_bar_chart_costs(
         df_res,
