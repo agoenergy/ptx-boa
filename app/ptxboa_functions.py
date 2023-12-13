@@ -655,14 +655,6 @@ def display_and_edit_input_data(
                 )
             )
 
-            df = st.data_editor(
-                df,
-                use_container_width=True,
-                key=editor_key,
-                num_rows="fixed",
-                disabled=[index],
-                column_config=column_config,
-            )
             st.form_submit_button(
                 "Apply Changes",
                 type="primary",
@@ -679,6 +671,16 @@ def display_and_edit_input_data(
                     "editor_key": editor_key,
                 },
             )
+
+            df = st.data_editor(
+                df,
+                use_container_width=True,
+                key=editor_key,
+                num_rows="fixed",
+                disabled=[index],
+                column_config=column_config,
+            )
+
     else:
         st.dataframe(
             df,
