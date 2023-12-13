@@ -87,7 +87,7 @@ def content_deep_dive_countries(
                 api,
                 data_type="full load hours",
                 scope=ddc,
-                key="input_data_editor_full_load_hours_ddc",
+                key=f"input_data_full_load_hours_{ddc.replace(' ', '_').lower()}",
             )
 
         with c_0_1:
