@@ -12,15 +12,21 @@ from ptxboa.api_data import DataHandler, PtxData
 def user_data_01():
     return pd.DataFrame(
         data=[
-            ("Australia", "PV tilted", 800, "CAPEX"),
-            ("Chile", "PV tilted", 900, "CAPEX"),
-            ("Chile", "Wind Offshore", 5000, "full load hours"),
-            ("Argentina", "PV tilted", 2000, "full load hours"),
-            ("Costa Rica", "Wind-PV-Hybrid", 2000, "full load hours"),
-            ("Australia", "Wind Onshore", 4000, "full load hours"),
-            ("Costa Rica", None, 0.12, "interest rate"),
+            ("Australia", "PV tilted", 800, "CAPEX", None),
+            ("Chile", "PV tilted", 900, "CAPEX", None),
+            ("Chile", "Wind Offshore", 5000, "full load hours", None),
+            ("Argentina", "PV tilted", 2000, "full load hours", None),
+            ("Costa Rica", "Wind-PV-Hybrid", 2000, "full load hours", None),
+            ("Australia", "Wind Onshore", 4000, "full load hours", None),
+            ("Costa Rica", None, 0.12, "interest rate", None),
         ],
-        columns=["source_region_code", "process_code", "value", "parameter_code"],
+        columns=[
+            "source_region_code",
+            "process_code",
+            "value",
+            "parameter_code",
+            "flow_code",
+        ],
     )
 
 

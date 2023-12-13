@@ -2,7 +2,7 @@
 """Sidebar creation."""
 import streamlit as st
 
-from app.ptxboa_functions import reset_user_changes
+from app.ptxboa_functions import read_markdown_file, reset_user_changes
 from ptxboa.api import PtxboaAPI
 
 
@@ -22,21 +22,12 @@ def make_sidebar(api: PtxboaAPI):
     st.session_state["region"] = st.sidebar.selectbox(
         "Supply country / region:",
         region_list,
-        help=(
-            "One supply country or region can be selected here, "
-            " and detailed settings can be selected for this region below "
-            "(RE source, mode of transportation). For other regions, "
-            "default settings will be used."
-        ),
+        help=(read_markdown_file("md/helptext_sidebar_supply_region.md")),
         index=region_list.get_loc("Morocco"),  # Morocco as default
     )
     st.sidebar.toggle(
         "Include subregions",
-        help=(
-            "For three deep-dive countries (Argentina, Morocco, and South Africa) "
-            "the app calculates costs for subregions as well. Activate this switch"
-            "if you want to chose one of these subregions as a supply region. "
-        ),
+        help=(read_markdown_file("md/helptext_sidebar_include_subregions.md")),
         key="include_subregions",
     )
 
@@ -44,10 +35,7 @@ def make_sidebar(api: PtxboaAPI):
     st.session_state["country"] = st.sidebar.selectbox(
         "Demand country:",
         countries,
-        help=(
-            "The country you aim to export to. Some key info on the demand country you "
-            "choose here are displayed in the info box."
-        ),
+        help=read_markdown_file("md/helptext_sidebar_demand_country.md"),
         index=countries.get_loc("Germany"),
     )
     # get chain as combination of product, electrolyzer type and reconversion option:
@@ -64,7 +52,7 @@ def make_sidebar(api: PtxboaAPI):
                 "Methanol",
                 "Ft e-fuels",
             ],
-            help="The product you want to export.",
+            help=read_markdown_file("md/helptext_sidebar_product.md"),
             index=4,  # Methane as default
         )
     with c2:
@@ -75,15 +63,14 @@ def make_sidebar(api: PtxboaAPI):
                 "PEM",
                 "SEOC",
             ],
-            help="The electrolyzer type you wish to use.",
+            help=read_markdown_file("md/helptext_sidebar_electrolyzer_type.md"),
             index=0,  # AEL as default
         )
     if product in ["Ammonia", "Methane"]:
         use_reconversion = st.sidebar.toggle(
             "Include reconversion to H2",
             help=(
-                "If activated, account for costs of "
-                "reconverting product to H2 in demand country."
+                read_markdown_file("md/helptext_sidebar_include_reconversion_to_h2.md")
             ),
         )
     else:
@@ -96,11 +83,7 @@ def make_sidebar(api: PtxboaAPI):
     st.session_state["res_gen"] = st.sidebar.selectbox(
         "Renewable electricity source (for selected supply region):",
         api.get_dimension("res_gen").index,
-        help=(
-            "The source of electricity for the selected source country. For all "
-            "other countries Wind-PV hybrid systems will be used (an optimized mixture "
-            "of PV and wind onshore plants)"
-        ),
+        help=read_markdown_file("md/helptext_sidebar_re_source.md"),
     )
 
     # get scenario as combination of year and cost assumption:
@@ -110,10 +93,7 @@ def make_sidebar(api: PtxboaAPI):
             "Data year:",
             [2030, 2040],
             index=1,
-            help=(
-                "To cover parameter uncertainty and development over time, we provide "
-                "cost reduction pathways (high / medium / low) for 2030 and 2040."
-            ),
+            help=read_markdown_file("md/helptext_sidebar_data-year.md"),
             horizontal=True,
         )
     with c2:
@@ -121,10 +101,7 @@ def make_sidebar(api: PtxboaAPI):
             "Cost assumptions:",
             ["high", "medium", "low"],
             index=1,
-            help=(
-                "To cover parameter uncertainty and development over time, we provide "
-                "cost reduction pathways (high / medium / low) for 2030 and 2040."
-            ),
+            help=read_markdown_file("md/helptext_sidebar_cost_assumptions.md"),
             horizontal=True,
         )
     st.session_state["scenario"] = f"{data_year} ({cost_scenario})"
@@ -134,25 +111,25 @@ def make_sidebar(api: PtxboaAPI):
         "Carbon source:",
         api.get_dimension("secproc_co2").index,
         horizontal=True,
-        help="Help text",
+        help=read_markdown_file("md/helptext_sidebar_carbon_source.md"),
     )
     st.session_state["secproc_water"] = st.sidebar.radio(
         "Water source:",
         api.get_dimension("secproc_water").index,
         horizontal=True,
-        help="Help text",
+        help=read_markdown_file("md/helptext_sidebar_water_source.md"),
     )
     st.session_state["transport"] = st.sidebar.radio(
         "Mode of transportation (for selected supply country):",
         ["Ship", "Pipeline"],
         horizontal=True,
-        help="Help text",
+        help=read_markdown_file("md/helptext_sidebar_transport.md"),
         index=1,  # 'Pipeline' as default
     )
     if st.session_state["transport"] == "Ship":
         st.session_state["ship_own_fuel"] = st.sidebar.toggle(
             "For shipping option: Use the product as own fuel?",
-            help="Help text",
+            help=read_markdown_file("md/helptext_sidebar_transport_use_own_fuel.md"),
         )
     else:
         st.session_state["ship_own_fuel"] = False
@@ -161,15 +138,13 @@ def make_sidebar(api: PtxboaAPI):
         "Unit for delivered costs:",
         ["USD/MWh", "USD/t"],
         horizontal=True,
-        help="Help text",
+        help=read_markdown_file("md/helptext_sidebar_cost_unit.md"),
         index=1,  # 'USD/t' as default
     )
     st.sidebar.divider()
     st.sidebar.toggle(
         "Edit input data",
-        help="""Activate this to enable editing of input data.
-
-Disable this setting to reset user data to default values.""",
+        help=read_markdown_file("md/helptext_sidebar_edit_input_data.md"),
         value=False,
         key="edit_input_data",
         on_change=reset_user_changes,

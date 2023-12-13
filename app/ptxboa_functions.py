@@ -217,6 +217,7 @@ def get_data_type_from_input_data(
         "CAPEX",
         "full load hours",
         "interest rate",
+        "specific_costs",
     ],
     scope: Literal[None, "world", "Argentina", "Morocco", "South Africa"],
 ) -> pd.DataFrame:
@@ -234,7 +235,8 @@ def get_data_type_from_input_data(
     data_type : str
         the data type which should be selected. Needs to be one of
         "electricity_generation", "conversion_processes", "transportation_processes",
-        "reconversion_processes", "CAPEX", "full load hours", and "interest rate".
+        "reconversion_processes", "CAPEX", "full load hours", "interest rate",
+        and "specific costs".
     scope : Literal[None, "world", "Argentina", "Morocco", "South Africa"]
         The regional scope. Is automatically set to None for data of
         data type "conversion_processes" and "transportation_processes" which is not
@@ -260,6 +262,15 @@ def get_data_type_from_input_data(
         index = "process_code"
         columns = "parameter_code"
         processes = api.get_dimension("process")
+
+    if data_type == "specific_costs":
+        scope = None
+        source_region_code = [""]
+        index = "flow_code"
+        columns = "parameter_code"
+        processes = [""]
+        parameter_code = ["specific costs"]
+        process_code = [""]
 
     if data_type == "electricity_generation":
         parameter_code = [
@@ -419,6 +430,7 @@ def display_user_changes(api):
                     "source_region_code": "Source Region",
                     "process_code": "Process",
                     "parameter_code": "Parameter",
+                    "flow_code": "Carrier/Material",
                     "value": "Value",
                 }
             ).style.format(precision=3),
@@ -456,7 +468,8 @@ def register_user_changes(
         res = pd.DataFrame(data_list)
 
         # add missing key (the info that is not contained in the 2D table):
-        res[missing_index_name] = missing_index_value
+        if missing_index_name is not None or missing_index_value is not None:
+            res[missing_index_name] = missing_index_value
 
         # Replace the 'id' values with the corresponding index elements from df_tab
         res[index] = res[index].map(lambda x: df_tab.index[x])
@@ -467,6 +480,7 @@ def register_user_changes(
                     "source_region_code",
                     "process_code",
                     "parameter_code",
+                    "flow_code",
                     "value",
                 ]
             )
@@ -475,7 +489,13 @@ def register_user_changes(
         st.session_state["user_changes_df"] = pd.concat(
             [st.session_state["user_changes_df"], res]
         ).drop_duplicates(
-            subset=["source_region_code", "process_code", "parameter_code"], keep="last"
+            subset=[
+                "source_region_code",
+                "process_code",
+                "parameter_code",
+                "flow_code",
+            ],
+            keep="last",
         )
 
 
@@ -499,6 +519,7 @@ def display_and_edit_input_data(
         "reconversion_processes" "CAPEX",
         "full load hours",
         "interest rate",
+        "specific_costs",
     ],
     scope: Literal["world", "Argentina", "Morocco", "South Africa"],
     key: str,
@@ -516,7 +537,8 @@ def display_and_edit_input_data(
     data_type : str
         the data type which should be selected. Needs to be one of
         "electricity_generation", "conversion_processes", "transportation_processes",
-        "reconversion_processes", "CAPEX", "full load hours", and "interest rate".
+        "reconversion_processes", "CAPEX", "full load hours", "interest rate",
+        and "specific costs".
     scope : Literal[None, "world", "Argentina", "Morocco", "South Africa"]
         The regional scope. Is automatically set to None for data of
         data type "conversion_processes" and "transportation_processes" which is not
@@ -540,38 +562,7 @@ def display_and_edit_input_data(
         columns = "parameter_code"
         missing_index_name = "source_region_code"
         missing_index_value = None
-        column_config = None
-
-    if data_type in [
-        "electricity_generation",
-        "conversion_processes",
-        "reconversion_processes",
-    ]:
-        column_config = {
-            "CAPEX": st.column_config.NumberColumn(format="%.0f USD/kW", min_value=0),
-            "OPEX (fix)": st.column_config.NumberColumn(
-                format="%.0f USD/kW", min_value=0
-            ),
-            "efficiency": st.column_config.NumberColumn(
-                format="%.2f", min_value=0, max_value=1
-            ),
-            "lifetime / amortization period": st.column_config.NumberColumn(
-                format="%.0f a", min_value=0
-            ),
-        }
-
-    if data_type == "transportation_processes":
-        column_config = {
-            "levelized costs": st.column_config.NumberColumn(
-                format="%.2e USD/(kW km)", min_value=0
-            ),
-            "lifetime / amortization period": st.column_config.NumberColumn(
-                format="%.0f a", min_value=0
-            ),
-            "losses (own fuel, transport)": st.column_config.NumberColumn(
-                format="%.2e fraction per km", min_value=0
-            ),
-        }
+        column_config = get_column_config()
 
     if data_type == "interest rate":
         index = "source_region_code"
@@ -604,6 +595,13 @@ def display_and_edit_input_data(
             )
             for c in df.columns
         }
+
+    if data_type == "specific_costs":
+        index = "flow_code"
+        columns = "parameter_code"
+        missing_index_name = None
+        missing_index_value = None
+        column_config = get_column_config()
 
     # if editing is enabled, store modifications in session_state:
     if st.session_state["edit_input_data"]:
@@ -681,3 +679,33 @@ def get_region_from_subregion(subregion: str) -> str:
     """
     region = subregion.split(" (")[0]
     return region
+
+
+def get_column_config() -> dict:
+    """Define column configuration for dataframe display."""
+    column_config = {
+        "CAPEX": st.column_config.NumberColumn(format="%.0f USD/kW", min_value=0),
+        "OPEX (fix)": st.column_config.NumberColumn(format="%.0f USD/kW", min_value=0),
+        "efficiency": st.column_config.NumberColumn(
+            format="%.2f", min_value=0, max_value=1
+        ),
+        "lifetime / amortization period": st.column_config.NumberColumn(
+            format="%.0f a",
+            min_value=0,
+            help=read_markdown_file("md/helptext_columns_lifetime.md"),
+        ),
+        "levelized costs": st.column_config.NumberColumn(
+            format="%.2e USD/(kW km)", min_value=0
+        ),
+        "losses (own fuel, transport)": st.column_config.NumberColumn(
+            format="%.2e fraction per km",
+            min_value=0,
+            help=read_markdown_file("md/helptext_columns_losses.md"),
+        ),
+        "specific costs": st.column_config.NumberColumn(
+            format="%.3f [various units]",
+            min_value=0,
+            help=read_markdown_file("md/helptext_columns_specific_costs.md"),
+        ),
+    }
+    return column_config

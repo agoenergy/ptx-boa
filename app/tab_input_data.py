@@ -76,35 +76,40 @@ def content_input_data(api: PtxboaAPI) -> None:
 
     with st.container(border=True):
         st.subheader("Global data")
-        st.markdown("**Electricity generation:**")
-        with st.expander("**Data**"):
+        with st.expander("**Electricity generation**"):
             display_and_edit_input_data(
                 api,
                 data_type="electricity_generation",
                 scope=None,
                 key="input_data_editor_electricity_generation",
             )
-        st.markdown("**Electrolysis and derivate production:**")
-        with st.expander("**Data**"):
+        with st.expander("**Electrolysis and derivate production**"):
             display_and_edit_input_data(
                 api,
                 data_type="conversion_processes",
                 scope=None,
                 key="input_data_editor_conversion_processes",
             )
-        st.markdown("**Transportation (ships and pipelines):**")
-        with st.expander("**Data**"):
+        with st.expander("**Transportation (ships and pipelines)**"):
             display_and_edit_input_data(
                 api,
                 data_type="transportation_processes",
                 scope=None,
                 key="input_data_editor_transportation_processes",
             )
-        st.markdown("**Transportation (compression, liquefication and reconversion):**")
-        with st.expander("**Data**"):
+        with st.expander(
+            "**Transportation (compression, liquefication and reconversion)**"
+        ):
             display_and_edit_input_data(
                 api,
                 data_type="reconversion_processes",
                 scope=None,
                 key="input_data_editor_reconversion_processes",
+            )
+        with st.expander("**Specific costs for materials and energy carriers**"):
+            display_and_edit_input_data(
+                api,
+                data_type="specific_costs",
+                scope=None,
+                key="input_data_editor_specific_costs",
             )

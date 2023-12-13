@@ -1,0 +1,1 @@
+If the transportation distance is smaller than 6000km, you can choose pipeline transport. Ship transport is always considered possible. For other source countries than the selected one, pipeline is chosen by default if possible.
