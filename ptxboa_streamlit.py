@@ -9,6 +9,7 @@ import streamlit_antd_components as sac
 
 import app.ptxboa_functions as pf
 from app.context_data import load_context_data
+from app.layout_elements import display_footer
 from app.sidebar import make_sidebar
 from app.tab_certification_schemes import content_certification_schemes
 from app.tab_country_fact_sheets import content_country_fact_sheets
@@ -60,6 +61,7 @@ css = """
 st.markdown(css, unsafe_allow_html=True)
 
 api = st.cache_resource(PtxboaAPI)()
+
 st.title("PtX Business Opportunity Analyzer :red[draft version, please do not quote!]")
 
 with st.container():
@@ -183,3 +185,5 @@ if st.session_state[st.session_state["tab_key"]] == "Literature":
 
 if st.session_state[st.session_state["tab_key"]] == "Info":
     content_info()
+
+display_footer()

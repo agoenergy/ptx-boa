@@ -6,8 +6,6 @@ from app.ptxboa_functions import read_markdown_file
 
 
 def content_info():
-    st.image("img/logos.png")
-
     with st.container(border=True):
         st.markdown(read_markdown_file("md/info_intro.md"))
 
@@ -44,42 +42,3 @@ def content_info():
 
     with st.container(border=True):
         st.markdown(read_markdown_file("md/info_disclaimer.md"))
-
-    with st.container(border=True):
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            st.markdown(
-                """
-                ##### Developed by:
-                Öko-Institut<br/>
-                Merzhauser Straße 173<br/>
-                D-79100 Freiburg im Breisgau<br/>
-                www.oeko.de
-                """,
-                unsafe_allow_html=True,
-            )
-        with c2:
-            st.markdown(
-                """
-                ##### On behalf of:
-                Agora Energiewende<br/>
-                Anna-Louisa-Karsch-Str. 2<br/>
-                D-10178 Berlin<br/>
-                www.agora-energiewende.de
-                """,
-                unsafe_allow_html=True,
-            )
-        with c3:
-            st.markdown(
-                """
-                ##### Authors:
-                - Christoph Heinemann
-                - Dr. Roman Mendelevitch
-                - Markus Haller
-                - Christian Winger
-                - Johannes Aschauer
-                - Susanne Krieger
-                - Katharina Göckeler
-                """,
-                unsafe_allow_html=True,
-            )
