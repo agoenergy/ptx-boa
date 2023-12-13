@@ -41,6 +41,7 @@ def calculate_results_list(
     parameter_to_change: str,
     parameter_list: list = None,
     override_session_state: dict | None = None,
+    apply_user_data: bool = True,
 ) -> pd.DataFrame:
     """Calculate results for source regions and one selected target country.
 
@@ -59,6 +60,9 @@ def calculate_results_list(
         session state. Keys of the dictionary must in "chain", "country",
         "output_unit", "region", "res_gen", "scenario", "secproc_co2",
         "secproc_water", "ship_own_fuel", "transport".
+    apply_user_data: bool
+        If true, apply user data modifications (default).
+        If false, use only default scenario data.
 
     Returns
     -------
@@ -101,7 +105,7 @@ def calculate_results_list(
         res_single = calculate_results_single(
             api,
             settings,
-            user_data=st.session_state["user_changes_df"],
+            user_data=st.session_state["user_changes_df"] if apply_user_data else None,
         )
         res_list.append(res_single)
     res_details = pd.concat(res_list)

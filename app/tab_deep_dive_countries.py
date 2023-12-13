@@ -14,7 +14,11 @@ from app.ptxboa_functions import (
 from ptxboa.api import PtxboaAPI
 
 
-def content_deep_dive_countries(api: PtxboaAPI, costs_per_region: pd.DataFrame) -> None:
+def content_deep_dive_countries(
+    api: PtxboaAPI,
+    costs_per_region: pd.DataFrame,
+    costs_per_region_without_user_changes: pd.DataFrame,
+) -> None:
     """Create content for the "costs by region" sheet.
 
     Parameters
@@ -45,6 +49,7 @@ def content_deep_dive_countries(api: PtxboaAPI, costs_per_region: pd.DataFrame) 
 
         display_costs(
             select_subregions(costs_per_region, ddc),
+            select_subregions(costs_per_region_without_user_changes, ddc),
             key="region",
             titlestring="Costs per subregion",
             key_suffix=ddc,

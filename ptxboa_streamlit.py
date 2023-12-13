@@ -149,6 +149,30 @@ costs_per_chain = pf.calculate_results_list(
     override_session_state={"output_unit": "USD/MWh"},
 )
 
+# calculate results over different data dimensions (without user changes):
+costs_per_region_without_user_changes = pf.calculate_results_list(
+    api, parameter_to_change="region", parameter_list=None, apply_user_data=False
+)
+costs_per_scenario_without_user_changes = pf.calculate_results_list(
+    api, parameter_to_change="scenario", parameter_list=None, apply_user_data=False
+)
+costs_per_res_gen_without_user_changes = pf.calculate_results_list(
+    api,
+    parameter_to_change="res_gen",
+    # TODO: here we remove PV tracking manually, this needs to be fixed in data
+    parameter_list=[
+        x for x in api.get_dimension("res_gen").index.to_list() if x != "PV tracking"
+    ],
+    apply_user_data=False,
+)
+costs_per_chain_without_user_changes = pf.calculate_results_list(
+    api,
+    parameter_to_change="chain",
+    parameter_list=None,
+    override_session_state={"output_unit": "USD/MWh"},
+    apply_user_data=False,
+)
+
 # import context data:
 cd = load_context_data()
 
@@ -160,6 +184,10 @@ if st.session_state[st.session_state["tab_key"]] == "Dashboard":
         costs_per_scenario=costs_per_scenario,
         costs_per_res_gen=costs_per_res_gen,
         costs_per_chain=costs_per_chain,
+        costs_per_region_without_user_changes=costs_per_region_without_user_changes,
+        costs_per_scenario_without_user_changes=costs_per_scenario_without_user_changes,
+        costs_per_res_gen_without_user_changes=costs_per_res_gen_without_user_changes,
+        costs_per_chain_without_user_changes=costs_per_chain_without_user_changes,
     )
 
 if st.session_state[st.session_state["tab_key"]] == "Market scanning":
@@ -169,7 +197,9 @@ if st.session_state[st.session_state["tab_key"]] == "Input data":
     content_input_data(api)
 
 if st.session_state[st.session_state["tab_key"]] == "Deep-dive countries":
-    content_deep_dive_countries(api, costs_per_region)
+    content_deep_dive_countries(
+        api, costs_per_region, costs_per_region_without_user_changes
+    )
 
 if st.session_state[st.session_state["tab_key"]] == "Country fact sheets":
     content_country_fact_sheets(cd)
