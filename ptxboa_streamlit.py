@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
-"""Mockup streamlit app."""
+"""
+PtX BOA streamlit app, main file.
+
+Execution:
+>>> streamlit run  ptxboa_streamlit.py
+"""
 # TODO how do I use the treamlit logger?
 import logging
 
@@ -39,7 +44,7 @@ log_handler.setFormatter(
 logger.addHandler(log_handler)
 
 
-logger.info("Updating app...")
+logger.debug("Updating app...")
 
 # app layout:
 
@@ -191,7 +196,7 @@ if st.session_state[st.session_state["tab_key"]] == "Dashboard":
     )
 
 if st.session_state[st.session_state["tab_key"]] == "Market scanning":
-    content_market_scanning(api, costs_per_region)
+    content_market_scanning(api, costs_per_region, cd)
 
 if st.session_state[st.session_state["tab_key"]] == "Input data":
     content_input_data(api)
