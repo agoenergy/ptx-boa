@@ -53,22 +53,48 @@ This sheet helps you to better evaluate your country's competitive position
     df_plot["total costs"] = res_costs["Total"]
     df_plot = df_plot.merge(distances, left_index=True, right_index=True)
 
+    # merge RE supply potential from context data:
+    df_plot = df_plot.merge(
+        cd["supply"].set_index("country_name")[
+            ["re_tech_pot_EWI", "re_tech_pot_PTXAtlas"]
+        ],
+        left_index=True,
+        right_index=True,
+        how="left",
+    )
+
+    # prettify column names:
+    df_plot.rename(
+        {
+            "total costs": f"Total costs ({st.session_state['output_unit']})",
+            "shipping distance": "Shipping distance (km)",
+            "pipeline distance": "Pipeline distance (km)",
+            "re_tech_pot_EWI": "RE technical potential (EWI) (TWh/a)",
+            "re_tech_pot_PTXAtlas": "RE technical potential (PTX Atlas) (TWh/a)",
+        },
+        inplace=True,
+        axis=1,
+    )
+
+    # replace nan entries:
+    df_plot = df_plot.replace({"no potential": None, "no analysis ": None})
+
     # do not show subregions:
     df_plot = remove_subregions(api, df_plot, st.session_state["country"])
 
-    # create plot:st.session_state
+    # create plot:
     [c1, c2] = st.columns([1, 5])
     with c1:
         # select which distance to show:
         selected_distance = st.radio(
             "Select parameter:",
-            ["shipping distance", "pipeline distance"],
+            ["Shipping distance (km)", "Pipeline distance (km)"],
         )
     with c2:
         fig = px.scatter(
             df_plot,
             x=selected_distance,
-            y="total costs",
+            y=f"Total costs ({st.session_state['output_unit']})",
             title="Costs and transportation distances",
             height=600,
         )
@@ -82,6 +108,8 @@ This sheet helps you to better evaluate your country's competitive position
         st.plotly_chart(fig)
 
     # show data in tabular form:
-    st.markdown("**Data:**")
-    column_config = config_number_columns(df_plot, format="%.1f")
-    st.dataframe(df_plot, use_container_width=True, column_config=column_config)
+    with st.expander("**Data:**"):
+        column_config = config_number_columns(df_plot, format="%.0f")
+        st.dataframe(
+            df_plot, use_container_width=True, column_config=column_config, height=800
+        )
