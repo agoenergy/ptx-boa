@@ -127,7 +127,9 @@ def make_sidebar(api: PtxboaAPI):
         & (res["target_country_code"] == st.session_state["country"])
         & (res["parameter_code"] == "shipping distance"),
         "value",
-    ][0]
+    ].iloc[0]
+
+
     if distance < 6000:
         st.session_state["transport"] = st.sidebar.radio(
             "Mode of transportation (for selected supply country):",
