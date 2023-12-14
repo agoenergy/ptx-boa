@@ -82,34 +82,38 @@ This sheet helps you to better evaluate your country's competitive position
     # do not show subregions:
     df_plot = remove_subregions(api, df_plot, st.session_state["country"])
 
-    # create plot:
-    [c1, c2] = st.columns([1, 5])
-    with c1:
-        # select which distance to show:
-        selected_distance = st.radio(
-            "Select parameter:",
-            ["Shipping distance (km)", "Pipeline distance (km)"],
-        )
-    with c2:
-        fig = px.scatter(
-            df_plot,
-            x=selected_distance,
-            y=f"Total costs ({st.session_state['output_unit']})",
-            title="Costs and transportation distances",
-            height=600,
-        )
-        # Add text above markers
-        fig.update_traces(
-            text=df_plot.index,
-            textposition="top center",
-            mode="markers+text",
-        )
+    with st.container(border=True):
+        # create plot:
+        [c1, c2] = st.columns([1, 5])
+        with c1:
+            # select which distance to show:
+            selected_distance = st.radio(
+                "Select parameter:",
+                ["Shipping distance (km)", "Pipeline distance (km)"],
+            )
+        with c2:
+            fig = px.scatter(
+                df_plot,
+                x=selected_distance,
+                y=f"Total costs ({st.session_state['output_unit']})",
+                title="Costs and transportation distances",
+                height=600,
+            )
+            # Add text above markers
+            fig.update_traces(
+                text=df_plot.index,
+                textposition="top center",
+                mode="markers+text",
+            )
 
-        st.plotly_chart(fig)
+            st.plotly_chart(fig)
 
-    # show data in tabular form:
-    with st.expander("**Data:**"):
-        column_config = config_number_columns(df_plot, format="%.0f")
-        st.dataframe(
-            df_plot, use_container_width=True, column_config=column_config, height=800
-        )
+        # show data in tabular form:
+        with st.expander("**Data:**"):
+            column_config = config_number_columns(df_plot, format="%.0f")
+            st.dataframe(
+                df_plot,
+                use_container_width=True,
+                column_config=column_config,
+                height=800,
+            )
