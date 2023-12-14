@@ -33,13 +33,13 @@ def content_dashboard(
         title_string = (
             f"{cost_component} cost of exporting "
             f"{st.session_state['chain']} to "
-            f"{st.session_state['country']}:"
+            f"{st.session_state['country']}"
         )
         st.subheader(title_string)
         c_1, c_2 = st.columns([2, 1])
 
         with c_1:
-            st.markdown("##### Costs by supply country:")
+            st.markdown("##### Costs by supply country")
             fig_map = plot_costs_on_map(
                 api, costs_per_region, scope="world", cost_component=cost_component
             )
@@ -50,7 +50,7 @@ def content_dashboard(
             st.plotly_chart(fig_map, use_container_width=True)
 
         with c_2:
-            st.markdown("##### Cost distribution and details:")
+            st.markdown("##### Cost distribution and details")
             # create box plot and bar plot:
             fig1 = create_box_plot(costs_per_region)
             filtered_data = costs_per_region[
@@ -86,7 +86,7 @@ def content_dashboard(
                 api, costs_per_region_without_user_changes, st.session_state["country"]
             ),
             "region",
-            "Costs by region:",
+            "Costs by region",
         )
 
     with st.container(border=True):
@@ -94,7 +94,7 @@ def content_dashboard(
             costs_per_scenario,
             costs_per_scenario_without_user_changes,
             "scenario",
-            "Costs by data scenario:",
+            "Costs by data scenario",
         )
 
     with st.container(border=True):
@@ -102,7 +102,7 @@ def content_dashboard(
             costs_per_res_gen,
             costs_per_res_gen_without_user_changes,
             "res_gen",
-            "Costs by renewable electricity source:",
+            "Costs by renewable electricity source",
         )
 
     with st.container(border=True):
@@ -110,6 +110,6 @@ def content_dashboard(
             costs_per_chain,
             costs_per_chain_without_user_changes,
             "chain",
-            "Costs by supply chain:",
+            "Costs by supply chain",
             output_unit="USD/MWh",
         )

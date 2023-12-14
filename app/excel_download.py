@@ -36,7 +36,7 @@ def prepare_and_download_df_as_excel(df: pd.DataFrame, filename: str):
     excel_stream = prepare_df_as_excel_stream(df)
 
     st.download_button(
-        label="Download Table as Excel",
+        label="Download table as Excel",
         data=excel_stream,
         file_name=f"{filename}.xlsx",
         help="Click to download this Table as Excel File.",

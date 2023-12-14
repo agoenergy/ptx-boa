@@ -30,21 +30,21 @@ def _create_fact_sheet_demand_country(context_data: dict):
     with st.expander("**Demand**"):
         c1, c2, c3 = st.columns(3)
         with c1:
-            st.markdown("**Projected H2 demand in 2030:**")
+            st.markdown("**Projected H2 demand in 2030**")
             if data["h2_demand_2030"] in ["", "-", "n/a"]:
                 st.markdown("no data")
             else:
                 st.markdown(data["h2_demand_2030"])
                 st.markdown(f"*Source: {data['source_h2_demand_2030']}*")
         with c2:
-            st.markdown("**Targeted sectors (main):**")
+            st.markdown("**Targeted sectors (main)**")
             if data["demand_targeted_sectors_main"] in ["", "-", "n/a"]:
                 st.markdown("no data")
             else:
                 st.markdown(data["demand_targeted_sectors_main"])
                 st.markdown(f"*Source: {data['source_targeted_sectors_main']}*")
         with c3:
-            st.markdown("**Targeted sectors (secondary):**")
+            st.markdown("**Targeted sectors (secondary)**")
             if data["demand_targeted_sectors_secondary"] in [
                 "",
                 "-",
@@ -57,10 +57,10 @@ def _create_fact_sheet_demand_country(context_data: dict):
                 st.markdown(f"*Source: {data['source_targeted_sectors_secondary']}*")
 
     with st.expander("**Hydrogen strategy**"):
-        st.markdown("**Documents:**")
+        st.markdown("**Documents**")
         st.markdown(data["h2_strategy_documents"])
 
-        st.markdown("**Authorities:**")
+        st.markdown("**Authorities**")
         st.markdown(data["h2_strategy_authorities"])
 
     with st.expander("**Hydrogen trade characteristics**"):
@@ -68,11 +68,11 @@ def _create_fact_sheet_demand_country(context_data: dict):
         st.markdown(f"*Source: {data['source_h2_trade_characteristics']}*")
 
     with st.expander("**Infrastructure**"):
-        st.markdown("**LNG import terminals:**")
+        st.markdown("**LNG import terminals**")
         st.markdown(data["lng_import_terminals"])
         st.markdown(f"*Source: {data['source_lng_import_terminals']}*")
 
-        st.markdown("**H2 pipeline projects:**")
+        st.markdown("**H2 pipeline projects**")
         st.markdown(data["h2_pipeline_projects"])
         st.markdown(f"*Source: {data['source_h2_pipeline_projects']}*")
 
@@ -126,7 +126,7 @@ def _create_fact_sheet_supply_country(context_data: dict, api: PtxboaAPI):
         )
         st.markdown(text)
 
-    with st.expander("**Carbon Capture & Storage (CCS) Potentials**"):
+    with st.expander("**Carbon Capture & Storage (CCS) potentials**"):
         value = data["ccs_pot"]
         source = data["source_ccs1"]
         if value == "n/a":
@@ -134,7 +134,7 @@ def _create_fact_sheet_supply_country(context_data: dict, api: PtxboaAPI):
         else:
             st.markdown(f"**{value}**\n\n*Source: {source}*")
 
-    with st.expander("**Electricity Prices**"):
+    with st.expander("**Electricity prices**"):
         value = data["elec_prices_IEA2020"]
         source = data["source_elec_prices"]
         if value == "n/a":

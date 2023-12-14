@@ -40,7 +40,7 @@ def content_input_data(api: PtxboaAPI) -> None:
             st.markdown("**Map**")
             if data_selection in ["full load hours", "CAPEX"]:
                 map_parameter = st.selectbox(
-                    "Show Parameter on Map",
+                    "Show parameter on map",
                     [
                         "Wind Onshore",
                         "Wind Offshore",
@@ -68,7 +68,7 @@ def content_input_data(api: PtxboaAPI) -> None:
                 key=f"input_data_{data_selection}",
             )
         with c_0_1:
-            st.markdown("**Regional Distribution**")
+            st.markdown("**Regional distribution**")
         with c_1_1:
             # create plot:
             fig = px.box(df)
