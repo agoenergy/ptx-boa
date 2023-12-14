@@ -8,7 +8,7 @@ from app.ptxboa_functions import config_number_columns, remove_subregions
 from ptxboa.api import PtxboaAPI
 
 
-def content_market_scanning(api: PtxboaAPI, res_costs: pd.DataFrame) -> None:
+def content_market_scanning(api: PtxboaAPI, res_costs: pd.DataFrame, cd: dict) -> None:
     """Create content for the "market scanning" sheet.
 
     Parameters
@@ -17,6 +17,8 @@ def content_market_scanning(api: PtxboaAPI, res_costs: pd.DataFrame) -> None:
         an instance of the api class
     res_costs : pd.DataFrame
         Results.
+    cd: dict
+        context data.
     """
     with st.expander("What is this?"):
         st.markdown(
