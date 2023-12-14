@@ -82,6 +82,7 @@ This sheet helps you to better evaluate your country's competitive position
 
     # replace nan entries:
     df = df.replace({"no potential": None, "no analysis ": None})
+    df = df.astype(float)
 
     # do not show subregions:
     df = remove_subregions(api, df, st.session_state["country"])
@@ -113,6 +114,11 @@ This sheet helps you to better evaluate your country's competitive position
 
         # create plot:
         df_plot = df.copy().round(0)
+
+        # distinguish between selected region and others:
+        df_plot["category"] = "other regions"
+        df_plot.at[st.session_state["region"], "category"] = "selected supply region"
+
         if parameter_for_marker_size == "None":
             fig = px.scatter(
                 df_plot,
@@ -121,29 +127,25 @@ This sheet helps you to better evaluate your country's competitive position
             )
         else:
             df_plot = df_plot.loc[df_plot[parameter_for_marker_size] > 0]
-            df_plot = df_plot.astype(float)
             fig = px.scatter(
                 df_plot,
                 x=selected_distance,
                 y=f"Total costs ({st.session_state['output_unit']})",
                 size=parameter_for_marker_size,
                 size_max=50,
-                height=600,
+                color="category",
+                color_discrete_sequence=["#1A667B", "#D05094"],
+                text=df_plot.index,
             )
-        # Add text above markers
-        fig.update_traces(
-            text=df_plot.index,
-            textposition="top center",
-            mode="markers+text",
-        )
+            fig.update_traces(textposition="top center")
 
         st.plotly_chart(fig, use_container_width=True)
 
         # show data in tabular form:
         with st.expander("**Data**"):
-            column_config = config_number_columns(df_plot, format="%.0f")
+            column_config = config_number_columns(df, format="%.0f")
             st.dataframe(
-                df_plot,
+                df,
                 use_container_width=True,
                 column_config=column_config,
             )
@@ -158,7 +160,6 @@ This sheet helps you to better evaluate your country's competitive position
         )
 
         # filter shipping and pipeline distances:
-
         df = input_data.loc[
             (
                 input_data["parameter_code"].isin(
@@ -219,18 +220,20 @@ This sheet helps you to better evaluate your country's competitive position
 
         # create plot:
         df_plot = df.copy().round(0)
+
+        # distinguish between selected region and others:
+        df_plot["category"] = "other countries"
+        df_plot.at[st.session_state["country"], "category"] = "selected target country"
+
         fig = px.scatter(
             df_plot,
             x=selected_distance,
             y="Projected H2 demand in 2030 (Mt/a)",
-            height=600,
-        )
-        # Add text above markers
-        fig.update_traces(
+            color="category",
+            color_discrete_sequence=["#1A667B", "#D05094"],
             text=df_plot.index,
-            textposition="top center",
-            mode="markers+text",
         )
+        fig.update_traces(textposition="top center")
 
         st.plotly_chart(fig, use_container_width=True)
 
