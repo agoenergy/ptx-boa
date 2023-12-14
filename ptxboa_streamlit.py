@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
-"""Mockup streamlit app."""
+"""
+PtX BOA streamlit app, main file.
+
+Execution:
+>>> streamlit run  ptxboa_streamlit.py
+"""
 # TODO how do I use the treamlit logger?
 import logging
 
@@ -39,7 +44,7 @@ log_handler.setFormatter(
 logger.addHandler(log_handler)
 
 
-logger.info("Updating app...")
+logger.debug("Updating app...")
 
 # app layout:
 
