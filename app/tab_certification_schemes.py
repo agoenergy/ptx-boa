@@ -8,12 +8,15 @@ from app.ptxboa_functions import read_markdown_file
 
 def _render_scheme_info(context_data, scheme_name):
     df = context_data["certification_schemes"]
-    data = df.loc[df["name"] == scheme_name].iloc[0].to_dict()
+    data_with_na = df.loc[df["name"] == scheme_name].iloc[0].to_dict()
 
-    # replace na with "not specified":
-    for key in data:
-        if data[key] is np.nan:
+    # replace na with "not specified"
+    data = {}  # never modify a dict when iterating over it.
+    for key, value in data_with_na.items():
+        if value in ["", " ", np.nan]:
             data[key] = "not specified"
+        else:
+            data[key] = value
 
     st.markdown(data["description"])
 
@@ -27,7 +30,7 @@ def _render_scheme_info(context_data, scheme_name):
 
         st.markdown(
             """
-**Explanations:**
+**Explanations**
 
 - Info on "Geographical scope":
   - This field provides an answer to the question: if you want to address a specific
@@ -44,23 +47,23 @@ IRENA & RMI (2023): Creating a global hydrogen market: certification to enable t
 
     with st.expander("**Scope**"):
         if data["scope_emissions"] != "not specified":
-            st.markdown("- **Emissions:**")
+            st.markdown("- **Emissions**")
             st.markdown(data["scope_emissions"])
 
         if data["scope_electricity"] != "not specified":
-            st.markdown("- **Electricity:**")
+            st.markdown("- **Electricity**")
             st.markdown(data["scope_electricity"])
 
         if data["scope_water"] != "not specified":
-            st.markdown("- **Water:**")
+            st.markdown("- **Water**")
             st.markdown(data["scope_water"])
 
         if data["scope_biodiversity"] != "not specified":
-            st.markdown("- **Biodiversity:**")
+            st.markdown("- **Biodiversity**")
             st.markdown(data["scope_biodiversity"])
 
         if data["scope_other"] != "not specified":
-            st.markdown("- **Other:**")
+            st.markdown("- **Other**")
             st.markdown(data["scope_other"])
 
     with st.expander("**Sources**"):

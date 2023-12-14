@@ -13,7 +13,7 @@ def load_context_data():
         filename, sheet_name="demand_countries", skiprows=1, keep_default_na=False
     )
     cd["certification_schemes"] = pd.read_excel(
-        filename, sheet_name="certification_schemes", skiprows=1
+        filename, sheet_name="certification_schemes", skiprows=1, keep_default_na=False
     )
     cd["sustainability"] = pd.read_excel(filename, sheet_name="sustainability")
     cd["supply"] = pd.read_excel(
