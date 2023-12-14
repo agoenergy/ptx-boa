@@ -3,6 +3,7 @@
 import streamlit as st
 
 from app.ptxboa_functions import get_region_from_subregion, read_markdown_file
+from ptxboa.api import PtxboaAPI
 
 
 def _create_fact_sheet_demand_country(context_data: dict):
@@ -83,8 +84,10 @@ def _create_fact_sheet_demand_country(context_data: dict):
             st.markdown(f"*Source: {data['source_certification_info']}*")
 
 
-def _create_fact_sheet_supply_country(context_data: dict):
+def _create_fact_sheet_supply_country(context_data: dict, api: PtxboaAPI):
     """Display information on a chosen supply country."""
+    alpha2_codes = api.get_dimension("region")["iso3166_code"].to_dict()
+
     # select region:
     country_name = st.session_state["region"]
 
@@ -93,7 +96,9 @@ def _create_fact_sheet_supply_country(context_data: dict):
     df = context_data["supply"]
     data = df.loc[df["country_name"] == region_name].iloc[0].to_dict()
 
-    st.subheader(f"Fact sheet for {region_name}")
+    flag = f":flag-{alpha2_codes[region_name]}:".lower()
+
+    st.subheader(f"{flag} Fact sheet for {region_name}")
     with st.expander("**Technical potential for renewable electricity generation**"):
         if isinstance(data["re_tech_pot_EWI"], (int, float)):
             re_tech_pot_EWI = f"{data['re_tech_pot_EWI']:.0f} TWh/a"
@@ -141,10 +146,10 @@ def _create_fact_sheet_supply_country(context_data: dict):
         st.markdown(data["h2_strategy"])
 
 
-def content_country_fact_sheets(context_data):
+def content_country_fact_sheets(context_data, api):
     with st.expander("What is this?"):
         st.markdown(read_markdown_file("md/whatisthis_country_fact_sheets.md"))
     with st.container(border=True):
         _create_fact_sheet_demand_country(context_data)
     with st.container(border=True):
-        _create_fact_sheet_supply_country(context_data)
+        _create_fact_sheet_supply_country(context_data, api)
