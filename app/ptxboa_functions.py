@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
+from app.excel_download import prepare_and_download_df_as_excel
 from ptxboa.api import PtxboaAPI
 
 
@@ -649,7 +650,7 @@ def display_and_edit_input_data(
             st.session_state[f"{key}_number"] = 0
         editor_key = f"{key}_{st.session_state[f'{key}_number']}"
 
-        with st.form(key=f"{key}_form"):
+        with st.form(key=f"{key}_form", border=False):
             st.info(
                 (
                     "You can edit data directly in the table. When done, click the "
@@ -657,14 +658,6 @@ def display_and_edit_input_data(
                 )
             )
 
-            df = st.data_editor(
-                df,
-                use_container_width=True,
-                key=editor_key,
-                num_rows="fixed",
-                disabled=[index],
-                column_config=column_config,
-            )
             st.form_submit_button(
                 "Apply Changes",
                 type="primary",
@@ -681,12 +674,28 @@ def display_and_edit_input_data(
                     "editor_key": editor_key,
                 },
             )
+
+            df = st.data_editor(
+                df,
+                use_container_width=True,
+                key=editor_key,
+                num_rows="fixed",
+                disabled=[index],
+                column_config=column_config,
+            )
+
     else:
         st.dataframe(
             df,
             use_container_width=True,
             column_config=column_config,
         )
+
+    scenario = st.session_state["scenario"].lower()
+    scenario = scenario.replace(")", "").replace("(", "")
+    fn = f"{key}_{scenario}".replace(" ", "_")
+    prepare_and_download_df_as_excel(df, filename=fn)
+
     return df
 
 

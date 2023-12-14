@@ -1,6 +1,6 @@
 region_code,region_name,country_code,subregion_code,subregion_name,is_coastal,iso3166_code
-ARE,United Arab Emirates,ARE,,,True,
-ARG,Argentina,ARG,,,True,
+ARE,United Arab Emirates,ARE,,,True,AE
+ARG,Argentina,ARG,,,True,AR
 ARG-BA,Argentina (Buenos Aires),ARG,BA,Buenos Aires,True,AR-B
 ARG-CAT,Argentina (Catamarca),ARG,CAT,Catamarca,True,AR-K
 ARG-CBA,Argentina (Autonomous City of Buenos Aires),ARG,CBA,Autonomous City of Buenos Aires,True,AR-C
@@ -25,22 +25,22 @@ ARG-SAJ,Argentina (San Juan),ARG,SAJ,San Juan,True,AR-J
 ARG-SAL,Argentina (San Luis),ARG,SAL,San Luis,True,AR-D
 ARG-SAT,Argentina (Salta),ARG,SAT,Salta,True,AR-A
 ARG-TUC,Argentina (Tucumán),ARG,TUC,Tucumán,True,AR-T
-AUS,Australia,AUS,,,True,
-BRA,Brazil,BRA,,,True,
-CHL,Chile,CHL,,,True,
-CHN,China,CHN,,,True,
-COL,Colombia,COL,,,True,
-CRI,Costa Rica,CRI,,,True,
-DNK,Denmark,DNK,,,True,
-DZA,Algeria,DZA,,,True,
-EGY,Egypt,EGY,,,True,
-ESP,Spain,ESP,,,True,
-IDN,Indonesia,IDN,,,True,
-IND,India,IND,,,True,
-JOR,Jordan,JOR,,,True,
-KAZ,Kazakhstan,KAZ,,,True,
-KEN,Kenya,KEN,,,True,
-MAR,Morocco,MAR,,,True,
+AUS,Australia,AUS,,,True,AU
+BRA,Brazil,BRA,,,True,BR
+CHL,Chile,CHL,,,True,CL
+CHN,China,CHN,,,True,CN
+COL,Colombia,COL,,,True,CO
+CRI,Costa Rica,CRI,,,True,CR
+DNK,Denmark,DNK,,,True,DK
+DZA,Algeria,DZA,,,True,DZ
+EGY,Egypt,EGY,,,True,EG
+ESP,Spain,ESP,,,True,ES
+IDN,Indonesia,IDN,,,True,ID
+IND,India,IND,,,True,IN
+JOR,Jordan,JOR,,,True,JO
+KAZ,Kazakhstan,KAZ,,,True,KZ
+KEN,Kenya,KEN,,,True,KE
+MAR,Morocco,MAR,,,True,MA
 MAR-BEN,Morocco (Béni Mellal-Khénifra),MAR,BEN,Béni Mellal-Khénifra,True,MA-05
 MAR-CAS,Morocco (Casablanca),MAR,CAS,Casablanca,True,MA-06
 MAR-DAK,Morocco (Dakhla-Oued Ed-Dahab),MAR,DAK,Dakhla-Oued Ed-Dahab,True,MA-12
@@ -53,22 +53,22 @@ MAR-MAR,Morocco (Marrakech-Safi),MAR,MAR,Marrakech-Safi,True,MA-07
 MAR-RAB,Morocco (Rabat-Salé-Kénitra),MAR,RAB,Rabat-Salé-Kénitra,True,MA-04
 MAR-SOU,Morocco (Souss-Massa),MAR,SOU,Souss-Massa,True,MA-09
 MAR-TAN,Morocco (Tangier),MAR,TAN,Tangier,True,MA-01
-MEX,Mexico,MEX,,,True,
-MRT,Mauritania,MRT,,,True,
-NAM,Namibia,NAM,,,True,
-NOR,Norway,NOR,,,True,
-PER,Peru,PER,,,True,
-PRT,Portugal,PRT,,,True,
-RUS,Russia,RUS,,,True,
-SAU,Saudi Arabia,SAU,,,True,
-SWE,Sweden,SWE,,,True,
-THA,Thailand,THA,,,True,
-TUN,Tunisia,TUN,,,True,
-UKR,Ukraine,UKR,,,True,
-URY,Uruguay,URY,,,True,
-USA,USA,USA,,,True,
-VNM,Vietnam,VNM,,,True,
-ZAF,South Africa,ZAF,,,True,
+MEX,Mexico,MEX,,,True,MX
+MRT,Mauritania,MRT,,,True,MR
+NAM,Namibia,NAM,,,True,NA
+NOR,Norway,NOR,,,True,NO
+PER,Peru,PER,,,True,PE
+PRT,Portugal,PRT,,,True,PT
+RUS,Russia,RUS,,,True,RU
+SAU,Saudi Arabia,SAU,,,True,SA
+SWE,Sweden,SWE,,,True,SE
+THA,Thailand,THA,,,True,TH
+TUN,Tunisia,TUN,,,True,TN
+UKR,Ukraine,UKR,,,True,UA
+URY,Uruguay,URY,,,True,UY
+USA,USA,USA,,,True,US
+VNM,Vietnam,VNM,,,True,VN
+ZAF,South Africa,ZAF,,,True,ZA
 ZAF-EC,South Africa (East Cape),ZAF,EC,East Cape,True,ZA-EC
 ZAF-FRS,South Africa (Free State),ZAF,FRS,Free State,True,ZA-FS
 ZAF-GAU,South Africa (Gauteng),ZAF,GAU,Gauteng,True,ZA-GT

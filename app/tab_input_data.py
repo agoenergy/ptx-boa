@@ -65,7 +65,7 @@ def content_input_data(api: PtxboaAPI) -> None:
                 api,
                 data_type=data_selection,
                 scope="world",
-                key=f"input_data_editor_{data_selection}",
+                key=f"input_data_{data_selection}",
             )
         with c_0_1:
             st.markdown("**Regional Distribution**")
@@ -82,21 +82,21 @@ def content_input_data(api: PtxboaAPI) -> None:
                 api,
                 data_type="electricity_generation",
                 scope=None,
-                key="input_data_editor_electricity_generation",
+                key="input_data_electricity_generation",
             )
         with st.expander("**Electrolysis and derivate production**"):
             display_and_edit_input_data(
                 api,
                 data_type="conversion_processes",
                 scope=None,
-                key="input_data_editor_conversion_processes",
+                key="input_data_conversion_processes",
             )
         with st.expander("**Transportation (ships and pipelines)**"):
             display_and_edit_input_data(
                 api,
                 data_type="transportation_processes",
                 scope=None,
-                key="input_data_editor_transportation_processes",
+                key="input_data_transportation_processes",
             )
         with st.expander(
             "**Transportation (compression, liquefication and reconversion)**"
@@ -105,12 +105,12 @@ def content_input_data(api: PtxboaAPI) -> None:
                 api,
                 data_type="reconversion_processes",
                 scope=None,
-                key="input_data_editor_reconversion_processes",
+                key="input_data_reconversion_processes",
             )
         with st.expander("**Specific costs for materials and energy carriers**"):
             display_and_edit_input_data(
                 api,
                 data_type="specific_costs",
                 scope=None,
-                key="input_data_editor_specific_costs",
+                key="input_data_specific_costs",
             )

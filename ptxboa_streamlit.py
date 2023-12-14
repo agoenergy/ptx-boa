@@ -202,7 +202,7 @@ if st.session_state[st.session_state["tab_key"]] == "Deep-dive countries":
     )
 
 if st.session_state[st.session_state["tab_key"]] == "Country fact sheets":
-    content_country_fact_sheets(cd)
+    content_country_fact_sheets(cd, api)
 
 if st.session_state[st.session_state["tab_key"]] == "Certification schemes":
     content_certification_schemes(cd)

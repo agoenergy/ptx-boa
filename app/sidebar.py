@@ -119,13 +119,33 @@ def make_sidebar(api: PtxboaAPI):
         horizontal=True,
         help=read_markdown_file("md/helptext_sidebar_water_source.md"),
     )
-    st.session_state["transport"] = st.sidebar.radio(
-        "Mode of transportation (for selected supply country):",
-        ["Ship", "Pipeline"],
-        horizontal=True,
-        help=read_markdown_file("md/helptext_sidebar_transport.md"),
-        index=1,  # 'Pipeline' as default
-    )
+
+    # determine transportation distance, only allow pipeline if <6000km:
+    res = api.get_input_data(st.session_state["scenario"])
+    distance = res.loc[
+        (res["source_region_code"] == st.session_state["region"])
+        & (res["target_country_code"] == st.session_state["country"])
+        & (res["parameter_code"] == "shipping distance"),
+        "value",
+    ].iloc[0]
+
+    if distance < 6000:
+        st.session_state["transport"] = st.sidebar.radio(
+            "Mode of transportation (for selected supply country):",
+            ["Ship", "Pipeline"],
+            horizontal=True,
+            help=read_markdown_file("md/helptext_sidebar_transport.md"),
+            index=1,  # 'Pipeline' as default
+        )
+    else:
+        st.session_state["transport"] = st.sidebar.radio(
+            "Mode of transportation (for selected supply country):",
+            ["Ship", "Pipeline"],
+            horizontal=True,
+            help=read_markdown_file("md/helptext_sidebar_transport.md"),
+            index=0,  # select 'ship' and disable widget
+            disabled=True,
+        )
     if st.session_state["transport"] == "Ship":
         st.session_state["ship_own_fuel"] = st.sidebar.toggle(
             "For shipping option: Use the product as own fuel?",
