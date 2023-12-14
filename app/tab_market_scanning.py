@@ -49,12 +49,12 @@ This sheet helps you to better evaluate your country's competitive position
     )
 
     # merge costs and distances:
-    df_plot = pd.DataFrame()
-    df_plot["total costs"] = res_costs["Total"]
-    df_plot = df_plot.merge(distances, left_index=True, right_index=True)
+    df = pd.DataFrame()
+    df["total costs"] = res_costs["Total"]
+    df = df.merge(distances, left_index=True, right_index=True)
 
     # merge RE supply potential from context data:
-    df_plot = df_plot.merge(
+    df = df.merge(
         cd["supply"].set_index("country_name")[
             ["re_tech_pot_EWI", "re_tech_pot_PTXAtlas"]
         ],
@@ -64,7 +64,7 @@ This sheet helps you to better evaluate your country's competitive position
     )
 
     # prettify column names:
-    df_plot.rename(
+    df.rename(
         {
             "total costs": f"Total costs ({st.session_state['output_unit']})",
             "shipping distance": "Shipping distance (km)",
@@ -77,26 +77,54 @@ This sheet helps you to better evaluate your country's competitive position
     )
 
     # replace nan entries:
-    df_plot = df_plot.replace({"no potential": None, "no analysis ": None})
+    df = df.replace({"no potential": None, "no analysis ": None})
 
     # do not show subregions:
-    df_plot = remove_subregions(api, df_plot, st.session_state["country"])
+    df = remove_subregions(api, df, st.session_state["country"])
 
     with st.container(border=True):
-        # select which distance to show:
-        st.markdown("### Costs and transportation distances")
-        selected_distance = st.radio(
-            "Select parameter to show on vertical axis:",
-            ["Shipping distance (km)", "Pipeline distance (km)"],
+        st.markdown(
+            f"### Costs and transportation distances to {st.session_state['country']}"
         )
+        c1, c2 = st.columns(2)
+        with c1:
+            # select which distance to show:
+            selected_distance = st.radio(
+                "Select parameter to show on vertical axis:",
+                ["Shipping distance (km)", "Pipeline distance (km)"],
+            )
+
+        with c2:
+            # select parameter for marker size:
+            parameter_for_marker_size = st.radio(
+                "Select parameter to scale marker size:",
+                [
+                    "RE technical potential (EWI) (TWh/a)",
+                    "RE technical potential (PTX Atlas) (TWh/a)",
+                    "None",
+                ],
+            )
 
         # create plot:
-        fig = px.scatter(
-            df_plot,
-            x=selected_distance,
-            y=f"Total costs ({st.session_state['output_unit']})",
-            height=600,
-        )
+        df_plot = df.copy()
+        if parameter_for_marker_size == "None":
+            fig = px.scatter(
+                df_plot,
+                x=selected_distance,
+                y=f"Total costs ({st.session_state['output_unit']})",
+                height=600,
+            )
+        else:
+            df_plot = df_plot.loc[df_plot[parameter_for_marker_size] > 0]
+            df_plot = df_plot.astype(float)
+            fig = px.scatter(
+                df_plot,
+                x=selected_distance,
+                y=f"Total costs ({st.session_state['output_unit']})",
+                size=parameter_for_marker_size,
+                size_max=50,
+                height=600,
+            )
         # Add text above markers
         fig.update_traces(
             text=df_plot.index,
