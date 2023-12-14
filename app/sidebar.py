@@ -129,7 +129,6 @@ def make_sidebar(api: PtxboaAPI):
         "value",
     ].iloc[0]
 
-
     if distance < 6000:
         st.session_state["transport"] = st.sidebar.radio(
             "Mode of transportation (for selected supply country):",
