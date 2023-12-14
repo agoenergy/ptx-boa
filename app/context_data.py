@@ -21,4 +21,30 @@ def load_context_data():
     )
     cd["literature"] = pd.read_excel(filename, sheet_name="literature")
 
-    return cd
+    return _insert_clickable_references(cd)
+
+
+def _insert_clickable_references(context_data):
+    """Insert clickable markdown references into the context data text fields."""
+    literature = context_data["literature"]
+    literature["markdown_link"] = (
+        "[" + literature["short_name"] + "](" + literature["url"] + ")"
+    )
+    links = literature.set_index("short_name")["markdown_link"].to_dict()
+
+    cd_new = {}
+    cd_new["literature"] = context_data["literature"]
+    for sheet in [
+        "demand_countries",
+        "certification_schemes",
+        "sustainability",
+        "supply",
+    ]:
+        for ref, link in links.items():
+            df = context_data[sheet]
+            for col in df.columns:
+                df[col] = df[col].astype("string").str.replace(ref, link)
+
+        cd_new[sheet] = df
+
+    return cd_new
