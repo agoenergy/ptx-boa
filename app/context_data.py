@@ -41,9 +41,10 @@ def _insert_clickable_references(context_data):
         "supply",
     ]:
         for ref, link in links.items():
-            df = context_data[sheet]
-            for col in df.columns:
-                df[col] = df[col].astype("string").str.replace(ref, link)
+            if isinstance(link, str):
+                df = context_data[sheet]
+                for col in df.columns:
+                    df[col] = df[col].astype(str).str.replace(ref, link)
 
         cd_new[sheet] = df
 
