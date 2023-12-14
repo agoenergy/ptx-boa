@@ -88,14 +88,16 @@ This sheet helps you to better evaluate your country's competitive position
 
     with st.container(border=True):
         st.markdown(
-            f"### Costs and transportation distances to {st.session_state['country']}"
+            "### Costs and transportation distances from different supply regions"
+            f" to {st.session_state['country']}"
         )
         c1, c2 = st.columns(2)
         with c1:
             # select which distance to show:
             selected_distance = st.radio(
-                "Select parameter to show on vertical axis:",
+                "Select parameter to show on horizontal axis:",
                 ["Shipping distance (km)", "Pipeline distance (km)"],
+                key="selected_distance_supply_regions",
             )
 
         with c2:
@@ -116,7 +118,6 @@ This sheet helps you to better evaluate your country's competitive position
                 df_plot,
                 x=selected_distance,
                 y=f"Total costs ({st.session_state['output_unit']})",
-                height=600,
             )
         else:
             df_plot = df_plot.loc[df_plot[parameter_for_marker_size] > 0]
@@ -145,8 +146,95 @@ This sheet helps you to better evaluate your country's competitive position
                 df_plot,
                 use_container_width=True,
                 column_config=column_config,
-                height=800,
             )
 
-            fn = "market_scanning"
+            fn = "market_scanning_supply_regions"
+            prepare_and_download_df_as_excel(df, filename=fn)
+
+    with st.container(border=True):
+        st.markdown(
+            f"### Transportation distances from {st.session_state['region']}"
+            " to different target countries"
+        )
+
+        # filter shipping and pipeline distances:
+
+        df = input_data.loc[
+            (
+                input_data["parameter_code"].isin(
+                    ["shipping distance", "pipeline distance"]
+                )
+            )
+            & (input_data["source_region_code"] == st.session_state["region"]),
+            ["target_country_code", "parameter_code", "value"],
+        ]
+        df = df.pivot_table(
+            index="target_country_code",
+            columns="parameter_code",
+            values="value",
+            aggfunc="sum",
+        )
+
+        # merge H2 demand from context data:
+
+        # H2 demand data hard coded from excel tool.
+        # TODO: improve data representation in context_data.xlsx
+        # and take data from there.
+        df["h2_demand_2030"] = None
+
+        df.at["China", "h2_demand_2030"] = 35
+        df.at["France", "h2_demand_2030"] = None
+        df.at["Germany", "h2_demand_2030"] = 3
+        df.at["India", "h2_demand_2030"] = 10
+        df.at["Japan", "h2_demand_2030"] = 3
+        df.at["Netherlands", "h2_demand_2030"] = None
+        df.at["South Korea", "h2_demand_2030"] = 2
+        df.at["Spain", "h2_demand_2030"] = None
+        df.at["USA", "h2_demand_2030"] = 10
+
+        # EU data is missing completely in context_data.xlsx:
+        df.at["EU", "shipping distance"] = 1104
+        df.at["EU", "pipeline distance"] = 2000
+        df.at["EU", "h2_demand_2030"] = 20
+
+        df["h2_demand_2030"] = df["h2_demand_2030"].astype(float)
+
+        # prettify column names:
+        df.rename(
+            {
+                "shipping distance": "Shipping distance (km)",
+                "pipeline distance": "Pipeline distance (km)",
+                "h2_demand_2030": "Projected H2 demand in 2030 (Mt/a)",
+            },
+            inplace=True,
+            axis=1,
+        )
+
+        # select parameter to display on x axis:
+        selected_distance = st.radio(
+            "Select parameter to show on horizontal axis:",
+            ["Shipping distance (km)", "Pipeline distance (km)"],
+            key="selected_distance_target_countries",
+        )
+
+        # create plot:
+        df_plot = df.copy().round(0)
+        fig = px.scatter(
+            df_plot,
+            x=selected_distance,
+            y="Projected H2 demand in 2030 (Mt/a)",
+            height=600,
+        )
+        # Add text above markers
+        fig.update_traces(
+            text=df_plot.index,
+            textposition="top center",
+            mode="markers+text",
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
+        with st.expander("**Data**"):
+            st.dataframe(df, use_container_width=True)
+            fn = "market_scanning_target_countries"
             prepare_and_download_df_as_excel(df, filename=fn)
