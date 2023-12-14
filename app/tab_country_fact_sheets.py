@@ -72,14 +72,14 @@ def _create_fact_sheet_demand_country(context_data: dict):
         st.markdown(data["lng_import_terminals"])
         st.markdown(f"*Source: {data['source_lng_import_terminals']}*")
 
-        st.markdown("**H2 pipeline projects**")
+        st.markdown("**Hydrogen pipeline projects**")
         st.markdown(data["h2_pipeline_projects"])
         st.markdown(f"*Source: {data['source_h2_pipeline_projects']}*")
 
     if (
         len(data["certification_info"]) > 1
     ):  # workaround, empty data sometimes contains "-"
-        with st.expander("**Certification schemes**"):
+        with st.expander("**Additional information on certification**"):
             st.markdown(data["certification_info"])
             st.markdown(f"*Source: {data['source_certification_info']}*")
 

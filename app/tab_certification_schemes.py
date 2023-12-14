@@ -22,9 +22,17 @@ def _render_scheme_info(context_data, scheme_name):
 
     with st.expander("**Characteristics**"):
         st.markdown(
-            f"- **Relation to other standards:** {data['relation_to_other_standards']}"
+            (
+                f"- **Relation to other schemes, standards or regulations:** "
+                f"{data['relation_to_other_standards']}"
+            )
         )
-        st.markdown(f"- **PTXBOA demand countries:** {data['ptxboa_demand_countries']}")
+        st.markdown(
+            (
+                f"- **Demand countries where this scheme, standard or regulation "
+                f"applies:** {data['ptxboa_demand_countries']}"
+            )
+        )
         st.markdown(f"- **Labels:** {data['label']}")
         st.markdown(f"- **Lifecycle scope:** {data['lifecycle_scope']}")
 
