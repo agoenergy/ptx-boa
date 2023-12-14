@@ -4,7 +4,11 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from app.ptxboa_functions import config_number_columns, remove_subregions
+from app.ptxboa_functions import (
+    config_number_columns,
+    prepare_and_download_df_as_excel,
+    remove_subregions,
+)
 from ptxboa.api import PtxboaAPI
 
 
@@ -106,7 +110,7 @@ This sheet helps you to better evaluate your country's competitive position
             )
 
         # create plot:
-        df_plot = df.copy()
+        df_plot = df.copy().round(0)
         if parameter_for_marker_size == "None":
             fig = px.scatter(
                 df_plot,
@@ -143,3 +147,6 @@ This sheet helps you to better evaluate your country's competitive position
                 column_config=column_config,
                 height=800,
             )
+
+            fn = "market_scanning"
+            prepare_and_download_df_as_excel(df, filename=fn)
