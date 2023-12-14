@@ -196,7 +196,7 @@ if st.session_state[st.session_state["tab_key"]] == "Dashboard":
     )
 
 if st.session_state[st.session_state["tab_key"]] == "Market scanning":
-    content_market_scanning(api, costs_per_region)
+    content_market_scanning(api, costs_per_region, cd)
 
 if st.session_state[st.session_state["tab_key"]] == "Input data":
     content_input_data(api)
