@@ -107,7 +107,7 @@ This sheet helps you to better evaluate your country's competitive position
         st.plotly_chart(fig, use_container_width=True)
 
         # show data in tabular form:
-        with st.expander("**Data:**"):
+        with st.expander("**Data**"):
             column_config = config_number_columns(df_plot, format="%.0f")
             st.dataframe(
                 df_plot,
