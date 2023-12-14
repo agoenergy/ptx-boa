@@ -84,6 +84,8 @@ def display_costs(
         column_config = config_number_columns(df_res, format=f"%.1f {output_unit}")
         st.dataframe(df_res, use_container_width=True, column_config=column_config)
         fn = f"costs_per_{key}_{key_suffix}".strip("_")
+        if st.session_state["user_changes_df"] is not None:
+            fn = f"{fn}_{select_data}".replace(" ", "_")
         prepare_and_download_df_as_excel(df_res, filename=fn)
 
     return None
