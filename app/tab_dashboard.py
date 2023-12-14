@@ -33,7 +33,7 @@ def content_dashboard(
         title_string = (
             f"{cost_component} cost of exporting "
             f"{st.session_state['chain']} to "
-            f"{st.session_state['country']}:"
+            f"{st.session_state['country']}"
         )
         st.subheader(title_string)
         c_1, c_2 = st.columns([2, 1])

@@ -32,10 +32,6 @@ def _render_scheme_info(context_data, scheme_name):
             """
 **Explanations**
 
-- Info on "Geographical scope":
-  - This field provides an answer to the question: if you want to address a specific
- country of demand, which regulations and/or standards exist in this country
-   that require or allow proof of a specific product property?
 - Info on "Lifecycle scope":
   - Well-to-gate: GHG emissions are calculated up to production.
   - Well-to-wheel: GHG emissions are calculated up to the time of use.

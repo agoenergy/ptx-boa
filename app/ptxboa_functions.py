@@ -654,12 +654,12 @@ def display_and_edit_input_data(
             st.info(
                 (
                     "You can edit data directly in the table. When done, click the "
-                    "**Apply Changes** button below to rerun calculations."
+                    "**Apply changes** button below to rerun calculations."
                 )
             )
 
             st.form_submit_button(
-                "Apply Changes",
+                "Apply changes",
                 type="primary",
                 on_click=register_user_changes,
                 kwargs={
@@ -774,10 +774,10 @@ def change_index_names(df: pd.DataFrame, mapping: dict | None = None) -> pd.Data
     if mapping is None:
         mapping = {
             "process_code": "Process",
-            "source_region_code": "Source Region",
-            "region": "Source Region",
+            "source_region_code": "Source region",
+            "region": "Source region",
             "scenario": "Scenario",
-            "res_gen": "RE Source",
+            "res_gen": "RE source",
             "chain": "Chain",
             "flow_code": "Carrier/Material",
         }

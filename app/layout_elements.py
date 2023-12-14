@@ -100,7 +100,7 @@ def display_footer():
         with c1:
             st.markdown(
                 """
-                ##### Developed by:
+                ##### Developed by
                 Öko-Institut<br/>
                 Merzhauser Straße 173<br/>
                 D-79100 Freiburg im Breisgau<br/>
@@ -111,7 +111,7 @@ def display_footer():
         with c2:
             st.markdown(
                 """
-                ##### On behalf of:
+                ##### On behalf of
                 Agora Energiewende<br/>
                 Anna-Louisa-Karsch-Str. 2<br/>
                 D-10178 Berlin<br/>
@@ -122,14 +122,14 @@ def display_footer():
         with c3:
             st.markdown(
                 """
-                ##### Authors:
-                - Christoph Heinemann
-                - Dr. Roman Mendelevitch
-                - Markus Haller
-                - Christian Winger
-                - Johannes Aschauer
-                - Susanne Krieger
-                - Katharina Göckeler
+                ##### Authors
+                Christoph Heinemann<br/>
+                Dr. Roman Mendelevitch<br/>
+                Markus Haller<br/>
+                Christian Winger<br/>
+                Johannes Aschauer<br/>
+                Susanne Krieger<br/>
+                Katharina Göckeler<br/>
                 """,
                 unsafe_allow_html=True,
             )

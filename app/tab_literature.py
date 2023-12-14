@@ -29,7 +29,7 @@ def content_literature(context_data: dict):
     markdown_text = ""
     for _ind, row in df.iterrows():
         if _is_valid_url(row["url"]):
-            text = f"- {row['long_name']}: [Link]({row['url']})\n"
+            text = f"- {row['long_name'].strip('.')} ([Link]({row['url']}))\n"
         else:
             text = f"- {row['long_name']}\n"
         markdown_text = markdown_text + text

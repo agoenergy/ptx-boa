@@ -65,7 +65,7 @@ def content_deep_dive_countries(
         with c_0_0:
             st.markdown("**Map**")
             map_parameter = st.selectbox(
-                "Show Parameter on Map",
+                "Show parameter on map",
                 [
                     "Wind Onshore",
                     "Wind Offshore",
@@ -91,7 +91,7 @@ def content_deep_dive_countries(
             )
 
         with c_0_1:
-            st.markdown("**Regional Distribution**")
+            st.markdown("**Regional distribution**")
         with c_1_1:
             fig = px.box(df)
             fig.update_layout(xaxis_title=None)
