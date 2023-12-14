@@ -124,7 +124,11 @@ This sheet helps you to better evaluate your country's competitive position
                 df_plot,
                 x=selected_distance,
                 y=f"Total costs ({st.session_state['output_unit']})",
+                color="category",
+                color_discrete_sequence=["#1A667B", "#D05094"],
+                text=df_plot.index,
             )
+            fig.update_traces(textposition="top center")
         else:
             df_plot = df_plot.loc[df_plot[parameter_for_marker_size] > 0]
             fig = px.scatter(
