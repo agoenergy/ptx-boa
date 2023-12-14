@@ -83,30 +83,28 @@ This sheet helps you to better evaluate your country's competitive position
     df_plot = remove_subregions(api, df_plot, st.session_state["country"])
 
     with st.container(border=True):
-        # create plot:
-        [c1, c2] = st.columns([1, 5])
-        with c1:
-            # select which distance to show:
-            selected_distance = st.radio(
-                "Select parameter:",
-                ["Shipping distance (km)", "Pipeline distance (km)"],
-            )
-        with c2:
-            fig = px.scatter(
-                df_plot,
-                x=selected_distance,
-                y=f"Total costs ({st.session_state['output_unit']})",
-                title="Costs and transportation distances",
-                height=600,
-            )
-            # Add text above markers
-            fig.update_traces(
-                text=df_plot.index,
-                textposition="top center",
-                mode="markers+text",
-            )
+        # select which distance to show:
+        st.markdown("### Costs and transportation distances")
+        selected_distance = st.radio(
+            "Select parameter to show on vertical axis:",
+            ["Shipping distance (km)", "Pipeline distance (km)"],
+        )
 
-            st.plotly_chart(fig)
+        # create plot:
+        fig = px.scatter(
+            df_plot,
+            x=selected_distance,
+            y=f"Total costs ({st.session_state['output_unit']})",
+            height=600,
+        )
+        # Add text above markers
+        fig.update_traces(
+            text=df_plot.index,
+            textposition="top center",
+            mode="markers+text",
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
 
         # show data in tabular form:
         with st.expander("**Data:**"):
