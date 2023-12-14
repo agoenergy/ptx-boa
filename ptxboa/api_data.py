@@ -14,7 +14,23 @@ logger = logging.getLogger(__name__)
 
 def _load_data(data_dir, name: str) -> pd.DataFrame:
     filepath = Path(data_dir) / f"{name}.csv"
-    df = pd.read_csv(filepath).drop(columns="key", errors="ignore")
+    df = pd.read_csv(
+        filepath,
+        # need to define custom na values due to Alpha2 code of Namibia
+        na_values={
+            "N/A",
+            "n/a",
+            "NULL",
+            "null",
+            "NaN",
+            "-NaN",
+            "nan",
+            "-nan",
+            "",
+            "None",
+        },
+        keep_default_na=False,
+    ).drop(columns="key", errors="ignore")
     # numerical columns should never be empty, dimension columns
     # maybe empty and will be filled with ""
     df = df.fillna("")
