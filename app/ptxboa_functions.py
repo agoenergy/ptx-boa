@@ -224,6 +224,7 @@ def get_data_type_from_input_data(
         "full load hours",
         "interest rate",
         "specific_costs",
+        "conversion_coefficients",
     ],
     scope: Literal[None, "world", "Argentina", "Morocco", "South Africa"],
 ) -> pd.DataFrame:
@@ -242,7 +243,7 @@ def get_data_type_from_input_data(
         the data type which should be selected. Needs to be one of
         "electricity_generation", "conversion_processes", "transportation_processes",
         "reconversion_processes", "CAPEX", "full load hours", "interest rate",
-        and "specific costs".
+        "specific costs" and "conversion_coefficients".
     scope : Literal[None, "world", "Argentina", "Morocco", "South Africa"]
         The regional scope. Is automatically set to None for data of
         data type "conversion_processes" and "transportation_processes" which is not
@@ -274,9 +275,18 @@ def get_data_type_from_input_data(
         source_region_code = [""]
         index = "flow_code"
         columns = "parameter_code"
-        processes = [""]
         parameter_code = ["specific costs"]
         process_code = [""]
+
+    if data_type == "conversion_coefficients":
+        scope = None
+        source_region_code = [""]
+        index = "process_code"
+        columns = "flow_code"
+        parameter_code = ["conversion factors"]
+        process_code = input_data.loc[
+            input_data["parameter_code"] == "conversion factors", "process_code"
+        ].unique()
 
     if data_type == "electricity_generation":
         parameter_code = [
@@ -305,7 +315,6 @@ def get_data_type_from_input_data(
             "losses (own fuel, transport)",
             "levelized costs",
             "lifetime / amortization period",
-            # FIXME: add bunker fuel consumption
         ]
         process_code = processes.loc[
             processes["is_transport"] & ~processes["is_transformation"], "process_name"
@@ -544,6 +553,7 @@ def display_and_edit_input_data(
         "full load hours",
         "interest rate",
         "specific_costs",
+        "conversion_coefficients",
     ],
     scope: Literal["world", "Argentina", "Morocco", "South Africa"],
     key: str,
@@ -562,7 +572,7 @@ def display_and_edit_input_data(
         the data type which should be selected. Needs to be one of
         "electricity_generation", "conversion_processes", "transportation_processes",
         "reconversion_processes", "CAPEX", "full load hours", "interest rate",
-        and "specific costs".
+        "specific costs" and "conversion_coefficients"
     scope : Literal[None, "world", "Argentina", "Morocco", "South Africa"]
         The regional scope. Is automatically set to None for data of
         data type "conversion_processes" and "transportation_processes" which is not
@@ -640,6 +650,13 @@ def display_and_edit_input_data(
         columns = "parameter_code"
         missing_index_name = None
         missing_index_value = None
+        column_config = get_column_config()
+
+    if data_type == "conversion_coefficients":
+        index = "process_code"
+        columns = "flow_code"
+        missing_index_name = "parameter_code"
+        missing_index_value = "conversion factors"
         column_config = get_column_config()
 
     df = change_index_names(df)
@@ -754,6 +771,38 @@ def get_column_config() -> dict:
             format="%.3f [various units]",
             min_value=0,
             help=read_markdown_file("md/helptext_columns_specific_costs.md"),
+        ),
+        "bunker fuel": st.column_config.NumberColumn(
+            format="%.2e fraction per km",
+            min_value=0,
+            help=read_markdown_file("md/helptext_columns_bunker_fuel.md"),
+        ),
+        "FT e-fuels": st.column_config.NumberColumn(
+            format="%.2e fraction per km",
+            min_value=0,
+            help=read_markdown_file("md/helptext_columns_ft_e_fuels.md"),
+        ),
+        "carbon dioxide": st.column_config.NumberColumn(
+            format="%.3f kgCO2 per main output",
+            help=read_markdown_file("md/helptext_columns_carbon_dioxide.md"),
+        ),
+        "electricity": st.column_config.NumberColumn(
+            format="%.3f kWh per main output",
+            min_value=0,
+            help=read_markdown_file("md/helptext_columns_electricity.md"),
+        ),
+        "heat": st.column_config.NumberColumn(
+            format="%.3f kWh per main output",
+            help=read_markdown_file("md/helptext_columns_heat.md"),
+        ),
+        "nitrogen": st.column_config.NumberColumn(
+            format="%.3f kWh per main output",
+            min_value=0,
+            help=read_markdown_file("md/helptext_columns_nitrogen.md"),
+        ),
+        "water": st.column_config.NumberColumn(
+            format="%.3f kWh per main output",
+            help=read_markdown_file("md/helptext_columns_water.md"),
         ),
     }
     return column_config
