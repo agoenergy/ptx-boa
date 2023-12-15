@@ -115,6 +115,7 @@ def content_input_data(api: PtxboaAPI) -> None:
                 key="input_data_specific_costs",
             )
         with st.expander("**Conversion coefficients**"):
+            st.caption(read_markdown_file("md/info_conversion_coefficients.md"))
             display_and_edit_input_data(
                 api,
                 data_type="conversion_coefficients",
