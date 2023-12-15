@@ -225,6 +225,7 @@ def get_data_type_from_input_data(
         "interest rate",
         "specific_costs",
         "conversion_coefficients",
+        "dac_and_desalination",
     ],
     scope: Literal[None, "world", "Argentina", "Morocco", "South Africa"],
 ) -> pd.DataFrame:
@@ -243,7 +244,7 @@ def get_data_type_from_input_data(
         the data type which should be selected. Needs to be one of
         "electricity_generation", "conversion_processes", "transportation_processes",
         "reconversion_processes", "CAPEX", "full load hours", "interest rate",
-        "specific costs" and "conversion_coefficients".
+        "specific costs", "conversion_coefficients" and "dac_and_desalination".
     scope : Literal[None, "world", "Argentina", "Morocco", "South Africa"]
         The regional scope. Is automatically set to None for data of
         data type "conversion_processes" and "transportation_processes" which is not
@@ -263,6 +264,7 @@ def get_data_type_from_input_data(
         "conversion_processes",
         "transportation_processes",
         "reconversion_processes",
+        "dac_and_desalination",
     ]:
         scope = None
         source_region_code = [""]
@@ -307,7 +309,21 @@ def get_data_type_from_input_data(
             "efficiency",
         ]
         process_code = processes.loc[
-            ~processes["is_transport"] & ~processes["is_re_generation"], "process_name"
+            ~processes["is_transport"]
+            & ~processes["is_re_generation"]
+            & ~processes["is_secondary"],
+            "process_name",
+        ].to_list()
+
+    if data_type == "dac_and_desalination":
+        parameter_code = [
+            "CAPEX",
+            "OPEX (fix)",
+            "lifetime / amortization period",
+            "efficiency",
+        ]
+        process_code = processes.loc[
+            processes["is_secondary"], "process_name"
         ].to_list()
 
     if data_type == "transportation_processes":
@@ -554,6 +570,7 @@ def display_and_edit_input_data(
         "interest rate",
         "specific_costs",
         "conversion_coefficients",
+        "dac_and_desalination",
     ],
     scope: Literal["world", "Argentina", "Morocco", "South Africa"],
     key: str,
@@ -572,7 +589,7 @@ def display_and_edit_input_data(
         the data type which should be selected. Needs to be one of
         "electricity_generation", "conversion_processes", "transportation_processes",
         "reconversion_processes", "CAPEX", "full load hours", "interest rate",
-        "specific costs" and "conversion_coefficients"
+        "specific costs", "conversion_coefficients" and "dac_and_desalination"
     scope : Literal[None, "world", "Argentina", "Morocco", "South Africa"]
         The regional scope. Is automatically set to None for data of
         data type "conversion_processes" and "transportation_processes" which is not
@@ -606,6 +623,7 @@ def display_and_edit_input_data(
         "conversion_processes",
         "transportation_processes",
         "reconversion_processes",
+        "dac_and_desalination",
     ]:
         index = "process_code"
         columns = "parameter_code"
