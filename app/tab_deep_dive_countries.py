@@ -40,6 +40,7 @@ def content_deep_dive_countries(
     )
 
     with st.container(border=True):
+        st.subheader("Costs per subregion")
         fig_map = plot_costs_on_map(
             api, costs_per_region, scope=ddc, cost_component="Total"
         )
