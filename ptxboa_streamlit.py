@@ -92,6 +92,7 @@ with st.container():
         placeholder = st.empty()
 
 tabs = (
+    "Info",
     "Dashboard",
     "Market scanning",
     "Input data",
@@ -100,7 +101,6 @@ tabs = (
     "Certification schemes",
     "Sustainability",
     "Literature",
-    "Info",
 )
 
 tabs_icons = {
