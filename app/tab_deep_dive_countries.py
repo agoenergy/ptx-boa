@@ -3,6 +3,7 @@
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+from streamlit_antd_components import SegmentedItem, segmented
 
 from app.layout_elements import display_costs
 from app.plot_functions import plot_costs_on_map, plot_input_data_on_map
@@ -35,8 +36,14 @@ def content_deep_dive_countries(
     with st.expander("What is this?"):
         st.markdown(read_markdown_file("md/whatisthis_deep_dive_countries.md"))
 
-    ddc = st.radio(
-        "Select country:", ["Argentina", "Morocco", "South Africa"], horizontal=True
+    st.write("Select which country to display:")
+    ddc = segmented(
+        items=[
+            SegmentedItem(label="Argentina"),
+            SegmentedItem(label="Morocco"),
+            SegmentedItem(label="South Africa"),
+        ],
+        grow=True,
     )
 
     with st.container(border=True):
