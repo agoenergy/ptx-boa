@@ -67,7 +67,14 @@ st.markdown(css, unsafe_allow_html=True)
 
 api = st.cache_resource(PtxboaAPI)()
 
-st.title("PtX Business Opportunity Analyzer :red[draft version, please do not quote!]")
+st.title("PtX Business Opportunity Analyzer")
+
+with st.container():
+    st.error(
+        "**Draft version!** This app is under development."
+        " Results are preliminary, and there may be bugs or unexpected behaviour."
+        " Please do not cite."
+    )
 
 with st.container():
     if st.session_state["edit_input_data"]:
