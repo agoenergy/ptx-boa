@@ -7,6 +7,7 @@ import streamlit as st
 from app.ptxboa_functions import (
     config_number_columns,
     prepare_and_download_df_as_excel,
+    read_markdown_file,
     remove_subregions,
 )
 from ptxboa.api import PtxboaAPI
@@ -25,16 +26,7 @@ def content_market_scanning(api: PtxboaAPI, res_costs: pd.DataFrame, cd: dict) -
         context data.
     """
     with st.expander("What is this?"):
-        st.markdown(
-            """
-**Market scanning: Get an overview of competing PTX BOA supply countries
- and potential demand countries.**
-
-This sheet helps you to better evaluate your country's competitive position
- as well as your options on the emerging global H2 market.
-
-            """
-        )
+        st.markdown(read_markdown_file("md/whatisthis_market_scanning.md"))
 
     # get input data:
     input_data = api.get_input_data(st.session_state["scenario"])

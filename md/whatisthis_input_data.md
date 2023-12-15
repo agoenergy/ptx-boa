@@ -1,5 +1,9 @@
 ##### Input data
 
-This tab gives you an overview of model input data that is country-specific. This includes full load hours (FLH) and capital expenditures (CAPEX) of renewable generation technologies, weighted average cost of capital (WACC), as well as shipping and pipeline distances to the chosen demand country.
+This tab gives you an overview of model input data that is country-specific.
 
-The box plots show median, 1st and 3rd quartile as well as the total spread of values. They also show the data for your country for comparison.
+First you get an overview of data that is region specific: CAPEX, full load hours of renewables, and interest rates (WACC). For CAPEX and full load hours you can choose which source to display in map and data tables.
+
+Next follows a list of global input data (that is not region specific). It is structured by expandable sections, each one containing a data table.
+
+You can edit all data tables in this tab when activating data edit mode (at the bottom of the sidebar).
