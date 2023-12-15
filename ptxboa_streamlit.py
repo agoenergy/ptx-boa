@@ -17,8 +17,8 @@ from app.context_data import load_context_data
 from app.layout_elements import display_footer
 from app.sidebar import make_sidebar
 from app.tab_certification_schemes import content_certification_schemes
+from app.tab_costs import content_costs
 from app.tab_country_fact_sheets import content_country_fact_sheets
-from app.tab_dashboard import content_costs
 from app.tab_deep_dive_countries import content_deep_dive_countries
 from app.tab_info import content_info
 from app.tab_input_data import content_input_data
