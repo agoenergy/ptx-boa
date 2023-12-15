@@ -107,6 +107,13 @@ def content_input_data(api: PtxboaAPI) -> None:
                 scope=None,
                 key="input_data_reconversion_processes",
             )
+        with st.expander("**Direct air capture and desalination**"):
+            display_and_edit_input_data(
+                api,
+                data_type="dac_and_desalination",
+                scope=None,
+                key="input_data_dac_and_desalination",
+            )
         with st.expander("**Specific costs for materials and energy carriers**"):
             display_and_edit_input_data(
                 api,

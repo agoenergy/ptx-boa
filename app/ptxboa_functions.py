@@ -225,6 +225,7 @@ def get_data_type_from_input_data(
         "interest rate",
         "specific_costs",
         "conversion_coefficients",
+        "dac_and_desalination",
     ],
     scope: Literal[None, "world", "Argentina", "Morocco", "South Africa"],
 ) -> pd.DataFrame:
@@ -243,7 +244,7 @@ def get_data_type_from_input_data(
         the data type which should be selected. Needs to be one of
         "electricity_generation", "conversion_processes", "transportation_processes",
         "reconversion_processes", "CAPEX", "full load hours", "interest rate",
-        "specific costs" and "conversion_coefficients".
+        "specific costs", "conversion_coefficients" and "dac_and_desalination".
     scope : Literal[None, "world", "Argentina", "Morocco", "South Africa"]
         The regional scope. Is automatically set to None for data of
         data type "conversion_processes" and "transportation_processes" which is not
@@ -263,6 +264,7 @@ def get_data_type_from_input_data(
         "conversion_processes",
         "transportation_processes",
         "reconversion_processes",
+        "dac_and_desalination",
     ]:
         scope = None
         source_region_code = [""]
@@ -307,7 +309,20 @@ def get_data_type_from_input_data(
             "efficiency",
         ]
         process_code = processes.loc[
-            ~processes["is_transport"] & ~processes["is_re_generation"], "process_name"
+            ~processes["is_transport"]
+            & ~processes["is_re_generation"]
+            & ~processes["is_secondary"],
+            "process_name",
+        ].to_list()
+
+    if data_type == "dac_and_desalination":
+        parameter_code = [
+            "CAPEX",
+            "OPEX (fix)",
+            "lifetime / amortization period",
+        ]
+        process_code = processes.loc[
+            processes["is_secondary"], "process_name"
         ].to_list()
 
     if data_type == "transportation_processes":
@@ -554,6 +569,7 @@ def display_and_edit_input_data(
         "interest rate",
         "specific_costs",
         "conversion_coefficients",
+        "dac_and_desalination",
     ],
     scope: Literal["world", "Argentina", "Morocco", "South Africa"],
     key: str,
@@ -572,7 +588,7 @@ def display_and_edit_input_data(
         the data type which should be selected. Needs to be one of
         "electricity_generation", "conversion_processes", "transportation_processes",
         "reconversion_processes", "CAPEX", "full load hours", "interest rate",
-        "specific costs" and "conversion_coefficients"
+        "specific costs", "conversion_coefficients" and "dac_and_desalination"
     scope : Literal[None, "world", "Argentina", "Morocco", "South Africa"]
         The regional scope. Is automatically set to None for data of
         data type "conversion_processes" and "transportation_processes" which is not
@@ -606,12 +622,33 @@ def display_and_edit_input_data(
         "conversion_processes",
         "transportation_processes",
         "reconversion_processes",
+        "dac_and_desalination",
     ]:
         index = "process_code"
         columns = "parameter_code"
         missing_index_name = "source_region_code"
         missing_index_value = None
         column_config = get_column_config()
+
+    if data_type == "dac_and_desalination":
+        index = "process_code"
+        columns = "parameter_code"
+        missing_index_name = "source_region_code"
+        missing_index_value = None
+        column_config = {
+            "CAPEX": st.column_config.NumberColumn(format="%.2e USD/kg", min_value=0),
+            "OPEX (fix)": st.column_config.NumberColumn(
+                format="%.2e USD/kg", min_value=0
+            ),
+            "efficiency": st.column_config.NumberColumn(
+                format="%.2f", min_value=0, max_value=1
+            ),
+            "lifetime / amortization period": st.column_config.NumberColumn(
+                format="%.0f a",
+                min_value=0,
+                help=read_markdown_file("md/helptext_columns_lifetime.md"),
+            ),
+        }
 
     if data_type == "interest rate":
         index = "source_region_code"
