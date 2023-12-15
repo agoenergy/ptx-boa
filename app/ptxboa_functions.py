@@ -320,7 +320,6 @@ def get_data_type_from_input_data(
             "CAPEX",
             "OPEX (fix)",
             "lifetime / amortization period",
-            "efficiency",
         ]
         process_code = processes.loc[
             processes["is_secondary"], "process_name"
@@ -630,6 +629,26 @@ def display_and_edit_input_data(
         missing_index_name = "source_region_code"
         missing_index_value = None
         column_config = get_column_config()
+
+    if data_type == "dac_and_desalination":
+        index = "process_code"
+        columns = "parameter_code"
+        missing_index_name = "source_region_code"
+        missing_index_value = None
+        column_config = {
+            "CAPEX": st.column_config.NumberColumn(format="%.2e USD/kg", min_value=0),
+            "OPEX (fix)": st.column_config.NumberColumn(
+                format="%.2e USD/kg", min_value=0
+            ),
+            "efficiency": st.column_config.NumberColumn(
+                format="%.2f", min_value=0, max_value=1
+            ),
+            "lifetime / amortization period": st.column_config.NumberColumn(
+                format="%.0f a",
+                min_value=0,
+                help=read_markdown_file("md/helptext_columns_lifetime.md"),
+            ),
+        }
 
     if data_type == "interest rate":
         index = "source_region_code"
