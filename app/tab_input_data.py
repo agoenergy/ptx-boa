@@ -114,3 +114,10 @@ def content_input_data(api: PtxboaAPI) -> None:
                 scope=None,
                 key="input_data_specific_costs",
             )
+        with st.expander("**Conversion coefficients**"):
+            display_and_edit_input_data(
+                api,
+                data_type="conversion_coefficients",
+                scope=None,
+                key="input_data_conversion_coefficients",
+            )
