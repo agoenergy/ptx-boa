@@ -772,6 +772,38 @@ def get_column_config() -> dict:
             min_value=0,
             help=read_markdown_file("md/helptext_columns_specific_costs.md"),
         ),
+        "bunker fuel": st.column_config.NumberColumn(
+            format="%.2e fraction per km",
+            min_value=0,
+            help=read_markdown_file("md/helptext_columns_bunker_fuel.md"),
+        ),
+        "FT e-fuels": st.column_config.NumberColumn(
+            format="%.2e fraction per km",
+            min_value=0,
+            help=read_markdown_file("md/helptext_columns_ft_e_fuels.md"),
+        ),
+        "carbon dioxide": st.column_config.NumberColumn(
+            format="%.3f kgCO2 per main output",
+            help=read_markdown_file("md/helptext_columns_carbon_dioxide.md"),
+        ),
+        "electricity": st.column_config.NumberColumn(
+            format="%.3f kWh per main output",
+            min_value=0,
+            help=read_markdown_file("md/helptext_columns_electricity.md"),
+        ),
+        "heat": st.column_config.NumberColumn(
+            format="%.3f kWh per main output",
+            help=read_markdown_file("md/helptext_columns_heat.md"),
+        ),
+        "nitrogen": st.column_config.NumberColumn(
+            format="%.3f kWh per main output",
+            min_value=0,
+            help=read_markdown_file("md/helptext_columns_nitrogen.md"),
+        ),
+        "water": st.column_config.NumberColumn(
+            format="%.3f kWh per main output",
+            help=read_markdown_file("md/helptext_columns_water.md"),
+        ),
     }
     return column_config
 
