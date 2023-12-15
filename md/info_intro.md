@@ -16,7 +16,7 @@ The app comes with a default dataset for all included countries to guide the use
 Here is a list of tabs and what you can find there:
 
 - **Info:** (this is what you are currently reading) This tab contains general information on the app and the methodology behind it.
-- **Dashboard:** lets you compare the costs of producing different molecules and exporting them to different countries.
+- **Costs:** lets you compare the costs of producing different molecules and exporting them to different countries.
 - **Market scanning:** provides an overview of competing supply countries and potential demand countries you might want to export to.
 - **Input data:** shows the data that goes into the calculations and lets you modify it.
 - **Deep-dive countries:** For three countries (Argentina, Morocco and South Africa) this tab shows you input data and costs on a higher regional resolution.
@@ -35,7 +35,7 @@ Here is a list of tabs and what you can find there:
 
 You can edit most input data that goes into the calculations. To activate data edit mode, you need to toggle the respective switch at the bottom of the sidebar. If you do so, you can edit the data in the tables on the **Input data** tab. At the top of the screen, you will see an overview of the changes you made, and the option to download changes to file, or upload a file with changes from a previous session.
 
-If you have modified the input data, you can choose in the **Dashboard** tab if you want to visualize the results based on the original data, the modified data, or the difference between both.
+If you have modified the input data, you can choose in the **Costs** tab if you want to visualize the results based on the original data, the modified data, or the difference between both.
 
 You can revert all data back to  default by turnin data edit mode off again.
 

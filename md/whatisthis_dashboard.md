@@ -1,4 +1,4 @@
-##### The dashboard
+##### Costs overview
 
 This tab shows the main results of the app: the costs of producing and exporting molecules according to your settings.
 

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Content of dashboard tab."""
+"""Content of costs tab."""
 import pandas as pd
 import streamlit as st
 from plotly.subplots import make_subplots
@@ -14,7 +14,7 @@ from app.ptxboa_functions import move_to_tab, read_markdown_file, remove_subregi
 from ptxboa.api import PtxboaAPI
 
 
-def content_dashboard(
+def content_costs(
     api: PtxboaAPI,
     costs_per_region: pd.DataFrame,
     costs_per_scenario: pd.DataFrame,

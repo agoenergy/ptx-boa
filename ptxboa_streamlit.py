@@ -18,7 +18,7 @@ from app.layout_elements import display_footer
 from app.sidebar import make_sidebar
 from app.tab_certification_schemes import content_certification_schemes
 from app.tab_country_fact_sheets import content_country_fact_sheets
-from app.tab_dashboard import content_dashboard
+from app.tab_dashboard import content_costs
 from app.tab_deep_dive_countries import content_deep_dive_countries
 from app.tab_info import content_info
 from app.tab_input_data import content_input_data
@@ -93,7 +93,7 @@ with st.container():
 
 tabs = (
     "Info",
-    "Dashboard",
+    "Costs",
     "Market scanning",
     "Input data",
     "Deep-dive countries",
@@ -104,7 +104,7 @@ tabs = (
 )
 
 tabs_icons = {
-    "Dashboard": "house-fill",
+    "Costs": "house-fill",
     "Info": "question-circle-fill",
 }
 
@@ -117,7 +117,7 @@ if "tab_key" not in st.session_state:
 
 # initializing "tab at first round
 if st.session_state["tab_key"] not in st.session_state:
-    st.session_state[st.session_state["tab_key"]] = "Dashboard"
+    st.session_state[st.session_state["tab_key"]] = "Costs"
 
 sac.tabs(
     [sac.TabsItem(label=i, icon=tabs_icons.get(i, None)) for i in tabs],
@@ -188,9 +188,9 @@ costs_per_chain_without_user_changes = pf.calculate_results_list(
 # import context data:
 cd = load_context_data()
 
-# dashboard:
-if st.session_state[st.session_state["tab_key"]] == "Dashboard":
-    content_dashboard(
+# costs:
+if st.session_state[st.session_state["tab_key"]] == "Costs":
+    content_costs(
         api,
         costs_per_region=costs_per_region,
         costs_per_scenario=costs_per_scenario,
