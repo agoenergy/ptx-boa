@@ -495,7 +495,7 @@ def create_process_chain_graph(api: PtxboaAPI) -> graphviz.Digraph:
 
     # create graph object:
     graph = graphviz.Digraph(
-        graph_attr={"rankdir": "TD"},
+        graph_attr={"rankdir": "TD", "ranksep": "0.02"},
     )
 
     def _draw_node(
@@ -556,36 +556,41 @@ def create_process_chain_graph(api: PtxboaAPI) -> graphviz.Digraph:
         sg.node("water")
         sg.node("carbon dioxide")
         sg.node("bunker fuel")
-        sg.attr(label="Secondary input / output")
-        sg.attr(style="filled", color="lightgrey")
+        sg.attr(label="Secondary inputs / outputs")
 
-    graph.node("res_gen", label=f'RE source:\n{st.session_state["res_gen"]}')
-    graph = _draw_node(api, graph, "ELY")
-    graph = _draw_node(api, graph, "DERIV")
+    with graph.subgraph(name="cluster_1") as sg_main:
+        sg_main.attr(label="Main process chain")
+        sg_main.node("res_gen", label=f'RE source:\n{st.session_state["res_gen"]}')
+        sg_main = _draw_node(api, sg_main, "ELY")
+        sg_main = _draw_node(api, sg_main, "DERIV")
 
-    graph = _draw_edge(api, graph, "res_gen", "ELY", label="Electricity")
-    graph = _draw_edge(api, graph, "ELY", "DERIV")
+        sg_main = _draw_edge(api, sg_main, "res_gen", "ELY", label="Electricity")
+        sg_main = _draw_edge(api, sg_main, "ELY", "DERIV")
 
-    if st.session_state["transport"] == "Ship":
-        graph = _draw_node(api, graph, "PRE_SHP")
-        graph = _draw_node(api, graph, "SHP")
-        graph = _draw_node(api, graph, "POST_SHP")
+        if st.session_state["transport"] == "Ship":
+            if st.session_state["ship_own_fuel"]:
+                shiptype = "SHP-OWN"
+            else:
+                shiptype = "SHP"
+            sg_main = _draw_node(api, sg_main, "PRE_SHP")
+            sg_main = _draw_node(api, sg_main, shiptype)
+            sg_main = _draw_node(api, sg_main, "POST_SHP")
 
-        graph = _draw_edge(api, graph, "PRE_SHP", "SHP")
-        graph = _draw_edge(api, graph, "SHP", "POST_SHP")
-        graph = _draw_edge(api, graph, "POST_SHP", "output")
+            sg_main = _draw_edge(api, sg_main, "PRE_SHP", shiptype)
+            sg_main = _draw_edge(api, sg_main, shiptype, "POST_SHP")
+            sg_main = _draw_edge(api, sg_main, "POST_SHP", "output")
 
-        graph = _draw_edge(api, graph, "DERIV", "PRE_SHP")
+            sg_main = _draw_edge(api, sg_main, "DERIV", "PRE_SHP")
 
-    if st.session_state["transport"] == "Pipeline":
-        graph = _draw_node(api, graph, "PRE_PPL")
-        graph = _draw_node(api, graph, "PPL")
-        graph = _draw_node(api, graph, "POST_PPL")
+        if st.session_state["transport"] == "Pipeline":
+            sg_main = _draw_node(api, sg_main, "PRE_PPL")
+            sg_main = _draw_node(api, sg_main, "PPL")
+            sg_main = _draw_node(api, sg_main, "POST_PPL")
 
-        graph = _draw_edge(api, graph, "PRE_PPL", "PPL")
-        graph = _draw_edge(api, graph, "PPL", "POST_PPL")
-        graph = _draw_edge(api, graph, "POST_PPL", "output")
+            sg_main = _draw_edge(api, sg_main, "PRE_PPL", "PPL")
+            sg_main = _draw_edge(api, sg_main, "PPL", "POST_PPL")
+            sg_main = _draw_edge(api, sg_main, "POST_PPL", "output")
 
-        graph = _draw_edge(api, graph, "DERIV", "PRE_PPL")
+            sg_main = _draw_edge(api, sg_main, "DERIV", "PRE_PPL")
 
     return graph
