@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Literal
 
+import graphviz
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -486,3 +487,71 @@ def create_scatter_plot(df_res, settings: dict):
     fig.update_traces(texttemplate="%{text}", textposition="top center")
     st.plotly_chart(fig)
     st.write(df_res)
+
+
+def create_process_chain_graph(api: PtxboaAPI) -> graphviz.Digraph:
+    """Create graphviz graph of current process chain."""
+    chain_selected = st.session_state["chain"]
+
+    # create graph object:
+    graph = graphviz.Digraph(graph_attr={"rankdir": "TD"}, node_attr={"width": "0.3"})
+
+    def _draw_node(
+        api, graph: graphviz.Digraph, process_code: str, label: str = None
+    ) -> graphviz.Digraph:
+        """Add node to graph."""
+        chain = api.get_dimension("chain")
+        process = api.get_dimension("process")
+        chain_full_names = chain.replace(process["process_name"].to_dict())
+        if label is None:
+            label = chain_full_names.at[chain_selected, process_code]
+        graph.node(process_code, label=label)
+        return graph
+
+    def _draw_edge(
+        api: PtxboaAPI,
+        graph: graphviz.Digraph,
+        node_from: str,
+        node_to: str,
+        label: str = None,
+    ) -> graphviz.Digraph:
+        """Add edge to graph."""
+        chain = api.get_dimension("chain")
+        process = api.get_dimension("process")
+        flow = api.get_dimension("flow")
+        if label is None:
+            process_code_from = chain.at[st.session_state["chain"], node_from]
+            if process_code_from != "":
+                flow_code = process.at[process_code_from, "main_flow_code_out"]
+                label = flow.at[flow_code, "flow_name"]
+        graph.edge(node_from, node_to, label=label)
+        return graph
+
+    graph.node("res_gen", label=f'RE source:\n{st.session_state["res_gen"]}')
+    graph = _draw_node(api, graph, "ELY")
+    graph = _draw_node(api, graph, "DERIV")
+
+    graph = _draw_edge(api, graph, "res_gen", "ELY", label="Electricity")
+    graph = _draw_edge(api, graph, "ELY", "DERIV")
+
+    if st.session_state["transport"] == "Ship":
+        graph = _draw_node(api, graph, "PRE_SHP")
+        graph = _draw_node(api, graph, "SHP")
+        graph = _draw_node(api, graph, "POST_SHP")
+
+        graph = _draw_edge(api, graph, "PRE_SHP", "SHP")
+        graph = _draw_edge(api, graph, "SHP", "POST_SHP")
+
+        graph = _draw_edge(api, graph, "DERIV", "PRE_SHP")
+
+    if st.session_state["transport"] == "Pipeline":
+        graph = _draw_node(api, graph, "PRE_PPL")
+        graph = _draw_node(api, graph, "PPL")
+        graph = _draw_node(api, graph, "POST_PPL")
+
+        graph = _draw_edge(api, graph, "PRE_PPL", "PPL")
+        graph = _draw_edge(api, graph, "PPL", "POST_PPL")
+
+        graph = _draw_edge(api, graph, "DERIV", "PRE_PPL")
+
+    return graph
