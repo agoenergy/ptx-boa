@@ -497,6 +497,7 @@ def create_process_chain_graph(api: PtxboaAPI) -> graphviz.Digraph:
     graph = graphviz.Digraph(
         graph_attr={"rankdir": "TD", "ranksep": "0.02"},
     )
+    graph.attr("node", width="3.0")  # Width in inches
 
     def _draw_node(
         api, graph: graphviz.Digraph, process_code: str, label: str = None
@@ -557,6 +558,9 @@ def create_process_chain_graph(api: PtxboaAPI) -> graphviz.Digraph:
         sg.node("carbon dioxide")
         sg.node("bunker fuel")
         sg.attr(label="Secondary inputs / outputs")
+        sg.edge("water", "heat", style="invis")
+        sg.edge("heat", "carbon dioxide", style="invis")
+        sg.edge("carbon dioxide", "bunker fuel", style="invis")
 
     with graph.subgraph(name="cluster_1") as sg_main:
         sg_main.attr(label="Main process chain")
