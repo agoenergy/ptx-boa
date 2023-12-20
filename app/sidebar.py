@@ -50,7 +50,7 @@ def make_sidebar(api: PtxboaAPI):
                 "LOHC",
                 "Methane",
                 "Methanol",
-                "Ft e-fuels",
+                "FT e-fuels",
             ],
             help=read_markdown_file("md/helptext_sidebar_product.md"),
             index=4,  # Methane as default
