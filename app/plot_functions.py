@@ -494,7 +494,9 @@ def create_process_chain_graph(api: PtxboaAPI) -> graphviz.Digraph:
     chain_selected = st.session_state["chain"]
 
     # create graph object:
-    graph = graphviz.Digraph(graph_attr={"rankdir": "TD"})
+    graph = graphviz.Digraph(
+        graph_attr={"rankdir": "TD"},
+    )
 
     def _draw_node(
         api, graph: graphviz.Digraph, process_code: str, label: str = None
@@ -549,6 +551,14 @@ def create_process_chain_graph(api: PtxboaAPI) -> graphviz.Digraph:
         graph.edge(node_from, node_to, label=label)
         return graph
 
+    with graph.subgraph(name="cluster_0") as sg:
+        sg.node("heat")
+        sg.node("water")
+        sg.node("carbon dioxide")
+        sg.node("bunker fuel")
+        sg.attr(label="Secondary input / output")
+        sg.attr(style="filled", color="lightgrey")
+
     graph.node("res_gen", label=f'RE source:\n{st.session_state["res_gen"]}')
     graph = _draw_node(api, graph, "ELY")
     graph = _draw_node(api, graph, "DERIV")
@@ -563,6 +573,7 @@ def create_process_chain_graph(api: PtxboaAPI) -> graphviz.Digraph:
 
         graph = _draw_edge(api, graph, "PRE_SHP", "SHP")
         graph = _draw_edge(api, graph, "SHP", "POST_SHP")
+        graph = _draw_edge(api, graph, "POST_SHP", "output")
 
         graph = _draw_edge(api, graph, "DERIV", "PRE_SHP")
 
@@ -573,6 +584,7 @@ def create_process_chain_graph(api: PtxboaAPI) -> graphviz.Digraph:
 
         graph = _draw_edge(api, graph, "PRE_PPL", "PPL")
         graph = _draw_edge(api, graph, "PPL", "POST_PPL")
+        graph = _draw_edge(api, graph, "POST_PPL", "output")
 
         graph = _draw_edge(api, graph, "DERIV", "PRE_PPL")
 
