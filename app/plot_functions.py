@@ -494,7 +494,7 @@ def create_process_chain_graph(api: PtxboaAPI) -> graphviz.Digraph:
     chain_selected = st.session_state["chain"]
 
     # create graph object:
-    graph = graphviz.Digraph(graph_attr={"rankdir": "TD"}, node_attr={"width": "0.3"})
+    graph = graphviz.Digraph(graph_attr={"rankdir": "TD"})
 
     def _draw_node(
         api, graph: graphviz.Digraph, process_code: str, label: str = None
@@ -503,9 +503,31 @@ def create_process_chain_graph(api: PtxboaAPI) -> graphviz.Digraph:
         chain = api.get_dimension("chain")
         process = api.get_dimension("process")
         chain_full_names = chain.replace(process["process_name"].to_dict())
+
+        # create label:
         if label is None:
             label = chain_full_names.at[chain_selected, process_code]
         graph.node(process_code, label=label)
+
+        # create edges for secondary input / output flows:
+        input_data = api.get_input_data(st.session_state["scenario"])
+        flows = input_data.loc[
+            (input_data["parameter_code"] == "conversion factors")
+            & (
+                input_data["process_code"]
+                == chain_full_names.at[chain_selected, process_code]
+            ),
+            ["flow_code", "value"],
+        ].set_index("flow_code")
+        for flow in flows.index:
+            if flow == "electricity":
+                graph.edge("res_gen", process_code, style="dashed")
+            else:
+                if flows.at[flow, "value"] < 0:
+                    graph.edge(process_code, flow, style="dashed")
+                else:
+                    graph.edge(flow, process_code, style="dashed")
+
         return graph
 
     def _draw_edge(
