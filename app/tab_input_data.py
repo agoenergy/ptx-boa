@@ -3,7 +3,11 @@
 import plotly.express as px
 import streamlit as st
 
-from app.plot_functions import create_process_chain_graph, plot_input_data_on_map
+from app.plot_functions import (
+    create_process_chain_graph,
+    create_process_chain_sankey_diagram,
+    plot_input_data_on_map,
+)
 from app.ptxboa_functions import display_and_edit_input_data, read_markdown_file
 from ptxboa.api import PtxboaAPI
 
@@ -134,3 +138,8 @@ def content_input_data(api: PtxboaAPI) -> None:
         with st.expander("**Process chain diagram**"):
             graph = create_process_chain_graph(api)
             st.graphviz_chart(graph)
+
+    with st.container(border=True):
+        with st.expander("**Process chain sankey diagram**"):
+            graph = create_process_chain_sankey_diagram(api)
+            st.plotly_chart(graph)

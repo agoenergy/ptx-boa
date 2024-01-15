@@ -598,3 +598,80 @@ def create_process_chain_graph(api: PtxboaAPI) -> graphviz.Digraph:
             sg_main = _draw_edge(api, sg_main, "DERIV", "PRE_PPL")
 
     return graph
+
+
+def create_process_chain_sankey_diagram(api: PtxboaAPI):
+    """Create sankey diagram of process chain."""
+    # An example diagram is hard coded here.
+    # It should be created based on process and chain data:
+    # - show only nodes that exist in chain
+    # - link width based on flows (results from calculations)
+
+    # define nodes:
+    nodes = [
+        "RES-GEN",
+        "ELY",
+        "DERIV",
+        "TRANSPORT_PRE",
+        "TRANSPORT",
+        "TRANSPORT_POST",
+        "OUTPUT",
+        "LOSSES",
+        "WATER",
+        "HEAT",
+        "CO2",
+        "BUNKER_FUEL",
+        "DAC",
+        "DESAL",
+    ]
+
+    def _append_link(data: dict, source: str, target: str, value: float) -> dict:
+        """For sankey diagram: add link to list of links."""
+        i_source = data["node"].index(source)
+        i_target = data["node"].index(target)
+        data["source"].append(i_source)
+        data["target"].append(i_target)
+        data["value"].append(value)
+        return data
+
+    data = {"node": [], "source": [], "target": [], "value": []}
+    data["node"] = nodes
+
+    # main process chain:
+    data = _append_link(data, "RES-GEN", "ELY", 6)
+    data = _append_link(data, "ELY", "DERIV", 5)
+    data = _append_link(data, "DERIV", "TRANSPORT_PRE", 4)
+    data = _append_link(data, "TRANSPORT_PRE", "TRANSPORT", 3)
+    data = _append_link(data, "TRANSPORT", "TRANSPORT_POST", 2)
+    data = _append_link(data, "TRANSPORT_POST", "OUTPUT", 1)
+
+    # water:
+    data = _append_link(data, "DESAL", "WATER", 0.5)
+    data = _append_link(data, "WATER", "ELY", 1)
+    data = _append_link(data, "DERIV", "WATER", 0.5)
+
+    # heat:
+    data = _append_link(data, "DERIV", "HEAT", 1)
+
+    # co2:
+    data = _append_link(data, "DAC", "CO2", 1)
+    data = _append_link(data, "CO2", "DERIV", 1)
+    data = _append_link(data, "RES-GEN", "DAC", 1)
+
+    # bunker fuel:
+    data = _append_link(data, "BUNKER_FUEL", "TRANSPORT", 1)
+
+    # create figure:
+    fig = go.Figure(
+        data=go.Sankey(
+            node={"label": nodes},
+            link={
+                "arrowlen": 15,
+                "source": data["source"],
+                "target": data["target"],
+                "value": data["value"],
+            },
+        )
+    )
+
+    return fig
