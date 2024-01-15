@@ -43,7 +43,7 @@ def content_deep_dive_countries(
             SegmentedItem(label="Morocco"),
             SegmentedItem(label="South Africa"),
         ],
-        grow=True,
+        use_container_width=True,
     )
 
     with st.container(border=True):
