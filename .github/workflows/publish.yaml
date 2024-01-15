@@ -2,9 +2,7 @@ name: publish
 
 on:
   push:
-    branches: ["update-docker"]
-  pull_request:
-    branches: ["update-docker"]
+    branches: ["develop"]
 
 permissions:
   contents: read
