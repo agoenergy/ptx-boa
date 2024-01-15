@@ -48,19 +48,20 @@ pytest
 ### Create image and publish to docker hub
 
 ```bash
-docker build -t wingechr/ptx-boa:VERSION .
-docker push wingechr/ptx-boa:VERSION
+bumpversion patch|minor|major
+docker build -t wingechr/ptx-boa:<VERSION>.
+docker push wingechr/ptx-boa:<VERSION>
 ```
 
 ### Deploy in production
 
 ```bash
-docker pull wingechr/ptx-boa:VERSION
+docker pull wingechr/ptx-boa:<VERSION>
 docker images
 docker container ls --all
 docker ps --no-trunc
 
 docker stop app
 docker rm app
-docker run -d -p 9000:80 --name app --restart unless-stopped wingechr/ptx-boa:VERSION
+docker run -d -p 9000:80 --name app --restart unless-stopped wingechr/ptx-boa:<VERSION>
 ```

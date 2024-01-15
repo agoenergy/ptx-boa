@@ -74,7 +74,7 @@ st.title("PtX Business Opportunity Analyzer")
 
 with st.container():
     st.error(
-        "**Draft version!** This app is under development."
+        f"**Draft version ({__version__})!** This app is under development."
         " Results are preliminary, and there may be bugs or unexpected behaviour."
         " Please do not cite."
     )
