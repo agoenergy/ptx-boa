@@ -25,4 +25,4 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: wingechr/ptx-boa:
+          tags: wingechr/ptx-boa:0.1.1
