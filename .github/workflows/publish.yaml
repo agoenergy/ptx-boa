@@ -2,7 +2,7 @@ name: publish
 
 on:
   push:
-    branches: ["develop"]
+    branches: ["update-docker"]
 
 permissions:
   contents: read
@@ -25,4 +25,4 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: wingechr/ptxboa:latest
+          tags: wingechr/ptx-boa:
