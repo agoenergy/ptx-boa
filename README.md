@@ -6,7 +6,7 @@ PtX-BOA is a tool that aims to promote the export of a wide range of PtX molecul
 
 ### Setup
 
-After cloning the repository, create a virtual python environment 
+After cloning the repository, create a virtual python environment
 in a subdirectory `.env` and activate it:
 
 ```bash
@@ -48,12 +48,19 @@ pytest
 ### Create image and publish to docker hub
 
 ```bash
-docker build -t wingechr/ptx-boa:0.0.1 .
-docker push wingechr/ptx-boa:0.0.1
+docker build -t wingechr/ptx-boa:VERSION .
+docker push wingechr/ptx-boa:VERSION
 ```
 
-### Run (in cloud or locally)
+### Deploy in production
 
 ```bash
-docker run -p 80:80 wingechr/ptx-boa:0.0.1
+docker pull wingechr/ptx-boa:VERSION
+docker images
+docker container ls --all
+docker ps --no-trunc
+
+docker stop app
+docker rm app
+docker run -d -p 9000:80 --name app --restart unless-stopped wingechr/ptx-boa:VERSION
 ```
