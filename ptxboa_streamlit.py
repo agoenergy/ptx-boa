@@ -6,7 +6,7 @@ Execution:
 >>> streamlit run  ptxboa_streamlit.py
 """
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 # TODO how do I use the treamlit logger?
 import logging
