@@ -5,6 +5,9 @@ PtX BOA streamlit app, main file.
 Execution:
 >>> streamlit run  ptxboa_streamlit.py
 """
+
+__version__ = "0.1.0"
+
 # TODO how do I use the treamlit logger?
 import logging
 
