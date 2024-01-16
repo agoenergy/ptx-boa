@@ -24,5 +24,6 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
+          context: . # use the previously checked out git context, not the default branch
           push: true
           tags: wingechr/ptx-boa:0.2.0
