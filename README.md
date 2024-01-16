@@ -43,17 +43,16 @@ In order to run the tests locally run [pytest](https://pytest.org) in the root d
 pytest
 ```
 
-## Deployment
+## Release Procedure
 
-### Create image and publish to docker hub
+- merge all relevant branches into develop
+- update version (`bumpversion patch|minor|major`)
+- change and commit `CHANGELOG.md` with description of changes
+- push
+- create pull requests to merge develop into main
+- merging will automatically (via git action) create and publish the new docker image `wingechr/ptx-boa:<VERSION>`
 
-```bash
-bumpversion patch|minor|major
-docker build -t wingechr/ptx-boa:<VERSION>.
-docker push wingechr/ptx-boa:<VERSION>
-```
-
-### Deploy in production
+### Update docker image in production
 
 ```bash
 docker pull wingechr/ptx-boa:<VERSION>

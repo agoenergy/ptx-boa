@@ -2,7 +2,7 @@ name: publish
 
 on:
   push:
-    branches: ["develop", "main"]
+    branches: ["main"]
 
 permissions:
   contents: read
