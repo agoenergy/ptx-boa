@@ -22,6 +22,5 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: https://github.com/agoenergy/ptx-boa.git#main # we dont want to use the default branch (develop)
           push: true
           tags: wingechr/ptx-boa:0.2.0
