@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 from typing import Literal
 
-import graphviz
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -487,117 +486,6 @@ def create_scatter_plot(df_res, settings: dict):
     fig.update_traces(texttemplate="%{text}", textposition="top center")
     st.plotly_chart(fig)
     st.write(df_res)
-
-
-def create_process_chain_graph(api: PtxboaAPI) -> graphviz.Digraph:
-    """Create graphviz graph of current process chain."""
-    chain_selected = st.session_state["chain"]
-
-    # create graph object:
-    graph = graphviz.Digraph(
-        graph_attr={"rankdir": "TD", "ranksep": "0.02"},
-    )
-    graph.attr("node", width="3.0")  # Width in inches
-
-    def _draw_node(
-        api, graph: graphviz.Digraph, process_code: str, label: str = None
-    ) -> graphviz.Digraph:
-        """Add node to graph."""
-        chain = api.get_dimension("chain")
-        process = api.get_dimension("process")
-        chain_full_names = chain.replace(process["process_name"].to_dict())
-
-        # create label:
-        if label is None:
-            label = chain_full_names.at[chain_selected, process_code]
-        graph.node(process_code, label=label)
-
-        # create edges for secondary input / output flows:
-        input_data = api.get_input_data(st.session_state["scenario"])
-        flows = input_data.loc[
-            (input_data["parameter_code"] == "conversion factors")
-            & (
-                input_data["process_code"]
-                == chain_full_names.at[chain_selected, process_code]
-            ),
-            ["flow_code", "value"],
-        ].set_index("flow_code")
-        for flow in flows.index:
-            if flow == "electricity":
-                graph.edge("res_gen", process_code, style="dashed")
-            else:
-                if flows.at[flow, "value"] < 0:
-                    graph.edge(process_code, flow, style="dashed")
-                else:
-                    graph.edge(flow, process_code, style="dashed")
-
-        return graph
-
-    def _draw_edge(
-        api: PtxboaAPI,
-        graph: graphviz.Digraph,
-        node_from: str,
-        node_to: str,
-        label: str = None,
-    ) -> graphviz.Digraph:
-        """Add edge to graph."""
-        chain = api.get_dimension("chain")
-        process = api.get_dimension("process")
-        flow = api.get_dimension("flow")
-        if label is None:
-            process_code_from = chain.at[st.session_state["chain"], node_from]
-            if process_code_from != "":
-                flow_code = process.at[process_code_from, "main_flow_code_out"]
-                label = flow.at[flow_code, "flow_name"]
-        graph.edge(node_from, node_to, label=label)
-        return graph
-
-    with graph.subgraph(name="cluster_0") as sg:
-        sg.node("heat")
-        sg.node("water")
-        sg.node("carbon dioxide")
-        sg.node("bunker fuel")
-        sg.attr(label="Secondary inputs / outputs")
-        sg.edge("water", "heat", style="invis")
-        sg.edge("heat", "carbon dioxide", style="invis")
-        sg.edge("carbon dioxide", "bunker fuel", style="invis")
-
-    with graph.subgraph(name="cluster_1") as sg_main:
-        sg_main.attr(label="Main process chain")
-        sg_main.node("res_gen", label=f'RE source:\n{st.session_state["res_gen"]}')
-        sg_main = _draw_node(api, sg_main, "ELY")
-        sg_main = _draw_node(api, sg_main, "DERIV")
-
-        sg_main = _draw_edge(api, sg_main, "res_gen", "ELY", label="Electricity")
-        sg_main = _draw_edge(api, sg_main, "ELY", "DERIV")
-
-        if st.session_state["transport"] == "Ship":
-            if st.session_state["ship_own_fuel"]:
-                shiptype = "SHP-OWN"
-            else:
-                shiptype = "SHP"
-            sg_main = _draw_node(api, sg_main, "PRE_SHP")
-            sg_main = _draw_node(api, sg_main, shiptype)
-            sg_main = _draw_node(api, sg_main, "POST_SHP")
-
-            sg_main = _draw_edge(api, sg_main, "PRE_SHP", shiptype)
-            sg_main = _draw_edge(api, sg_main, shiptype, "POST_SHP")
-            sg_main = _draw_edge(api, sg_main, "POST_SHP", "output")
-
-            sg_main = _draw_edge(api, sg_main, "DERIV", "PRE_SHP")
-
-        if st.session_state["transport"] == "Pipeline":
-            sg_main = _draw_node(api, sg_main, "PRE_PPL")
-            sg_main = _draw_node(api, sg_main, "PPL")
-            sg_main = _draw_node(api, sg_main, "POST_PPL")
-
-            sg_main = _draw_edge(api, sg_main, "PRE_PPL", "PPL")
-            sg_main = _draw_edge(api, sg_main, "PPL", "POST_PPL")
-            sg_main = _draw_edge(api, sg_main, "POST_PPL", "output")
-
-            sg_main = _draw_edge(api, sg_main, "DERIV", "PRE_PPL")
-
-    return graph
 
 
 def create_process_chain_sankey_diagram(api: PtxboaAPI):
