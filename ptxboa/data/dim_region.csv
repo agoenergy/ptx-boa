@@ -1,0 +1,80 @@
+region_code,region_name,country_code,subregion_code,subregion_name,is_coastal,iso3166_code
+ARE,United Arab Emirates,ARE,,,True,AE
+ARG,Argentina,ARG,,,True,AR
+ARG-BA,Argentina (Buenos Aires),ARG,BA,Buenos Aires,True,AR-B
+ARG-CAT,Argentina (Catamarca),ARG,CAT,Catamarca,True,AR-K
+ARG-CBA,Argentina (Autonomous City of Buenos Aires),ARG,CBA,Autonomous City of Buenos Aires,True,AR-C
+ARG-CHA,Argentina (Chaco),ARG,CHA,Chaco,True,AR-H
+ARG-CHU,Argentina (Chubut),ARG,CHU,Chubut,True,AR-U
+ARG-COR,Argentina (Corrientes),ARG,COR,Corrientes,True,AR-W
+ARG-CRB,Argentina (Córdoba),ARG,CRB,Córdoba,True,AR-X
+ARG-CRU,Argentina (Santa Cruz),ARG,CRU,Santa Cruz,True,AR-Z
+ARG-EST,Argentina (Santiago del Estero),ARG,EST,Santiago del Estero,True,AR-G
+ARG-FOR,Argentina (Formosa),ARG,FOR,Formosa,True,AR-P
+ARG-FUE,"Argentina (Tierra del Fuego, Antártida e Islas del Atlántico Sur)",ARG,FUE,"Tierra del Fuego, Antártida e Islas del Atlántico Sur",True,AR-V
+ARG-JUJ,Argentina (Jujuy),ARG,JUJ,Jujuy,True,AR-Y
+ARG-LAR,Argentina (La Rioja),ARG,LAR,La Rioja,True,AR-F
+ARG-MEN,Argentina (Mendoza),ARG,MEN,Mendoza,True,AR-M
+ARG-MIS,Argentina (Misiones),ARG,MIS,Misiones,True,AR-N
+ARG-NEG,Argentina (Río Negro),ARG,NEG,Río Negro,True,AR-R
+ARG-NEU,Argentina (Neuquén),ARG,NEU,Neuquén,True,AR-Q
+ARG-PAM,Argentina (La Pampa),ARG,PAM,La Pampa,True,AR-L
+ARG-RIO,Argentina (Entre Ríos),ARG,RIO,Entre Ríos,True,AR-E
+ARG-SAF,Argentina (Santa Fe),ARG,SAF,Santa Fe,True,AR-S
+ARG-SAJ,Argentina (San Juan),ARG,SAJ,San Juan,True,AR-J
+ARG-SAL,Argentina (San Luis),ARG,SAL,San Luis,True,AR-D
+ARG-SAT,Argentina (Salta),ARG,SAT,Salta,True,AR-A
+ARG-TUC,Argentina (Tucumán),ARG,TUC,Tucumán,True,AR-T
+AUS,Australia,AUS,,,True,AU
+BRA,Brazil,BRA,,,True,BR
+CHL,Chile,CHL,,,True,CL
+CHN,China,CHN,,,True,CN
+COL,Colombia,COL,,,True,CO
+CRI,Costa Rica,CRI,,,True,CR
+DNK,Denmark,DNK,,,True,DK
+DZA,Algeria,DZA,,,True,DZ
+EGY,Egypt,EGY,,,True,EG
+ESP,Spain,ESP,,,True,ES
+IDN,Indonesia,IDN,,,True,ID
+IND,India,IND,,,True,IN
+JOR,Jordan,JOR,,,True,JO
+KAZ,Kazakhstan,KAZ,,,True,KZ
+KEN,Kenya,KEN,,,True,KE
+MAR,Morocco,MAR,,,True,MA
+MAR-BEN,Morocco (Béni Mellal-Khénifra),MAR,BEN,Béni Mellal-Khénifra,True,MA-05
+MAR-CAS,Morocco (Casablanca),MAR,CAS,Casablanca,True,MA-06
+MAR-DAK,Morocco (Dakhla-Oued Ed-Dahab),MAR,DAK,Dakhla-Oued Ed-Dahab,True,MA-12
+MAR-DRA,Morocco (Drâa-Tafilalet),MAR,DRA,Drâa-Tafilalet,True,MA-08
+MAR-FES,Morocco (Fès-Meknès),MAR,FES,Fès-Meknès,True,MA-03
+MAR-GUE,Morocco (Guelmim-Oued Noun),MAR,GUE,Guelmim-Oued Noun,True,MA-10
+MAR-LAA,Morocco (Laâyoune-Sakia El Hamra),MAR,LAA,Laâyoune-Sakia El Hamra,True,MA-11
+MAR-LOR,Morocco (L´oriental),MAR,LOR,L´oriental,True,MA-02
+MAR-MAR,Morocco (Marrakech-Safi),MAR,MAR,Marrakech-Safi,True,MA-07
+MAR-RAB,Morocco (Rabat-Salé-Kénitra),MAR,RAB,Rabat-Salé-Kénitra,True,MA-04
+MAR-SOU,Morocco (Souss-Massa),MAR,SOU,Souss-Massa,True,MA-09
+MAR-TAN,Morocco (Tangier),MAR,TAN,Tangier,True,MA-01
+MEX,Mexico,MEX,,,True,MX
+MRT,Mauritania,MRT,,,True,MR
+NAM,Namibia,NAM,,,True,NA
+NOR,Norway,NOR,,,True,NO
+PER,Peru,PER,,,True,PE
+PRT,Portugal,PRT,,,True,PT
+RUS,Russia,RUS,,,True,RU
+SAU,Saudi Arabia,SAU,,,True,SA
+SWE,Sweden,SWE,,,True,SE
+THA,Thailand,THA,,,True,TH
+TUN,Tunisia,TUN,,,True,TN
+UKR,Ukraine,UKR,,,True,UA
+URY,Uruguay,URY,,,True,UY
+USA,USA,USA,,,True,US
+VNM,Vietnam,VNM,,,True,VN
+ZAF,South Africa,ZAF,,,True,ZA
+ZAF-EC,South Africa (East Cape),ZAF,EC,East Cape,True,ZA-EC
+ZAF-FRS,South Africa (Free State),ZAF,FRS,Free State,True,ZA-FS
+ZAF-GAU,South Africa (Gauteng),ZAF,GAU,Gauteng,True,ZA-GT
+ZAF-KWA,South Africa (KwaZulu-Natal),ZAF,KWA,KwaZulu-Natal,True,ZA-NL
+ZAF-LIM,South Africa (Limpopo),ZAF,LIM,Limpopo,True,ZA-LP
+ZAF-MPU,South Africa (Mpumalanga),ZAF,MPU,Mpumalanga,True,ZA-MP
+ZAF-NC,South Africa (Northern Cape),ZAF,NC,Northern Cape,True,ZA-NC
+ZAF-NW,South Africa (North West),ZAF,NW,North West,True,ZA-NW
+ZAF-WC,South Africa (Western Cape),ZAF,WC,Western Cape,True,ZA-WC

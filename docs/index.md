@@ -1,0 +1,3 @@
+# PTXBOA Documentation
+
+::: ptxboa.api

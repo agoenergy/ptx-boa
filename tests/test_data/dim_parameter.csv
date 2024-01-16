@@ -1,0 +1,26 @@
+parameter_name,unit,parameter_code,per_flow,per_transformation_process,per_transport_process,per_re_generation_process,per_process,per_region,per_import_country,has_global_default,global_default_changeable,own_country_changeable,comment,deprecated
+calorific values,various (kWh per mass or volume),CALOR,True,False,False,False,False,False,False,False,no,no,,False
+CAPEX,USD2021/kW,CAPEX,False,True,False,True,True,True,False,True,extended,extended,,False
+CAPEX (transport),USD2021/(kW*km),CAPEX-T,False,False,True,False,True,False,False,False,extended,extended,,True
+transport capacity,kWh/a,CAP-T,False,False,False,False,False,True,True,False,0,1,,False
+conversion factors,various (input per main output),CONV,True,True,True,False,True,False,False,False,advanced,advanced,defined per main output. Can be >0 (secondary output) or <0 (secondary input),False
+"conversion factors (other fuel, transport)",kWh/kWh/km,CONV-OT,False,False,True,False,True,False,False,False,,,,True
+"conversion factors (own fuel, transport)",kWh/kWh/km,CONV-T,False,False,True,False,True,False,False,False,,,,True
+distance between RE site and coast,km,DST-S-C,False,False,False,False,False,True,False,False,no,extended,,False
+shipping distance,km,DST-S-D,False,False,False,False,False,True,True,False,no,no,,False
+pipeline distance,km,DST-S-DP,False,False,False,False,False,True,True,False,no,no,added 20221122 by mh. Data to be provided by rm. TODO: apply in calculations,False
+efficiency,various (output per main input),EFF,False,True,False,False,True,False,False,False,extended,extended,"main output per main input. The unit is % if we assume that everything is normalized to energy content as far. Exceptions are material flows without energy content (water, nitrogen, carbon, CO2)",False
+"efficiency (other fuel, transport)",fraction/km,EFF-OT,False,False,True,False,True,False,False,False,advanced,advanced,for transportation efficiency (like losses) should depend on distance,True
+"efficiency (own fuel, transport)",fraction/km,EFF-T,False,False,True,False,True,False,False,False,advanced,advanced,for transportation efficiency (like losses) should depend on distance,True
+full load hours,h,FLH,False,False,False,True,False,True,False,False,no,extended,,False
+lifetime / amortization period,years,LIFETIME,False,True,False,True,True,False,False,False,extended,extended,,False
+"losses (own fuel, transport)",fraction/km,LOSS-T,False,False,True,False,True,False,False,False,advanced,advanced,for transportation efficiency (like losses) should depend on distance,False
+OPEX (fix),USD2021/kW,OPEX-F,False,True,False,True,True,True,False,True,extended,extended,,False
+"OPEX (fix, transport)",USD2021/(kW*km),OPEX-FT,False,False,True,False,True,False,False,False,extended,extended,,True
+OPEX (other variable),USD2021/kWh,OPEX-O,False,True,False,True,True,True,False,True,extended,extended,,True
+levelized costs,USD2021/(kWh*km),OPEX-T,False,False,True,False,True,False,False,False,extended,extended,,False
+RE potential,MWel,RE-POT,False,False,False,True,False,True,False,False,no,no,,False
+sea share of pipeline distance,fraction,SEASHARE,False,False,False,False,False,True,True,False,no,no,,False
+specific costs,various (USD2021 per flow),SPECCOST,True,False,False,False,False,True,False,True,basic,extended,"Costs are associated with every *secondary* input. It could also be associated with secondary output (<0 for gains, >0 for costs)",False
+interest rate,fraction,WACC,False,True,False,True,True,True,False,True,,,,False
+Storage cost factor,1,STR-CF,False,False,False,False,False,False,False,False,no,no,,False

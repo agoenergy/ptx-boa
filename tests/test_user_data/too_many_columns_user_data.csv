@@ -1,0 +1,23 @@
+source_region_code,process_code,parameter_code,value,flow_code,additional_column
+Colombia,Wind-PV-Hybrid,CAPEX,3000.0,,None
+Costa Rica,PV tilted,CAPEX,2000.0,,None
+Spain,Wind Offshore,CAPEX,4000.0,,None
+Indonesia,Wind Onshore,CAPEX,100.0,,None
+Algeria,Wind Onshore,full load hours,4000.0,,None
+Egypt,PV tilted,full load hours,8760.0,,None
+India,Wind Offshore,full load hours,2000.0,,None
+Kenya,Wind-PV-Hybrid,full load hours,5000.0,,None
+,Ammonia Synthesis (Haber-Bosch),efficiency,0.4,,None
+,Direct Air Capture,CAPEX,1000.0,,None
+,FT e-fuels Synthesis (Fischer-Tropsch),OPEX (fix),5000.0,,None
+,FT e-fuels Synthesis (Fischer-Tropsch),lifetime / amortization period,100.0,,None
+,Methane Synthesis,CAPEX,300.0,,None
+,Methanol Synthesis,efficiency,1.0,,None
+,PV tilted,lifetime / amortization period,50.0,,None
+,Ammonia ship (own fuel consumption),levelized costs,100.0,,None
+,Ammonia ship (own fuel consumption),"losses (own fuel, transport)",0.5,,None
+,Autothermal-Reactor (Blue Hydrogen),lifetime / amortization period,40.0,,None
+United Arab Emirates,,interest rate,0.0001,,None
+Australia,,interest rate,0.9,,None
+Colombia,,interest rate,1.0,,None
+,,specific costs,0.3,heat
