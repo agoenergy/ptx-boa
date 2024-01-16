@@ -4,9 +4,8 @@ LABEL version="0.1.2"
 RUN apt-get update
 RUN apt-get install -y git
 RUN git clone https://github.com/agoenergy/ptx-boa.git
-RUN git checkout main
-
 WORKDIR ptx-boa
+RUN git checkout main
 RUN pip3 install -r requirements.txt
 EXPOSE 80
 
