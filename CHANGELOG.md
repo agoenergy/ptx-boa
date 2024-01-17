@@ -1,5 +1,11 @@
 # CHANGELOG.md
 
+## 0.2.0 (2024-01-16)
+
+test release (still a draft version)
+
+---
+
 ## {version} ({date})
 
 ### Features
