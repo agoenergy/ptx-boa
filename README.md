@@ -46,22 +46,24 @@ pytest
 ## Release Procedure
 
 - merge all relevant branches into develop
-- create a release branch
-- update version (`bumpversion patch|minor|major`)
-- change and commit `CHANGELOG.md` with description of changes
+- commit release changes either directly into decelop or use a release branch:
+  - change and commit `CHANGELOG.md` with description of changes
+  - update version (`bumpversion patch|minor|major`).
+    This creates automatically a commit
 - create pull requests to merge develop into main
-- merging will automatically (via git action) create and publish the new docker image `wingechr/ptx-boa:<VERSION>`
-- finally, merge relase (or main) branch back into develop
+- merging this will automatically (via git action) create
+  and publish the new docker image `wingechr/ptx-boa:<VERSION>`
 
 ### Update docker image in production
 
 ```bash
+# connect to server
+ssh ptxboa
+# pull latest image from dockerhub
 docker pull wingechr/ptx-boa:<VERSION>
-docker images
-docker container ls --all
-docker ps --no-trunc
-
+# stop and delete the currently running container "app"
 docker stop app
 docker rm app
+# start the latest image as "app"
 docker run -d -p 9000:80 --name app --restart unless-stopped wingechr/ptx-boa:<VERSION>
 ```
