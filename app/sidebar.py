@@ -2,7 +2,8 @@
 """Sidebar creation."""
 import streamlit as st
 
-from app.ptxboa_functions import read_markdown_file, reset_user_changes
+from app.ptxboa_functions import read_markdown_file
+from app.user_data import reset_user_changes
 from ptxboa.api import PtxboaAPI
 
 
