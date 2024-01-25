@@ -4,9 +4,9 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+from app.excel_download import prepare_and_download_df_as_excel
 from app.ptxboa_functions import (
     config_number_columns,
-    prepare_and_download_df_as_excel,
     read_markdown_file,
     remove_subregions,
 )
