@@ -18,7 +18,6 @@ def make_sidebar(api: PtxboaAPI):
         .index
     )
 
-
     # select region:
     region = st.sidebar.selectbox(
         "Supply country / region:",
