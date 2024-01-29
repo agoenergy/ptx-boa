@@ -14,8 +14,10 @@ def make_sidebar(api: PtxboaAPI):
     region_list = (
         api.get_dimension("region")
         .loc[api.get_dimension("region")["subregion_code"] == ""]
+        .sort_index()
         .index
     )
+
 
     # select region:
     region = st.sidebar.selectbox(
