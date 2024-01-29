@@ -15,7 +15,7 @@ def update_csv(table, fields, filename, where=""):
     pd.read_sql(
         f'select {fields} from "{table}" {where} order by "key"',
         engine,
-    ).to_csv(filename, index=False)
+    ).to_csv(filename, index=False, lineterminator="\n")
 
 
 if __name__ == "__main__":
