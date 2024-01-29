@@ -3,8 +3,9 @@
 import plotly.express as px
 import streamlit as st
 
+from app.layout_elements import display_and_edit_input_data
 from app.plot_functions import plot_input_data_on_map
-from app.ptxboa_functions import display_and_edit_input_data, read_markdown_file
+from app.ptxboa_functions import read_markdown_file
 from ptxboa.api import PtxboaAPI
 
 

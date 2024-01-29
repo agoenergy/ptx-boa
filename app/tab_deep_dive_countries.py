@@ -5,13 +5,9 @@ import plotly.express as px
 import streamlit as st
 from streamlit_antd_components import SegmentedItem, segmented
 
-from app.layout_elements import display_costs
+from app.layout_elements import display_and_edit_input_data, display_costs
 from app.plot_functions import plot_costs_on_map, plot_input_data_on_map
-from app.ptxboa_functions import (
-    display_and_edit_input_data,
-    read_markdown_file,
-    select_subregions,
-)
+from app.ptxboa_functions import read_markdown_file, select_subregions
 from ptxboa.api import PtxboaAPI
 
 

@@ -15,9 +15,9 @@ import pandas as pd
 import streamlit as st
 import streamlit_antd_components as sac
 
-import app.ptxboa_functions as pf
 from app.context_data import load_context_data
 from app.layout_elements import display_footer
+from app.ptxboa_functions import calculate_results_list
 from app.sidebar import make_sidebar
 from app.tab_certification_schemes import content_certification_schemes
 from app.tab_costs import content_costs
@@ -28,6 +28,7 @@ from app.tab_input_data import content_input_data
 from app.tab_literature import content_literature
 from app.tab_market_scanning import content_market_scanning
 from app.tab_sustainability import content_sustainability
+from app.user_data import display_user_changes
 from app.user_data_from_file import download_user_data, upload_user_data
 from ptxboa.api import PtxboaAPI
 
@@ -85,7 +86,7 @@ with st.container():
         with st.expander("Modified data"):
             if st.session_state["user_changes_df"] is not None:
                 download_user_data()
-            pf.display_user_changes(api)
+            display_user_changes(api)
 
             with st.container():
                 st.divider()
@@ -139,17 +140,17 @@ if "colors" not in st.session_state:
     st.session_state["colors"] = colors["Hex Code"].to_list()
 
 # calculate results over different data dimensions:
-costs_per_region = pf.calculate_results_list(
+costs_per_region = calculate_results_list(
     api,
     parameter_to_change="region",
     parameter_list=None,
 )
-costs_per_scenario = pf.calculate_results_list(
+costs_per_scenario = calculate_results_list(
     api,
     parameter_to_change="scenario",
     parameter_list=None,
 )
-costs_per_res_gen = pf.calculate_results_list(
+costs_per_res_gen = calculate_results_list(
     api,
     parameter_to_change="res_gen",
     # TODO: here we remove PV tracking manually, this needs to be fixed in data
@@ -157,7 +158,7 @@ costs_per_res_gen = pf.calculate_results_list(
         x for x in api.get_dimension("res_gen").index.to_list() if x != "PV tracking"
     ],
 )
-costs_per_chain = pf.calculate_results_list(
+costs_per_chain = calculate_results_list(
     api,
     parameter_to_change="chain",
     parameter_list=None,
@@ -165,13 +166,13 @@ costs_per_chain = pf.calculate_results_list(
 )
 
 # calculate results over different data dimensions (without user changes):
-costs_per_region_without_user_changes = pf.calculate_results_list(
+costs_per_region_without_user_changes = calculate_results_list(
     api, parameter_to_change="region", parameter_list=None, apply_user_data=False
 )
-costs_per_scenario_without_user_changes = pf.calculate_results_list(
+costs_per_scenario_without_user_changes = calculate_results_list(
     api, parameter_to_change="scenario", parameter_list=None, apply_user_data=False
 )
-costs_per_res_gen_without_user_changes = pf.calculate_results_list(
+costs_per_res_gen_without_user_changes = calculate_results_list(
     api,
     parameter_to_change="res_gen",
     # TODO: here we remove PV tracking manually, this needs to be fixed in data
@@ -180,7 +181,7 @@ costs_per_res_gen_without_user_changes = pf.calculate_results_list(
     ],
     apply_user_data=False,
 )
-costs_per_chain_without_user_changes = pf.calculate_results_list(
+costs_per_chain_without_user_changes = calculate_results_list(
     api,
     parameter_to_change="chain",
     parameter_list=None,
