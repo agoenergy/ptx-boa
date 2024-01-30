@@ -416,6 +416,7 @@ def create_bar_chart_costs(
         output_unit = st.session_state["output_unit"]
 
     fig.update_layout(yaxis_title=output_unit)
+    fig.update_layout(legend_traceorder="reversed")
     return fig
 
 

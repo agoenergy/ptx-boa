@@ -66,6 +66,7 @@ def content_costs(
                 doublefig.add_trace(trace, row=1, col=2)
 
             doublefig.update_layout(barmode="stack")
+            doublefig.update_layout(legend_traceorder="reversed")
             doublefig.update_layout(
                 height=350,
                 margin={"l": 10, "r": 10, "t": 20, "b": 20},
