@@ -109,6 +109,12 @@ def calculate_results_list(
         res_list.append(res_single)
     res_details = pd.concat(res_list)
 
+    # drop Green Iron if comparing chains (because it is not an energy carrier)
+    if parameter_to_change == "chain":
+        res_details = res_details.loc[
+            ~res_details["chain"].str.startswith("Green Iron")
+        ]
+
     return aggregate_costs(res_details, parameter_to_change)
 
 
