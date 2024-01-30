@@ -36,42 +36,38 @@ def content_costs(
             f"{st.session_state['country']}"
         )
         st.subheader(title_string)
-        c_1, c_2 = st.columns([2, 1])
 
-        with c_1:
-            st.markdown("##### Costs by supply country")
-            fig_map = plot_costs_on_map(
-                api, costs_per_region, scope="world", cost_component=cost_component
-            )
-            fig_map.update_layout(
-                height=350,
-                margin={"l": 10, "r": 10, "t": 10, "b": 10},
-            )
-            st.plotly_chart(fig_map, use_container_width=True)
+        fig_map = plot_costs_on_map(
+            api, costs_per_region, scope="world", cost_component=cost_component
+        )
+        fig_map.update_layout(
+            margin={"l": 10, "r": 10, "t": 10, "b": 10},
+        )
+        st.plotly_chart(fig_map, use_container_width=True)
 
-        with c_2:
-            st.markdown("##### Cost distribution and details")
-            # create box plot and bar plot:
-            fig1 = create_box_plot(costs_per_region)
-            filtered_data = costs_per_region[
-                costs_per_region.index == st.session_state["region"]
-            ]
-            fig2 = create_bar_chart_costs(filtered_data)
-            doublefig = make_subplots(rows=1, cols=2, shared_yaxes=True)
+        st.subheader("Cost distribution and cost components")
+        # create box plot and bar plot:
+        fig1 = create_box_plot(costs_per_region)
+        filtered_data = costs_per_region[
+            costs_per_region.index == st.session_state["region"]
+        ]
+        fig2 = create_bar_chart_costs(filtered_data)
+        doublefig = make_subplots(rows=1, cols=2, shared_yaxes=True)
 
-            for trace in fig1.data:
-                trace.showlegend = False
-                doublefig.add_trace(trace, row=1, col=1)
-            for trace in fig2.data:
-                doublefig.add_trace(trace, row=1, col=2)
+        for trace in fig1.data:
+            trace.showlegend = False
+            doublefig.add_trace(trace, row=1, col=1)
+        for trace in fig2.data:
+            doublefig.add_trace(trace, row=1, col=2)
 
-            doublefig.update_layout(barmode="stack")
-            doublefig.update_layout(
-                height=350,
-                margin={"l": 10, "r": 10, "t": 20, "b": 20},
-            )
+        doublefig.update_layout(barmode="stack")
+        doublefig.update_yaxes(title_text=st.session_state["output_unit"], row=1, col=1)
+        doublefig.update_layout(
+            height=350,
+            margin={"l": 10, "r": 10, "t": 20, "b": 20},
+        )
 
-            st.plotly_chart(doublefig, use_container_width=True)
+        st.plotly_chart(doublefig, use_container_width=True)
 
         st.button(
             "More Info on Supply Region and Demand Country",
