@@ -29,16 +29,15 @@ def content_costs(
         st.markdown(read_markdown_file("md/whatisthis_costs.md"))
 
     with st.container(border=True):
-        cost_component = "Total"
         title_string = (
-            f"{cost_component} cost of exporting "
+            f"Cost of exporting "
             f"{st.session_state['chain']} to "
             f"{st.session_state['country']}"
         )
         st.subheader(title_string)
 
         fig_map = plot_costs_on_map(
-            api, costs_per_region, scope="world", cost_component=cost_component
+            api, costs_per_region, scope="world", cost_component="Total"
         )
         fig_map.update_layout(
             margin={"l": 10, "r": 10, "t": 10, "b": 10},
