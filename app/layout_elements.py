@@ -147,13 +147,13 @@ def display_footer():
         # TODO: fix uneven height and vertical alignment of logos
         c1, c2, c3, c4 = st.columns(4, gap="medium")
         with c1:
-            st.image("img/oeko_logo_300dpi_RGB.png")
+            st.image("img/oeko_logo_612x306.png")
         with c2:
-            st.image("img/agora-energiewende_logo_RGB.png")
+            st.image("img/agora-energiewende_logo_612x306.png")
         with c3:
-            st.image("img/Agora_Industry_logo_RGB.png")
+            st.image("img/Agora_Industry_logo_612x306.png")
         with c4:
-            st.image("img/PtX-Hub_Logo_international_2207_RGB.jpg")
+            st.image("img/PtX-Hub_Logo_international_612x306.png")
 
 
 def display_and_edit_input_data(
