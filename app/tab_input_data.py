@@ -64,8 +64,14 @@ def content_input_data(api: PtxboaAPI) -> None:
             )
         with st.expander("**Regional distribution**"):
             # create plot:
+            if data_selection == "CAPEX":
+                ylabel = "CAPEX (USD/kW)"
+            if data_selection == "full load hours":
+                ylabel = "full load hours (h/a)"
+            if data_selection == "interest rate":
+                ylabel = "interest rate (per unit)"
             fig = px.box(df)
-            fig.update_layout(xaxis_title=None)
+            fig.update_layout(xaxis_title=None, yaxis_title=ylabel)
             st.plotly_chart(fig, use_container_width=True)
 
     with st.container(border=True):
