@@ -93,6 +93,15 @@ def display_costs(
     )
     st.plotly_chart(fig, use_container_width=True)
 
+    # add explainer for costs by supply chain comparison:
+    if titlestring == "Costs by supply chain":
+        st.caption(
+            (
+                "**Note**: Green Iron is not shown in this comparison "
+                "as it is not an energy carrier."
+            )
+        )
+
     with st.expander("**Data**"):
         column_config = config_number_columns(df_res, format=f"%.1f {output_unit}")
         st.dataframe(df_res, use_container_width=True, column_config=column_config)

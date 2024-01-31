@@ -98,6 +98,10 @@ def calculate_results_list(
     if parameter_list is None:
         parameter_list = api.get_dimension(parameter_to_change).index
 
+    # drop Green Iron if comparing chains (because it is not an energy carrier)
+    if parameter_to_change == "chain":
+        parameter_list = parameter_list[~parameter_list.str.startswith("Green Iron")]
+
     res_list = []
     for parameter in parameter_list:
         settings.update({parameter_to_change: parameter})
