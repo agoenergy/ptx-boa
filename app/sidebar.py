@@ -129,6 +129,9 @@ def make_sidebar(api: PtxboaAPI):
             horizontal=True,
             help=read_markdown_file("md/helptext_sidebar_carbon_source.md"),
         )
+    else:
+        st.session_state["secproc_co2"] = None
+
     st.session_state["secproc_water"] = st.sidebar.radio(
         "Water source:",
         api.get_dimension("secproc_water").index,
