@@ -2,7 +2,7 @@
 """Sidebar creation."""
 import streamlit as st
 
-from app.ptxboa_functions import read_markdown_file
+from app.ptxboa_functions import check_if_input_is_needed, read_markdown_file
 from app.user_data import reset_user_changes
 from ptxboa.api import PtxboaAPI
 
@@ -119,12 +119,19 @@ def make_sidebar(api: PtxboaAPI):
     st.session_state["scenario"] = f"{data_year} ({cost_scenario})"
 
     st.sidebar.subheader("Additional settings:")
-    st.session_state["secproc_co2"] = st.sidebar.radio(
-        "Carbon source:",
-        api.get_dimension("secproc_co2").index,
-        horizontal=True,
-        help=read_markdown_file("md/helptext_sidebar_carbon_source.md"),
-    )
+
+    # check if carbon is needed as input:
+    needs_co2 = check_if_input_is_needed(api, flow_code="CO2-G")
+    if needs_co2:
+        st.session_state["secproc_co2"] = st.sidebar.radio(
+            "Carbon source:",
+            api.get_dimension("secproc_co2").index,
+            horizontal=True,
+            help=read_markdown_file("md/helptext_sidebar_carbon_source.md"),
+        )
+    else:
+        st.session_state["secproc_co2"] = None
+
     st.session_state["secproc_water"] = st.sidebar.radio(
         "Water source:",
         api.get_dimension("secproc_water").index,
