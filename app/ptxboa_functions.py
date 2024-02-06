@@ -98,6 +98,10 @@ def calculate_results_list(
     if parameter_list is None:
         parameter_list = api.get_dimension(parameter_to_change).index
 
+    # drop Green Iron if comparing chains (because it is not an energy carrier)
+    if parameter_to_change == "chain":
+        parameter_list = parameter_list[~parameter_list.str.startswith("Green Iron")]
+
     res_list = []
     for parameter in parameter_list:
         settings.update({parameter_to_change: parameter})
@@ -563,3 +567,21 @@ def change_index_names(df: pd.DataFrame, mapping: dict | None = None) -> pd.Data
     new_idx_names = [mapping.get(i, i) for i in df.index.names]
     df.index.names = new_idx_names
     return df
+
+
+def check_if_input_is_needed(api: PtxboaAPI, flow_code: str) -> bool:
+    """Check if a certain input is required by the selected process chain."""
+    # get list of processes in selected chain:
+    process_codes = (
+        api.get_dimension("chain").loc[st.session_state["chain"]][:-1].to_list()
+    )
+    process_codes = [p for p in process_codes if p != ""]
+
+    # get list of conversion coefficients for these processes:
+    df = api.get_input_data(scenario=st.session_state["scenario"], long_names=False)
+    flow_codes = df.loc[
+        (df["process_code"].isin(process_codes)) & (df["parameter_code"] == "CONV"),
+        "flow_code",
+    ].to_list()
+
+    return flow_code in flow_codes

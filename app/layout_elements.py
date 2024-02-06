@@ -93,6 +93,15 @@ def display_costs(
     )
     st.plotly_chart(fig, use_container_width=True)
 
+    # add explainer for costs by supply chain comparison:
+    if titlestring == "Costs by supply chain":
+        st.caption(
+            (
+                "**Note**: Green Iron is not shown in this comparison "
+                "as it is not an energy carrier."
+            )
+        )
+
     with st.expander("**Data**"):
         column_config = config_number_columns(df_res, format=f"%.1f {output_unit}")
         st.dataframe(df_res, use_container_width=True, column_config=column_config)
@@ -144,7 +153,16 @@ def display_footer():
                 unsafe_allow_html=True,
             )
 
-        st.image("img/logos.png")
+        # TODO: fix uneven height and vertical alignment of logos
+        c1, c2, c3, c4 = st.columns(4, gap="medium")
+        with c1:
+            st.image("img/oeko_logo_612x306.png")
+        with c2:
+            st.image("img/agora-energiewende_logo_612x306.png")
+        with c3:
+            st.image("img/Agora_Industry_logo_612x306.png")
+        with c4:
+            st.image("img/PtX-Hub_Logo_international_612x306.png")
 
 
 def display_and_edit_input_data(
