@@ -33,7 +33,8 @@ def content_input_data(api: PtxboaAPI) -> None:
             horizontal=True,
         )
 
-        with st.expander("**Map**"):
+        with st.expander("**Map**", expanded=True):
+
             if data_selection in ["full load hours", "CAPEX"]:
                 map_parameter = st.selectbox(
                     "Select parameter to display on map:",
