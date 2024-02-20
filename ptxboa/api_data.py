@@ -39,76 +39,12 @@ def _load_data(data_dir, name: str) -> pd.DataFrame:
 
 DATA_DIR = Path(__file__).parent.resolve() / "data"
 
-PARAMETER_DIMENSIONS = {
-    "CALOR": {"required": ["flow_code"], "global_default": False},
-    "CAPEX": {
-        "required": ["process_code", "source_region_code"],
-        "global_default": True,
-    },
-    "CAP-T": {
-        "required": ["source_region_code", "target_country_code"],
-        "global_default": False,
-    },
-    "CONV": {"required": ["flow_code", "process_code"], "global_default": False},
-    "DST-S-D": {
-        "required": ["source_region_code", "target_country_code"],
-        "global_default": False,
-    },
-    "DST-S-DP": {
-        "required": ["source_region_code", "target_country_code"],
-        "global_default": False,
-    },
-    "EFF": {"required": ["process_code"], "global_default": False},
-    "FLH": {
-        "required": [
-            "process_code",
-            "source_region_code",
-            # the following are not required for RES:
-            # "process_code_res",
-            # "process_code_ely",
-            # "process_code_deriv",
-        ],
-        "global_default": False,
-    },
-    "LIFETIME": {"required": ["process_code"], "global_default": False},
-    "LOSS-T": {"required": ["process_code"], "global_default": False},
-    "OPEX-F": {
-        "required": ["process_code", "source_region_code"],
-        "global_default": True,
-    },
-    "OPEX-O": {
-        "required": ["process_code", "source_region_code"],
-        "global_default": True,
-    },
-    "OPEX-T": {"required": ["process_code"], "global_default": False},
-    "RE-POT": {
-        "required": ["process_code", "source_region_code"],
-        "global_default": False,
-    },
-    "SEASHARE": {
-        "required": ["source_region_code", "target_country_code"],
-        "global_default": False,
-    },
-    "SPECCOST": {
-        "required": ["flow_code", "source_region_code"],
-        "global_default": True,
-    },
-    "WACC": {
-        "required": ["source_region_code"],
-        "global_default": True,
-    },
-    "STR-CF": {
-        "required": [],
-        "global_default": False,
-    },
-}
 
 ParameterCode = Literal[
     "CALOR",
     "CAPEX",
     "CAP-T",
     "CONV",
-    "DST-S-C",
     "DST-S-D",
     "DST-S-DP",
     "EFF",
@@ -117,6 +53,7 @@ ParameterCode = Literal[
     "LOSS-T",
     "OPEX-F",
     "OPEX-T",
+    "OPEX-O",
     "RE-POT",
     "SEASHARE",
     "SPECCOST",
@@ -165,6 +102,39 @@ class PtxData:
                 [2030, 2040], ["low", "medium", "high"]
             )
         }
+
+        # ----------------------------------------------------------------------------
+        # loading parameters
+        # ----------------------------------------------------------------------------
+
+        self.PARAMETER_DIMENSIONS = {}
+        # create class instances for parameters
+        df_parameters = _load_data(data_dir, name="dim_parameter").set_index(
+            "parameter_code", drop=False
+        )
+        assert set(df_parameters.index) == set(ParameterCode.__args__), set(
+            ParameterCode.__args__
+        ) - set(df_parameters.index)
+
+        for parameter_code, specs in df_parameters.iterrows():
+            required = [
+                y
+                for x, y in [
+                    ("per_flow", "flow_code"),
+                    ("per_process", "process_code"),
+                    ("per_region", "source_region_code"),
+                    ("per_import_country", "target_country_code"),
+                ]
+                if specs[x]
+            ]
+            global_default = specs["has_global_default"]
+
+            if global_default:
+                assert "source_region_code" in required
+            self.PARAMETER_DIMENSIONS[parameter_code] = {
+                "global_default": global_default,
+                "required": required,
+            }
 
     def _load_scenario_table(
         self, data_dir: str | Path, scenario: ScenarioCode
@@ -658,7 +628,6 @@ class DataHandler:
                 - 'CAPEX'
                 - 'CAP-T'
                 - 'CONV'
-                - 'DST-S-C'
                 - 'DST-S-D'
                 - 'DST-S-DP'
                 - 'EFF'
@@ -695,7 +664,6 @@ class DataHandler:
             following parameters:
                 - CAPEX
                 - CAP-T
-                - DST-S-C
                 - DST-S-D
                 - DST-S-DP
                 - FLH
@@ -805,7 +773,10 @@ class DataHandler:
             empty_result = False
         except KeyError:
             empty_result = True
-        if empty_result and PARAMETER_DIMENSIONS[parameter_code]["global_default"]:
+        if (
+            empty_result
+            and self.ptxdata.PARAMETER_DIMENSIONS[parameter_code]["global_default"]
+        ):
             # make query with empty "source_region_code"
             logger.debug(
                 f"searching global default, did not find entry for key '{key}'"
@@ -857,7 +828,12 @@ class DataHandler:
             "source_region_code",
             "target_country_code",
         ]:
-            if k in PARAMETER_DIMENSIONS[params["parameter_code"]]["required"]:
+            if (
+                k
+                in self.ptxdata.PARAMETER_DIMENSIONS[params["parameter_code"]][
+                    "required"
+                ]
+            ):
                 selector += f"-{params[k]}"
             else:
                 selector += "-"
@@ -880,7 +856,9 @@ class DataHandler:
         kwargs :
             keyword arguments passed to `self.get_parameter_value()`
         """
-        required_param_names = PARAMETER_DIMENSIONS[parameter_code]["required"]
+        required_param_names = self.ptxdata.PARAMETER_DIMENSIONS[parameter_code][
+            "required"
+        ]
 
         for p in required_param_names:
             required_value = kwargs.pop(p)
