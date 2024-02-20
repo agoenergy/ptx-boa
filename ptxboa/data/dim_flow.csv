@@ -1,17 +1,17 @@
-flow_name,unit,flow_code,secondary_process,result_process_type
-bunker fuel,kwh bunker fuel (l),BFUEL-L,False
-methanol (liquid),kWh CH3OH (l),CH3OH-L,False
-methane (gas),kWh CH4 (g),CH4-G,False
-methane (liquid),kWh CH4 (l),CH4-L,False
-FT e-fuels,kwh CHx (l),CHX-L,False
-carbon dioxide,kg CO2 (g),CO2-G,True,Carbon
-carbon,kg C (s),C-S,False
-Green iron,kg DRI (s),DRI-S,False
-electricity,kWh (el.),EL,False
-hydrogen (gas),kWh H2 (g),H2-G,False
-hydrogen (liquid),kWh H2 (l),H2-L,False
-water,kg H2O (l),H2O-L,True,Water
-heat,kWh (heat),HEAT,False,Heat
-hydrogen (LOHC),kWh H2 (l),LOHC-L,False
-nitrogen,kg N2 (g),N2-G,False
-ammonia (liquid),kWh NH3 (l),NH3-L,False
+flow_code,flow_name,unit,secondary_process,secondary_flow,result_process_type
+BFUEL-L,bunker fuel,kwh bunker fuel (l),False,True,
+CH3OH-L,methanol (liquid),kWh CH3OH (l),False,False,
+CH4-G,methane (gas),kWh CH4 (g),False,False,
+CH4-L,methane (liquid),kWh CH4 (l),False,False,
+CHX-L,FT e-fuels,kwh CHx (l),False,False,
+CO2-G,carbon dioxide,kg CO2 (g),True,True,Carbon
+C-S,carbon,kg C (s),False,False,
+DRI-S,Green iron,kg DRI (s),False,False,
+EL,electricity,kWh (el.),False,True,
+H2-G,hydrogen (gas),kWh H2 (g),False,False,
+H2-L,hydrogen (liquid),kWh H2 (l),False,False,
+H2O-L,water,kg H2O (l),True,True,Water
+HEAT,heat,kWh (heat),False,True,Heat
+LOHC-L,hydrogen (LOHC),kWh H2 (l),False,False,
+N2-G,nitrogen,kg N2 (g),False,True,
+NH3-L,ammonia (liquid),kWh NH3 (l),False,False,
