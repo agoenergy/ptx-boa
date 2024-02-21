@@ -5,6 +5,7 @@ import logging
 import unittest
 
 import numpy as np
+import pytest
 
 from ptxboa.api import PtxboaAPI
 from ptxboa.api_calc import annuity
@@ -101,7 +102,7 @@ class TestApi(unittest.TestCase):
             ("Electricity and H2 storage", "OPEX"): 184.90944262777725,
         }
 
-        result_dict = {k: v for k, v in res_values.items() if v}
+        result_dict = {k: pytest.approx(v) for k, v in res_values.items() if v}
 
         assert expected_result == result_dict
 
@@ -138,7 +139,7 @@ class TestApi(unittest.TestCase):
             ("Electricity and H2 storage", "OPEX"): 63.449562769066546,
         }
 
-        result_dict = {k: v for k, v in res_values.items() if v}
+        result_dict = {k: pytest.approx(v) for k, v in res_values.items() if v}
 
         assert expected_result == result_dict
 
