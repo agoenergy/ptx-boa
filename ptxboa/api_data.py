@@ -40,6 +40,78 @@ def _load_data(data_dir, name: str) -> pd.DataFrame:
 DATA_DIR = Path(__file__).parent.resolve() / "data"
 
 
+def get_transport_distances(
+    source_region_code,
+    target_country_code,
+    use_ship,
+    ship_own_fuel,
+    dist_ship,
+    dist_pipeline,
+    seashare_pipeline,
+    existing_pipeline_cap,
+):
+    # TODO: new calculation of distances
+    dist_transp = {}
+    if source_region_code == target_country_code:
+        # no transport (only China)
+        pass
+    elif dist_pipeline and not use_ship:
+        # use pipeline if pipeline possible and ship not selected
+        if existing_pipeline_cap:
+            # use retrofitting
+            dist_transp["PPLX"] = dist_pipeline * seashare_pipeline
+            dist_transp["PPLR"] = dist_pipeline * (1 - seashare_pipeline)
+        else:
+            dist_transp["PPLS"] = dist_pipeline * seashare_pipeline
+            dist_transp["PPL"] = dist_pipeline * (1 - seashare_pipeline)
+    else:
+        # use ship
+        if ship_own_fuel:
+            dist_transp["SHP-OWN"] = dist_ship
+        else:
+            dist_transp["SHP"] = dist_ship
+
+    return dist_transp
+
+
+def filter_chain_processes(chain, transport_distances):
+    result_main = []
+    result_transport = []
+    for process_step in ["RES", "ELY", "DERIV"]:
+        process_code = chain[process_step]
+        if process_code:
+            result_main.append(process_step)
+    is_shipping = transport_distances.get("SHP") or transport_distances.get("SHP-OWN")
+    is_pipeline = (
+        transport_distances.get("PPLS")
+        or transport_distances.get("PPL")
+        or transport_distances.get("PPLX")
+        or transport_distances.get("PPLR")
+    )
+    if is_shipping:
+        if chain["PRE_SHP"]:  # not all have preprocessing
+            result_transport.append("PRE_SHP")
+    elif is_pipeline:
+        if chain["PRE_PPL"]:  # not all have preprocessing
+            result_transport.append("PRE_PPL")
+
+    for k, v in transport_distances.items():
+        if v:
+            assert chain[k]
+            result_transport.append(k)
+
+    if is_shipping:
+        if chain["POST_SHP"]:  # not all have preprocessing
+            result_transport.append("POST_SHP")
+    elif is_pipeline:
+        if chain["POST_PPL"]:  # not all have preprocessing
+            result_transport.append("POST_PPL")
+
+    # TODO: CHECK that flow chain is correct
+
+    return result_main, result_transport
+
+
 ParameterCode = Literal[
     "CALOR",
     "CAPEX",
@@ -872,3 +944,171 @@ class DataHandler:
     def get_dimension(self, dim: str) -> pd.DataFrame:
         """Delegate get_dimension to underlying data class."""
         return self.ptxdata.get_dimension(dim=dim)
+
+    def get_calculation_data(
+        self,
+        secondary_processes: dict,
+        chain: dict,
+        process_code_res: str,
+        process_code_ely: str,
+        process_code_deriv: str,
+        source_region_code: str,
+        target_country_code: str,
+        use_ship: bool,
+        ship_own_fuel: bool,
+    ) -> pd.DataFrame:
+        """Calculate results."""
+        result = {
+            "main_process_chain": [],
+            "transport_process_chain": [],
+            "secondary_process": {},
+            "secondary_flow": {},
+            "parameter": {},
+        }
+
+        # get process codes for selected chain
+        df_processes = self.get_dimension("process")
+        df_flows = self.get_dimension("flow")
+
+        def get_parameter_value_w_default(
+            parameter_code, process_code="", flow_code="", default=None
+        ):
+            return self.get_parameter_value(
+                parameter_code=parameter_code,
+                process_code=process_code,
+                flow_code=flow_code,
+                source_region_code=source_region_code,
+                target_country_code=target_country_code,
+                process_code_res=process_code_res,
+                process_code_ely=process_code_ely,
+                process_code_deriv=process_code_deriv,
+                default=default,
+            )
+
+        def flow_conv_params(process_code):
+            result = {}
+            flows = df_processes.loc[process_code, "secondary_flows"].split("/")
+            flows = [x.strip() for x in flows if x.strip()]
+            for flow_code in flows:
+                result[flow_code] = get_parameter_value_w_default(
+                    parameter_code="CONV",
+                    process_code=process_code,
+                    flow_code=flow_code,
+                    default=0,
+                )
+            return result
+
+        def get_process_params(process_code):
+            result = {}
+            result["EFF"] = get_parameter_value_w_default(
+                "EFF", process_code=process_code, default=1
+            )
+            result["FLH"] = get_parameter_value_w_default(
+                "FLH", process_code=process_code, default=7000  # TODO: default?
+            )
+            result["LIFETIME"] = get_parameter_value_w_default(
+                "LIFETIME", process_code=process_code, default=20  # TODO: default?
+            )
+            result["CAPEX"] = get_parameter_value_w_default(
+                "CAPEX", process_code=process_code, default=0
+            )  # TODO
+            result["OPEX-F"] = get_parameter_value_w_default(
+                "OPEX-F", process_code=process_code, default=0
+            )
+            result["OPEX-O"] = get_parameter_value_w_default(
+                "OPEX-O", process_code=process_code, default=0
+            )
+            result["CONV"] = flow_conv_params(process_code)
+
+        def get_transport_process_params(process_code, dist_transport):
+            result = {}
+            # TODO: also save in results
+            loss_t = get_parameter_value_w_default(
+                "LOSS-T", process_code=process_code, default=0
+            )
+            result["EFF"] = 1 - loss_t * dist_transport
+            result["OPEX-T"] = get_parameter_value_w_default(
+                "OPEX-T", process_code=process_code, default=0
+            )
+            result["OPEX-O"] = get_parameter_value_w_default(
+                "OPEX-O", process_code=process_code, default=0
+            )
+            result["CONV"] = flow_conv_params(process_code)
+            return result
+
+        def get_flow_params():
+            # TODO: only get used flows?
+            secondary_flows = list(
+                df_flows.loc[df_flows["secondary_flow"], "flow_code"]
+            )
+            result = {}
+            for flow_code in secondary_flows:
+                result[flow_code] = get_parameter_value_w_default(
+                    "SPECCOST", flow_code=flow_code
+                )
+            return result
+
+        # some flows are grouped into their own output category (but not all)
+        # so we load the mapping from the data
+
+        # iterate over main chain, update the value in the main flow
+        # and accumulate result data from each process
+
+        # get general parameters
+
+        result["parameter"]["WACC"] = get_parameter_value_w_default("WACC")
+        result["parameter"]["STR-CF"] = get_parameter_value_w_default("STR-CF")
+        result["parameter"]["CALOR"] = get_parameter_value_w_default(
+            parameter_code="CALOR", flow_code=chain["FLOW_OUT"]
+        )
+
+        # get transport distances and options
+        # TODO? add these also to data
+        dist_pipeline = get_parameter_value_w_default("DST-S-DP", default=0)
+        seashare_pipeline = get_parameter_value_w_default("SEASHARE", default=0)
+        existing_pipeline_cap = get_parameter_value_w_default("CAP-T", default=0)
+        dist_ship = get_parameter_value_w_default("DST-S-D", default=0)
+
+        if not use_ship and not chain["CAN_PIPELINE"]:
+            logging.warning("Must use ship")
+            use_ship = True
+
+        transport_distances = get_transport_distances(
+            source_region_code,
+            target_country_code,
+            use_ship,
+            ship_own_fuel,
+            dist_ship,
+            dist_pipeline,
+            seashare_pipeline,
+            existing_pipeline_cap,
+        )
+
+        chain["RES"] = process_code_res
+
+        chain_steps_main, chain_steps_transport = filter_chain_processes(
+            chain, transport_distances
+        )
+
+        for process_step in chain_steps_main:
+            process_code = chain[process_step]
+            get_process_params(process_code)
+
+        for _, process_code in secondary_processes.items():
+            if not process_code:
+                continue
+            get_process_params(process_code)
+
+        for process_step in chain_steps_transport:
+            process_code = chain[process_step]
+            if not process_code:
+                raise Exception((process_step, chain))
+            if process_step in transport_distances:
+                dist_transport = transport_distances[process_step]
+                get_transport_process_params(process_code, dist_transport)
+            else:  # pre/post
+                get_process_params(process_code)
+
+        result["parameter"]["SPECCOST"] = get_flow_params()
+
+        return result

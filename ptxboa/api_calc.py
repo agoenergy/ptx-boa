@@ -51,6 +51,18 @@ class PtxCalc:
         ship_own_fuel: bool,
     ) -> pd.DataFrame:
         """Calculate results."""
+        self.data_handler.get_calculation_data(
+            secondary_processes,
+            chain,
+            process_code_res,
+            process_code_ely,
+            process_code_deriv,
+            source_region_code,
+            target_country_code,
+            use_ship,
+            ship_own_fuel,
+        )
+
         # get process codes for selected chain
         df_processes = self.data_handler.get_dimension("process")
         df_flows = self.data_handler.get_dimension("flow")
@@ -85,6 +97,7 @@ class PtxCalc:
             "DST-S-DP",
             default=0,
         )
+
         dist_transport_land = 0
         use_retrofitted_pipeline = False
         no_transport = source_region_code == target_country_code  # only China
