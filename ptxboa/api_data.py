@@ -761,12 +761,17 @@ class DataHandler:
             flows = df_processes.loc[process_code, "secondary_flows"].split("/")
             flows = [x.strip() for x in flows if x.strip()]
             for flow_code in flows:
-                result[flow_code] = get_parameter_value_w_default(
+                conv = get_parameter_value_w_default(
                     parameter_code="CONV",
                     process_code=process_code,
                     flow_code=flow_code,
                     default=0,
                 )
+                if conv <= 0:
+                    # currently negative flows (i.e. additional output)
+                    # has no value
+                    continue
+                result[flow_code] = conv
             return result
 
         def get_process_params(process_code):
