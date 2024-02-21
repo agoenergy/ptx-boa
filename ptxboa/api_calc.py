@@ -225,13 +225,13 @@ class PtxCalc:
                     if is_transport:
                         flow_cost = flow_cost * dist_transport
 
-                    result_process_type = (
+                    flow_result_process_type = (
                         df_flows.at[flow_code, "result_process_type"]
                         or result_process_type
                     )
 
                     results.append(
-                        (result_process_type, process_code, "FLOW", flow_cost)
+                        (flow_result_process_type, process_code, "FLOW", flow_cost)
                     )
                     if not (is_shipping or is_pipeline):
                         results.append(
