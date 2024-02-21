@@ -81,19 +81,14 @@ class TestApi(unittest.TestCase):
         res = self._test_api_call(settings)
         # test result categories
         res_values = res.groupby(["process_type", "cost_type"]).sum("values")["values"]
-        for k, v in {
+        expected_result = {
             ("Water", "CAPEX"): 1.2335908034771972,
             ("Water", "OPEX"): 0.5313055092514363,
             ("Water", "FLOW"): 1.1785698932651663,
             ("Electrolysis", "CAPEX"): 306.09326488966565,
             ("Electrolysis", "OPEX"): 65.91693028280527,
-            ("Electrolysis", "FLOW"): 0,
             ("Electricity generation", "CAPEX"): 1008.7007256349594,
             ("Electricity generation", "OPEX"): 304.11200849063624,
-            ("Electricity generation", "FLOW"): 0,
-            ("Transportation (Pipeline)", "CAPEX"): 0,
-            ("Transportation (Pipeline)", "OPEX"): 0,
-            ("Transportation (Pipeline)", "FLOW"): 0,
             ("Transportation (Ship)", "CAPEX"): 68.82605644805622,
             ("Transportation (Ship)", "OPEX"): 70.896276571698,
             ("Transportation (Ship)", "FLOW"): 104.72562247224381,
@@ -102,15 +97,13 @@ class TestApi(unittest.TestCase):
             ("Carbon", "FLOW"): 99.10921639183132,
             ("Derivate production", "CAPEX"): 101.53206754867816,
             ("Derivate production", "OPEX"): 38.600831488868316,
-            ("Derivate production", "FLOW"): 0,
-            ("Heat", "CAPEX"): 0,
-            ("Heat", "OPEX"): 0,
             ("Heat", "FLOW"): 273.29119470172753,
-            ("Electricity and H2 storage", "CAPEX"): 0,
             ("Electricity and H2 storage", "OPEX"): 184.90944262777725,
-            ("Electricity and H2 storage", "FLOW"): 0,
-        }.items():
-            self.assertAlmostEqual(res_values.get(k, 0), v, places=3, msg=k)
+        }
+
+        result_dict = {k: v for k, v in res_values.items() if v}
+
+        assert expected_result == result_dict
 
     def test_example_api_call_2_ship_own_fuel(self):
         """Test output structure of api.calculate()."""
