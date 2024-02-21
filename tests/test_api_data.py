@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from ptxboa.api_data import DataHandler, PtxData
+from ptxboa.api_data import DataHandler
 
 
 @pytest.fixture()
@@ -31,20 +31,20 @@ def user_data_01():
 
 
 @pytest.fixture()
-def ptxdata_static():
+def ptxdata_dir_static():
     """Instance with static copy of the data, this dataset will never change."""
-    return PtxData(data_dir=Path(__file__).parent / "test_data")
+    return Path(__file__).parent / "test_data"
 
 
 @pytest.fixture()
-def ptxdata_live():
+def ptxdata_dir_live():
     """
     Instance with live data as used in deployment.
 
     This dataset could change and we might use this fixture to see if updates work
     correctly.
     """
-    return PtxData()
+    return None
 
 
 @pytest.mark.parametrize(
@@ -122,9 +122,9 @@ def ptxdata_live():
         ),
     ),
 )
-@pytest.mark.parametrize("ptxdata", ("ptxdata_static", "ptxdata_live"))
+@pytest.mark.parametrize("ptxdata_dir", ("ptxdata_dir_static", "ptxdata_dir_live"))
 def test_get_parameter_value(
-    ptxdata,
+    ptxdata_dir,
     scenario,
     parameter_code,
     process_code,
@@ -139,12 +139,16 @@ def test_get_parameter_value(
     request,
     default,
 ):
-    ptxdata_instance = request.getfixturevalue(ptxdata)
+    ptxdata_dir = request.getfixturevalue(ptxdata_dir)
 
     if user_data is not None:
         user_data = request.getfixturevalue(user_data)
 
-    handler = DataHandler(ptxdata_instance, scenario=scenario, user_data=user_data)
+    handler = DataHandler(
+        scenario=scenario,
+        user_data=user_data,
+        data_dir=ptxdata_dir,
+    )
     result = handler.get_parameter_value(
         parameter_code=parameter_code,
         process_code=process_code,
@@ -169,8 +173,6 @@ def test_get_parameter_value(
         ("secproc_water", "Specific costs", ""),
     ),
 )
-def test_get_dimensions_parameter_code(
-    ptxdata_static, dimension, parameter_name, expected_code
-):
-    out_code = ptxdata_static.get_dimensions_parameter_code(dimension, parameter_name)
+def test_get_dimensions_parameter_code(dimension, parameter_name, expected_code):
+    out_code = DataHandler.get_dimensions_parameter_code(dimension, parameter_name)
     assert out_code == expected_code

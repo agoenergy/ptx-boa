@@ -7,7 +7,7 @@ import logging
 import pandas as pd
 
 from .api_calc import PtxCalc
-from .api_data import DATA_DIR, DataHandler, DimensionCode, PtxData, ScenarioCode
+from .api_data import DATA_DIR, DataHandler, DimensionCode, ScenarioCode
 
 logger = logging.getLogger()
 
@@ -39,7 +39,7 @@ class PtxboaAPI:
         return cls._inst
 
     def __init__(self, data_dir=DATA_DIR):
-        self.data = PtxData(data_dir=data_dir)
+        self.data_dir = data_dir
         self._calc_counter = 0  # temporary counter for calls of calculate()
 
     def get_dimension(self, dim: DimensionCode) -> pd.DataFrame:
@@ -66,7 +66,7 @@ class PtxboaAPI:
         : pd.DataFrame
             The dimension the data as
         """
-        return self.data.get_dimension(dim)
+        return DataHandler.get_dimension(dim)
 
     def get_input_data(
         self,
@@ -107,7 +107,7 @@ class PtxboaAPI:
             'source_region_code', 'target_country_code', 'value', 'unit', 'source'
 
         """
-        handler = DataHandler(self.data, scenario, user_data)
+        handler = DataHandler(scenario, user_data)
         return handler.get_input_data(long_names)
 
     def calculate(
@@ -166,7 +166,7 @@ class PtxboaAPI:
             * `cost_type`: one of {RESULT_COST_TYPES}
 
         """
-        data_handler = DataHandler(self.data, scenario, user_data)
+        data_handler = DataHandler(scenario, user_data)
 
         # prepare / convert user settings to internal codes
         dct_chain = dict(data_handler.get_dimension("chain").loc[chain])
@@ -176,21 +176,21 @@ class PtxboaAPI:
 
         result_df = PtxCalc(data_handler).calculate(
             secondary_processes={
-                "H2O-L": self.data.get_dimensions_parameter_code(
+                "H2O-L": DataHandler.get_dimensions_parameter_code(
                     "secproc_water", secproc_water
                 ),
-                "CO2-G": self.data.get_dimensions_parameter_code(
+                "CO2-G": DataHandler.get_dimensions_parameter_code(
                     "secproc_co2", secproc_co2
                 ),
             },
             chain=dct_chain,
-            process_code_res=self.data.get_dimensions_parameter_code(
+            process_code_res=DataHandler.get_dimensions_parameter_code(
                 "res_gen", res_gen
             ),
-            source_region_code=self.data.get_dimensions_parameter_code(
+            source_region_code=DataHandler.get_dimensions_parameter_code(
                 "region", region
             ),
-            target_country_code=self.data.get_dimensions_parameter_code(
+            target_country_code=DataHandler.get_dimensions_parameter_code(
                 "country", country
             ),
             process_code_ely=dct_chain["ELY"],

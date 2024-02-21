@@ -309,7 +309,7 @@ class TestApi(unittest.TestCase):
 
     def test_datahandler(self):
         """Test functionality for DataHandler.get_parameter_value."""
-        data_handler = DataHandler(self.api.data, scenario="2030 (low)", user_data=None)
+        data_handler = DataHandler(scenario="2030 (low)", user_data=None)
 
         expected_val = 0.0594
 

@@ -155,7 +155,7 @@ DimensionCode = Literal[
 ]
 
 
-class PtxData:
+class _PtxData:
     def __init__(self, data_dir=DATA_DIR):
         self.dimensions = {
             dim: _load_data(data_dir, name=f"dim_{dim}")
@@ -627,6 +627,9 @@ class PtxData:
             )
 
 
+default_ptx_data = _PtxData(data_dir=DATA_DIR)
+
+
 class DataHandler:
     """
     Handler class for parameter retrieval.
@@ -637,20 +640,20 @@ class DataHandler:
 
     def __init__(
         self,
-        ptxdata: PtxData,
         scenario: ScenarioCode,
         user_data: None | pd.DataFrame = None,
+        data_dir=None,
     ):
-        ptxdata.check_valid_scenario_id(scenario)
+        self.ptxdata = _PtxData(data_dir=data_dir) if data_dir else default_ptx_data
+        self.ptxdata.check_valid_scenario_id(scenario)
         self.scenario = scenario
         self.user_data = user_data
-        self.scenario_data = ptxdata.get_input_data(
+        self.scenario_data = self.ptxdata.get_input_data(
             scenario,
             long_names=False,
             user_data=user_data,
             enforce_copy=False,
         )
-        self.ptxdata = ptxdata
 
     def get_input_data(self, long_names):
         """Return scenario data.
@@ -941,9 +944,10 @@ class DataHandler:
                     f"Got: {kwargs}"
                 )
 
-    def get_dimension(self, dim: str) -> pd.DataFrame:
+    @staticmethod
+    def get_dimension(dim: str) -> pd.DataFrame:
         """Delegate get_dimension to underlying data class."""
-        return self.ptxdata.get_dimension(dim=dim)
+        return default_ptx_data.get_dimension(dim=dim)
 
     def get_calculation_data(
         self,
@@ -1113,3 +1117,13 @@ class DataHandler:
             result["transport_process_chain"].append(res)
 
         return result
+
+    @staticmethod
+    def get_dimensions_parameter_code(
+        dimension: Literal[
+            "res_gen", "secproc_co2", "secproc_water", "region", "country"
+        ],
+        parameter_name: str,
+    ) -> str:
+        """Get the internal code for a paremeter within a certain dimension."""
+        return default_ptx_data.get_dimensions_parameter_code(dimension, parameter_name)
