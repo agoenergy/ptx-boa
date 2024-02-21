@@ -10,19 +10,20 @@ from typing import Any, Dict, List, Literal
 import numpy as np
 import pandas as pd
 
-from .data.static import ResultProcessTypes  # noqa: imported
+from .data.static import ChainNameType  # noqa: imported
+from .data.static import ResultProcessType  # noqa: imported
 from .data.static import (
-    FlowCode,
-    ParameterCode,
-    ParameterRangeCode,
-    ProcessCode,
-    ScenarioCode,
-    SourceRegionCode,
-    TargetCountryCode,
-    YearCode,
+    FlowCodeType,
+    ParameterCodeType,
+    ParameterRangeCodeType,
+    ProcessCodeType,
+    ScenarioCodeType,
+    SourceRegionCodeType,
+    TargetCountryCodeType,
+    YearCodeType,
 )
 
-DimensionCode = Literal[
+DimensionCodeType = Literal[
     "scenario",
     "secproc_co2",
     "secproc_water",
@@ -36,7 +37,7 @@ DimensionCode = Literal[
     "flow",
 ]
 
-ProcessStep = Literal[
+ProcessStepType = Literal[
     "ELY",
     "DERIV",
     "PRE_SHP",
@@ -52,7 +53,7 @@ ProcessStep = Literal[
 ]
 
 
-CalculateData = Dict[
+CalculateDataType = Dict[
     Literal[
         "main_process_chain",
         "transport_process_chain",
@@ -64,6 +65,10 @@ CalculateData = Dict[
 
 ResultCostType = Literal["CAPEX", "OPEX", "FLOW", "LC"]
 
+
+TransportType = Literal["Ship", "Pipeline"]
+
+OutputUnitType = Literal["USD/MWh", "USD/t"]
 
 logger = logging.getLogger(__name__)
 DATA_DIR_DEFAULT = Path(__file__).parent.resolve() / "data"
@@ -117,7 +122,9 @@ def _assign_key_index(
 
 
 @cache
-def _load_scenario_table(data_dir: str | Path, scenario: ScenarioCode) -> pd.DataFrame:
+def _load_scenario_table(
+    data_dir: str | Path, scenario: ScenarioCodeType
+) -> pd.DataFrame:
     df = _load_data(data_dir, scenario).replace(np.nan, "")
     return _assign_key_index(df, table_type="scenario")
 
@@ -160,15 +167,15 @@ def _load_data(data_dir: str | Path, name: str) -> pd.DataFrame:
 
 
 def _get_transport_distances(
-    source_region_code: SourceRegionCode,
-    target_country_code: TargetCountryCode,
+    source_region_code: SourceRegionCodeType,
+    target_country_code: TargetCountryCodeType,
     use_ship: bool,
     ship_own_fuel: bool,
     dist_ship: float,
     dist_pipeline: float,
     seashare_pipeline: float,
     existing_pipeline_cap: float,
-) -> Dict[ProcessStep, float]:
+) -> Dict[ProcessStepType, float]:
     # TODO: new calculation of distances
     dist_transp = {}
     if source_region_code == target_country_code:
@@ -194,7 +201,7 @@ def _get_transport_distances(
 
 
 def validate_process_chain(
-    process_codes: List[ProcessCode], final_flow_code: FlowCode
+    process_codes: List[ProcessCodeType], final_flow_code: FlowCodeType
 ) -> None:
     df_processes = DataHandler.get_dimension("process")
     flow_code = ""  # initial flow code
@@ -207,8 +214,8 @@ def validate_process_chain(
 
 
 def _filter_chain_processes(
-    chain: dict, transport_distances: Dict[ProcessStep, float]
-) -> List[ProcessStep]:
+    chain: dict, transport_distances: Dict[ProcessStepType, float]
+) -> List[ProcessStepType]:
     result_main = []
     result_transport = []
     for process_step in ["RES", "ELY", "DERIV"]:
@@ -249,13 +256,13 @@ def _filter_chain_processes(
     return result_main, result_transport
 
 
-def _load_parameter_dims() -> Dict[ParameterCode, dict]:
+def _load_parameter_dims() -> Dict[ParameterCodeType, dict]:
     # create class instances for parameters
     df_parameters = _load_data(DATA_DIR_DIMS, name="dim_parameter").set_index(
         "parameter_code", drop=False
     )
-    assert set(df_parameters.index) == set(ParameterCode.__args__), set(
-        ParameterCode.__args__
+    assert set(df_parameters.index) == set(ParameterCodeType.__args__), set(
+        ParameterCodeType.__args__
     ) - set(df_parameters.index)
 
     PARAMETER_DIMENSIONS = {}
@@ -390,7 +397,7 @@ dimensions2 = {
                 "file_name": f"{year}_{parameter_range}",
             }
             for year, parameter_range in product(
-                YearCode.__args__, ParameterRangeCode.__args__
+                YearCodeType.__args__, ParameterRangeCodeType.__args__
             )
         ]
     ).set_index("scenario_name"),
@@ -447,12 +454,12 @@ class DataHandler:
 
     def __init__(
         self,
-        scenario: ScenarioCode,
+        scenario: ScenarioCodeType,
         user_data: None | pd.DataFrame = None,
         data_dir: str = None,
     ):
 
-        assert scenario in ScenarioCode.__args__
+        assert scenario in ScenarioCodeType.__args__
 
         self.scenario = scenario
         self.user_data = user_data
@@ -498,14 +505,14 @@ class DataHandler:
 
     def _get_parameter_value(
         self,
-        parameter_code: ParameterCode,
-        process_code: ProcessCode = None,
-        flow_code: FlowCode = None,
-        source_region_code: SourceRegionCode = None,
-        target_country_code: TargetCountryCode = None,
-        process_code_res: ProcessCode = None,
-        process_code_ely: ProcessCode = None,
-        process_code_deriv: ProcessCode = None,
+        parameter_code: ParameterCodeType,
+        process_code: ProcessCodeType = None,
+        flow_code: FlowCodeType = None,
+        source_region_code: SourceRegionCodeType = None,
+        target_country_code: TargetCountryCodeType = None,
+        process_code_res: ProcessCodeType = None,
+        process_code_ely: ProcessCodeType = None,
+        process_code_deriv: ProcessCodeType = None,
         default: float = None,
     ) -> float:
         """
@@ -513,7 +520,7 @@ class DataHandler:
 
         Parameters
         ----------
-        parameter_code : ParameterCode
+        parameter_code : ParameterCodeType
             parameter category. Must be one of:
                 - 'CALOR',
                 - 'CAPEX'
@@ -726,7 +733,7 @@ class DataHandler:
 
     def _check_required_parameter_value_kwargs(
         self,
-        parameter_code: ParameterCode,
+        parameter_code: ParameterCodeType,
         **kwargs,
     ):
         """
@@ -759,16 +766,16 @@ class DataHandler:
 
     def get_calculation_data(
         self,
-        secondary_processes: Dict[FlowCode, ProcessCode],
+        secondary_processes: Dict[FlowCodeType, ProcessCodeType],
         chain: dict,
-        process_code_res: ProcessCode,
-        process_code_ely: ProcessCode,
-        process_code_deriv: ProcessCode,
-        source_region_code: SourceRegionCode,
-        target_country_code: TargetCountryCode,
+        process_code_res: ProcessCodeType,
+        process_code_ely: ProcessCodeType,
+        process_code_deriv: ProcessCodeType,
+        source_region_code: SourceRegionCodeType,
+        target_country_code: TargetCountryCodeType,
         use_ship: bool,
         ship_own_fuel: bool,
-    ) -> CalculateData:
+    ) -> CalculateDataType:
         """Calculate results."""
         # get process codes for selected chain
         df_processes = self.get_dimension("process")

@@ -3,11 +3,11 @@
 
 from typing import Literal
 
-YearCode = Literal["2030", "2040"]
+YearCodeType = Literal["2030", "2040"]
 
-ParameterRangeCode = Literal["high", "low", "medium"]
+ParameterRangeCodeType = Literal["high", "low", "medium"]
 
-SourceRegionCode = Literal[
+SourceRegionCodeType = Literal[
     "ARE",
     "ARG",
     "ARG-BA",
@@ -89,11 +89,11 @@ SourceRegionCode = Literal[
     "ZAF-WC",
 ]
 
-TargetCountryCode = Literal[
+TargetCountryCodeType = Literal[
     "CHN", "DEU", "ESP", "FRA", "IND", "JPN", "KOR", "NLD", "USA"
 ]
 
-ProcessCode = Literal[
+ProcessCodeType = Literal[
     "AEL-EL",
     "ATR",
     "CH3OHREC",
@@ -148,7 +148,7 @@ ProcessCode = Literal[
     "WIND-ON",
 ]
 
-FlowCode = Literal[
+FlowCodeType = Literal[
     "BFUEL-L",
     "CH3OH-L",
     "CH4-G",
@@ -167,7 +167,7 @@ FlowCode = Literal[
     "NH3-L",
 ]
 
-ParameterCode = Literal[
+ParameterCodeType = Literal[
     "CALOR",
     "CAPEX",
     "CAP-T",
@@ -188,7 +188,37 @@ ParameterCode = Literal[
     "WACC",
 ]
 
-ScenarioCode = Literal[
+ChainNameType = Literal[
+    "Ammonia (AEL)",
+    "Ammonia (AEL) + reconv. to H2",
+    "Ammonia (PEM)",
+    "Ammonia (PEM) + reconv. to H2",
+    "Ammonia (SEOC)",
+    "Ammonia (SEOC) + reconv. to H2",
+    "FT e-fuels (AEL)",
+    "FT e-fuels (PEM)",
+    "FT e-fuels (SEOC)",
+    "Green Iron (AEL)",
+    "Green Iron (PEM)",
+    "Green Iron (SEOC)",
+    "Hydrogen (AEL)",
+    "Hydrogen (PEM)",
+    "Hydrogen (SEOC)",
+    "LOHC (AEL)",
+    "LOHC (PEM)",
+    "LOHC (SEOC)",
+    "Methane (AEL)",
+    "Methane (AEL) + reconv. to H2",
+    "Methane (PEM)",
+    "Methane (PEM) + reconv. to H2",
+    "Methane (SEOC)",
+    "Methane (SEOC) + reconv. to H2",
+    "Methanol (AEL)",
+    "Methanol (PEM)",
+    "Methanol (SEOC)",
+]
+
+ScenarioCodeType = Literal[
     "2030 (high)",
     "2030 (low)",
     "2030 (medium)",
@@ -197,7 +227,7 @@ ScenarioCode = Literal[
     "2040 (medium)",
 ]
 
-ResultProcessTypes = Literal[
+ResultProcessType = Literal[
     "Carbon",
     "Derivate production",
     "Electricity and H2 storage",

@@ -9,17 +9,20 @@ import pandas as pd
 from .api_calc import PtxCalc
 from .api_data import (
     DATA_DIR_DEFAULT,
+    ChainNameType,
     DataHandler,
-    DimensionCode,
+    DimensionCodeType,
+    OutputUnitType,
     ResultCostType,
-    ResultProcessTypes,
-    ScenarioCode,
+    ResultProcessType,
+    ScenarioCodeType,
+    TransportType,
 )
 
 logger = logging.getLogger()
 
 RESULT_COST_TYPES = list(ResultCostType.__args__)
-RESULT_PROCESS_TYPES = list(ResultProcessTypes.__args__)
+RESULT_PROCESS_TYPES = list(ResultProcessType.__args__)
 
 
 class PtxboaAPI:
@@ -39,7 +42,7 @@ class PtxboaAPI:
         self.data_dir = data_dir
         self._calc_counter = 0  # temporary counter for calls of calculate()
 
-    def get_dimension(self, dim: DimensionCode) -> pd.DataFrame:
+    def get_dimension(self, dim: DimensionCodeType) -> pd.DataFrame:
         """Return a dimension element to populate app dropdowns.
 
         Parameters
@@ -67,7 +70,7 @@ class PtxboaAPI:
 
     def get_input_data(
         self,
-        scenario: ScenarioCode,
+        scenario: ScenarioCodeType,
         long_names: bool = True,
         user_data: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
@@ -109,16 +112,16 @@ class PtxboaAPI:
 
     def calculate(
         self,
-        scenario: ScenarioCode,
+        scenario: ScenarioCodeType,
         secproc_co2: str,
         secproc_water: str,
-        chain: str,
+        chain: ChainNameType,
         res_gen: str,
         region: str,
         country: str,
-        transport: str,
+        transport: TransportType,
         ship_own_fuel: bool = False,  # TODO: no correctly passed by app
-        output_unit="USD/MWh",
+        output_unit: OutputUnitType = "USD/MWh",
         user_data: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         """Calculate results based on user selection.

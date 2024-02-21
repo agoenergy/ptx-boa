@@ -39,9 +39,9 @@ def main():
     literals = [
         '"""DO NOT EDIT (created by _update_static.py)."""',
         "from typing import Literal",
-        create_literal_from_db("YearCode", "year", "ptxboa_year"),
+        create_literal_from_db("YearCodeType", "year", "ptxboa_year"),
         create_literal_from_query(
-            "ParameterRangeCode",
+            "ParameterRangeCodeType",
             "parameter_range",
             (
                 "select lower(parameter_range) as parameter_range "
@@ -49,16 +49,19 @@ def main():
             ),
         ),
         create_literal_from_db(
-            "SourceRegionCode", "region_code", "ptxboa_source_region"
+            "SourceRegionCodeType", "region_code", "ptxboa_source_region"
         ),
         create_literal_from_db(
-            "TargetCountryCode", "country_code", "ptxboa_target_country"
+            "TargetCountryCodeType", "country_code", "ptxboa_target_country"
         ),
-        create_literal_from_db("ProcessCode", "process_code", "ptxboa_process"),
-        create_literal_from_db("FlowCode", "flow_code", "ptxboa_flow"),
-        create_literal_from_db("ParameterCode", "parameter_code", "ptxboa_parameter"),
+        create_literal_from_db("ProcessCodeType", "process_code", "ptxboa_process"),
+        create_literal_from_db("FlowCodeType", "flow_code", "ptxboa_flow"),
+        create_literal_from_db(
+            "ParameterCodeType", "parameter_code", "ptxboa_parameter"
+        ),
+        create_literal_from_db("ChainNameType", "chain", "ptxboa_chains"),
         create_literal_from_query(
-            "ScenarioCode",
+            "ScenarioCodeType",
             "scenario",
             (
                 "select year + ' (' + lower(parameter_range) + ')' as scenario "
@@ -66,7 +69,7 @@ def main():
             ),
         ),
         create_literal_from_query(
-            "ResultProcessTypes",
+            "ResultProcessType",
             "result_process_type",
             "SELECT distinct result_process_type FROM ptxboa_process_class",
         ),
