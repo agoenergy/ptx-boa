@@ -65,38 +65,10 @@ def main():
                 "from ptxboa_parameter_range cross join ptxboa_year"
             ),
         ),
-        create_literal(
-            "DimensionCode",
-            [
-                "scenario",
-                "secproc_co2",
-                "secproc_water",
-                "chain",
-                "res_gen",
-                "region",
-                "country",
-                "transport",
-                "output_unit",
-                "process",
-                "flow",
-            ],
-        ),
-        create_literal(
-            "ProcessStep",
-            [
-                "ELY",
-                "DERIV",
-                "PRE_SHP",
-                "PRE_PPL",
-                "POST_SHP",
-                "POST_PPL",
-                "SHP",
-                "SHP-OWN",
-                "PPLS",
-                "PPL",
-                "PPLX",
-                "PPLR",
-            ],
+        create_literal_from_query(
+            "ResultProcessTypes",
+            "result_process_type",
+            "SELECT distinct result_process_type FROM ptxboa_process_class",
         ),
     ]
 

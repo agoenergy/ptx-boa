@@ -10,18 +10,47 @@ from typing import Any, Dict, List, Literal
 import numpy as np
 import pandas as pd
 
-from .data.static import DimensionCode  # noqa: will be imported
+from .data.static import ResultProcessTypes  # noqa: imported
 from .data.static import (
     FlowCode,
     ParameterCode,
     ParameterRangeCode,
     ProcessCode,
-    ProcessStep,
     ScenarioCode,
     SourceRegionCode,
     TargetCountryCode,
     YearCode,
 )
+
+DimensionCode = Literal[
+    "scenario",
+    "secproc_co2",
+    "secproc_water",
+    "chain",
+    "res_gen",
+    "region",
+    "country",
+    "transport",
+    "output_unit",
+    "process",
+    "flow",
+]
+
+ProcessStep = Literal[
+    "ELY",
+    "DERIV",
+    "PRE_SHP",
+    "PRE_PPL",
+    "POST_SHP",
+    "POST_PPL",
+    "SHP",
+    "SHP-OWN",
+    "PPLS",
+    "PPL",
+    "PPLX",
+    "PPLR",
+]
+
 
 CalculateData = Dict[
     Literal[
@@ -33,9 +62,11 @@ CalculateData = Dict[
     Any,
 ]
 
+ResultCostType = Literal["CAPEX", "OPEX", "FLOW", "LC"]
+
 
 logger = logging.getLogger(__name__)
-DATA_DIR = Path(__file__).parent.resolve() / "data"
+DATA_DIR_DEFAULT = Path(__file__).parent.resolve() / "data"
 DATA_DIR_DIMS = Path(__file__).parent.resolve() / "data"
 
 
@@ -425,7 +456,7 @@ class DataHandler:
 
         self.scenario = scenario
         self.user_data = user_data
-        self.data_dir = data_dir or DATA_DIR
+        self.data_dir = data_dir or DATA_DIR_DEFAULT
 
         self.flh = _load_flh_data(self.data_dir)
         self.storage_cost_factor = _load_storage_cost_factor_data(self.data_dir)
@@ -568,6 +599,8 @@ class DataHandler:
         ValueError
             if no value is found for a parameter combination and no default is given.
         """
+        # FIXME: replace with a cleaner, faster,class based lookup per parameter
+
         # convert missing codes tom empty strings
         # for data matching
         params = {

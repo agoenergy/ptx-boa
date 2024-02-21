@@ -76,11 +76,11 @@ def main():
         ,"is_re_generation"
         ,"is_transport"
         ,"is_secondary"
-        ,"process_class"
+        /*,"process_class"*/
         ,"is_secondary_all"
         ,"is_ely"
         ,"is_deriv"
-        ,"class_name"
+        /*,"class_name"*/
         ,"result_process_type"
         ,"secondary_flows"
         FROM "ptxboa_process"

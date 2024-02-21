@@ -1,0 +1,17 @@
+flow_code,flow_name,unit,secondary_process,secondary_flow,result_process_type
+BFUEL-L,bunker fuel,kwh bunker fuel (l),False,True,
+CH3OH-L,methanol (liquid),kWh CH3OH (l),False,False,
+CH4-G,methane (gas),kWh CH4 (g),False,False,
+CH4-L,methane (liquid),kWh CH4 (l),False,False,
+CHX-L,FT e-fuels,kwh CHx (l),False,False,
+CO2-G,carbon dioxide,kg CO2 (g),True,True,Carbon
+C-S,carbon,kg C (s),False,False,
+DRI-S,Green iron,kg DRI (s),False,False,
+EL,electricity,kWh (el.),False,True,
+H2-G,hydrogen (gas),kWh H2 (g),False,False,
+H2-L,hydrogen (liquid),kWh H2 (l),False,False,
+H2O-L,water,kg H2O (l),True,True,Water
+HEAT,heat,kWh (heat),False,True,Heat
+LOHC-L,hydrogen (LOHC),kWh H2 (l),False,False,
+N2-G,nitrogen,kg N2 (g),False,True,
+NH3-L,ammonia (liquid),kWh NH3 (l),False,False,

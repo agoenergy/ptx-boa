@@ -197,31 +197,14 @@ ScenarioCode = Literal[
     "2040 (medium)",
 ]
 
-DimensionCode = Literal[
-    "scenario",
-    "secproc_co2",
-    "secproc_water",
-    "chain",
-    "res_gen",
-    "region",
-    "country",
-    "transport",
-    "output_unit",
-    "process",
-    "flow",
-]
-
-ProcessStep = Literal[
-    "ELY",
-    "DERIV",
-    "PRE_SHP",
-    "PRE_PPL",
-    "POST_SHP",
-    "POST_PPL",
-    "SHP",
-    "SHP-OWN",
-    "PPLS",
-    "PPL",
-    "PPLX",
-    "PPLR",
+ResultProcessTypes = Literal[
+    "Carbon",
+    "Derivate production",
+    "Electricity and H2 storage",
+    "Electricity generation",
+    "Electrolysis",
+    "HEAT",
+    "Transportation (Pipeline)",
+    "Transportation (Ship)",
+    "Water",
 ]

@@ -7,22 +7,19 @@ import logging
 import pandas as pd
 
 from .api_calc import PtxCalc
-from .api_data import DATA_DIR, DataHandler, DimensionCode, ScenarioCode
+from .api_data import (
+    DATA_DIR_DEFAULT,
+    DataHandler,
+    DimensionCode,
+    ResultCostType,
+    ResultProcessTypes,
+    ScenarioCode,
+)
 
 logger = logging.getLogger()
 
-RESULT_COST_TYPES = ["CAPEX", "OPEX", "FLOW", "LC"]
-RESULT_PROCESS_TYPES = [
-    "Water",
-    "Electrolysis",
-    "Electricity generation",
-    "Transportation (Pipeline)",
-    "Transportation (Ship)",
-    "Carbon",
-    "Derivate production",
-    "Heat",
-    "Electricity and H2 storage",
-]
+RESULT_COST_TYPES = list(ResultCostType.__args__)
+RESULT_PROCESS_TYPES = list(ResultProcessTypes.__args__)
 
 
 class PtxboaAPI:
@@ -38,7 +35,7 @@ class PtxboaAPI:
             logger.warning("Api should only be instantiated once")
         return cls._inst
 
-    def __init__(self, data_dir=DATA_DIR):
+    def __init__(self, data_dir=DATA_DIR_DEFAULT):
         self.data_dir = data_dir
         self._calc_counter = 0  # temporary counter for calls of calculate()
 

@@ -1,0 +1,19 @@
+parameter_code,parameter_name,unit,per_flow,per_transformation_process,per_transport_process,per_re_generation_process,per_process,per_region,per_import_country,has_global_default,global_default_changeable,own_country_changeable,comment
+CALOR,calorific values,various (kWh per mass or volume),True,False,False,False,False,False,False,False,no,no,
+CAPEX,CAPEX,USD2021/kW,False,True,False,True,True,True,False,True,extended,extended,
+CAP-T,transport capacity,kWh/a,False,False,False,False,False,True,True,False,0,1,
+CONV,conversion factors,various (input per main output),True,True,True,False,True,False,False,False,advanced,advanced,defined per main output. Can be >0 (secondary output) or <0 (secondary input)
+DST-S-D,shipping distance,km,False,False,False,False,False,True,True,False,no,no,
+DST-S-DP,pipeline distance,km,False,False,False,False,False,True,True,False,no,no,added 20221122 by mh. Data to be provided by rm. TODO: apply in calculations
+EFF,efficiency,various (output per main input),False,True,False,False,True,False,False,False,extended,extended,"main output per main input. The unit is % if we assume that everything is normalized to energy content as far. Exceptions are material flows without energy content (water, nitrogen, carbon, CO2)"
+FLH,full load hours,h,False,True,False,True,True,True,False,False,no,extended,
+LIFETIME,lifetime / amortization period,years,False,True,False,True,True,False,False,False,extended,extended,
+LOSS-T,"losses (own fuel, transport)",fraction/km,False,False,True,False,True,False,False,False,advanced,advanced,for transportation efficiency (like losses) should depend on distance
+OPEX-F,OPEX (fix),USD2021/kW,False,True,False,True,True,True,False,True,extended,extended,
+OPEX-O,OPEX (other variable),USD2021/kWh,False,True,False,True,True,True,False,True,extended,extended,
+OPEX-T,levelized costs,USD2021/(kWh*km),False,False,True,False,True,False,False,False,extended,extended,
+RE-POT,RE potential,MWel,False,False,False,True,True,True,False,False,no,no,
+SEASHARE,sea share of pipeline distance,fraction,False,False,False,False,False,True,True,False,no,no,
+SPECCOST,specific costs,various (USD2021 per flow),True,False,False,False,False,True,False,True,basic,extended,"Costs are associated with every *secondary* input. It could also be associated with secondary output (<0 for gains, >0 for costs)"
+STR-CF,Storage cost factor,1,False,True,False,True,False,False,False,False,0,0,
+WACC,interest rate,fraction,False,True,False,True,False,True,False,True,,,
