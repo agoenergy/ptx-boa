@@ -2,6 +2,7 @@
 """Handle data queries for api calculation."""
 
 import logging
+from functools import cache
 from itertools import product
 from pathlib import Path
 from typing import Dict, List, Literal
@@ -73,16 +74,19 @@ def _assign_key_index(
     return df.set_index("key")
 
 
+@cache
 def _load_scenario_table(data_dir: str | Path, scenario: ScenarioCode) -> pd.DataFrame:
     df = _load_data(data_dir, scenario).replace(np.nan, "")
     return _assign_key_index(df, table_type="scenario")
 
 
+@cache
 def _load_flh_data(data_dir: str | Path) -> pd.DataFrame:
     df = _load_data(data_dir, name="flh").replace(np.nan, "")
     return _assign_key_index(df, table_type="flh")
 
 
+@cache
 def _load_storage_cost_factor_data(data_dir: str | Path) -> pd.DataFrame:
     df = _load_data(data_dir, name="storage_cost_factor").replace(np.nan, "")
     return _assign_key_index(df, table_type="storage_cost_factor")
@@ -405,7 +409,7 @@ class DataHandler:
         self.scenario_data = _load_scenario_table(
             self.data_dir,
             f"{scenario.replace(' ', '_').replace(')', '').replace('(', '')}",
-        )
+        ).copy()
 
         if user_data is not None:
             self.scenario_data = _update_scenario_data_with_user_data(
