@@ -316,16 +316,13 @@ def _update_scenario_data_with_user_data(
     return scenario_data
 
 
-PARAMETER_DIMENSIONS = _load_parameter_dims()
-
+parameters = _load_parameter_dims()
+chains = _load_data(DATA_DIR_DIMS, name="chains").set_index("chain").replace(np.nan, "")
 dimensions = {
     dim: _load_data(DATA_DIR_DIMS, name=f"dim_{dim}")
     for dim in ["country", "flow", "parameter", "process", "region"]
 }
-chains = _load_data(DATA_DIR_DIMS, name="chains").set_index("chain").replace(np.nan, "")
-
-
-_dimensions = {
+dimensions2 = {
     "scenario": pd.DataFrame(
         [
             {
@@ -609,7 +606,7 @@ class DataHandler:
             empty_result = False
         except KeyError:
             empty_result = True
-        if empty_result and PARAMETER_DIMENSIONS[parameter_code]["global_default"]:
+        if empty_result and parameters[parameter_code]["global_default"]:
             # make query with empty "source_region_code"
             logger.debug(
                 f"searching global default, did not find entry for key '{key}'"
@@ -661,7 +658,7 @@ class DataHandler:
             "source_region_code",
             "target_country_code",
         ]:
-            if k in PARAMETER_DIMENSIONS[params["parameter_code"]]["required"]:
+            if k in parameters[params["parameter_code"]]["required"]:
                 selector += f"-{params[k]}"
             else:
                 selector += "-"
@@ -684,7 +681,7 @@ class DataHandler:
         kwargs :
             keyword arguments passed to `self.get_parameter_value()`
         """
-        required_param_names = PARAMETER_DIMENSIONS[parameter_code]["required"]
+        required_param_names = parameters[parameter_code]["required"]
 
         for p in required_param_names:
             required_value = kwargs.pop(p)
@@ -698,7 +695,7 @@ class DataHandler:
     @staticmethod
     def get_dimension(dim: str) -> pd.DataFrame:
         """Delegate get_dimension to underlying data class."""
-        return _dimensions[dim]
+        return dimensions2[dim]
 
     def get_calculation_data(
         self,
