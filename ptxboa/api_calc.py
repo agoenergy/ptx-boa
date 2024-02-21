@@ -121,8 +121,8 @@ class PtxCalc:
                     )
             else:
                 opex_t = step_data["OPEX-T"]
-                dist_transport = step_data["OPEX-T"]
-                opex_ot = opex_t * step_data["DIST"]
+                dist_transport = step_data["DIST"]
+                opex_ot = opex_t * dist_transport
                 opex = (opex_o + opex_ot) * main_output_value
                 results.append((result_process_type, process_code, "OPEX", opex))
 
