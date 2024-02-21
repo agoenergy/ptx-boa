@@ -174,7 +174,7 @@ class PtxboaAPI:
         if transport not in {"Ship", "Pipeline"}:
             logger.error(f"Invalid choice for transport: {transport}")
 
-        result_df = PtxCalc(data_handler).calculate(
+        data = data_handler.get_calculation_data(
             secondary_processes={
                 "H2O-L": DataHandler.get_dimensions_parameter_code(
                     "secproc_water", secproc_water
@@ -199,15 +199,14 @@ class PtxboaAPI:
             ship_own_fuel=ship_own_fuel,
         )
 
+        result_df = PtxCalc(data_handler).calculate(data)
+
         # conversion to output unit
         if output_unit not in {"USD/MWh", "USD/t"}:
             logger.error(f"Invalid choice for output_unit: {output_unit}")
         conversion = 1000
         if output_unit == "USD/t":
-            chain_flow_out = dct_chain["FLOW_OUT"]
-            calor = data_handler._get_parameter_value(
-                parameter_code="CALOR", flow_code=chain_flow_out
-            )
+            calor = data["parameter"]["CALOR"]
             conversion *= calor
         result_df["values"] = result_df["values"] * conversion
 

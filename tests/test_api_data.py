@@ -144,12 +144,12 @@ def test_get_parameter_value(
     if user_data is not None:
         user_data = request.getfixturevalue(user_data)
 
-    handler = DataHandler(
+    data_handler = DataHandler(
         scenario=scenario,
         user_data=user_data,
         data_dir=ptxdata_dir,
     )
-    result = handler._get_parameter_value(
+    result = data_handler._get_parameter_value(
         parameter_code=parameter_code,
         process_code=process_code,
         flow_code=flow_code,

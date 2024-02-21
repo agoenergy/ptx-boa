@@ -5,7 +5,7 @@ import logging
 from functools import cache
 from itertools import product
 from pathlib import Path
-from typing import Dict, List, Literal
+from typing import Any, Dict, List, Literal
 
 import numpy as np
 import pandas as pd
@@ -22,6 +22,17 @@ from .data.static import (
     TargetCountryCode,
     YearCode,
 )
+
+CalculateData = Dict[
+    Literal[
+        "main_process_chain",
+        "transport_process_chain",
+        "secondary_process",
+        "parameter",
+    ],
+    Any,
+]
+
 
 logger = logging.getLogger(__name__)
 DATA_DIR = Path(__file__).parent.resolve() / "data"
@@ -151,6 +162,19 @@ def _get_transport_distances(
     return dist_transp
 
 
+def validate_process_chain(
+    process_codes: List[ProcessCode], final_flow_code: FlowCode
+) -> None:
+    df_processes = DataHandler.get_dimension("process")
+    flow_code = ""  # initial flow code
+    for process_code in process_codes:
+        process = df_processes.loc[process_code]
+        flow_code_in = process["main_flow_code_in"]
+        assert flow_code == flow_code_in
+        flow_code = process["main_flow_code_out"]
+    assert flow_code == final_flow_code
+
+
 def _filter_chain_processes(
     chain: dict, transport_distances: Dict[ProcessStep, float]
 ) -> List[ProcessStep]:
@@ -187,6 +211,9 @@ def _filter_chain_processes(
             result_transport.append("POST_PPL")
 
     # TODO: CHECK that flow chain is correct
+    validate_process_chain(
+        [chain[p] for p in result_main + result_transport], chain["FLOW_OUT"]
+    )
 
     return result_main, result_transport
 
@@ -708,7 +735,7 @@ class DataHandler:
         target_country_code: TargetCountryCode,
         use_ship: bool,
         ship_own_fuel: bool,
-    ) -> pd.DataFrame:
+    ) -> CalculateData:
         """Calculate results."""
         # get process codes for selected chain
         df_processes = self.get_dimension("process")
@@ -763,6 +790,7 @@ class DataHandler:
                 "OPEX-O", process_code=process_code, default=0
             )
             result["CONV"] = flow_conv_params(process_code)
+            return result
 
         def get_transport_process_params(process_code, dist_transport):
             result = {}
@@ -770,6 +798,7 @@ class DataHandler:
             loss_t = get_parameter_value_w_default(
                 "LOSS-T", process_code=process_code, default=0
             )
+            result["DIST"] = dist_transport  # TODO: `DIST` not oficcial parameter
             result["EFF"] = 1 - loss_t * dist_transport
             result["OPEX-T"] = get_parameter_value_w_default(
                 "OPEX-T", process_code=process_code, default=0
@@ -845,12 +874,15 @@ class DataHandler:
         for process_step in chain_steps_main:
             process_code = chain[process_step]
             res = get_process_params(process_code)
+            res["step"] = process_step
+            res["process_code"] = process_code
             result["main_process_chain"].append(res)
 
         for flow_code, process_code in secondary_processes.items():
             if not process_code:
                 continue
             res = get_process_params(process_code)
+            res["process_code"] = process_code
             result["secondary_process"][flow_code] = res
 
         for process_step in chain_steps_transport:
@@ -862,6 +894,8 @@ class DataHandler:
                 res = get_transport_process_params(process_code, dist_transport)
             else:  # pre/post
                 res = get_process_params(process_code)
+            res["step"] = process_step
+            res["process_code"] = process_code
             result["transport_process_chain"].append(res)
 
         return result
