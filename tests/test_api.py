@@ -122,36 +122,25 @@ class TestApi(unittest.TestCase):
         res = self._test_api_call(settings)
         # test result categories
         res_values = res.groupby(["process_type", "cost_type"]).sum("values")["values"]
-        for k, v in {
+        expected_result = {
             ("Water", "CAPEX"): 1.4301071608500682,
             ("Water", "OPEX"): 0.21273242859187,
             ("Water", "FLOW"): 0.471894289243873,
             ("Electrolysis", "CAPEX"): 769.4966207336263,
             ("Electrolysis", "OPEX"): 85.8485762832237,
-            ("Electrolysis", "FLOW"): 0,
             ("Electricity generation", "CAPEX"): 1409.6548019077416,
             ("Electricity generation", "OPEX"): 146.78305821183,
-            ("Electricity generation", "FLOW"): 0,
-            ("Transportation (Pipeline)", "CAPEX"): 0,
-            ("Transportation (Pipeline)", "OPEX"): 0,
-            ("Transportation (Pipeline)", "FLOW"): 0,
-            ("Transportation (Ship)", "CAPEX"): 0,
             ("Transportation (Ship)", "OPEX"): 12.2061245592688,
-            ("Transportation (Ship)", "FLOW"): 0,
-            ("Carbon", "CAPEX"): 0,
-            ("Carbon", "OPEX"): 0,
             ("Carbon", "FLOW"): 61.3694736856213,
             ("Derivate production", "CAPEX"): 328.98383860792785,
             ("Derivate production", "OPEX"): 37.0003810701601,
             ("Derivate production", "FLOW"): 16.8369286421993,
-            ("Heat", "CAPEX"): 0,
-            ("Heat", "OPEX"): 0,
-            ("Heat", "FLOW"): 0,
-            ("Electricity and H2 storage", "CAPEX"): 0,
             ("Electricity and H2 storage", "OPEX"): 63.449562769066546,
-            ("Electricity and H2 storage", "FLOW"): 0,
-        }.items():
-            self.assertAlmostEqual(res_values.get(k, 0), v, places=3, msg=k)
+        }
+
+        result_dict = {k: v for k, v in res_values.items() if v}
+
+        assert expected_result == result_dict
 
     def test_example_api_call_3_pipeline_sea_land(self):
         """Test output structure of api.calculate()."""
