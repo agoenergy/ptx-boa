@@ -958,14 +958,6 @@ class DataHandler:
         ship_own_fuel: bool,
     ) -> pd.DataFrame:
         """Calculate results."""
-        result = {
-            "main_process_chain": [],
-            "transport_process_chain": [],
-            "secondary_process": {},
-            "secondary_flow": {},
-            "parameter": {},
-        }
-
         # get process codes for selected chain
         df_processes = self.get_dimension("process")
         df_flows = self.get_dimension("flow")
@@ -1056,11 +1048,19 @@ class DataHandler:
 
         # get general parameters
 
+        result = {
+            "main_process_chain": [],
+            "transport_process_chain": [],
+            "secondary_process": {},
+            "parameter": {},
+        }
+
         result["parameter"]["WACC"] = get_parameter_value_w_default("WACC")
         result["parameter"]["STR-CF"] = get_parameter_value_w_default("STR-CF")
         result["parameter"]["CALOR"] = get_parameter_value_w_default(
             parameter_code="CALOR", flow_code=chain["FLOW_OUT"]
         )
+        result["parameter"]["SPECCOST"] = get_flow_params()
 
         # get transport distances and options
         # TODO? add these also to data
@@ -1092,12 +1092,14 @@ class DataHandler:
 
         for process_step in chain_steps_main:
             process_code = chain[process_step]
-            get_process_params(process_code)
+            res = get_process_params(process_code)
+            result["main_process_chain"].append(res)
 
-        for _, process_code in secondary_processes.items():
+        for flow_code, process_code in secondary_processes.items():
             if not process_code:
                 continue
-            get_process_params(process_code)
+            res = get_process_params(process_code)
+            result["secondary_process"][flow_code] = res
 
         for process_step in chain_steps_transport:
             process_code = chain[process_step]
@@ -1105,10 +1107,9 @@ class DataHandler:
                 raise Exception((process_step, chain))
             if process_step in transport_distances:
                 dist_transport = transport_distances[process_step]
-                get_transport_process_params(process_code, dist_transport)
+                res = get_transport_process_params(process_code, dist_transport)
             else:  # pre/post
-                get_process_params(process_code)
-
-        result["parameter"]["SPECCOST"] = get_flow_params()
+                res = get_process_params(process_code)
+            result["transport_process_chain"].append(res)
 
         return result
