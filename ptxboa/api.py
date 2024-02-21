@@ -205,7 +205,7 @@ class PtxboaAPI:
         conversion = 1000
         if output_unit == "USD/t":
             chain_flow_out = dct_chain["FLOW_OUT"]
-            calor = data_handler.get_parameter_value(
+            calor = data_handler._get_parameter_value(
                 parameter_code="CALOR", flow_code=chain_flow_out
             )
             conversion *= calor

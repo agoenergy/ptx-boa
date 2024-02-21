@@ -315,23 +315,23 @@ class TestApi(unittest.TestCase):
 
         # WACC without source_region_code (this is NOT fine)
         self.assertRaises(
-            Exception, data_handler.get_parameter_value, parameter_code="WACC"
+            Exception, data_handler._get_parameter_value, parameter_code="WACC"
         )
 
         # WACC with process_code="" (this is fine)
-        pval = data_handler.get_parameter_value(
+        pval = data_handler._get_parameter_value(
             parameter_code="WACC", process_code="", source_region_code="AUS"
         )
         self.assertAlmostEqual(pval, expected_val)
 
         # WACC without process_code (this is fine)
-        pval = data_handler.get_parameter_value(
+        pval = data_handler._get_parameter_value(
             parameter_code="WACC", source_region_code="AUS"
         )
         self.assertAlmostEqual(pval, expected_val)
 
         # WACC without additional,non required field (this is fine)
-        pval = data_handler.get_parameter_value(
+        pval = data_handler._get_parameter_value(
             parameter_code="WACC",
             source_region_code="AUS",
             target_country_code="XYZ",
@@ -339,7 +339,7 @@ class TestApi(unittest.TestCase):
         self.assertAlmostEqual(pval, expected_val)
 
         # FLH for other
-        pval = data_handler.get_parameter_value(
+        pval = data_handler._get_parameter_value(
             parameter_code="FLH",
             source_region_code="MAR-GUE",
             process_code="PEM-EL",
@@ -350,14 +350,14 @@ class TestApi(unittest.TestCase):
         self.assertAlmostEqual(pval, 5436.92426314625)
 
         # FLH for RES
-        pval = data_handler.get_parameter_value(
+        pval = data_handler._get_parameter_value(
             parameter_code="FLH", source_region_code="ARG", process_code="PV-FIX"
         )
         self.assertAlmostEqual(pval, 1494.0)
 
         # test distances
         # FLH for RES
-        pval = data_handler.get_parameter_value(
+        pval = data_handler._get_parameter_value(
             parameter_code="DST-S-DP",
             source_region_code="ARE",
             target_country_code="DEU",

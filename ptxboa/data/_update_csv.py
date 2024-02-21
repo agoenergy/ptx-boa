@@ -37,7 +37,6 @@ def main():
         ,"FLOW_OUT"
         ,"CAN_PIPELINE"
         FROM "ptxboa_chains"
-        WHERE "is_deprecated" = 0
         ORDER BY "chain"
         """,
         "chains.csv",
@@ -61,7 +60,6 @@ def main():
         "own_country_changeable",
         "comment"
         FROM "ptxboa_parameter"
-        WHERE "deprecated" = 0
         ORDER BY "parameter_code"
         """,
         "dim_parameter.csv",
@@ -80,14 +78,12 @@ def main():
         ,"is_secondary"
         ,"process_class"
         ,"is_secondary_all"
-        ,"is_deprecated"
         ,"is_ely"
         ,"is_deriv"
         ,"class_name"
         ,"result_process_type"
         ,"secondary_flows"
         FROM "ptxboa_process"
-        WHERE "is_deprecated" = 0
         ORDER BY "process_code"
         """,
         "dim_process.csv",
@@ -103,7 +99,6 @@ def main():
         "secondary_flow",
         "result_process_type"
         FROM "ptxboa_flow"
-        WHERE "is_deprecated" = 0
         ORDER BY "flow_code"
         """,
         "dim_flow.csv",

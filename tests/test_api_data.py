@@ -149,7 +149,7 @@ def test_get_parameter_value(
         user_data=user_data,
         data_dir=ptxdata_dir,
     )
-    result = handler.get_parameter_value(
+    result = handler._get_parameter_value(
         parameter_code=parameter_code,
         process_code=process_code,
         flow_code=flow_code,

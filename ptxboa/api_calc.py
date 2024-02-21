@@ -70,7 +70,7 @@ class PtxCalc:
         def get_parameter_value_w_default(
             parameter_code, process_code="", flow_code="", default=None
         ):
-            return self.data_handler.get_parameter_value(
+            return self.data_handler._get_parameter_value(
                 parameter_code=parameter_code,
                 process_code=process_code,
                 flow_code=flow_code,

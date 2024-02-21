@@ -4,15 +4,89 @@
 import logging
 from itertools import product
 from pathlib import Path
-from typing import Literal
+from typing import Dict, List, Literal
 
 import numpy as np
 import pandas as pd
 
+from .data.static import (
+    DimensionCode,
+    FlowCode,
+    ParameterCode,
+    ProcessCode,
+    ProcessStep,
+    ScenarioCode,
+    SourceRegionCode,
+    TargetCountryCode,
+)
+
 logger = logging.getLogger(__name__)
+DATA_DIR = Path(__file__).parent.resolve() / "data"
+DATA_DIR_DIMS = Path(__file__).parent.resolve() / "data"
 
 
-def _load_data(data_dir, name: str) -> pd.DataFrame:
+def _assign_key_index(
+    df: pd.DataFrame,
+    table_type: Literal["flh", "scenario", "storage_cost_factor"],
+) -> pd.DataFrame:
+    """
+    Assing a unique index to a dataframe containing "index" columns.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+    table_type : str in {"flh", "scenario", "storage_cost_factor"}
+
+    Returns
+    -------
+    pd.DataFrame
+
+    Raises
+    ------
+    ValueError
+        if the constructed index is not unique
+    """
+    keys_in_table = {
+        "flh": [
+            "region",
+            "process_res",
+            "process_ely",
+            "process_deriv",
+            "process_flh",
+        ],
+        "scenario": [
+            "parameter_code",
+            "process_code",
+            "flow_code",
+            "source_region_code",
+            "target_country_code",
+        ],
+        "storage_cost_factor": ["process_res", "process_ely", "process_deriv"],
+    }
+    key_columns = keys_in_table[table_type]
+    df[key_columns] = df[key_columns].astype(str)
+    df["key"] = df[key_columns].agg("-".join, axis=1)
+    if not df["key"].is_unique:
+        raise ValueError(f"duplicate keys in storage {table_type} data.")
+    return df.set_index("key")
+
+
+def _load_scenario_table(data_dir: str | Path, scenario: ScenarioCode) -> pd.DataFrame:
+    df = _load_data(data_dir, scenario).replace(np.nan, "")
+    return _assign_key_index(df, table_type="scenario")
+
+
+def _load_flh_data(data_dir: str | Path) -> pd.DataFrame:
+    df = _load_data(data_dir, name="flh").replace(np.nan, "")
+    return _assign_key_index(df, table_type="flh")
+
+
+def _load_storage_cost_factor_data(data_dir: str | Path) -> pd.DataFrame:
+    df = _load_data(data_dir, name="storage_cost_factor").replace(np.nan, "")
+    return _assign_key_index(df, table_type="storage_cost_factor")
+
+
+def _load_data(data_dir: str | Path, name: str) -> pd.DataFrame:
     filepath = Path(data_dir) / f"{name}.csv"
     df = pd.read_csv(
         filepath,
@@ -37,19 +111,16 @@ def _load_data(data_dir, name: str) -> pd.DataFrame:
     return df
 
 
-DATA_DIR = Path(__file__).parent.resolve() / "data"
-
-
 def get_transport_distances(
-    source_region_code,
-    target_country_code,
-    use_ship,
-    ship_own_fuel,
-    dist_ship,
-    dist_pipeline,
-    seashare_pipeline,
-    existing_pipeline_cap,
-):
+    source_region_code: SourceRegionCode,
+    target_country_code: TargetCountryCode,
+    use_ship: bool,
+    ship_own_fuel: bool,
+    dist_ship: float,
+    dist_pipeline: float,
+    seashare_pipeline: float,
+    existing_pipeline_cap: float,
+) -> Dict[ProcessStep, float]:
     # TODO: new calculation of distances
     dist_transp = {}
     if source_region_code == target_country_code:
@@ -74,7 +145,9 @@ def get_transport_distances(
     return dist_transp
 
 
-def filter_chain_processes(chain, transport_distances):
+def filter_chain_processes(
+    chain: dict, transport_distances: Dict[ProcessStep, float]
+) -> List[ProcessStep]:
     result_main = []
     result_transport = []
     for process_step in ["RES", "ELY", "DERIV"]:
@@ -112,161 +185,60 @@ def filter_chain_processes(chain, transport_distances):
     return result_main, result_transport
 
 
-ParameterCode = Literal[
-    "CALOR",
-    "CAPEX",
-    "CAP-T",
-    "CONV",
-    "DST-S-D",
-    "DST-S-DP",
-    "EFF",
-    "FLH",
-    "LIFETIME",
-    "LOSS-T",
-    "OPEX-F",
-    "OPEX-T",
-    "OPEX-O",
-    "RE-POT",
-    "SEASHARE",
-    "SPECCOST",
-    "WACC",
-    "STR-CF",
-]
-ScenarioCode = Literal[
-    "2030 (low)",
-    "2030 (medium)",
-    "2030 (high)",
-    "2040 (low)",
-    "2040 (medium)",
-    "2040 (high)",
-]
-DimensionCode = Literal[
-    "scenario",
-    "secproc_co2",
-    "secproc_water",
-    "chain",
-    "res_gen",
-    "region",
-    "country",
-    "transport",
-    "output_unit",
-    "process",
-    "flow",
-]
+def load_parameter_dims() -> Dict[ParameterCode, dict]:
+    # create class instances for parameters
+    df_parameters = _load_data(DATA_DIR_DIMS, name="dim_parameter").set_index(
+        "parameter_code", drop=False
+    )
+    assert set(df_parameters.index) == set(ParameterCode.__args__), set(
+        ParameterCode.__args__
+    ) - set(df_parameters.index)
+
+    PARAMETER_DIMENSIONS = {}
+    for parameter_code, specs in df_parameters.iterrows():
+        required = [
+            y
+            for x, y in [
+                ("per_flow", "flow_code"),
+                ("per_process", "process_code"),
+                ("per_region", "source_region_code"),
+                ("per_import_country", "target_country_code"),
+            ]
+            if specs[x]
+        ]
+        global_default = specs["has_global_default"]
+
+        if global_default:
+            assert "source_region_code" in required
+        PARAMETER_DIMENSIONS[parameter_code] = {
+            "global_default": global_default,
+            "required": required,
+        }
+    return PARAMETER_DIMENSIONS
 
 
 class _PtxData:
-    def __init__(self, data_dir=DATA_DIR):
-        self.dimensions = {
-            dim: _load_data(data_dir, name=f"dim_{dim}")
-            for dim in ["country", "flow", "parameter", "process", "region"]
-        }
-        self.flh = self._load_flh_data(data_dir)
-        self.storage_cost_factor = self._load_storage_cost_factor_data(data_dir)
-        self.chains = (
-            _load_data(data_dir, name="chains").set_index("chain").replace(np.nan, "")
-        )
+
+    dimensions = {
+        dim: _load_data(DATA_DIR_DIMS, name=f"dim_{dim}")
+        for dim in ["country", "flow", "parameter", "process", "region"]
+    }
+    chains = (
+        _load_data(DATA_DIR_DIMS, name="chains").set_index("chain").replace(np.nan, "")
+    )
+    PARAMETER_DIMENSIONS = load_parameter_dims()
+
+    def __init__(self, data_dir: str = DATA_DIR):
+        self.flh = _load_flh_data(data_dir)
+        self.storage_cost_factor = _load_storage_cost_factor_data(data_dir)
         self.scenario_data = {
-            f"{year} ({parameter_range})": self._load_scenario_table(
+            f"{year} ({parameter_range})": _load_scenario_table(
                 data_dir, f"{year}_{parameter_range}"
             )
             for year, parameter_range in product(
                 [2030, 2040], ["low", "medium", "high"]
             )
         }
-
-        # ----------------------------------------------------------------------------
-        # loading parameters
-        # ----------------------------------------------------------------------------
-
-        self.PARAMETER_DIMENSIONS = {}
-        # create class instances for parameters
-        df_parameters = _load_data(data_dir, name="dim_parameter").set_index(
-            "parameter_code", drop=False
-        )
-        assert set(df_parameters.index) == set(ParameterCode.__args__), set(
-            ParameterCode.__args__
-        ) - set(df_parameters.index)
-
-        for parameter_code, specs in df_parameters.iterrows():
-            required = [
-                y
-                for x, y in [
-                    ("per_flow", "flow_code"),
-                    ("per_process", "process_code"),
-                    ("per_region", "source_region_code"),
-                    ("per_import_country", "target_country_code"),
-                ]
-                if specs[x]
-            ]
-            global_default = specs["has_global_default"]
-
-            if global_default:
-                assert "source_region_code" in required
-            self.PARAMETER_DIMENSIONS[parameter_code] = {
-                "global_default": global_default,
-                "required": required,
-            }
-
-    def _load_scenario_table(
-        self, data_dir: str | Path, scenario: ScenarioCode
-    ) -> pd.DataFrame:
-        df = _load_data(data_dir, scenario).replace(np.nan, "")
-        return self._assign_key_index(df, table_type="scenario")
-
-    def _load_flh_data(self, data_dir: str | Path) -> pd.DataFrame:
-        df = _load_data(data_dir, name="flh").replace(np.nan, "")
-        return self._assign_key_index(df, table_type="flh")
-
-    def _load_storage_cost_factor_data(self, data_dir: str | Path) -> pd.DataFrame:
-        df = _load_data(data_dir, name="storage_cost_factor").replace(np.nan, "")
-        return self._assign_key_index(df, table_type="storage_cost_factor")
-
-    def _assign_key_index(
-        self,
-        df: pd.DataFrame,
-        table_type: Literal["flh", "scenario", "storage_cost_factor"],
-    ) -> pd.DataFrame:
-        """
-        Assing a unique index to a dataframe containing "index" columns.
-
-        Parameters
-        ----------
-        df : pd.DataFrame
-        table_type : str in {"flh", "scenario", "storage_cost_factor"}
-
-        Returns
-        -------
-        pd.DataFrame
-
-        Raises
-        ------
-        ValueError
-            if the constructed index is not unique
-        """
-        keys_in_table = {
-            "flh": [
-                "region",
-                "process_res",
-                "process_ely",
-                "process_deriv",
-                "process_flh",
-            ],
-            "scenario": [
-                "parameter_code",
-                "process_code",
-                "flow_code",
-                "source_region_code",
-                "target_country_code",
-            ],
-            "storage_cost_factor": ["process_res", "process_ely", "process_deriv"],
-        }
-        key_columns = keys_in_table[table_type]
-        df[key_columns] = df[key_columns].astype(str)
-        df["key"] = df[key_columns].agg("-".join, axis=1)
-        if not df["key"].is_unique:
-            raise ValueError(f"duplicate keys in storage {table_type} data.")
-        return df.set_index("key")
 
     def get_input_data(
         self,
@@ -329,49 +301,11 @@ class _PtxData:
 
         return scenario_data
 
-    def get_dimensions_parameter_code(
-        self,
-        dimension: Literal[
-            "res_gen", "secproc_co2", "secproc_water", "region", "country"
-        ],
-        parameter_name: str,
-    ) -> str:
-        """
-        Get the internal code for a paremeter within a certain dimension.
-
-        Used to translate long name parameters from frontend to codes.
-
-        Parameters
-        ----------
-        dimension : str
-        parameter_name : str
-
-        Returns
-        -------
-        str
-        """
-        if not parameter_name or parameter_name == "Specific costs":
-            return ""
-
-        # mapping of different parameter dimension names depending on "dimension"
-        dimension_parameter_mapping = {
-            "res_gen": "process",
-            "secproc_co2": "process",
-            "secproc_water": "process",
-            "region": "region",
-            "country": "country",
-        }
-        target_dim_name = dimension_parameter_mapping.get(dimension)
-        df = self.get_dimension(dimension)
-        return df.loc[
-            df[target_dim_name + "_name"] == parameter_name, target_dim_name + "_code"
-        ].iloc[0]
-
     def _map_names_and_codes(
         self,
         scenario_data: pd.DataFrame,
         mapping_direction: Literal["code_to_name", "name_to_code"],
-    ):
+    ) -> pd.DataFrame:
         """
         Map codes in scenario data to long names and vice versa.
 
@@ -642,7 +576,7 @@ class DataHandler:
         self,
         scenario: ScenarioCode,
         user_data: None | pd.DataFrame = None,
-        data_dir=None,
+        data_dir: str = None,
     ):
         self.ptxdata = _PtxData(data_dir=data_dir) if data_dir else default_ptx_data
         self.ptxdata.check_valid_scenario_id(scenario)
@@ -655,7 +589,7 @@ class DataHandler:
             enforce_copy=False,
         )
 
-    def get_input_data(self, long_names):
+    def get_input_data(self, long_names: bool) -> pd.DataFrame:
         """Return scenario data.
 
         If user data is defined, specified values will be replaced with those.
@@ -680,16 +614,16 @@ class DataHandler:
             enforce_copy=True,
         )
 
-    def get_parameter_value(
+    def _get_parameter_value(
         self,
         parameter_code: ParameterCode,
-        process_code: str = None,
-        flow_code: str = None,
-        source_region_code: str = None,
-        target_country_code: str = None,
-        process_code_res: str = None,
-        process_code_ely: str = None,
-        process_code_deriv: str = None,
+        process_code: ProcessCode = None,
+        flow_code: FlowCode = None,
+        source_region_code: SourceRegionCode = None,
+        target_country_code: TargetCountryCode = None,
+        process_code_res: ProcessCode = None,
+        process_code_ely: ProcessCode = None,
+        process_code_deriv: ProcessCode = None,
         default: float = None,
     ) -> float:
         """
@@ -951,13 +885,13 @@ class DataHandler:
 
     def get_calculation_data(
         self,
-        secondary_processes: dict,
+        secondary_processes: Dict[FlowCode, ProcessCode],
         chain: dict,
-        process_code_res: str,
-        process_code_ely: str,
-        process_code_deriv: str,
-        source_region_code: str,
-        target_country_code: str,
+        process_code_res: ProcessCode,
+        process_code_ely: ProcessCode,
+        process_code_deriv: ProcessCode,
+        source_region_code: SourceRegionCode,
+        target_country_code: TargetCountryCode,
         use_ship: bool,
         ship_own_fuel: bool,
     ) -> pd.DataFrame:
@@ -969,7 +903,7 @@ class DataHandler:
         def get_parameter_value_w_default(
             parameter_code, process_code="", flow_code="", default=None
         ):
-            return self.get_parameter_value(
+            return self._get_parameter_value(
                 parameter_code=parameter_code,
                 process_code=process_code,
                 flow_code=flow_code,
@@ -1118,12 +1052,41 @@ class DataHandler:
 
         return result
 
-    @staticmethod
+    @classmethod
     def get_dimensions_parameter_code(
+        cls,
         dimension: Literal[
             "res_gen", "secproc_co2", "secproc_water", "region", "country"
         ],
         parameter_name: str,
     ) -> str:
-        """Get the internal code for a paremeter within a certain dimension."""
-        return default_ptx_data.get_dimensions_parameter_code(dimension, parameter_name)
+        """
+        Get the internal code for a paremeter within a certain dimension.
+
+        Used to translate long name parameters from frontend to codes.
+
+        Parameters
+        ----------
+        dimension : str
+        parameter_name : str
+
+        Returns
+        -------
+        str
+        """
+        if not parameter_name or parameter_name == "Specific costs":
+            return ""
+
+        # mapping of different parameter dimension names depending on "dimension"
+        dimension_parameter_mapping = {
+            "res_gen": "process",
+            "secproc_co2": "process",
+            "secproc_water": "process",
+            "region": "region",
+            "country": "country",
+        }
+        target_dim_name = dimension_parameter_mapping.get(dimension)
+        df = cls.get_dimension(dimension)
+        return df.loc[
+            df[target_dim_name + "_name"] == parameter_name, target_dim_name + "_code"
+        ].iloc[0]
