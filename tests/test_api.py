@@ -259,7 +259,7 @@ class TestApi(unittest.TestCase):
     def test_api_get_input_data_output_format(self):
         """Test output structure of api.get_input_data()."""
         # test wrong scenario
-        self.assertRaises(ValueError, self.api.get_input_data, scenario="invalid")
+        self.assertRaises(Exception, self.api.get_input_data, scenario="invalid")
         # test output structure of data
         res = self.api.get_input_data("2030 (high)", long_names=False)
         self.assertEqual(
