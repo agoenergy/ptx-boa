@@ -72,6 +72,7 @@ OutputUnitType = Literal["USD/MWh", "USD/t"]
 logger = logging.getLogger(__name__)
 DATA_DIR_DEFAULT = Path(__file__).parent.resolve() / "data"
 DATA_DIR_DIMS = Path(__file__).parent.resolve() / "data"
+KEY_SEPARATOR = ","
 
 
 def _assign_key_index(
@@ -114,7 +115,7 @@ def _assign_key_index(
     }
     key_columns = keys_in_table[table_type]
     df[key_columns] = df[key_columns].astype(str)
-    df["key"] = df[key_columns].agg("-".join, axis=1)
+    df["key"] = df[key_columns].agg(KEY_SEPARATOR.join, axis=1)
     if not df["key"].is_unique:
         raise ValueError(f"duplicate keys in storage {table_type} data.")
     return df.set_index("key")
@@ -638,7 +639,7 @@ class DataHandler:
         ):
             # FLH not changed by user_data
             df = self.flh
-            key = "-".join(
+            key = KEY_SEPARATOR.join(
                 [
                     params[k]
                     for k in [
@@ -653,7 +654,7 @@ class DataHandler:
         elif parameter_code == "STR-CF":
             # Storage cost factor not changed by user (and currently in separate file)
             df = self.storage_cost_factor
-            key = "-".join(
+            key = KEY_SEPARATOR.join(
                 [
                     params[k]
                     for k in [
@@ -725,9 +726,9 @@ class DataHandler:
             "target_country_code",
         ]:
             if k in parameters[params["parameter_code"]]["required"]:
-                selector += f"-{params[k]}"
+                selector += f"{KEY_SEPARATOR}{params[k]}"
             else:
-                selector += "-"
+                selector += KEY_SEPARATOR
         return selector
 
     def _check_required_parameter_value_kwargs(
