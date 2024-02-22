@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 
 from .data.static import (
+    ChainNameType,
     FlowCodeType,
     ParameterCodeType,
     ParameterNameType,
@@ -24,16 +25,16 @@ from .data.static import (
 
 DimensionCodeType = Literal[
     "scenario",
-    "secproc_co2",
-    "secproc_water",
     "chain",
-    "res_gen",
     "region",
     "country",
     "transport",
     "output_unit",
-    "process",
     "flow",
+    "process",
+    "secproc_co2",  # subset of process
+    "secproc_water",  # subset of process
+    "res_gen",  # subset of process
 ]
 
 ProcessStepType = Literal[
@@ -63,7 +64,6 @@ CalculateDataType = Dict[
 ]
 
 ResultCostType = Literal["CAPEX", "OPEX", "FLOW", "LC"]
-
 
 TransportType = Literal["Ship", "Pipeline"]
 
@@ -766,10 +766,8 @@ class DataHandler:
     def get_calculation_data(
         self,
         secondary_processes: Dict[FlowCodeType, ProcessCodeType],
-        chain: dict,
+        chain_name: ChainNameType,
         process_code_res: ProcessCodeType,
-        process_code_ely: ProcessCodeType,
-        process_code_deriv: ProcessCodeType,
         source_region_code: SourceRegionCodeType,
         target_country_code: TargetCountryCodeType,
         use_ship: bool,
@@ -780,8 +778,16 @@ class DataHandler:
         df_processes = self.get_dimension("process")
         df_flows = self.get_dimension("flow")
 
+        chain = dict(self.get_dimension("chain").loc[chain_name])
+        process_code_ely = chain["ELY"]
+        process_code_deriv = chain["DERIV"]
+        chain["RES"] = process_code_res
+
         def get_parameter_value_w_default(
-            parameter_code, process_code="", flow_code="", default=None
+            parameter_code: ParameterCodeType,
+            process_code: ProcessCodeType = "",
+            flow_code: FlowCodeType = "",
+            default: float = None,
         ):
             return self._get_parameter_value(
                 parameter_code=parameter_code,
@@ -795,7 +801,7 @@ class DataHandler:
                 default=default,
             )
 
-        def flow_conv_params(process_code):
+        def flow_conv_params(process_code: ProcessCodeType):
             result = {}
             flows = df_processes.loc[process_code, "secondary_flows"].split("/")
             flows = [x.strip() for x in flows if x.strip()]
@@ -813,7 +819,7 @@ class DataHandler:
                 result[flow_code] = conv
             return result
 
-        def get_process_params(process_code):
+        def get_process_params(process_code: ProcessCodeType):
             result = {}
             result["EFF"] = get_parameter_value_w_default(
                 "EFF", process_code=process_code, default=1
@@ -836,7 +842,9 @@ class DataHandler:
             result["CONV"] = flow_conv_params(process_code)
             return result
 
-        def get_transport_process_params(process_code, dist_transport):
+        def get_transport_process_params(
+            process_code: ProcessCodeType, dist_transport: float
+        ):
             result = {}
             # TODO: also save in results
             loss_t = get_parameter_value_w_default(
@@ -908,8 +916,6 @@ class DataHandler:
             seashare_pipeline,
             existing_pipeline_cap,
         )
-
-        chain["RES"] = process_code_res
 
         chain_steps_main, chain_steps_transport = _filter_chain_processes(
             chain, transport_distances

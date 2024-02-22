@@ -175,22 +175,27 @@ class PtxboaAPI:
         """
         data_handler = DataHandler(scenario, user_data)
 
-        # prepare / convert user settings to internal codes
-        dct_chain = dict(data_handler.get_dimension("chain").loc[chain])
-
-        if transport not in {"Ship", "Pipeline"}:
+        if transport not in TransportType.__args__:
             logger.error(f"Invalid choice for transport: {transport}")
 
         data = data_handler.get_calculation_data(
             secondary_processes={
-                "H2O-L": DataHandler.get_dimensions_parameter_code(
-                    "secproc_water", secproc_water
+                "H2O-L": (
+                    DataHandler.get_dimensions_parameter_code(
+                        "secproc_water", secproc_water
+                    )
+                    if secproc_water
+                    else None
                 ),
-                "CO2-G": DataHandler.get_dimensions_parameter_code(
-                    "secproc_co2", secproc_co2
+                "CO2-G": (
+                    DataHandler.get_dimensions_parameter_code(
+                        "secproc_co2", secproc_co2
+                    )
+                    if secproc_co2
+                    else None
                 ),
             },
-            chain=dct_chain,
+            chain_name=chain,
             process_code_res=DataHandler.get_dimensions_parameter_code(
                 "res_gen", res_gen
             ),
@@ -200,8 +205,6 @@ class PtxboaAPI:
             target_country_code=DataHandler.get_dimensions_parameter_code(
                 "country", country
             ),
-            process_code_ely=dct_chain["ELY"],
-            process_code_deriv=dct_chain["DERIV"],
             use_ship=(transport == "Ship"),
             ship_own_fuel=ship_own_fuel,
         )

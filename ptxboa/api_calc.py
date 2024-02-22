@@ -10,7 +10,7 @@ from ptxboa.api_data import CalculateDataType, DataHandler
 logger = logging.getLogger()
 
 
-def annuity(rate: float, periods: int, value: float) -> float:
+def _annuity(rate: float, periods: int, value: float) -> float:
     """Calculate annuity.
 
     Parameters
@@ -64,8 +64,13 @@ class PtxCalc:
         for step_data in data["main_process_chain"] + data["transport_process_chain"]:
             process_step = step_data["step"]
             process_code = step_data["process_code"]
-            is_shipping = process_step in {"PRE_SHP", "SHP", "SHP-OWN", "POST_SHP"}
-            is_pipeline = process_step in {
+            is_shipping_or_pre_post = process_step in {
+                "PRE_SHP",
+                "SHP",
+                "SHP-OWN",
+                "POST_SHP",
+            }
+            is_pipeline_or_pre_post = process_step in {
                 "PRE_PPL",
                 "PPLS",
                 "PPL",
@@ -96,13 +101,13 @@ class PtxCalc:
                 opex_f = step_data["OPEX-F"]
                 capacity = main_output_value / flh
                 capex = capacity * capex
-                capex_ann = annuity(wacc, liefetime, capex)
+                capex_ann = _annuity(wacc, liefetime, capex)
                 opex = opex_f * capacity + opex_o * main_output_value
 
                 results.append((result_process_type, process_code, "CAPEX", capex_ann))
                 results.append((result_process_type, process_code, "OPEX", opex))
 
-                if not (is_shipping or is_pipeline):
+                if not (is_shipping_or_pre_post or is_pipeline_or_pre_post):
                     results.append(
                         (
                             "Electricity and H2 storage",
@@ -126,7 +131,7 @@ class PtxCalc:
                 opex = (opex_o + opex_ot) * main_output_value
                 results.append((result_process_type, process_code, "OPEX", opex))
 
-                if not (is_shipping or is_pipeline):
+                if not (is_shipping_or_pre_post or is_pipeline_or_pre_post):
                     results.append(
                         (
                             "Electricity and H2 storage",
@@ -155,7 +160,7 @@ class PtxCalc:
 
                     capacity = flow_value  # no FLH
                     capex = capacity * capex
-                    capex_ann = annuity(wacc, liefetime, capex)
+                    capex_ann = _annuity(wacc, liefetime, capex)
                     opex = opex_f * capacity + opex_o * flow_value
 
                     results.append(
@@ -164,7 +169,7 @@ class PtxCalc:
                     results.append(
                         (sec_result_process_type, sec_process_code, "OPEX", opex)
                     )
-                    if not (is_shipping or is_pipeline):
+                    if not (is_shipping_or_pre_post or is_pipeline_or_pre_post):
                         results.append(
                             (
                                 "Electricity and H2 storage",
@@ -204,7 +209,7 @@ class PtxCalc:
                                 sec_flow_cost,
                             )
                         )
-                        if not (is_shipping or is_pipeline):
+                        if not (is_shipping_or_pre_post or is_pipeline_or_pre_post):
                             results.append(
                                 (
                                     "Electricity and H2 storage",
@@ -233,7 +238,7 @@ class PtxCalc:
                     results.append(
                         (flow_result_process_type, process_code, "FLOW", flow_cost)
                     )
-                    if not (is_shipping or is_pipeline):
+                    if not (is_shipping_or_pre_post or is_pipeline_or_pre_post):
                         results.append(
                             (
                                 "Electricity and H2 storage",
