@@ -9,14 +9,21 @@ import pandas as pd
 from .api_calc import PtxCalc
 from .api_data import (
     DATA_DIR_DEFAULT,
-    ChainNameType,
     DataHandler,
     DimensionCodeType,
     OutputUnitType,
     ResultCostType,
+    TransportType,
+)
+from .data.static import (
+    ChainNameType,
+    ResGenType,
     ResultProcessType,
     ScenarioCodeType,
-    TransportType,
+    SecProcCO2Type,
+    SecProcH2OType,
+    SourceRegionNameType,
+    TargetCountryNameType,
 )
 
 logger = logging.getLogger()
@@ -38,7 +45,7 @@ class PtxboaAPI:
             logger.warning("Api should only be instantiated once")
         return cls._inst
 
-    def __init__(self, data_dir=DATA_DIR_DEFAULT):
+    def __init__(self, data_dir: str = DATA_DIR_DEFAULT):
         self.data_dir = data_dir
         self._calc_counter = 0  # temporary counter for calls of calculate()
 
@@ -113,12 +120,12 @@ class PtxboaAPI:
     def calculate(
         self,
         scenario: ScenarioCodeType,
-        secproc_co2: str,
-        secproc_water: str,
+        secproc_co2: SecProcCO2Type,
+        secproc_water: SecProcH2OType,
         chain: ChainNameType,
-        res_gen: str,
-        region: str,
-        country: str,
+        res_gen: ResGenType,
+        region: SourceRegionNameType,
+        country: TargetCountryNameType,
         transport: TransportType,
         ship_own_fuel: bool = False,  # TODO: no correctly passed by app
         output_unit: OutputUnitType = "USD/MWh",

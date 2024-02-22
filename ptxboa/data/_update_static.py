@@ -54,10 +54,19 @@ def main():
         create_literal_from_db(
             "TargetCountryCodeType", "country_code", "ptxboa_target_country"
         ),
+        create_literal_from_db(
+            "SourceRegionNameType", "region_name", "ptxboa_source_region"
+        ),
+        create_literal_from_db(
+            "TargetCountryNameType", "country_name", "ptxboa_target_country"
+        ),
         create_literal_from_db("ProcessCodeType", "process_code", "ptxboa_process"),
         create_literal_from_db("FlowCodeType", "flow_code", "ptxboa_flow"),
         create_literal_from_db(
             "ParameterCodeType", "parameter_code", "ptxboa_parameter"
+        ),
+        create_literal_from_db(
+            "ParameterNameType", "parameter_name", "ptxboa_parameter"
         ),
         create_literal_from_db("ChainNameType", "chain", "ptxboa_chains"),
         create_literal_from_query(
@@ -72,6 +81,27 @@ def main():
             "ResultProcessType",
             "result_process_type",
             "SELECT distinct result_process_type FROM ptxboa_process_class",
+        ),
+        create_literal_from_query(
+            "SecProcCO2Type",
+            "process_name",
+            (
+                "SELECT process_name from ptxboa_process where "
+                "main_flow_code_out='CO2-G' and is_secondary=1"
+            ),
+        ),
+        create_literal_from_query(
+            "SecProcH2OType",
+            "process_name",
+            (
+                "SELECT process_name from ptxboa_process where "
+                "main_flow_code_out='H2O-L' and is_secondary=1"
+            ),
+        ),
+        create_literal_from_query(
+            "ResGenType",
+            "process_name",
+            "SELECT process_name from ptxboa_process where is_re_generation=1",
         ),
     ]
 

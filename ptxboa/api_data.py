@@ -10,11 +10,10 @@ from typing import Any, Dict, List, Literal
 import numpy as np
 import pandas as pd
 
-from .data.static import ChainNameType  # noqa: imported
-from .data.static import ResultProcessType  # noqa: imported
 from .data.static import (
     FlowCodeType,
     ParameterCodeType,
+    ParameterNameType,
     ParameterRangeCodeType,
     ProcessCodeType,
     ScenarioCodeType,
@@ -760,7 +759,7 @@ class DataHandler:
                 )
 
     @staticmethod
-    def get_dimension(dim: str) -> pd.DataFrame:
+    def get_dimension(dim: DimensionCodeType) -> pd.DataFrame:
         """Delegate get_dimension to underlying data class."""
         return dimensions2[dim]
 
@@ -948,10 +947,8 @@ class DataHandler:
     @classmethod
     def get_dimensions_parameter_code(
         cls,
-        dimension: Literal[
-            "res_gen", "secproc_co2", "secproc_water", "region", "country"
-        ],
-        parameter_name: str,
+        dimension: DimensionCodeType,
+        parameter_name: ParameterNameType,
     ) -> str:
         """
         Get the internal code for a paremeter within a certain dimension.

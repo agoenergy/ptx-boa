@@ -5,7 +5,7 @@ import logging
 
 import pandas as pd
 
-from ptxboa.api_data import DataHandler
+from ptxboa.api_data import CalculateDataType, DataHandler
 
 logger = logging.getLogger()
 
@@ -38,7 +38,7 @@ class PtxCalc:
     def __init__(self, data_handler: DataHandler):
         self.data_handler = data_handler
 
-    def calculate(self, data: dict) -> pd.DataFrame:
+    def calculate(self, data: CalculateDataType) -> pd.DataFrame:
         """Calculate results."""
         # get process codes for selected chain
         df_processes = self.data_handler.get_dimension("process")

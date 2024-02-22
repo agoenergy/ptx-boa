@@ -93,6 +93,100 @@ TargetCountryCodeType = Literal[
     "CHN", "DEU", "ESP", "FRA", "IND", "JPN", "KOR", "NLD", "USA"
 ]
 
+SourceRegionNameType = Literal[
+    "Algeria",
+    "Argentina",
+    "Argentina (Autonomous City of Buenos Aires)",
+    "Argentina (Buenos Aires)",
+    "Argentina (Catamarca)",
+    "Argentina (Chaco)",
+    "Argentina (Chubut)",
+    "Argentina (Córdoba)",
+    "Argentina (Corrientes)",
+    "Argentina (Entre Ríos)",
+    "Argentina (Formosa)",
+    "Argentina (Jujuy)",
+    "Argentina (La Pampa)",
+    "Argentina (La Rioja)",
+    "Argentina (Mendoza)",
+    "Argentina (Misiones)",
+    "Argentina (Neuquén)",
+    "Argentina (Río Negro)",
+    "Argentina (Salta)",
+    "Argentina (San Juan)",
+    "Argentina (San Luis)",
+    "Argentina (Santa Cruz)",
+    "Argentina (Santa Fe)",
+    "Argentina (Santiago del Estero)",
+    "Argentina (Tierra del Fuego, Antártida e Islas del Atlántico Sur)",
+    "Argentina (Tucumán)",
+    "Australia",
+    "Brazil",
+    "Chile",
+    "China",
+    "Colombia",
+    "Costa Rica",
+    "Denmark",
+    "Egypt",
+    "India",
+    "Indonesia",
+    "Jordan",
+    "Kazakhstan",
+    "Kenya",
+    "Mauritania",
+    "Mexico",
+    "Morocco",
+    "Morocco (Béni Mellal-Khénifra)",
+    "Morocco (Casablanca)",
+    "Morocco (Dakhla-Oued Ed-Dahab)",
+    "Morocco (Drâa-Tafilalet)",
+    "Morocco (Fès-Meknès)",
+    "Morocco (Guelmim-Oued Noun)",
+    "Morocco (L´oriental)",
+    "Morocco (Laâyoune-Sakia El Hamra)",
+    "Morocco (Marrakech-Safi)",
+    "Morocco (Rabat-Salé-Kénitra)",
+    "Morocco (Souss-Massa)",
+    "Morocco (Tangier)",
+    "Namibia",
+    "Norway",
+    "Peru",
+    "Portugal",
+    "Russia",
+    "Saudi Arabia",
+    "South Africa",
+    "South Africa (East Cape)",
+    "South Africa (Free State)",
+    "South Africa (Gauteng)",
+    "South Africa (KwaZulu-Natal)",
+    "South Africa (Limpopo)",
+    "South Africa (Mpumalanga)",
+    "South Africa (North West)",
+    "South Africa (Northern Cape)",
+    "South Africa (Western Cape)",
+    "Spain",
+    "Sweden",
+    "Thailand",
+    "Tunisia",
+    "Ukraine",
+    "United Arab Emirates",
+    "Uruguay",
+    "USA",
+    "Vietnam",
+]
+
+TargetCountryNameType = Literal[
+    "China",
+    "France",
+    "Germany",
+    "India",
+    "Japan",
+    "Netherlands",
+    "South Korea",
+    "Spain",
+    "USA",
+]
+
 ProcessCodeType = Literal[
     "AEL-EL",
     "ATR",
@@ -188,6 +282,27 @@ ParameterCodeType = Literal[
     "WACC",
 ]
 
+ParameterNameType = Literal[
+    "calorific values",
+    "CAPEX",
+    "conversion factors",
+    "efficiency",
+    "full load hours",
+    "interest rate",
+    "levelized costs",
+    "lifetime / amortization period",
+    "losses (own fuel, transport)",
+    "OPEX (fix)",
+    "OPEX (other variable)",
+    "pipeline distance",
+    "RE potential",
+    "sea share of pipeline distance",
+    "shipping distance",
+    "specific costs",
+    "Storage cost factor",
+    "transport capacity",
+]
+
 ChainNameType = Literal[
     "Ammonia (AEL)",
     "Ammonia (AEL) + reconv. to H2",
@@ -237,4 +352,12 @@ ResultProcessType = Literal[
     "Transportation (Pipeline)",
     "Transportation (Ship)",
     "Water",
+]
+
+SecProcCO2Type = Literal["Direct Air Capture"]
+
+SecProcH2OType = Literal["Sea Water desalination"]
+
+ResGenType = Literal[
+    "PV tilted", "PV tracking", "Wind-PV-Hybrid", "Wind Offshore", "Wind Onshore"
 ]
