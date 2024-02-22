@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 """Update csv files from Database."""
 
+import os
+
 import pandas as pd
 import pyodbc  # noqa
 import sqlalchemy as sa
 
 
-def update_csv(query, filename):
+def update_csv(query: str, filename: str, data_dir: str = None) -> None:
+    data_dir = data_dir or os.path.dirname(__file__)
     CS = (
         "mssql+pyodbc://?odbc_connect=driver=sql server;server=sqldaek2;database=ptxboa"
     )
@@ -14,7 +17,7 @@ def update_csv(query, filename):
     pd.read_sql(
         query,
         engine,
-    ).to_csv(filename, index=False, lineterminator="\n")
+    ).to_csv(data_dir + "/" + filename, index=False, lineterminator="\n")
 
 
 def main():
@@ -58,7 +61,8 @@ def main():
         "has_global_default",
         "global_default_changeable",
         "own_country_changeable",
-        "comment"
+        "comment",
+        "dimensions"
         FROM "ptxboa_parameter"
         ORDER BY "parameter_code"
         """,
@@ -76,8 +80,8 @@ def main():
         ,"is_re_generation"
         ,"is_transport"
         ,"is_secondary"
-        /*,"process_class"*/
-        ,"is_secondary_all"
+        ,"process_class"
+        /*,"is_secondary_all"*/
         ,"is_ely"
         ,"is_deriv"
         /*,"class_name"*/
@@ -107,7 +111,6 @@ def main():
     update_csv(
         """
         SELECT
-        "key",
         "region",
         "process_res",
         "process_ely",
@@ -124,7 +127,6 @@ def main():
     update_csv(
         """
         select
-        "key",
         "process_res",
         "process_ely",
         "process_deriv",
@@ -142,7 +144,6 @@ def main():
             update_csv(
                 f"""
                 select
-                "key",
                 "parameter_code",
                 "process_code",
                 "flow_code",
