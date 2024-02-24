@@ -76,46 +76,6 @@ KEY_SEPARATOR = ","
 
 
 @cache
-def _load_scenario_table(
-    data_dir: str | Path, scenario: ScenarioCodeType
-) -> pd.DataFrame:
-    return _load_data(
-        data_dir,
-        scenario,
-        key_columns=[
-            "parameter_code",
-            "process_code",
-            "flow_code",
-            "source_region_code",
-            "target_country_code",
-        ],
-    )
-
-
-@cache
-def _load_flh_data(data_dir: str | Path) -> pd.DataFrame:
-    return _load_data(
-        data_dir,
-        name="flh",
-        key_columns=[
-            "region",
-            "process_res",
-            "process_ely",
-            "process_deriv",
-            "process_flh",
-        ],
-    )
-
-
-@cache
-def _load_storage_cost_factor_data(data_dir: str | Path) -> pd.DataFrame:
-    return _load_data(
-        data_dir,
-        name="storage_cost_factor",
-        key_columns=["process_res", "process_ely", "process_deriv"],
-    )
-
-
 def _load_data(
     data_dir: str | Path, name: str, key_columns: str | Tuple = None
 ) -> pd.DataFrame:
@@ -454,12 +414,36 @@ class DataHandler:
         self.user_data = user_data
         self.data_dir = data_dir or DATA_DIR_DEFAULT
 
-        self.flh = _load_flh_data(self.data_dir)
-        self.storage_cost_factor = _load_storage_cost_factor_data(self.data_dir)
-
-        self.scenario_data = _load_scenario_table(
+        self.flh = _load_data(
             self.data_dir,
-            f"{scenario.replace(' ', '_').replace(')', '').replace('(', '')}",
+            name="flh",
+            key_columns=(
+                "region",
+                "process_res",
+                "process_ely",
+                "process_deriv",
+                "process_flh",
+            ),
+        )
+        self.storage_cost_factor = _load_data(
+            self.data_dir,
+            name="storage_cost_factor",
+            key_columns=("process_res", "process_ely", "process_deriv"),
+        )
+
+        scenario_filename = (
+            f"{scenario.replace(' ', '_').replace(')', '').replace('(', '')}"
+        )
+        self.scenario_data = _load_data(
+            self.data_dir,
+            scenario_filename,
+            key_columns=(
+                "parameter_code",
+                "process_code",
+                "flow_code",
+                "source_region_code",
+                "target_country_code",
+            ),
         ).copy()
 
         if user_data is not None:
