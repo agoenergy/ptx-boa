@@ -210,31 +210,10 @@ def _load_parameter_dims() -> Dict[ParameterCodeType, dict]:
     df_parameters = _load_data(
         DATA_DIR_DIMS, name="dim_parameter", key_columns="parameter_code"
     )
-    assert set(df_parameters.index) == set(ParameterCodeType.__args__), set(
-        ParameterCodeType.__args__
-    ) - set(df_parameters.index)
-
-    PARAMETER_DIMENSIONS = {}
-    for parameter_code, specs in df_parameters.iterrows():
-        required = [
-            y
-            for x, y in [
-                ("per_flow", "flow_code"),
-                ("per_process", "process_code"),
-                ("per_region", "source_region_code"),
-                ("per_import_country", "target_country_code"),
-            ]
-            if specs[x]
-        ]
-        global_default = specs["has_global_default"]
-
-        if global_default:
-            assert "source_region_code" in required
-        PARAMETER_DIMENSIONS[parameter_code] = {
-            "global_default": global_default,
-            "required": required,
-        }
-    return PARAMETER_DIMENSIONS
+    df_parameters["dimensions"] = df_parameters["dimensions"].apply(
+        lambda x: x.split("/") if x else []
+    )
+    return df_parameters
 
 
 def _map_names_and_codes(
@@ -646,7 +625,7 @@ class DataHandler:
             empty_result = False
         except KeyError:
             empty_result = True
-        if empty_result and parameters[parameter_code]["global_default"]:
+        if empty_result and parameters.at[parameter_code, "has_global_default"]:
             # make query with empty "source_region_code"
             logger.debug(
                 f"searching global default, did not find entry for key '{key}'"
@@ -698,7 +677,7 @@ class DataHandler:
             "source_region_code",
             "target_country_code",
         ]:
-            if k in parameters[params["parameter_code"]]["required"]:
+            if k in parameters.at[params["parameter_code"], "dimensions"]:
                 selector += f"{KEY_SEPARATOR}{params[k]}"
             else:
                 selector += KEY_SEPARATOR
@@ -721,7 +700,7 @@ class DataHandler:
         kwargs :
             keyword arguments passed to `self.get_parameter_value()`
         """
-        required_param_names = parameters[parameter_code]["required"]
+        required_param_names = parameters.at[parameter_code, "dimensions"]
 
         for p in required_param_names:
             required_value = kwargs.pop(p)
