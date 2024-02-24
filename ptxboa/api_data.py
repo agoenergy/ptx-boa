@@ -207,8 +207,8 @@ def _filter_chain_processes(
 
 def _load_parameter_dims() -> Dict[ParameterCodeType, dict]:
     # create class instances for parameters
-    df_parameters = _load_data(DATA_DIR_DIMS, name="dim_parameter").set_index(
-        "parameter_code", drop=False
+    df_parameters = _load_data(
+        DATA_DIR_DIMS, name="dim_parameter", key_columns="parameter_code"
     )
     assert set(df_parameters.index) == set(ParameterCodeType.__args__), set(
         ParameterCodeType.__args__
@@ -331,7 +331,7 @@ def _update_scenario_data_with_user_data(
 
 
 parameters = _load_parameter_dims()
-chains = _load_data(DATA_DIR_DIMS, name="chains").set_index("chain").replace(np.nan, "")
+chains = _load_data(DATA_DIR_DIMS, name="chains", key_columns="chain")
 dimensions = {
     dim: _load_data(DATA_DIR_DIMS, name=f"dim_{dim}")
     for dim in ["country", "flow", "parameter", "process", "region"]
