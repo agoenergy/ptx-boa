@@ -5,7 +5,7 @@ import logging
 from functools import cache
 from itertools import product
 from pathlib import Path
-from typing import Any, Dict, List, Literal
+from typing import Any, Dict, List, Literal, Tuple
 
 import numpy as np
 import pandas as pd
@@ -75,73 +75,50 @@ DATA_DIR_DIMS = Path(__file__).parent.resolve() / "data"
 KEY_SEPARATOR = ","
 
 
-def _assign_key_index(
-    df: pd.DataFrame,
-    table_type: Literal["flh", "scenario", "storage_cost_factor"],
+@cache
+def _load_scenario_table(
+    data_dir: str | Path, scenario: ScenarioCodeType
 ) -> pd.DataFrame:
-    """
-    Assing a unique index to a dataframe containing "index" columns.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-    table_type : str in {"flh", "scenario", "storage_cost_factor"}
-
-    Returns
-    -------
-    pd.DataFrame
-
-    Raises
-    ------
-    ValueError
-        if the constructed index is not unique
-    """
-    keys_in_table = {
-        "flh": [
-            "region",
-            "process_res",
-            "process_ely",
-            "process_deriv",
-            "process_flh",
-        ],
-        "scenario": [
+    return _load_data(
+        data_dir,
+        scenario,
+        key_columns=[
             "parameter_code",
             "process_code",
             "flow_code",
             "source_region_code",
             "target_country_code",
         ],
-        "storage_cost_factor": ["process_res", "process_ely", "process_deriv"],
-    }
-    key_columns = keys_in_table[table_type]
-    df[key_columns] = df[key_columns].astype(str)
-    df["key"] = df[key_columns].agg(KEY_SEPARATOR.join, axis=1)
-    if not df["key"].is_unique:
-        raise ValueError(f"duplicate keys in storage {table_type} data.")
-    return df.set_index("key")
-
-
-@cache
-def _load_scenario_table(
-    data_dir: str | Path, scenario: ScenarioCodeType
-) -> pd.DataFrame:
-    df = _load_data(data_dir, scenario).replace(np.nan, "")
-    return _assign_key_index(df, table_type="scenario")
+    )
 
 
 @cache
 def _load_flh_data(data_dir: str | Path) -> pd.DataFrame:
-    df = _load_data(data_dir, name="flh").replace(np.nan, "")
-    return _assign_key_index(df, table_type="flh")
+    return _load_data(
+        data_dir,
+        name="flh",
+        key_columns=[
+            "region",
+            "process_res",
+            "process_ely",
+            "process_deriv",
+            "process_flh",
+        ],
+    )
 
 
 @cache
 def _load_storage_cost_factor_data(data_dir: str | Path) -> pd.DataFrame:
-    df = _load_data(data_dir, name="storage_cost_factor").replace(np.nan, "")
-    return _assign_key_index(df, table_type="storage_cost_factor")
+    return _load_data(
+        data_dir,
+        name="storage_cost_factor",
+        key_columns=["process_res", "process_ely", "process_deriv"],
+    )
 
 
-def _load_data(data_dir: str | Path, name: str) -> pd.DataFrame:
+def _load_data(
+    data_dir: str | Path, name: str, key_columns: str | Tuple = None
+) -> pd.DataFrame:
     filepath = Path(data_dir) / f"{name}.csv"
     df = pd.read_csv(
         filepath,
@@ -163,6 +140,18 @@ def _load_data(data_dir: str | Path, name: str) -> pd.DataFrame:
     # numerical columns should never be empty, dimension columns
     # maybe empty and will be filled with ""
     df = df.fillna("")
+
+    # set index
+    if key_columns:
+        if isinstance(key_columns, str):
+            key_columns = [key_columns]
+        key_columns = list(key_columns)
+        df = df.assign(key=df[key_columns].agg(KEY_SEPARATOR.join, axis=1)).set_index(
+            "key"
+        )
+        if not df.index.unique:
+            raise ValueError("duplicate keys in data")
+
     return df
 
 
@@ -200,7 +189,7 @@ def _get_transport_distances(
     return dist_transp
 
 
-def validate_process_chain(
+def _validate_process_chain(
     process_codes: List[ProcessCodeType], final_flow_code: FlowCodeType
 ) -> None:
     df_processes = DataHandler.get_dimension("process")
@@ -249,7 +238,7 @@ def _filter_chain_processes(
             result_transport.append("POST_PPL")
 
     # TODO: CHECK that flow chain is correct
-    validate_process_chain(
+    _validate_process_chain(
         [chain[p] for p in result_main + result_transport], chain["FLOW_OUT"]
     )
 
@@ -904,7 +893,6 @@ class DataHandler:
         dist_ship = get_parameter_value_w_default("DST-S-D", default=0)
 
         if not use_ship and not chain["CAN_PIPELINE"]:
-            logging.warning("Must use ship")
             use_ship = True
 
         transport_distances = _get_transport_distances(
