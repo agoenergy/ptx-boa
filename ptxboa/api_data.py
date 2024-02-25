@@ -10,9 +10,13 @@ from typing import Any, Dict, List, Literal, Tuple
 import numpy as np
 import pandas as pd
 
+from ptxboa.utils import filter_chain_processes, get_transport_distances
+
 from .data.static import (
     ChainNameType,
+    DimensionCodeType,
     FlowCodeType,
+    OutputUnitType,
     ParameterCodeType,
     ParameterNameType,
     ParameterRangeCodeType,
@@ -20,38 +24,9 @@ from .data.static import (
     ScenarioCodeType,
     SourceRegionCodeType,
     TargetCountryCodeType,
+    TransportType,
     YearCodeType,
 )
-
-DimensionCodeType = Literal[
-    "scenario",
-    "chain",
-    "region",
-    "country",
-    "transport",
-    "output_unit",
-    "flow",
-    "process",
-    "secproc_co2",  # subset of process
-    "secproc_water",  # subset of process
-    "res_gen",  # subset of process
-]
-
-ProcessStepType = Literal[
-    "ELY",
-    "DERIV",
-    "PRE_SHP",
-    "PRE_PPL",
-    "POST_SHP",
-    "POST_PPL",
-    "SHP",
-    "SHP-OWN",
-    "PPLS",
-    "PPL",
-    "PPLX",
-    "PPLR",
-]
-
 
 CalculateDataType = Dict[
     Literal[
@@ -63,106 +38,11 @@ CalculateDataType = Dict[
     Any,
 ]
 
-ResultCostType = Literal["CAPEX", "OPEX", "FLOW", "LC"]
-
-TransportType = Literal["Ship", "Pipeline"]
-
-OutputUnitType = Literal["USD/MWh", "USD/t"]
 
 logger = logging.getLogger(__name__)
 DATA_DIR_DEFAULT = Path(__file__).parent.resolve() / "data"
 DATA_DIR_DIMS = Path(__file__).parent.resolve() / "data"
 KEY_SEPARATOR = ","
-
-
-def _get_transport_distances(
-    source_region_code: SourceRegionCodeType,
-    target_country_code: TargetCountryCodeType,
-    use_ship: bool,
-    ship_own_fuel: bool,
-    dist_ship: float,
-    dist_pipeline: float,
-    seashare_pipeline: float,
-    existing_pipeline_cap: float,
-) -> Dict[ProcessStepType, float]:
-    # TODO: new calculation of distances
-    dist_transp = {}
-    if source_region_code == target_country_code:
-        # no transport (only China)
-        pass
-    elif dist_pipeline and not use_ship:
-        # use pipeline if pipeline possible and ship not selected
-        if existing_pipeline_cap:
-            # use retrofitting
-            dist_transp["PPLX"] = dist_pipeline * seashare_pipeline
-            dist_transp["PPLR"] = dist_pipeline * (1 - seashare_pipeline)
-        else:
-            dist_transp["PPLS"] = dist_pipeline * seashare_pipeline
-            dist_transp["PPL"] = dist_pipeline * (1 - seashare_pipeline)
-    else:
-        # use ship
-        if ship_own_fuel:
-            dist_transp["SHP-OWN"] = dist_ship
-        else:
-            dist_transp["SHP"] = dist_ship
-
-    return dist_transp
-
-
-def _validate_process_chain(
-    process_codes: List[ProcessCodeType], final_flow_code: FlowCodeType
-) -> None:
-    df_processes = DataHandler.get_dimension("process")
-    flow_code = ""  # initial flow code
-    for process_code in process_codes:
-        process = df_processes.loc[process_code]
-        flow_code_in = process["main_flow_code_in"]
-        assert flow_code == flow_code_in
-        flow_code = process["main_flow_code_out"]
-    assert flow_code == final_flow_code
-
-
-def _filter_chain_processes(
-    chain: dict, transport_distances: Dict[ProcessStepType, float]
-) -> List[ProcessStepType]:
-    result_main = []
-    result_transport = []
-    for process_step in ["RES", "ELY", "DERIV"]:
-        process_code = chain[process_step]
-        if process_code:
-            result_main.append(process_step)
-    is_shipping = transport_distances.get("SHP") or transport_distances.get("SHP-OWN")
-    is_pipeline = (
-        transport_distances.get("PPLS")
-        or transport_distances.get("PPL")
-        or transport_distances.get("PPLX")
-        or transport_distances.get("PPLR")
-    )
-    if is_shipping:
-        if chain["PRE_SHP"]:  # not all have preprocessing
-            result_transport.append("PRE_SHP")
-    elif is_pipeline:
-        if chain["PRE_PPL"]:  # not all have preprocessing
-            result_transport.append("PRE_PPL")
-
-    for k, v in transport_distances.items():
-        if v:
-            assert chain[k]
-            result_transport.append(k)
-
-    if is_shipping:
-        if chain["POST_SHP"]:  # not all have preprocessing
-            result_transport.append("POST_SHP")
-    elif is_pipeline:
-        if chain["POST_PPL"]:  # not all have preprocessing
-            result_transport.append("POST_PPL")
-
-    # TODO: CHECK that flow chain is correct
-    _validate_process_chain(
-        [chain[p] for p in result_main + result_transport], chain["FLOW_OUT"]
-    )
-
-    return result_main, result_transport
 
 
 def _assign_key(df: pd.DataFrame, key_columns: str | List[str]) -> pd.DataFrame:
@@ -590,17 +470,6 @@ class DataHandler:
             "process_code_deriv": process_code_deriv or "",
         }
 
-        self._check_required_parameter_value_kwargs(
-            parameter_code,
-            process_code=process_code,
-            flow_code=flow_code,
-            source_region_code=source_region_code,
-            target_country_code=target_country_code,
-            process_code_res=process_code_res,
-            process_code_ely=process_code_ely,
-            process_code_deriv=process_code_deriv,
-        )
-
         if (
             parameter_code == "FLH"
             and process_code
@@ -608,62 +477,66 @@ class DataHandler:
         ):
             # FLH not changed by user_data
             df = self.flh
-            key = KEY_SEPARATOR.join(
-                [
-                    params[k]
-                    for k in [
-                        "source_region_code",
-                        "process_code_res",
-                        "process_code_ely",
-                        "process_code_deriv",
-                        "process_code",
-                    ]
-                ]
-            )
+            keys = [
+                "source_region_code",
+                "process_code_res",
+                "process_code_ely",
+                "process_code_deriv",
+                "process_code",
+            ]
+            required_keys = set(keys)
+
         elif parameter_code == "STR-CF":
             # Storage cost factor not changed by user (and currently in separate file)
             df = self.storage_cost_factor
-            key = KEY_SEPARATOR.join(
-                [
-                    params[k]
-                    for k in [
-                        "process_code_res",
-                        "process_code_ely",
-                        "process_code_deriv",
-                    ]
-                ]
-            )
+            keys = [
+                "process_code_res",
+                "process_code_ely",
+                "process_code_deriv",
+            ]
+            required_keys = set(keys)
+
         else:
             df = self.scenario_data
-            key = self._construct_key_in_scenario_data(params)
+            keys = [
+                "parameter_code",
+                "process_code",
+                "flow_code",
+                "source_region_code",
+                "target_country_code",
+            ]
+            required_keys = set(
+                self.dimensions["parameter"].at[parameter_code, "dimensions"]
+            ) | {"parameter_code"}
 
-        try:
-            row = df.at[key, "value"]
-            empty_result = False
-        except KeyError:
-            empty_result = True
+        def _get_value(
+            df: pd.DataFrame, params: dict, keys: list, required_keys: set
+        ) -> float:
+            key = KEY_SEPARATOR.join(
+                [params[k] if k in required_keys else "" for k in keys]
+            )
+            try:
+                return df.at[key, "value"]
+            except KeyError:
+                return None
+
+        result = _get_value(df, params, keys, required_keys)
+
         if (
-            empty_result
+            result is None
             and self.dimensions["parameter"].at[parameter_code, "has_global_default"]
         ):
             # make query with empty "source_region_code"
-            logger.debug(
-                f"searching global default, did not find entry for key '{key}'"
+            result = _get_value(
+                df, params, keys, required_keys - {"source_region_code"}
             )
-            params["source_region_code"] = ""
-            params["target_country_code"] = ""
-            key = self._construct_key_in_scenario_data(params)
-            try:
-                row = df.at[key, "value"]
-                empty_result = False
-            except KeyError:
-                empty_result = True
 
-        if empty_result:
-            if default is not None:
-                return default
+        if result is None and default is not None:
+            result = default
+
+        if result is None:
             raise ValueError(
-                f"""did not find a parameter value for key '{key}':
+                f"""did not find a parameter value for:
                 parameter_code={parameter_code},
                 process_code={process_code},
                 flow_code={flow_code},
@@ -674,69 +547,7 @@ class DataHandler:
                 process_code_deriv={process_code_deriv},
             """
             )
-        return row
-
-    def _construct_key_in_scenario_data(
-        self,
-        params: dict,
-    ) -> pd.Series:
-        """
-        Create a boolean index object which can be used to filter df.
-
-        Parameters
-        ----------
-        params : dict
-            dictionary which needs to contain the following keys:
-            ["parameter_code", "process_code", "flow_code", "source_region_code",
-            "target_country_code"]
-        """
-        selector = params["parameter_code"]
-        for k in [
-            "process_code",
-            "flow_code",
-            "source_region_code",
-            "target_country_code",
-        ]:
-            if (
-                k
-                in self.dimensions["parameter"].at[
-                    params["parameter_code"], "dimensions"
-                ]
-            ):
-                selector += f"{KEY_SEPARATOR}{params[k]}"
-            else:
-                selector += KEY_SEPARATOR
-        return selector
-
-    def _check_required_parameter_value_kwargs(
-        self,
-        parameter_code: ParameterCodeType,
-        **kwargs,
-    ):
-        """
-        Check parameters passed to `self.get_parameter_value()`.
-
-        Check that required parameter dimensions are not None and that
-        unused dimensions are None.
-
-        Parameters
-        ----------
-        parameter_code : str
-        kwargs :
-            keyword arguments passed to `self.get_parameter_value()`
-        """
-        required_param_names = self.dimensions["parameter"].at[
-            parameter_code, "dimensions"
-        ]
-
-        for p in required_param_names:
-            required_value = kwargs.pop(p)
-            if not required_value:
-                raise ValueError(
-                    f"'{parameter_code}': the following parameters must be "
-                    f"defined\n{required_param_names}\n"
-                    f"Got: {kwargs}"
-                )
+        return result
 
     @classmethod
     def get_dimension(cls, dim: DimensionCodeType) -> pd.DataFrame:
@@ -885,7 +696,7 @@ class DataHandler:
         if not use_ship and not chain["CAN_PIPELINE"]:
             use_ship = True
 
-        transport_distances = _get_transport_distances(
+        transport_distances = get_transport_distances(
             source_region_code,
             target_country_code,
             use_ship,
@@ -896,8 +707,8 @@ class DataHandler:
             existing_pipeline_cap,
         )
 
-        chain_steps_main, chain_steps_transport = _filter_chain_processes(
-            chain, transport_distances
+        chain_steps_main, chain_steps_transport = filter_chain_processes(
+            self, chain, transport_distances
         )
 
         for process_step in chain_steps_main:

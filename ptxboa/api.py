@@ -7,23 +7,20 @@ import logging
 import pandas as pd
 
 from .api_calc import PtxCalc
-from .api_data import (
-    DATA_DIR_DEFAULT,
-    DataHandler,
-    DimensionCodeType,
-    OutputUnitType,
-    ResultCostType,
-    TransportType,
-)
+from .api_data import DATA_DIR_DEFAULT, DataHandler
 from .data.static import (
     ChainNameType,
+    DimensionCodeType,
+    OutputUnitType,
     ResGenType,
+    ResultCostType,
     ResultProcessType,
     ScenarioCodeType,
     SecProcCO2Type,
     SecProcH2OType,
     SourceRegionNameType,
     TargetCountryNameType,
+    TransportType,
 )
 
 logger = logging.getLogger()

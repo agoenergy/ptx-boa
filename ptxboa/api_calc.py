@@ -6,32 +6,9 @@ import logging
 import pandas as pd
 
 from ptxboa.api_data import CalculateDataType, DataHandler
+from ptxboa.utils import annuity
 
 logger = logging.getLogger()
-
-
-def _annuity(rate: float, periods: int, value: float) -> float:
-    """Calculate annuity.
-
-    Parameters
-    ----------
-    rate: float
-        interest rate per period
-    periods: int
-        number of periods
-    value: float
-        present value of an ordinary annuity
-
-    Returns
-    -------
-    : float
-        value of each payment
-
-    """
-    if rate == 0:
-        return value / periods
-    else:
-        return value * rate / (1 - (1 / (1 + rate) ** periods))
 
 
 class PtxCalc:
@@ -101,7 +78,7 @@ class PtxCalc:
                 opex_f = step_data["OPEX-F"]
                 capacity = main_output_value / flh
                 capex = capacity * capex
-                capex_ann = _annuity(wacc, liefetime, capex)
+                capex_ann = annuity(wacc, liefetime, capex)
                 opex = opex_f * capacity + opex_o * main_output_value
 
                 results.append((result_process_type, process_code, "CAPEX", capex_ann))
@@ -160,7 +137,7 @@ class PtxCalc:
 
                     capacity = flow_value  # no FLH
                     capex = capacity * capex
-                    capex_ann = _annuity(wacc, liefetime, capex)
+                    capex_ann = annuity(wacc, liefetime, capex)
                     opex = opex_f * capacity + opex_o * flow_value
 
                     results.append(

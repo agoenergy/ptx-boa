@@ -361,3 +361,38 @@ SecProcH2OType = Literal["Sea Water desalination"]
 ResGenType = Literal[
     "PV tilted", "PV tracking", "Wind-PV-Hybrid", "Wind Offshore", "Wind Onshore"
 ]
+
+DimensionCodeType = Literal[
+    "scenario",
+    "chain",
+    "region",
+    "country",
+    "transport",
+    "output_unit",
+    "flow",
+    "process",
+    "secproc_co2",
+    "secproc_water",
+    "res_gen",
+]
+
+ProcessStepType = Literal[
+    "ELY",
+    "DERIV",
+    "PRE_SHP",
+    "PRE_PPL",
+    "POST_SHP",
+    "POST_PPL",
+    "SHP",
+    "SHP-OWN",
+    "PPLS",
+    "PPL",
+    "PPLX",
+    "PPLR",
+]
+
+ResultCostType = Literal["CAPEX", "OPEX", "FLOW", "LC"]
+
+TransportType = Literal["Ship", "Pipeline"]
+
+OutputUnitType = Literal["USD/MWh", "USD/t"]

@@ -103,6 +103,42 @@ def main():
             "process_name",
             "SELECT process_name from ptxboa_process where is_re_generation=1",
         ),
+        create_literal(
+            "DimensionCodeType",
+            [
+                "scenario",
+                "chain",
+                "region",
+                "country",
+                "transport",
+                "output_unit",
+                "flow",
+                "process",
+                "secproc_co2",  # subset of process
+                "secproc_water",  # subset of process
+                "res_gen",  # subset of process
+            ],
+        ),
+        create_literal(
+            "ProcessStepType",
+            [
+                "ELY",
+                "DERIV",
+                "PRE_SHP",
+                "PRE_PPL",
+                "POST_SHP",
+                "POST_PPL",
+                "SHP",
+                "SHP-OWN",
+                "PPLS",
+                "PPL",
+                "PPLX",
+                "PPLR",
+            ],
+        ),
+        create_literal("ResultCostType", ["CAPEX", "OPEX", "FLOW", "LC"]),
+        create_literal("TransportType", ["Ship", "Pipeline"]),
+        create_literal("OutputUnitType", ["USD/MWh", "USD/t"]),
     ]
 
     with open(os.path.dirname(__file__) + "/static.py", "w", encoding="utf-8") as file:
