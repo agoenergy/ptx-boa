@@ -210,8 +210,10 @@ def _load_parameter_dims() -> Dict[ParameterCodeType, dict]:
     df_parameters = _load_data(
         DATA_DIR_DIMS, name="dim_parameter", key_columns="parameter_code"
     )
-    df_parameters["dimensions"] = df_parameters["dimensions"].apply(
-        lambda x: x.split("/") if x else []
+    df_parameters = df_parameters.assign(
+        dimensions=df_parameters["dimensions"].apply(
+            lambda x: x.split("/") if x else []
+        )
     )
     return df_parameters
 
@@ -309,14 +311,26 @@ def _update_scenario_data_with_user_data(
     return scenario_data
 
 
-parameters = _load_parameter_dims()
-chains = _load_data(DATA_DIR_DIMS, name="chains", key_columns="chain")
-dimensions = {
-    dim: _load_data(DATA_DIR_DIMS, name=f"dim_{dim}")
-    for dim in ["country", "flow", "parameter", "process", "region"]
-}
-dimensions2 = {
-    "scenario": pd.DataFrame(
+def _load_dimensions():
+    dimensions = {}
+
+    dimensions["country"] = _load_data(
+        DATA_DIR_DIMS, name="dim_country", key_columns="country_name"
+    )  # TODO:by name
+    dimensions["region"] = _load_data(
+        DATA_DIR_DIMS, name="dim_region", key_columns="region_name"
+    )  # TODO:by name
+    dimensions["flow"] = _load_data(
+        DATA_DIR_DIMS, name="dim_flow", key_columns="flow_code"
+    )
+    dimensions["parameter"] = _load_data(
+        DATA_DIR_DIMS, name="dim_parameter", key_columns="parameter_code"
+    )
+    dimensions["process"] = _load_data(
+        DATA_DIR_DIMS, name="dim_process", key_columns="process_code"
+    )
+
+    dimensions["scenario"] = pd.DataFrame(
         [
             {
                 "year": year,
@@ -328,16 +342,16 @@ dimensions2 = {
                 YearCodeType.__args__, ParameterRangeCodeType.__args__
             )
         ]
-    ).set_index("scenario_name"),
-    "secproc_co2": pd.concat(
+    ).set_index("scenario_name")
+    dimensions["secproc_co2"] = pd.concat(
         [
             dimensions["process"]
             .loc[dimensions["process"]["process_class"] == "PROV_C"]
             .copy(),
             pd.DataFrame([{"process_name": "Specific costs"}]),
         ]
-    ).set_index("process_name", drop=False),
-    "secproc_water": pd.concat(
+    ).set_index("process_name", drop=False)
+    dimensions["secproc_water"] = pd.concat(
         [
             (
                 dimensions["process"]
@@ -346,30 +360,26 @@ dimensions2 = {
             ),
             pd.DataFrame([{"process_name": "Specific costs"}]),
         ]
-    ).set_index("process_name", drop=False),
-    "chain": chains.copy(),
-    "res_gen": (
+    ).set_index("process_name", drop=False)
+    dimensions["chain"] = _load_data(DATA_DIR_DIMS, name="chains", key_columns="chain")
+    dimensions["res_gen"] = (
         dimensions["process"]
         .loc[dimensions["process"]["process_class"] == "RE-GEN"]
         .copy()
         .set_index("process_name", drop=False)
-    ),
-    "region": dimensions["region"].set_index("region_name", drop=False),
-    "country": (
-        dimensions["country"]
-        .loc[dimensions["country"]["is_import"]]
-        .set_index("country_name", drop=False)
-    ),
-    "transport": pd.DataFrame(
+    )
+
+    dimensions["transport"] = pd.DataFrame(
         [{"transport_name": "Ship"}, {"transport_name": "Pipeline"}]
-    ).set_index("transport_name", drop=False),
-    "output_unit": pd.DataFrame(
+    ).set_index("transport_name", drop=False)
+    dimensions["output_unit"] = pd.DataFrame(
         [{"unit_name": "USD/MWh"}, {"unit_name": "USD/t"}]
-    ).set_index("unit_name", drop=False),
-    "process": dimensions["process"].set_index("process_code", drop=False),
-    "flow": dimensions["flow"].set_index("flow_code", drop=False),
-    "parameter": dimensions["parameter"].set_index("parameter_code", drop=False),
-}
+    ).set_index("unit_name", drop=False)
+
+    return dimensions
+
+
+dimensions = _load_dimensions()
 
 
 class DataHandler:
@@ -379,6 +389,8 @@ class DataHandler:
     Instances of this class can be used to retrieve data from a single scenario and
     combine it with set user data.
     """
+
+    _parameters = _load_parameter_dims()
 
     def __init__(
         self,
@@ -625,7 +637,7 @@ class DataHandler:
             empty_result = False
         except KeyError:
             empty_result = True
-        if empty_result and parameters.at[parameter_code, "has_global_default"]:
+        if empty_result and self._parameters.at[parameter_code, "has_global_default"]:
             # make query with empty "source_region_code"
             logger.debug(
                 f"searching global default, did not find entry for key '{key}'"
@@ -677,7 +689,7 @@ class DataHandler:
             "source_region_code",
             "target_country_code",
         ]:
-            if k in parameters.at[params["parameter_code"], "dimensions"]:
+            if k in self._parameters.at[params["parameter_code"], "dimensions"]:
                 selector += f"{KEY_SEPARATOR}{params[k]}"
             else:
                 selector += KEY_SEPARATOR
@@ -700,7 +712,7 @@ class DataHandler:
         kwargs :
             keyword arguments passed to `self.get_parameter_value()`
         """
-        required_param_names = parameters.at[parameter_code, "dimensions"]
+        required_param_names = self._parameters.at[parameter_code, "dimensions"]
 
         for p in required_param_names:
             required_value = kwargs.pop(p)
@@ -714,7 +726,7 @@ class DataHandler:
     @staticmethod
     def get_dimension(dim: DimensionCodeType) -> pd.DataFrame:
         """Delegate get_dimension to underlying data class."""
-        return dimensions2[dim]
+        return dimensions[dim]
 
     def get_calculation_data(
         self,
