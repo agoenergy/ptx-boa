@@ -75,46 +75,6 @@ DATA_DIR_DIMS = Path(__file__).parent.resolve() / "data"
 KEY_SEPARATOR = ","
 
 
-@cache
-def _load_data(
-    data_dir: str | Path, name: str, key_columns: str | Tuple = None
-) -> pd.DataFrame:
-    filepath = Path(data_dir) / f"{name}.csv"
-    df = pd.read_csv(
-        filepath,
-        # need to define custom na values due to Alpha2 code of Namibia
-        na_values={
-            "N/A",
-            "n/a",
-            "NULL",
-            "null",
-            "NaN",
-            "-NaN",
-            "nan",
-            "-nan",
-            "",
-            "None",
-        },
-        keep_default_na=False,
-    ).drop(columns="key", errors="ignore")
-    # numerical columns should never be empty, dimension columns
-    # maybe empty and will be filled with ""
-    df = df.fillna("")
-
-    # set index
-    if key_columns:
-        if isinstance(key_columns, str):
-            key_columns = [key_columns]
-        key_columns = list(key_columns)
-        df = df.assign(key=df[key_columns].agg(KEY_SEPARATOR.join, axis=1)).set_index(
-            "key"
-        )
-        if not df.index.unique:
-            raise ValueError("duplicate keys in data")
-
-    return df
-
-
 def _get_transport_distances(
     source_region_code: SourceRegionCodeType,
     target_country_code: TargetCountryCodeType,
@@ -205,110 +165,44 @@ def _filter_chain_processes(
     return result_main, result_transport
 
 
-def _load_parameter_dims() -> Dict[ParameterCodeType, dict]:
-    # create class instances for parameters
-    df_parameters = _load_data(
-        DATA_DIR_DIMS, name="dim_parameter", key_columns="parameter_code"
-    )
-    df_parameters = df_parameters.assign(
-        dimensions=df_parameters["dimensions"].apply(
-            lambda x: x.split("/") if x else []
-        )
-    )
-    return df_parameters
-
-
-def _map_names_and_codes(
-    scenario_data: pd.DataFrame,
-    mapping_direction: Literal["code_to_name", "name_to_code"],
+@cache
+def _load_data(
+    data_dir: str | Path, name: str, key_columns: str | Tuple = None
 ) -> pd.DataFrame:
-    """
-    Map codes in scenario data to long names and vice versa.
+    filepath = Path(data_dir) / f"{name}.csv"
+    df = pd.read_csv(
+        filepath,
+        # need to define custom na values due to Alpha2 code of Namibia
+        na_values={
+            "N/A",
+            "n/a",
+            "NULL",
+            "null",
+            "NaN",
+            "-NaN",
+            "nan",
+            "-nan",
+            "",
+            "None",
+        },
+        keep_default_na=False,
+    ).drop(columns="key", errors="ignore")
+    # numerical columns should never be empty, dimension columns
+    # maybe empty and will be filled with ""
+    df = df.fillna("")
 
-    Mapping is done for data points in the dimensions "parameter", "process",
-    "flow", "region", and "country".
-
-    Parameters
-    ----------
-    scenario_data : pd.DataFrame
-    mapping_direction : str in {"code_to_name", "name_to_code"}
-
-
-    Returns
-    -------
-    : pd.DataFrame
-        Same size as input `scenario_data` but with replaced names/codes
-        as a copy of the original data.
-
-    Raises
-    ------
-    ValueError
-        on invalid `mapping_direction` arguments
-    """
-    if mapping_direction not in ["code_to_name", "name_to_code"]:
-        raise ValueError(
-            "mapping direction needs to be 'name_to_code' or 'code_to_name'"
+    # set index
+    if key_columns:
+        if isinstance(key_columns, str):
+            key_columns = [key_columns]
+        key_columns = list(key_columns)
+        df = df.assign(key=df[key_columns].agg(KEY_SEPARATOR.join, axis=1)).set_index(
+            "key"
         )
-    in_type = mapping_direction.split("_")[0]
-    out_type = mapping_direction.split("_")[-1]
+        if not df.index.unique:
+            raise ValueError("duplicate keys in data")
 
-    for dim in ["parameter", "process", "flow", "region", "country"]:
-        mapping = pd.Series(
-            dimensions[dim][f"{dim}_{out_type}"].to_list(),
-            index=dimensions[dim][f"{dim}_{in_type}"],
-        )
-        if dim not in ["region", "country"]:
-            column_name = f"{dim}_code"
-        elif dim == "region":
-            column_name = "source_region_code"
-        elif dim == "country":
-            column_name = "target_country_code"
-        scenario_data[column_name] = scenario_data[column_name].map(
-            mapping, na_action="ignore"
-        )
-    scenario_data = scenario_data.replace(np.nan, "")
-    return scenario_data
-
-
-def _update_scenario_data_with_user_data(
-    scenario_data: pd.DataFrame, user_data: pd.DataFrame
-):
-    """
-    Update scenario_data with custom user_data.
-
-    Parameters
-    ----------
-    scenario_data : pd.DataFrame
-        the (unmodfied) scenario data
-    user_data : pd.DataFrame
-        user data containing only rows of scenario_data that have been modified.
-        The ids in the received user data from frontend are long names and need to
-        be mapped to codes first.
-    """
-    user_data = user_data.copy().fillna("")
-    scenario_data = scenario_data.copy()
-    # user data from frontend only has columns
-    # "source_region_code", "process_code", "value" and "parameter_code", and
-    # "flow_code" we need to replace missing column "target_country_code"
-    user_data["target_country_code"] = ""
-
-    # user data comes with long names from frontend
-    user_data = _map_names_and_codes(user_data, mapping_direction="name_to_code")
-
-    # we only can user DataFrame.update with matching index values
-    # but we do not want tu use "key"
-    for row in user_data.itertuples():
-        selector = (
-            (scenario_data["parameter_code"] == row.parameter_code)
-            & (scenario_data["process_code"] == row.process_code)
-            & (scenario_data["flow_code"] == row.flow_code)
-            & (scenario_data["source_region_code"] == row.source_region_code)
-            & (scenario_data["target_country_code"] == row.target_country_code)
-        )
-        if len(scenario_data.loc[selector]) == 0:
-            raise ValueError(f"could not replace user_parameterin scenario_data\n{row}")
-        scenario_data.loc[selector, "value"] = row.value
-    return scenario_data
+    return df
 
 
 def _load_dimensions():
@@ -326,8 +220,19 @@ def _load_dimensions():
     dimensions["parameter"] = _load_data(
         DATA_DIR_DIMS, name="dim_parameter", key_columns="parameter_code"
     )
+    dimensions["parameter"] = dimensions["parameter"].assign(
+        dimensions=dimensions["parameter"]["dimensions"].apply(
+            lambda x: x.split("/") if x else []
+        )
+    )
+
     dimensions["process"] = _load_data(
         DATA_DIR_DIMS, name="dim_process", key_columns="process_code"
+    )
+    dimensions["process"] = dimensions["process"].assign(
+        secondary_flows=dimensions["process"]["secondary_flows"].apply(
+            lambda x: x.split("/") if x else []
+        )
     )
 
     dimensions["scenario"] = pd.DataFrame(
@@ -350,7 +255,9 @@ def _load_dimensions():
             .copy(),
             pd.DataFrame([{"process_name": "Specific costs"}]),
         ]
-    ).set_index("process_name", drop=False)
+    ).set_index(
+        "process_name", drop=False
+    )  # TODO: by name
     dimensions["secproc_water"] = pd.concat(
         [
             (
@@ -360,26 +267,25 @@ def _load_dimensions():
             ),
             pd.DataFrame([{"process_name": "Specific costs"}]),
         ]
-    ).set_index("process_name", drop=False)
+    ).set_index(
+        "process_name", drop=False
+    )  # TODO: by name
     dimensions["chain"] = _load_data(DATA_DIR_DIMS, name="chains", key_columns="chain")
     dimensions["res_gen"] = (
         dimensions["process"]
         .loc[dimensions["process"]["process_class"] == "RE-GEN"]
         .copy()
         .set_index("process_name", drop=False)
-    )
+    )  # TODO: by name
 
     dimensions["transport"] = pd.DataFrame(
-        [{"transport_name": "Ship"}, {"transport_name": "Pipeline"}]
+        {"transport_name": TransportType.__args__}
     ).set_index("transport_name", drop=False)
     dimensions["output_unit"] = pd.DataFrame(
-        [{"unit_name": "USD/MWh"}, {"unit_name": "USD/t"}]
+        {"unit_name": OutputUnitType.__args__}
     ).set_index("unit_name", drop=False)
 
     return dimensions
-
-
-dimensions = _load_dimensions()
 
 
 class DataHandler:
@@ -390,7 +296,105 @@ class DataHandler:
     combine it with set user data.
     """
 
-    _parameters = _load_parameter_dims()
+    dimensions = _load_dimensions()
+
+    @classmethod
+    def _map_names_and_codes(
+        cls,
+        scenario_data: pd.DataFrame,
+        mapping_direction: Literal["code_to_name", "name_to_code"],
+    ) -> pd.DataFrame:
+        """
+        Map codes in scenario data to long names and vice versa.
+
+        Mapping is done for data points in the dimensions "parameter", "process",
+        "flow", "region", and "country".
+
+        Parameters
+        ----------
+        scenario_data : pd.DataFrame
+        mapping_direction : str in {"code_to_name", "name_to_code"}
+
+
+        Returns
+        -------
+        : pd.DataFrame
+            Same size as input `scenario_data` but with replaced names/codes
+            as a copy of the original data.
+
+        Raises
+        ------
+        ValueError
+            on invalid `mapping_direction` arguments
+        """
+        if mapping_direction not in ["code_to_name", "name_to_code"]:
+            raise ValueError(
+                "mapping direction needs to be 'name_to_code' or 'code_to_name'"
+            )
+        in_type = mapping_direction.split("_")[0]
+        out_type = mapping_direction.split("_")[-1]
+
+        for dim in ["parameter", "process", "flow", "region", "country"]:
+            mapping = pd.Series(
+                cls.dimensions[dim][f"{dim}_{out_type}"].to_list(),
+                index=cls.dimensions[dim][f"{dim}_{in_type}"],
+            )
+            if dim not in ["region", "country"]:
+                column_name = f"{dim}_code"
+            elif dim == "region":
+                column_name = "source_region_code"
+            elif dim == "country":
+                column_name = "target_country_code"
+            scenario_data[column_name] = scenario_data[column_name].map(
+                mapping, na_action="ignore"
+            )
+        scenario_data = scenario_data.replace(np.nan, "")
+        return scenario_data
+
+    @classmethod
+    def _update_scenario_data_with_user_data(
+        cls, scenario_data: pd.DataFrame, user_data: pd.DataFrame
+    ):
+        """
+        Update scenario_data with custom user_data.
+
+        Parameters
+        ----------
+        scenario_data : pd.DataFrame
+            the (unmodfied) scenario data
+        user_data : pd.DataFrame
+            user data containing only rows of scenario_data that have been modified.
+            The ids in the received user data from frontend are long names and need to
+            be mapped to codes first.
+        """
+        user_data = user_data.copy().fillna("")
+        scenario_data = scenario_data.copy()
+        # user data from frontend only has columns
+        # "source_region_code", "process_code", "value" and "parameter_code", and
+        # "flow_code" we need to replace missing column "target_country_code"
+        user_data["target_country_code"] = ""
+
+        # user data comes with long names from frontend
+        user_data = cls._map_names_and_codes(
+            user_data, mapping_direction="name_to_code"
+        )
+
+        # we only can user DataFrame.update with matching index values
+        # but we do not want tu use "key"
+        for row in user_data.itertuples():
+            selector = (
+                (scenario_data["parameter_code"] == row.parameter_code)
+                & (scenario_data["process_code"] == row.process_code)
+                & (scenario_data["flow_code"] == row.flow_code)
+                & (scenario_data["source_region_code"] == row.source_region_code)
+                & (scenario_data["target_country_code"] == row.target_country_code)
+            )
+            if len(scenario_data.loc[selector]) == 0:
+                raise ValueError(
+                    f"could not replace user_parameterin scenario_data\n{row}"
+                )
+            scenario_data.loc[selector, "value"] = row.value
+        return scenario_data
 
     def __init__(
         self,
@@ -438,7 +442,7 @@ class DataHandler:
         ).copy()
 
         if user_data is not None:
-            self.scenario_data = _update_scenario_data_with_user_data(
+            self.scenario_data = self._update_scenario_data_with_user_data(
                 self.scenario_data, user_data
             )
 
@@ -462,7 +466,7 @@ class DataHandler:
         """
         input_data = self.scenario_data
         if long_names:
-            input_data = _map_names_and_codes(
+            input_data = self._map_names_and_codes(
                 input_data, mapping_direction="code_to_name"
             )
         return input_data
@@ -637,7 +641,10 @@ class DataHandler:
             empty_result = False
         except KeyError:
             empty_result = True
-        if empty_result and self._parameters.at[parameter_code, "has_global_default"]:
+        if (
+            empty_result
+            and self.dimensions["parameter"].at[parameter_code, "has_global_default"]
+        ):
             # make query with empty "source_region_code"
             logger.debug(
                 f"searching global default, did not find entry for key '{key}'"
@@ -689,7 +696,12 @@ class DataHandler:
             "source_region_code",
             "target_country_code",
         ]:
-            if k in self._parameters.at[params["parameter_code"], "dimensions"]:
+            if (
+                k
+                in self.dimensions["parameter"].at[
+                    params["parameter_code"], "dimensions"
+                ]
+            ):
                 selector += f"{KEY_SEPARATOR}{params[k]}"
             else:
                 selector += KEY_SEPARATOR
@@ -712,7 +724,9 @@ class DataHandler:
         kwargs :
             keyword arguments passed to `self.get_parameter_value()`
         """
-        required_param_names = self._parameters.at[parameter_code, "dimensions"]
+        required_param_names = self.dimensions["parameter"].at[
+            parameter_code, "dimensions"
+        ]
 
         for p in required_param_names:
             required_value = kwargs.pop(p)
@@ -723,10 +737,10 @@ class DataHandler:
                     f"Got: {kwargs}"
                 )
 
-    @staticmethod
-    def get_dimension(dim: DimensionCodeType) -> pd.DataFrame:
+    @classmethod
+    def get_dimension(cls, dim: DimensionCodeType) -> pd.DataFrame:
         """Delegate get_dimension to underlying data class."""
-        return dimensions[dim]
+        return cls.dimensions[dim]
 
     def get_calculation_data(
         self,
@@ -768,7 +782,7 @@ class DataHandler:
 
         def flow_conv_params(process_code: ProcessCodeType):
             result = {}
-            flows = df_processes.loc[process_code, "secondary_flows"].split("/")
+            flows = df_processes.loc[process_code, "secondary_flows"]
             flows = [x.strip() for x in flows if x.strip()]
             for flow_code in flows:
                 conv = get_parameter_value_w_default(
