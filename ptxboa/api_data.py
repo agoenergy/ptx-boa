@@ -165,9 +165,19 @@ def _filter_chain_processes(
     return result_main, result_transport
 
 
+def _assign_key(df: pd.DataFrame, key_columns: str | List[str]) -> pd.DataFrame:
+    if isinstance(key_columns, str):
+        key_columns = [key_columns]
+    key_columns = list(key_columns)  # in case we got tuple
+    df = df.assign(key=df[key_columns].agg(KEY_SEPARATOR.join, axis=1)).set_index("key")
+    if not df.index.unique:
+        raise ValueError("duplicate keys in data")
+    return df
+
+
 @cache
 def _load_data(
-    data_dir: str | Path, name: str, key_columns: str | Tuple = None
+    data_dir: str | Path, name: str, key_columns: str | Tuple[str] = None
 ) -> pd.DataFrame:
     filepath = Path(data_dir) / f"{name}.csv"
     df = pd.read_csv(
@@ -193,14 +203,7 @@ def _load_data(
 
     # set index
     if key_columns:
-        if isinstance(key_columns, str):
-            key_columns = [key_columns]
-        key_columns = list(key_columns)
-        df = df.assign(key=df[key_columns].agg(KEY_SEPARATOR.join, axis=1)).set_index(
-            "key"
-        )
-        if not df.index.unique:
-            raise ValueError("duplicate keys in data")
+        df = _assign_key(df, key_columns)
 
     return df
 
@@ -368,32 +371,30 @@ class DataHandler:
             be mapped to codes first.
         """
         user_data = user_data.copy().fillna("")
-        scenario_data = scenario_data.copy()
         # user data from frontend only has columns
         # "source_region_code", "process_code", "value" and "parameter_code", and
         # "flow_code" we need to replace missing column "target_country_code"
-        user_data["target_country_code"] = ""
-
+        user_data = user_data.assign(target_country_code="")
         # user data comes with long names from frontend
         user_data = cls._map_names_and_codes(
             user_data, mapping_direction="name_to_code"
         )
+        user_data = _assign_key(
+            user_data,
+            [
+                "parameter_code",
+                "process_code",
+                "flow_code",
+                "source_region_code",
+                "target_country_code",
+            ],
+        )
+        scenario_data = scenario_data.copy()
 
         # we only can user DataFrame.update with matching index values
-        # but we do not want tu use "key"
-        for row in user_data.itertuples():
-            selector = (
-                (scenario_data["parameter_code"] == row.parameter_code)
-                & (scenario_data["process_code"] == row.process_code)
-                & (scenario_data["flow_code"] == row.flow_code)
-                & (scenario_data["source_region_code"] == row.source_region_code)
-                & (scenario_data["target_country_code"] == row.target_country_code)
-            )
-            if len(scenario_data.loc[selector]) == 0:
-                raise ValueError(
-                    f"could not replace user_parameterin scenario_data\n{row}"
-                )
-            scenario_data.loc[selector, "value"] = row.value
+        for key, value in user_data["value"].items():
+            scenario_data.at[key, "value"] = value
+
         return scenario_data
 
     def __init__(
