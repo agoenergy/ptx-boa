@@ -10,8 +10,6 @@ from typing import Any, Dict, List, Literal, Tuple
 import numpy as np
 import pandas as pd
 
-from ptxboa.utils import filter_chain_processes, get_transport_distances
-
 from .static import (
     ChainNameType,
     DimensionType,
@@ -21,6 +19,7 @@ from .static import (
     ParameterNameType,
     ParameterRangeValues,
     ProcessCodeType,
+    ProcessStepType,
     ScenarioType,
     ScenarioValues,
     SourceRegionCodeType,
@@ -44,6 +43,97 @@ logger = logging.getLogger(__name__)
 DATA_DIR_DEFAULT = Path(__file__).parent.resolve() / "data"
 DATA_DIR_DIMS = Path(__file__).parent.resolve() / "static"
 KEY_SEPARATOR = ","
+
+
+def _get_transport_distances(
+    source_region_code: SourceRegionCodeType,
+    target_country_code: TargetCountryCodeType,
+    use_ship: bool,
+    ship_own_fuel: bool,
+    dist_ship: float,
+    dist_pipeline: float,
+    seashare_pipeline: float,
+    existing_pipeline_cap: float,
+) -> Dict[ProcessStepType, float]:
+    dist_transp = {}
+    if source_region_code == target_country_code:
+        # no transport (only China)
+        pass
+    elif dist_pipeline and not use_ship:
+        # use pipeline if pipeline possible and ship not selected
+        if existing_pipeline_cap:
+            # use retrofitting
+            dist_transp["PPLX"] = dist_pipeline * seashare_pipeline
+            dist_transp["PPLR"] = dist_pipeline * (1 - seashare_pipeline)
+        else:
+            dist_transp["PPLS"] = dist_pipeline * seashare_pipeline
+            dist_transp["PPL"] = dist_pipeline * (1 - seashare_pipeline)
+    else:
+        # use ship
+        if ship_own_fuel:
+            dist_transp["SHP-OWN"] = dist_ship
+        else:
+            dist_transp["SHP"] = dist_ship
+
+    return dist_transp
+
+
+def _validate_process_chain(
+    DataHandler, process_codes: List[ProcessCodeType], final_flow_code: FlowCodeType
+) -> None:
+    df_processes = DataHandler.get_dimension("process")
+    flow_code = ""  # initial flow code
+    for process_code in process_codes:
+        process = df_processes.loc[process_code]
+        flow_code_in = process["main_flow_code_in"]
+        assert flow_code == flow_code_in
+        flow_code = process["main_flow_code_out"]
+    assert flow_code == final_flow_code
+
+
+def _filter_chain_processes(
+    DataHandler, chain: dict, transport_distances: Dict[ProcessStepType, float]
+) -> List[ProcessStepType]:
+    result_main = []
+    result_transport = []
+    for process_step in ["RES", "ELY", "DERIV"]:
+        process_code = chain[process_step]
+        if process_code:
+            result_main.append(process_step)
+    is_shipping = transport_distances.get("SHP") or transport_distances.get("SHP-OWN")
+    is_pipeline = (
+        transport_distances.get("PPLS")
+        or transport_distances.get("PPL")
+        or transport_distances.get("PPLX")
+        or transport_distances.get("PPLR")
+    )
+    if is_shipping:
+        if chain["PRE_SHP"]:  # not all have preprocessing
+            result_transport.append("PRE_SHP")
+    elif is_pipeline:
+        if chain["PRE_PPL"]:  # not all have preprocessing
+            result_transport.append("PRE_PPL")
+
+    for k, v in transport_distances.items():
+        if v:
+            assert chain[k]
+            result_transport.append(k)
+
+    if is_shipping:
+        if chain["POST_SHP"]:  # not all have preprocessing
+            result_transport.append("POST_SHP")
+    elif is_pipeline:
+        if chain["POST_PPL"]:  # not all have preprocessing
+            result_transport.append("POST_PPL")
+
+    # TODO: CHECK that flow chain is correct
+    _validate_process_chain(
+        DataHandler,
+        [chain[p] for p in result_main + result_transport],
+        chain["FLOW_OUT"],
+    )
+
+    return result_main, result_transport
 
 
 def _assign_key(df: pd.DataFrame, key_columns: str | List[str]) -> pd.DataFrame:
@@ -92,12 +182,13 @@ def _load_data(
 def _load_dimensions():
     dimensions = {}
 
+    # NOTE / TODO: some are indexed by name,some by code
     dimensions["country"] = _load_data(
         DATA_DIR_DIMS, name="dim_country", key_columns="country_name"
-    )  # TODO:by name
+    )
     dimensions["region"] = _load_data(
         DATA_DIR_DIMS, name="dim_region", key_columns="region_name"
-    )  # TODO:by name
+    )
     dimensions["flow"] = _load_data(
         DATA_DIR_DIMS, name="dim_flow", key_columns="flow_code"
     )
@@ -109,7 +200,6 @@ def _load_dimensions():
             lambda x: x.split("/") if x else []
         )
     )
-
     dimensions["process"] = _load_data(
         DATA_DIR_DIMS, name="dim_process", key_columns="process_code"
     )
@@ -118,7 +208,6 @@ def _load_dimensions():
             lambda x: x.split("/") if x else []
         )
     )
-
     dimensions["scenario"] = pd.DataFrame(
         [
             {
@@ -137,9 +226,7 @@ def _load_dimensions():
             .copy(),
             pd.DataFrame([{"process_name": "Specific costs"}]),
         ]
-    ).set_index(
-        "process_name", drop=False
-    )  # TODO: by name
+    ).set_index("process_name", drop=False)
     dimensions["secproc_water"] = pd.concat(
         [
             (
@@ -149,17 +236,14 @@ def _load_dimensions():
             ),
             pd.DataFrame([{"process_name": "Specific costs"}]),
         ]
-    ).set_index(
-        "process_name", drop=False
-    )  # TODO: by name
+    ).set_index("process_name", drop=False)
     dimensions["chain"] = _load_data(DATA_DIR_DIMS, name="chains", key_columns="chain")
     dimensions["res_gen"] = (
         dimensions["process"]
         .loc[dimensions["process"]["process_class"] == "RE-GEN"]
         .copy()
         .set_index("process_name", drop=False)
-    )  # TODO: by name
-
+    )
     dimensions["transport"] = pd.DataFrame(
         {"transport_name": TransportValues}
     ).set_index("transport_name", drop=False)
@@ -695,7 +779,7 @@ class DataHandler:
         if not use_ship and not chain["CAN_PIPELINE"]:
             use_ship = True
 
-        transport_distances = get_transport_distances(
+        transport_distances = _get_transport_distances(
             source_region_code,
             target_country_code,
             use_ship,
@@ -706,7 +790,7 @@ class DataHandler:
             existing_pipeline_cap,
         )
 
-        chain_steps_main, chain_steps_transport = filter_chain_processes(
+        chain_steps_main, chain_steps_transport = _filter_chain_processes(
             self, chain, transport_distances
         )
 
