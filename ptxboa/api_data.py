@@ -35,6 +35,7 @@ CalculateDataType = Dict[
         "transport_process_chain",
         "secondary_process",
         "parameter",
+        "context",
     ],
     Any,
 ]
@@ -761,6 +762,10 @@ class DataHandler:
             "transport_process_chain": [],
             "secondary_process": {},
             "parameter": {},
+            "context": {
+                "source_region_code": source_region_code,
+                "target_country_code": target_country_code,
+            },
         }
 
         result["parameter"]["WACC"] = get_parameter_value_w_default("WACC")

@@ -213,6 +213,7 @@ def test_get_calculation_data(ptxdata_dir, scenario, kwargs, request):
             return x
 
     assert rec_approx(data) == {
+        "context": {"source_region_code": "ARE", "target_country_code": "DEU"},
         "main_process_chain": [
             {
                 "EFF": 1,
