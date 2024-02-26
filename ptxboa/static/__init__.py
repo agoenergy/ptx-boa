@@ -733,6 +733,10 @@ ResGenValues = [
 ]
 
 
+ProcessCodeResType = Literal["PV-FIX", "PV-TRK", "RES-HYBR", "WIND-OFF", "WIND-ON"]
+ProcessCodeResValues = ["PV-FIX", "PV-TRK", "RES-HYBR", "WIND-OFF", "WIND-ON"]
+
+
 DimensionType = Literal[
     "scenario",
     "chain",

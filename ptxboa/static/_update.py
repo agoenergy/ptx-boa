@@ -101,6 +101,11 @@ def main():
             "process_name",
             "SELECT process_name from ptxboa_process where is_re_generation=1",
         ),
+        create_literal_from_query(
+            "ProcessCodeRes",
+            "process_code",
+            "SELECT process_code from ptxboa_process where is_re_generation=1",
+        ),
         create_literal(
             "Dimension",
             [

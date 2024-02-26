@@ -176,3 +176,123 @@ def test_get_parameter_value(
 def test_get_dimensions_parameter_code(dimension, parameter_name, expected_code):
     out_code = DataHandler.get_dimensions_parameter_code(dimension, parameter_name)
     assert out_code == expected_code
+
+
+@pytest.mark.parametrize(
+    "ptxdata_dir, scenario, kwargs",
+    [
+        [
+            "ptxdata_dir_static",
+            "2040 (medium)",
+            {
+                "source_region_code": "ARE",
+                "target_country_code": "DEU",
+                "chain_name": "Ammonia (AEL) + reconv. to H2",
+                "process_code_res": "PV-FIX",
+                "secondary_processes": {"H2O": "DESAL"},
+                "ship_own_fuel": False,
+                "use_ship": True,
+            },
+        ]
+    ],
+)
+def test_get_calculation_data(ptxdata_dir, scenario, kwargs, request):
+    ptxdata_dir = request.getfixturevalue(ptxdata_dir)
+    data_handler = DataHandler(data_dir=ptxdata_dir, scenario=scenario)
+    data = data_handler.get_calculation_data(**kwargs)
+    # recursively use pytest.approx
+
+    def rec_approx(x):
+        if isinstance(x, dict):
+            return {k: rec_approx(v) for k, v in x.items()}
+        elif isinstance(x, list):
+            return [rec_approx(v) for v in x]
+        elif isinstance(x, (int, float)):
+            return pytest.approx(x)
+        else:
+            return x
+
+    assert rec_approx(data) == {
+        "main_process_chain": [
+            {
+                "EFF": 1,
+                "FLH": 1662.0,
+                "LIFETIME": 20.0,
+                "CAPEX": 689.9185245680053,
+                "OPEX-F": 19.317718687904147,
+                "OPEX-O": 0,
+                "CONV": {},
+                "step": "RES",
+                "process_code": "PV-FIX",
+            },
+            {
+                "EFF": 0.715,
+                "FLH": 2779.7,
+                "LIFETIME": 20.0,
+                "CAPEX": 516.5359022558687,
+                "OPEX-F": 10.330718045117374,
+                "OPEX-O": 0,
+                "CONV": {"H2O-L": 0.3},
+                "step": "ELY",
+                "process_code": "AEL-EL",
+            },
+            {
+                "EFF": 0.819,
+                "FLH": 7752.95,
+                "LIFETIME": 30.0,
+                "CAPEX": 1316.719810985975,
+                "OPEX-F": 65.83599054929876,
+                "OPEX-O": 0,
+                "CONV": {"EL": 0.1419230769230769, "N2-G": 0.1598076923076923},
+                "step": "DERIV",
+                "process_code": "NH3SYN",
+            },
+        ],
+        "transport_process_chain": [
+            {
+                "DIST": 12441.9,
+                "EFF": 0.9885160879437337,
+                "OPEX-T": 3.23721292735082e-07,
+                "OPEX-O": 0.00042087134757,
+                "CONV": {"BFUEL-L": 5.343656103416341e-06},
+                "step": "SHP",
+                "process_code": "NH3-SB",
+            },
+            {
+                "EFF": 0.7466101694915254,
+                "FLH": 6657.599999999999,
+                "LIFETIME": 25.0,
+                "CAPEX": 411.4034862565861,
+                "OPEX-F": 12.342104587697584,
+                "OPEX-O": 0,
+                "CONV": {"EL": 0.0076699999999999},
+                "step": "POST_SHP",
+                "process_code": "NH3-REC",
+            },
+        ],
+        "secondary_process": {
+            "H2O": {
+                "EFF": 1.0,
+                "FLH": 7000,
+                "LIFETIME": 20.0,
+                "CAPEX": 0.0023667276243093,
+                "OPEX-F": 9.466910497237568e-05,
+                "OPEX-O": 0,
+                "CONV": {"EL": 0.003},
+                "process_code": "DESAL",
+            }
+        },
+        "parameter": {
+            "WACC": 0.055673211551852,
+            "STR-CF": 0.0482,
+            "CALOR": 33.33,
+            "SPECCOST": {
+                "BFUEL-L": 0.0027940534453652,
+                "CO2-G": 0.038577660276243,
+                "EL": 0.07,
+                "H2O-L": 0.0011904639950276,
+                "HEAT": 0.05,
+                "N2-G": 0.01,
+            },
+        },
+    }
