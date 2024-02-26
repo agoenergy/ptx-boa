@@ -6,26 +6,41 @@ import logging
 import pandas as pd
 
 from ptxboa.api_data import CalculateDataType, DataHandler
-from ptxboa.utils import annuity
 
 logger = logging.getLogger()
 
 
+def annuity(rate: float, periods: int, value: float) -> float:
+    """Calculate annuity.
+
+    Parameters
+    ----------
+    rate: float
+        interest rate per period
+    periods: int
+        number of periods
+    value: float
+        present value of an ordinary annuity
+
+    Returns
+    -------
+    : float
+        value of each payment
+
+    """
+    if rate == 0:
+        return value / periods
+    else:
+        return value * rate / (1 - (1 / (1 + rate) ** periods))
+
+
 class PtxCalc:
-    def __init__(self, data_handler: DataHandler):
-        self.data_handler = data_handler
 
-    def calculate(self, data: CalculateDataType) -> pd.DataFrame:
+    @staticmethod
+    def calculate(data: CalculateDataType) -> pd.DataFrame:
         """Calculate results."""
-        # get process codes for selected chain
-        df_processes = self.data_handler.get_dimension("process")
-        df_flows = self.data_handler.get_dimension("flow")
-
-        # some flows are grouped into their own output category (but not all)
-        # so we load the mapping from the data
-
-        # iterate over main chain, update the value in the main flow
-        # and accumulate result data from each process
+        df_processes = DataHandler.get_dimension("process")
+        df_flows = DataHandler.get_dimension("flow")
 
         # get general parameters
         parameters = data["parameter"]
@@ -35,9 +50,11 @@ class PtxCalc:
         # start main chain calculation
         main_output_value = 1  # start with normalized value of 1
 
+        # accumulate needed electric input
         sum_el = main_output_value
         results = []
 
+        # iterate over steps in chain
         for step_data in data["main_process_chain"] + data["transport_process_chain"]:
             process_step = step_data["step"]
             process_code = step_data["process_code"]
@@ -85,6 +102,7 @@ class PtxCalc:
                 results.append((result_process_type, process_code, "OPEX", opex))
 
                 if not (is_shipping_or_pre_post or is_pipeline_or_pre_post):
+                    # no storage factor in transport pre/post
                     results.append(
                         (
                             "Electricity and H2 storage",
@@ -117,13 +135,14 @@ class PtxCalc:
                             opex * storage_factor,
                         )
                     )
-
+            # create flows for process step
             for flow_code, conv in step_data["CONV"].items():
                 flow_value = main_output_value * conv
 
                 sec_process_data = data["secondary_process"].get(flow_code)
 
                 if sec_process_data:
+                    # use secondary process
                     sec_process_code = sec_process_data["process_code"]
                     sec_result_process_type = df_processes.at[
                         sec_process_code, "result_process_type"
@@ -151,7 +170,7 @@ class PtxCalc:
                             (
                                 "Electricity and H2 storage",
                                 sec_process_code,
-                                "OPEX",  # NOTE: in old app,storage is always OPEX
+                                "OPEX",  # NOTE: in old app, storage is always OPEX
                                 capex_ann * storage_factor,
                             )
                         )
@@ -191,12 +210,13 @@ class PtxCalc:
                                 (
                                     "Electricity and H2 storage",
                                     sec_process_code,
-                                    "OPEX",  # NOTE: in old app,storage is always OPEX
+                                    "OPEX",  # NOTE: in old app, storage is always OPEX
                                     sec_flow_cost * storage_factor,
                                 )
                             )
 
                 else:
+                    # use market
                     speccost = parameters["SPECCOST"][flow_code]
                     if flow_code == "EL":
                         sum_el += flow_value
@@ -220,19 +240,18 @@ class PtxCalc:
                             (
                                 "Electricity and H2 storage",
                                 process_code,
-                                "OPEX",  # NOTE: in old app,storage is always OPEX
+                                "OPEX",  # NOTE: in old app, storage is always OPEX
                                 flow_cost * storage_factor,
                             )
                         )
 
-        # add additional storage cost
-
         # convert to DataFrame
-        # TODO: fist one should be renamed to result_process_type
         dim_columns = ["process_type", "process_subtype", "cost_type"]
         results = pd.DataFrame(results, columns=dim_columns + ["values"])
 
-        # normalization
+        # normalization:
+        # scale so that we star twith 1 EL input,
+        # rescale so that we have 1 unit output
         norm_factor = sum_el / main_output_value
         results["values"] = results["values"] * norm_factor
 

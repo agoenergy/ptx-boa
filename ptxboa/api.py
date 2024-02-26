@@ -7,46 +7,30 @@ import logging
 import pandas as pd
 
 from .api_calc import PtxCalc
-from .api_data import DATA_DIR_DEFAULT, DataHandler
-from .data.static import (
+from .api_data import DataHandler
+from .static import (
     ChainNameType,
-    DimensionCodeType,
+    DimensionType,
     OutputUnitType,
     ResGenType,
-    ResultCostType,
-    ResultProcessType,
-    ScenarioCodeType,
+    ScenarioType,
     SecProcCO2Type,
     SecProcH2OType,
     SourceRegionNameType,
     TargetCountryNameType,
     TransportType,
+    TransportValues,
 )
 
 logger = logging.getLogger()
 
-RESULT_COST_TYPES = list(ResultCostType.__args__)
-RESULT_PROCESS_TYPES = list(ResultProcessType.__args__)
-
 
 class PtxboaAPI:
-    """Singleton class for data and calculation api."""
-
-    _inst = None
-
-    def __new__(cls, *args, **kwargs):
-        """Make sure class is only instantiated once."""
-        if not cls._inst:
-            cls._inst = super(PtxboaAPI, cls).__new__(cls, *args, **kwargs)
-        else:
-            logger.warning("Api should only be instantiated once")
-        return cls._inst
-
-    def __init__(self, data_dir: str = DATA_DIR_DEFAULT):
+    def __init__(self, data_dir: str = None):
         self.data_dir = data_dir
-        self._calc_counter = 0  # temporary counter for calls of calculate()
 
-    def get_dimension(self, dim: DimensionCodeType) -> pd.DataFrame:
+    @staticmethod
+    def get_dimension(dim: DimensionType) -> pd.DataFrame:
         """Return a dimension element to populate app dropdowns.
 
         Parameters
@@ -74,7 +58,7 @@ class PtxboaAPI:
 
     def get_input_data(
         self,
-        scenario: ScenarioCodeType,
+        scenario: ScenarioType,
         long_names: bool = True,
         user_data: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
@@ -116,7 +100,7 @@ class PtxboaAPI:
 
     def calculate(
         self,
-        scenario: ScenarioCodeType,
+        scenario: ScenarioType,
         secproc_co2: SecProcCO2Type,
         secproc_water: SecProcH2OType,
         chain: ChainNameType,
@@ -172,7 +156,7 @@ class PtxboaAPI:
         """
         data_handler = DataHandler(scenario, user_data)
 
-        if transport not in TransportType.__args__:
+        if transport not in TransportValues:
             logger.error(f"Invalid choice for transport: {transport}")
 
         data = data_handler.get_calculation_data(
@@ -206,7 +190,7 @@ class PtxboaAPI:
             ship_own_fuel=ship_own_fuel,
         )
 
-        result_df = PtxCalc(data_handler).calculate(data)
+        result_df = PtxCalc.calculate(data)
 
         # conversion to output unit
         if output_unit not in {"USD/MWh", "USD/t"}:

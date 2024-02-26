@@ -8,8 +8,8 @@ import numpy as np
 import pytest
 
 from ptxboa.api import PtxboaAPI
+from ptxboa.api_calc import annuity
 from ptxboa.api_data import DataHandler
-from ptxboa.utils import annuity
 
 logging.basicConfig(
     format="[%(asctime)s %(levelname)7s] %(message)s",

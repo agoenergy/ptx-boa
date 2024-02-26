@@ -6,6 +6,8 @@ import pandas as pd
 import pyodbc  # noqa
 import sqlalchemy as sa
 
+PYTHON_FILE = os.path.dirname(__file__) + "/__init__.py"
+
 
 def sql_to_df(query: str) -> pd.DataFrame:
     CS = (
@@ -20,7 +22,7 @@ def sql_to_df(query: str) -> pd.DataFrame:
 
 def create_literal(name: str, items: list) -> str:
     items = ", ".join(f'"{x}"' for x in items)
-    return f"{name} = Literal[{items}]"
+    return f"{name}Type = Literal[{items}]\n" f"{name}Values = [{items}]\n"
 
 
 def create_literal_from_query(name: str, column: str, query: str) -> str:
@@ -39,9 +41,9 @@ def main():
     literals = [
         '"""DO NOT EDIT (created by _update_static.py)."""',
         "from typing import Literal",
-        create_literal_from_db("YearCodeType", "year", "ptxboa_year"),
+        create_literal_from_db("Year", "year", "ptxboa_year"),
         create_literal_from_query(
-            "ParameterRangeCodeType",
+            "ParameterRange",
             "parameter_range",
             (
                 "select lower(parameter_range) as parameter_range "
@@ -49,28 +51,24 @@ def main():
             ),
         ),
         create_literal_from_db(
-            "SourceRegionCodeType", "region_code", "ptxboa_source_region"
+            "SourceRegionCode", "region_code", "ptxboa_source_region"
         ),
         create_literal_from_db(
-            "TargetCountryCodeType", "country_code", "ptxboa_target_country"
+            "TargetCountryCode", "country_code", "ptxboa_target_country"
         ),
         create_literal_from_db(
-            "SourceRegionNameType", "region_name", "ptxboa_source_region"
+            "SourceRegionName", "region_name", "ptxboa_source_region"
         ),
         create_literal_from_db(
-            "TargetCountryNameType", "country_name", "ptxboa_target_country"
+            "TargetCountryName", "country_name", "ptxboa_target_country"
         ),
-        create_literal_from_db("ProcessCodeType", "process_code", "ptxboa_process"),
-        create_literal_from_db("FlowCodeType", "flow_code", "ptxboa_flow"),
-        create_literal_from_db(
-            "ParameterCodeType", "parameter_code", "ptxboa_parameter"
-        ),
-        create_literal_from_db(
-            "ParameterNameType", "parameter_name", "ptxboa_parameter"
-        ),
-        create_literal_from_db("ChainNameType", "chain", "ptxboa_chains"),
+        create_literal_from_db("ProcessCode", "process_code", "ptxboa_process"),
+        create_literal_from_db("FlowCode", "flow_code", "ptxboa_flow"),
+        create_literal_from_db("ParameterCode", "parameter_code", "ptxboa_parameter"),
+        create_literal_from_db("ParameterName", "parameter_name", "ptxboa_parameter"),
+        create_literal_from_db("ChainName", "chain", "ptxboa_chains"),
         create_literal_from_query(
-            "ScenarioCodeType",
+            "Scenario",
             "scenario",
             (
                 "select year + ' (' + lower(parameter_range) + ')' as scenario "
@@ -78,12 +76,12 @@ def main():
             ),
         ),
         create_literal_from_query(
-            "ResultProcessType",
+            "ResultClass",
             "result_process_type",
             "SELECT distinct result_process_type FROM ptxboa_process_class",
         ),
         create_literal_from_query(
-            "SecProcCO2Type",
+            "SecProcCO2",
             "process_name",
             (
                 "SELECT process_name from ptxboa_process where "
@@ -91,7 +89,7 @@ def main():
             ),
         ),
         create_literal_from_query(
-            "SecProcH2OType",
+            "SecProcH2O",
             "process_name",
             (
                 "SELECT process_name from ptxboa_process where "
@@ -99,12 +97,12 @@ def main():
             ),
         ),
         create_literal_from_query(
-            "ResGenType",
+            "ResGen",
             "process_name",
             "SELECT process_name from ptxboa_process where is_re_generation=1",
         ),
         create_literal(
-            "DimensionCodeType",
+            "Dimension",
             [
                 "scenario",
                 "chain",
@@ -120,7 +118,7 @@ def main():
             ],
         ),
         create_literal(
-            "ProcessStepType",
+            "ProcessStep",
             [
                 "ELY",
                 "DERIV",
@@ -136,12 +134,12 @@ def main():
                 "PPLR",
             ],
         ),
-        create_literal("ResultCostType", ["CAPEX", "OPEX", "FLOW", "LC"]),
-        create_literal("TransportType", ["Ship", "Pipeline"]),
-        create_literal("OutputUnitType", ["USD/MWh", "USD/t"]),
+        create_literal("ResultCost", ["CAPEX", "OPEX", "FLOW", "LC"]),
+        create_literal("Transport", ["Ship", "Pipeline"]),
+        create_literal("OutputUnit", ["USD/MWh", "USD/t"]),
     ]
 
-    with open(os.path.dirname(__file__) + "/static.py", "w", encoding="utf-8") as file:
+    with open(PYTHON_FILE, "w", encoding="utf-8") as file:
         for x in literals:
             file.write(x)
             file.write("\n\n")

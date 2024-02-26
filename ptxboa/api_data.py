@@ -12,20 +12,21 @@ import pandas as pd
 
 from ptxboa.utils import filter_chain_processes, get_transport_distances
 
-from .data.static import (
+from .static import (
     ChainNameType,
-    DimensionCodeType,
+    DimensionType,
     FlowCodeType,
-    OutputUnitType,
+    OutputUnitValues,
     ParameterCodeType,
     ParameterNameType,
-    ParameterRangeCodeType,
+    ParameterRangeValues,
     ProcessCodeType,
-    ScenarioCodeType,
+    ScenarioType,
+    ScenarioValues,
     SourceRegionCodeType,
     TargetCountryCodeType,
-    TransportType,
-    YearCodeType,
+    TransportValues,
+    YearValues,
 )
 
 CalculateDataType = Dict[
@@ -41,7 +42,7 @@ CalculateDataType = Dict[
 
 logger = logging.getLogger(__name__)
 DATA_DIR_DEFAULT = Path(__file__).parent.resolve() / "data"
-DATA_DIR_DIMS = Path(__file__).parent.resolve() / "data"
+DATA_DIR_DIMS = Path(__file__).parent.resolve() / "static"
 KEY_SEPARATOR = ","
 
 
@@ -126,9 +127,7 @@ def _load_dimensions():
                 "scenario_name": f"{year} ({parameter_range})",
                 "file_name": f"{year}_{parameter_range}",
             }
-            for year, parameter_range in product(
-                YearCodeType.__args__, ParameterRangeCodeType.__args__
-            )
+            for year, parameter_range in product(YearValues, ParameterRangeValues)
         ]
     ).set_index("scenario_name")
     dimensions["secproc_co2"] = pd.concat(
@@ -162,11 +161,11 @@ def _load_dimensions():
     )  # TODO: by name
 
     dimensions["transport"] = pd.DataFrame(
-        {"transport_name": TransportType.__args__}
+        {"transport_name": TransportValues}
     ).set_index("transport_name", drop=False)
-    dimensions["output_unit"] = pd.DataFrame(
-        {"unit_name": OutputUnitType.__args__}
-    ).set_index("unit_name", drop=False)
+    dimensions["output_unit"] = pd.DataFrame({"unit_name": OutputUnitValues}).set_index(
+        "unit_name", drop=False
+    )
 
     return dimensions
 
@@ -279,12 +278,12 @@ class DataHandler:
 
     def __init__(
         self,
-        scenario: ScenarioCodeType,
+        scenario: ScenarioType,
         user_data: None | pd.DataFrame = None,
         data_dir: str = None,
     ):
 
-        assert scenario in ScenarioCodeType.__args__
+        assert scenario in ScenarioValues
 
         self.scenario = scenario
         self.user_data = user_data
@@ -550,7 +549,7 @@ class DataHandler:
         return result
 
     @classmethod
-    def get_dimension(cls, dim: DimensionCodeType) -> pd.DataFrame:
+    def get_dimension(cls, dim: DimensionType) -> pd.DataFrame:
         """Delegate get_dimension to underlying data class."""
         return cls.dimensions[dim]
 
@@ -743,7 +742,7 @@ class DataHandler:
     @classmethod
     def get_dimensions_parameter_code(
         cls,
-        dimension: DimensionCodeType,
+        dimension: DimensionType,
         parameter_name: ParameterNameType,
     ) -> str:
         """
