@@ -5,6 +5,9 @@ Ammonia (PEM),PEM-EL,NH3SYN,,,,,NH3-SB,NH3-S,,,,,NH3-L,False
 Ammonia (PEM) + reconv. to H2,PEM-EL,NH3SYN,,,NH3-REC,NH3-REC,NH3-SB,NH3-S,,,,,H2-G,False
 Ammonia (SEOC),SOEC-EL,NH3SYN,,,,,NH3-SB,NH3-S,,,,,NH3-L,False
 Ammonia (SEOC) + reconv. to H2,SOEC-EL,NH3SYN,,,NH3-REC,NH3-REC,NH3-SB,NH3-S,,,,,H2-G,False
+FT e-fuels (AEL),AEL-EL,EFUELSYN,,,,,SYN-SB,SYN-S,,,,,CHX-L,False
+FT e-fuels (PEM),PEM-EL,EFUELSYN,,,,,SYN-SB,SYN-S,,,,,CHX-L,False
+FT e-fuels (SEOC),SOEC-EL,EFUELSYN,,,,,SYN-SB,SYN-S,,,,,CHX-L,False
 Green Iron (AEL),AEL-EL,DRI,,,,,DRI-SB,,,,,,DRI-S,False
 Green Iron (PEM),PEM-EL,DRI,,,,,DRI-SB,,,,,,DRI-S,False
 Green Iron (SEOC),SOEC-EL,DRI,,,,,DRI-SB,,,,,,DRI-S,False
@@ -23,6 +26,3 @@ Methane (SEOC) + reconv. to H2,SOEC-EL,CH4SYN,CH4-LIQ,CH4-COMP,REGASATR,ATR,CH4-
 Methanol (AEL),AEL-EL,CH3OHSYN,,,,,CH3OH-SB,CH3OH-S,,,,,CH3OH-L,False
 Methanol (PEM),PEM-EL,CH3OHSYN,,,,,CH3OH-SB,CH3OH-S,,,,,CH3OH-L,False
 Methanol (SEOC),SOEC-EL,CH3OHSYN,,,,,CH3OH-SB,CH3OH-S,,,,,CH3OH-L,False
-FT e-fuels (AEL),AEL-EL,EFUELSYN,,,,,SYN-SB,SYN-S,,,,,CHX-L,False
-FT e-fuels (PEM),PEM-EL,EFUELSYN,,,,,SYN-SB,SYN-S,,,,,CHX-L,False
-FT e-fuels (SEOC),SOEC-EL,EFUELSYN,,,,,SYN-SB,SYN-S,,,,,CHX-L,False
