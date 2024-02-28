@@ -109,7 +109,21 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
     n.add("Load", name="H2_demand", bus="H2", p_set=1)
 
     # add storage:
-    # TODO
+    def add_storage(n: Network, input_data: dict, name: str, bus: str) -> None:
+        n.add(
+            "StorageUnit",
+            name=name,
+            bus=bus,
+            capital_cost=input_data[name]["CAPEX_A"] + input_data[name]["OPEX_F"],
+            efficiency_store=input_data[name]["EFF"],
+            max_hours=24,
+            cyclic_state_of_charge=True,
+            marginal_cost=input_data[name]["OPEX_O"],
+            p_nom_extendable=True,
+        )
+
+    add_storage(n, input_data, "EL_STR", "ELEC")
+    add_storage(n, input_data, "H2_STR", "H2")
 
     # add RE profiles:
     # TODO
