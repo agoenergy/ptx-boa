@@ -159,4 +159,18 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
     # Calculate FLH for electrolyzer:
     result_data["ELY"] = {}
     result_data["ELY"]["FLH"] = get_flh(n, "ELY", "Link")
+
+    # calculate capacity factor for storage units:
+    # TODO: we use storage capacity per output, is this correct?
+    # TODO: or rather use p_nom per output?
+    result_data["EL_STR"] = {}
+    result_data["EL_STR"]["CAP_F"] = (
+        n.storage_units.at["EL_STR", "p_nom_opt"]
+        * n.storage_units.at["EL_STR", "max_hours"]
+    )
+    result_data["H2_STR"] = {}
+    result_data["H2_STR"]["CAP_F"] = (
+        n.storage_units.at["H2_STR", "p_nom_opt"]
+        * n.storage_units.at["H2_STR", "max_hours"]
+    )
     return result_data, n
