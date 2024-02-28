@@ -1,8 +1,33 @@
 # -*- coding: utf-8 -*-
 """API interface for FLH optimizer."""
+from typing import List, Optional
+
+import pandas as pd
 from pypsa import Network
 
 from flh_opt._types import OptInputDataType, OptOutputDataType
+
+
+def get_profiles(
+    source_region_code: str,
+    process_code: str,
+    re_location: str,
+    path: str = "tests/test_profiles",
+    selection: Optional[List[int]] = None,
+) -> pd.DataFrame:
+    """Get RES profiles from CSV file."""
+    filename = f"{path}/{source_region_code}_profiles.csv"
+    data_raw = pd.read_csv(filename)
+    data = data_raw.loc[
+        (data_raw["re_location"] == re_location)
+        & (data_raw["re_source"] == process_code),
+        ["time", "specific_generation"],
+    ].set_index("time")
+
+    if selection:
+        data = data.iloc[selection]
+
+    return data
 
 
 def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
