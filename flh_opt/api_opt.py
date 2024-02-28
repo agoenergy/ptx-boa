@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 """API interface for FLH optimizer."""
-from _types import OptInputDataType, OptOutputDataType
+from pypsa import Network
+
+from flh_opt._types import OptInputDataType, OptOutputDataType
 
 
-def optimize(input_data: OptInputDataType) -> OptOutputDataType:
+def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
     """Run flh optimization.
 
     Parameters
@@ -66,10 +68,62 @@ def optimize(input_data: OptInputDataType) -> OptOutputDataType:
             }
         }
     """
+    # initialize network object:
+    n = Network()
+
+    # add buses:
+    n.add("Bus", "ELEC")
+    n.add("Bus", "H2")
+
+    # add carriers:
+    n.add("Carrier", "Electricity")
+    n.add("Carrier", "H2")
+    n.add("Carrier", "H2O")
+
+    # add generators:
+    for g in input_data["RES"]:
+        n.add("Carrier", name=g["PROCESS_CODE"])
+        n.add(
+            "Generator",
+            name=g["PROCESS_CODE"],
+            bus="ELEC",
+            carrier=g["PROCESS_CODE"],
+            capital_cost=g["CAPEX_A"] + g["OPEX_F"],
+            marginal_cost=g["OPEX_O"],
+            p_nom_extendable=True,
+        )
+
+    # add links:
+    n.add(
+        "Link",
+        name="ELY",
+        bus0="ELEC",
+        bus1="H2",
+        efficiency=input_data["ELY"]["EFF"],
+        capital_cost=input_data["ELY"]["CAPEX_A"] + input_data["ELY"]["OPEX_F"],
+        marginal_cost=input_data["ELY"]["OPEX_O"],
+        p_nom_extendable=True,
+    )
+
+    # add loads:
+    n.add("Load", name="H2_demand", bus="H2", p_set=1)
+
+    # add storage:
+    # TODO
+
+    # add RE profiles:
+    # TODO
+
+    # solve optimization problem:
+    n.optimize(solver_name="highs")
+
+    # calculate results:
+    # TODO
+
     result_data = {  # OptOutputDataType
         "RES": [{"SHARE_FACTOR": 0.519, "FLH": 0.907, "PROCESS_CODE": "PV-FIX"}],
         "ELY": {"FLH": 0.548},
         "EL_STR": {"CAP_F": 0.112},
         "H2_STR": {"CAP_F": 0.698},
     }
-    return result_data
+    return result_data, n
