@@ -150,10 +150,17 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
 
     result_data = {}
     result_data["RES"] = []
+
+    # Calculate total RES capacity:
+    list_res = [item["PROCESS_CODE"] for item in input_data["RES"]]
+    cap_total = n.generators.loc[list_res, "p_nom_opt"].sum()
+
+    # Add results for each RES type:
     for g in input_data["RES"]:
         d = {}
         d["PROCESS_CODE"] = g["PROCESS_CODE"]
         d["FLH"] = get_flh(n, g["PROCESS_CODE"], "Generator")
+        d["SHARE_FACTOR"] = n.generators.at[g["PROCESS_CODE"], "p_nom_opt"] / cap_total
         result_data["RES"].append(d)
 
     # Calculate FLH for electrolyzer:
