@@ -132,14 +132,6 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
     n.optimize(solver_name="highs")
 
     # calculate results:
-    # TODO
-
-    result_data = {  # OptOutputDataType
-        "RES": [{"SHARE_FACTOR": 0.519, "FLH": 0.907, "PROCESS_CODE": "PV-FIX"}],
-        "ELY": {"FLH": 0.548},
-        "EL_STR": {"CAP_F": 0.112},
-        "H2_STR": {"CAP_F": 0.698},
-    }
 
     def get_flh(n: Network, g: str, component_type: str) -> float:
         if component_type == "Generator":
