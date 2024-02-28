@@ -156,6 +156,7 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
         d["FLH"] = get_flh(n, g["PROCESS_CODE"], "Generator")
         result_data["RES"].append(d)
 
+    # Calculate FLH for electrolyzer:
     result_data["ELY"] = {}
     result_data["ELY"]["FLH"] = get_flh(n, "ELY", "Link")
     return result_data, n
