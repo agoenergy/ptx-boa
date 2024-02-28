@@ -33,3 +33,6 @@ def test_api_opt():
     assert n.objective == pytest.approx(2.29136690647482)
 
     logging.info(res)
+
+    # write to netcdf file:
+    n.export_to_netcdf("tmp.nc")
