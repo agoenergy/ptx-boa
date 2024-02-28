@@ -126,4 +126,16 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
         "EL_STR": {"CAP_F": 0.112},
         "H2_STR": {"CAP_F": 0.698},
     }
+
+    def _get_flh(n: Network, g: str) -> float:
+        flh = n.generators.at[g, "p_nom_opt"] / n.generators_t["p"][g].sum()
+        return flh
+
+    result_data = {}
+    result_data["RES"] = []
+    for g in input_data["RES"]:
+        d = {}
+        d["FLH"] = _get_flh(n, g["PROCESS_CODE"])
+        result_data["RES"].append(d)
+
     return result_data, n
