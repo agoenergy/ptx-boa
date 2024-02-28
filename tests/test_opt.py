@@ -10,6 +10,19 @@ from flh_opt.api_opt import optimize
 logging.basicConfig(level=logging.INFO)
 
 
+# borrowed from test_api_data.py:
+# TODO: make this available globally
+def rec_approx(x):
+    if isinstance(x, dict):
+        return {k: rec_approx(v) for k, v in x.items()}
+    elif isinstance(x, list):
+        return [rec_approx(v) for v in x]
+    elif isinstance(x, (int, float)):
+        return pytest.approx(x)
+    else:
+        return x
+
+
 def test_api_opt():
     input_data = {
         "SOURCE_REGION_CODE": "GYE",
@@ -29,10 +42,21 @@ def test_api_opt():
 
     [res, n] = optimize(input_data)
 
+    # write to netcdf file:
+    n.export_to_netcdf("tmp.nc")
+
     # Test for expected objective value:
     assert n.objective == pytest.approx(2.29136690647482)
 
-    logging.info(res)
-
-    # write to netcdf file:
-    n.export_to_netcdf("tmp.nc")
+    assert rec_approx(res) == {
+        "RES": [
+            {
+                "SHARE_FACTOR": 1,
+                "FLH": 1,
+                "PROCESS_CODE": "PV-FIX",
+            }
+        ],
+        "ELY": {"FLH": 1},
+        "EL_STR": {"CAP_F": 0},
+        "H2_STR": {"CAP_F": 0},
+    }
