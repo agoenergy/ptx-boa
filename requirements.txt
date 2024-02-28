@@ -5,3 +5,4 @@ openpyxl~=3.1
 plotly~=5.16
 streamlit-antd-components
 XlsxWriter
+pypsa~=0.27
