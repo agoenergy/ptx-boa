@@ -5,7 +5,7 @@ import logging
 
 import pytest
 
-from flh_opt.api_opt import optimize
+from flh_opt.api_opt import get_profiles, optimize
 
 logging.basicConfig(level=logging.INFO)
 
@@ -60,3 +60,14 @@ def test_api_opt():
         "EL_STR": {"CAP_F": 0},
         "H2_STR": {"CAP_F": 0},
     }
+
+
+def test_profile_import():
+    res = get_profiles(
+        source_region_code="ARG",
+        process_code="PV-FIX",
+        re_location="PV-FIX",
+        selection=range(0, 48),
+    )
+    assert len(res) == 48
+    assert 11.756292238271236 == pytest.approx(res.sum())
