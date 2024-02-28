@@ -127,15 +127,21 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
         "H2_STR": {"CAP_F": 0.698},
     }
 
-    def _get_flh(n: Network, g: str) -> float:
-        flh = n.generators.at[g, "p_nom_opt"] / n.generators_t["p"][g].sum()
+    def get_flh(n: Network, g: str, component_type: str) -> float:
+        if component_type == "Generator":
+            flh = n.generators.at[g, "p_nom_opt"] / n.generators_t["p"][g].sum()
+        if component_type == "Link":
+            flh = n.links.at[g, "p_nom_opt"] / n.links_t["p0"][g].sum()
         return flh
 
     result_data = {}
     result_data["RES"] = []
     for g in input_data["RES"]:
         d = {}
-        d["FLH"] = _get_flh(n, g["PROCESS_CODE"])
+        d["PROCESS_CODE"] = g["PROCESS_CODE"]
+        d["FLH"] = get_flh(n, g["PROCESS_CODE"], "Generator")
         result_data["RES"].append(d)
 
+    result_data["ELY"] = {}
+    result_data["ELY"]["FLH"] = get_flh(n, "ELY", "Link")
     return result_data, n
