@@ -124,6 +124,7 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
         name="ELY",
         bus0="ELEC",
         bus1="H2",
+        carrier="H2",
         efficiency=input_data["ELY"]["EFF"],
         capital_cost=input_data["ELY"]["CAPEX_A"] + input_data["ELY"]["OPEX_F"],
         marginal_cost=input_data["ELY"]["OPEX_O"],
