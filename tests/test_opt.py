@@ -25,18 +25,18 @@ def rec_approx(x):
 
 def test_api_opt():
     input_data = {
-        "SOURCE_REGION_CODE": "GYE",
+        "SOURCE_REGION_CODE": "ARG",
         "RES": [
             {
-                "CAPEX_A": 0.826,
-                "OPEX_F": 0.209,
-                "OPEX_O": 0.025,
+                "CAPEX_A": 30,
+                "OPEX_F": 1,
+                "OPEX_O": 0.1,
                 "PROCESS_CODE": "PV-FIX",
             }
         ],
-        "ELY": {"EFF": 0.834, "CAPEX_A": 0.52, "OPEX_F": 0.131, "OPEX_O": 0.2},
-        "EL_STR": {"EFF": 0.544, "CAPEX_A": 0.385, "OPEX_F": 0.835, "OPEX_O": 0.501},
-        "H2_STR": {"EFF": 0.478, "CAPEX_A": 0.342, "OPEX_F": 0.764, "OPEX_O": 0.167},
+        "ELY": {"EFF": 0.75, "CAPEX_A": 25, "OPEX_F": 5, "OPEX_O": 0.1},
+        "EL_STR": {"EFF": 1, "CAPEX_A": 10, "OPEX_F": 1, "OPEX_O": 0.1},
+        "H2_STR": {"EFF": 1, "CAPEX_A": 10, "OPEX_F": 1, "OPEX_O": 0.1},
         "SPECCOST": {"H2O": 0.658},
     }
 
@@ -46,19 +46,19 @@ def test_api_opt():
     n.export_to_netcdf("tmp.nc")
 
     # Test for expected objective value:
-    assert n.objective == pytest.approx(2.29136690647482)
+    assert n.objective == pytest.approx(3046.20318251384)
 
     assert rec_approx(res) == {
         "RES": [
             {
                 "SHARE_FACTOR": 1,
-                "FLH": 1,
+                "FLH": 0.230310775525,
                 "PROCESS_CODE": "PV-FIX",
             }
         ],
-        "ELY": {"FLH": 1},
+        "ELY": {"FLH": 0.40971534364341405},
         "EL_STR": {"CAP_F": 0},
-        "H2_STR": {"CAP_F": 0},
+        "H2_STR": {"CAP_F": 34.57725460457206},
     }
 
 
