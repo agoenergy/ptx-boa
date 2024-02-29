@@ -23,8 +23,8 @@ def rec_approx(x):
         return x
 
 
-def test_api_opt():
-    input_data = {
+api_test_settings = [
+    {
         "SOURCE_REGION_CODE": "ARG",
         "RES": [
             {
@@ -38,7 +38,64 @@ def test_api_opt():
         "EL_STR": {"EFF": 1, "CAPEX_A": 10, "OPEX_F": 1, "OPEX_O": 0.1},
         "H2_STR": {"EFF": 1, "CAPEX_A": 10, "OPEX_F": 1, "OPEX_O": 0.1},
         "SPECCOST": {"H2O": 0.658},
-    }
+        "expected_output": {
+            "RES": [
+                {
+                    "SHARE_FACTOR": 1,
+                    "FLH": 0.230310775525,
+                    "PROCESS_CODE": "PV-FIX",
+                }
+            ],
+            "ELY": {"FLH": 0.40971534364341405},
+            "EL_STR": {"CAP_F": 0},
+            "H2_STR": {"CAP_F": 34.57725460457206},
+        },
+        "expected_ojective_value": 3046.20318251384,
+    },
+    {
+        "SOURCE_REGION_CODE": "ARG",
+        "RES": [
+            {
+                "CAPEX_A": 30,
+                "OPEX_F": 1,
+                "OPEX_O": 0.01,
+                "PROCESS_CODE": "PV-FIX",
+            },
+            {
+                "CAPEX_A": 30,
+                "OPEX_F": 1,
+                "OPEX_O": 0.02,
+                "PROCESS_CODE": "WIND-ON",
+            },
+        ],
+        "ELY": {"EFF": 0.75, "CAPEX_A": 25, "OPEX_F": 5, "OPEX_O": 0.1},
+        "EL_STR": {"EFF": 1, "CAPEX_A": 10, "OPEX_F": 1, "OPEX_O": 0.1},
+        "H2_STR": {"EFF": 1, "CAPEX_A": 10, "OPEX_F": 1, "OPEX_O": 0.1},
+        "SPECCOST": {"H2O": 0.658},
+        "expected_output": {
+            "RES": [
+                {
+                    "SHARE_FACTOR": 0.3580517435075871,
+                    "FLH": 0.21534125023157286,
+                    "PROCESS_CODE": "PV-FIX",
+                },
+                {
+                    "SHARE_FACTOR": 0.6419482564924128,
+                    "FLH": 0.11585990924307125,
+                    "PROCESS_CODE": "WIND-ON",
+                },
+            ],
+            "ELY": {"FLH": 0.8545957682852908},
+            "EL_STR": {"CAP_F": 0},
+            "H2_STR": {"CAP_F": 12.323994361813343},
+        },
+        "expected_ojective_value": 1756.5131745521187,
+    },
+]
+
+
+@pytest.mark.parametrize("input_data", api_test_settings)
+def test_api_opt(input_data):
 
     [res, n] = optimize(input_data)
 
@@ -46,20 +103,9 @@ def test_api_opt():
     n.export_to_netcdf("tmp.nc")
 
     # Test for expected objective value:
-    assert n.objective == pytest.approx(3046.20318251384)
+    assert n.objective == pytest.approx(input_data["expected_ojective_value"])
 
-    assert rec_approx(res) == {
-        "RES": [
-            {
-                "SHARE_FACTOR": 1,
-                "FLH": 0.230310775525,
-                "PROCESS_CODE": "PV-FIX",
-            }
-        ],
-        "ELY": {"FLH": 0.40971534364341405},
-        "EL_STR": {"CAP_F": 0},
-        "H2_STR": {"CAP_F": 34.57725460457206},
-    }
+    assert rec_approx(res) == input_data["expected_output"]
 
 
 # settings for profile tests:
