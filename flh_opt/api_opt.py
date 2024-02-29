@@ -151,7 +151,26 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
     add_storage(n, input_data, "H2_STR", "H2")
 
     # add RE profiles:
-    # TODO
+    res_profiles = pd.DataFrame()
+    for g in input_data["RES"]:
+        process_code = g["PROCESS_CODE"]
+        res_profiles[process_code] = get_profiles(
+            source_region_code=input_data["SOURCE_REGION_CODE"],
+            process_code=process_code,
+            re_location=process_code,  # TODO: account for hybrid
+            selection=range(0, 48),
+        )["specific_generation"]
+
+    # define snapshots:
+    n.snapshots = res_profiles.index
+
+    # define snapshot weightings:
+    n.snapshot_weightings["generators"] = 8760.0 / len(n.snapshots)
+    n.snapshot_weightings["objective"] = 8760.0 / len(n.snapshots)
+    n.snapshot_weightings["stores"] = 1
+
+    # import profiles to network:
+    n.import_series_from_dataframe(res_profiles, "Generator", "p_max_pu")
 
     # solve optimization problem:
     n.optimize(solver_name="highs")
