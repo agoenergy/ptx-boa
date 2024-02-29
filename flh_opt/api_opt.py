@@ -165,7 +165,7 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
             source_region_code=input_data["SOURCE_REGION_CODE"],
             process_code=process_code,
             re_location=re_location,
-            selection=range(0, 48),
+            selection=range(0, 48),  # TODO: make this a function parameter?
         )["specific_generation"]
 
     # define snapshots:
