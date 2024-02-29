@@ -154,10 +154,14 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
     res_profiles = pd.DataFrame()
     for g in input_data["RES"]:
         process_code = g["PROCESS_CODE"]
+        if len(input_data["RES"]) > 1:
+            re_location = "RES_HYBR"
+        else:
+            re_location = process_code
         res_profiles[process_code] = get_profiles(
             source_region_code=input_data["SOURCE_REGION_CODE"],
             process_code=process_code,
-            re_location=process_code,  # TODO: account for hybrid
+            re_location=re_location,
             selection=range(0, 48),
         )["specific_generation"]
 
