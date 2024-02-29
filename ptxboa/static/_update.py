@@ -36,6 +36,18 @@ def create_literal_from_db(name: str, column: str, table: str) -> str:
     return create_literal_from_query(name, column, query)
 
 
+def update_csv(query: str, filename: str, data_dir: str = None) -> None:
+    data_dir = data_dir or os.path.dirname(__file__)
+    CS = (
+        "mssql+pyodbc://?odbc_connect=driver=sql server;server=sqldaek2;database=ptxboa"
+    )
+    engine = sa.create_engine(CS)
+    pd.read_sql(
+        query,
+        engine,
+    ).to_csv(data_dir + "/" + filename, index=False, lineterminator="\n")
+
+
 def main():
 
     literals = [
@@ -148,6 +160,93 @@ def main():
         for x in literals:
             file.write(x)
             file.write("\n\n")
+
+    update_csv(
+        """
+        SELECT
+        "chain"
+        ,"ELY"
+        ,"DERIV"
+        ,"PRE_SHP"
+        ,"PRE_PPL"
+        ,"POST_SHP"
+        ,"POST_PPL"
+        ,"SHP"
+        ,"SHP-OWN"
+        ,"PPLS"
+        ,"PPL"
+        ,"PPLX"
+        ,"PPLR"
+        ,"FLOW_OUT"
+        ,"CAN_PIPELINE"
+        FROM "ptxboa_chains"
+        ORDER BY "chain"
+        """,
+        "chains.csv",
+    )
+
+    update_csv(
+        """
+        SELECT
+        "parameter_code",
+        "parameter_name",
+        "unit",
+        "per_flow",
+        "per_transformation_process",
+        "per_transport_process",
+        "per_re_generation_process",
+        "per_process",
+        "per_region",
+        "per_import_country",
+        "has_global_default",
+        "global_default_changeable",
+        "own_country_changeable",
+        "comment",
+        "dimensions"
+        FROM "ptxboa_parameter"
+        ORDER BY "parameter_code"
+        """,
+        "dim_parameter.csv",
+    )
+
+    update_csv(
+        """
+        SELECT
+         "process_code"
+        ,"process_name"
+        ,"main_flow_code_out"
+        ,"main_flow_code_in"
+        ,"is_transformation"
+        ,"is_re_generation"
+        ,"is_transport"
+        ,"is_secondary"
+        ,"process_class"
+        /*,"is_secondary_all"*/
+        ,"is_ely"
+        ,"is_deriv"
+        /*,"class_name"*/
+        ,"result_process_type"
+        ,"secondary_flows"
+        FROM "ptxboa_process"
+        ORDER BY "process_code"
+        """,
+        "dim_process.csv",
+    )
+
+    update_csv(
+        """
+        SELECT
+        "flow_code",
+        "flow_name",
+        "unit",
+        "secondary_process",
+        "secondary_flow",
+        "result_process_type"
+        FROM "ptxboa_flow"
+        ORDER BY "flow_code"
+        """,
+        "dim_flow.csv",
+    )
 
 
 if __name__ == "__main__":
