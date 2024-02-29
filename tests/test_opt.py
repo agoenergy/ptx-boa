@@ -62,12 +62,32 @@ def test_api_opt():
     }
 
 
-def test_profile_import():
+# settings for profile tests:
+profile_test_settings = [
+    {
+        "source_region_code": "ARG",
+        "process_code": "PV-FIX",
+        "re_location": "PV-FIX",
+        "selection": range(0, 48),
+        "expected_sum": 11.756292238271236,
+    },
+    {
+        "source_region_code": "ARG",
+        "process_code": "WIND-ON",
+        "re_location": "RES_HYBR",
+        "selection": range(0, 48),
+        "expected_sum": 8.39907094,
+    },
+]
+
+
+@pytest.mark.parametrize("settings", profile_test_settings)
+def test_profile_import(settings):
     res = get_profiles(
-        source_region_code="ARG",
-        process_code="PV-FIX",
-        re_location="PV-FIX",
-        selection=range(0, 48),
+        source_region_code=settings["source_region_code"],
+        process_code=settings["process_code"],
+        re_location=settings["re_location"],
+        selection=settings["selection"],
     )
-    assert len(res) == 48
-    assert 11.756292238271236 == pytest.approx(res.sum())
+    assert len(res) == len(settings["selection"])
+    assert settings["expected_sum"] == pytest.approx(res.sum())
