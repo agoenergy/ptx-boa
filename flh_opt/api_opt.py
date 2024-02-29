@@ -119,6 +119,7 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
         )
 
     # add links:
+    # TODO: account for water demand
     n.add(
         "Link",
         name="ELY",
@@ -135,6 +136,7 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
     n.add("Load", name="H2_demand", bus="H2", p_set=1)
 
     # add storage:
+    # TODO: for H2 storage: invest in cap and store/dispatch cap. individually?
     def add_storage(n: Network, input_data: dict, name: str, bus: str) -> None:
         n.add(
             "StorageUnit",
@@ -142,7 +144,7 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
             bus=bus,
             capital_cost=input_data[name]["CAPEX_A"] + input_data[name]["OPEX_F"],
             efficiency_store=input_data[name]["EFF"],
-            max_hours=24,
+            max_hours=24,  # TODO: move this parameter out of the code.
             cyclic_state_of_charge=True,
             marginal_cost=input_data[name]["OPEX_O"],
             p_nom_extendable=True,
