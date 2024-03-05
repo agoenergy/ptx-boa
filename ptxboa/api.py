@@ -8,6 +8,7 @@ import pandas as pd
 
 from .api_calc import PtxCalc
 from .api_data import DataHandler
+from .api_optimize import PtxOpt
 from .static import (
     ChainNameType,
     DimensionType,
@@ -190,6 +191,11 @@ class PtxboaAPI:
             ship_own_fuel=ship_own_fuel,
         )
 
+        opt_flh_data = PtxOpt().get_data(data)
+        # TODO: update data with optimized flh data
+        data["_opt_flh_data"] = opt_flh_data
+
+        logger.info("PtxCalc.calculate")
         result_df = PtxCalc.calculate(data)
 
         # conversion to output unit
