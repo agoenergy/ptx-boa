@@ -161,3 +161,6 @@ cython_debug/
 
 # VSCode project settings:
 .vscode
+
+# netcdf files (pypsa test output)
+*.nc
