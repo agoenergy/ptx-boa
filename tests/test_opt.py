@@ -3,9 +3,10 @@
 
 import logging
 
+import pandas as pd
 import pytest
 
-from flh_opt.api_opt import get_profiles, optimize
+from flh_opt.api_opt import get_profiles_and_weights, optimize
 
 logging.basicConfig(level=logging.INFO)
 
@@ -50,7 +51,7 @@ api_test_settings = [
             "EL_STR": {"CAP_F": 0},
             "H2_STR": {"CAP_F": 34.57725460457206},
         },
-        "expected_ojective_value": 3046.20318251384,
+        "expected_ojective_value": 391.21301357978956,
     },
     {
         "SOURCE_REGION_CODE": "ARG",
@@ -89,7 +90,7 @@ api_test_settings = [
             "EL_STR": {"CAP_F": 0},
             "H2_STR": {"CAP_F": 12.323994361813343},
         },
-        "expected_ojective_value": 1756.5131745521187,
+        "expected_ojective_value": 198.36220457417505,
     },
 ]
 
@@ -112,28 +113,30 @@ def test_api_opt(input_data):
 profile_test_settings = [
     {
         "source_region_code": "ARG",
-        "process_code": "PV-FIX",
         "re_location": "PV-FIX",
-        "selection": range(0, 48),
-        "expected_sum": 11.756292238271236,
+        "selection": None,
+        "expected_sum": pd.Series({"PV-FIX": 215.495714}),
+        "expected_weights_sum": 8760,
     },
     {
         "source_region_code": "ARG",
-        "process_code": "WIND-ON",
         "re_location": "RES_HYBR",
         "selection": range(0, 48),
-        "expected_sum": 8.39907094,
+        "expected_sum": pd.Series({"PV-FIX": 10.133478, "WIND-ON": 30.832906}),
+        "expected_weights_sum": 486.857143,
     },
 ]
 
 
 @pytest.mark.parametrize("settings", profile_test_settings)
 def test_profile_import(settings):
-    res = get_profiles(
+    res, weights = get_profiles_and_weights(
         source_region_code=settings["source_region_code"],
-        process_code=settings["process_code"],
         re_location=settings["re_location"],
         selection=settings["selection"],
     )
-    assert len(res) == len(settings["selection"])
-    assert settings["expected_sum"] == pytest.approx(res.sum())
+    if settings["selection"] is not None:
+        assert len(res) == len(settings["selection"])
+
+    pd.testing.assert_series_equal(res.sum(), settings["expected_sum"])
+    assert settings["expected_weights_sum"] == pytest.approx(weights.sum())
