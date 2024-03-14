@@ -17,16 +17,18 @@ def get_profiles_and_weights(
 ) -> pd.DataFrame:
     """Get RES profiles from CSV file."""
     filestem = f"{source_region_code}_{re_location}_aggregated"
-    data = pd.read_csv(f"{path}/{filestem}.csv", index_col=["period_id", "TimeStep"])
-    weights = pd.read_csv(
-        f"{path}/{filestem}.weights.csv", index_col=["period_id", "TimeStep"]
+    data = pd.read_csv(f"{path}/{filestem}.csv", index_col="TimeStep").drop(
+        "period_id", axis=1
+    )
+    weights_and_period_ids = pd.read_csv(
+        f"{path}/{filestem}.weights.csv", index_col="TimeStep"
     )
 
     if selection:
         data = data.iloc[selection]
-        weights = weights.iloc[selection]
+        weights_and_period_ids = weights_and_period_ids.iloc[selection]
 
-    return data, weights
+    return data, weights_and_period_ids
 
 
 def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
@@ -159,7 +161,7 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
             re_location = "RES_HYBR"
         else:
             re_location = process_code
-        res_profiles, weights = get_profiles_and_weights(
+        res_profiles, weights_and_period_ids = get_profiles_and_weights(
             source_region_code=input_data["SOURCE_REGION_CODE"],
             re_location=re_location,
             selection=range(0, 48),  # TODO: make this a function parameter?
@@ -169,6 +171,7 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
     n.snapshots = res_profiles.index
 
     # define snapshot weightings:
+    weights = weights_and_period_ids["weight"]
     if not not math.isclose(weights.sum(), 8760):
         weights = weights * 8760 / weights.sum()
 
