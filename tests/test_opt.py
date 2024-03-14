@@ -135,4 +135,4 @@ def test_profile_import(settings):
         assert len(res) == len(settings["selection"])
 
     pd.testing.assert_series_equal(res.sum(), settings["expected_sum"])
-    assert settings["expected_weights_sum"] == pytest.approx(weights.sum())
+    assert settings["expected_weights_sum"] == pytest.approx(weights["weight"].sum())
