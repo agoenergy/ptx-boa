@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """API interface for FLH optimizer."""
+import math
 from typing import List, Optional
 
 import pandas as pd
@@ -8,26 +9,25 @@ from pypsa import Network
 from flh_opt._types import OptInputDataType, OptOutputDataType
 
 
-def get_profiles(
+def get_profiles_and_weights(
     source_region_code: str,
-    process_code: str,
     re_location: str,
     path: str = "tests/test_profiles",
     selection: Optional[List[int]] = None,
 ) -> pd.DataFrame:
     """Get RES profiles from CSV file."""
-    filename = f"{path}/{source_region_code}_profiles.csv"
-    data_raw = pd.read_csv(filename)
-    data = data_raw.loc[
-        (data_raw["re_location"] == re_location)
-        & (data_raw["re_source"] == process_code),
-        ["time", "specific_generation"],
-    ].set_index("time")
+    filestem = f"{source_region_code}_{re_location}_aggregated"
+    data = pd.read_csv(f"{path}/{filestem}.csv", index_col=["period_id", "TimeStep"])
+    data.index = data.index.map(lambda x: f"{x[0]}_{x[1]}")
+    weights_and_period_ids = pd.read_csv(
+        f"{path}/{filestem}.weights.csv", index_col="TimeStep"
+    )
+    weights_and_period_ids.index = data.index
 
     if selection:
         data = data.iloc[selection]
-
-    return data
+        weights_and_period_ids = weights_and_period_ids.iloc[selection]
+    return data, weights_and_period_ids
 
 
 def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
@@ -154,26 +154,27 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
     add_storage(n, input_data, "H2_STR", "H2")
 
     # add RE profiles:
-    res_profiles = pd.DataFrame()
     for g in input_data["RES"]:
         process_code = g["PROCESS_CODE"]
         if len(input_data["RES"]) > 1:
             re_location = "RES_HYBR"
         else:
             re_location = process_code
-        res_profiles[process_code] = get_profiles(
+        res_profiles, weights_and_period_ids = get_profiles_and_weights(
             source_region_code=input_data["SOURCE_REGION_CODE"],
-            process_code=process_code,
             re_location=re_location,
-            selection=range(0, 48),  # TODO: make this a function parameter?
-        )["specific_generation"]
+        )
 
     # define snapshots:
     n.snapshots = res_profiles.index
 
     # define snapshot weightings:
-    n.snapshot_weightings["generators"] = 8760.0 / len(n.snapshots)
-    n.snapshot_weightings["objective"] = 8760.0 / len(n.snapshots)
+    weights = weights_and_period_ids["weight"]
+    if not math.isclose(weights.sum(), 8760):
+        weights = weights * 8760 / weights.sum()
+
+    n.snapshot_weightings["generators"] = weights
+    n.snapshot_weightings["objective"] = weights
     n.snapshot_weightings["stores"] = 1
 
     # import profiles to network:
@@ -189,6 +190,8 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
             flh = n.generators_t["p"][g].mean() / n.generators.at[g, "p_nom_opt"]
         if component_type == "Link":
             flh = n.links_t["p0"][g].mean() / n.links.at[g, "p_nom_opt"]
+        if math.isnan(flh):
+            flh = 0
         return flh
 
     result_data = {}
