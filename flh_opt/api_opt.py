@@ -97,8 +97,8 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
     n = Network()
 
     # add buses:
-    n.add("Bus", "ELEC")
-    n.add("Bus", "H2")
+    n.add("Bus", "ELEC", carrier="Electricity")
+    n.add("Bus", "H2", carrier="H2")
 
     # add carriers:
     n.add("Carrier", "Electricity")
@@ -142,6 +142,7 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
             "StorageUnit",
             name=name,
             bus=bus,
+            carrier=n.buses.at[bus, "carrier"],
             capital_cost=input_data[name]["CAPEX_A"] + input_data[name]["OPEX_F"],
             efficiency_store=input_data[name]["EFF"],
             max_hours=24,  # TODO: move this parameter out of the code.
