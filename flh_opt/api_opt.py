@@ -190,6 +190,8 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
             flh = n.generators_t["p"][g].mean() / n.generators.at[g, "p_nom_opt"]
         if component_type == "Link":
             flh = n.links_t["p0"][g].mean() / n.links.at[g, "p_nom_opt"]
+        if math.isnan(flh):
+            flh = 0
         return flh
 
     result_data = {}
