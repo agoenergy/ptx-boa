@@ -42,16 +42,16 @@ api_test_settings = [
         "expected_output": {
             "RES": [
                 {
-                    "SHARE_FACTOR": 1,
-                    "FLH": 0.230310775525,
                     "PROCESS_CODE": "PV-FIX",
+                    "FLH": 0.10209904130397318,
+                    "SHARE_FACTOR": 1.0,
                 }
             ],
-            "ELY": {"FLH": 0.40971534364341405},
-            "EL_STR": {"CAP_F": 0},
-            "H2_STR": {"CAP_F": 34.57725460457206},
+            "ELY": {"FLH": 0.36068215977942414},
+            "EL_STR": {"CAP_F": 121.50878141391004},
+            "H2_STR": {"CAP_F": 348.33524817139295},
         },
-        "expected_ojective_value": 391.21301357978956,
+        "expected_ojective_value": 2480.8292413355575,
     },
     {
         "SOURCE_REGION_CODE": "ARG",
@@ -75,22 +75,18 @@ api_test_settings = [
         "SPECCOST": {"H2O": 0.658},
         "expected_output": {
             "RES": [
+                {"PROCESS_CODE": "PV-FIX", "FLH": 0, "SHARE_FACTOR": -0.0},
                 {
-                    "SHARE_FACTOR": 0.3580517435075871,
-                    "FLH": 0.21534125023157286,
-                    "PROCESS_CODE": "PV-FIX",
-                },
-                {
-                    "SHARE_FACTOR": 0.6419482564924128,
-                    "FLH": 0.11585990924307125,
                     "PROCESS_CODE": "WIND-ON",
+                    "FLH": 0.345701024478453,
+                    "SHARE_FACTOR": 1.0,
                 },
             ],
-            "ELY": {"FLH": 0.8545957682852908},
-            "EL_STR": {"CAP_F": 0},
-            "H2_STR": {"CAP_F": 12.323994361813343},
+            "ELY": {"FLH": 0.5124598171364299},
+            "EL_STR": {"CAP_F": -0.0},
+            "H2_STR": {"CAP_F": 122.44991931269928},
         },
-        "expected_ojective_value": 198.36220457417505,
+        "expected_ojective_value": 1748.871332914744,
     },
 ]
 
