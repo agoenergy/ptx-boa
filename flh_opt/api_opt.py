@@ -17,17 +17,16 @@ def get_profiles_and_weights(
 ) -> pd.DataFrame:
     """Get RES profiles from CSV file."""
     filestem = f"{source_region_code}_{re_location}_aggregated"
-    data = pd.read_csv(f"{path}/{filestem}.csv", index_col="TimeStep").drop(
-        "period_id", axis=1
-    )
+    data = pd.read_csv(f"{path}/{filestem}.csv", index_col=["period_id", "TimeStep"])
+    data.index = data.index.map(lambda x: f"{x[0]}_{x[1]}")
     weights_and_period_ids = pd.read_csv(
         f"{path}/{filestem}.weights.csv", index_col="TimeStep"
     )
+    weights_and_period_ids.index = data.index
 
     if selection:
         data = data.iloc[selection]
         weights_and_period_ids = weights_and_period_ids.iloc[selection]
-
     return data, weights_and_period_ids
 
 
@@ -164,7 +163,6 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
         res_profiles, weights_and_period_ids = get_profiles_and_weights(
             source_region_code=input_data["SOURCE_REGION_CODE"],
             re_location=re_location,
-            selection=range(0, 48),  # TODO: make this a function parameter?
         )
 
     # define snapshots:
@@ -172,7 +170,7 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
 
     # define snapshot weightings:
     weights = weights_and_period_ids["weight"]
-    if not not math.isclose(weights.sum(), 8760):
+    if not math.isclose(weights.sum(), 8760):
         weights = weights * 8760 / weights.sum()
 
     n.snapshot_weightings["generators"] = weights
