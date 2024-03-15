@@ -133,7 +133,7 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
     )
 
     # add loads:
-    n.add("Load", name="H2_demand", bus="H2", p_set=1)
+    n.add("Load", name="H2_demand", bus="H2", carrier="H2", p_set=1)
 
     # add storage:
     # TODO: for H2 storage: invest in cap and store/dispatch cap. individually?
