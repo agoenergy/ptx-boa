@@ -71,6 +71,7 @@ api_test_settings = [
         ],
         "ELY": {"EFF": 0.75, "CAPEX_A": 25, "OPEX_F": 5, "OPEX_O": 0.1},
         "DERIV": {
+            "EFF": 0.8,
             "CAPEX_A": 0.826,
             "OPEX_F": 0.209,
             "OPEX_O": 0.025,
@@ -130,7 +131,7 @@ api_test_settings = [
         "expected_ojective_value": 1748.871332914744,
     },
 ]
-api_test_settings_names = ["H2, PV", "H2, Hybrid", "CH4, Hybrid"]
+api_test_settings_names = ["H2, PV", "CH4, Hybrid", "H2, Hybrid"]
 
 
 @pytest.mark.parametrize("input_data", api_test_settings, ids=api_test_settings_names)
