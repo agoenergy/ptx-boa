@@ -70,6 +70,47 @@ api_test_settings = [
             },
         ],
         "ELY": {"EFF": 0.75, "CAPEX_A": 25, "OPEX_F": 5, "OPEX_O": 0.1},
+        "DERIV": {
+            "CAPEX_A": 0.826,
+            "OPEX_F": 0.209,
+            "OPEX_O": 0.025,
+            "PROCESS_CODE": "CH4SYN",
+        },
+        "EL_STR": {"EFF": 1, "CAPEX_A": 10, "OPEX_F": 1, "OPEX_O": 0.1},
+        "H2_STR": {"EFF": 1, "CAPEX_A": 10, "OPEX_F": 1, "OPEX_O": 0.1},
+        "SPECCOST": {"H2O": 0.658},
+        "expected_output": {
+            "RES": [
+                {"PROCESS_CODE": "PV-FIX", "FLH": 0, "SHARE_FACTOR": -0.0},
+                {
+                    "PROCESS_CODE": "WIND-ON",
+                    "FLH": 0.345701024478453,
+                    "SHARE_FACTOR": 1.0,
+                },
+            ],
+            "ELY": {"FLH": 0.5124598171364299},
+            "EL_STR": {"CAP_F": -0.0},
+            "H2_STR": {"CAP_F": 122.44991931269928},
+        },
+        "expected_ojective_value": 1748.871332914744,
+    },
+    {
+        "SOURCE_REGION_CODE": "ARG",
+        "RES": [
+            {
+                "CAPEX_A": 30,
+                "OPEX_F": 1,
+                "OPEX_O": 0.01,
+                "PROCESS_CODE": "PV-FIX",
+            },
+            {
+                "CAPEX_A": 30,
+                "OPEX_F": 1,
+                "OPEX_O": 0.02,
+                "PROCESS_CODE": "WIND-ON",
+            },
+        ],
+        "ELY": {"EFF": 0.75, "CAPEX_A": 25, "OPEX_F": 5, "OPEX_O": 0.1},
         "EL_STR": {"EFF": 1, "CAPEX_A": 10, "OPEX_F": 1, "OPEX_O": 0.1},
         "H2_STR": {"EFF": 1, "CAPEX_A": 10, "OPEX_F": 1, "OPEX_O": 0.1},
         "SPECCOST": {"H2O": 0.658},
@@ -89,9 +130,10 @@ api_test_settings = [
         "expected_ojective_value": 1748.871332914744,
     },
 ]
+api_test_settings_names = ["H2, PV", "H2, Hybrid", "CH4, Hybrid"]
 
 
-@pytest.mark.parametrize("input_data", api_test_settings)
+@pytest.mark.parametrize("input_data", api_test_settings, ids=api_test_settings_names)
 def test_api_opt(input_data):
 
     [res, n] = optimize(input_data)

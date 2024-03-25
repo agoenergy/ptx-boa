@@ -53,6 +53,12 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
                 "OPEX_F": 0.131,
                 "OPEX_O": 0.2
             },
+            "DERIV":{
+                "CAPEX_A": 0.826,
+                "OPEX_F": 0.209,
+                "OPEX_O": 0.025,
+                "PROCESS_CODE": "CH4SYN",
+                },
             "EL_STR": {
                 "EFF": 0.544,
                 "CAPEX_A": 0.385,
