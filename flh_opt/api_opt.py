@@ -105,11 +105,15 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
     # add buses:
     n.add("Bus", "ELEC", carrier="Electricity")
     n.add("Bus", "H2", carrier="H2")
+    if "DERIV" in input_data.keys():
+        n.add("Bus", "final_product", carrier="final_product")
 
     # add carriers:
     n.add("Carrier", "Electricity")
     n.add("Carrier", "H2")
     n.add("Carrier", "H2O")
+    if "DERIV" in input_data.keys():
+        n.add("Carrier", "final_product")
 
     # add generators:
     for g in input_data["RES"]:
@@ -138,8 +142,26 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
         p_nom_extendable=True,
     )
 
+    if "DERIV" in input_data.keys():
+        n.add(
+            "Link",
+            name="DERIV",
+            bus0="H2",
+            bus1="final_product",
+            carrier="final_product",
+            efficiency=input_data["DERIV"]["EFF"],
+            capital_cost=input_data["DERIV"]["CAPEX_A"] + input_data["DERIV"]["OPEX_F"],
+            marginal_cost=input_data["DERIV"]["OPEX_O"],
+            p_nom_extendable=True,
+        )
+
     # add loads:
-    n.add("Load", name="H2_demand", bus="H2", carrier="H2", p_set=1)
+    if "DERIV" in input_data.keys():
+        n.add(
+            "Load", name="demand", bus="final_product", carrier="final_product", p_set=1
+        )
+    else:
+        n.add("Load", name="demand", bus="H2", carrier="H2", p_set=1)
 
     # add storage:
     # TODO: for H2 storage: invest in cap and store/dispatch cap. individually?
