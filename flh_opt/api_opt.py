@@ -194,11 +194,15 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
 
     def get_flh(n: Network, g: str, component_type: str) -> float:
         if component_type == "Generator":
-            flh = n.generators_t["p"][g].mean() / n.generators.at[g, "p_nom_opt"]
+            gen = n.generators_t["p"][g].mean()
+            p_nom = n.generators.at[g, "p_nom_opt"]
         if component_type == "Link":
-            flh = n.links_t["p0"][g].mean() / n.links.at[g, "p_nom_opt"]
-        if math.isnan(flh):
+            gen = n.links_t["p0"][g].mean()
+            p_nom = n.links.at[g, "p_nom_opt"]
+        if gen == 0:
             flh = 0
+        else:
+            flh = gen / p_nom
         return flh
 
     result_data = {}
