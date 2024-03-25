@@ -146,7 +146,7 @@ def test_api_opt(input_data):
     [res, n] = optimize(input_data)
 
     # write to netcdf file:
-    n.export_to_netcdf("tmp.nc")
+    n.export_to_netcdf(f"tests/{input_data['id']}.nc")
 
     # Test for expected objective value:
     assert n.objective == pytest.approx(input_data["expected_ojective_value"])
