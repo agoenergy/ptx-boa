@@ -26,6 +26,7 @@ def rec_approx(x):
 
 api_test_settings = [
     {
+        "id": "H2, PV",
         "SOURCE_REGION_CODE": "ARG",
         "RES": [
             {
@@ -54,6 +55,7 @@ api_test_settings = [
         "expected_ojective_value": 2480.8292413355575,
     },
     {
+        "id": "CH4, hybrid",
         "SOURCE_REGION_CODE": "ARG",
         "RES": [
             {
@@ -96,6 +98,7 @@ api_test_settings = [
         "expected_ojective_value": 1748.871332914744,
     },
     {
+        "id": "H2, hybrid",
         "SOURCE_REGION_CODE": "ARG",
         "RES": [
             {
@@ -131,7 +134,10 @@ api_test_settings = [
         "expected_ojective_value": 1748.871332914744,
     },
 ]
-api_test_settings_names = ["H2, PV", "CH4, Hybrid", "H2, Hybrid"]
+# Corresponding names for each configuration
+api_test_settings_names = []
+for i in api_test_settings:
+    api_test_settings_names.append(i["id"])
 
 
 @pytest.mark.parametrize("input_data", api_test_settings, ids=api_test_settings_names)
