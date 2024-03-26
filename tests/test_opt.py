@@ -39,7 +39,7 @@ api_test_settings = [
         "ELY": {"EFF": 0.75, "CAPEX_A": 25, "OPEX_F": 5, "OPEX_O": 0.1},
         "EL_STR": {"EFF": 1, "CAPEX_A": 10, "OPEX_F": 1, "OPEX_O": 0.1},
         "H2_STR": {"EFF": 1, "CAPEX_A": 10, "OPEX_F": 1, "OPEX_O": 0.1},
-        "SPECCOST": {"H2O": 0.658},
+        "SPECCOST": {"H2O-L": 1, "CO2-G": 1, "HEAT": 1},
         "expected_output": {
             "RES": [
                 {
@@ -81,7 +81,7 @@ api_test_settings = [
         },
         "EL_STR": {"EFF": 1, "CAPEX_A": 10, "OPEX_F": 1, "OPEX_O": 0.1},
         "H2_STR": {"EFF": 1, "CAPEX_A": 10, "OPEX_F": 1, "OPEX_O": 0.1},
-        "SPECCOST": {"H2O": 0.658},
+        "SPECCOST": {"H2O-L": 1, "CO2-G": 1, "HEAT": 1},
         "expected_output": {
             "RES": [
                 {"PROCESS_CODE": "PV-FIX", "FLH": 0, "SHARE_FACTOR": -0.0},
@@ -117,7 +117,7 @@ api_test_settings = [
         "ELY": {"EFF": 0.75, "CAPEX_A": 25, "OPEX_F": 5, "OPEX_O": 0.1},
         "EL_STR": {"EFF": 1, "CAPEX_A": 10, "OPEX_F": 1, "OPEX_O": 0.1},
         "H2_STR": {"EFF": 1, "CAPEX_A": 10, "OPEX_F": 1, "OPEX_O": 0.1},
-        "SPECCOST": {"H2O": 0.658},
+        "SPECCOST": {"H2O-L": 1, "CO2-G": 1, "HEAT": 1},
         "expected_output": {
             "RES": [
                 {"PROCESS_CODE": "PV-FIX", "FLH": 0, "SHARE_FACTOR": -0.0},
