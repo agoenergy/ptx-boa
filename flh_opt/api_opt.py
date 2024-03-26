@@ -112,7 +112,7 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
         n.add("Bus", "final_product", carrier="final_product")
         n.add("Carrier", "final_product")
 
-    # add generators:
+    # add RE generators:
     for g in input_data["RES"]:
         n.add("Carrier", name=g["PROCESS_CODE"])
         n.add(
@@ -123,6 +123,17 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
             capital_cost=g["CAPEX_A"] + g["OPEX_F"],
             marginal_cost=g["OPEX_O"],
             p_nom_extendable=True,
+        )
+
+    # add supply for secondary inputs:
+    for c in input_data["SPECCOST"].keys():
+        n.add(
+            "Generator",
+            name=f"{c}_supply",
+            bus=c,
+            carrier=c,
+            marginal_cost=input_data["SPECCOST"][c],
+            p_nom=100,
         )
 
     # add links:
