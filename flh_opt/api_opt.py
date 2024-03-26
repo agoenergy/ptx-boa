@@ -135,6 +135,16 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
             marginal_cost=input_data["SPECCOST"][c],
             p_nom=100,
         )
+        n.add(
+            "Generator",
+            name=f"{c}_sink",
+            bus=c,
+            carrier=c,
+            p_max_pu=0,
+            p_min_pu=-1,
+            marginal_cost=0,
+            p_nom=100,
+        )
 
     # add links:
     # TODO: account for water demand
