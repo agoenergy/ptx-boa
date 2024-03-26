@@ -105,6 +105,9 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
     # add buses:
     n.add("Bus", "ELEC", carrier="Electricity")
     n.add("Bus", "H2", carrier="H2")
+    n.add("Bus", "HEAT", carrier="HEAT")
+    n.add("Bus", "CO2-G", carrier="CO2-G")
+    n.add("Bus", "H2O-L", carrier="H2O-L")
     if "DERIV" in input_data.keys():
         n.add("Bus", "final_product", carrier="final_product")
 
@@ -112,6 +115,9 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
     n.add("Carrier", "Electricity")
     n.add("Carrier", "H2")
     n.add("Carrier", "H2O")
+    n.add("Carrier", "HEAT")
+    n.add("Carrier", "CO2-G")
+    n.add("Carrier", "H2O-L")
     if "DERIV" in input_data.keys():
         n.add("Carrier", "final_product")
 
