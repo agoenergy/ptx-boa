@@ -153,8 +153,10 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
         name="ELY",
         bus0="ELEC",
         bus1="H2",
+        bus2="H2O-L",
         carrier="H2",
         efficiency=input_data["ELY"]["EFF"],
+        efficiency2=-input_data["ELY"]["CONV"]["H2O-L"],
         capital_cost=input_data["ELY"]["CAPEX_A"] + input_data["ELY"]["OPEX_F"],
         marginal_cost=input_data["ELY"]["OPEX_O"],
         p_nom_extendable=True,
@@ -172,6 +174,7 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
             marginal_cost=input_data["DERIV"]["OPEX_O"],
             p_nom_extendable=True,
         )
+        # TODO: add conversion efficiencies and buses for secondary input / output
 
     # add loads:
     if "DERIV" in input_data.keys():
