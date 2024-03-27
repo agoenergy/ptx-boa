@@ -66,8 +66,10 @@ with st.sidebar:
                     for k, v in value.items():
                         if isinstance(v, str):
                             input_data[key][k] = st.text_input(f"{key} {k}", value=v)
-                        else:
+                        if isinstance(v, float) or isinstance(v, int):
                             input_data[key][k] = st.number_input(f"{key} {k}", value=v)
+                        if isinstance(v, dict):
+                            input_data[key][k] = v
                 else:
                     input_data[key] = st.text_input(key, value=value)
 
