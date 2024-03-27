@@ -197,7 +197,7 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
             carrier=n.buses.at[bus, "carrier"],
             capital_cost=input_data[name]["CAPEX_A"] + input_data[name]["OPEX_F"],
             efficiency_store=input_data[name]["EFF"],
-            max_hours=24,  # TODO: move this parameter out of the code.
+            max_hours=4,  # TODO: move this parameter out of the code.
             cyclic_state_of_charge=True,
             marginal_cost=input_data[name]["OPEX_O"],
             p_nom_extendable=True,
