@@ -158,17 +158,34 @@ for i in api_test_settings:
     api_test_settings_names.append(i["id"])
 
 
-@pytest.mark.parametrize("input_data", api_test_settings, ids=api_test_settings_names)
-def test_api_opt(input_data):
-
+@pytest.fixture(scope="module", params=api_test_settings, ids=api_test_settings_names)
+def call_optimize(request):
+    input_data = request.param
     [res, n] = optimize(input_data)
+    return [res, n, input_data]
 
-    # write to netcdf file:
+
+def test_optimize_optimal_solution(call_optimize):
+    """Test if solver finds optimal solution."""
+    [res, n, input_data] = call_optimize
+    assert res["model_status"][0] == "ok", "Solver status not OK"
+    assert res["model_status"][1] == "optimal", "No optimal solution found"
+
+
+def test_optimize_export_to_netcdf(call_optimize):
+    """Write network to netcdf file."""
+    [res, n, input_data] = call_optimize
     n.export_to_netcdf(f"tests/{input_data['id']}.nc")
+
+
+def test_optimize_expected_results(call_optimize):
+    """Test if obtained results match expected results."""
+    [res, n, input_data] = call_optimize
 
     # Test for expected objective value:
     assert n.objective == pytest.approx(input_data["expected_ojective_value"])
 
+    # Test for other results:
     assert rec_approx(res) == input_data["expected_output"]
 
 
