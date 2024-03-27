@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Test dashboard for optimization function."""
 from json import load
+from time import time
 from typing import Dict, List
 
 import pandas as pd
@@ -77,11 +78,6 @@ with st.sidebar:
         submit_button = st.form_submit_button(label="Submit")
 
 
-# call optimization:
-def call_optimize(input_data: dict):
-    return optimize(input_data)
-
-
 # add vertical lines:
 def add_vertical_lines(fig: Figure, x_values: list):
     for i in range(0, len(x_values), 7 * 24):
@@ -90,8 +86,15 @@ def add_vertical_lines(fig: Figure, x_values: list):
 
 # Call the optimize function when the submit button is clicked
 if submit_button:
-    result, n = call_optimize(input_data)
+    start_time = time()
+    result, n = optimize(input_data)
+    end_time = time()
+    run_time = end_time - start_time
+    st.info(f"Time to solve optimization problem: {run_time:.2f} seconds")
+
     res = n.statistics()
+
+    n.export_to_netcdf(f"tests/{input_data['id']}_via_streamlit.nc")
 
     st.subheader("Capacity, full load hours and costs")
     res2 = pd.DataFrame()
