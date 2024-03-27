@@ -41,41 +41,32 @@ with st.expander("Default input data"):
 
 # Create a form
 with st.sidebar:
-    with st.form(key="my_form"):
-        st.write('Edit the values and press "Submit" to update the data.')
 
-        # Create widgets for each item in the data
-        input_data = {}
-        for key, value in default_input_data.items():
-            with st.expander(key):
-                if isinstance(value, list):
-                    input_data[key] = []
-                    for i, item in enumerate(value):
-                        item_data = {}
-                        for k, v in item.items():
-                            if isinstance(v, str):
-                                item_data[k] = st.text_input(
-                                    f"{key} {i+1} {k}", value=v
-                                )
-                            else:
-                                item_data[k] = st.number_input(
-                                    f"{key} {i+1} {k}", value=v
-                                )
-                        input_data[key].append(item_data)
-                elif isinstance(value, dict):
-                    input_data[key] = {}
-                    for k, v in value.items():
+    # Create widgets for each item in the data
+    input_data = {}
+    for key, value in default_input_data.items():
+        with st.expander(key):
+            if isinstance(value, list):
+                input_data[key] = []
+                for i, item in enumerate(value):
+                    item_data = {}
+                    for k, v in item.items():
                         if isinstance(v, str):
-                            input_data[key][k] = st.text_input(f"{key} {k}", value=v)
-                        if isinstance(v, float) or isinstance(v, int):
-                            input_data[key][k] = st.number_input(f"{key} {k}", value=v)
-                        if isinstance(v, dict):
-                            input_data[key][k] = v
-                else:
-                    input_data[key] = st.text_input(key, value=value)
-
-        # Create a submit button
-        submit_button = st.form_submit_button(label="Submit")
+                            item_data[k] = st.text_input(f"{key} {i+1} {k}", value=v)
+                        else:
+                            item_data[k] = st.number_input(f"{key} {i+1} {k}", value=v)
+                    input_data[key].append(item_data)
+            elif isinstance(value, dict):
+                input_data[key] = {}
+                for k, v in value.items():
+                    if isinstance(v, str):
+                        input_data[key][k] = st.text_input(f"{key} {k}", value=v)
+                    if isinstance(v, float) or isinstance(v, int):
+                        input_data[key][k] = st.number_input(f"{key} {k}", value=v)
+                    if isinstance(v, dict):
+                        input_data[key][k] = v
+            else:
+                input_data[key] = st.text_input(key, value=value)
 
 
 # add vertical lines:
@@ -84,35 +75,53 @@ def add_vertical_lines(fig: Figure, x_values: list):
         fig.add_vline(i, line_width=0.5)
 
 
-# Call the optimize function when the submit button is clicked
-if submit_button:
+@st.cache_data
+def solve_model(input_data: Dict):
     start_time = time()
     result, n = optimize(input_data)
     end_time = time()
     run_time = end_time - start_time
-    st.info(f"Time to solve optimization problem: {run_time:.2f} seconds")
 
     res = n.statistics()
 
-    n.export_to_netcdf(f"tests/{input_data['id']}_via_streamlit.nc")
-
-    st.subheader("Capacity, full load hours and costs")
     res2 = pd.DataFrame()
-    res2["Capacity (MW per MW H2 output)"] = res["Optimal Capacity"]
+
+    # for links: calculate capacity in terms of output:
+    res2["Capacity (MW per MW final product)"] = res["Optimal Capacity"]
+    res2.loc[
+        res2.index.isin([("Link", "H2")]), "Capacity (MW per MW final product)"
+    ] = (
+        res2.loc[
+            res2.index.isin([("Link", "H2")]), "Capacity (MW per MW final product)"
+        ]
+        * input_data["ELY"]["EFF"]
+    )
+    if "DERIV" in input_data.keys():
+        res2.loc[
+            res2.index.isin([("Link", "final_product")]),
+            "Capacity (MW per MW final product)",
+        ] = (
+            res2.loc[
+                res2.index.isin([("Link", "final_product")]),
+                "Capacity (MW per MW final product)",
+            ]
+            * input_data["DERIV"]["EFF"]
+        )
+
     res2["flh (h/a)"] = res["Capacity Factor"] * 8760
-    res2["total cost (USD/MWhH2)"] = (
+    res2["total cost (USD/MWh final product)"] = (
         (res["Capital Expenditure"] + res["Operational Expenditure"]) / 8760 * 1000
     )
-    res2.loc["Total", "total cost (USD/MWhH2)"] = res2["total cost (USD/MWhH2)"].sum()
-    st.dataframe(res2.round(1))
-    st.subheader("Aggregate results")
-    st.dataframe(res.round(2))
+    res2.loc["Total", "total cost (USD/MWh final product)"] = res2[
+        "total cost (USD/MWh final product)"
+    ].sum()
+
+    n.export_to_netcdf(f"tests/{input_data['id']}_via_streamlit.nc")
 
     supply = n.statistics.supply(aggregate_time=False).reset_index()
 
     supply2 = supply.melt(id_vars=["component", "carrier"])
 
-    st.subheader("Bus profiles")
     eb = (
         n.statistics.energy_balance(aggregate_time=False)
         .reset_index()
@@ -120,36 +129,58 @@ if submit_button:
     )
     eb["component2"] = eb["component"] + " (" + eb["carrier"] + ")"
 
-    fig = px.bar(
-        eb,
-        x="snapshot",
-        y="value",
-        facet_row="bus_carrier",
-        color="component2",
-        height=800,
-        labels={"value": "MW"},
-    )
-    fig.update_layout(bargap=0)
-    add_vertical_lines(fig, n.snapshots)
-    st.plotly_chart(fig, use_container_width=True)
-
-    st.subheader("Storage State of Charge")
     soc = n.storage_units_t["state_of_charge"]
-    fig = px.line(soc, labels={"value": "MW"})
-    add_vertical_lines(fig, n.snapshots)
-    st.plotly_chart(fig, use_container_width=True)
 
-    st.subheader("Supply profiles")
-    fig = px.area(
-        supply2,
-        x="snapshot",
-        y="value",
-        facet_row="component",
-        height=800,
-        color="carrier",
-        labels={"value": "MW"},
-    )
-    add_vertical_lines(fig, n.snapshots)
-    st.plotly_chart(fig, use_container_width=True)
-    with st.expander("Data"):
-        st.dataframe(supply2)
+    snapshots = n.snapshots
+    return [res, res2, supply2, eb, soc, snapshots, run_time]
+
+
+# Call the optimize function when the submit button is clicked
+[res, res2, supply2, eb, soc, snapshots, run_time] = solve_model(input_data)
+
+st.info(f"Time to solve optimization problem: {run_time:.2f} seconds")
+
+st.subheader("Capacity, full load hours and costs")
+
+st.dataframe(res2.round(1))
+st.subheader("Aggregate results")
+st.dataframe(res.round(2))
+
+st.subheader("Bus profiles")
+all_bus_carriers = eb["bus_carrier"].unique()
+select_bus_carriers = st.multiselect(
+    "buses to show", all_bus_carriers, default=all_bus_carriers
+)
+eb_select = eb.loc[eb["bus_carrier"].isin(select_bus_carriers)]
+fig = px.bar(
+    eb_select,
+    x="snapshot",
+    y="value",
+    facet_row="bus_carrier",
+    color="component2",
+    height=800,
+    labels={"value": "MW"},
+)
+fig.update_layout(bargap=0)
+add_vertical_lines(fig, snapshots)
+st.plotly_chart(fig, use_container_width=True)
+
+st.subheader("Storage State of Charge")
+fig = px.line(soc, labels={"value": "MW"})
+add_vertical_lines(fig, snapshots)
+st.plotly_chart(fig, use_container_width=True)
+
+st.subheader("Supply profiles")
+fig = px.area(
+    supply2,
+    x="snapshot",
+    y="value",
+    facet_row="component",
+    height=800,
+    color="carrier",
+    labels={"value": "MW"},
+)
+add_vertical_lines(fig, snapshots)
+st.plotly_chart(fig, use_container_width=True)
+with st.expander("Data"):
+    st.dataframe(supply2)
