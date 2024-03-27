@@ -91,6 +91,9 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
             "ELY": {
                 "FLH": 0.548
             },
+            "DERIV": {
+                "FLH": 0.548
+            },
             "EL_STR": {
                 "CAP_F": 0.112
             },
@@ -301,6 +304,8 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
             n.storage_units.at["H2_STR", "p_nom_opt"]
             * n.storage_units.at["H2_STR", "max_hours"]
         )
+        result_data["DERIV"] = {}
+        result_data["DERIV"]["FLH"] = get_flh(n, "DERIV", "Link")
 
     # store model status:
     result_data["model_status"] = model_status
