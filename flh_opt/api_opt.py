@@ -249,7 +249,7 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
     n.import_series_from_dataframe(res_profiles, "Generator", "p_max_pu")
 
     # solve optimization problem:
-    n.optimize(solver_name="highs")
+    model_status = n.optimize(solver_name="highs")
 
     # calculate results:
 
@@ -299,4 +299,7 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
             n.storage_units.at["H2_STR", "p_nom_opt"]
             * n.storage_units.at["H2_STR", "max_hours"]
         )
+
+    # store model status:
+    result_data["model_status"] = model_status
     return result_data, n
