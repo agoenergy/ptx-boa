@@ -6,7 +6,7 @@
             {
                 "CAPEX_A": 30,
                 "OPEX_F": 1,
-                "OPEX_O": 0.01,
+                "OPEX_O": 0.001,
                 "PROCESS_CODE": "PV-FIX"
             }
         ],
@@ -63,13 +63,13 @@
             {
                 "CAPEX_A": 30,
                 "OPEX_F": 1,
-                "OPEX_O": 0.01,
+                "OPEX_O": 0.001,
                 "PROCESS_CODE": "PV-FIX"
             },
             {
                 "CAPEX_A": 80,
                 "OPEX_F": 1,
-                "OPEX_O": 0.02,
+                "OPEX_O": 0.002,
                 "PROCESS_CODE": "WIND-ON"
             }
         ],
@@ -143,13 +143,13 @@
             {
                 "CAPEX_A": 30,
                 "OPEX_F": 1,
-                "OPEX_O": 0.01,
+                "OPEX_O": 0.001,
                 "PROCESS_CODE": "PV-FIX"
             },
             {
                 "CAPEX_A": 80,
                 "OPEX_F": 1,
-                "OPEX_O": 0.02,
+                "OPEX_O": 0.002,
                 "PROCESS_CODE": "WIND-ON"
             }
         ],
