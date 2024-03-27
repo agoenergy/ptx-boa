@@ -159,9 +159,12 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
         bus2="H2O-L",
         carrier="H2",
         efficiency=input_data["ELY"]["EFF"],
-        efficiency2=-input_data["ELY"]["CONV"]["H2O-L"],
-        capital_cost=input_data["ELY"]["CAPEX_A"] + input_data["ELY"]["OPEX_F"],
-        marginal_cost=input_data["ELY"]["OPEX_O"],
+        # input data is per main output,
+        # pypsa link parameters are defined per main input
+        efficiency2=-input_data["ELY"]["CONV"]["H2O-L"] / input_data["ELY"]["EFF"],
+        capital_cost=(input_data["ELY"]["CAPEX_A"] + input_data["ELY"]["OPEX_F"])
+        / input_data["ELY"]["EFF"],
+        marginal_cost=input_data["ELY"]["OPEX_O"] / input_data["ELY"]["EFF"],
         p_nom_extendable=True,
     )
 
@@ -173,14 +176,23 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
             bus1="final_product",
             carrier="final_product",
             efficiency=input_data["DERIV"]["EFF"],
-            capital_cost=input_data["DERIV"]["CAPEX_A"] + input_data["DERIV"]["OPEX_F"],
-            marginal_cost=input_data["DERIV"]["OPEX_O"],
+            # input data is per main output,
+            # pypsa link parameters are defined per main input
+            capital_cost=(
+                input_data["DERIV"]["CAPEX_A"] + input_data["DERIV"]["OPEX_F"]
+            )
+            / input_data["DERIV"]["EFF"],
+            marginal_cost=input_data["DERIV"]["OPEX_O"] / input_data["DERIV"]["EFF"],
             p_nom_extendable=True,
         )
         # add conversion efficiencies and buses for secondary input / output
         for i, c in enumerate(input_data["DERIV"]["CONV"].keys()):
             n.links.at["DERIV", f"bus{i+2}"] = c
-            n.links.at["DERIV", f"efficiency{i+2}"] = -input_data["DERIV"]["CONV"][c]
+            # input data is per main output,
+            # pypsa link parameters are defined per main input
+            n.links.at["DERIV", f"efficiency{i+2}"] = (
+                -input_data["DERIV"]["CONV"][c] / input_data["DERIV"]["EFF"]
+            )
 
     # add loads:
     if "DERIV" in input_data.keys():
