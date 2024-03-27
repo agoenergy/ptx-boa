@@ -174,7 +174,10 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
             marginal_cost=input_data["DERIV"]["OPEX_O"],
             p_nom_extendable=True,
         )
-        # TODO: add conversion efficiencies and buses for secondary input / output
+        # add conversion efficiencies and buses for secondary input / output
+        for i, c in enumerate(input_data["DERIV"]["CONV"].keys()):
+            n.links.at["DERIV", f"bus{i+2}"] = c
+            n.links.at["DERIV", f"efficiency{i+2}"] = -input_data["DERIV"]["CONV"][c]
 
     # add loads:
     if "DERIV" in input_data.keys():

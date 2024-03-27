@@ -87,7 +87,12 @@
             "CAPEX_A": 0.826,
             "OPEX_F": 0.209,
             "OPEX_O": 0.025,
-            "PROCESS_CODE": "CH4SYN"
+            "PROCESS_CODE": "CH4SYN",
+            "CONV": {
+                "CO2-G": 0.2,
+                "HEAT": -0.2,
+                "H2O-L": -0.1
+            }
         },
         "EL_STR": {
             "EFF": 1,
