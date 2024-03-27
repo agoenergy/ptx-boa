@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 """Test dashboard for optimization function."""
+from json import load
+from typing import Dict, List
+
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -12,28 +15,28 @@ st.set_page_config(layout="wide")
 # Set the pandas display option to format floats with 2 decimal places
 pd.set_option("display.float_format", "{:.2f}".format)
 
-# Default input data
-default_input_data = {
-    "SOURCE_REGION_CODE": "ARG",
-    "RES": [
-        {
-            "CAPEX_A": 30,
-            "OPEX_F": 1,
-            "OPEX_O": 0.01,
-            "PROCESS_CODE": "PV-FIX",
-        },
-        {
-            "CAPEX_A": 100,
-            "OPEX_F": 1,
-            "OPEX_O": 0.02,
-            "PROCESS_CODE": "WIND-ON",
-        },
-    ],
-    "ELY": {"EFF": 0.75, "CAPEX_A": 50, "OPEX_F": 5, "OPEX_O": 0.1},
-    "EL_STR": {"EFF": 1, "CAPEX_A": 10, "OPEX_F": 1, "OPEX_O": 0.1},
-    "H2_STR": {"EFF": 1, "CAPEX_A": 10, "OPEX_F": 1, "OPEX_O": 0.1},
-    "SPECCOST": {"H2O": 0.658},
-}
+
+# load input data from json:
+def load_json(filename: str) -> List[Dict]:
+    """Load input data from json file."""
+    with open(filename, "r") as f:
+        api_test_settings = load(f)
+
+    # extract ids:
+    api_test_settings_names = []
+    for i in api_test_settings:
+        api_test_settings_names.append(i["id"])
+    return [api_test_settings, api_test_settings_names]
+
+
+[api_test_settings, api_test_settings_names] = load_json(
+    "tests/test_optimize_settings.json"
+)
+test_case = st.selectbox("Select test case", api_test_settings_names)
+default_input_data = api_test_settings[api_test_settings_names.index(test_case)]
+
+with st.expander("Default input data"):
+    st.write(default_input_data)
 
 # Create a form
 with st.sidebar:
