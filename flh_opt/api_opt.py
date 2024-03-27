@@ -214,10 +214,10 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
         bus = "H2"
         carrier = "H2"
 
-    # add final energy storage (for flexible demand):
+    # add final product storage (for flexible demand):
     n.add(
         "StorageUnit",
-        name="final_energy_storage",
+        name="final_product_storage",
         bus=bus,
         carrier=carrier,
         p_nom=100,
