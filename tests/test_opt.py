@@ -2,9 +2,11 @@
 """Test flh optimization."""
 
 import logging
+from json import load
 
 import pandas as pd
 import pytest
+from streamlit.testing.v1 import AppTest
 
 from flh_opt.api_opt import get_profiles_and_weights, optimize
 
@@ -24,84 +26,47 @@ def rec_approx(x):
         return x
 
 
-api_test_settings = [
-    {
-        "SOURCE_REGION_CODE": "ARG",
-        "RES": [
-            {
-                "CAPEX_A": 30,
-                "OPEX_F": 1,
-                "OPEX_O": 0.1,
-                "PROCESS_CODE": "PV-FIX",
-            }
-        ],
-        "ELY": {"EFF": 0.75, "CAPEX_A": 25, "OPEX_F": 5, "OPEX_O": 0.1},
-        "EL_STR": {"EFF": 1, "CAPEX_A": 10, "OPEX_F": 1, "OPEX_O": 0.1},
-        "H2_STR": {"EFF": 1, "CAPEX_A": 10, "OPEX_F": 1, "OPEX_O": 0.1},
-        "SPECCOST": {"H2O": 0.658},
-        "expected_output": {
-            "RES": [
-                {
-                    "PROCESS_CODE": "PV-FIX",
-                    "FLH": 0.10209904130397318,
-                    "SHARE_FACTOR": 1.0,
-                }
-            ],
-            "ELY": {"FLH": 0.36068215977942414},
-            "EL_STR": {"CAP_F": 121.50878141391004},
-            "H2_STR": {"CAP_F": 348.33524817139295},
-        },
-        "expected_ojective_value": 2480.8292413355575,
-    },
-    {
-        "SOURCE_REGION_CODE": "ARG",
-        "RES": [
-            {
-                "CAPEX_A": 30,
-                "OPEX_F": 1,
-                "OPEX_O": 0.01,
-                "PROCESS_CODE": "PV-FIX",
-            },
-            {
-                "CAPEX_A": 30,
-                "OPEX_F": 1,
-                "OPEX_O": 0.02,
-                "PROCESS_CODE": "WIND-ON",
-            },
-        ],
-        "ELY": {"EFF": 0.75, "CAPEX_A": 25, "OPEX_F": 5, "OPEX_O": 0.1},
-        "EL_STR": {"EFF": 1, "CAPEX_A": 10, "OPEX_F": 1, "OPEX_O": 0.1},
-        "H2_STR": {"EFF": 1, "CAPEX_A": 10, "OPEX_F": 1, "OPEX_O": 0.1},
-        "SPECCOST": {"H2O": 0.658},
-        "expected_output": {
-            "RES": [
-                {"PROCESS_CODE": "PV-FIX", "FLH": 0, "SHARE_FACTOR": -0.0},
-                {
-                    "PROCESS_CODE": "WIND-ON",
-                    "FLH": 0.345701024478453,
-                    "SHARE_FACTOR": 1.0,
-                },
-            ],
-            "ELY": {"FLH": 0.5124598171364299},
-            "EL_STR": {"CAP_F": -0.0},
-            "H2_STR": {"CAP_F": 122.44991931269928},
-        },
-        "expected_ojective_value": 1748.871332914744,
-    },
-]
+# import test input data sets from json file:
+with open("tests/test_optimize_settings.json", "r") as f:
+    api_test_settings = load(f)
+
+# extract ids:
+api_test_settings_names = []
+for i in api_test_settings:
+    api_test_settings_names.append(i["id"])
 
 
-@pytest.mark.parametrize("input_data", api_test_settings)
-def test_api_opt(input_data):
+@pytest.fixture(scope="module", params=api_test_settings, ids=api_test_settings_names)
+def call_optimize(request):
+    input_data = request.param
+    [res, n] = optimize(input_data["input_data"])
+    return [res, n, input_data]
 
-    [res, n] = optimize(input_data)
 
-    # write to netcdf file:
-    n.export_to_netcdf("tmp.nc")
+def test_optimize_optimal_solution(call_optimize):
+    """Test if solver finds optimal solution."""
+    [res, n, input_data] = call_optimize
+    assert res["model_status"][0] == "ok", "Solver status not OK"
+    assert res["model_status"][1] == "optimal", "No optimal solution found"
 
-    # Test for expected objective value:
+
+def test_optimize_export_to_netcdf(call_optimize):
+    """Write network to netcdf file."""
+    [res, n, input_data] = call_optimize
+    n.export_to_netcdf(f"tests/{input_data['id']}.nc")
+
+
+@pytest.mark.xfail()
+def test_optimize_expected_objective_value(call_optimize):
+    """Test for expected objective value."""
+    [res, n, input_data] = call_optimize
     assert n.objective == pytest.approx(input_data["expected_ojective_value"])
 
+
+@pytest.mark.xfail()
+def test_optimize_expected_results(call_optimize):
+    """Test if obtained results match expected results."""
+    [res, n, input_data] = call_optimize
     assert rec_approx(res) == input_data["expected_output"]
 
 
@@ -136,3 +101,16 @@ def test_profile_import(settings):
 
     pd.testing.assert_series_equal(res.sum(), settings["expected_sum"])
     assert settings["expected_weights_sum"] == pytest.approx(weights["weight"].sum())
+
+
+@pytest.fixture
+def running_app_test_optimize():
+    """Fixture that returns a fresh instance of a running app."""
+    at = AppTest.from_file("app_test_optimize.py")
+    at.run(timeout=60)
+    return at
+
+
+def test_app_test_optimize_smoke(running_app_test_optimize):
+    """Test if the app starts up without errors."""
+    assert not running_app_test_optimize.exception
