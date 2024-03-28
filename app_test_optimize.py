@@ -34,7 +34,9 @@ def load_json(filename: str) -> List[Dict]:
     "tests/test_optimize_settings.json"
 )
 test_case = st.selectbox("Select test case", api_test_settings_names)
-default_input_data = api_test_settings[api_test_settings_names.index(test_case)]
+default_input_data = api_test_settings[api_test_settings_names.index(test_case)][
+    "input_data"
+]
 
 with st.expander("Default input data"):
     st.write(default_input_data)
@@ -116,7 +118,7 @@ def solve_model(input_data: Dict):
         "total cost (USD/MWh final product)"
     ].sum()
 
-    n.export_to_netcdf(f"tests/{input_data['id']}_via_streamlit.nc")
+    n.export_to_netcdf(f"tests/{test_case}_via_streamlit.nc")
 
     supply = n.statistics.supply(aggregate_time=False).reset_index()
 
