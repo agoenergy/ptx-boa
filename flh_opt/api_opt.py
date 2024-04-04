@@ -111,7 +111,7 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
         n.add("Bus", name=c, carrier=c)
         n.add("Carrier", name=c)
 
-    if "DERIV" in input_data.keys():
+    if input_data.get("DERIV"):
         n.add("Bus", "final_product", carrier="final_product")
         n.add("Carrier", "final_product")
 
@@ -168,7 +168,7 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
         p_nom_extendable=True,
     )
 
-    if "DERIV" in input_data.keys():
+    if input_data.get("DERIV"):
         n.add(
             "Link",
             name="DERIV",
@@ -195,7 +195,7 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
             )
 
     # add loads:
-    if "DERIV" in input_data.keys():
+    if input_data.get("DERIV"):
         n.add(
             "Load", name="demand", bus="final_product", carrier="final_product", p_set=1
         )
@@ -218,10 +218,9 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
         )
 
     add_storage(n, input_data, "EL_STR", "ELEC")
-    if "DERIV" in input_data.keys():
+    if input_data.get("DERIV"):
         add_storage(n, input_data, "H2_STR", "H2")
 
-    if "DERIV" in input_data.keys():
         bus = "final_product"
         carrier = "final_product"
     else:
@@ -310,7 +309,7 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
         n.storage_units.at["EL_STR", "p_nom_opt"]
         * n.storage_units.at["EL_STR", "max_hours"]
     )
-    if "DERIV" in input_data.keys():
+    if input_data.get("DERIV"):
         result_data["H2_STR"] = {}
         result_data["H2_STR"]["CAP_F"] = (
             n.storage_units.at["H2_STR", "p_nom_opt"]
