@@ -381,6 +381,10 @@ def get_data_type_from_input_data(
     if scope in ["Argentina", "Morocco", "South Africa"]:
         df = select_subregions(df, scope)
 
+    if data_type == "interest rate":
+        # transform data to match unit [%]
+        df = df * 100
+
     return df
 
 

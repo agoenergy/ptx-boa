@@ -263,7 +263,7 @@ def display_and_edit_input_data(
         missing_index_name = "parameter_code"
         missing_index_value = "interest rate"
         column_config = {
-            c: st.column_config.NumberColumn(format="%.3f", min_value=0, max_value=1)
+            c: st.column_config.NumberColumn(format="%.2f", min_value=0, max_value=100)
             for c in df.columns
         }
 
