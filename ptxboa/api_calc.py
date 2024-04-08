@@ -5,7 +5,8 @@ import logging
 
 import pandas as pd
 
-from ptxboa.api_data import CalculateDataType, DataHandler
+from ptxboa.api_data import DataHandler
+from ptxboa.static._types import CalculateDataType
 
 logger = logging.getLogger()
 

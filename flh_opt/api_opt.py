@@ -12,15 +12,17 @@ from flh_opt._types import OptInputDataType, OptOutputDataType
 def get_profiles_and_weights(
     source_region_code: str,
     re_location: str,
-    path: str = "tests/test_profiles",
+    profiles_path: str = "tests/test_profiles",
     selection: Optional[List[int]] = None,
 ) -> pd.DataFrame:
     """Get RES profiles from CSV file."""
     filestem = f"{source_region_code}_{re_location}_aggregated"
-    data = pd.read_csv(f"{path}/{filestem}.csv", index_col=["period_id", "TimeStep"])
+    data = pd.read_csv(
+        f"{profiles_path}/{filestem}.csv", index_col=["period_id", "TimeStep"]
+    )
     data.index = data.index.map(lambda x: f"{x[0]}_{x[1]}")
     weights_and_period_ids = pd.read_csv(
-        f"{path}/{filestem}.weights.csv", index_col="TimeStep"
+        f"{profiles_path}/{filestem}.weights.csv", index_col="TimeStep"
     )
     weights_and_period_ids.index = data.index
 
@@ -30,7 +32,9 @@ def get_profiles_and_weights(
     return data, weights_and_period_ids
 
 
-def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
+def optimize(
+    input_data: OptInputDataType, profiles_path: str = "tests/test_profiles"
+) -> tuple[OptOutputDataType, Network]:
     """Run flh optimization.
 
     Parameters
@@ -81,9 +85,11 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
                 "OPEX_O": 0.167
             },
             "SPECCOST": {
-                "H2O": 0.658
+                "H2O-L": 0.658
             }
         }
+
+    profiles_path: str: path for for profiles data
 
     Returns
     -------
@@ -256,6 +262,7 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
         res_profiles, weights_and_period_ids = get_profiles_and_weights(
             source_region_code=input_data["SOURCE_REGION_CODE"],
             re_location=re_location,
+            profiles_path=profiles_path,
         )
 
     # define snapshots:

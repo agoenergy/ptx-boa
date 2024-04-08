@@ -5,11 +5,14 @@ import logging
 from functools import cache
 from itertools import product
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Tuple
+from typing import Dict, List, Literal, Tuple
 
 import numpy as np
 import pandas as pd
 
+from ptxboa.static._types import CalculateDataType
+
+from .api_optimize import PtxOpt
 from .static import (
     ChainNameType,
     DimensionType,
@@ -28,18 +31,6 @@ from .static import (
     TransportValues,
     YearValues,
 )
-
-CalculateDataType = Dict[
-    Literal[
-        "main_process_chain",
-        "transport_process_chain",
-        "secondary_process",
-        "parameter",
-        "context",
-    ],
-    Any,
-]
-
 
 logger = logging.getLogger(__name__)
 DATA_DIR_DEFAULT = Path(__file__).parent.resolve() / "data"
@@ -276,6 +267,7 @@ class DataHandler:
         scenario: ScenarioType,
         user_data: None | pd.DataFrame = None,
         data_dir: str = None,
+        optimize_flh: bool = False,
     ):
 
         assert scenario in ScenarioValues
@@ -320,6 +312,8 @@ class DataHandler:
             self.scenario_data = self._update_scenario_data_with_user_data(
                 self.scenario_data, user_data
             )
+
+        self.optimizer = PtxOpt() if optimize_flh else None
 
     def get_input_data(self, long_names: bool) -> pd.DataFrame:
         """Return scenario data.
@@ -735,6 +729,10 @@ class DataHandler:
             res["step"] = process_step
             res["process_code"] = process_code
             result["transport_process_chain"].append(res)
+
+        # get optimizedFLH?
+        if self.optimizer:
+            result = self.optimizer.get_data(result)
 
         return result
 

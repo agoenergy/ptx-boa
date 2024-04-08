@@ -8,7 +8,6 @@ import pandas as pd
 
 from .api_calc import PtxCalc
 from .api_data import DataHandler
-from .api_optimize import PtxOpt  # noqa F401
 from .static import (
     ChainNameType,
     DimensionType,
@@ -96,7 +95,9 @@ class PtxboaAPI:
             'source_region_code', 'target_country_code', 'value', 'unit', 'source'
 
         """
-        handler = DataHandler(scenario, user_data, data_dir=self.data_dir)
+        handler = DataHandler(
+            scenario, user_data, data_dir=self.data_dir, optimize_flh=False
+        )
         return handler.get_input_data(long_names)
 
     def calculate(
@@ -191,11 +192,6 @@ class PtxboaAPI:
             ship_own_fuel=ship_own_fuel,
         )
 
-        # opt_flh_data = PtxOpt().get_data(data) # noqa: E800
-        # TODO: update data with optimized flh data
-        # data["_opt_flh_data"] = opt_flh_data # noqa: E800
-
-        logger.info("PtxCalc.calculate")
         result_df = PtxCalc.calculate(data)
 
         # conversion to output unit

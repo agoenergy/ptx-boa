@@ -66,7 +66,7 @@ class OptInputDataType(TypedDict):
     DERIV: ProcessDerivInputData
     EL_STR: ProcessStorageInputDataType
     H2_STR: ProcessStorageInputDataType
-    SPECCOST: Dict[Literal["H2O"], float]
+    SPECCOST: Dict[Literal["H2O-L"], float]
 
 
 class ProcessOutputResType(TypedDict):
