@@ -7,6 +7,25 @@ import string
 from typing import Dict, List, Literal, TypedDict, get_args, get_origin
 
 ProcessCodeResType = Literal["PV-FIX", "PV-TRK", "RES-HYBR", "WIND-OFF", "WIND-ON"]
+ProcessCodeDerivType = Literal["CH3OHSYN", "CH4SYN", "DRI", "EFUELSYN", "NH3SYN"]
+SecondaryFlowType = Literal[
+    "BFUEL-L",
+    "CH3OH-L",
+    "CH4-G",
+    "CH4-L",
+    "CHX-L",
+    "CO2-G",
+    "C-S",
+    "DRI-S",
+    "EL",
+    "H2-G",
+    "H2-L",
+    "H2O-L",
+    "HEAT",
+    "LOHC-L",
+    "N2-G",
+    "NH3-L",
+]
 
 
 class ProcessElyInputDataType(TypedDict):
@@ -14,7 +33,7 @@ class ProcessElyInputDataType(TypedDict):
     CAPEX_A: float
     OPEX_F: float
     OPEX_O: float
-    Dict[Literal["H2O"], float]
+    CONV: Dict[Literal["H2O-L"], float]
 
 
 class ProcessStorageInputDataType(TypedDict):
@@ -31,10 +50,20 @@ class ProcessResInputDataType(TypedDict):
     PROCESS_CODE: ProcessCodeResType
 
 
+class ProcessDerivInputData(TypedDict):
+    EFF: float
+    CAPEX_A: float
+    OPEX_F: float
+    OPEX_O: float
+    PROCESS_CODE: ProcessCodeDerivType
+    CONV: Dict[SecondaryFlowType, float]
+
+
 class OptInputDataType(TypedDict):
     SOURCE_REGION_CODE: str
     RES: List[ProcessResInputDataType]
     ELY: ProcessElyInputDataType
+    DERIV: ProcessDerivInputData
     EL_STR: ProcessStorageInputDataType
     H2_STR: ProcessStorageInputDataType
     SPECCOST: Dict[Literal["H2O"], float]
@@ -49,6 +78,7 @@ class ProcessOutputResType(TypedDict):
 class OptOutputDataType(TypedDict):
     RES: List[ProcessOutputResType]
     ELY: Dict[Literal["FLH"], float]
+    DERIV: Dict[Literal["FLH"], float]
     EL_STR: Dict[Literal["CAP_F"], float]
     H2_STR: Dict[Literal["CAP_F"], float]
 
