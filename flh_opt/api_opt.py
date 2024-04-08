@@ -51,7 +51,22 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
                 "EFF": 0.834,
                 "CAPEX_A": 0.52,
                 "OPEX_F": 0.131,
-                "OPEX_O": 0.2
+                "OPEX_O": 0.2,
+                "CONV": {
+                    "H2O-L": 0.677
+                }
+            },
+            "DERIV": {
+                "EFF": 0.717,
+                "CAPEX_A": 0.367,
+                "OPEX_F": 0.082,
+                "OPEX_O": 0.132,
+                "PROCESS_CODE": "CH4SYN",
+                "CONV": {
+                    "CO2-G": 0.2,
+                    "HEAT": -0.2,
+                    "H2O-L": -0.15
+                }
             },
             "EL_STR": {
                 "EFF": 0.544,
@@ -85,6 +100,9 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
             "ELY": {
                 "FLH": 0.548
             },
+            "DERIV": {
+                "FLH": 0.548
+            },
             "EL_STR": {
                 "CAP_F": 0.112
             },
@@ -96,16 +114,17 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
     # initialize network object:
     n = Network()
 
-    # add buses:
-    n.add("Bus", "ELEC", carrier="Electricity")
-    n.add("Bus", "H2", carrier="H2")
+    # add buses and carriers:
+    carriers = ["ELEC", "H2", "HEAT", "CO2-G", "H2O-L"]
+    for c in carriers:
+        n.add("Bus", name=c, carrier=c)
+        n.add("Carrier", name=c)
 
-    # add carriers:
-    n.add("Carrier", "Electricity")
-    n.add("Carrier", "H2")
-    n.add("Carrier", "H2O")
+    if input_data.get("DERIV"):
+        n.add("Bus", "final_product", carrier="final_product")
+        n.add("Carrier", "final_product")
 
-    # add generators:
+    # add RE generators:
     for g in input_data["RES"]:
         n.add("Carrier", name=g["PROCESS_CODE"])
         n.add(
@@ -118,6 +137,27 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
             p_nom_extendable=True,
         )
 
+    # add supply for secondary inputs:
+    for c in input_data["SPECCOST"].keys():
+        n.add(
+            "Generator",
+            name=f"{c}_supply",
+            bus=c,
+            carrier=c,
+            marginal_cost=input_data["SPECCOST"][c],
+            p_nom=100,
+        )
+        n.add(
+            "Generator",
+            name=f"{c}_sink",
+            bus=c,
+            carrier=c,
+            p_max_pu=0,
+            p_min_pu=-1,
+            marginal_cost=0,
+            p_nom=100,
+        )
+
     # add links:
     # TODO: account for water demand
     n.add(
@@ -125,18 +165,53 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
         name="ELY",
         bus0="ELEC",
         bus1="H2",
+        bus2="H2O-L",
         carrier="H2",
         efficiency=input_data["ELY"]["EFF"],
-        capital_cost=input_data["ELY"]["CAPEX_A"] + input_data["ELY"]["OPEX_F"],
-        marginal_cost=input_data["ELY"]["OPEX_O"],
+        # input data is per main output,
+        # pypsa link parameters are defined per main input
+        efficiency2=-input_data["ELY"]["CONV"]["H2O-L"] / input_data["ELY"]["EFF"],
+        capital_cost=(input_data["ELY"]["CAPEX_A"] + input_data["ELY"]["OPEX_F"])
+        / input_data["ELY"]["EFF"],
+        marginal_cost=input_data["ELY"]["OPEX_O"] / input_data["ELY"]["EFF"],
         p_nom_extendable=True,
     )
 
+    if input_data.get("DERIV"):
+        n.add(
+            "Link",
+            name="DERIV",
+            bus0="H2",
+            bus1="final_product",
+            carrier="final_product",
+            efficiency=input_data["DERIV"]["EFF"],
+            # input data is per main output,
+            # pypsa link parameters are defined per main input
+            capital_cost=(
+                input_data["DERIV"]["CAPEX_A"] + input_data["DERIV"]["OPEX_F"]
+            )
+            / input_data["DERIV"]["EFF"],
+            marginal_cost=input_data["DERIV"]["OPEX_O"] / input_data["DERIV"]["EFF"],
+            p_nom_extendable=True,
+        )
+        # add conversion efficiencies and buses for secondary input / output
+        for i, c in enumerate(input_data["DERIV"]["CONV"].keys()):
+            n.links.at["DERIV", f"bus{i+2}"] = c
+            # input data is per main output,
+            # pypsa link parameters are defined per main input
+            n.links.at["DERIV", f"efficiency{i+2}"] = (
+                -input_data["DERIV"]["CONV"][c] / input_data["DERIV"]["EFF"]
+            )
+
     # add loads:
-    n.add("Load", name="H2_demand", bus="H2", carrier="H2", p_set=1)
+    if input_data.get("DERIV"):
+        n.add(
+            "Load", name="demand", bus="final_product", carrier="final_product", p_set=1
+        )
+    else:
+        n.add("Load", name="demand", bus="H2", carrier="H2", p_set=1)
 
     # add storage:
-    # TODO: for H2 storage: invest in cap and store/dispatch cap. individually?
     def add_storage(n: Network, input_data: dict, name: str, bus: str) -> None:
         n.add(
             "StorageUnit",
@@ -145,14 +220,31 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
             carrier=n.buses.at[bus, "carrier"],
             capital_cost=input_data[name]["CAPEX_A"] + input_data[name]["OPEX_F"],
             efficiency_store=input_data[name]["EFF"],
-            max_hours=24,  # TODO: move this parameter out of the code.
+            max_hours=4,  # TODO: move this parameter out of the code.
             cyclic_state_of_charge=True,
             marginal_cost=input_data[name]["OPEX_O"],
             p_nom_extendable=True,
         )
 
     add_storage(n, input_data, "EL_STR", "ELEC")
-    add_storage(n, input_data, "H2_STR", "H2")
+    if input_data.get("DERIV"):
+        add_storage(n, input_data, "H2_STR", "H2")
+
+        bus = "final_product"
+        carrier = "final_product"
+    else:
+        bus = "H2"
+        carrier = "H2"
+
+    # add final product storage (for flexible demand):
+    n.add(
+        "StorageUnit",
+        name="final_product_storage",
+        bus=bus,
+        carrier=carrier,
+        p_nom=100,
+        max_hours=8760,
+    )
 
     # add RE profiles:
     for g in input_data["RES"]:
@@ -182,17 +274,21 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
     n.import_series_from_dataframe(res_profiles, "Generator", "p_max_pu")
 
     # solve optimization problem:
-    n.optimize(solver_name="highs")
+    model_status = n.optimize(solver_name="highs")
 
     # calculate results:
 
     def get_flh(n: Network, g: str, component_type: str) -> float:
         if component_type == "Generator":
-            flh = n.generators_t["p"][g].mean() / n.generators.at[g, "p_nom_opt"]
+            gen = n.generators_t["p"][g].mean()
+            p_nom = n.generators.at[g, "p_nom_opt"]
         if component_type == "Link":
-            flh = n.links_t["p0"][g].mean() / n.links.at[g, "p_nom_opt"]
-        if math.isnan(flh):
+            gen = n.links_t["p0"][g].mean()
+            p_nom = n.links.at[g, "p_nom_opt"]
+        if gen == 0:
             flh = 0
+        else:
+            flh = gen / p_nom
         return flh
 
     result_data = {}
@@ -222,9 +318,15 @@ def optimize(input_data: OptInputDataType) -> tuple[OptOutputDataType, Network]:
         n.storage_units.at["EL_STR", "p_nom_opt"]
         * n.storage_units.at["EL_STR", "max_hours"]
     )
-    result_data["H2_STR"] = {}
-    result_data["H2_STR"]["CAP_F"] = (
-        n.storage_units.at["H2_STR", "p_nom_opt"]
-        * n.storage_units.at["H2_STR", "max_hours"]
-    )
+    if input_data.get("DERIV"):
+        result_data["H2_STR"] = {}
+        result_data["H2_STR"]["CAP_F"] = (
+            n.storage_units.at["H2_STR", "p_nom_opt"]
+            * n.storage_units.at["H2_STR", "max_hours"]
+        )
+        result_data["DERIV"] = {}
+        result_data["DERIV"]["FLH"] = get_flh(n, "DERIV", "Link")
+
+    # store model status:
+    result_data["model_status"] = model_status
     return result_data, n
