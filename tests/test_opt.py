@@ -95,6 +95,7 @@ def test_profile_import(settings):
         source_region_code=settings["source_region_code"],
         re_location=settings["re_location"],
         selection=settings["selection"],
+        profiles_path="tests/test_profiles",
     )
     if settings["selection"] is not None:
         assert len(res) == len(settings["selection"])

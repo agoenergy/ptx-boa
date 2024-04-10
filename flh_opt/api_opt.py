@@ -12,7 +12,7 @@ from flh_opt._types import OptInputDataType, OptOutputDataType
 def get_profiles_and_weights(
     source_region_code: str,
     re_location: str,
-    profiles_path: str = "tests/test_profiles",
+    profiles_path: str = "flh_opt/renewable_profiles",
     selection: Optional[List[int]] = None,
 ) -> pd.DataFrame:
     """Get RES profiles from CSV file."""
@@ -33,7 +33,7 @@ def get_profiles_and_weights(
 
 
 def optimize(
-    input_data: OptInputDataType, profiles_path: str = "tests/test_profiles"
+    input_data: OptInputDataType, profiles_path: str = "flh_opt/renewable_profiles"
 ) -> tuple[OptOutputDataType, Network]:
     """Run flh optimization.
 

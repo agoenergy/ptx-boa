@@ -57,7 +57,7 @@ class PtxOpt:
 
     def __init__(self, cache_dir: str = DEFAULT_CACHE_DIR):
         self.cache_dir = cache_dir
-        self.profiles_path = "tests/test_profiles"  # TODO: path for profiles data
+        self.profiles_path = "flh_opt/renewable_profiles"
 
     def _save(self, filepath: str, data: object, raise_on_overwrite=False) -> None:
         if raise_on_overwrite and os.path.exists(filepath):
