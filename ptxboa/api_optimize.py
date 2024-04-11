@@ -137,18 +137,27 @@ class PtxOpt:
 
         for step in input_data["main_process_chain"]:
             if step["step"] == "RES":
-                # if step["process_code"] == "RES-HYBR": # noqa E800
-                #    res_codes = ["PV-FIX", "WIND-ON"]  # noqa E800
-                # TODO: we need parameters for other RES from input data as well!
+                if step["process_code"] == "RES-HYBR":
+                    for pc in ["PV-FIX", "WIND-ON"]:
+                        proc_data = input_data["flh_opt_process"][pc]
+                        result["RES"].append(
+                            {
+                                "CAPEX_A": proc_data["CAPEX"],
+                                "OPEX_F": proc_data["OPEX-F"],
+                                "OPEX_O": proc_data["OPEX-O"],
+                                "PROCESS_CODE": pc,
+                            }
+                        )
+                else:
+                    result["RES"].append(
+                        {
+                            "CAPEX_A": step["CAPEX"],  # TODO why CAPEX_A?
+                            "OPEX_F": step["OPEX-F"],
+                            "OPEX_O": step["OPEX-O"],
+                            "PROCESS_CODE": step["process_code"],
+                        }
+                    )
 
-                result["RES"] = [
-                    {
-                        "CAPEX_A": step["CAPEX"],  # TODO why CAPEX_A?
-                        "OPEX_F": step["OPEX-F"],
-                        "OPEX_O": step["OPEX-O"],
-                        "PROCESS_CODE": step["process_code"],
-                    }
-                ]
             elif step["step"] == "ELY":
                 result["ELY"] = {
                     "EFF": step["EFF"],
@@ -178,18 +187,26 @@ class PtxOpt:
 
     @staticmethod
     def _merge_data(input_data: CalculateDataType, opt_output_data: OptOutputDataType):
+        flh_opt_process = input_data["flh_opt_process"]
+
         for step in input_data["main_process_chain"]:
             if step["step"] == "RES":
-                # TODO merge technologies with SHARE_FACTOR for each PROCESS_CODE
-                for res in opt_output_data["RES"]:
-                    sf = res["SHARE_FACTOR"]
-                    flh = res["FLH"]
+                output_res = opt_output_data["RES"]
+                if step["process_code"] == "RES-HYBR":
+                    assert len(output_res) == 2
+                    step["FLH"] = sum(x["FLH"] * x["SHARE_FACTOR"] for x in output_res)
+                    # Merge technologies with SHARE_FACTOR for each PROCESS_CODE
+                    for k in ["LIFETIME", "CAPEX", "OPEX-F", "OPEX-O"]:
+                        step[k] = sum(
+                            flh_opt_process[x["PROCESS_CODE"]][k] * x["SHARE_FACTOR"]
+                            for x in output_res
+                        )
+                else:
+                    assert len(output_res) == 1
+                    flh = output_res[0]["FLH"]
+                    step["FLH"] = flh
 
-                step["FLH"] = flh * 8760  # NOTE: output is fratcion
-                step["OPEX-O"] = step["OPEX-O"] * sf
-                step["OPEX-F"] = step["OPEX-F"] * sf
-                step["CAPEX"] = step["CAPEX"] * sf
-                step["LIFETIME"] = step["LIFETIME"] * sf
+                step["FLH"] = step["FLH"] * 8760  # NOTE: output is fraction
 
             elif step["step"] == "ELY":
                 step["FLH"] = opt_output_data["ELY"]["FLH"] * 8760

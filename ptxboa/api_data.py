@@ -661,6 +661,7 @@ class DataHandler:
         # get general parameters
 
         result = {
+            "flh_opt_process": {},
             "main_process_chain": [],
             "transport_process_chain": [],
             "secondary_process": {},
@@ -732,6 +733,10 @@ class DataHandler:
 
         # get optimizedFLH?
         if self.optimizer:
+            # If RES=Hybrid: we also need PV and Wind-On
+            if process_code_res == "RES-HYBR":
+                for pc in ["PV-FIX", "WIND-ON"]:
+                    result["flh_opt_process"][pc] = get_process_params(pc)
             result = self.optimizer.get_data(result)
 
         return result
