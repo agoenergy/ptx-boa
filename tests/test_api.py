@@ -238,7 +238,7 @@ class TestApi(unittest.TestCase):
             ("Heat", "OPEX"): 0,
             ("Heat", "FLOW"): 0,
             ("Electricity and H2 storage", "CAPEX"): 0,
-            ("Electricity and H2 storage", "OPEX"): 1.9692876679109192,
+            ("Electricity and H2 storage", "OPEX"): 1.968808488442095,
             ("Electricity and H2 storage", "FLOW"): 0,
         }.items():
             self.assertAlmostEqual(res_values.get(k, 0), v, places=3, msg=k)

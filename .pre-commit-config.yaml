@@ -4,7 +4,7 @@ exclude: ^(data|archive)/
 repos:
   # ============== PRE-COMMIT HOOKS ===============
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v4.6.0
     hooks:
       - id: check-added-large-files
         args: ['--maxkb=5000'] # we need some data files and images in the repository
@@ -16,7 +16,7 @@ repos:
 
   # ==================== BLACK ====================
   - repo: https://github.com/psf/black
-    rev: 24.2.0
+    rev: 24.3.0
     hooks:
       - id: black
         args: ["--line-length", "88"]
