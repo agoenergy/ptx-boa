@@ -267,7 +267,7 @@ class DataHandler:
         scenario: ScenarioType,
         user_data: None | pd.DataFrame = None,
         data_dir: str = None,
-        optimize_flh: bool = False,
+        optimize_flh: bool = True,
     ):
 
         assert scenario in ScenarioValues
