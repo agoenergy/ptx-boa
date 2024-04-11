@@ -126,26 +126,12 @@ class PtxOpt:
     def _prepare_data(input_data: CalculateDataType) -> OptInputDataType:
 
         src_reg = input_data["context"]["source_region_code"]
-        # TODO: no profiles yet, only test data
-        src_reg = "ARG"
 
         result = {
             "SOURCE_REGION_CODE": src_reg,
             "RES": [],
             "ELY": None,
             "DERIV": None,
-            "EL_STR": {  # TODO: not defined in chains?
-                "EFF": 1,
-                "CAPEX_A": 0.1,
-                "OPEX_F": 0.1,
-                "OPEX_O": 0.1,
-            },
-            "H2_STR": {  # TODO: not defined in chains?
-                "EFF": 1,
-                "CAPEX_A": 0.1,
-                "OPEX_F": 0.1,
-                "OPEX_O": 0.1,
-            },
             "SPECCOST": {"H2O-L": input_data["parameter"]["SPECCOST"]["H2O-L"]},
         }
 
@@ -179,6 +165,13 @@ class PtxOpt:
                     "OPEX_O": step["OPEX-O"],
                     "PROCESS_CODE": step["process_code"],
                     "CONV": step["CONV"],
+                }
+            elif step["step"] in ("EL_STR", "H2_STR"):
+                result[step["step"]] = {
+                    "EFF": step["EFF"],
+                    "CAPEX_A": step["CAPEX"],
+                    "OPEX_F": step["OPEX-F"],
+                    "OPEX_O": step["OPEX-O"],
                 }
 
         return result

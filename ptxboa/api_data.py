@@ -792,7 +792,7 @@ class DataHandler:
     ) -> List[ProcessStepType]:
         result_main = []
         result_transport = []
-        for process_step in ["RES", "ELY", "DERIV"]:
+        for process_step in ["RES", "EL_STR", "ELY", "H2_STR", "DERIV"]:
             process_code = chain[process_step]
             if process_code:
                 result_main.append(process_step)
