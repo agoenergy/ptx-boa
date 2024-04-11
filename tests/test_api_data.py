@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Unittests for ptxboa api_data module."""
+import json
 from pathlib import Path
 
 import pandas as pd
@@ -318,6 +319,7 @@ def test_get_calculation_data(ptxdata_dir, scenario, kwargs, request):
                 "N2-G": 0.01,
             },
         },
+        "flh_opt_process": {},
     }
 
 
@@ -473,4 +475,6 @@ def test_get_calculation_data_w_opt(ptxdata_dir, scenario, kwargs, request):
         "context": {"source_region_code": "ARG", "target_country_code": "DEU"},
     }
 
-    assert exp_result == pytest.approx(result)
+    assert json.dumps(result, sort_keys=True, indent=2) == json.dumps(
+        exp_result, sort_keys=True, indent=2
+    )
