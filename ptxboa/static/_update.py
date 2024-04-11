@@ -20,6 +20,11 @@ def sql_to_df(query: str) -> pd.DataFrame:
     )
 
 
+def update_csv(query: str, filename: str, data_dir: str = None) -> None:
+    data_dir = data_dir or os.path.dirname(__file__)
+    sql_to_df(query).to_csv(data_dir + "/" + filename, index=False, lineterminator="\n")
+
+
 def create_literal(name: str, items: list) -> str:
     items = ", ".join(f'"{x}"' for x in items)
     return f"{name}Type = Literal[{items}]\n" f"{name}Values = [{items}]\n"
@@ -125,7 +130,9 @@ def main():
         create_literal(
             "ProcessStep",
             [
+                "EL_STR",  # storage electricity
                 "ELY",
+                "H2_STR",  # storage H2
                 "DERIV",
                 "PRE_SHP",
                 "PRE_PPL",
@@ -148,6 +155,124 @@ def main():
         for x in literals:
             file.write(x)
             file.write("\n\n")
+
+    update_csv(
+        """
+        SELECT
+        "parameter_code",
+        "parameter_name",
+        "unit",
+        "per_flow",
+        "per_transformation_process",
+        "per_transport_process",
+        "per_re_generation_process",
+        "per_process",
+        "per_region",
+        "per_import_country",
+        "has_global_default",
+        "global_default_changeable",
+        "own_country_changeable",
+        "comment",
+        "dimensions"
+        FROM "ptxboa_parameter"
+        ORDER BY "parameter_code"
+        """,
+        "dim_parameter.csv",
+    )
+
+    update_csv(
+        """
+        SELECT
+         "process_code"
+        ,"process_name"
+        ,"main_flow_code_out"
+        ,"main_flow_code_in"
+        ,"is_transformation"
+        ,"is_re_generation"
+        ,"is_transport"
+        ,"is_secondary"
+        ,"process_class"
+        /*,"is_secondary_all"*/
+        ,"is_ely"
+        ,"is_deriv"
+        /*,"class_name"*/
+        ,"result_process_type"
+        ,"secondary_flows"
+        FROM "ptxboa_process"
+        ORDER BY "process_code"
+        """,
+        "dim_process.csv",
+    )
+
+    update_csv(
+        """
+        SELECT
+        "flow_code",
+        "flow_name",
+        "unit",
+        "secondary_process",
+        "secondary_flow",
+        "result_process_type"
+        FROM "ptxboa_flow"
+        ORDER BY "flow_code"
+        """,
+        "dim_flow.csv",
+    )
+
+    update_csv(
+        """
+        SELECT
+        "country_code",
+        "country_name",
+        "is_import",
+        "is_export"
+        FROM "_ptxboa_country"
+        ORDER BY "country_code"
+        """,
+        "dim_country.csv",
+    )
+
+    update_csv(
+        """
+        SELECT
+        "region_code",
+        "region_name",
+        "country_code",
+        "subregion_code",
+        "subregion_name",
+        "is_coastal",
+        "iso3166_code"
+        FROM "ptxboa_source_region"
+        ORDER BY "region_code"
+        """,
+        "dim_region.csv",
+    )
+
+    update_csv(
+        """
+        SELECT
+        "chain"
+        ,"EL_STR"
+        ,"ELY"
+        ,"H2_STR"
+        ,"DERIV"
+        ,"PRE_SHP"
+        ,"PRE_PPL"
+        ,"POST_SHP"
+        ,"POST_PPL"
+        ,"SHP"
+        ,"SHP-OWN"
+        ,"PPLS"
+        ,"PPL"
+        ,"PPLX"
+        ,"PPLR"
+        ,"FLOW_OUT"
+        ,"CAN_PIPELINE"
+        FROM "ptxboa_chains"
+        ORDER BY "chain"
+        """,
+        "chains.csv",
+    )
 
 
 if __name__ == "__main__":
