@@ -3,6 +3,7 @@
 
 import logging
 import unittest
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -18,11 +19,14 @@ logging.basicConfig(
 )
 
 
+ptxdata_dir_static = Path(__file__).parent / "test_data"
+
+
 class TestApi(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Set up code for class."""
-        cls.api = PtxboaAPI()
+        cls.api = PtxboaAPI(data_dir=ptxdata_dir_static)
 
     def _test_api_call(self, settings):
         res = self.api.calculate(**settings)
@@ -83,23 +87,23 @@ class TestApi(unittest.TestCase):
         # test result categories
         res_values = res.groupby(["process_type", "cost_type"]).sum("values")["values"]
         expected_result = {
-            ("Water", "CAPEX"): 1.2335908034771972,
-            ("Water", "OPEX"): 0.5313055092514363,
-            ("Water", "FLOW"): 1.1785698932651663,
-            ("Electrolysis", "CAPEX"): 306.09326488966565,
-            ("Electrolysis", "OPEX"): 65.91693028280527,
-            ("Electricity generation", "CAPEX"): 1008.7007256349594,
-            ("Electricity generation", "OPEX"): 304.11200849063624,
-            ("Transportation (Ship)", "CAPEX"): 68.82605644805622,
-            ("Transportation (Ship)", "OPEX"): 70.896276571698,
-            ("Transportation (Ship)", "FLOW"): 104.72562247224381,
-            ("Carbon", "CAPEX"): 220.78692210941142,
-            ("Carbon", "OPEX"): 111.91943564963195,
-            ("Carbon", "FLOW"): 99.10921639183132,
-            ("Derivate production", "CAPEX"): 101.53206754867816,
-            ("Derivate production", "OPEX"): 38.600831488868316,
-            ("Heat", "FLOW"): 273.29119470172753,
-            ("Electricity and H2 storage", "OPEX"): 184.90944262777725,
+            ("Water", "CAPEX"): 1.1342172270672746,
+            ("Water", "OPEX"): 0.539157778349926,
+            ("Water", "FLOW"): 1.195988210583831,
+            ("Electrolysis", "CAPEX"): 290.29664931801034,
+            ("Electrolysis", "OPEX"): 68.99723120650344,
+            ("Electricity generation", "CAPEX"): 927.4434737560686,
+            ("Electricity generation", "OPEX"): 308.606539951669,
+            ("Transportation (Ship)", "CAPEX"): 61.35376450396558,
+            ("Transportation (Ship)", "OPEX"): 71.15409022458118,
+            ("Transportation (Ship)", "FLOW"): 106.24743335376925,
+            ("Carbon", "CAPEX"): 196.81657679863747,
+            ("Carbon", "OPEX"): 113.57351510254443,
+            ("Carbon", "FLOW"): 100.57397108324335,
+            ("Derivate production", "CAPEX"): 90.50895668682817,
+            ("Derivate production", "OPEX"): 39.171320804334,
+            ("Heat", "FLOW"): 277.3302192660863,
+            ("Electricity and H2 storage", "OPEX"): 176.3817106548646,
         }
 
         result_dict = {k: pytest.approx(v) for k, v in res_values.items() if v}
@@ -124,19 +128,19 @@ class TestApi(unittest.TestCase):
         # test result categories
         res_values = res.groupby(["process_type", "cost_type"]).sum("values")["values"]
         expected_result = {
-            ("Water", "CAPEX"): 1.4301071608500682,
+            ("Water", "CAPEX"): 0.8511210005237106,
             ("Water", "OPEX"): 0.21273242859187,
             ("Water", "FLOW"): 0.471894289243873,
-            ("Electrolysis", "CAPEX"): 769.4966207336263,
+            ("Electrolysis", "CAPEX"): 457.96199870023696,
             ("Electrolysis", "OPEX"): 85.8485762832237,
-            ("Electricity generation", "CAPEX"): 1409.6548019077416,
+            ("Electricity generation", "CAPEX"): 838.9488831589423,
             ("Electricity generation", "OPEX"): 146.78305821183,
             ("Transportation (Ship)", "OPEX"): 12.2061245592688,
             ("Carbon", "FLOW"): 61.3694736856213,
-            ("Derivate production", "CAPEX"): 328.98383860792785,
+            ("Derivate production", "CAPEX"): 188.2042202083766,
             ("Derivate production", "OPEX"): 37.0003810701601,
             ("Derivate production", "FLOW"): 16.8369286421993,
-            ("Electricity and H2 storage", "OPEX"): 63.449562769066546,
+            ("Electricity and H2 storage", "OPEX"): 40.72566174247268,
         }
 
         result_dict = {k: pytest.approx(v) for k, v in res_values.items() if v}
@@ -161,16 +165,16 @@ class TestApi(unittest.TestCase):
         # test result categories
         res_values = res.groupby(["process_type", "cost_type"]).sum("values")["values"]
         for k, v in {
-            ("Water", "CAPEX"): 0.14714045025363445,
+            ("Water", "CAPEX"): 0.09778240749517693,
             ("Water", "OPEX"): 0.0301895762734038,
             ("Water", "FLOW"): 0.0669681098101092,
-            ("Electrolysis", "CAPEX"): 39.1305462336558,
-            ("Electrolysis", "OPEX"): 4.014309484932684,
+            ("Electrolysis", "CAPEX"): 31.26888734395876,
+            ("Electrolysis", "OPEX"): 4.827015838720482,
             ("Electrolysis", "FLOW"): 0,
-            ("Electricity generation", "CAPEX"): 334.59097616359,
+            ("Electricity generation", "CAPEX"): 222.35293638860577,
             ("Electricity generation", "OPEX"): 58.3523144804189,
             ("Electricity generation", "FLOW"): 0,
-            ("Transportation (Pipeline)", "CAPEX"): 7.994178867029144,
+            ("Transportation (Pipeline)", "CAPEX"): 5.312543588236488,
             ("Transportation (Pipeline)", "OPEX"): 24.678148029682,
             ("Transportation (Pipeline)", "FLOW"): 2.97636043600485,
             ("Transportation (Ship)", "CAPEX"): 0,
@@ -186,7 +190,7 @@ class TestApi(unittest.TestCase):
             ("Heat", "OPEX"): 0,
             ("Heat", "FLOW"): 0,
             ("Electricity and H2 storage", "CAPEX"): 0,
-            ("Electricity and H2 storage", "OPEX"): 2.8361608892430747,
+            ("Electricity and H2 storage", "OPEX"): 2.060474611944337,
             ("Electricity and H2 storage", "FLOW"): 0,
         }.items():
             self.assertAlmostEqual(res_values.get(k, 0), v, places=3, msg=k)
@@ -212,13 +216,13 @@ class TestApi(unittest.TestCase):
             ("Water", "CAPEX"): 0,
             ("Water", "OPEX"): 0,
             ("Water", "FLOW"): 0.362589872395495,
-            ("Electrolysis", "CAPEX"): 12.794368018601135,
-            ("Electrolysis", "OPEX"): 2.949357463755985,
+            ("Electrolysis", "CAPEX"): 14.26507991048662,
+            ("Electrolysis", "OPEX"): 3.546461787521432,
             ("Electrolysis", "FLOW"): 0,
-            ("Electricity generation", "CAPEX"): 28.587278733039113,
+            ("Electricity generation", "CAPEX"): 26.50698388538755,
             ("Electricity generation", "OPEX"): 6.58993893072181,
             ("Electricity generation", "FLOW"): 0,
-            ("Transportation (Pipeline)", "CAPEX"): 1.3825947272020482,
+            ("Transportation (Pipeline)", "CAPEX"): 1.281983377858589,
             ("Transportation (Pipeline)", "OPEX"): 2.55172143395481,
             ("Transportation (Pipeline)", "FLOW"): 0.710683430261875,
             ("Transportation (Ship)", "CAPEX"): 0,
@@ -293,10 +297,13 @@ class TestApi(unittest.TestCase):
     def test_datahandler(self):
         """Test functionality for DataHandler.get_parameter_value."""
         data_handler = DataHandler(
-            scenario="2030 (low)", user_data=None, optimize_flh=False
+            scenario="2030 (low)",
+            user_data=None,
+            optimize_flh=False,
+            data_dir=ptxdata_dir_static,
         )
 
-        expected_val = 0.0594
+        expected_val = 0.0503
 
         # WACC without source_region_code (this is NOT fine)
         self.assertRaises(

@@ -122,7 +122,7 @@ def ptxdata_dir_live():
         ),
     ),
 )
-@pytest.mark.parametrize("ptxdata_dir", ("ptxdata_dir_static", "ptxdata_dir_live"))
+@pytest.mark.parametrize("ptxdata_dir", ("ptxdata_dir_static",))
 def test_get_parameter_value(
     ptxdata_dir,
     scenario,
