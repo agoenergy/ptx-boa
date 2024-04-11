@@ -20,6 +20,11 @@ def sql_to_df(query: str) -> pd.DataFrame:
     )
 
 
+def update_csv(query: str, filename: str, data_dir: str = None) -> None:
+    data_dir = data_dir or os.path.dirname(__file__)
+    sql_to_df(query).to_csv(data_dir + "/" + filename, index=False, lineterminator="\n")
+
+
 def create_literal(name: str, items: list) -> str:
     items = ", ".join(f'"{x}"' for x in items)
     return f"{name}Type = Literal[{items}]\n" f"{name}Values = [{items}]\n"
@@ -34,18 +39,6 @@ def create_literal_from_query(name: str, column: str, query: str) -> str:
 def create_literal_from_db(name: str, column: str, table: str) -> str:
     query = f'select "{column}" from "{table}" order by "{column}"'
     return create_literal_from_query(name, column, query)
-
-
-def update_csv(query: str, filename: str, data_dir: str = None) -> None:
-    data_dir = data_dir or os.path.dirname(__file__)
-    CS = (
-        "mssql+pyodbc://?odbc_connect=driver=sql server;server=sqldaek2;database=ptxboa"
-    )
-    engine = sa.create_engine(CS)
-    pd.read_sql(
-        query,
-        engine,
-    ).to_csv(data_dir + "/" + filename, index=False, lineterminator="\n")
 
 
 def main():
@@ -137,7 +130,9 @@ def main():
         create_literal(
             "ProcessStep",
             [
+                "EL_STR",  # storage electricity
                 "ELY",
+                "H2_STR",  # storage H2
                 "DERIV",
                 "PRE_SHP",
                 "PRE_PPL",
@@ -160,30 +155,6 @@ def main():
         for x in literals:
             file.write(x)
             file.write("\n\n")
-
-    update_csv(
-        """
-        SELECT
-        "chain"
-        ,"ELY"
-        ,"DERIV"
-        ,"PRE_SHP"
-        ,"PRE_PPL"
-        ,"POST_SHP"
-        ,"POST_PPL"
-        ,"SHP"
-        ,"SHP-OWN"
-        ,"PPLS"
-        ,"PPL"
-        ,"PPLX"
-        ,"PPLR"
-        ,"FLOW_OUT"
-        ,"CAN_PIPELINE"
-        FROM "ptxboa_chains"
-        ORDER BY "chain"
-        """,
-        "chains.csv",
-    )
 
     update_csv(
         """
@@ -246,6 +217,61 @@ def main():
         ORDER BY "flow_code"
         """,
         "dim_flow.csv",
+    )
+
+    update_csv(
+        """
+        SELECT
+        "country_code",
+        "country_name",
+        "is_import",
+        "is_export"
+        FROM "_ptxboa_country"
+        ORDER BY "country_code"
+        """,
+        "dim_country.csv",
+    )
+
+    update_csv(
+        """
+        SELECT
+        "region_code",
+        "region_name",
+        "country_code",
+        "subregion_code",
+        "subregion_name",
+        "is_coastal",
+        "iso3166_code"
+        FROM "ptxboa_source_region"
+        ORDER BY "region_code"
+        """,
+        "dim_region.csv",
+    )
+
+    update_csv(
+        """
+        SELECT
+        "chain"
+        ,"EL_STR"
+        ,"ELY"
+        ,"H2_STR"
+        ,"DERIV"
+        ,"PRE_SHP"
+        ,"PRE_PPL"
+        ,"POST_SHP"
+        ,"POST_PPL"
+        ,"SHP"
+        ,"SHP-OWN"
+        ,"PPLS"
+        ,"PPL"
+        ,"PPLX"
+        ,"PPLR"
+        ,"FLOW_OUT"
+        ,"CAN_PIPELINE"
+        FROM "ptxboa_chains"
+        ORDER BY "chain"
+        """,
+        "chains.csv",
     )
 
 

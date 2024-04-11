@@ -766,7 +766,9 @@ DimensionValues = [
 
 
 ProcessStepType = Literal[
+    "EL_STR",
     "ELY",
+    "H2_STR",
     "DERIV",
     "PRE_SHP",
     "PRE_PPL",
@@ -780,7 +782,9 @@ ProcessStepType = Literal[
     "PPLR",
 ]
 ProcessStepValues = [
+    "EL_STR",
     "ELY",
+    "H2_STR",
     "DERIV",
     "PRE_SHP",
     "PRE_PPL",

@@ -95,7 +95,9 @@ class PtxboaAPI:
             'source_region_code', 'target_country_code', 'value', 'unit', 'source'
 
         """
-        handler = DataHandler(scenario, user_data, data_dir=self.data_dir)
+        handler = DataHandler(
+            scenario, user_data, data_dir=self.data_dir, optimize_flh=False
+        )
         return handler.get_input_data(long_names)
 
     def calculate(
@@ -111,6 +113,7 @@ class PtxboaAPI:
         ship_own_fuel: bool = False,  # TODO: no correctly passed by app
         output_unit: OutputUnitType = "USD/MWh",
         user_data: pd.DataFrame | None = None,
+        optimize_flh: bool = False,
     ) -> pd.DataFrame:
         """Calculate results based on user selection.
 
@@ -141,7 +144,8 @@ class PtxboaAPI:
             contains only rows of scenario_data that have been modified.
             ids are expected to come as long names. Needs to have the columns
             ["source_region_code", "process_code", "parameter_code", "value"].
-
+        optimize_flh: bool, optional
+            use optimizer module for FLH
 
         Returns
         -------
@@ -154,7 +158,9 @@ class PtxboaAPI:
             * `cost_type`: one of {RESULT_COST_TYPES}
 
         """
-        data_handler = DataHandler(scenario, user_data, data_dir=self.data_dir)
+        data_handler = DataHandler(
+            scenario, user_data, data_dir=self.data_dir, optimize_flh=optimize_flh
+        )
 
         if transport not in TransportValues:
             logger.error(f"Invalid choice for transport: {transport}")
