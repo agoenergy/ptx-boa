@@ -320,34 +320,40 @@ def optimize(
         return flh
 
     result_data = {}
-    result_data["RES"] = []
-
-    # Calculate total RES capacity:
-    list_res = [item["PROCESS_CODE"] for item in input_data["RES"]]
-    cap_total = n.generators.loc[list_res, "p_nom_opt"].sum()
-
-    # Add results for each RES type:
-    for g in input_data["RES"]:
-        d = {}
-        d["PROCESS_CODE"] = g["PROCESS_CODE"]
-        d["FLH"] = get_flh(n, g["PROCESS_CODE"], "Generator")
-        d["SHARE_FACTOR"] = n.generators.at[g["PROCESS_CODE"], "p_nom_opt"] / cap_total
-        result_data["RES"].append(d)
-
-    # Calculate FLH for electrolyzer:
-    result_data["ELY"] = {}
-    result_data["ELY"]["FLH"] = get_flh(n, "ELY", "Link")
-
-    # calculate capacity factor for storage units:
-    # we use charging capacity (p_nom) per final product demand
-    result_data["EL_STR"] = {}
-    result_data["EL_STR"]["CAP_F"] = n.storage_units.at["EL_STR", "p_nom_opt"]
-    if input_data.get("DERIV"):
-        result_data["H2_STR"] = {}
-        result_data["H2_STR"]["CAP_F"] = n.links.at["H2_STR_in", "p_nom_opt"]
-        result_data["DERIV"] = {}
-        result_data["DERIV"]["FLH"] = get_flh(n, "DERIV", "Link")
 
     # store model status:
     result_data["model_status"] = model_status
+
+    # only store results if optimization was successful:
+    if model_status[1] == "optimal":
+        result_data["RES"] = []
+
+        # Calculate total RES capacity:
+        list_res = [item["PROCESS_CODE"] for item in input_data["RES"]]
+        cap_total = n.generators.loc[list_res, "p_nom_opt"].sum()
+
+        # Add results for each RES type:
+        for g in input_data["RES"]:
+            d = {}
+            d["PROCESS_CODE"] = g["PROCESS_CODE"]
+            d["FLH"] = get_flh(n, g["PROCESS_CODE"], "Generator")
+            d["SHARE_FACTOR"] = (
+                n.generators.at[g["PROCESS_CODE"], "p_nom_opt"] / cap_total
+            )
+            result_data["RES"].append(d)
+
+        # Calculate FLH for electrolyzer:
+        result_data["ELY"] = {}
+        result_data["ELY"]["FLH"] = get_flh(n, "ELY", "Link")
+
+        # calculate capacity factor for storage units:
+        # we use charging capacity (p_nom) per final product demand
+        result_data["EL_STR"] = {}
+        result_data["EL_STR"]["CAP_F"] = n.storage_units.at["EL_STR", "p_nom_opt"]
+        if input_data.get("DERIV"):
+            result_data["H2_STR"] = {}
+            result_data["H2_STR"]["CAP_F"] = n.links.at["H2_STR_in", "p_nom_opt"]
+            result_data["DERIV"] = {}
+            result_data["DERIV"]["FLH"] = get_flh(n, "DERIV", "Link")
+
     return result_data, n

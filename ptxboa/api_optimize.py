@@ -189,29 +189,38 @@ class PtxOpt:
     def _merge_data(input_data: CalculateDataType, opt_output_data: OptOutputDataType):
         flh_opt_process = input_data["flh_opt_process"]
 
-        for step in input_data["main_process_chain"]:
-            if step["step"] == "RES":
-                output_res = opt_output_data["RES"]
-                if step["process_code"] == "RES-HYBR":
-                    assert len(output_res) == 2
-                    step["FLH"] = sum(x["FLH"] * x["SHARE_FACTOR"] for x in output_res)
-                    # Merge technologies with SHARE_FACTOR for each PROCESS_CODE
-                    for k in ["LIFETIME", "CAPEX", "OPEX-F", "OPEX-O"]:
-                        step[k] = sum(
-                            flh_opt_process[x["PROCESS_CODE"]][k] * x["SHARE_FACTOR"]
-                            for x in output_res
+        # only overwrite  flh if optimization was successful:
+        if opt_output_data["model_status"][1] == "optimal":
+            for step in input_data["main_process_chain"]:
+                if step["step"] == "RES":
+                    output_res = opt_output_data["RES"]
+                    if step["process_code"] == "RES-HYBR":
+                        assert len(output_res) == 2
+                        step["FLH"] = sum(
+                            x["FLH"] * x["SHARE_FACTOR"] for x in output_res
                         )
-                else:
-                    assert len(output_res) == 1
-                    flh = output_res[0]["FLH"]
-                    step["FLH"] = flh
+                        # Merge technologies with SHARE_FACTOR for each PROCESS_CODE
+                        for k in ["LIFETIME", "CAPEX", "OPEX-F", "OPEX-O"]:
+                            step[k] = sum(
+                                flh_opt_process[x["PROCESS_CODE"]][k]
+                                * x["SHARE_FACTOR"]
+                                for x in output_res
+                            )
+                    else:
+                        assert len(output_res) == 1
+                        flh = output_res[0]["FLH"]
+                        step["FLH"] = flh
 
-                step["FLH"] = step["FLH"] * 8760  # NOTE: output is fraction
+                    step["FLH"] = step["FLH"] * 8760  # NOTE: output is fraction
 
-            elif step["step"] == "ELY":
-                step["FLH"] = opt_output_data["ELY"]["FLH"] * 8760
-            elif step["step"] == "DERIV":
-                step["FLH"] = opt_output_data["DERIV"]["FLH"] * 8760
+                elif step["step"] == "ELY":
+                    step["FLH"] = opt_output_data["ELY"]["FLH"] * 8760
+                elif step["step"] == "DERIV":
+                    step["FLH"] = opt_output_data["DERIV"]["FLH"] * 8760
+        else:
+            logging.warning("Optimization not successful.")
+            logging.warning(f"Solver status:{opt_output_data['model_status'][0]}")
+            logging.warning(f"Model status:{opt_output_data['model_status'][1]}")
 
             # TODO: Storage: "CAP_F"
 
