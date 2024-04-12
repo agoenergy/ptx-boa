@@ -144,6 +144,7 @@ costs_per_region = calculate_results_list(
     api,
     parameter_to_change="region",
     parameter_list=None,
+    optimize_flh=False,  # @markushal: use FLH optimizer disabled in region compare
 )
 costs_per_scenario = calculate_results_list(
     api,

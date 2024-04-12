@@ -111,6 +111,7 @@ class PtxboaAPI:
         ship_own_fuel: bool = False,  # TODO: no correctly passed by app
         output_unit: OutputUnitType = "USD/MWh",
         user_data: pd.DataFrame | None = None,
+        optimize_flh: bool = False,
     ) -> pd.DataFrame:
         """Calculate results based on user selection.
 
@@ -187,6 +188,7 @@ class PtxboaAPI:
             ),
             use_ship=(transport == "Ship"),
             ship_own_fuel=ship_own_fuel,
+            optimize_flh=optimize_flh,
         )
 
         result_df = PtxCalc.calculate(data)
