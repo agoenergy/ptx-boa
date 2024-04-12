@@ -234,8 +234,29 @@ def optimize(
 
     add_storage(n, input_data, "EL_STR", "ELEC")
     if input_data.get("DERIV"):
-        add_storage(n, input_data, "H2_STR", "H2")
-
+        n.add("Bus", name="H2_STR_bus", carrier="H2")
+        n.add(
+            "Link",
+            name="H2_STR_in",
+            bus0="H2",
+            bus1="H2_STR_bus",
+            carrier="H2",
+            p_nom_extendable=True,
+            capital_cost=input_data["H2_STR"]["CAPEX_A"]
+            + input_data["H2_STR"]["OPEX_F"],
+            efficiency_store=input_data["H2_STR"]["EFF"],
+            cyclic_state_of_charge=True,
+            marginal_cost=input_data["H2_STR"]["OPEX_O"],
+        )
+        n.add(
+            "Link",
+            name="H2_STR_out",
+            bus0="H2_STR_bus",
+            bus1="H2",
+            carrier="H2",
+            p_nom=100,
+        )
+        n.add("Store", name="H2_STR_store", bus="H2_STR_bus", carrier="H2", e_nom=1e5)
         bus = "final_product"
         carrier = "final_product"
     else:
@@ -318,19 +339,12 @@ def optimize(
     result_data["ELY"]["FLH"] = get_flh(n, "ELY", "Link")
 
     # calculate capacity factor for storage units:
-    # TODO: we use storage capacity per output, is this correct?
-    # TODO: or rather use p_nom per output?
+    # we use charging capacity (p_nom) per final product demand
     result_data["EL_STR"] = {}
-    result_data["EL_STR"]["CAP_F"] = (
-        n.storage_units.at["EL_STR", "p_nom_opt"]
-        * n.storage_units.at["EL_STR", "max_hours"]
-    )
+    result_data["EL_STR"]["CAP_F"] = n.storage_units.at["EL_STR", "p_nom_opt"]
     if input_data.get("DERIV"):
         result_data["H2_STR"] = {}
-        result_data["H2_STR"]["CAP_F"] = (
-            n.storage_units.at["H2_STR", "p_nom_opt"]
-            * n.storage_units.at["H2_STR", "max_hours"]
-        )
+        result_data["H2_STR"]["CAP_F"] = n.links.at["H2_STR_in", "p_nom_opt"]
         result_data["DERIV"] = {}
         result_data["DERIV"]["FLH"] = get_flh(n, "DERIV", "Link")
 
