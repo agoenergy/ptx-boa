@@ -107,6 +107,11 @@ def calculate_results_list(
     res_list = []
     for parameter in parameter_list:
         settings.update({parameter_to_change: parameter})
+        # only optimize when using actual chosen parameter set:
+        if st.session_state[parameter_to_change] == parameter:
+            optimize_flh = True
+        else:
+            optimize_flh = False
         res_single = calculate_results_single(
             api,
             settings,
