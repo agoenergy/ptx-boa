@@ -141,5 +141,5 @@ def test_issue_312_fix_fhl_optimization_errors(api, chain):
         "ship_own_fuel": False,
         "output_unit": "USD/t",
     }
-    res = api.calculate(**settings)
+    res = api.calculate(**settings, optimize_flh=True)
     assert len(res) > 0
