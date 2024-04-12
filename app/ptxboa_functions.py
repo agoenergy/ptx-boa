@@ -30,7 +30,7 @@ def calculate_results_single(
     pd.DataFrame
         same format as for :meth:`~ptxboa.api.PtxboaAPI.calculate()`
     """
-    res = _api.calculate(user_data=user_data, **settings)
+    res = _api.calculate(user_data=user_data, **settings, optimize_flh=False)
 
     return res
 

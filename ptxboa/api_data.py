@@ -166,6 +166,58 @@ class DataHandler:
 
     dimensions = _load_dimensions()
 
+    def __init__(
+        self,
+        scenario: ScenarioType,
+        user_data: None | pd.DataFrame = None,
+        data_dir: str = None,
+    ):
+
+        assert scenario in ScenarioValues
+
+        self.scenario = scenario
+        self.user_data = user_data
+        self.data_dir = data_dir or DATA_DIR_DEFAULT
+
+        self.flh = _load_data(
+            self.data_dir,
+            name="flh",
+            key_columns=(
+                "region",
+                "process_res",
+                "process_ely",
+                "process_deriv",
+                "process_flh",
+            ),
+        )
+        self.storage_cost_factor = _load_data(
+            self.data_dir,
+            name="storage_cost_factor",
+            key_columns=("process_res", "process_ely", "process_deriv"),
+        )
+
+        scenario_filename = (
+            f"{scenario.replace(' ', '_').replace(')', '').replace('(', '')}"
+        )
+        self.scenario_data = _load_data(
+            self.data_dir,
+            scenario_filename,
+            key_columns=(
+                "parameter_code",
+                "process_code",
+                "flow_code",
+                "source_region_code",
+                "target_country_code",
+            ),
+        ).copy()
+
+        if user_data is not None:
+            self.scenario_data = self._update_scenario_data_with_user_data(
+                self.scenario_data, user_data
+            )
+
+        self.optimizer = PtxOpt()
+
     @classmethod
     def _map_names_and_codes(
         cls,
@@ -261,59 +313,6 @@ class DataHandler:
             scenario_data.at[key, "value"] = value
 
         return scenario_data
-
-    def __init__(
-        self,
-        scenario: ScenarioType,
-        user_data: None | pd.DataFrame = None,
-        data_dir: str = None,
-        optimize_flh: bool = True,
-    ):
-
-        assert scenario in ScenarioValues
-
-        self.scenario = scenario
-        self.user_data = user_data
-        self.data_dir = data_dir or DATA_DIR_DEFAULT
-
-        self.flh = _load_data(
-            self.data_dir,
-            name="flh",
-            key_columns=(
-                "region",
-                "process_res",
-                "process_ely",
-                "process_deriv",
-                "process_flh",
-            ),
-        )
-        self.storage_cost_factor = _load_data(
-            self.data_dir,
-            name="storage_cost_factor",
-            key_columns=("process_res", "process_ely", "process_deriv"),
-        )
-
-        scenario_filename = (
-            f"{scenario.replace(' ', '_').replace(')', '').replace('(', '')}"
-        )
-        self.scenario_data = _load_data(
-            self.data_dir,
-            scenario_filename,
-            key_columns=(
-                "parameter_code",
-                "process_code",
-                "flow_code",
-                "source_region_code",
-                "target_country_code",
-            ),
-        ).copy()
-
-        if user_data is not None:
-            self.scenario_data = self._update_scenario_data_with_user_data(
-                self.scenario_data, user_data
-            )
-
-        self.optimizer = PtxOpt() if optimize_flh else None
 
     def get_input_data(self, long_names: bool) -> pd.DataFrame:
         """Return scenario data.
@@ -551,6 +550,7 @@ class DataHandler:
         target_country_code: TargetCountryCodeType,
         use_ship: bool,
         ship_own_fuel: bool,
+        optimize_flh: bool,
     ) -> CalculateDataType:
         """Calculate results."""
         # get process codes for selected chain
@@ -732,7 +732,7 @@ class DataHandler:
             result["transport_process_chain"].append(res)
 
         # get optimizedFLH?
-        if self.optimizer:
+        if optimize_flh:
             # If RES=Hybrid: we also need PV and Wind-On
             if process_code_res == "RES-HYBR":
                 for pc in ["PV-FIX", "WIND-ON"]:
