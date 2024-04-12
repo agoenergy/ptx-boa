@@ -14,6 +14,7 @@ import logging
 import pandas as pd
 import streamlit as st
 import streamlit_antd_components as sac
+from pypsa import Network
 
 from app.context_data import load_context_data
 from app.layout_elements import display_footer
@@ -54,6 +55,9 @@ logger.debug("Updating app...")
 
 # Set the pandas display option to format floats with 2 decimal places
 pd.set_option("display.float_format", "{:.2f}".format)
+
+if "network" not in st.session_state:
+    st.session_state["network"] = Network()
 
 if "user_changes_df" not in st.session_state:
     st.session_state["user_changes_df"] = None

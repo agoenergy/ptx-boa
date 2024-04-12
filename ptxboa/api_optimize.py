@@ -8,6 +8,8 @@ import os
 import pickle  # noqa S403
 import time
 
+import streamlit as st
+
 from flh_opt._types import OptInputDataType, OptOutputDataType
 from flh_opt.api_opt import optimize
 from ptxboa.static._types import CalculateDataType
@@ -242,5 +244,8 @@ class PtxOpt:
         opt_output_data, _network = optimize(
             opt_input_data, profiles_path=self.profiles_path
         )
+        # todo: for debugging, temporarily pass network to session state:
+        st.session_state["network"] = _network
+
         self._merge_data(data, opt_output_data)
         return data
