@@ -64,13 +64,20 @@ def content_optimization(api: PtxboaAPI) -> None:
         )
         eb["component2"] = eb["component"] + " (" + eb["carrier"] + ")"
 
-        soc = n.storage_units_t["state_of_charge"]
+        if len(n.stores) > 0:
+            soc = pd.concat(
+                [n.storage_units_t["state_of_charge"], n.stores_t["e"]], axis=1
+            )
+        else:
+            soc = n.storage_units_t["state_of_charge"]
 
         snapshots = n.snapshots
 
         st.subheader("Capacity, full load hours and costs")
 
+        st.warning("TODO: Capacities of links (ELY, DERIV) is input, not output")
         st.dataframe(res2.round(1))
+
         st.subheader("Aggregate results")
         st.dataframe(res.round(2))
 
