@@ -5,12 +5,15 @@ import plotly.express as px
 import streamlit as st
 from plotly.graph_objects import Figure
 
+from app.network_download import download_network_as_netcdf
 from ptxboa.api import PtxboaAPI
 
 
 def content_optimization(api: PtxboaAPI) -> None:
     st.subheader("Optimization results")
     st.warning("Warning: Preliminary debugging results. ")
+
+    download_network_as_netcdf(st.session_state["network"], "network.nc")
 
     if st.session_state["model_status"] == "optimal":
         input_data = api.get_input_data(st.session_state["scenario"])
