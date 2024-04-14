@@ -28,6 +28,7 @@ from app.tab_info import content_info
 from app.tab_input_data import content_input_data
 from app.tab_literature import content_literature
 from app.tab_market_scanning import content_market_scanning
+from app.tab_optimization import content_optimization
 from app.tab_sustainability import content_sustainability
 from app.user_data import display_user_changes
 from app.user_data_from_file import download_user_data, upload_user_data
@@ -58,6 +59,10 @@ pd.set_option("display.float_format", "{:.2f}".format)
 
 if "network" not in st.session_state:
     st.session_state["network"] = Network()
+
+if "model_status" not in st.session_state:
+    st.session_state["model_status"] = "not yet solved"
+
 
 if "user_changes_df" not in st.session_state:
     st.session_state["user_changes_df"] = None
@@ -109,6 +114,7 @@ tabs = (
     "Certification schemes",
     "Sustainability",
     "Literature",
+    "Optimization",
 )
 
 tabs_icons = {
@@ -236,5 +242,8 @@ if st.session_state[st.session_state["tab_key"]] == "Literature":
 
 if st.session_state[st.session_state["tab_key"]] == "Info":
     content_info()
+
+if st.session_state[st.session_state["tab_key"]] == "Optimization":
+    content_optimization(api)
 
 display_footer()
