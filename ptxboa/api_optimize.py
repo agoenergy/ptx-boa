@@ -246,6 +246,7 @@ class PtxOpt:
         )
         # todo: for debugging, temporarily pass network to session state:
         st.session_state["network"] = _network
+        st.session_state["model_status"] = opt_output_data["model_status"][1]
 
         self._merge_data(data, opt_output_data)
         return data
