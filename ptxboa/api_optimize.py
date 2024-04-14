@@ -134,7 +134,10 @@ class PtxOpt:
             "RES": [],
             "ELY": None,
             "DERIV": None,
-            "SPECCOST": {"H2O-L": input_data["parameter"]["SPECCOST"]["H2O-L"]},
+            "SPECCOST": {
+                "H2O-L": input_data["parameter"]["SPECCOST"]["H2O-L"],
+                "CO2-G": input_data["parameter"]["SPECCOST"]["CO2-G"],
+            },
         }
 
         for step in input_data["main_process_chain"]:

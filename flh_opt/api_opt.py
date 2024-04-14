@@ -85,7 +85,8 @@ def optimize(
                 "OPEX_O": 0.167
             },
             "SPECCOST": {
-                "H2O-L": 0.658
+                "H2O-L": 0.658,
+                "CO2-G": 1.0
             }
         }
 
