@@ -3,7 +3,7 @@ numpy~=1.25
 streamlit==1.31.1
 openpyxl~=3.1
 plotly~=5.16
-streamlit-antd-components
-XlsxWriter
+streamlit-antd-components~=0.3.2
+XlsxWriter~=3.2
 pypsa~=0.27
-highspy
+highspy~=1.5.3
