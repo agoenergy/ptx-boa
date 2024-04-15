@@ -226,7 +226,7 @@ def main():
         "country_name",
         "is_import",
         "is_export"
-        FROM "_ptxboa_country"
+        FROM "ptxboa_target_country"
         ORDER BY "country_code"
         """,
         "dim_country.csv",
