@@ -300,6 +300,7 @@ class TestApi(unittest.TestCase):
             scenario="2030 (low)",
             user_data=None,
             data_dir=ptxdata_dir_static,
+            cache_dir=None,
         )
 
         expected_val = 0.0503

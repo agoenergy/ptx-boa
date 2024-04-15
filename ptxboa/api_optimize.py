@@ -57,72 +57,33 @@ def get_data_hash_md5(key: object) -> str:
 
 class PtxOpt:
 
-    def __init__(self, cache_dir: str = DEFAULT_CACHE_DIR):
+    def __init__(self, cache_dir: str = None):
         self.cache_dir = cache_dir
         self.profiles_path = "flh_opt/renewable_profiles"
 
     def _save(self, filepath: str, data: object, raise_on_overwrite=False) -> None:
         if raise_on_overwrite and os.path.exists(filepath):
             raise FileExistsError("file already exists: %s", filepath)
-        with open(filepath, "wb") as file:
+        # first write to temporary file
+        filepath_temp = filepath + ".tmp"
+        with open(filepath_temp, "wb") as file:
             pickle.dump(data, file)
+
+        if os.path.exists(filepath):
+            os.remove(filepath)
+        os.rename(filepath_temp, filepath)
 
     def _load(self, filepath: str) -> object:
         with open(filepath, "rb") as file:
             data = pickle.load(file)  # noqa S301
         return data
 
-    def _get_cache_filepath(self, name, suffix=".pickle"):
+    def _get_cache_filepath(self, hashsum: str, suffix=".pickle"):
         # group twice by first two chars (256 combinations)
-        dirpath = self.cache_dir + f"/{name[0:2]}/{name[2:4]}"
+        dirpath = self.cache_dir + f"/{hashsum[0:2]}/{hashsum[2:4]}"
         os.makedirs(dirpath, exist_ok=True)
-        filepath = f"{dirpath}/{name}{suffix}"
+        filepath = f"{dirpath}/{hashsum}{suffix}"
         return filepath
-
-    def _get_data(self, input_data: dict):
-        """Calculate or load hashed optimized data.
-
-        Parameters
-        ----------
-        input_data : dict
-            hashable input data
-
-        Returns
-        -------
-        dict
-            result data
-        """
-        # try to load
-        key_hash_md5 = get_data_hash_md5(input_data)
-        filepath = self._get_cache_filepath(key_hash_md5)
-        filepath_lock = filepath + ".lock"
-
-        # someone else already started this, so we wait for it to finish (with timeout)
-        logger.info(f"START get_data: {key_hash_md5}")
-
-        wait_for_file_to_disappear(filepath_lock)
-
-        if not os.path.exists(filepath):
-            # create lockfile
-            logger.info(f"LOCK  get_data: {key_hash_md5}")
-            open(filepath_lock, "wb").close()
-            logger.info(f"CALC  get_data: {key_hash_md5}")
-            data = self._calculate_data(input_data)
-            self._save(filepath, data)
-            # remove lock
-            os.remove(filepath_lock)
-            logger.info(f"SAVE  get_data: {key_hash_md5}")
-
-        logger.info(f"STOP get_data: {key_hash_md5}")
-        return self._load(filepath)
-
-    def _calculate_data(self, input_data: dict):
-        # dummy: run optimization
-
-        wait_seconds = 0 if IS_TEST else 3
-        time.sleep(wait_seconds)
-
-        return input_data
 
     @staticmethod
     def _prepare_data(input_data: CalculateDataType) -> OptInputDataType:
@@ -244,6 +205,15 @@ class PtxOpt:
             with results from optimization
         """
         opt_input_data = self._prepare_data(data)
+
+        if self.cache_dir:
+            hashsum = get_data_hash_md5(opt_input_data)
+            filepath = self._get_cache_filepath(hashsum)
+
+            if os.path.exists(filepath):
+                data = self._load(filepath)
+                return data
+
         opt_output_data, _network = optimize(
             opt_input_data, profiles_path=self.profiles_path
         )
@@ -252,4 +222,10 @@ class PtxOpt:
         st.session_state["model_status"] = opt_output_data["model_status"][1]
 
         self._merge_data(data, opt_output_data)
+
+        if self.cache_dir:
+            self._save(filepath, data)
+            # TODO: may be removed: load from file to check integrity
+            data = self._load(filepath)
+
         return data

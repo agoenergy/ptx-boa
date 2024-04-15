@@ -4,6 +4,7 @@
 import logging
 from json import load
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import pandas as pd
 import pytest
@@ -57,7 +58,8 @@ def test_optimize_optimal_solution(call_optimize):
 def test_optimize_export_to_netcdf(call_optimize):
     """Write network to netcdf file."""
     [res, n, input_data] = call_optimize
-    n.export_to_netcdf(f"tests/{input_data['id']}.nc")
+    with TemporaryDirectory() as export_dir:
+        n.export_to_netcdf(f"{export_dir}/{input_data['id']}.nc")
 
 
 @pytest.mark.xfail()

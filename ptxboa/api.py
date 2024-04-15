@@ -95,7 +95,9 @@ class PtxboaAPI:
             'source_region_code', 'target_country_code', 'value', 'unit', 'source'
 
         """
-        handler = DataHandler(scenario, user_data, data_dir=self.data_dir)
+        handler = DataHandler(
+            scenario, user_data, data_dir=self.data_dir, cache_dir=None
+        )
         return handler.get_input_data(long_names)
 
     def calculate(
@@ -154,7 +156,9 @@ class PtxboaAPI:
             * `cost_type`: one of {RESULT_COST_TYPES}
 
         """
-        data_handler = DataHandler(scenario, user_data, data_dir=self.data_dir)
+        data_handler = DataHandler(
+            scenario, user_data, data_dir=self.data_dir, cache_dir=None
+        )
 
         if transport not in TransportValues:
             logger.error(f"Invalid choice for transport: {transport}")

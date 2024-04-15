@@ -171,6 +171,7 @@ class DataHandler:
         scenario: ScenarioType,
         user_data: None | pd.DataFrame = None,
         data_dir: str = None,
+        cache_dir: str = None,
     ):
 
         assert scenario in ScenarioValues
@@ -216,7 +217,7 @@ class DataHandler:
                 self.scenario_data, user_data
             )
 
-        self.optimizer = PtxOpt()
+        self.optimizer = PtxOpt(cache_dir=cache_dir)
 
     @classmethod
     def _map_names_and_codes(
