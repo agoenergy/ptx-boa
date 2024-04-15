@@ -1,9 +1,9 @@
-pandas~=2.1
-numpy~=1.25
+pandas==2.2.1
+numpy==1.26.4
 streamlit==1.31.1
-openpyxl~=3.1
-plotly~=5.16
-streamlit-antd-components~=0.3.2
-XlsxWriter~=3.2
-pypsa~=0.27
-highspy~=1.5.3
+openpyxl==3.1.2
+plotly==5.19.0
+streamlit-antd-components==0.3.2
+XlsxWriter==3.2.0
+pypsa==0.27
+highspy==1.5.3
