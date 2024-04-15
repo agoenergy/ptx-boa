@@ -8,5 +8,8 @@ WORKDIR ptx-boa
 RUN git checkout main
 RUN pip3 install -r requirements.txt
 EXPOSE 80
+# disable progress bar
+ENV TQDM_DISABLE=1
+ENV HIGHS_OUTPUT_FLAG=false
 
 ENTRYPOINT ["streamlit", "run", "ptxboa_streamlit.py", "--server.port=80", "--server.address=0.0.0.0"]

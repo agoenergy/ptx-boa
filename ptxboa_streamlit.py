@@ -10,6 +10,7 @@ __version__ = "0.2.1"
 
 # TODO how do I use the treamlit logger?
 import logging
+import warnings
 
 import pandas as pd
 import streamlit as st
@@ -33,6 +34,15 @@ from app.tab_sustainability import content_sustainability
 from app.user_data import display_user_changes
 from app.user_data_from_file import download_user_data, upload_user_data
 from ptxboa.api import PtxboaAPI
+
+warnings.filterwarnings(  # filter pandas warning from pypsa optimizer
+    action="ignore",
+    category=FutureWarning,
+    message=(
+        r".*A value is trying to be set on a copy of a DataFrame or Series "
+        r"through chained assignment using an inplace method.*"
+    ),
+)
 
 # setup logging
 # level can be changed on strartup with: --logger.level=LEVEL

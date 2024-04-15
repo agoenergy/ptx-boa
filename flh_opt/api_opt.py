@@ -1,12 +1,19 @@
 # -*- coding: utf-8 -*-
 """API interface for FLH optimizer."""
 import math
+import os
 from typing import List, Optional
 
 import pandas as pd
 from pypsa import Network
 
 from flh_opt._types import OptInputDataType, OptOutputDataType
+
+solver_options = {
+    "output_flag": os.environ.get(
+        "HIGHS_OUTPUT_FLAG", "true"
+    )  # set environment variable HIGHS_OUTPUT_FLAG=false to reduce HIGHS solver print
+}
 
 
 def get_profiles_and_weights(
@@ -303,7 +310,7 @@ def optimize(
     n.import_series_from_dataframe(res_profiles, "Generator", "p_max_pu")
 
     # solve optimization problem:
-    model_status = n.optimize(solver_name="highs")
+    model_status = n.optimize(solver_name="highs", solver_options=solver_options)
 
     # calculate results:
 
