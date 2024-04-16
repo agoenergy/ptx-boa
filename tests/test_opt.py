@@ -5,6 +5,7 @@ import logging
 from json import load
 
 import pandas as pd
+import pypsa
 import pytest
 from streamlit.testing.v1 import AppTest
 
@@ -115,3 +116,35 @@ def running_app_test_optimize():
 def test_app_test_optimize_smoke(running_app_test_optimize):
     """Test if the app starts up without errors."""
     assert not running_app_test_optimize.exception
+
+
+@pytest.mark.filterwarnings("always")
+def test_e_cyclic_period_minimal_example():
+    n = pypsa.Network()
+
+    levels = [[0, 1], [0, 1, 2]]
+    index = pd.MultiIndex.from_product(levels)
+
+    n.set_snapshots(index)
+    n.add("Bus", "b0")
+    n.add(
+        "Store",
+        "storage",
+        bus="b0",
+        e_nom=10,
+        e_cyclic_per_period=False,
+    )
+    n.add("Load", name="load", bus="b0", p_set=[1, 2, 1, 1, 2, 1])
+    n.add(
+        "Generator",
+        name="gen",
+        bus="b0",
+        p_nom=5,
+        marginal_cost=[1, 1, 1, 2, 2, 2],
+        p_max_pu=[1, 1, 1, 1, 1, 1],
+    )
+
+    n.optimize.create_model()
+    res = n.optimize.solve_model(solver_name="highs")
+    assert res[1] == "optimal"
+    n.statistics()
