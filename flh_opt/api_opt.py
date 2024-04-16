@@ -129,7 +129,7 @@ def optimize(
     n = Network()
 
     # add buses and carriers:
-    carriers = ["ELEC", "H2", "CO2-G", "H2O-L"]
+    carriers = ["EL", "H2", "CO2-G", "H2O-L"]
     for c in carriers:
         n.add("Bus", name=c, carrier=c)
         n.add("Carrier", name=c)
@@ -151,7 +151,7 @@ def optimize(
         n.add(
             "Generator",
             name=g["PROCESS_CODE"],
-            bus="ELEC",
+            bus="EL",
             carrier=g["PROCESS_CODE"],
             capital_cost=g["CAPEX_A"] + g["OPEX_F"],
             marginal_cost=g["OPEX_O"],
@@ -184,7 +184,7 @@ def optimize(
     n.add(
         "Link",
         name="ELY",
-        bus0="ELEC",
+        bus0="EL",
         bus1="H2",
         bus2="H2O-L",
         carrier="H2",
@@ -247,7 +247,7 @@ def optimize(
             p_nom_extendable=True,
         )
 
-    add_storage(n, input_data, "EL_STR", "ELEC")
+    add_storage(n, input_data, "EL_STR", "EL")
     if input_data.get("DERIV"):
         n.add("Bus", name="H2_STR_bus", carrier="H2")
         n.add(
