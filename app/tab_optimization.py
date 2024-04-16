@@ -45,6 +45,14 @@ def content_optimization(api: PtxboaAPI) -> None:
             show_filtered_df(n.storage_units.copy(), drop_empty, drop_zero, drop_one)
             show_filtered_df(n.stores.copy(), drop_empty, drop_zero, drop_one)
 
+        df = n.generators_t["p"]
+        df = df.reset_index().melt(id_vars=["timestep", "period"])
+        st.dataframe(df)
+        fig = px.line(
+            df, x="timestep", y="value", facet_col="period", color="Generator"
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
         res = n.statistics()
 
         res2 = pd.DataFrame()
