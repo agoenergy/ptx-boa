@@ -307,6 +307,8 @@ def optimize(
         carrier=carrier,
         p_nom=100,
         max_hours=8760,
+        cyclic_state_of_charge=True,
+        cyclic_state_of_charge_per_period=False,
     )
 
     # add RE profiles:
