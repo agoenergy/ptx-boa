@@ -69,6 +69,11 @@ class TestApi(unittest.TestCase):
         level_cost_category = res.index.levels[0]
         self.assertFalse("" in level_cost_category, "empty value in cost_category")
 
+    def test_issue_317_demand_country_list_must_not_contain_supply_countries(self):
+        """See https://github.com/agoenergy/ptx-boa/issues/317."""
+        countries = self.api.get_dimension("country")
+        self.assertFalse("Angola" in countries.index)
+
     def test_example_api_call_1_ship(self):
         """Test output structure of api.calculate()."""
         settings = {
