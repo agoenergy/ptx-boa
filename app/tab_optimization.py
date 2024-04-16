@@ -19,6 +19,32 @@ def content_optimization(api: PtxboaAPI) -> None:
         input_data = api.get_input_data(st.session_state["scenario"])
         n = st.session_state["network"]
 
+        def show_filtered_df(
+            df: pd.DataFrame, drop_empty: bool, drop_zero: bool, drop_one: bool
+        ):
+            for c in df.columns:
+                if (
+                    df[c].eq("PQ").all()
+                    or (drop_empty and df[c].isnull().all())
+                    or (drop_empty and df[c].eq("").all())
+                    or (drop_zero and df[c].eq(0).all())
+                    or (drop_one and df[c].eq(1).all())
+                ):
+                    df.drop(columns=c, inplace=True)
+            st.write(df)
+
+        with st.expander("Input data"):
+            drop_empty = st.toggle("Drop empty columns", False)
+            drop_zero = st.toggle("Drop  columns with only zeros", False)
+            drop_one = st.toggle("Drop columns with only ones", False)
+            show_filtered_df(n.carriers.copy(), drop_empty, drop_zero, drop_one)
+            show_filtered_df(n.buses.copy(), drop_empty, drop_zero, drop_one)
+            show_filtered_df(n.loads.copy(), drop_empty, drop_zero, drop_one)
+            show_filtered_df(n.generators.copy(), drop_empty, drop_zero, drop_one)
+            show_filtered_df(n.links.copy(), drop_empty, drop_zero, drop_one)
+            show_filtered_df(n.storage_units.copy(), drop_empty, drop_zero, drop_one)
+            show_filtered_df(n.stores.copy(), drop_empty, drop_zero, drop_one)
+
         res = n.statistics()
 
         res2 = pd.DataFrame()
