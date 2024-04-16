@@ -277,7 +277,14 @@ def optimize(
             carrier="H2",
             p_nom=100,
         )
-        n.add("Store", name="H2_STR_store", bus="H2_STR_bus", carrier="H2", e_nom=1e5)
+        n.add(
+            "Store",
+            name="H2_STR_store",
+            bus="H2_STR_bus",
+            carrier="H2",
+            e_nom=1e5,
+            e_cyclic_per_period=True,
+        )
         bus = "final_product"
         carrier = "final_product"
     else:
@@ -309,6 +316,11 @@ def optimize(
 
     # define snapshots:
     n.snapshots = res_profiles.index
+
+    # set multi period snapshots:
+    n.snapshots = pd.MultiIndex.from_tuples(
+        n.snapshots.str.split("_").tolist(), names=["level1", "level2"]
+    )
 
     # define snapshot weightings:
     weights = weights_and_period_ids["weight"]
