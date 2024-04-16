@@ -129,10 +129,21 @@ def optimize(
     n = Network()
 
     # add buses and carriers:
-    carriers = ["ELEC", "H2", "HEAT", "CO2-G", "H2O-L"]
+    carriers = ["EL", "H2"]
     for c in carriers:
         n.add("Bus", name=c, carrier=c)
         n.add("Carrier", name=c)
+
+    # create list of secondary carriers:
+    if "DERIV" in input_data.keys():
+        if input_data["DERIV"] is not None:
+            carriers_sec = list(input_data["DERIV"]["CONV"].keys())
+        else:
+            carriers_sec = []
+
+    # we need H2O in any case because it is required by the electrolyzer:
+    if "H2O-L" not in carriers_sec:
+        carriers_sec.append("H2O-L")
 
     if input_data.get("DERIV"):
         n.add("Bus", "final_product", carrier="final_product")
@@ -144,7 +155,7 @@ def optimize(
         n.add(
             "Generator",
             name=g["PROCESS_CODE"],
-            bus="ELEC",
+            bus="EL",
             carrier=g["PROCESS_CODE"],
             capital_cost=g["CAPEX_A"] + g["OPEX_F"],
             marginal_cost=g["OPEX_O"],
@@ -152,32 +163,35 @@ def optimize(
         )
 
     # add supply for secondary inputs:
-    for c in input_data["SPECCOST"].keys():
-        n.add(
-            "Generator",
-            name=f"{c}_supply",
-            bus=c,
-            carrier=c,
-            marginal_cost=input_data["SPECCOST"][c],
-            p_nom=100,
-        )
-        n.add(
-            "Generator",
-            name=f"{c}_sink",
-            bus=c,
-            carrier=c,
-            p_max_pu=0,
-            p_min_pu=-1,
-            marginal_cost=0,
-            p_nom=100,
-        )
+    for c in carriers_sec:
+        if c not in carriers:
+            n.add("Bus", name=c, carrier=c)
+            n.add("Carrier", name=c)
+            n.add(
+                "Generator",
+                name=f"{c}_supply",
+                bus=c,
+                carrier=c,
+                marginal_cost=input_data["SPECCOST"][c],
+                p_nom=100,
+            )
+            n.add(
+                "Generator",
+                name=f"{c}_sink",
+                bus=c,
+                carrier=c,
+                p_max_pu=0,
+                p_min_pu=-1,
+                marginal_cost=0,
+                p_nom=100,
+            )
 
     # add links:
     # TODO: account for water demand
     n.add(
         "Link",
         name="ELY",
-        bus0="ELEC",
+        bus0="EL",
         bus1="H2",
         bus2="H2O-L",
         carrier="H2",
@@ -240,7 +254,7 @@ def optimize(
             p_nom_extendable=True,
         )
 
-    add_storage(n, input_data, "EL_STR", "ELEC")
+    add_storage(n, input_data, "EL_STR", "EL")
     if input_data.get("DERIV"):
         n.add("Bus", name="H2_STR_bus", carrier="H2")
         n.add(
@@ -252,8 +266,7 @@ def optimize(
             p_nom_extendable=True,
             capital_cost=input_data["H2_STR"]["CAPEX_A"]
             + input_data["H2_STR"]["OPEX_F"],
-            efficiency_store=input_data["H2_STR"]["EFF"],
-            cyclic_state_of_charge=True,
+            efficiency=input_data["H2_STR"]["EFF"],
             marginal_cost=input_data["H2_STR"]["OPEX_O"],
         )
         n.add(
