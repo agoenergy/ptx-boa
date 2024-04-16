@@ -252,8 +252,7 @@ def optimize(
             p_nom_extendable=True,
             capital_cost=input_data["H2_STR"]["CAPEX_A"]
             + input_data["H2_STR"]["OPEX_F"],
-            efficiency_store=input_data["H2_STR"]["EFF"],
-            cyclic_state_of_charge=True,
+            efficiency=input_data["H2_STR"]["EFF"],
             marginal_cost=input_data["H2_STR"]["OPEX_O"],
         )
         n.add(
