@@ -338,6 +338,8 @@ def optimize(
     if not math.isclose(weights.sum(), 8760):
         weights = weights * 8760 / weights.sum()
 
+    weights.index = n.snapshots
+
     n.snapshot_weightings["generators"] = weights
     n.snapshot_weightings["objective"] = weights
     n.snapshot_weightings["stores"] = 1
