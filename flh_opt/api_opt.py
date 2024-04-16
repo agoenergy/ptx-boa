@@ -321,6 +321,7 @@ def optimize(
     n.snapshots = pd.MultiIndex.from_tuples(
         n.snapshots.str.split("_").tolist(), names=["level1", "level2"]
     )
+    res_profiles.index = n.snapshots
 
     # define snapshot weightings:
     weights = weights_and_period_ids["weight"]
