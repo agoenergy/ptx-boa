@@ -45,12 +45,69 @@ def content_optimization(api: PtxboaAPI) -> None:
             show_filtered_df(n.storage_units.copy(), drop_empty, drop_zero, drop_one)
             show_filtered_df(n.stores.copy(), drop_empty, drop_zero, drop_one)
 
-        df = n.generators_t["p"]
-        df = df.reset_index().melt(id_vars=["timestep", "period"])
+        def transform_time_series(df: pd.DataFrame) -> pd.DataFrame:
+            res = df.reset_index().melt(
+                id_vars=["timestep", "period"],
+                var_name="Generator",
+                value_name="MW (MWh for SOC)",
+            )
+            return res
+
+        df_gen = n.generators_t["p"]
+        df_gen = transform_time_series(df_gen)
+        df_links = -n.links_t["p1"]
+        df_links = transform_time_series(df_links)
+        df_store = n.stores_t["e"]
+        df_store = transform_time_series(df_store)
+        df_storageunit = n.storage_units_t["state_of_charge"]
+        df_storageunit = transform_time_series(df_storageunit)
+
+        df = pd.concat([df_gen, df_links, df_store, df_storageunit])
+
+        # selection:
+        df = df.loc[
+            df["Generator"].isin(
+                [
+                    "PV-FIX",
+                    "WIND-ON",
+                    "WIND-OFF",
+                    "ELY",
+                    "DERIV",
+                    "H2_STR_store",
+                    "EL_STR",
+                ]
+            )
+        ]
+        df["Type"] = "Power"
+
+        ind = df["Generator"].isin(["ELY"])
+        df.loc[ind, "Type"] = "H2"
+
+        ind = df["Generator"].isin(
+            [
+                "H2_STR_store",
+                "EL_STR",
+            ]
+        )
+        df.loc[ind, "Type"] = "SOC"
+
+        ind = df["Generator"].isin(["ELY"])
+        df.loc[ind, "Type"] = "H2"
+
+        ind = df["Generator"].isin(["DERIV"])
+        df.loc[ind, "Type"] = "Derivate"
+
         st.dataframe(df)
         fig = px.line(
-            df, x="timestep", y="value", facet_col="period", color="Generator"
+            df,
+            x="timestep",
+            y="MW (MWh for SOC)",
+            facet_col="period",
+            color="Generator",
+            facet_row="Type",
+            height=800,
         )
+        fig.update_yaxes(matches=None)
         st.plotly_chart(fig, use_container_width=True)
 
         res = n.statistics()
