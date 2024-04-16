@@ -1,12 +1,19 @@
 # -*- coding: utf-8 -*-
 """API interface for FLH optimizer."""
 import math
+import os
 from typing import List, Optional
 
 import pandas as pd
 from pypsa import Network
 
 from flh_opt._types import OptInputDataType, OptOutputDataType
+
+solver_options = {
+    "output_flag": os.environ.get(
+        "HIGHS_OUTPUT_FLAG", "true"
+    )  # set environment variable HIGHS_OUTPUT_FLAG=false to reduce HIGHS solver print
+}
 
 
 def get_profiles_and_weights(
@@ -85,7 +92,8 @@ def optimize(
                 "OPEX_O": 0.167
             },
             "SPECCOST": {
-                "H2O-L": 0.658
+                "H2O-L": 0.658,
+                "CO2-G": 1.0
             }
         }
 
@@ -234,8 +242,29 @@ def optimize(
 
     add_storage(n, input_data, "EL_STR", "ELEC")
     if input_data.get("DERIV"):
-        add_storage(n, input_data, "H2_STR", "H2")
-
+        n.add("Bus", name="H2_STR_bus", carrier="H2")
+        n.add(
+            "Link",
+            name="H2_STR_in",
+            bus0="H2",
+            bus1="H2_STR_bus",
+            carrier="H2",
+            p_nom_extendable=True,
+            capital_cost=input_data["H2_STR"]["CAPEX_A"]
+            + input_data["H2_STR"]["OPEX_F"],
+            efficiency_store=input_data["H2_STR"]["EFF"],
+            cyclic_state_of_charge=True,
+            marginal_cost=input_data["H2_STR"]["OPEX_O"],
+        )
+        n.add(
+            "Link",
+            name="H2_STR_out",
+            bus0="H2_STR_bus",
+            bus1="H2",
+            carrier="H2",
+            p_nom=100,
+        )
+        n.add("Store", name="H2_STR_store", bus="H2_STR_bus", carrier="H2", e_nom=1e5)
         bus = "final_product"
         carrier = "final_product"
     else:
@@ -281,7 +310,7 @@ def optimize(
     n.import_series_from_dataframe(res_profiles, "Generator", "p_max_pu")
 
     # solve optimization problem:
-    model_status = n.optimize(solver_name="highs")
+    model_status = n.optimize(solver_name="highs", solver_options=solver_options)
 
     # calculate results:
 
@@ -299,41 +328,40 @@ def optimize(
         return flh
 
     result_data = {}
-    result_data["RES"] = []
-
-    # Calculate total RES capacity:
-    list_res = [item["PROCESS_CODE"] for item in input_data["RES"]]
-    cap_total = n.generators.loc[list_res, "p_nom_opt"].sum()
-
-    # Add results for each RES type:
-    for g in input_data["RES"]:
-        d = {}
-        d["PROCESS_CODE"] = g["PROCESS_CODE"]
-        d["FLH"] = get_flh(n, g["PROCESS_CODE"], "Generator")
-        d["SHARE_FACTOR"] = n.generators.at[g["PROCESS_CODE"], "p_nom_opt"] / cap_total
-        result_data["RES"].append(d)
-
-    # Calculate FLH for electrolyzer:
-    result_data["ELY"] = {}
-    result_data["ELY"]["FLH"] = get_flh(n, "ELY", "Link")
-
-    # calculate capacity factor for storage units:
-    # TODO: we use storage capacity per output, is this correct?
-    # TODO: or rather use p_nom per output?
-    result_data["EL_STR"] = {}
-    result_data["EL_STR"]["CAP_F"] = (
-        n.storage_units.at["EL_STR", "p_nom_opt"]
-        * n.storage_units.at["EL_STR", "max_hours"]
-    )
-    if input_data.get("DERIV"):
-        result_data["H2_STR"] = {}
-        result_data["H2_STR"]["CAP_F"] = (
-            n.storage_units.at["H2_STR", "p_nom_opt"]
-            * n.storage_units.at["H2_STR", "max_hours"]
-        )
-        result_data["DERIV"] = {}
-        result_data["DERIV"]["FLH"] = get_flh(n, "DERIV", "Link")
 
     # store model status:
     result_data["model_status"] = model_status
+
+    # only store results if optimization was successful:
+    if model_status[1] == "optimal":
+        result_data["RES"] = []
+
+        # Calculate total RES capacity:
+        list_res = [item["PROCESS_CODE"] for item in input_data["RES"]]
+        cap_total = n.generators.loc[list_res, "p_nom_opt"].sum()
+
+        # Add results for each RES type:
+        for g in input_data["RES"]:
+            d = {}
+            d["PROCESS_CODE"] = g["PROCESS_CODE"]
+            d["FLH"] = get_flh(n, g["PROCESS_CODE"], "Generator")
+            d["SHARE_FACTOR"] = (
+                n.generators.at[g["PROCESS_CODE"], "p_nom_opt"] / cap_total
+            )
+            result_data["RES"].append(d)
+
+        # Calculate FLH for electrolyzer:
+        result_data["ELY"] = {}
+        result_data["ELY"]["FLH"] = get_flh(n, "ELY", "Link")
+
+        # calculate capacity factor for storage units:
+        # we use charging capacity (p_nom) per final product demand
+        result_data["EL_STR"] = {}
+        result_data["EL_STR"]["CAP_F"] = n.storage_units.at["EL_STR", "p_nom_opt"]
+        if input_data.get("DERIV"):
+            result_data["H2_STR"] = {}
+            result_data["H2_STR"]["CAP_F"] = n.links.at["H2_STR_in", "p_nom_opt"]
+            result_data["DERIV"] = {}
+            result_data["DERIV"]["FLH"] = get_flh(n, "DERIV", "Link")
+
     return result_data, n

@@ -14,6 +14,7 @@ def calculate_results_single(
     _api: PtxboaAPI,
     settings: dict,
     user_data: pd.DataFrame | None = None,
+    optimize_flh: bool = False,
 ) -> pd.DataFrame:
     """Calculate results for a single set of settings.
 
@@ -30,7 +31,7 @@ def calculate_results_single(
     pd.DataFrame
         same format as for :meth:`~ptxboa.api.PtxboaAPI.calculate()`
     """
-    res = _api.calculate(user_data=user_data, **settings)
+    res = _api.calculate(user_data=user_data, **settings, optimize_flh=optimize_flh)
 
     return res
 
@@ -41,6 +42,7 @@ def calculate_results_list(
     parameter_list: list = None,
     override_session_state: dict | None = None,
     apply_user_data: bool = True,
+    optimize_flh: bool = True,  # @markushal: use FLH optimizer by default
 ) -> pd.DataFrame:
     """Calculate results for source regions and one selected target country.
 
@@ -105,10 +107,16 @@ def calculate_results_list(
     res_list = []
     for parameter in parameter_list:
         settings.update({parameter_to_change: parameter})
+        # only optimize when using actual chosen parameter set:
+        if st.session_state[parameter_to_change] == parameter:
+            optimize_flh = True
+        else:
+            optimize_flh = False
         res_single = calculate_results_single(
             api,
             settings,
             user_data=st.session_state["user_changes_df"] if apply_user_data else None,
+            optimize_flh=optimize_flh,
         )
         res_list.append(res_single)
     res_details = pd.concat(res_list)

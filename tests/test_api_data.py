@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 """Unittests for ptxboa api_data module."""
-import json
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import pandas as pd
 import pytest
 
 from ptxboa.api_data import DataHandler
+
+from .utils import assert_deep_equal
 
 
 @pytest.fixture()
@@ -146,7 +148,7 @@ def test_get_parameter_value(
         user_data = request.getfixturevalue(user_data)
 
     data_handler = DataHandler(
-        scenario=scenario, user_data=user_data, data_dir=ptxdata_dir, optimize_flh=False
+        scenario=scenario, user_data=user_data, data_dir=ptxdata_dir, cache_dir=None
     )
     result = data_handler._get_parameter_value(
         parameter_code=parameter_code,
@@ -197,10 +199,8 @@ def test_get_dimensions_parameter_code(dimension, parameter_name, expected_code)
 )
 def test_get_calculation_data(ptxdata_dir, scenario, kwargs, request):
     ptxdata_dir = request.getfixturevalue(ptxdata_dir)
-    data_handler = DataHandler(
-        data_dir=ptxdata_dir, scenario=scenario, optimize_flh=False
-    )
-    data = data_handler.get_calculation_data(**kwargs)
+    data_handler = DataHandler(data_dir=ptxdata_dir, scenario=scenario, cache_dir=None)
+    data = data_handler.get_calculation_data(**kwargs, optimize_flh=False)
     # recursively use pytest.approx
 
     def rec_approx(x):
@@ -343,10 +343,13 @@ def test_get_calculation_data(ptxdata_dir, scenario, kwargs, request):
 )
 def test_get_calculation_data_w_opt(ptxdata_dir, scenario, kwargs, request):
     ptxdata_dir = request.getfixturevalue(ptxdata_dir)
-    data_handler = DataHandler(
-        data_dir=ptxdata_dir, scenario=scenario, optimize_flh=True
-    )
-    result = data_handler.get_calculation_data(**kwargs)
+
+    with TemporaryDirectory() as cache_dir:
+        # use temporary dir as cache dir
+        data_handler = DataHandler(
+            data_dir=ptxdata_dir, scenario=scenario, cache_dir=cache_dir
+        )
+        result = data_handler.get_calculation_data(**kwargs, optimize_flh=True)
     exp_result = {
         "flh_opt_process": {
             "PV-FIX": {
@@ -475,6 +478,4 @@ def test_get_calculation_data_w_opt(ptxdata_dir, scenario, kwargs, request):
         "context": {"source_region_code": "ARG", "target_country_code": "DEU"},
     }
 
-    assert json.dumps(result, sort_keys=True, indent=2) == json.dumps(
-        exp_result, sort_keys=True, indent=2
-    )
+    assert_deep_equal(exp_result, result)
