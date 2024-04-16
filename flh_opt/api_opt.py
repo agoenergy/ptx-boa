@@ -254,8 +254,9 @@ def optimize(
             carrier=n.buses.at[bus, "carrier"],
             capital_cost=input_data[name]["CAPEX_A"] + input_data[name]["OPEX_F"],
             efficiency_store=input_data[name]["EFF"],
-            max_hours=4,  # TODO: move this parameter out of the code.
+            max_hours=4,  # TODO: move this parameter out of the code.,
             cyclic_state_of_charge=True,
+            cyclic_state_of_charge_per_period=True,
             marginal_cost=input_data[name]["OPEX_O"],
             p_nom_extendable=True,
         )
@@ -289,6 +290,7 @@ def optimize(
             bus="H2_STR_bus",
             carrier="H2",
             e_nom=1e5,
+            e_cyclic=True,
             e_cyclic_per_period=True,
         )
         bus = "final_product"
