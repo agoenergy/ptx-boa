@@ -20,6 +20,7 @@
                     "H2O-L": 0.3
                 }
             },
+            "DERIV": null,
             "EL_STR": {
                 "EFF": 0.9,
                 "CAPEX_A": 50,
@@ -167,6 +168,7 @@
                     "H2O-L": 0.3
                 }
             },
+            "DERIV": null,
             "EL_STR": {
                 "EFF": 0.9,
                 "CAPEX_A": 50,

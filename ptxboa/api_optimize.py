@@ -98,6 +98,8 @@ class PtxOpt:
             "SPECCOST": {
                 "H2O-L": input_data["parameter"]["SPECCOST"]["H2O-L"],
                 "CO2-G": input_data["parameter"]["SPECCOST"]["CO2-G"],
+                "N2-G": input_data["parameter"]["SPECCOST"]["N2-G"],
+                "HEAT": input_data["parameter"]["SPECCOST"]["HEAT"],
             },
         }
 

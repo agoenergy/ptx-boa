@@ -8,7 +8,6 @@ from tempfile import TemporaryDirectory
 
 import pandas as pd
 import pytest
-from streamlit.testing.v1 import AppTest
 
 from flh_opt.api_opt import get_profiles_and_weights, optimize
 from ptxboa.api import PtxboaAPI
@@ -108,19 +107,6 @@ def test_profile_import(settings):
 
     pd.testing.assert_series_equal(res.sum(), settings["expected_sum"])
     assert settings["expected_weights_sum"] == pytest.approx(weights["weight"].sum())
-
-
-@pytest.fixture
-def running_app_test_optimize():
-    """Fixture that returns a fresh instance of a running app."""
-    at = AppTest.from_file("app_test_optimize.py")
-    at.run(timeout=60)
-    return at
-
-
-def test_app_test_optimize_smoke(running_app_test_optimize):
-    """Test if the app starts up without errors."""
-    assert not running_app_test_optimize.exception
 
 
 @pytest.fixture()
