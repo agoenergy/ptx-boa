@@ -29,7 +29,7 @@ class TestApi(unittest.TestCase):
         cls.api = PtxboaAPI(data_dir=ptxdata_dir_static)
 
     def _test_api_call(self, settings):
-        res = self.api.calculate(**settings)
+        res = self.api.calculate(**settings, optimize_flh=False)
         # test that settings are in results
         for k, v in settings.items():
             if k in ["ship_own_fuel", "output_unit"]:  # skip some
@@ -68,6 +68,11 @@ class TestApi(unittest.TestCase):
         res = self._test_api_call(settings)
         level_cost_category = res.index.levels[0]
         self.assertFalse("" in level_cost_category, "empty value in cost_category")
+
+    def test_issue_317_demand_country_list_must_not_contain_supply_countries(self):
+        """See https://github.com/agoenergy/ptx-boa/issues/317."""
+        countries = self.api.get_dimension("country")
+        self.assertFalse("Angola" in countries.index)
 
     def test_example_api_call_1_ship(self):
         """Test output structure of api.calculate()."""
@@ -299,8 +304,8 @@ class TestApi(unittest.TestCase):
         data_handler = DataHandler(
             scenario="2030 (low)",
             user_data=None,
-            optimize_flh=False,
             data_dir=ptxdata_dir_static,
+            cache_dir=None,
         )
 
         expected_val = 0.0503

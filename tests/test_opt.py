@@ -3,6 +3,8 @@
 
 import logging
 from json import load
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import pandas as pd
 import pypsa
@@ -10,8 +12,11 @@ import pytest
 from streamlit.testing.v1 import AppTest
 
 from flh_opt.api_opt import get_profiles_and_weights, optimize
+from ptxboa.api import PtxboaAPI
 
 logging.basicConfig(level=logging.INFO)
+
+ptxdata_dir_static = Path(__file__).parent / "test_data"
 
 
 # borrowed from test_api_data.py:
@@ -54,7 +59,8 @@ def test_optimize_optimal_solution(call_optimize):
 def test_optimize_export_to_netcdf(call_optimize):
     """Write network to netcdf file."""
     [res, n, input_data] = call_optimize
-    n.export_to_netcdf(f"tests/{input_data['id']}.nc")
+    with TemporaryDirectory() as export_dir:
+        n.export_to_netcdf(f"{export_dir}/{input_data['id']}.nc")
 
 
 @pytest.mark.xfail()
@@ -116,6 +122,30 @@ def running_app_test_optimize():
 def test_app_test_optimize_smoke(running_app_test_optimize):
     """Test if the app starts up without errors."""
     assert not running_app_test_optimize.exception
+
+
+@pytest.fixture()
+def api():
+    return PtxboaAPI(data_dir=ptxdata_dir_static)
+
+
+@pytest.mark.parametrize("chain", ["Methane (AEL)", "Hydrogen (AEL)"])
+def test_issue_312_fix_fhl_optimization_errors(api, chain):
+    """See https://github.com/agoenergy/ptx-boa/issues/312."""
+    settings = {
+        "region": "Morocco",
+        "country": "Germany",
+        "chain": chain,
+        "res_gen": "PV tilted",
+        "scenario": "2040 (medium)",
+        "secproc_co2": "Specific costs",
+        "secproc_water": "Specific costs",
+        "transport": "Pipeline",
+        "ship_own_fuel": False,
+        "output_unit": "USD/t",
+    }
+    res = api.calculate(**settings, optimize_flh=True)
+    assert len(res) > 0
 
 
 @pytest.mark.filterwarnings("always")

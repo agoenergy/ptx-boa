@@ -10,10 +10,12 @@ __version__ = "0.2.1"
 
 # TODO how do I use the treamlit logger?
 import logging
+import warnings
 
 import pandas as pd
 import streamlit as st
 import streamlit_antd_components as sac
+from pypsa import Network
 
 from app.context_data import load_context_data
 from app.layout_elements import display_footer
@@ -27,10 +29,20 @@ from app.tab_info import content_info
 from app.tab_input_data import content_input_data
 from app.tab_literature import content_literature
 from app.tab_market_scanning import content_market_scanning
+from app.tab_optimization import content_optimization
 from app.tab_sustainability import content_sustainability
 from app.user_data import display_user_changes
 from app.user_data_from_file import download_user_data, upload_user_data
 from ptxboa.api import PtxboaAPI
+
+warnings.filterwarnings(  # filter pandas warning from pypsa optimizer
+    action="ignore",
+    category=FutureWarning,
+    message=(
+        r".*A value is trying to be set on a copy of a DataFrame or Series "
+        r"through chained assignment using an inplace method.*"
+    ),
+)
 
 # setup logging
 # level can be changed on strartup with: --logger.level=LEVEL
@@ -54,6 +66,13 @@ logger.debug("Updating app...")
 
 # Set the pandas display option to format floats with 2 decimal places
 pd.set_option("display.float_format", "{:.2f}".format)
+
+if "network" not in st.session_state:
+    st.session_state["network"] = Network()
+
+if "model_status" not in st.session_state:
+    st.session_state["model_status"] = "not yet solved"
+
 
 if "user_changes_df" not in st.session_state:
     st.session_state["user_changes_df"] = None
@@ -105,6 +124,7 @@ tabs = (
     "Certification schemes",
     "Sustainability",
     "Literature",
+    "Optimization",
 )
 
 tabs_icons = {
@@ -144,6 +164,7 @@ costs_per_region = calculate_results_list(
     api,
     parameter_to_change="region",
     parameter_list=None,
+    optimize_flh=False,  # @markushal: use FLH optimizer disabled in region compare
 )
 costs_per_scenario = calculate_results_list(
     api,
@@ -231,5 +252,8 @@ if st.session_state[st.session_state["tab_key"]] == "Literature":
 
 if st.session_state[st.session_state["tab_key"]] == "Info":
     content_info()
+
+if st.session_state[st.session_state["tab_key"]] == "Optimization":
+    content_optimization(api)
 
 display_footer()

@@ -96,7 +96,7 @@ class PtxboaAPI:
 
         """
         handler = DataHandler(
-            scenario, user_data, data_dir=self.data_dir, optimize_flh=False
+            scenario, user_data, data_dir=self.data_dir, cache_dir=None
         )
         return handler.get_input_data(long_names)
 
@@ -144,8 +144,6 @@ class PtxboaAPI:
             contains only rows of scenario_data that have been modified.
             ids are expected to come as long names. Needs to have the columns
             ["source_region_code", "process_code", "parameter_code", "value"].
-        optimize_flh: bool, optional
-            use optimizer module for FLH
 
         Returns
         -------
@@ -159,7 +157,7 @@ class PtxboaAPI:
 
         """
         data_handler = DataHandler(
-            scenario, user_data, data_dir=self.data_dir, optimize_flh=optimize_flh
+            scenario, user_data, data_dir=self.data_dir, cache_dir=None
         )
 
         if transport not in TransportValues:
@@ -194,6 +192,7 @@ class PtxboaAPI:
             ),
             use_ship=(transport == "Ship"),
             ship_own_fuel=ship_own_fuel,
+            optimize_flh=optimize_flh,
         )
 
         result_df = PtxCalc.calculate(data)
