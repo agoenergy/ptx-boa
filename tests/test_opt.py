@@ -148,6 +148,8 @@ def test_issue_312_fix_fhl_optimization_errors(api, chain):
     assert len(res) > 0
 
 
+# expected to fail because of pypsa bug https://github.com/PyPSA/PyPSA/issues/866
+@pytest.mark.xfail()
 @pytest.mark.filterwarnings("always")
 def test_e_cyclic_period_minimal_example():
     n = pypsa.Network()
