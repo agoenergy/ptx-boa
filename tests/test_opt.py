@@ -7,6 +7,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import pandas as pd
+import pypsa
 import pytest
 
 from flh_opt.api_opt import get_profiles_and_weights, optimize
@@ -131,3 +132,37 @@ def test_issue_312_fix_fhl_optimization_errors(api, chain):
     }
     res = api.calculate(**settings, optimize_flh=True)
     assert len(res) > 0
+
+
+# expected to fail because of pypsa bug https://github.com/PyPSA/PyPSA/issues/866
+@pytest.mark.xfail()
+@pytest.mark.filterwarnings("always")
+def test_e_cyclic_period_minimal_example():
+    n = pypsa.Network()
+
+    levels = [[0, 1], [0, 1, 2]]
+    index = pd.MultiIndex.from_product(levels)
+
+    n.set_snapshots(index)
+    n.add("Bus", "b0")
+    n.add(
+        "Store",
+        "storage",
+        bus="b0",
+        e_nom=10,
+        e_cyclic_per_period=False,
+    )
+    n.add("Load", name="load", bus="b0", p_set=[1, 2, 1, 1, 2, 1])
+    n.add(
+        "Generator",
+        name="gen",
+        bus="b0",
+        p_nom=5,
+        marginal_cost=[1, 1, 1, 2, 2, 2],
+        p_max_pu=[1, 1, 1, 1, 1, 1],
+    )
+
+    n.optimize.create_model()
+    res = n.optimize.solve_model(solver_name="highs")
+    assert res[1] == "optimal"
+    n.statistics()
