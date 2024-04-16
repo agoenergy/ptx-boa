@@ -129,17 +129,21 @@ def optimize(
     n = Network()
 
     # add buses and carriers:
-    carriers = ["EL", "H2", "CO2-G", "H2O-L"]
+    carriers = ["EL", "H2"]
     for c in carriers:
         n.add("Bus", name=c, carrier=c)
         n.add("Carrier", name=c)
 
+    # create list of secondary carriers:
     if "DERIV" in input_data.keys():
         if input_data["DERIV"] is not None:
-            for c in input_data["DERIV"]["CONV"].keys():
-                if c not in carriers:
-                    n.add("Bus", name=c, carrier=c)
-                    n.add("Carrier", name=c)
+            carriers_sec = list(input_data["DERIV"]["CONV"].keys())
+        else:
+            carriers_sec = []
+
+    # we need H2O in any case because it is required by the electrolyzer:
+    if "H2O-L" not in carriers_sec:
+        carriers_sec.append("H2O-L")
 
     if input_data.get("DERIV"):
         n.add("Bus", "final_product", carrier="final_product")
@@ -159,25 +163,28 @@ def optimize(
         )
 
     # add supply for secondary inputs:
-    for c in input_data["SPECCOST"].keys():
-        n.add(
-            "Generator",
-            name=f"{c}_supply",
-            bus=c,
-            carrier=c,
-            marginal_cost=input_data["SPECCOST"][c],
-            p_nom=100,
-        )
-        n.add(
-            "Generator",
-            name=f"{c}_sink",
-            bus=c,
-            carrier=c,
-            p_max_pu=0,
-            p_min_pu=-1,
-            marginal_cost=0,
-            p_nom=100,
-        )
+    for c in carriers_sec:
+        if c not in carriers:
+            n.add("Bus", name=c, carrier=c)
+            n.add("Carrier", name=c)
+            n.add(
+                "Generator",
+                name=f"{c}_supply",
+                bus=c,
+                carrier=c,
+                marginal_cost=input_data["SPECCOST"][c],
+                p_nom=100,
+            )
+            n.add(
+                "Generator",
+                name=f"{c}_sink",
+                bus=c,
+                carrier=c,
+                p_max_pu=0,
+                p_min_pu=-1,
+                marginal_cost=0,
+                p_nom=100,
+            )
 
     # add links:
     # TODO: account for water demand
