@@ -134,11 +134,12 @@ def optimize(
         n.add("Bus", name=c, carrier=c)
         n.add("Carrier", name=c)
 
-    if input_data["DERIV"] is not None:
-        for c in input_data["DERIV"]["CONV"].keys():
-            if c not in carriers:
-                n.add("Bus", name=c, carrier=c)
-                n.add("Carrier", name=c)
+    if "DERIV" in input_data.keys():
+        if input_data["DERIV"] is not None:
+            for c in input_data["DERIV"]["CONV"].keys():
+                if c not in carriers:
+                    n.add("Bus", name=c, carrier=c)
+                    n.add("Carrier", name=c)
 
     if input_data.get("DERIV"):
         n.add("Bus", "final_product", carrier="final_product")
