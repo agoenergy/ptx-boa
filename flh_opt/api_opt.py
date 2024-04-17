@@ -254,8 +254,9 @@ def optimize(
             carrier=n.buses.at[bus, "carrier"],
             capital_cost=input_data[name]["CAPEX_A"] + input_data[name]["OPEX_F"],
             efficiency_store=input_data[name]["EFF"],
-            max_hours=4,  # TODO: move this parameter out of the code.
+            max_hours=4,  # TODO: move this parameter out of the code.,
             cyclic_state_of_charge=True,
+            cyclic_state_of_charge_per_period=True,
             marginal_cost=input_data[name]["OPEX_O"],
             p_nom_extendable=True,
         )
@@ -283,7 +284,15 @@ def optimize(
             carrier="H2",
             p_nom=100,
         )
-        n.add("Store", name="H2_STR_store", bus="H2_STR_bus", carrier="H2", e_nom=1e5)
+        n.add(
+            "Store",
+            name="H2_STR_store",
+            bus="H2_STR_bus",
+            carrier="H2",
+            e_nom=1e5,
+            e_cyclic=True,
+            e_cyclic_per_period=True,
+        )
         bus = "final_product"
         carrier = "final_product"
     else:
@@ -298,6 +307,8 @@ def optimize(
         carrier=carrier,
         p_nom=100,
         max_hours=8760,
+        cyclic_state_of_charge=True,
+        cyclic_state_of_charge_per_period=False,
     )
 
     # add RE profiles:
@@ -316,10 +327,18 @@ def optimize(
     # define snapshots:
     n.snapshots = res_profiles.index
 
+    # set multi period snapshots:
+    n.snapshots = pd.MultiIndex.from_tuples(
+        n.snapshots.str.split("_").tolist(), names=["level1", "level2"]
+    )
+    res_profiles.index = n.snapshots
+
     # define snapshot weightings:
     weights = weights_and_period_ids["weight"]
     if not math.isclose(weights.sum(), 8760):
         weights = weights * 8760 / weights.sum()
+
+    weights.index = n.snapshots
 
     n.snapshot_weightings["generators"] = weights
     n.snapshot_weightings["objective"] = weights
