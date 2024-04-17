@@ -13,14 +13,12 @@ def content_optimization(api: PtxboaAPI) -> None:
     st.subheader("Optimization results")
     st.warning("Warning: Preliminary debugging results. ")
 
-    download_network_as_netcdf(st.session_state["network"], "network.nc")
-
     if st.session_state["model_status"] == "optimal":
         n = st.session_state["network"]
 
         res = calc_aggregate_statistics(n)
         with st.expander("Aggregate statistics"):
-            st.dataframe(res, use_container_width=True)
+            st.dataframe(res.round(2), use_container_width=True)
 
         with st.expander("Profiles"):
             create_profile_figure(n)
@@ -32,6 +30,8 @@ def content_optimization(api: PtxboaAPI) -> None:
         st.error(
             f"No optimal solution! -> model status is {st.session_state['model_status']}"  # noqa
         )
+
+    download_network_as_netcdf(st.session_state["network"], "network.nc")
 
 
 # calculate aggregate statistics:
@@ -97,6 +97,20 @@ def calc_aggregate_statistics(n: pypsa.Network) -> pd.DataFrame:
     )
 
     res.at["Total", "Cost (USD/MWh)"] = res["Cost (USD/MWh)"].sum()
+
+    # rename components:
+    rename_list = {
+        "PV-FIX": "PV tilted",
+        "WIND-ON": "Wind onshore",
+        "WIND-OFF": "Wind offshore",
+        "ELY": "Electrolyzer",
+        "DERIV": "Derivate production",
+        "H2_STR_in": "H2 storage",
+        "EL_STR": "Electricity storage",
+        "CO2-G_supply": "CO2 supply",
+        "H2O-L_supply": "Water supply",
+    }
+    res = res.rename(rename_list, axis=0)
     return res
 
 
@@ -111,7 +125,7 @@ def create_profile_figure(n: pypsa.Network) -> None:
         return res
 
     df_p_max_pu = n.generators_t["p_max_pu"]
-    df_p_max_pu = transform_time_series(df_p_max_pu, parameter="p_max_pu")
+    df_p_max_pu = transform_time_series(df_p_max_pu, parameter="cap. factor")
     df_gen = n.generators_t["p"]
     df_gen = transform_time_series(df_gen)
     df_links = -n.links_t["p1"]
@@ -146,8 +160,8 @@ def create_profile_figure(n: pypsa.Network) -> None:
             "WIND-OFF",
         )
     )
-    ind2 = df["Parameter"] == "p_max_pu"
-    df.loc[ind1 & ind2, "Type"] = "p_max_pu"
+    ind2 = df["Parameter"] == "cap. factor"
+    df.loc[ind1 & ind2, "Type"] = "cap. factor"
 
     ind = df["Component"].isin(["ELY"])
     df.loc[ind, "Type"] = "H2"
@@ -160,6 +174,21 @@ def create_profile_figure(n: pypsa.Network) -> None:
 
     ind = df["Component"].isin(["DERIV"])
     df.loc[ind, "Type"] = "Derivate"
+
+    # rename components:
+    rename_list = {
+        "PV-FIX": "PV tilted",
+        "WIND-ON": "Wind onshore",
+        "WIND-OFF": "Wind offshore",
+        "ELY": "Electrolyzer",
+        "DERIV": "Derivate production",
+        "H2_STR_in": "H2 storage",
+        "H2_STR_store": "H2 storage",
+        "EL_STR": "Electricity storage",
+        "CO2-G_supply": "CO2 supply",
+        "H2O-L_supply": "Water supply",
+    }
+    df = df.replace(rename_list)
 
     # filter:
     types_all = df["Type"].unique().tolist()
@@ -180,10 +209,10 @@ def create_profile_figure(n: pypsa.Network) -> None:
         facet_row="Type",
         height=800,
     )
-    fig.update_yaxes(matches=None)
+    fig.update_yaxes(matches=None, showticklabels=True)
     st.plotly_chart(fig, use_container_width=True)
 
-    st.dataframe(df, use_container_width=True)
+    st.dataframe(df_sel, use_container_width=True)
 
 
 def show_filtered_df(
