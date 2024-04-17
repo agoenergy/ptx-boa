@@ -101,14 +101,17 @@ def calc_aggregate_statistics(n: pypsa.Network) -> pd.DataFrame:
 
 
 def create_profile_figure(n: pypsa.Network) -> None:
-    def transform_time_series(df: pd.DataFrame) -> pd.DataFrame:
+    def transform_time_series(df: pd.DataFrame, parameter: str = None) -> pd.DataFrame:
         res = df.reset_index().melt(
             id_vars=["timestep", "period"],
-            var_name="Generator",
+            var_name="Component",
             value_name="MW (MWh for SOC)",
         )
+        res["Parameter"] = parameter
         return res
 
+    df_p_max_pu = n.generators_t["p_max_pu"]
+    df_p_max_pu = transform_time_series(df_p_max_pu, parameter="p_max_pu")
     df_gen = n.generators_t["p"]
     df_gen = transform_time_series(df_gen)
     df_links = -n.links_t["p1"]
@@ -118,11 +121,11 @@ def create_profile_figure(n: pypsa.Network) -> None:
     df_storageunit = n.storage_units_t["state_of_charge"]
     df_storageunit = transform_time_series(df_storageunit)
 
-    df = pd.concat([df_gen, df_links, df_store, df_storageunit])
+    df = pd.concat([df_p_max_pu, df_gen, df_links, df_store, df_storageunit])
 
     # selection:
     df = df.loc[
-        df["Generator"].isin(
+        df["Component"].isin(
             [
                 "PV-FIX",
                 "WIND-ON",
@@ -137,29 +140,51 @@ def create_profile_figure(n: pypsa.Network) -> None:
     ]
     df["Type"] = "Power"
 
-    ind = df["Generator"].isin(["ELY"])
+    ind1 = df["Component"].isin(
+        (
+            "PV-FIX",
+            "WIND-ON",
+            "WIND-OFF",
+        )
+    )
+    ind2 = df["Parameter"] == "p_max_pu"
+    df.loc[ind1 & ind2, "Type"] = "p_max_pu"
+
+    ind = df["Component"].isin(["ELY"])
     df.loc[ind, "Type"] = "H2"
 
-    ind = df["Generator"].isin(["H2_STR_store", "EL_STR", "final_product_storage"])
+    ind = df["Component"].isin(["H2_STR_store", "EL_STR", "final_product_storage"])
     df.loc[ind, "Type"] = "SOC"
 
-    ind = df["Generator"].isin(["ELY"])
+    ind = df["Component"].isin(["ELY"])
     df.loc[ind, "Type"] = "H2"
 
-    ind = df["Generator"].isin(["DERIV"])
+    ind = df["Component"].isin(["DERIV"])
     df.loc[ind, "Type"] = "Derivate"
 
+    # filter:
+    types_all = df["Type"].unique().tolist()
+    types_sel = st.multiselect("Data types to display:", types_all, default=types_all)
+
+    periods_all = df["period"].unique().tolist()
+    periods_sel = st.multiselect(
+        "Periods to display:", periods_all, default=periods_all
+    )
+    df_sel = df.loc[(df["Type"].isin(types_sel)) & (df["period"].isin(periods_sel))]
+
     fig = px.line(
-        df,
+        df_sel,
         x="timestep",
         y="MW (MWh for SOC)",
         facet_col="period",
-        color="Generator",
+        color="Component",
         facet_row="Type",
         height=800,
     )
     fig.update_yaxes(matches=None)
     st.plotly_chart(fig, use_container_width=True)
+
+    st.dataframe(df, use_container_width=True)
 
 
 def show_filtered_df(
