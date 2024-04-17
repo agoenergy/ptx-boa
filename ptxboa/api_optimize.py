@@ -13,6 +13,7 @@ import streamlit as st
 from flh_opt._types import OptInputDataType, OptOutputDataType
 from flh_opt.api_opt import optimize
 from ptxboa.static._types import CalculateDataType
+from ptxboa.utils import annuity
 
 DEFAULT_CACHE_DIR = os.path.dirname(__file__) + "/data/cache"
 IS_TEST = "PYTEST_CURRENT_TEST" in os.environ
@@ -110,7 +111,11 @@ class PtxOpt:
                         proc_data = input_data["flh_opt_process"][pc]
                         result["RES"].append(
                             {
-                                "CAPEX_A": proc_data["CAPEX"],
+                                "CAPEX_A": annuity(
+                                    periods=proc_data["LIFETIME"],
+                                    rate=input_data["parameter"]["WACC"],
+                                    value=proc_data["CAPEX"],
+                                ),
                                 "OPEX_F": proc_data["OPEX-F"],
                                 "OPEX_O": proc_data["OPEX-O"],
                                 "PROCESS_CODE": pc,
@@ -119,7 +124,11 @@ class PtxOpt:
                 else:
                     result["RES"].append(
                         {
-                            "CAPEX_A": step["CAPEX"],  # TODO why CAPEX_A?
+                            "CAPEX_A": annuity(
+                                periods=step["LIFETIME"],
+                                rate=input_data["parameter"]["WACC"],
+                                value=step["CAPEX"],
+                            ),
                             "OPEX_F": step["OPEX-F"],
                             "OPEX_O": step["OPEX-O"],
                             "PROCESS_CODE": step["process_code"],
@@ -129,7 +138,11 @@ class PtxOpt:
             elif step["step"] == "ELY":
                 result["ELY"] = {
                     "EFF": step["EFF"],
-                    "CAPEX_A": step["CAPEX"],
+                    "CAPEX_A": annuity(
+                        periods=step["LIFETIME"],
+                        rate=input_data["parameter"]["WACC"],
+                        value=step["CAPEX"],
+                    ),
                     "OPEX_F": step["OPEX-F"],
                     "OPEX_O": step["OPEX-O"],
                     "CONV": step["CONV"],
@@ -137,7 +150,11 @@ class PtxOpt:
             elif step["step"] == "DERIV":
                 result["DERIV"] = {
                     "EFF": step["EFF"],
-                    "CAPEX_A": step["CAPEX"],
+                    "CAPEX_A": annuity(
+                        periods=step["LIFETIME"],
+                        rate=input_data["parameter"]["WACC"],
+                        value=step["CAPEX"],
+                    ),
                     "OPEX_F": step["OPEX-F"],
                     "OPEX_O": step["OPEX-O"],
                     "PROCESS_CODE": step["process_code"],
@@ -146,7 +163,11 @@ class PtxOpt:
             elif step["step"] in ("EL_STR", "H2_STR"):
                 result[step["step"]] = {
                     "EFF": step["EFF"],
-                    "CAPEX_A": step["CAPEX"],
+                    "CAPEX_A": annuity(
+                        periods=step["LIFETIME"],
+                        rate=input_data["parameter"]["WACC"],
+                        value=step["CAPEX"],
+                    ),
                     "OPEX_F": step["OPEX-F"],
                     "OPEX_O": step["OPEX-O"],
                 }
