@@ -134,7 +134,6 @@ def create_profile_figure(n: pypsa.Network) -> None:
                 "DERIV",
                 "H2_STR_store",
                 "EL_STR",
-                "final_product_storage",
             ]
         )
     ]
