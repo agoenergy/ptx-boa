@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Data interface for optimized data of FLH."""
 
+import datetime
 import hashlib
 import json
 import os
@@ -9,6 +10,7 @@ import time
 from pathlib import Path
 
 import streamlit as st
+from pypsa import Network
 
 from flh_opt._types import OptInputDataType, OptOutputDataType
 from flh_opt.api_opt import optimize
@@ -54,23 +56,70 @@ def get_data_hash_md5(key: object) -> str:
     return hash_md5
 
 
+class TempFile:
+    def __init__(self, filepath, raise_on_overwrite=False):
+        self.filepath = filepath
+        self.filepath_tmp = str(self.filepath) + ".tmp"
+        self.raise_on_overwrite = raise_on_overwrite
+
+    def __enter__(self):
+        # check existing files
+        for path in [self.filepath, self.filepath_tmp]:
+            if os.path.exists(path):
+                message = f"file should not exist - overwriting: {path}"
+                if self.raise_on_overwrite:
+                    raise FileExistsError(message)
+                logger.warning(message)
+                os.remove(path)
+        return self.filepath_tmp
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # move to filepath_tmp => filepath
+        if not os.path.exists(self.filepath_tmp):
+            # file should have been written
+            logger.warning(f"file does not exist: {self.filepath_tmp}")
+            return
+        if os.path.exists(self.filepath):
+            # file was created in the meantime?
+            logger.warning(f"file should not exist - overwriting: {self.filepath}")
+            os.remove(self.filepath)
+        if exc_type:
+            # there was an error: remove temporary file
+            os.remove(self.filepath_tmp)
+            logger.warning(exc_val)  # or raise Error
+        else:
+            # move file to target
+            os.rename(self.filepath_tmp, self.filepath)
+            logger.info(f"saved file {self.filepath}")
+
+
 class PtxOpt:
 
     def __init__(self, profiles_path: Path, cache_dir: Path):
         self.cache_dir = cache_dir
         self.profiles_path = profiles_path
 
-    def _save(self, filepath: str, data: object, raise_on_overwrite=False) -> None:
-        if raise_on_overwrite and os.path.exists(filepath):
-            raise FileExistsError("file already exists: %s", filepath)
-        # first write to temporary file
-        filepath_temp = str(filepath) + ".tmp"
-        with open(filepath_temp, "wb") as file:
-            pickle.dump(data, file)
+    def _save(
+        self,
+        filepath: str,
+        data: object,
+        network: Network,
+        metadata: dict,
+        raise_on_overwrite=False,
+    ) -> None:
+        with TempFile(filepath, raise_on_overwrite=raise_on_overwrite) as filepath_tmp:
+            with open(filepath_tmp, "wb") as file:
+                pickle.dump(data, file)
 
-        if os.path.exists(filepath):
-            os.remove(filepath)
-        os.rename(filepath_temp, filepath)
+        # also save network
+        filepath_nw = str(filepath) + ".network.nc"
+        with TempFile(filepath_nw, raise_on_overwrite=False) as filepath_tmp:
+            network.export_to_netcdf(filepath_tmp)
+
+        # also save metadata
+        filepath_metadata = str(filepath) + ".metadata.json"
+        with open(filepath_metadata, "w", encoding="utf-8") as file:
+            json.dump(metadata, file, indent=2, ensure_ascii=False)
 
     def _load(self, filepath: str) -> object:
         with open(filepath, "rb") as file:
@@ -227,31 +276,31 @@ class PtxOpt:
         """
         opt_input_data = self._prepare_data(data)
 
-        hashsum = get_data_hash_md5(opt_input_data)
-
-        logger.warning("====== api_optimize.get_data")
-        logger.warning(f"cache_dir: {self.cache_dir}")
-        logger.warning(f"hashsum: {hashsum}")
-
         if self.cache_dir:
+            hashsum = get_data_hash_md5(opt_input_data)
             filepath = self._get_cache_filepath(hashsum)
 
             if os.path.exists(filepath):
+                logger.info(f"load opt flh data from cache: {hashsum}")
                 data = self._load(filepath)
                 return data
 
-        opt_output_data, _network = optimize(
+        opt_output_data, network = optimize(
             opt_input_data, profiles_path=self.profiles_path
         )
         # todo: for debugging, temporarily pass network to session state:
-        st.session_state["network"] = _network
+        st.session_state["network"] = network
         st.session_state["model_status"] = opt_output_data["model_status"][1]
 
         self._merge_data(data, opt_output_data)
 
         if self.cache_dir:
-            self._save(filepath, data)
-            # TODO: may be removed: load from file to check integrity
+            metadata = {
+                "opt_input_data": opt_input_data,
+                "model_status": opt_output_data["model_status"],
+                "datetime": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            }
+            self._save(filepath, data, network, metadata)
             data = self._load(filepath)
 
         return data
