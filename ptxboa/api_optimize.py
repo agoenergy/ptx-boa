@@ -3,23 +3,21 @@
 
 import hashlib
 import json
-import logging
 import os
 import pickle  # noqa S403
 import time
+from pathlib import Path
 
 import streamlit as st
 
 from flh_opt._types import OptInputDataType, OptOutputDataType
 from flh_opt.api_opt import optimize
+from ptxboa import logger
 from ptxboa.static._types import CalculateDataType
 from ptxboa.utils import annuity
 
-DEFAULT_CACHE_DIR = os.path.dirname(__file__) + "/data/cache"
-IS_TEST = "PYTEST_CURRENT_TEST" in os.environ
-logger = logging.getLogger()
 
-
+# TODO unused
 def wait_for_file_to_disappear(
     filepath: str, timeout_s: float = 10, poll_interv_s: float = 0.2
 ):
@@ -58,15 +56,15 @@ def get_data_hash_md5(key: object) -> str:
 
 class PtxOpt:
 
-    def __init__(self, cache_dir: str = None):
+    def __init__(self, profiles_path: Path, cache_dir: Path):
         self.cache_dir = cache_dir
-        self.profiles_path = "flh_opt/renewable_profiles"
+        self.profiles_path = profiles_path
 
     def _save(self, filepath: str, data: object, raise_on_overwrite=False) -> None:
         if raise_on_overwrite and os.path.exists(filepath):
             raise FileExistsError("file already exists: %s", filepath)
         # first write to temporary file
-        filepath_temp = filepath + ".tmp"
+        filepath_temp = str(filepath) + ".tmp"
         with open(filepath_temp, "wb") as file:
             pickle.dump(data, file)
 
@@ -81,9 +79,9 @@ class PtxOpt:
 
     def _get_cache_filepath(self, hashsum: str, suffix=".pickle"):
         # group twice by first two chars (256 combinations)
-        dirpath = self.cache_dir + f"/{hashsum[0:2]}/{hashsum[2:4]}"
+        dirpath = self.cache_dir / hashsum[0:2] / hashsum[2:4]
         os.makedirs(dirpath, exist_ok=True)
-        filepath = f"{dirpath}/{hashsum}{suffix}"
+        filepath = dirpath / f"{hashsum}{suffix}"
         return filepath
 
     @staticmethod
@@ -207,9 +205,9 @@ class PtxOpt:
                 elif step["step"] == "DERIV":
                     step["FLH"] = opt_output_data["DERIV"]["FLH"] * 8760
         else:
-            logging.warning("Optimization not successful.")
-            logging.warning(f"Solver status:{opt_output_data['model_status'][0]}")
-            logging.warning(f"Model status:{opt_output_data['model_status'][1]}")
+            logger.warning("Optimization not successful.")
+            logger.warning(f"Solver status:{opt_output_data['model_status'][0]}")
+            logger.warning(f"Model status:{opt_output_data['model_status'][1]}")
 
             # TODO: Storage: "CAP_F"
 
@@ -229,8 +227,13 @@ class PtxOpt:
         """
         opt_input_data = self._prepare_data(data)
 
+        hashsum = get_data_hash_md5(opt_input_data)
+
+        logger.warning("====== api_optimize.get_data")
+        logger.warning(f"cache_dir: {self.cache_dir}")
+        logger.warning(f"hashsum: {hashsum}")
+
         if self.cache_dir:
-            hashsum = get_data_hash_md5(opt_input_data)
             filepath = self._get_cache_filepath(hashsum)
 
             if os.path.exists(filepath):

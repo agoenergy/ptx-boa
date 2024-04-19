@@ -148,7 +148,7 @@ def test_get_parameter_value(
         user_data = request.getfixturevalue(user_data)
 
     data_handler = DataHandler(
-        scenario=scenario, user_data=user_data, data_dir=ptxdata_dir, cache_dir=None
+        scenario=scenario, user_data=user_data, data_dir=ptxdata_dir
     )
     result = data_handler._get_parameter_value(
         parameter_code=parameter_code,
@@ -199,7 +199,7 @@ def test_get_dimensions_parameter_code(dimension, parameter_name, expected_code)
 )
 def test_get_calculation_data(ptxdata_dir, scenario, kwargs, request):
     ptxdata_dir = request.getfixturevalue(ptxdata_dir)
-    data_handler = DataHandler(data_dir=ptxdata_dir, scenario=scenario, cache_dir=None)
+    data_handler = DataHandler(data_dir=ptxdata_dir, scenario=scenario)
     data = data_handler.get_calculation_data(**kwargs, optimize_flh=False)
     # recursively use pytest.approx
 

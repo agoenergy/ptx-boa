@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
 """Classes for main process chain calculation."""
 
-import logging
 
 import pandas as pd
 
 from ptxboa.api_data import DataHandler
 from ptxboa.static._types import CalculateDataType
 from ptxboa.utils import annuity
-
-logger = logging.getLogger()
 
 
 class PtxCalc:

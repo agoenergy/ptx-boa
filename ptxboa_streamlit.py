@@ -33,6 +33,7 @@ from app.tab_optimization import content_optimization
 from app.tab_sustainability import content_sustainability
 from app.user_data import display_user_changes
 from app.user_data_from_file import download_user_data, upload_user_data
+from ptxboa import DEFAULT_CACHE_DIR, DEFAULT_DATA_DIR
 from ptxboa.api import PtxboaAPI
 
 warnings.filterwarnings(  # filter pandas warning from pypsa optimizer
@@ -88,7 +89,10 @@ css = """
 """
 st.markdown(css, unsafe_allow_html=True)
 
-api = st.cache_resource(PtxboaAPI)()
+api = st.cache_resource(PtxboaAPI)(
+    data_dir=DEFAULT_DATA_DIR,
+    cache_dir=DEFAULT_CACHE_DIR,  # TODO: maybe disable in test environment?
+)
 
 st.title("PtX Business Opportunity Analyzer")
 
