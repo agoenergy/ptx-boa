@@ -36,6 +36,5 @@ class SingletonMeta(type):
         """
         key = (cls, args)
         if key not in cls._instances:
-            print("NEW", key)
             cls._instances[key] = super().__call__(*args)
         return cls._instances[key]

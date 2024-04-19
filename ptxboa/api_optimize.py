@@ -146,6 +146,18 @@ class PtxOpt:
             data = pickle.load(file)  # noqa S301
         return data
 
+    def _load_network(self, filepath: str):
+        filepath_nw = str(filepath) + ".network.nc"
+
+        network = Network()
+        network.import_from_netcdf(filepath_nw)
+
+        filepath_metadata = str(filepath) + ".metadata.json"
+        with open(filepath_metadata, "r", encoding="utf-8") as file:
+            metadata = json.load(file)
+
+        return network, metadata
+
     def _get_cache_filepath(self, hashsum: str, suffix=".pickle"):
         # group twice by first two chars (256 combinations)
         dirpath = self.cache_dir / hashsum[0:2] / hashsum[2:4]
@@ -320,10 +332,19 @@ class PtxOpt:
             hashsum = get_data_hash_md5(hash_data)
             filepath = self._get_cache_filepath(hashsum)
 
+            logger.info(f"opt request: {hashsum}")
+
             if os.path.exists(filepath):
                 logger.info(f"load opt flh data from cache: {hashsum}")
                 data = self._load(filepath)
+
+                # todo: for debugging, temporarily pass network to session state:
+                network, metadata = self._load_network(filepath)
+                st.session_state["network"] = network
+                st.session_state["model_status"] = metadata["model_status"][1]
+
                 return data
+
         else:
             hash_data = None
 
