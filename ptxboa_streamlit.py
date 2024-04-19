@@ -48,20 +48,18 @@ warnings.filterwarnings(  # filter pandas warning from pypsa optimizer
 # setup logging
 # level can be changed on strartup with: --logger.level=LEVEL
 loglevel = st.logger.get_logger(__name__).level
-
-
-logger = logging.getLogger()  # do not ude __name__ so we can resue it in submodules
+logger = logging.getLogger()  # do not use __name__ so we can resue it in submodules
 logger.setLevel(loglevel)
-log_handler = logging.StreamHandler()
-log_handler.setFormatter(
-    logging.Formatter(
-        "[%(asctime)s %(levelname)7s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+if not logger.handlers:
+    # only add one handler
+    logger.handlers.append(logging.StreamHandler())
+for handler in logger.handlers:
+    handler.setFormatter(
+        logging.Formatter(
+            "[%(asctime)s %(levelname)7s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+        )
     )
-)
-logger.addHandler(log_handler)
 
-
-logger.debug("Updating app...")
 
 # app layout:
 
