@@ -6,32 +6,18 @@ import hashlib
 import json
 import os
 import pickle  # noqa S403
-import time
+import re
 from pathlib import Path
 
 import streamlit as st
 from pypsa import Network
 
+from flh_opt import __version__ as flh_opt_version
 from flh_opt._types import OptInputDataType, OptOutputDataType
 from flh_opt.api_opt import optimize
 from ptxboa import logger
 from ptxboa.static._types import CalculateDataType
-from ptxboa.utils import annuity
-
-
-# TODO unused
-def wait_for_file_to_disappear(
-    filepath: str, timeout_s: float = 10, poll_interv_s: float = 0.2
-):
-    t_waited = 0
-    while True:
-        if not os.path.exists(filepath):
-            return True
-        time.sleep(poll_interv_s)
-        t_waited += poll_interv_s
-        if timeout_s > 0 and t_waited >= timeout_s:
-            logger.warning("Timeout")
-            return False
+from ptxboa.utils import SingletonMeta, annuity
 
 
 def get_data_hash_md5(key: object) -> str:
@@ -93,11 +79,45 @@ class TempFile:
             logger.info(f"saved file {self.filepath}")
 
 
+class ProfilesHashes(metaclass=SingletonMeta):
+    """Only instanciated once for path."""
+
+    PATTERN = re.compile(
+        r"^(?P<region>[^_]+)_(?P<res>.+)_aggregated.weights.csv.metadata.json$"
+    )
+
+    def __init__(self, profiles_path):
+        self.profiles_path = str(profiles_path)
+        self.data = self._load_all()
+
+    def _read_metadata(self, filename):
+        """Read metadata json file."""
+        filepath = f"{self.profiles_path}/{filename}"
+        logger.info(f"READ {filepath}")
+        with open(filepath, encoding="utf-8") as file:
+            data = json.load(file)
+        return data
+
+    def _load_all(self) -> dict:
+        """Load all metadata json files."""
+        result = {}
+        for filename in os.listdir(self.profiles_path):
+            match = self.PATTERN.match(filename)
+            if not match:
+                continue
+            # region_code, res_code not in metadata,so we
+            # extract it from filename
+            region_res = match.groups()
+            metadata = self._read_metadata(filename) | match.groupdict()
+            result[region_res] = metadata
+        return result
+
+
 class PtxOpt:
 
     def __init__(self, profiles_path: Path, cache_dir: Path):
         self.cache_dir = cache_dir
-        self.profiles_path = profiles_path
+        self.profiles_hashes = ProfilesHashes(profiles_path)
 
     def _save(
         self,
@@ -277,16 +297,38 @@ class PtxOpt:
         opt_input_data = self._prepare_data(data)
 
         if self.cache_dir:
-            hashsum = get_data_hash_md5(opt_input_data)
+
+            src_reg = data["context"]["source_region_code"]
+            # find res
+            res = None
+            for step in data["main_process_chain"]:
+                if step["step"] == "RES":
+                    res = step["process_code"]
+                    break
+            key = (src_reg, res)
+            profiles_filehash_md5 = self.profiles_hashes.data[key]["filehash_md5"]
+
+            hash_data = {
+                "opt_input_data": opt_input_data,
+                # data not needed for optimization
+                # but that should change the hash
+                "context": {
+                    "flh_opt_version": flh_opt_version,
+                    "profiles_filehash_md5": profiles_filehash_md5,
+                },
+            }
+            hashsum = get_data_hash_md5(hash_data)
             filepath = self._get_cache_filepath(hashsum)
 
             if os.path.exists(filepath):
                 logger.info(f"load opt flh data from cache: {hashsum}")
                 data = self._load(filepath)
                 return data
+        else:
+            hash_data = None
 
         opt_output_data, network = optimize(
-            opt_input_data, profiles_path=self.profiles_path
+            opt_input_data, profiles_path=self.profiles_hashes.profiles_path
         )
         # todo: for debugging, temporarily pass network to session state:
         st.session_state["network"] = network
@@ -295,11 +337,10 @@ class PtxOpt:
         self._merge_data(data, opt_output_data)
 
         if self.cache_dir:
-            metadata = {
-                "opt_input_data": opt_input_data,
-                "model_status": opt_output_data["model_status"],
-                "datetime": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            }
+            metadata = hash_data.copy()
+            metadata["model_status"] = opt_output_data["model_status"]
+            metadata["datetime"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
             self._save(filepath, data, network, metadata)
             data = self._load(filepath)
 
