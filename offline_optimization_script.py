@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 """Offline optimization of parameter combinations."""
 
+import argparse
 import itertools
 import logging
+from pathlib import Path
 from typing import Literal
 
 import numpy as np
 
+from ptxboa import DEFAULT_CACHE_DIR, DEFAULT_DATA_DIR
 from ptxboa.api import PtxboaAPI
 
 
@@ -21,18 +24,16 @@ def product_dict(**kwargs):
 
 
 def main(
-    cache_dir: str | None = None,
-    dimensions: list[str] | None = None,
+    cache_dir: Path = DEFAULT_CACHE_DIR,
     loglevel: Literal["debug", "info", "warning", "error"] = "info",
 ):
     fmt = "[%(asctime)s %(levelname)7s] %(message)s"
     datefmt = "%Y-%m-%d %H:%M:%S"
-    logging.basicConfig(level=loglevel, format=fmt, datefmt=datefmt)
-    api = PtxboaAPI(
-        # cache_dir=cache_dir  # FIXME: not implemented yet
-    )
+    logging.basicConfig(level=loglevel.upper(), format=fmt, datefmt=datefmt)
+    api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR, cache_dir=cache_dir)
 
-    optimization_param_arrays = {
+    # these are the parameter dimensions that are relevant for the optimization
+    param_arrays = {
         "region": api.get_dimension("region")["region_name"].tolist(),
         "scenario": api.get_dimension("scenario").index.tolist(),
         "secproc_water": api.get_dimension("secproc_water").index.tolist(),
@@ -42,27 +43,46 @@ def main(
         "chain": api.get_dimension("chain").index.tolist(),
     }
 
-    if dimensions is not None:
-        assert all(d in optimization_param_arrays.keys() for d in dimensions)
-        used_param_arrays = {
-            k: v for k, v in optimization_param_arrays.items() if k in dimensions
-        }
-    else:
-        used_param_arrays = optimization_param_arrays.copy()
+    # specify parameter dimensions not relevant for optimization
+    # we choose arbritray values for those
+    static_params = {"transport": "Ship", "ship_own_fuel": False}
 
-    n_total = np.prod([len(x) for x in used_param_arrays.values()])
+    n_total = np.prod([len(x) for x in param_arrays.values()])
     one_percent = n_total // 100
-    assert len(list(product_dict(**used_param_arrays))) == n_total
-    for i, param_set in enumerate(product_dict(**used_param_arrays)):
+    assert len(list(product_dict(**param_arrays))) == n_total
+    for i, param_set in enumerate(product_dict(**param_arrays)):
         if i % one_percent == 0:
             p = i / n_total * 100
-            print(f"{p:.2f} % of all parameter combinations calculated")
+            logging.info(f"{p:.2f} % of all parameter combinations calculated")
         try:
-            api.calculate(transport="Ship", ship_own_fuel=False, **param_set)
+            logging.debug(f"calculating parameter set {param_set | static_params}")
+            api.calculate(optimize_flh=True, **static_params, **param_set)
         except Exception as e:
-            print(f"Error for {param_set}")
-            print(e)
+            logging.error(f"An error occurred for {param_set}\n{e}")
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+        description=("Offline optimization of parameter combinations.")
+    )
+    parser.add_argument(
+        "-c",
+        "--cache_dir",
+        type=Path,
+        default=DEFAULT_CACHE_DIR,
+        help=(
+            "Cache directory. Relative path to the directory from where you are "
+            "calling the script or absolute path."
+        ),
+    )
+    parser.add_argument(
+        "-l",
+        "--loglevel",
+        type=str,
+        default="info",
+        choices=["debug", "info", "warning", "error"],
+        help="Log level for the console.",
+    )
+
+    args = parser.parse_args()
+    main(cache_dir=args.cache_dir, loglevel=args.loglevel)
