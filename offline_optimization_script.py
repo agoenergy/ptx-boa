@@ -1,5 +1,28 @@
 # -*- coding: utf-8 -*-
-"""Offline optimization of parameter combinations."""
+"""
+Offline optimization of parameter combinations.
+
+Optimization on the server:
+
+login as ptxboa user:
+
+$ ssh ptxboa2
+
+navigate to repository folder and update code:
+
+$ cd ptx-boa_offline_optimization/ptx-boa
+$ git pull
+
+go back to offline optimization folder and activate virtualenv:
+
+$ cd ..
+$ . .venv/bin/activate
+
+run script with cache dir in offline optimization folder:
+
+$ python ptx-boa/offline_optimization_script.py --cache_dir "./optimization_cache"
+
+"""
 
 import argparse
 import itertools
