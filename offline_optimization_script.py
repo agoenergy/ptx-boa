@@ -69,11 +69,11 @@ def main(
 
     # these are the parameter dimensions that are relevant for the optimization
     param_arrays = {
-        "region": api.get_dimension("region")["region_name"].tolist(),
-        "scenario": api.get_dimension("scenario").index.tolist(),
         "secproc_water": api.get_dimension("secproc_water").index.tolist(),
-        "res_gen": api.get_dimension("res_gen").index.tolist(),
         "secproc_co2": api.get_dimension("secproc_co2").index.tolist(),
+        "scenario": api.get_dimension("scenario").index.tolist(),
+        "res_gen": api.get_dimension("res_gen").index.tolist(),
+        "region": api.get_dimension("region")["region_name"].tolist(),
         "chain": api.get_dimension("chain").index.tolist(),
     }
 
