@@ -44,6 +44,7 @@ def main(
 
     results = []
     network_statistics = []
+    # iterate over pickle result files
     for filepath in cache_dir.rglob("*.pickle"):
         f_hash = f"{filepath.parents[1].name}{filepath.parent.name}{filepath.stem}"
         # this is the respective network object filepath
@@ -73,24 +74,9 @@ def main(
         results.append(result)
 
     # extract record in "main_process_chain"
-    main_process_chain = pd.json_normalize(
-        results,
-        record_path=["main_process_chain"],
-        meta=["context", "optimization_hash", "model_status"],
-    )
-    # normalize entries in "context" to single columns
-    main_process_chain = pd.concat(
-        [
-            main_process_chain.drop(columns="context"),
-            pd.json_normalize(main_process_chain["context"]),
-        ],
-        axis=1,
-    )
+    main_process_chain = extract_main_process_chain_data(results)
 
-    secondary_process = pd.json_normalize(results)
-    secondary_process = secondary_process.drop(
-        columns=["main_process_chain", "transport_process_chain"]
-    )
+    secondary_process = extract_secondary_process_data(results)
 
     logging.info(f"writing collected data to {outdir}")
     main_process_chain.to_csv(
@@ -103,6 +89,33 @@ def main(
         network_statistics.to_csv(outdir / "network_statistics.csv")
 
     return main_process_chain
+
+
+def extract_secondary_process_data(results):
+    secondary_process = pd.json_normalize(results)
+    secondary_process = secondary_process.drop(
+        columns=["main_process_chain", "transport_process_chain"]
+    )
+
+    return secondary_process
+
+
+def extract_main_process_chain_data(results):
+    df = pd.json_normalize(
+        results,
+        record_path=["main_process_chain"],
+        meta=["context", "optimization_hash", "model_status"],
+    )
+    # normalize entries in "context" to single columns
+    df = pd.concat(
+        [
+            df.drop(columns="context"),
+            pd.json_normalize(df["context"]),
+        ],
+        axis=1,
+    )
+
+    return df
 
 
 if __name__ == "__main__":
