@@ -60,7 +60,6 @@ def main(
         "region": api.get_dimension("region")["region_name"].tolist(),
         "scenario": api.get_dimension("scenario").index.tolist(),
         "secproc_water": api.get_dimension("secproc_water").index.tolist(),
-        "country": api.get_dimension("country").index.tolist(),
         "res_gen": api.get_dimension("res_gen").index.tolist(),
         "secproc_co2": api.get_dimension("secproc_co2").index.tolist(),
         "chain": api.get_dimension("chain").index.tolist(),
@@ -68,7 +67,7 @@ def main(
 
     # specify parameter dimensions not relevant for optimization
     # we choose arbritray values for those
-    static_params = {"transport": "Ship", "ship_own_fuel": False}
+    static_params = {"transport": "Ship", "ship_own_fuel": False, "country": "Germany"}
 
     n_total = np.prod([len(x) for x in param_arrays.values()])
     one_percent = n_total // 100
