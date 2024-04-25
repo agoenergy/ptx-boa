@@ -50,38 +50,51 @@ def main(
     cache_dir: Path = DEFAULT_CACHE_DIR,
     loglevel: Literal["debug", "info", "warning", "error"] = "info",
 ):
+    cache_dir = Path(cache_dir)
+    cache_dir.mkdir(exist_ok=True)
+
     fmt = "[%(asctime)s %(levelname)7s] %(message)s"
     datefmt = "%Y-%m-%d %H:%M:%S"
-    logging.basicConfig(level=loglevel.upper(), format=fmt, datefmt=datefmt)
+    logging.basicConfig(
+        level=loglevel.upper(),
+        format=fmt,
+        datefmt=datefmt,
+        handlers=[
+            logging.FileHandler(cache_dir / "offline_optimization_script.log"),
+            logging.StreamHandler(),
+        ],
+    )
+    logging.info(f"starting offline optimization script with cache_dir: {cache_dir}")
     api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR, cache_dir=cache_dir)
 
     # these are the parameter dimensions that are relevant for the optimization
     param_arrays = {
-        "region": api.get_dimension("region")["region_name"].tolist(),
-        "scenario": api.get_dimension("scenario").index.tolist(),
         "secproc_water": api.get_dimension("secproc_water").index.tolist(),
-        "country": api.get_dimension("country").index.tolist(),
-        "res_gen": api.get_dimension("res_gen").index.tolist(),
         "secproc_co2": api.get_dimension("secproc_co2").index.tolist(),
+        "scenario": api.get_dimension("scenario").index.tolist(),
+        "res_gen": api.get_dimension("res_gen").index.tolist(),
+        "region": api.get_dimension("region")["region_name"].tolist(),
         "chain": api.get_dimension("chain").index.tolist(),
     }
 
     # specify parameter dimensions not relevant for optimization
     # we choose arbritray values for those
-    static_params = {"transport": "Ship", "ship_own_fuel": False}
+    static_params = {"transport": "Ship", "ship_own_fuel": False, "country": "Germany"}
 
     n_total = np.prod([len(x) for x in param_arrays.values()])
+    logging.info(f"Total number of parameter combinations: {n_total}")
     one_percent = n_total // 100
     assert len(list(product_dict(**param_arrays))) == n_total
     for i, param_set in enumerate(product_dict(**param_arrays)):
+        logging.info(f"parameter combination {i} of {n_total}")
         if i % one_percent == 0:
             p = i / n_total * 100
             logging.info(f"{p:.2f} % of all parameter combinations calculated")
         try:
-            logging.debug(f"calculating parameter set {param_set | static_params}")
+            logging.info(f"calculating parameter set {param_set | static_params}")
             api.calculate(optimize_flh=True, **static_params, **param_set)
         except Exception as e:
-            logging.error(f"An error occurred for {param_set}\n{e}")
+            logging.error(f"An error occurred for {param_set}: {e}")
 
 
 if __name__ == "__main__":
