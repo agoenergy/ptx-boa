@@ -7,6 +7,7 @@ import unittest
 import pandas as pd
 
 import app.ptxboa_functions as pf
+from ptxboa import DEFAULT_DATA_DIR
 from ptxboa.api import PtxboaAPI
 
 logging.basicConfig(
@@ -31,7 +32,7 @@ class TestPtxboaFunctions(unittest.TestCase):
             "ship_own_fuel": False,
             "output_unit": "USD/t",
         }
-        api = PtxboaAPI()
+        api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR)
         df_in = api.get_dimension("region")
 
         # regions including subregions: 79

@@ -9,7 +9,6 @@ import streamlit as st
 from ptxboa.api import PtxboaAPI
 
 
-@st.cache_data()
 def calculate_results_single(
     _api: PtxboaAPI,
     settings: dict,

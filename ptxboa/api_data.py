@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Handle data queries for api calculation."""
 
-import logging
 from functools import cache
 from itertools import product
 from pathlib import Path
@@ -10,6 +9,7 @@ from typing import Dict, List, Literal, Tuple
 import numpy as np
 import pandas as pd
 
+from ptxboa import KEY_SEPARATOR, PROFILES_DIR, STATIC_DATA_DIR
 from ptxboa.static._types import CalculateDataType
 
 from .api_optimize import PtxOpt
@@ -31,11 +31,6 @@ from .static import (
     TransportValues,
     YearValues,
 )
-
-logger = logging.getLogger(__name__)
-DATA_DIR_DEFAULT = Path(__file__).parent.resolve() / "data"
-DATA_DIR_DIMS = Path(__file__).parent.resolve() / "static"
-KEY_SEPARATOR = ","
 
 
 def _assign_key(df: pd.DataFrame, key_columns: str | List[str]) -> pd.DataFrame:
@@ -86,16 +81,16 @@ def _load_dimensions():
 
     # NOTE / TODO: some are indexed by name,some by code
     dimensions["country"] = _load_data(
-        DATA_DIR_DIMS, name="dim_country", key_columns="country_name"
+        STATIC_DATA_DIR, name="dim_country", key_columns="country_name"
     )
     dimensions["region"] = _load_data(
-        DATA_DIR_DIMS, name="dim_region", key_columns="region_name"
+        STATIC_DATA_DIR, name="dim_region", key_columns="region_name"
     )
     dimensions["flow"] = _load_data(
-        DATA_DIR_DIMS, name="dim_flow", key_columns="flow_code"
+        STATIC_DATA_DIR, name="dim_flow", key_columns="flow_code"
     )
     dimensions["parameter"] = _load_data(
-        DATA_DIR_DIMS, name="dim_parameter", key_columns="parameter_code"
+        STATIC_DATA_DIR, name="dim_parameter", key_columns="parameter_code"
     )
     dimensions["parameter"] = dimensions["parameter"].assign(
         dimensions=dimensions["parameter"]["dimensions"].apply(
@@ -103,7 +98,7 @@ def _load_dimensions():
         )
     )
     dimensions["process"] = _load_data(
-        DATA_DIR_DIMS, name="dim_process", key_columns="process_code"
+        STATIC_DATA_DIR, name="dim_process", key_columns="process_code"
     )
     dimensions["process"] = dimensions["process"].assign(
         secondary_flows=dimensions["process"]["secondary_flows"].apply(
@@ -139,7 +134,9 @@ def _load_dimensions():
             pd.DataFrame([{"process_name": "Specific costs"}]),
         ]
     ).set_index("process_name", drop=False)
-    dimensions["chain"] = _load_data(DATA_DIR_DIMS, name="chains", key_columns="chain")
+    dimensions["chain"] = _load_data(
+        STATIC_DATA_DIR, name="chains", key_columns="chain"
+    )
     dimensions["res_gen"] = (
         dimensions["process"]
         .loc[dimensions["process"]["process_class"] == "RE-GEN"]
@@ -178,7 +175,9 @@ class DataHandler:
 
         self.scenario = scenario
         self.user_data = user_data
-        self.data_dir = data_dir or DATA_DIR_DEFAULT
+        self.data_dir = data_dir
+        self.cache_dir = cache_dir
+        self.profiles_path = PROFILES_DIR
 
         self.flh = _load_data(
             self.data_dir,
@@ -217,7 +216,9 @@ class DataHandler:
                 self.scenario_data, user_data
             )
 
-        self.optimizer = PtxOpt(cache_dir=cache_dir)
+        self.optimizer = PtxOpt(
+            profiles_path=self.profiles_path, cache_dir=self.cache_dir
+        )
 
     @classmethod
     def _map_names_and_codes(

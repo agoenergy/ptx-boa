@@ -33,6 +33,7 @@ from app.tab_optimization import content_optimization
 from app.tab_sustainability import content_sustainability
 from app.user_data import display_user_changes
 from app.user_data_from_file import download_user_data, upload_user_data
+from ptxboa import DEFAULT_CACHE_DIR, DEFAULT_DATA_DIR
 from ptxboa.api import PtxboaAPI
 
 warnings.filterwarnings(  # filter pandas warning from pypsa optimizer
@@ -47,20 +48,18 @@ warnings.filterwarnings(  # filter pandas warning from pypsa optimizer
 # setup logging
 # level can be changed on strartup with: --logger.level=LEVEL
 loglevel = st.logger.get_logger(__name__).level
-
-
-logger = logging.getLogger()  # do not ude __name__ so we can resue it in submodules
+logger = logging.getLogger()  # do not use __name__ so we can resue it in submodules
 logger.setLevel(loglevel)
-log_handler = logging.StreamHandler()
-log_handler.setFormatter(
-    logging.Formatter(
-        "[%(asctime)s %(levelname)7s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+if not logger.handlers:
+    # only add one handler
+    logger.handlers.append(logging.StreamHandler())
+for handler in logger.handlers:
+    handler.setFormatter(
+        logging.Formatter(
+            "[%(asctime)s %(levelname)7s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+        )
     )
-)
-logger.addHandler(log_handler)
 
-
-logger.debug("Updating app...")
 
 # app layout:
 
@@ -88,7 +87,10 @@ css = """
 """
 st.markdown(css, unsafe_allow_html=True)
 
-api = st.cache_resource(PtxboaAPI)()
+api = st.cache_resource(PtxboaAPI)(
+    data_dir=DEFAULT_DATA_DIR,
+    cache_dir=DEFAULT_CACHE_DIR,  # TODO: maybe disable in test environment?
+)
 
 st.title("PtX Business Opportunity Analyzer")
 

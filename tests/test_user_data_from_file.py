@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 
 from app.user_data_from_file import _read_user_data_file, _validate_user_dataframe
+from ptxboa import DEFAULT_DATA_DIR
 from ptxboa.api import PtxboaAPI
 
 user_data_dir = Path(__file__).parent / "test_user_data"
@@ -96,7 +97,7 @@ def param_above_range_user_data() -> pd.DataFrame:
     ),
 )
 def test_validate_user_dataframe(user_data, expected_result, request):
-    api = PtxboaAPI()
+    api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR)
     user_data = request.getfixturevalue(user_data)
 
     if expected_result == "valid_user_data":

@@ -2,9 +2,11 @@
 """Api for calculations for webapp."""
 
 
-import logging
+from pathlib import Path
 
 import pandas as pd
+
+from ptxboa import logger
 
 from .api_calc import PtxCalc
 from .api_data import DataHandler
@@ -22,12 +24,11 @@ from .static import (
     TransportValues,
 )
 
-logger = logging.getLogger()
-
 
 class PtxboaAPI:
-    def __init__(self, data_dir: str = None):
+    def __init__(self, data_dir: Path, cache_dir: Path = None):
         self.data_dir = data_dir
+        self.cache_dir = cache_dir
 
     @staticmethod
     def get_dimension(dim: DimensionType) -> pd.DataFrame:
@@ -96,7 +97,10 @@ class PtxboaAPI:
 
         """
         handler = DataHandler(
-            scenario, user_data, data_dir=self.data_dir, cache_dir=None
+            scenario,
+            user_data,
+            data_dir=self.data_dir,
+            cache_dir=None,  # dont need caching for input data
         )
         return handler.get_input_data(long_names)
 
@@ -157,7 +161,7 @@ class PtxboaAPI:
 
         """
         data_handler = DataHandler(
-            scenario, user_data, data_dir=self.data_dir, cache_dir=None
+            scenario, user_data, data_dir=self.data_dir, cache_dir=self.cache_dir
         )
 
         if transport not in TransportValues:

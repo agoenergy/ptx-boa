@@ -1,37 +1,23 @@
 # -*- coding: utf-8 -*-
 """Data interface for optimized data of FLH."""
 
+import datetime
 import hashlib
 import json
-import logging
 import os
 import pickle  # noqa S403
-import time
+import re
+from pathlib import Path
 
 import streamlit as st
+from pypsa import Network
 
+from flh_opt import __version__ as flh_opt_version
 from flh_opt._types import OptInputDataType, OptOutputDataType
 from flh_opt.api_opt import optimize
+from ptxboa import logger
 from ptxboa.static._types import CalculateDataType
-from ptxboa.utils import annuity
-
-DEFAULT_CACHE_DIR = os.path.dirname(__file__) + "/data/cache"
-IS_TEST = "PYTEST_CURRENT_TEST" in os.environ
-logger = logging.getLogger()
-
-
-def wait_for_file_to_disappear(
-    filepath: str, timeout_s: float = 10, poll_interv_s: float = 0.2
-):
-    t_waited = 0
-    while True:
-        if not os.path.exists(filepath):
-            return True
-        time.sleep(poll_interv_s)
-        t_waited += poll_interv_s
-        if timeout_s > 0 and t_waited >= timeout_s:
-            logger.warning("Timeout")
-            return False
+from ptxboa.utils import SingletonMeta, annuity
 
 
 def get_data_hash_md5(key: object) -> str:
@@ -56,34 +42,127 @@ def get_data_hash_md5(key: object) -> str:
     return hash_md5
 
 
+class TempFile:
+    def __init__(self, filepath, raise_on_overwrite=False):
+        self.filepath = filepath
+        self.filepath_tmp = str(self.filepath) + ".tmp"
+        self.raise_on_overwrite = raise_on_overwrite
+
+    def __enter__(self):
+        # check existing files
+        for path in [self.filepath, self.filepath_tmp]:
+            if os.path.exists(path):
+                message = f"file should not exist - overwriting: {path}"
+                if self.raise_on_overwrite:
+                    raise FileExistsError(message)
+                logger.warning(message)
+                os.remove(path)
+        return self.filepath_tmp
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # move to filepath_tmp => filepath
+        if not os.path.exists(self.filepath_tmp):
+            # file should have been written
+            logger.warning(f"file does not exist: {self.filepath_tmp}")
+            return
+        if os.path.exists(self.filepath):
+            # file was created in the meantime?
+            logger.warning(f"file should not exist - overwriting: {self.filepath}")
+            os.remove(self.filepath)
+        if exc_type:
+            # there was an error: remove temporary file
+            os.remove(self.filepath_tmp)
+            logger.warning(exc_val)  # or raise Error
+        else:
+            # move file to target
+            os.rename(self.filepath_tmp, self.filepath)
+            logger.info(f"saved file {self.filepath}")
+
+
+class ProfilesHashes(metaclass=SingletonMeta):
+    """Only instanciated once for path."""
+
+    PATTERN = re.compile(
+        r"^(?P<region>[^_]+)_(?P<res>.+)_aggregated.weights.csv.metadata.json$"
+    )
+
+    def __init__(self, profiles_path):
+        self.profiles_path = str(profiles_path)
+        self.data = self._load_all()
+
+    def _read_metadata(self, filename):
+        """Read metadata json file."""
+        filepath = f"{self.profiles_path}/{filename}"
+        logger.info(f"READ {filepath}")
+        with open(filepath, encoding="utf-8") as file:
+            data = json.load(file)
+        return data
+
+    def _load_all(self) -> dict:
+        """Load all metadata json files."""
+        result = {}
+        for filename in os.listdir(self.profiles_path):
+            match = self.PATTERN.match(filename)
+            if not match:
+                continue
+            # region_code, res_code not in metadata,so we
+            # extract it from filename
+            region_res = match.groups()
+            metadata = self._read_metadata(filename) | match.groupdict()
+            result[region_res] = metadata
+        return result
+
+
 class PtxOpt:
 
-    def __init__(self, cache_dir: str = None):
+    def __init__(self, profiles_path: Path, cache_dir: Path):
         self.cache_dir = cache_dir
-        self.profiles_path = "flh_opt/renewable_profiles"
+        self.profiles_hashes = ProfilesHashes(profiles_path)
 
-    def _save(self, filepath: str, data: object, raise_on_overwrite=False) -> None:
-        if raise_on_overwrite and os.path.exists(filepath):
-            raise FileExistsError("file already exists: %s", filepath)
-        # first write to temporary file
-        filepath_temp = filepath + ".tmp"
-        with open(filepath_temp, "wb") as file:
-            pickle.dump(data, file)
+    def _save(
+        self,
+        filepath: str,
+        data: object,
+        network: Network,
+        metadata: dict,
+        raise_on_overwrite=False,
+    ) -> None:
+        with TempFile(filepath, raise_on_overwrite=raise_on_overwrite) as filepath_tmp:
+            with open(filepath_tmp, "wb") as file:
+                pickle.dump(data, file)
 
-        if os.path.exists(filepath):
-            os.remove(filepath)
-        os.rename(filepath_temp, filepath)
+        # also save network
+        filepath_nw = str(filepath) + ".network.nc"
+        with TempFile(filepath_nw, raise_on_overwrite=False) as filepath_tmp:
+            network.export_to_netcdf(filepath_tmp)
+
+        # also save metadata
+        filepath_metadata = str(filepath) + ".metadata.json"
+        with open(filepath_metadata, "w", encoding="utf-8") as file:
+            json.dump(metadata, file, indent=2, ensure_ascii=False)
 
     def _load(self, filepath: str) -> object:
         with open(filepath, "rb") as file:
             data = pickle.load(file)  # noqa S301
         return data
 
+    def _load_network(self, filepath: str):
+        filepath_nw = str(filepath) + ".network.nc"
+
+        network = Network()
+        network.import_from_netcdf(filepath_nw)
+
+        filepath_metadata = str(filepath) + ".metadata.json"
+        with open(filepath_metadata, "r", encoding="utf-8") as file:
+            metadata = json.load(file)
+
+        return network, metadata
+
     def _get_cache_filepath(self, hashsum: str, suffix=".pickle"):
         # group twice by first two chars (256 combinations)
-        dirpath = self.cache_dir + f"/{hashsum[0:2]}/{hashsum[2:4]}"
+        dirpath = self.cache_dir / hashsum[0:2] / hashsum[2:4]
         os.makedirs(dirpath, exist_ok=True)
-        filepath = f"{dirpath}/{hashsum}{suffix}"
+        filepath = dirpath / f"{hashsum}{suffix}"
         return filepath
 
     @staticmethod
@@ -207,9 +286,9 @@ class PtxOpt:
                 elif step["step"] == "DERIV":
                     step["FLH"] = opt_output_data["DERIV"]["FLH"] * 8760
         else:
-            logging.warning("Optimization not successful.")
-            logging.warning(f"Solver status:{opt_output_data['model_status'][0]}")
-            logging.warning(f"Model status:{opt_output_data['model_status'][1]}")
+            logger.warning("Optimization not successful.")
+            logger.warning(f"Solver status:{opt_output_data['model_status'][0]}")
+            logger.warning(f"Model status:{opt_output_data['model_status'][1]}")
 
             # TODO: Storage: "CAP_F"
 
@@ -230,25 +309,60 @@ class PtxOpt:
         opt_input_data = self._prepare_data(data)
 
         if self.cache_dir:
-            hashsum = get_data_hash_md5(opt_input_data)
+
+            src_reg = data["context"]["source_region_code"]
+            # find res
+            res = None
+            for step in data["main_process_chain"]:
+                if step["step"] == "RES":
+                    res = step["process_code"]
+                    break
+            key = (src_reg, res)
+            profiles_filehash_md5 = self.profiles_hashes.data[key]["filehash_md5"]
+
+            hash_data = {
+                "opt_input_data": opt_input_data,
+                # data not needed for optimization
+                # but that should change the hash
+                "context": {
+                    "flh_opt_version": flh_opt_version,
+                    "profiles_filehash_md5": profiles_filehash_md5,
+                },
+            }
+            hashsum = get_data_hash_md5(hash_data)
             filepath = self._get_cache_filepath(hashsum)
 
+            logger.info(f"opt request: {hashsum}")
+
             if os.path.exists(filepath):
+                logger.info(f"load opt flh data from cache: {hashsum}")
                 data = self._load(filepath)
+
+                # todo: for debugging, temporarily pass network to session state:
+                network, metadata = self._load_network(filepath)
+                st.session_state["network"] = network
+                st.session_state["model_status"] = metadata["model_status"][1]
+
                 return data
 
-        opt_output_data, _network = optimize(
-            opt_input_data, profiles_path=self.profiles_path
+        else:
+            hash_data = None
+
+        opt_output_data, network = optimize(
+            opt_input_data, profiles_path=self.profiles_hashes.profiles_path
         )
         # todo: for debugging, temporarily pass network to session state:
-        st.session_state["network"] = _network
+        st.session_state["network"] = network
         st.session_state["model_status"] = opt_output_data["model_status"][1]
 
         self._merge_data(data, opt_output_data)
 
         if self.cache_dir:
-            self._save(filepath, data)
-            # TODO: may be removed: load from file to check integrity
+            metadata = hash_data.copy()
+            metadata["model_status"] = opt_output_data["model_status"]
+            metadata["datetime"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            self._save(filepath, data, network, metadata)
             data = self._load(filepath)
 
         return data

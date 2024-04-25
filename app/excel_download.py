@@ -5,8 +5,6 @@ from io import BytesIO
 import pandas as pd
 import streamlit as st
 
-st.cache_data()
-
 
 def prepare_df_as_excel_stream(df: pd.DataFrame) -> bytes:
     """Convert a Dataframe to excel bytes stream."""
