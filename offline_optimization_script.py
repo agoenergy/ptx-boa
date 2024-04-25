@@ -86,6 +86,7 @@ def main(
     one_percent = n_total // 100
     assert len(list(product_dict(**param_arrays))) == n_total
     for i, param_set in enumerate(product_dict(**param_arrays)):
+        logging.info(f"parameter combination {i} of {n_total}")
         if i % one_percent == 0:
             p = i / n_total * 100
             logging.info(f"{p:.2f} % of all parameter combinations calculated")
