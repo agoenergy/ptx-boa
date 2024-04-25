@@ -20,6 +20,7 @@ import pandas as pd
 import pypsa
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
+from app.tab_optimization import calc_aggregate_statistics
 from ptxboa import DEFAULT_CACHE_DIR
 
 
@@ -64,7 +65,9 @@ def main(
         try:
             network = pypsa.Network()
             network.import_from_netcdf(network_path)
-            network_statistics.append(network.statistics())
+            s = calc_aggregate_statistics(network)
+            s["optimization_hash"] = f_hash
+            network_statistics.append(s)
         except (FileNotFoundError, ValueError) as e:
             logging.error(f"Error for Network {network_path}: {e}")
             pass
