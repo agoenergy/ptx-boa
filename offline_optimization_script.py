@@ -111,7 +111,6 @@ def main(
             result["result"] = None
 
         results.append(result)
-        break
 
     # save result
     with open(
@@ -133,7 +132,7 @@ if __name__ == "__main__":
         "-c",
         "--cache_dir",
         type=Path,
-        default=None,
+        default=DEFAULT_CACHE_DIR,
         help=(
             "Cache directory. Relative path to the directory from where you are "
             "calling the script or absolute path."
@@ -143,7 +142,7 @@ if __name__ == "__main__":
         "-o",
         "--out_dir",
         type=Path,
-        default=DEFAULT_CACHE_DIR,
+        default=None,
         help=("Output directory for inupt/output(hashsums)"),
     )
     parser.add_argument(
