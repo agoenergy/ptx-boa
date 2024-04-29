@@ -158,11 +158,12 @@ class PtxOpt:
 
         return network, metadata
 
-    def _get_cache_filepath(self, hashsum: str, suffix=".pickle"):
+    def _get_cache_filepath(self, hashsum: str, suffix=".pickle") -> str:
         # group twice by first two chars (256 combinations)
         dirpath = self.cache_dir / hashsum[0:2] / hashsum[2:4]
         os.makedirs(dirpath, exist_ok=True)
         filepath = dirpath / f"{hashsum}{suffix}"
+        filepath = str(filepath.resolve())
         return filepath
 
     @staticmethod
@@ -331,28 +332,30 @@ class PtxOpt:
         """
         opt_input_data = self._prepare_data(data)
 
-        hash_data, hashsum = self._get_hashsum(data, opt_input_data)
+        hash_data, hash_sum = self._get_hashsum(data, opt_input_data)
 
         # get hashsum
 
         if self.cache_dir:
 
-            filepath = self._get_cache_filepath(hashsum)
+            hash_filepath = self._get_cache_filepath(hash_sum)
 
-            logger.info(f"opt request: {hashsum}")
+            logger.info(f"opt request: {hash_sum}")
 
-            if os.path.exists(filepath):
-                logger.info(f"load opt flh data from cache: {hashsum}")
-                data = self._load(filepath)
+            if os.path.exists(hash_filepath):
+                logger.info(f"load opt flh data from cache: {hash_sum}")
+                data = self._load(hash_filepath)
 
                 # todo: for debugging, temporarily pass network to session state:
-                network, metadata = self._load_network(filepath)
+                network, metadata = self._load_network(hash_filepath)
                 st.session_state["network"] = network
                 st.session_state["model_status"] = metadata["model_status"][1]
 
                 # also return cash hashsum for debugging / analysis
-                data["flh_opt_hash_md5"] = hashsum
+                data["flh_opt_hash"] = {"hash_md5": hash_sum, "filepath": hash_filepath}
                 return data
+        else:
+            hash_filepath = None
 
         opt_output_data, network = optimize(
             opt_input_data, profiles_path=self.profiles_hashes.profiles_path
@@ -368,10 +371,10 @@ class PtxOpt:
             metadata["model_status"] = opt_output_data["model_status"]
             metadata["datetime"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-            self._save(filepath, data, network, metadata)
-            data = self._load(filepath)
+            self._save(hash_filepath, data, network, metadata)
+            data = self._load(hash_filepath)
 
         # also return cash hashsum for debugging / analysis
-        data["flh_opt_hash_md5"] = hashsum
+        data["flh_opt_hash"] = {"hash_md5": hash_sum, "filepath": hash_filepath}
 
         return data

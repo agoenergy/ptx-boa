@@ -9,7 +9,7 @@ CalculateDataType = Dict[
         "secondary_process",
         "parameter",
         "context",
-        "flh_opt_hash_md5",
+        "flh_opt_hash",
     ],
     Any,
 ]

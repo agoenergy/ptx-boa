@@ -29,7 +29,7 @@ class TestApi(unittest.TestCase):
         cls.api = PtxboaAPI(data_dir=ptxdata_dir_static)
 
     def _test_api_call(self, settings):
-        res = self.api.calculate(**settings, optimize_flh=False)
+        res, _metadata = self.api.calculate(**settings, optimize_flh=False)
         # test that settings are in results
         for k, v in settings.items():
             if k in ["ship_own_fuel", "output_unit"]:  # skip some
