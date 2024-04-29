@@ -292,6 +292,29 @@ class PtxOpt:
 
             # TODO: Storage: "CAP_F"
 
+    def _get_hashsum(self, data, opt_input_data):
+        src_reg = data["context"]["source_region_code"]
+        # find res
+        res = None
+        for step in data["main_process_chain"]:
+            if step["step"] == "RES":
+                res = step["process_code"]
+                break
+        key = (src_reg, res)
+        profiles_filehash_md5 = self.profiles_hashes.data[key]["filehash_md5"]
+
+        hash_data = {
+            "opt_input_data": opt_input_data,
+            # data not needed for optimization
+            # but that should change the hash
+            "context": {
+                "flh_opt_version": flh_opt_version,
+                "profiles_filehash_md5": profiles_filehash_md5,
+            },
+        }
+        hashsum = get_data_hash_md5(hash_data)
+        return hash_data, hashsum
+
     def get_data(self, data: CalculateDataType) -> CalculateDataType:
         """Get calculation data including optimized FLH.
 
@@ -308,28 +331,12 @@ class PtxOpt:
         """
         opt_input_data = self._prepare_data(data)
 
+        hash_data, hashsum = self._get_hashsum(data, opt_input_data)
+
+        # get hashsum
+
         if self.cache_dir:
 
-            src_reg = data["context"]["source_region_code"]
-            # find res
-            res = None
-            for step in data["main_process_chain"]:
-                if step["step"] == "RES":
-                    res = step["process_code"]
-                    break
-            key = (src_reg, res)
-            profiles_filehash_md5 = self.profiles_hashes.data[key]["filehash_md5"]
-
-            hash_data = {
-                "opt_input_data": opt_input_data,
-                # data not needed for optimization
-                # but that should change the hash
-                "context": {
-                    "flh_opt_version": flh_opt_version,
-                    "profiles_filehash_md5": profiles_filehash_md5,
-                },
-            }
-            hashsum = get_data_hash_md5(hash_data)
             filepath = self._get_cache_filepath(hashsum)
 
             logger.info(f"opt request: {hashsum}")
@@ -343,10 +350,9 @@ class PtxOpt:
                 st.session_state["network"] = network
                 st.session_state["model_status"] = metadata["model_status"][1]
 
+                # also return cash hashsum for debugging / analysis
+                data["flh_opt_hash_md5"] = hashsum
                 return data
-
-        else:
-            hash_data = None
 
         opt_output_data, network = optimize(
             opt_input_data, profiles_path=self.profiles_hashes.profiles_path
@@ -364,5 +370,8 @@ class PtxOpt:
 
             self._save(filepath, data, network, metadata)
             data = self._load(filepath)
+
+        # also return cash hashsum for debugging / analysis
+        data["flh_opt_hash_md5"] = hashsum
 
         return data
