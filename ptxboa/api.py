@@ -3,6 +3,7 @@
 
 
 from pathlib import Path
+from typing import Tuple
 
 import pandas as pd
 
@@ -118,7 +119,7 @@ class PtxboaAPI:
         output_unit: OutputUnitType = "USD/MWh",
         user_data: pd.DataFrame | None = None,
         optimize_flh: bool = False,
-    ) -> pd.DataFrame:
+    ) -> Tuple[pd.DataFrame, object]:
         """Calculate results based on user selection.
 
         Parameters
@@ -151,7 +152,7 @@ class PtxboaAPI:
 
         Returns
         -------
-        result : DataFrame
+        result : (DataFrame, metadata)
             columns are: most of the settings arguments of this function, and:
 
             * `values`: numerical value (usually cost)
@@ -220,4 +221,5 @@ class PtxboaAPI:
         result_df["country"] = country
         result_df["transport"] = transport
 
-        return result_df
+        metadata = {"flh_opt_hash": data.get("flh_opt_hash")}  # does not always exist
+        return result_df, metadata

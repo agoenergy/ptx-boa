@@ -26,6 +26,7 @@ $ python ptx-boa/offline_optimization_script.py --cache_dir "./optimization_cach
 
 import argparse
 import itertools
+import json
 import logging
 from pathlib import Path
 from typing import Literal
@@ -48,10 +49,14 @@ def product_dict(**kwargs):
 
 def main(
     cache_dir: Path = DEFAULT_CACHE_DIR,
+    out_dir=None,
     loglevel: Literal["debug", "info", "warning", "error"] = "info",
 ):
     cache_dir = Path(cache_dir)
     cache_dir.mkdir(exist_ok=True)
+
+    out_dir = Path(out_dir) if out_dir else cache_dir
+    out_dir.mkdir(exist_ok=True)
 
     fmt = "[%(asctime)s %(levelname)7s] %(message)s"
     datefmt = "%Y-%m-%d %H:%M:%S"
@@ -85,16 +90,38 @@ def main(
     logging.info(f"Total number of parameter combinations: {n_total}")
     one_percent = n_total // 100
     assert len(list(product_dict(**param_arrays))) == n_total
+
+    results = []  # save results
     for i, param_set in enumerate(product_dict(**param_arrays)):
         logging.info(f"parameter combination {i} of {n_total}")
         if i % one_percent == 0:
             p = i / n_total * 100
             logging.info(f"{p:.2f} % of all parameter combinations calculated")
+
+        params = param_set | static_params
+        result = {"params": params}
         try:
-            logging.info(f"calculating parameter set {param_set | static_params}")
-            api.calculate(optimize_flh=True, **static_params, **param_set)
+            logging.info(f"calculating parameter set {params}")
+            _df, metadata = api.calculate(optimize_flh=True, **params)
+            result["error"] = None
+            result["result"] = metadata.get("flh_opt_hash")
         except Exception as e:
-            logging.error(f"An error occurred for {param_set}: {e}")
+            logging.error(f"An error occurred for {params}: {e}")
+            result["error"] = str(e)
+            result["result"] = None
+
+        results.append(result)
+
+    # save result
+    with open(
+        out_dir / "offline_optimization.results.json", "w", encoding="utf-8"
+    ) as file:
+        json.dump(
+            results,
+            file,
+            indent=2,
+            ensure_ascii=False,
+        )
 
 
 if __name__ == "__main__":
@@ -112,6 +139,13 @@ if __name__ == "__main__":
         ),
     )
     parser.add_argument(
+        "-o",
+        "--out_dir",
+        type=Path,
+        default=None,
+        help=("Output directory for inupt/output(hashsums)"),
+    )
+    parser.add_argument(
         "-l",
         "--loglevel",
         type=str,
@@ -121,4 +155,4 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    main(cache_dir=args.cache_dir, loglevel=args.loglevel)
+    main(cache_dir=args.cache_dir, out_dir=args.out_dir, loglevel=args.loglevel)
