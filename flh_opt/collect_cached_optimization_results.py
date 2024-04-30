@@ -18,6 +18,7 @@ from typing import Literal
 
 import pandas as pd
 import pypsa
+from tqdm import tqdm
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from app.tab_optimization import calc_aggregate_statistics  # noqa E402
@@ -27,7 +28,7 @@ from ptxboa import DEFAULT_CACHE_DIR  # noqa E402
 def main(
     cache_dir: Path = DEFAULT_CACHE_DIR,
     out_dir: Path = None,
-    loglevel: Literal["debug", "info", "warning", "error"] = "info",
+    loglevel: Literal["debug", "info", "warning", "error"] = "warning",
 ):
     fmt = "[%(asctime)s %(levelname)7s] %(message)s"
     datefmt = "%Y-%m-%d %H:%M:%S"
@@ -49,15 +50,25 @@ def main(
 
     filepath_index = out_dir / "offline_optimization.results.json"
     with open(filepath_index, encoding="utf-8") as file:
-        index = json.load(file)
+        index_w_hash_duplicates = json.load(file)
 
-    for row in index:
+    # drop duplicated hashes
+    hash_set = set()
+    index = []
+    for row in index_w_hash_duplicates:
+        hashsum = row["result"]["hash_md5"]
+        if hashsum in hash_set:
+            continue
+        hash_set.add(hashsum)
+    index.append(row)
+
+    for row in tqdm(index):
         params = row["params"]
         error = row.get("error")
         if error:
             result = {}
         else:  # no error
-            hashinfo = row["result"] if not error else {}
+            hashinfo = row["result"]
             filepath = Path(hashinfo["filepath"])
             f_hash = hashinfo["hash_md5"]
 
