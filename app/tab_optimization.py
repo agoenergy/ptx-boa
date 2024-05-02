@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Content of optimization tab."""
 import pandas as pd
-import plotly.express as px
+import plotly.graph_objects as go
 import pypsa
 import streamlit as st
 
@@ -13,14 +13,12 @@ def content_optimization(api: PtxboaAPI) -> None:
     st.subheader("Optimization results")
     st.warning("Warning: Preliminary debugging results. ")
 
-    download_network_as_netcdf(st.session_state["network"], "network.nc")
-
     if st.session_state["model_status"] == "optimal":
         n = st.session_state["network"]
 
         res = calc_aggregate_statistics(n)
         with st.expander("Aggregate statistics"):
-            st.dataframe(res, use_container_width=True)
+            st.dataframe(res.round(2), use_container_width=True)
 
         with st.expander("Profiles"):
             create_profile_figure(n)
@@ -32,6 +30,8 @@ def content_optimization(api: PtxboaAPI) -> None:
         st.error(
             f"No optimal solution! -> model status is {st.session_state['model_status']}"  # noqa
         )
+
+    download_network_as_netcdf(st.session_state["network"], "network.nc")
 
 
 # calculate aggregate statistics:
@@ -97,18 +97,37 @@ def calc_aggregate_statistics(n: pypsa.Network) -> pd.DataFrame:
     )
 
     res.at["Total", "Cost (USD/MWh)"] = res["Cost (USD/MWh)"].sum()
+
+    # rename components:
+    rename_list = {
+        "PV-FIX": "PV tilted",
+        "WIND-ON": "Wind onshore",
+        "WIND-OFF": "Wind offshore",
+        "ELY": "Electrolyzer",
+        "DERIV": "Derivate production",
+        "H2_STR_in": "H2 storage",
+        "EL_STR": "Electricity storage",
+        "CO2-G_supply": "CO2 supply",
+        "H2O-L_supply": "Water supply",
+    }
+    res = res.rename(rename_list, axis=0)
     return res
 
 
 def create_profile_figure(n: pypsa.Network) -> None:
-    def transform_time_series(df: pd.DataFrame) -> pd.DataFrame:
+    def transform_time_series(
+        df: pd.DataFrame, parameter: str = "Power"
+    ) -> pd.DataFrame:
         res = df.reset_index().melt(
             id_vars=["timestep", "period"],
-            var_name="Generator",
+            var_name="Component",
             value_name="MW (MWh for SOC)",
         )
+        res["Parameter"] = parameter
         return res
 
+    df_p_max_pu = n.generators_t["p_max_pu"]
+    df_p_max_pu = transform_time_series(df_p_max_pu, parameter="cap. factor")
     df_gen = n.generators_t["p"]
     df_gen = transform_time_series(df_gen)
     df_links = -n.links_t["p1"]
@@ -118,11 +137,11 @@ def create_profile_figure(n: pypsa.Network) -> None:
     df_storageunit = n.storage_units_t["state_of_charge"]
     df_storageunit = transform_time_series(df_storageunit)
 
-    df = pd.concat([df_gen, df_links, df_store, df_storageunit])
+    df = pd.concat([df_p_max_pu, df_gen, df_links, df_store, df_storageunit])
 
     # selection:
     df = df.loc[
-        df["Generator"].isin(
+        df["Component"].isin(
             [
                 "PV-FIX",
                 "WIND-ON",
@@ -135,31 +154,168 @@ def create_profile_figure(n: pypsa.Network) -> None:
             ]
         )
     ]
-    df["Type"] = "Power"
 
-    ind = df["Generator"].isin(["ELY"])
-    df.loc[ind, "Type"] = "H2"
+    # rename components:
+    rename_list = {
+        "PV-FIX": "PV tilted",
+        "WIND-ON": "Wind onshore",
+        "WIND-OFF": "Wind offshore",
+        "ELY": "Electrolyzer",
+        "DERIV": "Derivate production",
+        "H2_STR_in": "H2 storage",
+        "H2_STR_store": "H2 storage",
+        "final_product_storage": "Final product storage",
+        "EL_STR": "Electricity storage",
+        "CO2-G_supply": "CO2 supply",
+        "H2O-L_supply": "Water supply",
+    }
+    df = df.replace(rename_list)
 
-    ind = df["Generator"].isin(["H2_STR_store", "EL_STR", "final_product_storage"])
-    df.loc[ind, "Type"] = "SOC"
+    df_sel = df
 
-    ind = df["Generator"].isin(["ELY"])
-    df.loc[ind, "Type"] = "H2"
+    # add continous time index:
+    df_sel["period"] = df_sel["period"].astype(int)
+    df_sel["timestep"] = df_sel["timestep"].astype(int)
+    df_sel["time"] = 7 * 24 * df_sel["period"] + df_sel["timestep"]
+    df_sel = df_sel.sort_values("time")
 
-    ind = df["Generator"].isin(["DERIV"])
-    df.loc[ind, "Type"] = "Derivate"
+    # generation:
+    st.subheader("Output")
+    fig = go.Figure()
 
-    fig = px.line(
-        df,
-        x="timestep",
-        y="MW (MWh for SOC)",
-        facet_col="period",
-        color="Generator",
-        facet_row="Type",
-        height=800,
+    def add_vertical_lines(fig: go.Figure):
+        """Add vertical lines between periods."""
+        for x in range(7 * 24, 7 * 8 * 24, 7 * 24):
+            fig.add_vline(x=x, line_color="black", line_width=0.5)
+
+    def add_to_figure(
+        df: pd.DataFrame,
+        fig: go.Figure,
+        component: str,
+        parameter: str,
+        color: str,
+        fill: bool = False,
+    ):
+        df_plot = df[(df["Component"] == component)]
+        df_plot = df_plot[(df_plot["Parameter"] == parameter)]
+        if fill:
+            fig.add_trace(
+                go.Line(
+                    x=df_plot["time"],
+                    y=df_plot["MW (MWh for SOC)"],
+                    name=component,
+                    line_color=color,
+                    stackgroup="one",
+                )
+            )
+        else:
+            fig.add_trace(
+                go.Line(
+                    x=df_plot["time"],
+                    y=df_plot["MW (MWh for SOC)"],
+                    name=component,
+                    line_color=color,
+                )
+            )
+
+    add_to_figure(
+        df_sel, fig, component="PV tilted", parameter="Power", fill=True, color="yellow"
     )
-    fig.update_yaxes(matches=None)
+    add_to_figure(
+        df_sel,
+        fig,
+        component="Wind onshore",
+        parameter="Power",
+        fill=True,
+        color="blue",
+    )
+    add_to_figure(
+        df_sel,
+        fig,
+        component="Wind offshore",
+        parameter="Power",
+        fill=True,
+        color="blue",
+    )
+    add_to_figure(
+        df_sel, fig, component="Electrolyzer", parameter="Power", color="black"
+    )
+    add_to_figure(
+        df_sel, fig, component="Derivate production", parameter="Power", color="red"
+    )
+
+    add_vertical_lines(fig)
+
+    fig.update_layout(
+        xaxis={"title": "time (h)"},
+        yaxis={"title": "output (MW)"},
+    )
+
     st.plotly_chart(fig, use_container_width=True)
+
+    st.subheader("Storage state of charge")
+    include_final_product_storage = st.toggle("Show final product storage", value=False)
+    # storage figure:
+    fig = go.Figure()
+
+    add_to_figure(
+        df_sel,
+        fig,
+        component="Electricity storage",
+        parameter="Power",
+        color="black",
+    )
+
+    add_to_figure(
+        df_sel,
+        fig,
+        component="H2 storage",
+        parameter="Power",
+        color="red",
+    )
+    if include_final_product_storage:
+        add_to_figure(
+            df_sel,
+            fig,
+            component="Final product storage",
+            parameter="Power",
+            color="blue",
+        )
+
+    add_vertical_lines(fig)
+
+    fig.update_layout(
+        xaxis={"title": "time (h)"},
+        yaxis={"title": "state of charge (MWh)"},
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.subheader("Capacity factors")
+
+    fig = go.Figure()
+    add_to_figure(
+        df_sel, fig, component="PV tilted", parameter="cap. factor", color="yellow"
+    )
+    add_to_figure(
+        df_sel,
+        fig,
+        component="Wind onshore",
+        parameter="cap. factor",
+        color="blue",
+    )
+    add_to_figure(
+        df_sel,
+        fig,
+        component="Wind offshore",
+        parameter="cap. factor",
+        color="blue",
+    )
+    add_vertical_lines(fig)
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.subheader("Profile data")
+    st.dataframe(df_sel, use_container_width=True)
 
 
 def show_filtered_df(
