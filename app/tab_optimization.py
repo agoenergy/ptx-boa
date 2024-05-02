@@ -4,7 +4,6 @@ import pandas as pd
 import plotly.graph_objects as go
 import pypsa
 import streamlit as st
-from plotly.subplots import make_subplots
 
 from app.network_download import download_network_as_netcdf
 from ptxboa.api import PtxboaAPI
@@ -116,7 +115,9 @@ def calc_aggregate_statistics(n: pypsa.Network) -> pd.DataFrame:
 
 
 def create_profile_figure(n: pypsa.Network) -> None:
-    def transform_time_series(df: pd.DataFrame, parameter: str = None) -> pd.DataFrame:
+    def transform_time_series(
+        df: pd.DataFrame, parameter: str = "Power"
+    ) -> pd.DataFrame:
         res = df.reset_index().melt(
             id_vars=["timestep", "period"],
             var_name="Component",
@@ -149,32 +150,10 @@ def create_profile_figure(n: pypsa.Network) -> None:
                 "DERIV",
                 "H2_STR_store",
                 "EL_STR",
+                "final_product_storage",
             ]
         )
     ]
-    df["Type"] = "Power"
-
-    ind1 = df["Component"].isin(
-        (
-            "PV-FIX",
-            "WIND-ON",
-            "WIND-OFF",
-        )
-    )
-    ind2 = df["Parameter"] == "cap. factor"
-    df.loc[ind1 & ind2, "Type"] = "cap. factor"
-
-    ind = df["Component"].isin(["ELY"])
-    df.loc[ind, "Type"] = "H2"
-
-    ind = df["Component"].isin(["H2_STR_store", "EL_STR", "final_product_storage"])
-    df.loc[ind, "Type"] = "SOC"
-
-    ind = df["Component"].isin(["ELY"])
-    df.loc[ind, "Type"] = "H2"
-
-    ind = df["Component"].isin(["DERIV"])
-    df.loc[ind, "Type"] = "Derivate"
 
     # rename components:
     rename_list = {
@@ -185,21 +164,14 @@ def create_profile_figure(n: pypsa.Network) -> None:
         "DERIV": "Derivate production",
         "H2_STR_in": "H2 storage",
         "H2_STR_store": "H2 storage",
+        "final_product_storage": "Final product storage",
         "EL_STR": "Electricity storage",
         "CO2-G_supply": "CO2 supply",
         "H2O-L_supply": "Water supply",
     }
     df = df.replace(rename_list)
 
-    # filter:
-    types_all = df["Type"].unique().tolist()
-    types_sel = st.multiselect("Data types to display:", types_all, default=types_all)
-
-    periods_all = df["period"].unique().tolist()
-    periods_sel = st.multiselect(
-        "Periods to display:", periods_all, default=periods_all
-    )
-    df_sel = df.loc[(df["Type"].isin(types_sel)) & (df["period"].isin(periods_sel))]
+    df_sel = df
 
     # add continous time index:
     df_sel["period"] = df_sel["period"].astype(int)
@@ -207,42 +179,142 @@ def create_profile_figure(n: pypsa.Network) -> None:
     df_sel["time"] = 7 * 24 * df_sel["period"] + df_sel["timestep"]
     df_sel = df_sel.sort_values("time")
 
-    # Create subplots
-    fig = make_subplots(
-        rows=len(types_all),
-        cols=1,
-        shared_xaxes=True,
-    )
+    # generation:
+    st.subheader("Output")
+    fig = go.Figure()
 
-    for i, t in enumerate(types_sel):
-        df_plot = df_sel[df_sel["Type"] == t]
-        for c in df_plot["Component"].unique():
-            tmp = df_plot[df_plot["Component"] == c]
+    def add_vertical_lines(fig: go.Figure):
+        """Add vertical lines between periods."""
+        for x in range(7 * 24, 7 * 8 * 24, 7 * 24):
+            fig.add_vline(x=x, line_color="black", line_width=0.5)
+
+    def add_to_figure(
+        df: pd.DataFrame,
+        fig: go.Figure,
+        component: str,
+        parameter: str,
+        color: str,
+        fill: bool = False,
+    ):
+        df_plot = df[(df["Component"] == component)]
+        df_plot = df_plot[(df_plot["Parameter"] == parameter)]
+        if fill:
             fig.add_trace(
                 go.Line(
-                    x=tmp["time"],
-                    y=tmp["MW (MWh for SOC)"],
-                    name=c,
-                ),
-                row=i + 1,
-                col=1,
+                    x=df_plot["time"],
+                    y=df_plot["MW (MWh for SOC)"],
+                    name=component,
+                    line_color=color,
+                    stackgroup="one",
+                )
             )
-        # add vertical lines between periods:
-        for x in range(7 * 24, 7 * 8 * 24, 7 * 24):
-            fig.add_vline(
-                x=x,
-                line_color="black",
-                row=i + 1,
-                col=1,
+        else:
+            fig.add_trace(
+                go.Line(
+                    x=df_plot["time"],
+                    y=df_plot["MW (MWh for SOC)"],
+                    name=component,
+                    line_color=color,
+                )
             )
 
-    # Update layout
+    add_to_figure(
+        df_sel, fig, component="PV tilted", parameter="Power", fill=True, color="yellow"
+    )
+    add_to_figure(
+        df_sel,
+        fig,
+        component="Wind onshore",
+        parameter="Power",
+        fill=True,
+        color="blue",
+    )
+    add_to_figure(
+        df_sel,
+        fig,
+        component="Wind offshore",
+        parameter="Power",
+        fill=True,
+        color="blue",
+    )
+    add_to_figure(
+        df_sel, fig, component="Electrolyzer", parameter="Power", color="black"
+    )
+    add_to_figure(
+        df_sel, fig, component="Derivate production", parameter="Power", color="red"
+    )
+
+    add_vertical_lines(fig)
+
     fig.update_layout(
-        xaxis={"title": "Time"}, yaxis={"title": "MW (MWh for SOC)"}, height=800
+        xaxis={"title": "time (h)"},
+        yaxis={"title": "output (MW)"},
     )
 
     st.plotly_chart(fig, use_container_width=True)
 
+    st.subheader("Storage state of charge")
+    include_final_product_storage = st.toggle("Show final product storage", value=False)
+    # storage figure:
+    fig = go.Figure()
+
+    add_to_figure(
+        df_sel,
+        fig,
+        component="Electricity storage",
+        parameter="Power",
+        color="black",
+    )
+
+    add_to_figure(
+        df_sel,
+        fig,
+        component="H2 storage",
+        parameter="Power",
+        color="red",
+    )
+    if include_final_product_storage:
+        add_to_figure(
+            df_sel,
+            fig,
+            component="Final product storage",
+            parameter="Power",
+            color="blue",
+        )
+
+    add_vertical_lines(fig)
+
+    fig.update_layout(
+        xaxis={"title": "time (h)"},
+        yaxis={"title": "state of charge (MWh)"},
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.subheader("Capacity factors")
+
+    fig = go.Figure()
+    add_to_figure(
+        df_sel, fig, component="PV tilted", parameter="cap. factor", color="yellow"
+    )
+    add_to_figure(
+        df_sel,
+        fig,
+        component="Wind onshore",
+        parameter="cap. factor",
+        color="blue",
+    )
+    add_to_figure(
+        df_sel,
+        fig,
+        component="Wind offshore",
+        parameter="cap. factor",
+        color="blue",
+    )
+    add_vertical_lines(fig)
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.subheader("Profile data")
     st.dataframe(df_sel, use_container_width=True)
 
 
