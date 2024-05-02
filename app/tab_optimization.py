@@ -200,16 +200,25 @@ def create_profile_figure(n: pypsa.Network) -> None:
     )
     df_sel = df.loc[(df["Type"].isin(types_sel)) & (df["period"].isin(periods_sel))]
 
+    # add continous time index:
+    df_sel["period"] = df_sel["period"].astype(int)
+    df_sel["timestep"] = df_sel["timestep"].astype(int)
+    df_sel["time"] = 7 * 24 * df_sel["period"] + df_sel["timestep"]
+    df_sel = df_sel.sort_values("time")
+
     fig = px.line(
         df_sel,
-        x="timestep",
+        x="time",
         y="MW (MWh for SOC)",
-        facet_col="period",
         color="Component",
         facet_row="Type",
         height=800,
     )
     fig.update_yaxes(matches=None, showticklabels=True)
+
+    # add vertical lines between periods:
+    for x in range(7 * 24, 7 * 8 * 24, 7 * 24):
+        fig.add_vline(x=x, line_color="black")
     st.plotly_chart(fig, use_container_width=True)
 
     st.dataframe(df_sel, use_container_width=True)
