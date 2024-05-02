@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """Content of optimization tab."""
 import pandas as pd
-import plotly.express as px
+import plotly.graph_objects as go
 import pypsa
 import streamlit as st
+from plotly.subplots import make_subplots
 
 from app.network_download import download_network_as_netcdf
 from ptxboa.api import PtxboaAPI
@@ -206,19 +207,40 @@ def create_profile_figure(n: pypsa.Network) -> None:
     df_sel["time"] = 7 * 24 * df_sel["period"] + df_sel["timestep"]
     df_sel = df_sel.sort_values("time")
 
-    fig = px.line(
-        df_sel,
-        x="time",
-        y="MW (MWh for SOC)",
-        color="Component",
-        facet_row="Type",
-        height=800,
+    # Create subplots
+    fig = make_subplots(
+        rows=len(types_all),
+        cols=1,
+        shared_xaxes=True,
     )
-    fig.update_yaxes(matches=None, showticklabels=True)
 
-    # add vertical lines between periods:
-    for x in range(7 * 24, 7 * 8 * 24, 7 * 24):
-        fig.add_vline(x=x, line_color="black")
+    for i, t in enumerate(types_sel):
+        df_plot = df_sel[df_sel["Type"] == t]
+        for c in df_plot["Component"].unique():
+            tmp = df_plot[df_plot["Component"] == c]
+            fig.add_trace(
+                go.Line(
+                    x=tmp["time"],
+                    y=tmp["MW (MWh for SOC)"],
+                    name=c,
+                ),
+                row=i + 1,
+                col=1,
+            )
+        # add vertical lines between periods:
+        for x in range(7 * 24, 7 * 8 * 24, 7 * 24):
+            fig.add_vline(
+                x=x,
+                line_color="black",
+                row=i + 1,
+                col=1,
+            )
+
+    # Update layout
+    fig.update_layout(
+        xaxis={"title": "Time"}, yaxis={"title": "MW (MWh for SOC)"}, height=800
+    )
+
     st.plotly_chart(fig, use_container_width=True)
 
     st.dataframe(df_sel, use_container_width=True)
