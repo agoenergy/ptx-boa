@@ -309,7 +309,7 @@ def optimize(
     for g in input_data["RES"]:
         process_code = g["PROCESS_CODE"]
         if len(input_data["RES"]) > 1:
-            re_location = "RES_HYBR"
+            re_location = "RES-HYBR"
         else:
             re_location = process_code
         res_profiles, weights_and_period_ids = get_profiles_and_weights(
