@@ -166,3 +166,191 @@ def test_e_cyclic_period_minimal_example():
     res = n.optimize.solve_model(solver_name="highs")
     assert res[1] == "optimal"
     n.statistics()
+
+
+@pytest.fixture()
+def flh_data_old(api) -> pd.DataFrame:
+    """Load old FLH data from csv.
+
+    and prepare them for merging with optimization results.
+    """
+    filename = "ptxboa/data/flh.csv"
+    flh_raw = pd.read_csv(filename, index_col=1)
+
+    # filter processes with optimized flh (only those are relevant for comparison)
+    flh_raw = flh_raw[
+        flh_raw["process_flh"].isin(
+            [
+                "AEL-EL",
+                "NH3SYN",
+                "PEM-EL",
+                "SOEC-EL",
+                "EFUELSYN",
+                "DRI",
+                "CH4SYN",
+                "CH3OHSYN",
+            ]
+        )
+    ]
+
+    # add long names to old flh data:
+    api.get_dimension("res_gen")
+
+    flh = (
+        flh_raw.merge(
+            api.get_dimension("process")[["process_code", "process_name"]],
+            left_on="process_res",
+            right_on="process_code",
+            how="left",
+        )
+        .drop("process_code", axis=1)
+        .rename({"process_name": "process_name_res"}, axis=1)
+    )
+
+    flh = (
+        flh.merge(
+            api.get_dimension("process")[["process_code", "process_name"]],
+            left_on="process_ely",
+            right_on="process_code",
+            how="left",
+        )
+        .drop("process_code", axis=1)
+        .rename({"process_name": "process_name_ely"}, axis=1)
+    )
+
+    flh = (
+        flh.merge(
+            api.get_dimension("process")[["process_code", "process_name"]],
+            left_on="process_deriv",
+            right_on="process_code",
+            how="left",
+        )
+        .drop("process_code", axis=1)
+        .rename({"process_name": "process_name_deriv"}, axis=1)
+    )
+
+    flh["source_region_code"] = flh["key"].str.split(",", n=1).str.get(0)
+    flh = flh.rename({"process_flh": "process_code"}, axis=1)
+    flh["res_gen"] = flh["process_name_res"]
+
+    return flh
+
+
+@pytest.fixture()
+def flh_data_new(api) -> pd.DataFrame:
+    """Load optimization results from csv files.
+
+    and prepare them for comparison with old dataset.
+    You need to download them from the server first:
+
+    ````
+    scp ptxboa2:/home/ptxboa/ptx-boa_offline_optimization/optimization_cache/*.csv .
+    ````
+    """
+    filename_new_data_main = (
+        "optimization_results/cached_optimization_data_main_process_chain.csv"
+    )
+    filename_new_data_secondary = (
+        "optimization_results/cached_optimization_data_secondary_process.csv"
+    )
+    # TODO merge network data as well: "optimization_results/network_statistics.csv"
+
+    flh_new_main = pd.read_csv(filename_new_data_main)
+    flh_new_secondary = pd.read_csv(filename_new_data_secondary)
+
+    # merge chain info to new flh data:
+    flh_all = pd.merge(
+        flh_new_main,
+        flh_new_secondary[["optimization_hash", "chain", "res_gen", "scenario"]],
+        on="optimization_hash",
+        how="left",
+    )
+
+    chain_info = api.get_dimension("chain")[["chain", "ELY", "DERIV"]].rename(
+        {"ELY": "process_ely", "DERIV": "process_deriv"}, axis=1
+    )
+
+    flh_all = flh_all.merge(chain_info, on="chain", how="left")
+
+    # filter for processes that are relevant for comparison:
+    flh_all = flh_all[
+        flh_all["process_code"].isin(
+            [
+                "AEL-EL",
+                "NH3SYN",
+                "PEM-EL",
+                "SOEC-EL",
+                "EFUELSYN",
+                "DRI",
+                "CH4SYN",
+                "CH3OHSYN",
+            ]
+        )
+    ]
+
+    return flh_all
+
+
+def get_flh_old(
+    flh_data_old: pd.DataFrame,
+    process_code: str,
+    source_region_code: str,
+    process_res: str,
+    process_ely: str,
+    process_deriv: str,
+) -> float:
+    """Get scalar flh data point from old dataset."""
+    ind1 = flh_data_old["source_region_code"] == source_region_code
+    ind2 = flh_data_old["process_code"] == process_code
+    ind3 = flh_data_old["process_ely"] == process_ely
+    ind3 = flh_data_old["process_res"] == process_res
+    ind4 = flh_data_old["process_deriv"] == process_deriv
+    res = flh_data_old[ind1 & ind2 & ind3 & ind4]
+    return res["value"].values[0]
+
+
+def test_flh_import(flh_data_old, flh_data_new):
+    """Merge new and old flh dataset."""
+    merged_data = flh_data_new.merge(
+        flh_data_old,
+        on=[
+            "source_region_code",
+            "process_code",
+            "process_ely",
+            "process_deriv",
+            "res_gen",
+        ],
+        how="left",
+    )[
+        [
+            "FLH",
+            "value",
+            "process_code",
+            "source_region_code",
+            "res_gen",
+            "scenario",
+            "process_ely",
+            "process_deriv",
+            "process_res",
+            "chain",
+            "model_status",
+        ]
+    ]
+
+    merged_data = merged_data.rename(
+        {"FLH": "flh_optimized", "value": "flh_old"}, axis=1
+    )
+
+    # export merged data to csv:
+    merged_data.to_csv("tests/merged_flh_data.csv")
+
+    # test extraction of scalar data point:
+    res = get_flh_old(
+        flh_data_old,
+        source_region_code="MAR",
+        process_code="AEL-EL",
+        process_res="PV-FIX",
+        process_ely="AEL-EL",
+        process_deriv="CH3OHSYN",
+    )
+    assert res == 2771.15
