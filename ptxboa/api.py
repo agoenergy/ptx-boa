@@ -281,11 +281,12 @@ class PtxboaAPI:
             transport=transport,
             ship_own_fuel=ship_own_fuel,
             user_data=user_data,
+            optimize_flh=True,
         )
-        hashsum = metadata["flh_opt_hash"]
+        hashsum = metadata["flh_opt_hash"]["hash_md5"]
         data_handler = DataHandler(
             scenario, user_data, data_dir=self.data_dir, cache_dir=self.cache_dir
         )
-        filepath = data_handler.optimize._get_cache_filepath(hashsum=hashsum)
-        network = data_handler.optimize._load_network(filepath=filepath)
+        filepath = data_handler.optimizer._get_cache_filepath(hashsum=hashsum)
+        network = data_handler.optimizer._load_network(filepath=filepath)
         return network
