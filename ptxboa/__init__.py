@@ -12,7 +12,7 @@ _THIS_DIR = Path(__file__).parent.resolve()
 
 PROFILES_DIR = _THIS_DIR / ".." / "flh_opt" / "renewable_profiles"
 STATIC_DATA_DIR = _THIS_DIR / "static"
-DEFAULT_CACHE_DIR = _THIS_DIR / "cache"
+DEFAULT_CACHE_DIR = Path(os.environ.get("PTXBOA_CACHE_DIR") or _THIS_DIR / "cache")
 DEFAULT_DATA_DIR = _THIS_DIR / "data"
 
 
