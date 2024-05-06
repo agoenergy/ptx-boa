@@ -237,7 +237,7 @@ class PtxboaAPI:
         transport: TransportType,
         ship_own_fuel: bool,
         user_data: pd.DataFrame | None = None,
-    ) -> pypsa.Network:
+    ) -> Tuple[pypsa.Network, dict]:
         """Calculate results based on user selection.
 
         Parameters
@@ -268,7 +268,8 @@ class PtxboaAPI:
 
         Returns
         -------
-        result : pypsa-Network
+        result : Tuple[pypsa-Network, dict]
+            second part of tuple contains metadata
         """
         _df, metadata = self.calculate(
             scenario=scenario,
