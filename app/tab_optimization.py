@@ -13,8 +13,24 @@ def content_optimization(api: PtxboaAPI) -> None:
     st.subheader("Optimization results")
     st.warning("Warning: Preliminary debugging results. ")
 
-    if st.session_state["model_status"] == "optimal":
-        n = st.session_state["network"]
+    try:
+        n, metadata = api.get_flh_opt_network(
+            scenario=st.session_state["scenario"],
+            secproc_co2=st.session_state["secproc_co2"],
+            secproc_water=st.session_state["secproc_water"],
+            chain=st.session_state["chain"],
+            res_gen=st.session_state["res_gen"],
+            region=st.session_state["region"],
+            country=st.session_state["country"],
+            transport=st.session_state["transport"],
+            ship_own_fuel=st.session_state["ship_own_fuel"],
+            user_data=st.session_state["user_changes_df"],
+        )
+    except FileNotFoundError:
+        st.error("No optimization model could be loaded")
+        return
+
+    if metadata["model_status"] == ["ok", "optimal"]:
 
         res = calc_aggregate_statistics(n)
         with st.expander("Aggregate statistics"):
