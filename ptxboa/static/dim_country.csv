@@ -1,0 +1,10 @@
+country_code,country_name,is_import,is_export
+CHN,China,True,True
+DEU,Germany,True,False
+ESP,Spain,True,True
+FRA,France,True,False
+IND,India,True,True
+JPN,Japan,True,False
+KOR,South Korea,True,False
+NLD,Netherlands,True,False
+USA,USA,True,True

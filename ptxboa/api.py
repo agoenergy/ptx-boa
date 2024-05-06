@@ -2,47 +2,38 @@
 """Api for calculations for webapp."""
 
 
-import logging
+from pathlib import Path
+from typing import Tuple
 
 import pandas as pd
+import pypsa
+
+from ptxboa import logger
 
 from .api_calc import PtxCalc
-from .api_data import DATA_DIR, DataHandler, DimensionCode, PtxData, ScenarioCode
-
-logger = logging.getLogger()
-
-RESULT_COST_TYPES = ["CAPEX", "OPEX", "FLOW", "LC"]
-RESULT_PROCESS_TYPES = [
-    "Water",
-    "Electrolysis",
-    "Electricity generation",
-    "Transportation (Pipeline)",
-    "Transportation (Ship)",
-    "Carbon",
-    "Derivate production",
-    "Heat",
-    "Electricity and H2 storage",
-]
+from .api_data import DataHandler
+from .static import (
+    ChainNameType,
+    DimensionType,
+    OutputUnitType,
+    ResGenType,
+    ScenarioType,
+    SecProcCO2Type,
+    SecProcH2OType,
+    SourceRegionNameType,
+    TargetCountryNameType,
+    TransportType,
+    TransportValues,
+)
 
 
 class PtxboaAPI:
-    """Singleton class for data and calculation api."""
+    def __init__(self, data_dir: Path, cache_dir: Path = None):
+        self.data_dir = data_dir
+        self.cache_dir = cache_dir
 
-    _inst = None
-
-    def __new__(cls, *args, **kwargs):
-        """Make sure class is only instantiated once."""
-        if not cls._inst:
-            cls._inst = super(PtxboaAPI, cls).__new__(cls, *args, **kwargs)
-        else:
-            logger.warning("Api should only be instantiated once")
-        return cls._inst
-
-    def __init__(self, data_dir=DATA_DIR):
-        self.data = PtxData(data_dir=data_dir)
-        self._calc_counter = 0  # temporary counter for calls of calculate()
-
-    def get_dimension(self, dim: DimensionCode) -> pd.DataFrame:
+    @staticmethod
+    def get_dimension(dim: DimensionType) -> pd.DataFrame:
         """Return a dimension element to populate app dropdowns.
 
         Parameters
@@ -66,11 +57,11 @@ class PtxboaAPI:
         : pd.DataFrame
             The dimension the data as
         """
-        return self.data.get_dimension(dim)
+        return DataHandler.get_dimension(dim)
 
     def get_input_data(
         self,
-        scenario: ScenarioCode,
+        scenario: ScenarioType,
         long_names: bool = True,
         user_data: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
@@ -107,23 +98,29 @@ class PtxboaAPI:
             'source_region_code', 'target_country_code', 'value', 'unit', 'source'
 
         """
-        handler = DataHandler(self.data, scenario, user_data)
+        handler = DataHandler(
+            scenario,
+            user_data,
+            data_dir=self.data_dir,
+            cache_dir=None,  # dont need caching for input data
+        )
         return handler.get_input_data(long_names)
 
     def calculate(
         self,
-        scenario: ScenarioCode,
-        secproc_co2: str,
-        secproc_water: str,
-        chain: str,
-        res_gen: str,
-        region: str,
-        country: str,
-        transport: str,
-        ship_own_fuel: bool = False,  # TODO: no correctly passed by app
-        output_unit="USD/MWh",
+        scenario: ScenarioType,
+        secproc_co2: SecProcCO2Type,
+        secproc_water: SecProcH2OType,
+        chain: ChainNameType,
+        res_gen: ResGenType,
+        region: SourceRegionNameType,
+        country: TargetCountryNameType,
+        transport: TransportType,
+        ship_own_fuel: bool,
+        output_unit: OutputUnitType = "USD/MWh",
         user_data: pd.DataFrame | None = None,
-    ) -> pd.DataFrame:
+        optimize_flh: bool = False,
+    ) -> Tuple[pd.DataFrame, object]:
         """Calculate results based on user selection.
 
         Parameters
@@ -154,10 +151,9 @@ class PtxboaAPI:
             ids are expected to come as long names. Needs to have the columns
             ["source_region_code", "process_code", "parameter_code", "value"].
 
-
         Returns
         -------
-        result : DataFrame
+        result : (DataFrame, metadata)
             columns are: most of the settings arguments of this function, and:
 
             * `values`: numerical value (usually cost)
@@ -166,48 +162,53 @@ class PtxboaAPI:
             * `cost_type`: one of {RESULT_COST_TYPES}
 
         """
-        data_handler = DataHandler(self.data, scenario, user_data)
+        data_handler = DataHandler(
+            scenario, user_data, data_dir=self.data_dir, cache_dir=self.cache_dir
+        )
 
-        # prepare / convert user settings to internal codes
-        dct_chain = dict(data_handler.get_dimension("chain").loc[chain])
-
-        if transport not in {"Ship", "Pipeline"}:
+        if transport not in TransportValues:
             logger.error(f"Invalid choice for transport: {transport}")
 
-        result_df = PtxCalc(data_handler).calculate(
+        data = data_handler.get_calculation_data(
             secondary_processes={
-                "H2O-L": self.data.get_dimensions_parameter_code(
-                    "secproc_water", secproc_water
+                "H2O-L": (
+                    DataHandler.get_dimensions_parameter_code(
+                        "secproc_water", secproc_water
+                    )
+                    if secproc_water
+                    else None
                 ),
-                "CO2-G": self.data.get_dimensions_parameter_code(
-                    "secproc_co2", secproc_co2
+                "CO2-G": (
+                    DataHandler.get_dimensions_parameter_code(
+                        "secproc_co2", secproc_co2
+                    )
+                    if secproc_co2
+                    else None
                 ),
             },
-            chain=dct_chain,
-            process_code_res=self.data.get_dimensions_parameter_code(
+            chain_name=chain,
+            process_code_res=DataHandler.get_dimensions_parameter_code(
                 "res_gen", res_gen
             ),
-            source_region_code=self.data.get_dimensions_parameter_code(
+            source_region_code=DataHandler.get_dimensions_parameter_code(
                 "region", region
             ),
-            target_country_code=self.data.get_dimensions_parameter_code(
+            target_country_code=DataHandler.get_dimensions_parameter_code(
                 "country", country
             ),
-            process_code_ely=dct_chain["ELY"],
-            process_code_deriv=dct_chain["DERIV"],
             use_ship=(transport == "Ship"),
             ship_own_fuel=ship_own_fuel,
+            optimize_flh=optimize_flh,
         )
+
+        result_df = PtxCalc.calculate(data)
 
         # conversion to output unit
         if output_unit not in {"USD/MWh", "USD/t"}:
             logger.error(f"Invalid choice for output_unit: {output_unit}")
         conversion = 1000
         if output_unit == "USD/t":
-            chain_flow_out = dct_chain["FLOW_OUT"]
-            calor = data_handler.get_parameter_value(
-                parameter_code="CALOR", flow_code=chain_flow_out
-            )
+            calor = data["parameter"]["CALOR"]
             conversion *= calor
         result_df["values"] = result_df["values"] * conversion
 
@@ -221,4 +222,72 @@ class PtxboaAPI:
         result_df["country"] = country
         result_df["transport"] = transport
 
-        return result_df
+        metadata = {"flh_opt_hash": data.get("flh_opt_hash")}  # does not always exist
+        return result_df, metadata
+
+    def get_flh_opt_network(
+        self,
+        scenario: ScenarioType,
+        secproc_co2: SecProcCO2Type,
+        secproc_water: SecProcH2OType,
+        chain: ChainNameType,
+        res_gen: ResGenType,
+        region: SourceRegionNameType,
+        country: TargetCountryNameType,
+        transport: TransportType,
+        ship_own_fuel: bool,
+        user_data: pd.DataFrame | None = None,
+    ) -> Tuple[pypsa.Network, dict]:
+        """Calculate results based on user selection.
+
+        Parameters
+        ----------
+        scenario : str
+            name of data scenario
+        secproc_co2 : str
+            name of secondary process for CO2
+        secproc_water : str
+            name of secondary process for H2O
+        chain : str
+            name of product chain
+        res_gen : str
+            name of renewable technology
+        region : str
+            name of region
+        country : str
+            name of destination country
+        transport : str
+            mode of transportation
+        ship_own_fuel : bool
+            `True` if ship uses product as fuel
+        user_data : pd.DataFrame | None, optional
+            user data that overrides scenario data
+            contains only rows of scenario_data that have been modified.
+            ids are expected to come as long names. Needs to have the columns
+            ["source_region_code", "process_code", "parameter_code", "value"].
+
+        Returns
+        -------
+        result : Tuple[pypsa-Network, dict]
+            second part of tuple contains metadata
+        """
+        _df, metadata = self.calculate(
+            scenario=scenario,
+            secproc_co2=secproc_co2,
+            secproc_water=secproc_water,
+            chain=chain,
+            res_gen=res_gen,
+            region=region,
+            country=country,
+            transport=transport,
+            ship_own_fuel=ship_own_fuel,
+            user_data=user_data,
+            optimize_flh=True,
+        )
+        hashsum = metadata["flh_opt_hash"]["hash_md5"]
+        data_handler = DataHandler(
+            scenario, user_data, data_dir=self.data_dir, cache_dir=self.cache_dir
+        )
+        filepath = data_handler.optimizer._get_cache_filepath(hashsum=hashsum)
+        network = data_handler.optimizer._load_network(filepath=filepath)
+        return network

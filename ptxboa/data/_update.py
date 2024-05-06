@@ -1,72 +1,84 @@
 # -*- coding: utf-8 -*-
 """Update csv files from Database."""
 
+import os
+
 import pandas as pd
 import pyodbc  # noqa
 import sqlalchemy as sa
 
 
-def update_csv(table, fields, filename, where=""):
+def update_csv(query: str, filename: str, data_dir: str = None) -> None:
+    data_dir = data_dir or os.path.dirname(__file__)
     CS = (
         "mssql+pyodbc://?odbc_connect=driver=sql server;server=sqldaek2;database=ptxboa"
     )
     engine = sa.create_engine(CS)
-    fields = ",".join(f'"{f}"' for f in fields)
     pd.read_sql(
-        f'select {fields} from "{table}" {where} order by "key"',
+        query,
         engine,
-    ).to_csv(filename, index=False)
+    ).to_csv(data_dir + "/" + filename, index=False, lineterminator="\n")
 
 
-if __name__ == "__main__":
+def main():
+
     update_csv(
-        "ptxboa_data_flh_view",
-        [
-            "key",
-            "region",
-            "process_res",
-            "process_ely",
-            "process_deriv",
-            "process_flh",
-            "value",
-            "source",
-        ],
+        """
+        SELECT
+        "key",
+        "region",
+        "process_res",
+        "process_ely",
+        "process_deriv",
+        "process_flh",
+        "value",
+        "source"
+        FROM "ptxboa_data_flh_view"
+        WHERE "value" is not null
+        ORDER BY "key"
+        """,
         "flh.csv",
-        where="where value is not null",
     )
     update_csv(
-        "ptxboa_data_storage_factor",
-        [
-            "key",
-            "process_res",
-            "process_ely",
-            "process_deriv",
-            "value",
-            "source",
-        ],
+        """
+        select
+        "key",
+        "process_res",
+        "process_ely",
+        "process_deriv",
+        "value",
+        "source"
+        FROM "ptxboa_data_storage_factor"
+        WHERE value is not null
+        ORDER BY "key"
+        """,
         "storage_cost_factor.csv",
-        where="where value is not null",
     )
 
     for year in [2030, 2040]:
         for rng in ["high", "medium", "low"]:
             update_csv(
-                "ptxboa_data_latest_full",
-                [
-                    "key",
-                    "parameter_code",
-                    "process_code",
-                    "flow_code",
-                    "source_region_code",
-                    "target_country_code",
-                    "value",
-                    "unit",
-                    "source",
-                ],
-                f"{year}_{rng}.csv",
-                where=f"""where
+                f"""
+                select
+                "key",
+                "parameter_code",
+                "process_code",
+                "flow_code",
+                "source_region_code",
+                "target_country_code",
+                "value",
+                "unit",
+                "source"
+                FROM "ptxboa_data_latest_full"
+                where
                 "year"={year} and
                 "parameter_range"='{rng}' and
-                value is not null
+                "value" is not null
+                order by "key"
                 """,
+                f"{year}_{rng}.csv",
             )
+
+
+if __name__ == "__main__":
+    main()

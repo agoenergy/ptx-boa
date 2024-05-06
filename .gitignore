@@ -161,3 +161,9 @@ cython_debug/
 
 # VSCode project settings:
 .vscode
+
+# netcdf files (pypsa test output)
+*.nc
+
+# cached optimization results:
+ptxboa/cache

@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## 0.3.0 (2024-05-06)
+
+- optimization of FLH data (with caching)
+
 ## 0.2.1 (2024-01-24)
 
 test release 2

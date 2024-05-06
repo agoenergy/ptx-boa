@@ -304,8 +304,7 @@ def _set_map_layout(fig: go.Figure, colorbar_title: str) -> go.Figure:
     fig.update_layout(
         coloraxis_colorbar={
             "title": colorbar_title,
-            "len": 0.5,
-        },  # colorbar
+        },
         margin={"t": 20, "b": 20, "l": 20, "r": 20},  # reduce margin around figure
         height=500,
     )
@@ -416,6 +415,7 @@ def create_bar_chart_costs(
         output_unit = st.session_state["output_unit"]
 
     fig.update_layout(yaxis_title=output_unit)
+    fig.update_layout(legend_traceorder="reversed")
     return fig
 
 

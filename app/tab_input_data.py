@@ -3,8 +3,9 @@
 import plotly.express as px
 import streamlit as st
 
+from app.layout_elements import display_and_edit_input_data
 from app.plot_functions import plot_input_data_on_map
-from app.ptxboa_functions import display_and_edit_input_data, read_markdown_file
+from app.ptxboa_functions import read_markdown_file
 from ptxboa.api import PtxboaAPI
 
 
@@ -32,15 +33,11 @@ def content_input_data(api: PtxboaAPI) -> None:
             horizontal=True,
         )
 
-        # in order to keep the figures horizontally aligned, we create two st.columns
-        # pairs the columns are identified by c_{row}_{column}, zero indexed
-        c_0_0, c_0_1 = st.columns([2, 1], gap="large")
-        c_1_0, c_1_1 = st.columns([2, 1], gap="large")
-        with c_0_0:
-            st.markdown("**Map**")
+        with st.expander("**Map**", expanded=True):
+
             if data_selection in ["full load hours", "CAPEX"]:
                 map_parameter = st.selectbox(
-                    "Show parameter on map",
+                    "Select parameter to display on map:",
                     [
                         "Wind Onshore",
                         "Wind Offshore",
@@ -51,7 +48,6 @@ def content_input_data(api: PtxboaAPI) -> None:
                 )
             else:
                 map_parameter = "interest rate"
-        with c_1_0:
             fig = plot_input_data_on_map(
                 api=api,
                 data_type=data_selection,
@@ -67,12 +63,16 @@ def content_input_data(api: PtxboaAPI) -> None:
                 scope="world",
                 key=f"input_data_{data_selection}",
             )
-        with c_0_1:
-            st.markdown("**Regional distribution**")
-        with c_1_1:
+        with st.expander("**Regional distribution**"):
             # create plot:
+            if data_selection == "CAPEX":
+                ylabel = "CAPEX (USD/kW)"
+            if data_selection == "full load hours":
+                ylabel = "full load hours (h/a)"
+            if data_selection == "interest rate":
+                ylabel = "interest rate (per unit)"
             fig = px.box(df)
-            fig.update_layout(xaxis_title=None)
+            fig.update_layout(xaxis_title=None, yaxis_title=ylabel)
             st.plotly_chart(fig, use_container_width=True)
 
     with st.container(border=True):

@@ -2,35 +2,47 @@
 """Sidebar creation."""
 import streamlit as st
 
-from app.ptxboa_functions import read_markdown_file, reset_user_changes
+from app.ptxboa_functions import check_if_input_is_needed, read_markdown_file
+from app.user_data import reset_user_changes
 from ptxboa.api import PtxboaAPI
 
 
 def make_sidebar(api: PtxboaAPI):
     st.sidebar.subheader("Main settings:")
-    if "include_subregions" not in st.session_state:
-        st.session_state["include_subregions"] = False
-    if st.session_state["include_subregions"]:
-        region_list = api.get_dimension("region").index
-    else:
-        region_list = (
-            api.get_dimension("region")
-            .loc[api.get_dimension("region")["subregion_code"] == ""]
-            .index
-        )
 
-    st.session_state["region"] = st.sidebar.selectbox(
+    # get list of regions that does not contain subregions:
+    region_list = (
+        api.get_dimension("region")
+        .loc[api.get_dimension("region")["subregion_code"] == ""]
+        .sort_index()
+        .index
+    )
+
+    # select region:
+    region = st.sidebar.selectbox(
         "Supply country / region:",
         region_list,
         help=(read_markdown_file("md/helptext_sidebar_supply_region.md")),
         index=region_list.get_loc("Morocco"),  # Morocco as default
     )
-    st.sidebar.toggle(
-        "Include subregions",
-        help=(read_markdown_file("md/helptext_sidebar_include_subregions.md")),
-        key="include_subregions",
-    )
+    st.session_state["region"] = region
 
+    # If a deep dive country has been selected, add option to select subregion:
+    if region in ["Argentina", "Morocco", "South Africa"]:
+        subregions = api.get_dimension("region")["region_name"]
+        subregions = subregions.loc[
+            (subregions.str.startswith(region)) & (subregions != region)
+        ]
+        subregion = st.sidebar.selectbox(
+            "Select subregion:",
+            subregions,
+            index=None,
+            help=(read_markdown_file("md/helptext_sidebar_supply_subregion.md")),
+        )
+        if subregion is not None:
+            st.session_state["region"] = subregion
+
+    # select demand country:
     countries = api.get_dimension("country").index
     st.session_state["country"] = st.sidebar.selectbox(
         "Demand country:",
@@ -107,12 +119,19 @@ def make_sidebar(api: PtxboaAPI):
     st.session_state["scenario"] = f"{data_year} ({cost_scenario})"
 
     st.sidebar.subheader("Additional settings:")
-    st.session_state["secproc_co2"] = st.sidebar.radio(
-        "Carbon source:",
-        api.get_dimension("secproc_co2").index,
-        horizontal=True,
-        help=read_markdown_file("md/helptext_sidebar_carbon_source.md"),
-    )
+
+    # check if carbon is needed as input:
+    needs_co2 = check_if_input_is_needed(api, flow_code="CO2-G")
+    if needs_co2:
+        st.session_state["secproc_co2"] = st.sidebar.radio(
+            "Carbon source:",
+            api.get_dimension("secproc_co2").index,
+            horizontal=True,
+            help=read_markdown_file("md/helptext_sidebar_carbon_source.md"),
+        )
+    else:
+        st.session_state["secproc_co2"] = None
+
     st.session_state["secproc_water"] = st.sidebar.radio(
         "Water source:",
         api.get_dimension("secproc_water").index,
