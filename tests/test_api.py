@@ -371,3 +371,40 @@ class TestApi(unittest.TestCase):
         self.assertAlmostEqual(annuity(0.1, 10, 1), 0.162745394882512)
         self.assertAlmostEqual(annuity(0.5, 10, 1), 0.5088237828522)
         self.assertAlmostEqual(annuity(1, 10, 1), 1.0009775171)
+
+
+class TestRegression(unittest.TestCase):
+    def test_issue_355_unique_index(self):
+        """See https://github.com/agoenergy/ptx-boa/issues/355 ."""
+        param_set = {
+            "transport": "Ship",
+            "ship_own_fuel": True,
+            "secproc_water": "Sea Water desalination",
+            "secproc_co2": "Direct Air Capture",
+            "scenario": "2030 (high)",
+            "country": "China",
+            "res_gen": "PV tilted",
+            "region": "United Arab Emirates",
+            "chain": "Ammonia (AEL) + reconv. to H2",
+        }
+        api = PtxboaAPI(data_dir=ptxdata_dir_static)
+        df = api.calculate(**param_set, optimize_flh=False)[0]
+        df = df.set_index(
+            [
+                "process_type",
+                "process_subtype",
+                "cost_type",
+                "scenario",
+                "secproc_co2",
+                "secproc_water",
+                "chain",
+                "res_gen",
+                "region",
+                "country",
+                "transport",
+            ]
+        )
+        self.assertTrue(
+            df.index.is_unique,
+            df.loc[df.index.duplicated()],
+        )
