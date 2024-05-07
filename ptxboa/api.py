@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Tuple
 
 import pandas as pd
+import pypsa
 
 from ptxboa import logger
 
@@ -115,7 +116,7 @@ class PtxboaAPI:
         region: SourceRegionNameType,
         country: TargetCountryNameType,
         transport: TransportType,
-        ship_own_fuel: bool = False,  # TODO: no correctly passed by app
+        ship_own_fuel: bool,
         output_unit: OutputUnitType = "USD/MWh",
         user_data: pd.DataFrame | None = None,
         optimize_flh: bool = False,
@@ -223,3 +224,70 @@ class PtxboaAPI:
 
         metadata = {"flh_opt_hash": data.get("flh_opt_hash")}  # does not always exist
         return result_df, metadata
+
+    def get_flh_opt_network(
+        self,
+        scenario: ScenarioType,
+        secproc_co2: SecProcCO2Type,
+        secproc_water: SecProcH2OType,
+        chain: ChainNameType,
+        res_gen: ResGenType,
+        region: SourceRegionNameType,
+        country: TargetCountryNameType,
+        transport: TransportType,
+        ship_own_fuel: bool,
+        user_data: pd.DataFrame | None = None,
+    ) -> Tuple[pypsa.Network, dict]:
+        """Calculate results based on user selection.
+
+        Parameters
+        ----------
+        scenario : str
+            name of data scenario
+        secproc_co2 : str
+            name of secondary process for CO2
+        secproc_water : str
+            name of secondary process for H2O
+        chain : str
+            name of product chain
+        res_gen : str
+            name of renewable technology
+        region : str
+            name of region
+        country : str
+            name of destination country
+        transport : str
+            mode of transportation
+        ship_own_fuel : bool
+            `True` if ship uses product as fuel
+        user_data : pd.DataFrame | None, optional
+            user data that overrides scenario data
+            contains only rows of scenario_data that have been modified.
+            ids are expected to come as long names. Needs to have the columns
+            ["source_region_code", "process_code", "parameter_code", "value"].
+
+        Returns
+        -------
+        result : Tuple[pypsa-Network, dict]
+            second part of tuple contains metadata
+        """
+        _df, metadata = self.calculate(
+            scenario=scenario,
+            secproc_co2=secproc_co2,
+            secproc_water=secproc_water,
+            chain=chain,
+            res_gen=res_gen,
+            region=region,
+            country=country,
+            transport=transport,
+            ship_own_fuel=ship_own_fuel,
+            user_data=user_data,
+            optimize_flh=True,
+        )
+        hashsum = metadata["flh_opt_hash"]["hash_md5"]
+        data_handler = DataHandler(
+            scenario, user_data, data_dir=self.data_dir, cache_dir=self.cache_dir
+        )
+        filepath = data_handler.optimizer._get_cache_filepath(hashsum=hashsum)
+        network = data_handler.optimizer._load_network(filepath=filepath)
+        return network

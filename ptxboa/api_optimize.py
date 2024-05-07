@@ -9,7 +9,6 @@ import pickle  # noqa S403
 import re
 from pathlib import Path
 
-import streamlit as st
 from pypsa import Network
 
 from flh_opt import __version__ as flh_opt_version
@@ -301,6 +300,7 @@ class PtxOpt:
             if step["step"] == "RES":
                 res = step["process_code"]
                 break
+
         key = (src_reg, res)
         profiles_filehash_md5 = self.profiles_hashes.data[key]["filehash_md5"]
 
@@ -346,11 +346,6 @@ class PtxOpt:
                 logger.info(f"load opt flh data from cache: {hash_sum}")
                 data = self._load(hash_filepath)
 
-                # todo: for debugging, temporarily pass network to session state:
-                network, metadata = self._load_network(hash_filepath)
-                st.session_state["network"] = network
-                st.session_state["model_status"] = metadata["model_status"][1]
-
                 # also return cash hashsum for debugging / analysis
                 data["flh_opt_hash"] = {"hash_md5": hash_sum, "filepath": hash_filepath}
                 return data
@@ -360,9 +355,6 @@ class PtxOpt:
         opt_output_data, network = optimize(
             opt_input_data, profiles_path=self.profiles_hashes.profiles_path
         )
-        # todo: for debugging, temporarily pass network to session state:
-        st.session_state["network"] = network
-        st.session_state["model_status"] = opt_output_data["model_status"][1]
 
         self._merge_data(data, opt_output_data)
 

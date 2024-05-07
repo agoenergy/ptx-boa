@@ -1,5 +1,5 @@
 FROM python:3.10-slim
-LABEL version="0.2.1"
+LABEL version="0.3.0"
 
 RUN apt-get update
 RUN apt-get install -y git
@@ -11,5 +11,6 @@ EXPOSE 80
 # disable progress bar
 ENV TQDM_DISABLE=1
 ENV HIGHS_OUTPUT_FLAG=false
+ENV PTXBOA_CACHE_DIR=/mnt/cache
 
 ENTRYPOINT ["streamlit", "run", "ptxboa_streamlit.py", "--server.port=80", "--server.address=0.0.0.0"]

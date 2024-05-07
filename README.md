@@ -66,5 +66,8 @@ docker pull wingechr/ptx-boa:<VERSION>
 docker stop app
 docker rm app
 # start the latest image as "app"
-docker run -d -p 9000:80 --name app --restart unless-stopped wingechr/ptx-boa:<VERSION>
+docker run -d -p 9000:80 -v /home/ptxboa/ptx-boa_offline_optimization/optimization_cache:/mnt/cache --name app --restart unless-stopped wingechr/ptx-boa:0.3.0
+
+# see logs
+docker logs --follow app
 ```
