@@ -103,9 +103,6 @@ def main(
 
         results.append(result)
 
-    # test comment
-    # blablabla
-    # blabla
     # extract record in "main_process_chain"
     main_process_chain = extract_main_process_chain_data(results)
 
