@@ -14,16 +14,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 from ptxboa import DEFAULT_CACHE_DIR, DEFAULT_DATA_DIR
 from ptxboa.api import PtxboaAPI
 
-loglevel = "info"
-
-fmt = "[%(asctime)s %(levelname)7s] %(message)s"
-datefmt = "%Y-%m-%d %H:%M:%S"
-logging.basicConfig(
-    level=loglevel.upper(),
-    format=fmt,
-    datefmt=datefmt,
-)
-CACHE_DIR = Path("/home/ptxboa/ptx-boa_offline_optimization/optimization_cache")
+SERVER_CACHE_DIR = Path("/home/ptxboa/ptx-boa_offline_optimization/optimization_cache")
 
 
 def product_dict(**kwargs):
@@ -41,22 +32,45 @@ def random_sample(param_arrays):
 
 
 def main(
-    cache_dir: Path = CACHE_DIR,
+    cache_dir: Path = DEFAULT_CACHE_DIR,
     out_dir: Path = None,
     loglevel: Literal["debug", "info", "warning", "error"] = "warning",
 ):
-
-    cache_dir = Path(cache_dir)
-    if not cache_dir.exists():
-        raise FileNotFoundError(f"cache_dir doe not exists {cache_dir}")
-
-    out_dir = Path(out_dir).resolve() if out_dir else cache_dir
-    out_dir.mkdir(parents=True, exist_ok=True)
+    pass
 
 
-api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR, cache_dir=DEFAULT_CACHE_DIR)
+cache_dir = SERVER_CACHE_DIR
+out_dir = None
+transport = "all"
+ship_own_fuel = "all"
+secproc_water = "all"
+secproc_co2 = "all"
+scenario = ["2030 (medium)"]
+country = "all"
+res_gen = "all"
+region = ["Morocco", "Argentina"]
+chain = "all"
 
-param_arrays = {
+loglevel = "warning"
+
+fmt = "[%(asctime)s %(levelname)7s] %(message)s"
+datefmt = "%Y-%m-%d %H:%M:%S"
+logging.basicConfig(
+    level=loglevel.upper(),
+    format=fmt,
+    datefmt=datefmt,
+)
+cache_dir = Path(cache_dir)
+if not cache_dir.exists():
+    raise FileNotFoundError(f"cache_dir doe not exists {cache_dir}")
+
+out_dir = Path(out_dir).resolve() if out_dir else cache_dir
+out_dir.mkdir(parents=True, exist_ok=True)
+
+
+api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR, cache_dir=cache_dir)
+
+param_arrays_complete = {
     "transport": api.get_dimension("transport").index.tolist(),
     "ship_own_fuel": [True, False],
     "secproc_water": api.get_dimension("secproc_water").index.tolist(),
@@ -69,9 +83,31 @@ param_arrays = {
 }
 # remove tracking PV (not implemented)
 try:
-    param_arrays["res_gen"].remove("PV tracking")
+    param_arrays_complete["res_gen"].remove("PV tracking")
 except ValueError:
     pass
+
+passed_dims = {
+    "transport": transport,
+    "ship_own_fuel": ship_own_fuel,
+    "secproc_water": secproc_water,
+    "secproc_co2": secproc_co2,
+    "scenario": scenario,
+    "country": country,
+    "res_gen": res_gen,
+    "region": region,
+    "chain": chain,
+}
+
+param_arrays = {}
+for dim, dv in passed_dims.items():
+    if dv == "all":
+        param_arrays[dim] = param_arrays_complete[dim]
+    else:
+        assert isinstance(dv, list)
+        assert all(x in param_arrays_complete[dim] for x in dv)
+        param_arrays[dim] = dv
+
 
 index_cols = [
     "process_type",
@@ -86,17 +122,16 @@ index_cols = [
     "country",
     "transport",
 ]
-
+n_total = len(list(product_dict(**param_arrays)))
+logging.info(f"calculating costs for {n_total} parameter sets")
 optimized_col = "optimized_flh"
 no_optimized_col = "no_optimized_flh"
 
 results = []
-# for i, param_set in enumerate(product_dict(**param_arrays)):
-for i in range(10):
-
-    param_set = random_sample(param_arrays)
+for i, param_set in enumerate(product_dict(**param_arrays)):
+    if i % 1000 == 0:
+        logging.info(f"{i} of {n_total} parameter combinations")
     try:
-
         df_no_opt = (
             api.calculate(optimize_flh=False, **param_set)[0]
             .rename(columns={"values": no_optimized_col})
@@ -127,23 +162,10 @@ for i in range(10):
         logging.error(f"KeyError: {e}")
         pass
 
-    if i > 10:
-        break
+    except AssertionError:
+        logging.error("AssertionError: invalid parameter combination")
+        pass
+
 
 results = pd.concat(results, axis=0, ignore_index=True)
-
-
-########
-"""
-Error for the following param set:
-{'transport': 'Ship',
- 'ship_own_fuel': True,
- 'secproc_water': 'Specific costs',
- 'secproc_co2': 'Direct Air Capture',
- 'scenario': '2040 (low)',
- 'country': 'India',
- 'res_gen': 'PV tilted',
- 'region': 'Indonesia',
- 'chain': 'Green Iron (SEOC)'}
-
-"""
+results.to_csv("/home/j.aschauer/ptxboa_result_comparison/cost_comparison_output.csv")
