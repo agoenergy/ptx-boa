@@ -167,9 +167,9 @@ def main(
         out_file,
         index=False,
     )
-    metadata_file = str(out_file) + "metadata.json"
+    metadata_file = str(out_file) + ".metadata.json"
     metadata = param_arrays | {"process_type_filter": process_type_filter}
-    with open(metadata_file, mode="r", encoding="utf-8") as f:
+    with open(metadata_file, mode="w", encoding="utf-8") as f:
         json.dump(metadata, f, indent=2)
 
     return results
