@@ -56,11 +56,13 @@ def main(
     hash_set = set()
     index = []
     for row in index_w_hash_duplicates:
+        if row.get("error"):
+            continue
         hashsum = row["result"]["hash_md5"]
         if hashsum in hash_set:
             continue
         hash_set.add(hashsum)
-    index.append(row)
+        index.append(row)
 
     for row in tqdm(index):
         params = row["params"]
