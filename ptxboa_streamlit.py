@@ -63,6 +63,10 @@ for handler in logger.handlers:
 
 # app layout:
 
+st.set_page_config(
+    page_title="PtX Business Opportunity Analyzer", page_icon="./data/favicon-16x16.png"
+)
+
 # Set the pandas display option to format floats with 2 decimal places
 pd.set_option("display.float_format", "{:.2f}".format)
 
