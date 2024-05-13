@@ -3,15 +3,17 @@
 
 
 from pathlib import Path
-from typing import Tuple
+from typing import List, Tuple
 
 import pandas as pd
 import pypsa
 
 from ptxboa import logger
 
+from . import PROFILES_DIR
 from .api_calc import PtxCalc
 from .api_data import DataHandler
+from .api_optimize import PtxOpt
 from .static import (
     ChainNameType,
     DimensionType,
@@ -291,3 +293,35 @@ class PtxboaAPI:
         filepath = data_handler.optimizer._get_cache_filepath(hashsum=hashsum)
         network = data_handler.optimizer._load_network(filepath=filepath)
         return network
+
+    def get_res_technologies(
+        self, region_name: SourceRegionNameType
+    ) -> List[ResGenType]:
+        """List all available RES technologies for a source region.
+
+        Parameters
+        ----------
+        region_name: SourceRegionNameType
+
+        Returns
+        -------
+        : List[ResGenType]
+
+        """
+        optimizer = PtxOpt(profiles_path=PROFILES_DIR)
+
+        # set of (region, res_tech) codes for which profile esists
+        df_region = self.get_dimension("region")
+        # translate name -> code
+        region_code = df_region.loc[df_region["region_name"] == region_name][0].index
+
+        # get all keys from profiles
+        reg_res = set(optimizer.profiles_hashes.data.keys())
+        res_techs = [res for reg, res in reg_res if reg == region_code]
+
+        df_res = self.get_dimension("res_gen")
+        # TODO: "-" or "_" ??
+        # translate code -> name
+        res_techs = [df_res.at[res, "process_name"] for res in res_techs]
+
+        return res_techs
