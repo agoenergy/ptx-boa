@@ -59,9 +59,10 @@ def register_user_changes(
 
         # convert the interest rate from [%] to [decimals]
         res["value"] = res["value"].astype(float)
-        res.loc[res["parameter_code"] == "interest rate", "value"] = (
-            res.loc[res["parameter_code"] == "interest rate", "value"] / 100
-        )
+        for param_code in ["interest rate", "efficiency"]:
+            res.loc[res["parameter_code"] == param_code, "value"] = (
+                res.loc[res["parameter_code"] == param_code, "value"] / 100
+            )
 
         if st.session_state["user_changes_df"] is None:
             st.session_state["user_changes_df"] = pd.DataFrame(
@@ -102,10 +103,11 @@ def display_user_changes(api):
     if st.session_state["user_changes_df"] is not None:
         df = st.session_state["user_changes_df"].copy()
 
-        # convert the interest rate from [decimals] to [%]
-        df.loc[df["parameter_code"] == "interest rate", "value"] = (
-            df.loc[df["parameter_code"] == "interest rate", "value"] * 100
-        )
+        # convert the values for 'interest rate' and 'efficiency' from [decimals] to [%]
+        for param_code in ["interest rate", "efficiency"]:
+            df.loc[df["parameter_code"] == param_code, "value"] = (
+                df.loc[df["parameter_code"] == param_code, "value"] * 100
+            )
 
         parameters = api.get_dimension("parameter")
         df["Unit"] = df["parameter_code"].map(

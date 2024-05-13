@@ -381,9 +381,12 @@ def get_data_type_from_input_data(
     if scope in ["Argentina", "Morocco", "South Africa"]:
         df = select_subregions(df, scope)
 
+    # transform data to match unit [%] for 'interest_rate' and 'efficieny'
     if data_type == "interest rate":
-        # transform data to match unit [%]
         df = df * 100
+
+    if "efficiency" in df.columns:
+        df["efficiency"] = df["efficiency"] * 100
 
     return df
 
@@ -490,7 +493,7 @@ def get_column_config() -> dict:
         "CAPEX": st.column_config.NumberColumn(format="%.0f USD/kW", min_value=0),
         "OPEX (fix)": st.column_config.NumberColumn(format="%.0f USD/kW", min_value=0),
         "efficiency": st.column_config.NumberColumn(
-            format="%.2f", min_value=0, max_value=1
+            format="%.2f %%", min_value=0, max_value=100
         ),
         "lifetime / amortization period": st.column_config.NumberColumn(
             format="%.0f a",
