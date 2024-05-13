@@ -308,20 +308,25 @@ class PtxboaAPI:
         : List[ResGenType]
 
         """
-        optimizer = PtxOpt(profiles_path=PROFILES_DIR)
+        optimizer = PtxOpt(profiles_path=PROFILES_DIR, cache_dir=None)
 
         # set of (region, res_tech) codes for which profile esists
         df_region = self.get_dimension("region")
-        # translate name -> code
-        region_code = df_region.loc[df_region["region_name"] == region_name][0].index
 
+        # translate name -> code
+        region_code = df_region.loc[
+            df_region["region_name"] == region_name, "region_code"
+        ].iloc[0]
         # get all keys from profiles
         reg_res = set(optimizer.profiles_hashes.data.keys())
-        res_techs = [res for reg, res in reg_res if reg == region_code]
+        # filter keys for selected source_region
+        res_techs = pd.Series([res for reg, res in reg_res if reg == region_code])
 
-        df_res = self.get_dimension("res_gen")
-        # TODO: "-" or "_" ??
         # translate code -> name
-        res_techs = [df_res.at[res, "process_name"] for res in res_techs]
-
+        res_gen = self.get_dimension("res_gen")
+        res_gen_code_to_name = pd.Series(
+            res_gen["process_name"].to_list(),
+            index=res_gen["process_code"],
+        )
+        res_techs = res_techs.map(res_gen_code_to_name).to_list()
         return res_techs
