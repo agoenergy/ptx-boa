@@ -544,7 +544,6 @@ ParameterCodeType = Literal[
     "RE-POT",
     "SEASHARE",
     "SPECCOST",
-    "STR-CF",
     "WACC",
 ]
 ParameterCodeValues = [
@@ -564,7 +563,6 @@ ParameterCodeValues = [
     "RE-POT",
     "SEASHARE",
     "SPECCOST",
-    "STR-CF",
     "WACC",
 ]
 
@@ -586,7 +584,6 @@ ParameterNameType = Literal[
     "sea share of pipeline distance",
     "shipping distance",
     "specific costs",
-    "Storage cost factor",
     "transport capacity",
 ]
 ParameterNameValues = [
@@ -606,7 +603,6 @@ ParameterNameValues = [
     "sea share of pipeline distance",
     "shipping distance",
     "specific costs",
-    "Storage cost factor",
     "transport capacity",
 ]
 
