@@ -190,11 +190,6 @@ class DataHandler:
                 "process_flh",
             ),
         )
-        self.storage_cost_factor = _load_data(
-            self.data_dir,
-            name="storage_cost_factor",
-            key_columns=("process_res", "process_ely", "process_deriv"),
-        )
 
         scenario_filename = (
             f"{scenario.replace(' ', '_').replace(')', '').replace('(', '')}"
@@ -475,16 +470,6 @@ class DataHandler:
             ]
             required_keys = set(keys)
 
-        elif parameter_code == "STR-CF":
-            # Storage cost factor not changed by user (and currently in separate file)
-            df = self.storage_cost_factor
-            keys = [
-                "process_code_res",
-                "process_code_ely",
-                "process_code_deriv",
-            ]
-            required_keys = set(keys)
-
         else:
             df = self.scenario_data
             keys = [
@@ -675,7 +660,6 @@ class DataHandler:
         }
 
         result["parameter"]["WACC"] = get_parameter_value_w_default("WACC")
-        result["parameter"]["STR-CF"] = get_parameter_value_w_default("STR-CF")
         result["parameter"]["CALOR"] = get_parameter_value_w_default(
             parameter_code="CALOR", flow_code=chain["FLOW_OUT"]
         )

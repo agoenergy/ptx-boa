@@ -308,7 +308,6 @@ def test_get_calculation_data(ptxdata_dir, scenario, kwargs, request):
         },
         "parameter": {
             "WACC": 0.055673211551852,
-            "STR-CF": 0.0482,
             "CALOR": 33.33,
             "SPECCOST": {
                 "BFUEL-L": 0.0027940534453652,
@@ -465,7 +464,6 @@ def test_get_calculation_data_w_opt(ptxdata_dir, scenario, kwargs, request):
         },
         "parameter": {
             "WACC": 0.1503103535592313,
-            "STR-CF": 0.0213,
             "CALOR": 33.33,
             "SPECCOST": {
                 "BFUEL-L": 0.0027940534453652,

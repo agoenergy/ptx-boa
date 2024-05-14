@@ -15,5 +15,4 @@ OPEX-T,levelized costs,USD2021/(kWh*km),False,False,True,False,True,False,False,
 RE-POT,RE potential,MWel,False,False,False,True,True,True,False,False,no,no,,process_code/source_region_code
 SEASHARE,sea share of pipeline distance,fraction,False,False,False,False,False,True,True,False,no,no,,source_region_code/target_country_code
 SPECCOST,specific costs,various (USD2021 per flow),True,False,False,False,False,True,False,True,basic,extended,"Costs are associated with every *secondary* input. It could also be associated with secondary output (<0 for gains, >0 for costs)",flow_code/source_region_code
-STR-CF,Storage cost factor,1,False,True,False,True,False,False,False,False,0,0,,
 WACC,interest rate,fraction,False,True,False,True,False,True,False,True,,,,source_region_code

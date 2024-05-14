@@ -6,7 +6,7 @@
     font="sans serif"
 
 [logger]
-    level="INFO"
+    level="WARNING"
 
 [browser]
     gatherUsageStats = false
