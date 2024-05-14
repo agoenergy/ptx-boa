@@ -99,7 +99,12 @@ def plot_input_data_on_map(
     api: PtxboaAPI,
     data_type: Literal["CAPEX", "full load hours", "interest rate"],
     color_col: Literal[
-        "PV tilted", "Wind Offshore", "Wind Onshore", "Wind-PV-Hybrid", "interest rate"
+        "PV tilted",
+        "Wind Offshore",
+        "Wind Onshore",
+        "Wind Onshore (hybrid)",
+        "PV tilted (hybrid)",
+        "interest rate",
     ],
     scope: Literal["world", "Argentina", "Morocco", "South Africa"] = "world",
 ) -> go.Figure:
@@ -129,12 +134,20 @@ def plot_input_data_on_map(
     if data_type == "interest rate":
         assert color_col == "interest rate"
         custom_data_func_kwargs = {"float_precision": 3}
-    else:
+    if data_type == "full load hours":
         assert color_col in [
             "PV tilted",
             "Wind Offshore",
             "Wind Onshore",
-            "Wind-PV-Hybrid",
+            "Wind Onshore (hybrid)",
+            "PV tilted (hybrid)",
+        ]
+        custom_data_func_kwargs = {"float_precision": 0}
+    if data_type == "CAPEX":
+        assert color_col in [
+            "PV tilted",
+            "Wind Offshore",
+            "Wind Onshore",
         ]
         custom_data_func_kwargs = {"float_precision": 0}
 

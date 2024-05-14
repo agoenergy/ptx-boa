@@ -14,7 +14,7 @@ from pypsa import Network
 
 from flh_opt import __version__ as flh_opt_version
 from flh_opt._types import OptInputDataType, OptOutputDataType
-from flh_opt.api_opt import get_profiles_and_weights, optimize
+from flh_opt.api_opt import optimize
 from ptxboa import logger
 from ptxboa.static._types import CalculateDataType
 from ptxboa.utils import SingletonMeta, annuity
@@ -136,13 +136,17 @@ class ProfilesFLH(metaclass=SingletonMeta):
 
         Profiles need to be weighted first.
         """
+        logger.info("load flh from profiles data")
         profile_data = []
         for region, res_location in self._available_profiles():
-            pr, we = get_profiles_and_weights(
-                source_region_code=region,
-                re_location=res_location,
-                profiles_path=str(self.profiles_path),
+            profiles_file = (
+                self.profiles_path / f"{region}_{res_location}_aggregated.csv"
             )
+            weights_file = (
+                self.profiles_path / f"{region}_{res_location}_aggregated.weights.csv"
+            )
+            pr = pd.read_csv(profiles_file, index_col=["period_id", "TimeStep"])
+            we = pd.read_csv(weights_file, index_col=["period_id", "TimeStep"])
             # multiply columns in profiles with weightings
             pr_weighted = (
                 pr.mul(we.squeeze(), axis=0)
@@ -155,6 +159,7 @@ class ProfilesFLH(metaclass=SingletonMeta):
             pr_weighted["re_location"] = res_location
             pr_weighted["source_region"] = region
             profile_data.append(pr_weighted)
+
         profile_data = pd.concat(profile_data)
 
         flh = (
@@ -162,9 +167,23 @@ class ProfilesFLH(metaclass=SingletonMeta):
                 "specific_generation"
             ]
             .sum()
-            .rename("values")
+            .rename("value")
+            .reset_index()
         )
-        return flh
+
+        # combine re_location and re_source to res_gen code
+        def combine_location_and_source(re_location, re_source):
+            if re_location == re_source:
+                return re_source
+            else:
+                return f"{re_location}-{re_source}"
+
+        flh["res_gen"] = flh.apply(
+            lambda x: combine_location_and_source(x["re_location"], x["re_source"]),
+            axis=1,
+        )
+
+        return flh[["source_region", "res_gen", "value"]]
 
 
 class PtxOpt:
