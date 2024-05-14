@@ -224,6 +224,9 @@ class PtxCalc:
         dim_columns = ["process_type", "process_subtype", "cost_type"]
         results = pd.DataFrame(results, columns=dim_columns + ["values"])
 
+        # sum over dim_columns
+        results = results.groupby(dim_columns).sum().reset_index()
+
         # normalization:
         # scale so that we star twith 1 EL input,
         # rescale so that we have 1 unit output
