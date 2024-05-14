@@ -286,7 +286,10 @@ class PtxboaAPI:
             user_data=user_data,
             optimize_flh=True,
         )
-        hashsum = metadata["flh_opt_hash"]["hash_md5"]
+        hashsum = metadata.get("flh_opt_hash", {}).get("hash_md5")
+        if not hashsum:
+            return None
+
         data_handler = DataHandler(
             scenario, user_data, data_dir=self.data_dir, cache_dir=self.cache_dir
         )
