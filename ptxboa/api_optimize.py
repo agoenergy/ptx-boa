@@ -9,11 +9,12 @@ import pickle  # noqa S403
 import re
 from pathlib import Path
 
+import pandas as pd
 from pypsa import Network
 
 from flh_opt import __version__ as flh_opt_version
 from flh_opt._types import OptInputDataType, OptOutputDataType
-from flh_opt.api_opt import optimize
+from flh_opt.api_opt import get_profiles_and_weights, optimize
 from ptxboa import logger
 from ptxboa.static._types import CalculateDataType
 from ptxboa.utils import SingletonMeta, annuity
@@ -112,11 +113,66 @@ class ProfilesHashes(metaclass=SingletonMeta):
         return result
 
 
+class ProfilesFLH(metaclass=SingletonMeta):
+    """Only instanciated once for profiles_path."""
+
+    PATTERN = re.compile(r"^(?P<region>[^_]+)_(?P<res>.+)_aggregated.csv$")
+
+    def __init__(self, profiles_path: Path):
+        self.profiles_path = profiles_path
+        self.data = self._load_all()
+
+    def _available_profiles(self) -> list[tuple[str, str]]:
+        region_res = []
+        for f in self.profiles_path.iterdir():
+            match = self.PATTERN.match(f.name)
+            if not match:
+                continue
+            region_res.append(match.groups())
+        return region_res
+
+    def _load_all(self) -> dict:
+        """Load all FLH data from profiles.
+
+        Profiles need to be weighted first.
+        """
+        profile_data = []
+        for region, res_location in self._available_profiles():
+            pr, we = get_profiles_and_weights(
+                source_region_code=region,
+                re_location=res_location,
+                profiles_path=str(self.profiles_path),
+            )
+            # multiply columns in profiles with weightings
+            pr_weighted = (
+                pr.mul(we.squeeze(), axis=0)
+                .reset_index(drop=True)
+                .stack()
+                .rename("specific_generation")
+            )
+            pr_weighted.index = pr_weighted.index.set_names("re_source", level=-1)
+            pr_weighted = pr_weighted.reset_index()
+            pr_weighted["re_location"] = res_location
+            pr_weighted["source_region"] = region
+            profile_data.append(pr_weighted)
+        profile_data = pd.concat(profile_data)
+
+        flh = (
+            pr.groupby(["source_region", "re_location", "re_source"])[
+                "specific_generation"
+            ]
+            .sum()
+            .rename("values")
+        )
+        return flh
+
+
 class PtxOpt:
 
     def __init__(self, profiles_path: Path, cache_dir: Path):
         self.cache_dir = cache_dir
         self.profiles_hashes = ProfilesHashes(profiles_path)
+        self.profiles_flh = ProfilesFLH(profiles_path)
 
     def _save(
         self,
