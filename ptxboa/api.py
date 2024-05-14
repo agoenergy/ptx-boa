@@ -310,13 +310,9 @@ class PtxboaAPI:
         """
         optimizer = PtxOpt(profiles_path=PROFILES_DIR, cache_dir=None)
 
-        # set of (region, res_tech) codes for which profile esists
-        df_region = self.get_dimension("region")
-
         # translate name -> code
-        region_code = df_region.loc[
-            df_region["region_name"] == region_name, "region_code"
-        ].iloc[0]
+        region_code = DataHandler.get_dimensions_parameter_code("region", region_name)
+
         # get all keys from profiles
         reg_res = set(optimizer.profiles_hashes.data.keys())
         # filter keys for selected source_region
