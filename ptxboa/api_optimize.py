@@ -7,6 +7,8 @@ import json
 import os
 import pickle  # noqa S403
 import re
+import shutil
+import tempfile
 from pathlib import Path
 
 from pypsa import Network
@@ -42,40 +44,32 @@ def get_data_hash_md5(key: object) -> str:
 
 
 class TempFile:
-    def __init__(self, filepath, raise_on_overwrite=False):
+    def __init__(self, filepath):
         self.filepath = filepath
-        self.filepath_tmp = str(self.filepath) + ".tmp"
-        self.raise_on_overwrite = raise_on_overwrite
+        self.filepath_tmp = None  # create in __enter__
 
     def __enter__(self):
         # check existing files
-        for path in [self.filepath, self.filepath_tmp]:
-            if os.path.exists(path):
-                message = f"file should not exist - overwriting: {path}"
-                if self.raise_on_overwrite:
-                    raise FileExistsError(message)
-                logger.warning(message)
-                os.remove(path)
+        fid, path = tempfile.mkstemp()
+        os.close(fid)
+        self.filepath_tmp = path
         return self.filepath_tmp
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         # move to filepath_tmp => filepath
-        if not os.path.exists(self.filepath_tmp):
+        if not os.path.getsize(self.filepath_tmp):
             # file should have been written
-            logger.warning(f"file does not exist: {self.filepath_tmp}")
-            return
-        if os.path.exists(self.filepath):
-            # file was created in the meantime?
-            logger.warning(f"file should not exist - overwriting: {self.filepath}")
-            os.remove(self.filepath)
-        if exc_type:
-            # there was an error: remove temporary file
+            logger.warning(f"file was not properly written: {self.filepath_tmp}")
             os.remove(self.filepath_tmp)
-            logger.warning(exc_val)  # or raise Error
+            return
+        elif os.path.exists(self.filepath):
+            # file was created in the meantime?
+            logger.info(f"file already exist: {self.filepath}")
+            os.remove(self.filepath_tmp)
         else:
             # move file to target
-            os.rename(self.filepath_tmp, self.filepath)
-            logger.debug(f"saved file {self.filepath}")
+            shutil.move(self.filepath_tmp, self.filepath)
+            logger.info(f"saved file {self.filepath}")
 
 
 class ProfilesHashes(metaclass=SingletonMeta):
@@ -119,26 +113,24 @@ class PtxOpt:
         self.profiles_hashes = ProfilesHashes(profiles_path)
 
     def _save(
-        self,
-        filepath: str,
-        data: object,
-        network: Network,
-        metadata: dict,
-        raise_on_overwrite=False,
+        self, filepath: str, data: object, network: Network, metadata: dict
     ) -> None:
-        with TempFile(filepath, raise_on_overwrite=raise_on_overwrite) as filepath_tmp:
+
+        filepath = str(filepath)
+
+        with TempFile(filepath) as filepath_tmp:
             with open(filepath_tmp, "wb") as file:
                 pickle.dump(data, file)
 
         # also save network
-        filepath_nw = str(filepath) + ".network.nc"
-        with TempFile(filepath_nw, raise_on_overwrite=False) as filepath_tmp:
+        filepath_nw = filepath + ".network.nc"
+        with TempFile(filepath_nw) as filepath_tmp:
             network.export_to_netcdf(filepath_tmp)
 
         # also save metadata
-        filepath_metadata = str(filepath) + ".metadata.json"
-        with open(filepath_metadata, "w", encoding="utf-8") as file:
-            json.dump(metadata, file, indent=2, ensure_ascii=False)
+        with TempFile(filepath + ".metadata.json") as filepath_tmp:
+            with open(filepath_tmp, "w", encoding="utf-8") as file:
+                json.dump(metadata, file, indent=2, ensure_ascii=False)
 
     def _load(self, filepath: str) -> object:
         with open(filepath, "rb") as file:
