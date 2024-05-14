@@ -2,13 +2,7 @@
 """Common Paths and settings."""
 import logging
 import os
-import warnings
 from pathlib import Path
-
-# disable warnings for loading networks
-
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-
 
 IS_TEST = "PYTEST_CURRENT_TEST" in os.environ  # TODO unused
 KEY_SEPARATOR = ","
