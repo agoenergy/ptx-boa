@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests for the streamlit app."""
+
 import pytest
 from streamlit.testing.v1 import AppTest
 
