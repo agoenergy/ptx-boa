@@ -92,9 +92,11 @@ def make_sidebar(api: PtxboaAPI):
     if use_reconversion:
         st.session_state["chain"] = f"{st.session_state['chain']} + reconv. to H2"
 
+    available_res_gen = api.get_res_technologies(st.session_state["region"])
     st.session_state["res_gen"] = st.sidebar.selectbox(
         "Renewable electricity source (for selected supply region):",
-        api.get_dimension("res_gen").index,
+        available_res_gen,
+        index=available_res_gen.index("PV tilted"),
         help=read_markdown_file("md/helptext_sidebar_re_source.md"),
     )
 
