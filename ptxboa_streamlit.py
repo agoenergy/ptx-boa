@@ -44,6 +44,11 @@ warnings.filterwarnings(  # filter pandas warning from pypsa optimizer
         r"through chained assignment using an inplace method.*"
     ),
 )
+warnings.filterwarnings(  # filter DeprecationWarning for read network
+    action="ignore",
+    category=DeprecationWarning,
+)
+
 
 # setup logging
 # level can be changed on strartup with: --logger.level=LEVEL
