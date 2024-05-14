@@ -75,7 +75,7 @@ class TempFile:
         else:
             # move file to target
             os.rename(self.filepath_tmp, self.filepath)
-            logger.info(f"saved file {self.filepath}")
+            logger.debug(f"saved file {self.filepath}")
 
 
 class ProfilesHashes(metaclass=SingletonMeta):
@@ -92,7 +92,7 @@ class ProfilesHashes(metaclass=SingletonMeta):
     def _read_metadata(self, filename):
         """Read metadata json file."""
         filepath = f"{self.profiles_path}/{filename}"
-        logger.info(f"READ {filepath}")
+        logger.debug(f"READ {filepath}")
         with open(filepath, encoding="utf-8") as file:
             data = json.load(file)
         return data
@@ -362,18 +362,18 @@ class PtxOpt:
             # load existing results
             opt_output_data = self._load(hash_filepath)
 
+        self._merge_data(data, opt_output_data)
+
         # also add flh_opt_hash if it exists so we can
         # retrieve the network later
         if use_cache:
-            opt_output_data["flh_opt_hash"] = {
+            data["flh_opt_hash"] = {
                 "hash_md5": hash_sum,
                 "filepath": hash_filepath,
             }
         else:
-            opt_output_data["flh_opt_hash"] = {
+            data["flh_opt_hash"] = {
                 "hash_md5": hash_sum,
             }
-
-        self._merge_data(data, opt_output_data)
 
         return data
