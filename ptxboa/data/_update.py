@@ -8,16 +8,21 @@ import pyodbc  # noqa
 import sqlalchemy as sa
 
 
-def update_csv(query: str, filename: str, data_dir: str = None) -> None:
+def update_csv(
+    query: str, filename: str, data_dir: str = None, check_uniue_cols: list = None
+) -> None:
     data_dir = data_dir or os.path.dirname(__file__)
     CS = (
         "mssql+pyodbc://?odbc_connect=driver=sql server;server=sqldaek2;database=ptxboa"
     )
     engine = sa.create_engine(CS)
-    pd.read_sql(
+    df = pd.read_sql(
         query,
         engine,
-    ).to_csv(data_dir + "/" + filename, index=False, lineterminator="\n")
+    )
+    if check_uniue_cols:
+        assert df.set_index(check_uniue_cols).index.is_unique
+    df.to_csv(data_dir + "/" + filename, index=False, lineterminator="\n")
 
 
 def main():
@@ -38,21 +43,6 @@ def main():
         ORDER BY "key"
         """,
         "flh.csv",
-    )
-    update_csv(
-        """
-        select
-        "key",
-        "process_res",
-        "process_ely",
-        "process_deriv",
-        "value",
-        "source"
-        FROM "ptxboa_data_storage_factor"
-        WHERE value is not null
-        ORDER BY "key"
-        """,
-        "storage_cost_factor.csv",
     )
 
     for year in [2030, 2040]:
@@ -77,6 +67,13 @@ def main():
                 order by "key"
                 """,
                 f"{year}_{rng}.csv",
+                check_uniue_cols=[
+                    "parameter_code",
+                    "process_code",
+                    "flow_code",
+                    "source_region_code",
+                    "target_country_code",
+                ],
             )
 
 

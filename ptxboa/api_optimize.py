@@ -386,43 +386,50 @@ class PtxOpt:
             same data, but replaced FLH (and some other data points)
             with results from optimization
         """
+        # prepare data for optimization
+        # (even if we dont optimize, we needit to get hashsum)
         opt_input_data = self._prepare_data(data)
 
-        hash_data, hash_sum = self._get_hashsum(data, opt_input_data)
+        use_cache = bool(self.cache_dir)
 
-        # get hashsum
+        # get hashsum (and metadata opt metadata)
+        opt_metadata, hash_sum = self._get_hashsum(data, opt_input_data)
 
-        if self.cache_dir:
-
+        if use_cache:
             hash_filepath = self._get_cache_filepath(hash_sum)
-
-            logger.info(f"opt request: {hash_sum}")
-
-            if os.path.exists(hash_filepath):
-                logger.info(f"load opt flh data from cache: {hash_sum}")
-                data = self._load(hash_filepath)
-
-                # also return cash hashsum for debugging / analysis
-                data["flh_opt_hash"] = {"hash_md5": hash_sum, "filepath": hash_filepath}
-                return data
         else:
             hash_filepath = None
 
-        opt_output_data, network = optimize(
-            opt_input_data, profiles_path=self.profiles_hashes.profiles_path
-        )
+        cache_exists = use_cache and os.path.exists(hash_filepath)
+
+        if not cache_exists:
+            # must run optimizer
+            opt_output_data, network = optimize(
+                opt_input_data, profiles_path=self.profiles_hashes.profiles_path
+            )
+            opt_metadata["model_status"] = opt_output_data["model_status"]
+            opt_metadata["datetime"] = datetime.datetime.now().strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
+            if use_cache:
+                # save results
+                self._save(hash_filepath, opt_output_data, network, opt_metadata)
+        else:
+            # load existing results
+            opt_output_data = self._load(hash_filepath)
+
+        # also add flh_opt_hash if it exists so we can
+        # retrieve the network later
+        if use_cache:
+            opt_output_data["flh_opt_hash"] = {
+                "hash_md5": hash_sum,
+                "filepath": hash_filepath,
+            }
+        else:
+            opt_output_data["flh_opt_hash"] = {
+                "hash_md5": hash_sum,
+            }
 
         self._merge_data(data, opt_output_data)
-
-        if self.cache_dir:
-            metadata = hash_data.copy()
-            metadata["model_status"] = opt_output_data["model_status"]
-            metadata["datetime"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-            self._save(hash_filepath, data, network, metadata)
-            data = self._load(hash_filepath)
-
-        # also return cash hashsum for debugging / analysis
-        data["flh_opt_hash"] = {"hash_md5": hash_sum, "filepath": hash_filepath}
 
         return data
