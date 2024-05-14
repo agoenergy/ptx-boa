@@ -158,7 +158,7 @@ class ProfilesFLH(metaclass=SingletonMeta):
         profile_data = pd.concat(profile_data)
 
         flh = (
-            pr.groupby(["source_region", "re_location", "re_source"])[
+            profile_data.groupby(["source_region", "re_location", "re_source"])[
                 "specific_generation"
             ]
             .sum()
