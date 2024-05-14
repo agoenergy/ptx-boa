@@ -8,7 +8,6 @@ Execution:
 
 __version__ = "0.4.2"
 
-# TODO how do I use the treamlit logger?
 import logging
 import warnings
 
@@ -172,10 +171,7 @@ if "colors" not in st.session_state:
 
 # calculate results over different data dimensions:
 costs_per_region = calculate_results_list(
-    api,
-    parameter_to_change="region",
-    parameter_list=None,
-    optimize_flh=False,  # @markushal: use FLH optimizer disabled in region compare
+    api, parameter_to_change="region", parameter_list=None
 )
 costs_per_scenario = calculate_results_list(
     api,
