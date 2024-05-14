@@ -10,9 +10,9 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from app.ptxboa_functions import (
+    get_data_type_from_input_data,
     remove_subregions,
     select_subregions,
-    subset_and_pivot_input_data,
 )
 from ptxboa.api import PtxboaAPI
 
@@ -122,17 +122,12 @@ def plot_input_data_on_map(
     -------
     go.Figure
     """
-    input_data = api.get_input_data(
-        scenario=st.session_state["scenario"],
-        user_data=st.session_state["user_changes_df"],
-    )
+    input_data = get_data_type_from_input_data(api, data_type=data_type, scope=None)
 
     units = {"CAPEX": "USD/kW", "full load hours": "h/a", "interest rate": ""}
 
     if data_type == "interest rate":
         assert color_col == "interest rate"
-        columns = "parameter_code"
-        process_code = [""]
         custom_data_func_kwargs = {"float_precision": 3}
     else:
         assert color_col in [
@@ -142,26 +137,10 @@ def plot_input_data_on_map(
             "Wind-PV-Hybrid",
         ]
         custom_data_func_kwargs = {"float_precision": 0}
-        columns = "process_code"
-        process_code = [
-            "Wind Onshore",
-            "Wind Offshore",
-            "PV tilted",
-            "Wind-PV-Hybrid",
-        ]
+
     custom_data_func_kwargs["unit"] = units[data_type]
     custom_data_func_kwargs["data_type"] = data_type
     custom_data_func_kwargs["map_variable"] = color_col
-
-    input_data = subset_and_pivot_input_data(
-        input_data=input_data,
-        source_region_code=None,
-        parameter_code=[data_type],
-        process_code=process_code,
-        index="source_region_code",
-        columns=columns,
-        values="value",
-    )
 
     if scope == "world":
         # Create a choropleth world map:
