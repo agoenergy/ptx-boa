@@ -121,7 +121,7 @@ class PtxboaAPI:
         ship_own_fuel: bool,
         output_unit: OutputUnitType = "USD/MWh",
         user_data: pd.DataFrame | None = None,
-        optimize_flh: bool = False,
+        optimize_flh: bool = True,
     ) -> Tuple[pd.DataFrame, object]:
         """Calculate results based on user selection.
 
