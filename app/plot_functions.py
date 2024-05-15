@@ -127,13 +127,13 @@ def plot_input_data_on_map(
         user_data=st.session_state["user_changes_df"],
     )
 
-    units = {"CAPEX": "USD/kW", "full load hours": "h/a", "interest rate": ""}
+    units = {"CAPEX": "USD/kW", "full load hours": "h/a", "interest rate": "%"}
 
     if data_type == "interest rate":
         assert color_col == "interest rate"
         columns = "parameter_code"
         process_code = [""]
-        custom_data_func_kwargs = {"float_precision": 3}
+        custom_data_func_kwargs = {"float_precision": 2}
     else:
         assert color_col in [
             "PV tilted",
@@ -162,6 +162,10 @@ def plot_input_data_on_map(
         columns=columns,
         values="value",
     )
+
+    # transform data to % for interest rate
+    if data_type == "interest rate":
+        input_data = input_data * 100
 
     if scope == "world":
         # Create a choropleth world map:
@@ -318,15 +322,18 @@ def _make_inputs_hoverdata(df, data_type, map_variable, unit, float_precision):
     custom_hover_data = []
     if data_type == "interest rate":
         for idx, row in df.iterrows():
-            hover = f"<b>{idx} | {data_type} </b><br><br>{row['interest rate']}"
+            hover = (
+                f"<b>{idx} | {data_type} </b><br><br>"
+                f"{row['interest rate']:.{float_precision}f} {unit}"
+            )
             custom_hover_data.append(hover)
     else:
         for idx, row in df.iterrows():
             hover = f"<b>{idx} | {data_type} </b><br>"
             for i, v in zip(row.index, row):
-                hover += f"<br><b>{i}</b>: {v:.{float_precision}f}{unit}"
+                hover += f"<br><b>{i}</b>: {v:.{float_precision}f} {unit}"
                 if i == map_variable:
-                    hover += " (displayed on map)"
+                    hover += " ← <i>displayed on map</i>"
             custom_hover_data.append(hover)
     return [custom_hover_data]
 
