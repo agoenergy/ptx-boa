@@ -46,15 +46,18 @@ def content_optimization(api: PtxboaAPI) -> None:
 
         with st.container(border=True):
             st.subheader("Generation profiles")
+            st.markdown(read_markdown_file("md/info_generation_profile_figure.md"))
             fig = create_profile_figure_generation(df_sel)
             st.plotly_chart(fig, use_container_width=True)
 
         with st.container(border=True):
             st.subheader("Capacities, full load hours and costs")
+            st.markdown(read_markdown_file("md/info_optimization_results.md"))
             st.dataframe(res.round(2), use_container_width=True)
 
         with st.container(border=True):
             st.subheader("Download model")
+            st.markdown(read_markdown_file("md/info_download_model.md"))
             download_network_as_netcdf(st.session_state["network"], "network.nc")
 
         with st.expander("Debugging output"):
