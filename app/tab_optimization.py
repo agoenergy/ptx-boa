@@ -17,6 +17,7 @@ def content_optimization(api: PtxboaAPI) -> None:
     with st.expander("What is this?"):
         st.markdown(read_markdown_file("md/whatisthis_optimization.md"))
 
+    # load netcdf file:
     try:
         n, metadata = api.get_flh_opt_network(
             scenario=st.session_state["scenario"],
@@ -69,6 +70,19 @@ def calc_aggregate_statistics(n: pypsa.Network) -> pd.DataFrame:
             ).sum()
             res.at[g, "CAPEX (USD/kW)"] = n.generators.at[g, "capital_cost"]
             res.at[g, "OPEX (USD/kWh)"] = n.generators.at[g, "marginal_cost"]
+            res.at[g, "Full load hours before curtailment (h)"] = (
+                n.generators_t["p_max_pu"][g] * n.snapshot_weightings["generators"]
+            ).sum()
+            res.at[g, "Curtailment (kWh/a)"] = (
+                res.at[g, "Capacity (kW)"]
+                * res.at[g, "Full load hours before curtailment (h)"]
+                - res.at[g, "Output (kWh/a)"]
+            )
+            res.at[g, "Curtailment (%)"] = (
+                100
+                * res.at[g, "Curtailment (kWh/a)"]
+                / (res.at[g, "Output (kWh/a)"] + res.at[g, "Curtailment (kWh/a)"])
+            )
 
     for g in ["ELY", "DERIV", "H2_STR_in"]:
         if g in n.links.index:
@@ -131,6 +145,18 @@ def calc_aggregate_statistics(n: pypsa.Network) -> pd.DataFrame:
         "H2O-L_supply": "Water supply",
     }
     res = res.rename(rename_list, axis=0)
+
+    # drop unwanted columns:
+    res = res[
+        [
+            "Capacity (kW)",
+            "Output (kWh/a)",
+            "Curtailment (%)",
+            "Full load hours before curtailment (h)",
+            "Full load hours (h)",
+            "Cost (USD/MWh)",
+        ]
+    ]
     return res
 
 
