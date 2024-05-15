@@ -153,6 +153,122 @@ def _load_dimensions():
     return dimensions
 
 
+class _ParameterGetter:
+    def __init__(
+        self,
+        data_handler,
+        source_region_code,
+        target_country_code,
+        process_code_res,
+        process_code_ely,
+        process_code_deriv,
+        df_processes,
+        df_flows,
+        use_user_data: bool = True,
+    ):
+        self.data_handler = data_handler
+        self.source_region_code = source_region_code
+        self.target_country_code = target_country_code
+        self.process_code_res = process_code_res
+        self.process_code_ely = process_code_ely
+        self.process_code_deriv = process_code_deriv
+        self.df_processes = df_processes
+        self.df_flows = df_flows
+        self.use_user_data = use_user_data
+
+    def get_parameter_value_w_default(
+        self,
+        parameter_code: ParameterCodeType,
+        process_code: ProcessCodeType = "",
+        flow_code: FlowCodeType = "",
+        default: float = None,
+    ):
+        return self.data_handler._get_parameter_value(
+            parameter_code=parameter_code,
+            process_code=process_code,
+            flow_code=flow_code,
+            source_region_code=self.source_region_code,
+            target_country_code=self.target_country_code,
+            process_code_res=self.process_code_res,
+            process_code_ely=self.process_code_ely,
+            process_code_deriv=self.process_code_deriv,
+            default=default,
+            use_user_data=self.use_user_data,
+        )
+
+    def flow_conv_params(self, process_code: ProcessCodeType):
+        result = {}
+        flows = self.df_processes.loc[process_code, "secondary_flows"]
+        flows = [x.strip() for x in flows if x.strip()]
+        for flow_code in flows:
+            conv = self.get_parameter_value_w_default(
+                parameter_code="CONV",
+                process_code=process_code,
+                flow_code=flow_code,
+                default=0,
+            )
+            if conv <= 0:
+                # currently negative flows (i.e. additional output)
+                # has no value
+                continue
+            result[flow_code] = conv
+        return result
+
+    def get_process_params(self, process_code: ProcessCodeType):
+        result = {}
+        result["EFF"] = self.get_parameter_value_w_default(
+            "EFF", process_code=process_code, default=1
+        )
+        result["FLH"] = self.get_parameter_value_w_default(
+            "FLH", process_code=process_code, default=7000  # TODO: default?
+        )
+        result["LIFETIME"] = self.get_parameter_value_w_default(
+            "LIFETIME", process_code=process_code, default=20  # TODO: default?
+        )
+        result["CAPEX"] = self.get_parameter_value_w_default(
+            "CAPEX", process_code=process_code, default=0
+        )  # TODO
+        result["OPEX-F"] = self.get_parameter_value_w_default(
+            "OPEX-F", process_code=process_code, default=0
+        )
+        result["OPEX-O"] = self.get_parameter_value_w_default(
+            "OPEX-O", process_code=process_code, default=0
+        )
+        result["CONV"] = self.flow_conv_params(process_code)
+        return result
+
+    def get_transport_process_params(
+        self, process_code: ProcessCodeType, dist_transport: float
+    ):
+        result = {}
+        # TODO: also save in results
+        loss_t = self.get_parameter_value_w_default(
+            "LOSS-T", process_code=process_code, default=0
+        )
+        result["DIST"] = dist_transport  # TODO: `DIST` not oficcial parameter
+        result["EFF"] = 1 - loss_t * dist_transport
+        result["OPEX-T"] = self.get_parameter_value_w_default(
+            "OPEX-T", process_code=process_code, default=0
+        )
+        result["OPEX-O"] = self.get_parameter_value_w_default(
+            "OPEX-O", process_code=process_code, default=0
+        )
+        result["CONV"] = self.flow_conv_params(process_code)
+        return result
+
+    def get_flow_params(self):
+        # TODO: only get used flows?
+        secondary_flows = list(
+            self.df_flows.loc[self.df_flows["secondary_flow"], "flow_code"]
+        )
+        result = {}
+        for flow_code in secondary_flows:
+            result[flow_code] = self.get_parameter_value_w_default(
+                "SPECCOST", flow_code=flow_code
+            )
+        return result
+
+
 class DataHandler:
     """
     Handler class for parameter retrieval.
@@ -194,7 +310,7 @@ class DataHandler:
         scenario_filename = (
             f"{scenario.replace(' ', '_').replace(')', '').replace('(', '')}"
         )
-        self.scenario_data = _load_data(
+        self._scenario_data = _load_data(
             self.data_dir,
             scenario_filename,
             key_columns=(
@@ -208,8 +324,10 @@ class DataHandler:
 
         if user_data is not None:
             self.scenario_data = self._update_scenario_data_with_user_data(
-                self.scenario_data, user_data
+                self._scenario_data, user_data
             )
+        else:
+            self.scenario_data = self._scenario_data
 
         self.optimizer = PtxOpt(
             profiles_path=self.profiles_path, cache_dir=self.cache_dir
@@ -347,6 +465,7 @@ class DataHandler:
         process_code_ely: ProcessCodeType = None,
         process_code_deriv: ProcessCodeType = None,
         default: float = None,
+        use_user_data: bool = True,
     ) -> float:
         """
         Get a parameter value for a process.
@@ -471,7 +590,11 @@ class DataHandler:
             required_keys = set(keys)
 
         else:
-            df = self.scenario_data
+            if use_user_data:
+                df = self.scenario_data
+            else:
+                df = self._scenario_data
+
             keys = [
                 "parameter_code",
                 "process_code",
@@ -538,6 +661,80 @@ class DataHandler:
         use_ship: bool,
         ship_own_fuel: bool,
         optimize_flh: bool,
+        use_user_data_for_optimize_flh: bool = True,
+    ) -> CalculateDataType:
+        """Create data for calculation.
+
+        Parameters
+        ----------
+        secondary_processes : Dict[FlowCodeType, ProcessCodeType]
+            _description_
+        chain_name : ChainNameType
+            _description_
+        process_code_res : ProcessCodeResType
+            _description_
+        source_region_code : SourceRegionCodeType
+            _description_
+        target_country_code : TargetCountryCodeType
+            _description_
+        use_ship : bool
+            _description_
+        ship_own_fuel : bool
+            _description_
+        optimize_flh : bool
+            _description_
+        use_user_data_for_optimize_flh : bool, optional
+            _description_, by default True
+
+        Returns
+        -------
+        CalculateDataType
+            _description_
+        """
+        data = self._get_calculation_data(
+            secondary_processes=secondary_processes,
+            chain_name=chain_name,
+            process_code_res=process_code_res,
+            source_region_code=source_region_code,
+            target_country_code=target_country_code,
+            use_ship=use_ship,
+            ship_own_fuel=ship_own_fuel,
+            use_user_data=True,
+        )
+
+        # get optimizedFLH?
+        if optimize_flh:
+
+            # if we have user data nd it should NOT be used for optimization
+            # get a different dataset for optimization
+            if self.user_data is None or use_user_data_for_optimize_flh:
+                data_opt = self._get_calculation_data(
+                    secondary_processes=secondary_processes,
+                    chain_name=chain_name,
+                    process_code_res=process_code_res,
+                    source_region_code=source_region_code,
+                    target_country_code=target_country_code,
+                    use_ship=use_ship,
+                    ship_own_fuel=ship_own_fuel,
+                    use_user_data=False,  # THIS IS THE IMPORTANT BIT
+                )
+            else:
+                data_opt = data
+
+            data = self.optimizer.get_data(data_opt, data)
+
+        return data
+
+    def _get_calculation_data(
+        self,
+        secondary_processes: Dict[FlowCodeType, ProcessCodeType],
+        chain_name: ChainNameType,
+        process_code_res: ProcessCodeResType,
+        source_region_code: SourceRegionCodeType,
+        target_country_code: TargetCountryCodeType,
+        use_ship: bool,
+        ship_own_fuel: bool,
+        use_user_data: bool = True,
     ) -> CalculateDataType:
         """Calculate results."""
         # get process codes for selected chain
@@ -549,95 +746,17 @@ class DataHandler:
         process_code_deriv = chain["DERIV"]
         chain["RES"] = process_code_res
 
-        def get_parameter_value_w_default(
-            parameter_code: ParameterCodeType,
-            process_code: ProcessCodeType = "",
-            flow_code: FlowCodeType = "",
-            default: float = None,
-        ):
-            return self._get_parameter_value(
-                parameter_code=parameter_code,
-                process_code=process_code,
-                flow_code=flow_code,
-                source_region_code=source_region_code,
-                target_country_code=target_country_code,
-                process_code_res=process_code_res,
-                process_code_ely=process_code_ely,
-                process_code_deriv=process_code_deriv,
-                default=default,
-            )
-
-        def flow_conv_params(process_code: ProcessCodeType):
-            result = {}
-            flows = df_processes.loc[process_code, "secondary_flows"]
-            flows = [x.strip() for x in flows if x.strip()]
-            for flow_code in flows:
-                conv = get_parameter_value_w_default(
-                    parameter_code="CONV",
-                    process_code=process_code,
-                    flow_code=flow_code,
-                    default=0,
-                )
-                if conv <= 0:
-                    # currently negative flows (i.e. additional output)
-                    # has no value
-                    continue
-                result[flow_code] = conv
-            return result
-
-        def get_process_params(process_code: ProcessCodeType):
-            result = {}
-            result["EFF"] = get_parameter_value_w_default(
-                "EFF", process_code=process_code, default=1
-            )
-            result["FLH"] = get_parameter_value_w_default(
-                "FLH", process_code=process_code, default=7000  # TODO: default?
-            )
-            result["LIFETIME"] = get_parameter_value_w_default(
-                "LIFETIME", process_code=process_code, default=20  # TODO: default?
-            )
-            result["CAPEX"] = get_parameter_value_w_default(
-                "CAPEX", process_code=process_code, default=0
-            )  # TODO
-            result["OPEX-F"] = get_parameter_value_w_default(
-                "OPEX-F", process_code=process_code, default=0
-            )
-            result["OPEX-O"] = get_parameter_value_w_default(
-                "OPEX-O", process_code=process_code, default=0
-            )
-            result["CONV"] = flow_conv_params(process_code)
-            return result
-
-        def get_transport_process_params(
-            process_code: ProcessCodeType, dist_transport: float
-        ):
-            result = {}
-            # TODO: also save in results
-            loss_t = get_parameter_value_w_default(
-                "LOSS-T", process_code=process_code, default=0
-            )
-            result["DIST"] = dist_transport  # TODO: `DIST` not oficcial parameter
-            result["EFF"] = 1 - loss_t * dist_transport
-            result["OPEX-T"] = get_parameter_value_w_default(
-                "OPEX-T", process_code=process_code, default=0
-            )
-            result["OPEX-O"] = get_parameter_value_w_default(
-                "OPEX-O", process_code=process_code, default=0
-            )
-            result["CONV"] = flow_conv_params(process_code)
-            return result
-
-        def get_flow_params():
-            # TODO: only get used flows?
-            secondary_flows = list(
-                df_flows.loc[df_flows["secondary_flow"], "flow_code"]
-            )
-            result = {}
-            for flow_code in secondary_flows:
-                result[flow_code] = get_parameter_value_w_default(
-                    "SPECCOST", flow_code=flow_code
-                )
-            return result
+        pg = _ParameterGetter(
+            data_handler=self,
+            source_region_code=source_region_code,
+            target_country_code=target_country_code,
+            process_code_res=process_code_res,
+            process_code_ely=process_code_ely,
+            process_code_deriv=process_code_deriv,
+            df_processes=df_processes,
+            df_flows=df_flows,
+            use_user_data=use_user_data,
+        )
 
         # some flows are grouped into their own output category (but not all)
         # so we load the mapping from the data
@@ -659,18 +778,18 @@ class DataHandler:
             },
         }
 
-        result["parameter"]["WACC"] = get_parameter_value_w_default("WACC")
-        result["parameter"]["CALOR"] = get_parameter_value_w_default(
+        result["parameter"]["WACC"] = pg.get_parameter_value_w_default("WACC")
+        result["parameter"]["CALOR"] = pg.get_parameter_value_w_default(
             parameter_code="CALOR", flow_code=chain["FLOW_OUT"]
         )
-        result["parameter"]["SPECCOST"] = get_flow_params()
+        result["parameter"]["SPECCOST"] = pg.get_flow_params()
 
         # get transport distances and options
         # TODO? add these also to data
-        dist_pipeline = get_parameter_value_w_default("DST-S-DP", default=0)
-        seashare_pipeline = get_parameter_value_w_default("SEASHARE", default=0)
-        existing_pipeline_cap = get_parameter_value_w_default("CAP-T", default=0)
-        dist_ship = get_parameter_value_w_default("DST-S-D", default=0)
+        dist_pipeline = pg.get_parameter_value_w_default("DST-S-DP", default=0)
+        seashare_pipeline = pg.get_parameter_value_w_default("SEASHARE", default=0)
+        existing_pipeline_cap = pg.get_parameter_value_w_default("CAP-T", default=0)
+        dist_ship = pg.get_parameter_value_w_default("DST-S-D", default=0)
 
         if not use_ship and not chain["CAN_PIPELINE"]:
             use_ship = True
@@ -692,7 +811,7 @@ class DataHandler:
 
         for process_step in chain_steps_main:
             process_code = chain[process_step]
-            res = get_process_params(process_code)
+            res = pg.get_process_params(process_code)
             res["step"] = process_step
             res["process_code"] = process_code
             result["main_process_chain"].append(res)
@@ -700,7 +819,7 @@ class DataHandler:
         for flow_code, process_code in secondary_processes.items():
             if not process_code:
                 continue
-            res = get_process_params(process_code)
+            res = pg.get_process_params(process_code)
             res["process_code"] = process_code
             result["secondary_process"][flow_code] = res
 
@@ -710,20 +829,17 @@ class DataHandler:
                 raise Exception((process_step, chain))
             if process_step in transport_distances:
                 dist_transport = transport_distances[process_step]
-                res = get_transport_process_params(process_code, dist_transport)
+                res = pg.get_transport_process_params(process_code, dist_transport)
             else:  # pre/post
-                res = get_process_params(process_code)
+                res = pg.get_process_params(process_code)
             res["step"] = process_step
             res["process_code"] = process_code
             result["transport_process_chain"].append(res)
 
-        # get optimizedFLH?
-        if optimize_flh:
-            # If RES=Hybrid: we also need PV and Wind-On
-            if process_code_res == "RES-HYBR":
-                for pc in ["PV-FIX", "WIND-ON"]:
-                    result["flh_opt_process"][pc] = get_process_params(pc)
-            result = self.optimizer.get_data(result)
+        # If RES=Hybrid: we also need PV and Wind-On
+        if process_code_res == "RES-HYBR":
+            for pc in ["PV-FIX", "WIND-ON"]:
+                result["flh_opt_process"][pc] = pg.get_process_params(pc)
 
         return result
 
