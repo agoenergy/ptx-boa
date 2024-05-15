@@ -488,7 +488,45 @@ def create_scatter_plot(df_res, settings: dict):
     st.write(df_res)
 
 
-def create_profile_figure(n: pypsa.Network) -> None:
+def add_vertical_lines(fig: go.Figure):
+    """Add vertical lines between periods."""
+    for x in range(7 * 24, 7 * 8 * 24, 7 * 24):
+        fig.add_vline(x=x, line_color="black", line_width=0.5)
+
+
+def add_trace_to_figure(
+    df: pd.DataFrame,
+    fig: go.Figure,
+    component: str,
+    parameter: str,
+    color: str,
+    fill: bool = False,
+):
+    """Add line (trace) to profile figure."""
+    df_plot = df[(df["Component"] == component)]
+    df_plot = df_plot[(df_plot["Parameter"] == parameter)]
+    if fill:
+        fig.add_trace(
+            go.Line(
+                x=df_plot["time"],
+                y=df_plot["MW (MWh for SOC)"],
+                name=component,
+                line_color=color,
+                stackgroup="one",
+            )
+        )
+    else:
+        fig.add_trace(
+            go.Line(
+                x=df_plot["time"],
+                y=df_plot["MW (MWh for SOC)"],
+                name=component,
+                line_color=color,
+            )
+        )
+
+
+def prepare_data_for_profile_figures(n: pypsa.Network) -> pd.DataFrame:
     def transform_time_series(
         df: pd.DataFrame, parameter: str = "Power"
     ) -> pd.DataFrame:
@@ -553,49 +591,18 @@ def create_profile_figure(n: pypsa.Network) -> None:
     df_sel["time"] = 7 * 24 * df_sel["period"] + df_sel["timestep"]
     df_sel = df_sel.sort_values("time")
 
+    return df_sel
+
+
+def create_profile_figure_generation(df_sel: pd.DataFrame) -> None:
     # generation:
     st.subheader("Output")
     fig = go.Figure()
 
-    def add_vertical_lines(fig: go.Figure):
-        """Add vertical lines between periods."""
-        for x in range(7 * 24, 7 * 8 * 24, 7 * 24):
-            fig.add_vline(x=x, line_color="black", line_width=0.5)
-
-    def add_to_figure(
-        df: pd.DataFrame,
-        fig: go.Figure,
-        component: str,
-        parameter: str,
-        color: str,
-        fill: bool = False,
-    ):
-        df_plot = df[(df["Component"] == component)]
-        df_plot = df_plot[(df_plot["Parameter"] == parameter)]
-        if fill:
-            fig.add_trace(
-                go.Line(
-                    x=df_plot["time"],
-                    y=df_plot["MW (MWh for SOC)"],
-                    name=component,
-                    line_color=color,
-                    stackgroup="one",
-                )
-            )
-        else:
-            fig.add_trace(
-                go.Line(
-                    x=df_plot["time"],
-                    y=df_plot["MW (MWh for SOC)"],
-                    name=component,
-                    line_color=color,
-                )
-            )
-
-    add_to_figure(
+    add_trace_to_figure(
         df_sel, fig, component="PV tilted", parameter="Power", fill=True, color="yellow"
     )
-    add_to_figure(
+    add_trace_to_figure(
         df_sel,
         fig,
         component="Wind onshore",
@@ -603,7 +610,7 @@ def create_profile_figure(n: pypsa.Network) -> None:
         fill=True,
         color="blue",
     )
-    add_to_figure(
+    add_trace_to_figure(
         df_sel,
         fig,
         component="Wind offshore",
@@ -611,10 +618,10 @@ def create_profile_figure(n: pypsa.Network) -> None:
         fill=True,
         color="blue",
     )
-    add_to_figure(
+    add_trace_to_figure(
         df_sel, fig, component="Electrolyzer", parameter="Power", color="black"
     )
-    add_to_figure(
+    add_trace_to_figure(
         df_sel, fig, component="Derivate production", parameter="Power", color="red"
     )
 
@@ -627,12 +634,14 @@ def create_profile_figure(n: pypsa.Network) -> None:
 
     st.plotly_chart(fig, use_container_width=True)
 
+
+def create_profile_figure_soc(df_sel: pd.DataFrame) -> None:
     st.subheader("Storage state of charge")
     include_final_product_storage = st.toggle("Show final product storage", value=False)
     # storage figure:
     fig = go.Figure()
 
-    add_to_figure(
+    add_trace_to_figure(
         df_sel,
         fig,
         component="Electricity storage",
@@ -640,7 +649,7 @@ def create_profile_figure(n: pypsa.Network) -> None:
         color="black",
     )
 
-    add_to_figure(
+    add_trace_to_figure(
         df_sel,
         fig,
         component="H2 storage",
@@ -648,7 +657,7 @@ def create_profile_figure(n: pypsa.Network) -> None:
         color="red",
     )
     if include_final_product_storage:
-        add_to_figure(
+        add_trace_to_figure(
             df_sel,
             fig,
             component="Final product storage",
@@ -665,20 +674,22 @@ def create_profile_figure(n: pypsa.Network) -> None:
 
     st.plotly_chart(fig, use_container_width=True)
 
+
+def create_profile_figure_capacity_factors(df_sel: pd.DataFrame) -> None:
     st.subheader("Capacity factors")
 
     fig = go.Figure()
-    add_to_figure(
+    add_trace_to_figure(
         df_sel, fig, component="PV tilted", parameter="cap. factor", color="yellow"
     )
-    add_to_figure(
+    add_trace_to_figure(
         df_sel,
         fig,
         component="Wind onshore",
         parameter="cap. factor",
         color="blue",
     )
-    add_to_figure(
+    add_trace_to_figure(
         df_sel,
         fig,
         component="Wind offshore",

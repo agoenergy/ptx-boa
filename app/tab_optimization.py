@@ -5,7 +5,12 @@ import pypsa
 import streamlit as st
 
 from app.network_download import download_network_as_netcdf
-from app.plot_functions import create_profile_figure
+from app.plot_functions import (
+    create_profile_figure_capacity_factors,
+    create_profile_figure_generation,
+    create_profile_figure_soc,
+    prepare_data_for_profile_figures,
+)
 from app.ptxboa_functions import read_markdown_file
 from ptxboa.api import PtxboaAPI
 
@@ -38,19 +43,24 @@ def content_optimization(api: PtxboaAPI) -> None:
     if metadata["model_status"] == ["ok", "optimal"]:
 
         res = calc_aggregate_statistics(n)
+        res_debug = calc_aggregate_statistics(n, include_debugging_output=True)
+        df_sel = prepare_data_for_profile_figures(n)
+
+        create_profile_figure_generation(df_sel)
+
         with st.expander("Aggregate statistics"):
             st.dataframe(res.round(2), use_container_width=True)
-
-        with st.expander("Profiles"):
-            create_profile_figure(n)
 
         with st.expander("Debugging output"):
             st.warning(
                 "This output is for debugging only. It will be hidden from end users by default."  # noqa
             )
             st.markdown("### Aggregate statistics:")
-            res_debug = calc_aggregate_statistics(n, include_debugging_output=True)
             st.dataframe(res_debug)
+
+            create_profile_figure_soc(df_sel)
+
+            create_profile_figure_capacity_factors(df_sel)
 
             st.markdown("### Input data:")
             show_input_data(n)
