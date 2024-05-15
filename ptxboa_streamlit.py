@@ -170,10 +170,16 @@ if "colors" not in st.session_state:
     st.session_state["colors"] = colors["Hex Code"].to_list()
 
 if st.session_state[st.session_state["tab_key"]] in [
+    "Info",
     "Costs",
     "Market scanning",
     "Input data",
     "Deep-dive countries",
+    "Country fact sheets",
+    "Certification schemes",
+    "Sustainability",
+    "Literature",
+    "Optimization",
 ]:
     # calculate results over different data dimensions:
     costs_per_region = calculate_results_list(
@@ -240,11 +246,16 @@ if st.session_state[st.session_state["tab_key"]] in [
         costs_per_chain_without_user_changes = None
 
 if st.session_state[st.session_state["tab_key"]] in [
+    "Info",
+    "Costs",
+    "Market scanning",
+    "Input data",
+    "Deep-dive countries",
     "Country fact sheets",
     "Certification schemes",
     "Sustainability",
     "Literature",
-    "Market scanning",
+    "Optimization",
 ]:
     # import context data:
     cd = load_context_data()
