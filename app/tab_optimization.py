@@ -16,8 +16,6 @@ from ptxboa.api import PtxboaAPI
 
 
 def content_optimization(api: PtxboaAPI) -> None:
-    st.subheader("Optimization results")
-    st.warning("Warning: Preliminary debugging results. ")
 
     with st.expander("What is this?"):
         st.markdown(read_markdown_file("md/whatisthis_optimization.md"))
@@ -46,31 +44,44 @@ def content_optimization(api: PtxboaAPI) -> None:
         res_debug = calc_aggregate_statistics(n, include_debugging_output=True)
         df_sel = prepare_data_for_profile_figures(n)
 
-        create_profile_figure_generation(df_sel)
+        with st.container(border=True):
+            st.subheader("Generation profiles")
+            fig = create_profile_figure_generation(df_sel)
+            st.plotly_chart(fig, use_container_width=True)
 
-        with st.expander("Aggregate statistics"):
+        with st.container(border=True):
+            st.subheader("Capacities, full load hours and costs")
             st.dataframe(res.round(2), use_container_width=True)
+
+        with st.container(border=True):
+            st.subheader("Download model")
+            download_network_as_netcdf(st.session_state["network"], "network.nc")
 
         with st.expander("Debugging output"):
             st.warning(
                 "This output is for debugging only. It will be hidden from end users by default."  # noqa
             )
-            st.markdown("### Aggregate statistics:")
+            st.markdown("#### Aggregate statistics:")
             st.dataframe(res_debug)
 
-            create_profile_figure_soc(df_sel)
+            st.markdown("#### Storage state of charge")
+            fig = create_profile_figure_soc(df_sel)
+            st.plotly_chart(fig, use_container_width=True)
 
-            create_profile_figure_capacity_factors(df_sel)
+            st.markdown("#### Capacity factors")
+            fig = create_profile_figure_capacity_factors(df_sel)
+            st.plotly_chart(fig, use_container_width=True)
 
-            st.markdown("### Input data:")
+            st.markdown("#### Profile data")
+            st.dataframe(df_sel, use_container_width=True)
+
+            st.markdown("#### Input data")
             show_input_data(n)
 
     else:
         st.error(
             f"No optimal solution! -> model status is {st.session_state['model_status']}"  # noqa
         )
-
-    download_network_as_netcdf(st.session_state["network"], "network.nc")
 
 
 # calculate aggregate statistics:
@@ -173,7 +184,6 @@ def calc_aggregate_statistics(
                 "Capacity (kW)",
                 "Output (kWh/a)",
                 "Curtailment (%)",
-                "Full load hours before curtailment (h)",
                 "Full load hours (h)",
                 "Cost (USD/MWh)",
             ]

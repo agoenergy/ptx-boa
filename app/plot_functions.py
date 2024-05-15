@@ -594,9 +594,8 @@ def prepare_data_for_profile_figures(n: pypsa.Network) -> pd.DataFrame:
     return df_sel
 
 
-def create_profile_figure_generation(df_sel: pd.DataFrame) -> None:
-    # generation:
-    st.subheader("Output")
+def create_profile_figure_generation(df_sel: pd.DataFrame) -> go.Figure:
+    """Create generation profile figure."""
     fig = go.Figure()
 
     add_trace_to_figure(
@@ -632,11 +631,11 @@ def create_profile_figure_generation(df_sel: pd.DataFrame) -> None:
         yaxis={"title": "output (MW)"},
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    return fig
 
 
-def create_profile_figure_soc(df_sel: pd.DataFrame) -> None:
-    st.subheader("Storage state of charge")
+def create_profile_figure_soc(df_sel: pd.DataFrame) -> go.Figure:
+    """Create storage state of charge figure."""
     include_final_product_storage = st.toggle("Show final product storage", value=False)
     # storage figure:
     fig = go.Figure()
@@ -672,12 +671,11 @@ def create_profile_figure_soc(df_sel: pd.DataFrame) -> None:
         yaxis={"title": "state of charge (MWh)"},
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    return fig
 
 
-def create_profile_figure_capacity_factors(df_sel: pd.DataFrame) -> None:
-    st.subheader("Capacity factors")
-
+def create_profile_figure_capacity_factors(df_sel: pd.DataFrame) -> go.Figure:
+    """Create capacity factors profile figure."""
     fig = go.Figure()
     add_trace_to_figure(
         df_sel, fig, component="PV tilted", parameter="cap. factor", color="yellow"
@@ -697,7 +695,5 @@ def create_profile_figure_capacity_factors(df_sel: pd.DataFrame) -> None:
         color="blue",
     )
     add_vertical_lines(fig)
-    st.plotly_chart(fig, use_container_width=True)
 
-    st.subheader("Profile data")
-    st.dataframe(df_sel, use_container_width=True)
+    return fig
