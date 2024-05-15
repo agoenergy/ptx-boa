@@ -220,10 +220,12 @@ def subset_and_pivot_input_data(
     if process_code is not None:
         input_data = input_data.loc[input_data["process_code"].isin(process_code)]
 
+    sources = {x for x in sorted(input_data["source"].dropna().unique()) if x}
+
     reshaped = input_data.pivot_table(
         index=index, columns=columns, values=values, aggfunc="sum"
     )
-    return reshaped
+    return reshaped, sources
 
 
 def get_data_type_from_input_data(
@@ -395,7 +397,7 @@ def get_data_type_from_input_data(
             "PV tilted",
         ]
 
-    df = subset_and_pivot_input_data(
+    df, sources = subset_and_pivot_input_data(
         input_data,
         source_region_code=source_region_code,
         parameter_code=parameter_code,
@@ -417,7 +419,7 @@ def get_data_type_from_input_data(
     if "efficiency" in df.columns:
         df["efficiency"] = df["efficiency"] * 100
 
-    return df
+    return df, sources
 
 
 def remove_subregions(api: PtxboaAPI, df: pd.DataFrame, country_name: str):

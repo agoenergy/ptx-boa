@@ -127,7 +127,7 @@ def plot_input_data_on_map(
     -------
     go.Figure
     """
-    input_data = get_data_type_from_input_data(api, data_type=data_type, scope=None)
+    input_data, _ = get_data_type_from_input_data(api, data_type=data_type, scope=None)
 
     units = {"CAPEX": "USD/kW", "full load hours": "h/a", "interest rate": "%"}
 
