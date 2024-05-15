@@ -118,6 +118,14 @@ def content_input_data(api: PtxboaAPI) -> None:
                 key="input_data_reconversion_processes",
             )
         with st.expander("**Direct air capture and desalination**"):
+            st.markdown(
+                (
+                    "Units for CAPEX and OPEX (fix) are per kg of CO<sub>2</sub> for "
+                    "direct air capture and per kg of H<sub>2</sub>0 for sea water "
+                    "desalination, respectively."
+                ),
+                unsafe_allow_html=True,
+            )
             display_and_edit_input_data(
                 api,
                 data_type="dac_and_desalination",

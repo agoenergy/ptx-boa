@@ -294,9 +294,9 @@ def display_and_edit_input_data(
         missing_index_name = "source_region_code"
         missing_index_value = None
         column_config = {
-            "CAPEX": st.column_config.NumberColumn(format="%.2e USD/kg", min_value=0),
+            "CAPEX": st.column_config.NumberColumn(format="%.5f USD/kg", min_value=0),
             "OPEX (fix)": st.column_config.NumberColumn(
-                format="%.2e USD/kg", min_value=0
+                format="%.5f USD/kg", min_value=0
             ),
             "efficiency": st.column_config.NumberColumn(
                 format="%.2f", min_value=0, max_value=1
