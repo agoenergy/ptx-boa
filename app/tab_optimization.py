@@ -44,7 +44,15 @@ def content_optimization(api: PtxboaAPI) -> None:
         with st.expander("Profiles"):
             create_profile_figure(n)
 
-        with st.expander("Input data"):
+        with st.expander("Debugging output"):
+            st.warning(
+                "This output is for debugging only. It will be hidden from end users by default."  # noqa
+            )
+            st.markdown("### Aggregate statistics:")
+            res_debug = calc_aggregate_statistics(n, include_debugging_output=True)
+            st.dataframe(res_debug)
+
+            st.markdown("### Input data:")
             show_input_data(n)
 
     else:
@@ -56,7 +64,9 @@ def content_optimization(api: PtxboaAPI) -> None:
 
 
 # calculate aggregate statistics:
-def calc_aggregate_statistics(n: pypsa.Network) -> pd.DataFrame:
+def calc_aggregate_statistics(
+    n: pypsa.Network, include_debugging_output: bool = False
+) -> pd.DataFrame:
     res = pd.DataFrame()
     for g in [
         "PV-FIX",
@@ -147,16 +157,17 @@ def calc_aggregate_statistics(n: pypsa.Network) -> pd.DataFrame:
     res = res.rename(rename_list, axis=0)
 
     # drop unwanted columns:
-    res = res[
-        [
-            "Capacity (kW)",
-            "Output (kWh/a)",
-            "Curtailment (%)",
-            "Full load hours before curtailment (h)",
-            "Full load hours (h)",
-            "Cost (USD/MWh)",
+    if not include_debugging_output:
+        res = res[
+            [
+                "Capacity (kW)",
+                "Output (kWh/a)",
+                "Curtailment (%)",
+                "Full load hours before curtailment (h)",
+                "Full load hours (h)",
+                "Cost (USD/MWh)",
+            ]
         ]
-    ]
     return res
 
 
