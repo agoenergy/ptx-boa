@@ -2,12 +2,18 @@
 """Api for calculations for webapp."""
 
 
-import logging
+from pathlib import Path
+from typing import List, Tuple
 
 import pandas as pd
+import pypsa
 
+from ptxboa import logger
+
+from . import PROFILES_DIR
 from .api_calc import PtxCalc
 from .api_data import DataHandler
+from .api_optimize import PtxOpt
 from .static import (
     ChainNameType,
     DimensionType,
@@ -22,12 +28,11 @@ from .static import (
     TransportValues,
 )
 
-logger = logging.getLogger()
-
 
 class PtxboaAPI:
-    def __init__(self, data_dir: str = None):
+    def __init__(self, data_dir: Path, cache_dir: Path = None):
         self.data_dir = data_dir
+        self.cache_dir = cache_dir
 
     @staticmethod
     def get_dimension(dim: DimensionType) -> pd.DataFrame:
@@ -95,7 +100,12 @@ class PtxboaAPI:
             'source_region_code', 'target_country_code', 'value', 'unit', 'source'
 
         """
-        handler = DataHandler(scenario, user_data, data_dir=self.data_dir)
+        handler = DataHandler(
+            scenario,
+            user_data,
+            data_dir=self.data_dir,
+            cache_dir=None,  # dont need caching for input data
+        )
         return handler.get_input_data(long_names)
 
     def calculate(
@@ -108,10 +118,11 @@ class PtxboaAPI:
         region: SourceRegionNameType,
         country: TargetCountryNameType,
         transport: TransportType,
-        ship_own_fuel: bool = False,  # TODO: no correctly passed by app
+        ship_own_fuel: bool,
         output_unit: OutputUnitType = "USD/MWh",
         user_data: pd.DataFrame | None = None,
-    ) -> pd.DataFrame:
+        optimize_flh: bool = True,
+    ) -> Tuple[pd.DataFrame, object]:
         """Calculate results based on user selection.
 
         Parameters
@@ -142,10 +153,9 @@ class PtxboaAPI:
             ids are expected to come as long names. Needs to have the columns
             ["source_region_code", "process_code", "parameter_code", "value"].
 
-
         Returns
         -------
-        result : DataFrame
+        result : (DataFrame, metadata)
             columns are: most of the settings arguments of this function, and:
 
             * `values`: numerical value (usually cost)
@@ -154,7 +164,9 @@ class PtxboaAPI:
             * `cost_type`: one of {RESULT_COST_TYPES}
 
         """
-        data_handler = DataHandler(scenario, user_data, data_dir=self.data_dir)
+        data_handler = DataHandler(
+            scenario, user_data, data_dir=self.data_dir, cache_dir=self.cache_dir
+        )
 
         if transport not in TransportValues:
             logger.error(f"Invalid choice for transport: {transport}")
@@ -188,6 +200,7 @@ class PtxboaAPI:
             ),
             use_ship=(transport == "Ship"),
             ship_own_fuel=ship_own_fuel,
+            optimize_flh=optimize_flh,
         )
 
         result_df = PtxCalc.calculate(data)
@@ -211,4 +224,152 @@ class PtxboaAPI:
         result_df["country"] = country
         result_df["transport"] = transport
 
-        return result_df
+        metadata = {"flh_opt_hash": data.get("flh_opt_hash")}  # does not always exist
+        return result_df, metadata
+
+    def get_flh_opt_network(
+        self,
+        scenario: ScenarioType,
+        secproc_co2: SecProcCO2Type,
+        secproc_water: SecProcH2OType,
+        chain: ChainNameType,
+        res_gen: ResGenType,
+        region: SourceRegionNameType,
+        country: TargetCountryNameType,
+        transport: TransportType,
+        ship_own_fuel: bool,
+        user_data: pd.DataFrame | None = None,
+    ) -> Tuple[pypsa.Network, dict]:
+        """Calculate results based on user selection.
+
+        Parameters
+        ----------
+        scenario : str
+            name of data scenario
+        secproc_co2 : str
+            name of secondary process for CO2
+        secproc_water : str
+            name of secondary process for H2O
+        chain : str
+            name of product chain
+        res_gen : str
+            name of renewable technology
+        region : str
+            name of region
+        country : str
+            name of destination country
+        transport : str
+            mode of transportation
+        ship_own_fuel : bool
+            `True` if ship uses product as fuel
+        user_data : pd.DataFrame | None, optional
+            user data that overrides scenario data
+            contains only rows of scenario_data that have been modified.
+            ids are expected to come as long names. Needs to have the columns
+            ["source_region_code", "process_code", "parameter_code", "value"].
+
+        Returns
+        -------
+        result : Tuple[pypsa-Network, dict]
+            second part of tuple contains metadata
+        """
+        _df, metadata = self.calculate(
+            scenario=scenario,
+            secproc_co2=secproc_co2,
+            secproc_water=secproc_water,
+            chain=chain,
+            res_gen=res_gen,
+            region=region,
+            country=country,
+            transport=transport,
+            ship_own_fuel=ship_own_fuel,
+            user_data=user_data,
+            optimize_flh=True,
+        )
+        hashsum = metadata.get("flh_opt_hash", {}).get("hash_md5")
+        if not hashsum:
+            return None
+
+        data_handler = DataHandler(
+            scenario, user_data, data_dir=self.data_dir, cache_dir=self.cache_dir
+        )
+        filepath = data_handler.optimizer._get_cache_filepath(hashsum=hashsum)
+        network = data_handler.optimizer._load_network(filepath=filepath)
+        return network
+
+    def get_res_technologies(
+        self, region_name: SourceRegionNameType
+    ) -> List[ResGenType]:
+        """List all available RES technologies for a source region.
+
+        Parameters
+        ----------
+        region_name: SourceRegionNameType
+
+        Returns
+        -------
+        : List[ResGenType]
+
+        """
+        optimizer = PtxOpt(profiles_path=PROFILES_DIR, cache_dir=None)
+
+        # translate name -> code
+        region_code = DataHandler.get_dimensions_parameter_code("region", region_name)
+
+        # get all keys from profiles
+        reg_res = set(optimizer.profiles_hashes.data.keys())
+        # filter keys for selected source_region
+        res_techs = pd.Series([res for reg, res in reg_res if reg == region_code])
+
+        # translate code -> name
+        res_gen = self.get_dimension("res_gen")
+        res_gen_code_to_name = pd.Series(
+            res_gen["process_name"].to_list(),
+            index=res_gen["process_code"],
+        )
+        res_techs = res_techs.map(res_gen_code_to_name).to_list()
+        return res_techs
+
+    def get_optimization_flh_input_data(self, long_names: bool = True) -> pd.DataFrame:
+        """
+        Return full load hours of renewables used by the optimization.
+
+        Parameters
+        ----------
+        long_names : bool, optional
+            Whether to return long names or internal codes, by default True
+
+        Returns
+        -------
+        : pd.DataFrame
+            long format data
+            columns: source_region, res_gen, value
+        """
+        optimizer = PtxOpt(profiles_path=PROFILES_DIR, cache_dir=None)
+        data = optimizer.profiles_flh.data.copy()
+        if long_names:
+            regions = self.get_dimension("region")
+            region_code_to_name = pd.Series(
+                regions["region_name"].to_list(),
+                index=regions["region_code"],
+            )
+            data["source_region"] = data["source_region"].map(region_code_to_name)
+
+            res_gen = self.get_dimension("res_gen")
+            res_gen_code_to_name = pd.Series(
+                res_gen["process_name"].to_list(),
+                index=res_gen["process_code"],
+            )
+            # TODO: we could define names and codes in ptxboa\static\dim_process.csv
+            # process_code, process_name
+            # RES-HYBR-PV-FIX, PV tilted (hybrid)
+            # RES-HYBR-WIND-ON, Wind Onshore (hybrid)
+            # hard coded names for hybrid location:
+            res_gen_code_to_name["RES-HYBR-PV-FIX"] = "PV tilted (hybrid)"
+            res_gen_code_to_name["RES-HYBR-WIND-ON"] = "Wind Onshore (hybrid)"
+
+            data["res_gen"] = data["res_gen"].map(res_gen_code_to_name)
+            return data
+
+        else:
+            return data

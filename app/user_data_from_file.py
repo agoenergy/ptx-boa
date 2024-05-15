@@ -7,6 +7,8 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
+logger = logging.getLogger()
+
 
 def upload_user_data(api):
     """Create a file upload and download interface."""
@@ -48,7 +50,7 @@ def upload_user_data(api):
             st.session_state["upload_validation"], str
         ):  # string indicating error in validation
             msg = f"Uploaded data is not valid: {st.session_state['upload_validation']}"
-            logging.info(f"Reject uploaded data: {msg}")
+            logger.info(f"Reject uploaded data: {msg}")
             c1, c2 = st.columns([0.9, 0.1])
             with c1:
                 st.error(msg)
@@ -197,7 +199,7 @@ def _validate_param_in_range(result):
                 )
                 break
         else:
-            logging.warning(f"range not checked for uploaded parameter '{p}'")
+            logger.warning(f"range not checked for uploaded parameter '{p}'")
 
     return result
 

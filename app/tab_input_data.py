@@ -36,14 +36,24 @@ def content_input_data(api: PtxboaAPI) -> None:
         with st.expander("**Map**", expanded=True):
 
             if data_selection in ["full load hours", "CAPEX"]:
-                map_parameter = st.selectbox(
-                    "Select parameter to display on map:",
-                    [
+                if data_selection == "full load hours":
+                    select_options = [
                         "Wind Onshore",
                         "Wind Offshore",
                         "PV tilted",
-                        "Wind-PV-Hybrid",
-                    ],
+                        "Wind Onshore (hybrid)",
+                        "PV tilted (hybrid)",
+                    ]
+                if data_selection == "CAPEX":
+                    select_options = [
+                        "Wind Onshore",
+                        "Wind Offshore",
+                        "PV tilted",
+                    ]
+
+                map_parameter = st.selectbox(
+                    "Select parameter to display on map:",
+                    select_options,
                     key="input_data_map_parameter",
                 )
             else:

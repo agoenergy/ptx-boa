@@ -1,15 +1,18 @@
 # -*- coding: utf-8 -*-
 """Handle data queries for api calculation."""
 
-import logging
 from functools import cache
 from itertools import product
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Tuple
+from typing import Dict, List, Literal, Tuple
 
 import numpy as np
 import pandas as pd
 
+from ptxboa import KEY_SEPARATOR, PROFILES_DIR, STATIC_DATA_DIR
+from ptxboa.static._types import CalculateDataType
+
+from .api_optimize import PtxOpt
 from .static import (
     ChainNameType,
     DimensionType,
@@ -28,23 +31,6 @@ from .static import (
     TransportValues,
     YearValues,
 )
-
-CalculateDataType = Dict[
-    Literal[
-        "main_process_chain",
-        "transport_process_chain",
-        "secondary_process",
-        "parameter",
-        "context",
-    ],
-    Any,
-]
-
-
-logger = logging.getLogger(__name__)
-DATA_DIR_DEFAULT = Path(__file__).parent.resolve() / "data"
-DATA_DIR_DIMS = Path(__file__).parent.resolve() / "static"
-KEY_SEPARATOR = ","
 
 
 def _assign_key(df: pd.DataFrame, key_columns: str | List[str]) -> pd.DataFrame:
@@ -95,16 +81,16 @@ def _load_dimensions():
 
     # NOTE / TODO: some are indexed by name,some by code
     dimensions["country"] = _load_data(
-        DATA_DIR_DIMS, name="dim_country", key_columns="country_name"
+        STATIC_DATA_DIR, name="dim_country", key_columns="country_name"
     )
     dimensions["region"] = _load_data(
-        DATA_DIR_DIMS, name="dim_region", key_columns="region_name"
+        STATIC_DATA_DIR, name="dim_region", key_columns="region_name"
     )
     dimensions["flow"] = _load_data(
-        DATA_DIR_DIMS, name="dim_flow", key_columns="flow_code"
+        STATIC_DATA_DIR, name="dim_flow", key_columns="flow_code"
     )
     dimensions["parameter"] = _load_data(
-        DATA_DIR_DIMS, name="dim_parameter", key_columns="parameter_code"
+        STATIC_DATA_DIR, name="dim_parameter", key_columns="parameter_code"
     )
     dimensions["parameter"] = dimensions["parameter"].assign(
         dimensions=dimensions["parameter"]["dimensions"].apply(
@@ -112,7 +98,7 @@ def _load_dimensions():
         )
     )
     dimensions["process"] = _load_data(
-        DATA_DIR_DIMS, name="dim_process", key_columns="process_code"
+        STATIC_DATA_DIR, name="dim_process", key_columns="process_code"
     )
     dimensions["process"] = dimensions["process"].assign(
         secondary_flows=dimensions["process"]["secondary_flows"].apply(
@@ -148,7 +134,9 @@ def _load_dimensions():
             pd.DataFrame([{"process_name": "Specific costs"}]),
         ]
     ).set_index("process_name", drop=False)
-    dimensions["chain"] = _load_data(DATA_DIR_DIMS, name="chains", key_columns="chain")
+    dimensions["chain"] = _load_data(
+        STATIC_DATA_DIR, name="chains", key_columns="chain"
+    )
     dimensions["res_gen"] = (
         dimensions["process"]
         .loc[dimensions["process"]["process_class"] == "RE-GEN"]
@@ -174,6 +162,58 @@ class DataHandler:
     """
 
     dimensions = _load_dimensions()
+
+    def __init__(
+        self,
+        scenario: ScenarioType,
+        user_data: None | pd.DataFrame = None,
+        data_dir: str = None,
+        cache_dir: str = None,
+    ):
+
+        assert scenario in ScenarioValues
+
+        self.scenario = scenario
+        self.user_data = user_data
+        self.data_dir = data_dir
+        self.cache_dir = cache_dir
+        self.profiles_path = PROFILES_DIR
+
+        self.flh = _load_data(
+            self.data_dir,
+            name="flh",
+            key_columns=(
+                "region",
+                "process_res",
+                "process_ely",
+                "process_deriv",
+                "process_flh",
+            ),
+        )
+
+        scenario_filename = (
+            f"{scenario.replace(' ', '_').replace(')', '').replace('(', '')}"
+        )
+        self.scenario_data = _load_data(
+            self.data_dir,
+            scenario_filename,
+            key_columns=(
+                "parameter_code",
+                "process_code",
+                "flow_code",
+                "source_region_code",
+                "target_country_code",
+            ),
+        ).copy()
+
+        if user_data is not None:
+            self.scenario_data = self._update_scenario_data_with_user_data(
+                self.scenario_data, user_data
+            )
+
+        self.optimizer = PtxOpt(
+            profiles_path=self.profiles_path, cache_dir=self.cache_dir
+        )
 
     @classmethod
     def _map_names_and_codes(
@@ -270,56 +310,6 @@ class DataHandler:
             scenario_data.at[key, "value"] = value
 
         return scenario_data
-
-    def __init__(
-        self,
-        scenario: ScenarioType,
-        user_data: None | pd.DataFrame = None,
-        data_dir: str = None,
-    ):
-
-        assert scenario in ScenarioValues
-
-        self.scenario = scenario
-        self.user_data = user_data
-        self.data_dir = data_dir or DATA_DIR_DEFAULT
-
-        self.flh = _load_data(
-            self.data_dir,
-            name="flh",
-            key_columns=(
-                "region",
-                "process_res",
-                "process_ely",
-                "process_deriv",
-                "process_flh",
-            ),
-        )
-        self.storage_cost_factor = _load_data(
-            self.data_dir,
-            name="storage_cost_factor",
-            key_columns=("process_res", "process_ely", "process_deriv"),
-        )
-
-        scenario_filename = (
-            f"{scenario.replace(' ', '_').replace(')', '').replace('(', '')}"
-        )
-        self.scenario_data = _load_data(
-            self.data_dir,
-            scenario_filename,
-            key_columns=(
-                "parameter_code",
-                "process_code",
-                "flow_code",
-                "source_region_code",
-                "target_country_code",
-            ),
-        ).copy()
-
-        if user_data is not None:
-            self.scenario_data = self._update_scenario_data_with_user_data(
-                self.scenario_data, user_data
-            )
 
     def get_input_data(self, long_names: bool) -> pd.DataFrame:
         """Return scenario data.
@@ -480,16 +470,6 @@ class DataHandler:
             ]
             required_keys = set(keys)
 
-        elif parameter_code == "STR-CF":
-            # Storage cost factor not changed by user (and currently in separate file)
-            df = self.storage_cost_factor
-            keys = [
-                "process_code_res",
-                "process_code_ely",
-                "process_code_deriv",
-            ]
-            required_keys = set(keys)
-
         else:
             df = self.scenario_data
             keys = [
@@ -557,6 +537,7 @@ class DataHandler:
         target_country_code: TargetCountryCodeType,
         use_ship: bool,
         ship_own_fuel: bool,
+        optimize_flh: bool,
     ) -> CalculateDataType:
         """Calculate results."""
         # get process codes for selected chain
@@ -667,6 +648,7 @@ class DataHandler:
         # get general parameters
 
         result = {
+            "flh_opt_process": {},
             "main_process_chain": [],
             "transport_process_chain": [],
             "secondary_process": {},
@@ -678,7 +660,6 @@ class DataHandler:
         }
 
         result["parameter"]["WACC"] = get_parameter_value_w_default("WACC")
-        result["parameter"]["STR-CF"] = get_parameter_value_w_default("STR-CF")
         result["parameter"]["CALOR"] = get_parameter_value_w_default(
             parameter_code="CALOR", flow_code=chain["FLOW_OUT"]
         )
@@ -735,6 +716,14 @@ class DataHandler:
             res["step"] = process_step
             res["process_code"] = process_code
             result["transport_process_chain"].append(res)
+
+        # get optimizedFLH?
+        if optimize_flh:
+            # If RES=Hybrid: we also need PV and Wind-On
+            if process_code_res == "RES-HYBR":
+                for pc in ["PV-FIX", "WIND-ON"]:
+                    result["flh_opt_process"][pc] = get_process_params(pc)
+            result = self.optimizer.get_data(result)
 
         return result
 
@@ -794,7 +783,7 @@ class DataHandler:
     ) -> List[ProcessStepType]:
         result_main = []
         result_transport = []
-        for process_step in ["RES", "ELY", "DERIV"]:
+        for process_step in ["RES", "EL_STR", "ELY", "H2_STR", "DERIV"]:
             process_code = chain[process_step]
             if process_code:
                 result_main.append(process_step)

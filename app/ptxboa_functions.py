@@ -7,13 +7,14 @@ import pandas as pd
 import streamlit as st
 
 from ptxboa.api import PtxboaAPI
+from ptxboa.utils import is_test
 
 
-@st.cache_data()
 def calculate_results_single(
     _api: PtxboaAPI,
     settings: dict,
     user_data: pd.DataFrame | None = None,
+    optimize_flh: bool = True,
 ) -> pd.DataFrame:
     """Calculate results for a single set of settings.
 
@@ -30,7 +31,9 @@ def calculate_results_single(
     pd.DataFrame
         same format as for :meth:`~ptxboa.api.PtxboaAPI.calculate()`
     """
-    res = _api.calculate(user_data=user_data, **settings)
+    res, _metadata = _api.calculate(
+        user_data=user_data, **settings, optimize_flh=optimize_flh
+    )
 
     return res
 
@@ -41,6 +44,7 @@ def calculate_results_list(
     parameter_list: list = None,
     override_session_state: dict | None = None,
     apply_user_data: bool = True,
+    optimize_flh: bool = True,  # @markushal: use FLH optimizer by default
 ) -> pd.DataFrame:
     """Calculate results for source regions and one selected target country.
 
@@ -85,6 +89,10 @@ def calculate_results_list(
     # copy settings from session_state:
     settings = {key: st.session_state[key] for key in setting_keys}
 
+    # in test environment: do not optimize by default
+    # NOTE: does not work in global, must be called here in a function
+    optimize_flh = not is_test()
+
     # update settings from session state with custom values
     if override_session_state is not None:
         if not set(override_session_state.keys()).issubset(set(setting_keys)):
@@ -105,10 +113,13 @@ def calculate_results_list(
     res_list = []
     for parameter in parameter_list:
         settings.update({parameter_to_change: parameter})
+        # only optimize when using actual chosen parameter set:
+
         res_single = calculate_results_single(
             api,
             settings,
             user_data=st.session_state["user_changes_df"] if apply_user_data else None,
+            optimize_flh=optimize_flh,
         )
         res_list.append(res_single)
     res_details = pd.concat(res_list)
@@ -256,6 +267,25 @@ def get_data_type_from_input_data(
     -------
     pd.DataFrame
     """
+    if data_type == "full load hours":
+        input_data = api.get_optimization_flh_input_data()
+        df = subset_and_pivot_input_data(
+            input_data,
+            source_region_code=None,
+            parameter_code=None,
+            process_code=None,
+            index="source_region",
+            columns="res_gen",
+            values="value",
+        )
+        if scope == "world":
+            df = remove_subregions(
+                api=api, df=df, country_name=st.session_state["country"]
+            )
+        if scope in ["Argentina", "Morocco", "South Africa"]:
+            df = select_subregions(df, scope)
+        return df
+
     input_data = api.get_input_data(
         st.session_state["scenario"],
         user_data=st.session_state["user_changes_df"],
@@ -348,7 +378,7 @@ def get_data_type_from_input_data(
             processes["is_transport"] & processes["is_transformation"], "process_name"
         ].to_list()
 
-    if data_type in ["CAPEX", "full load hours", "interest rate"]:
+    if data_type in ["CAPEX", "interest rate"]:
         source_region_code = None
         parameter_code = [data_type]
         index = "source_region_code"
@@ -357,13 +387,12 @@ def get_data_type_from_input_data(
         columns = "parameter_code"
         process_code = [""]
 
-    if data_type in ["CAPEX", "full load hours"]:
+    if data_type == "CAPEX":
         columns = "process_code"
         process_code = [
             "Wind Onshore",
             "Wind Offshore",
             "PV tilted",
-            "Wind-PV-Hybrid",
         ]
 
     df = subset_and_pivot_input_data(

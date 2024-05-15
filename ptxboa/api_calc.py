@@ -1,37 +1,12 @@
 # -*- coding: utf-8 -*-
 """Classes for main process chain calculation."""
 
-import logging
 
 import pandas as pd
 
-from ptxboa.api_data import CalculateDataType, DataHandler
-
-logger = logging.getLogger()
-
-
-def annuity(rate: float, periods: int, value: float) -> float:
-    """Calculate annuity.
-
-    Parameters
-    ----------
-    rate: float
-        interest rate per period
-    periods: int
-        number of periods
-    value: float
-        present value of an ordinary annuity
-
-    Returns
-    -------
-    : float
-        value of each payment
-
-    """
-    if rate == 0:
-        return value / periods
-    else:
-        return value * rate / (1 - (1 / (1 + rate) ** periods))
+from ptxboa.api_data import DataHandler
+from ptxboa.static._types import CalculateDataType
+from ptxboa.utils import annuity
 
 
 class PtxCalc:
@@ -45,7 +20,6 @@ class PtxCalc:
         # get general parameters
         parameters = data["parameter"]
         wacc = parameters["WACC"]
-        storage_factor = parameters["STR-CF"]
 
         # start main chain calculation
         main_output_value = 1  # start with normalized value of 1
@@ -58,20 +32,6 @@ class PtxCalc:
         for step_data in data["main_process_chain"] + data["transport_process_chain"]:
             process_step = step_data["step"]
             process_code = step_data["process_code"]
-            is_shipping_or_pre_post = process_step in {
-                "PRE_SHP",
-                "SHP",
-                "SHP-OWN",
-                "POST_SHP",
-            }
-            is_pipeline_or_pre_post = process_step in {
-                "PRE_PPL",
-                "PPLS",
-                "PPL",
-                "PPLX",
-                "PPLR",
-                "POST_PPL",
-            }
             is_transport = process_step in {
                 "SHP",
                 "SHP-OWN",
@@ -101,24 +61,6 @@ class PtxCalc:
                 results.append((result_process_type, process_code, "CAPEX", capex_ann))
                 results.append((result_process_type, process_code, "OPEX", opex))
 
-                if not (is_shipping_or_pre_post or is_pipeline_or_pre_post):
-                    # no storage factor in transport pre/post
-                    results.append(
-                        (
-                            "Electricity and H2 storage",
-                            process_code,
-                            "OPEX",  # NOTE: in old app,storage is always OPEX
-                            capex_ann * storage_factor,
-                        )
-                    )
-                    results.append(
-                        (
-                            "Electricity and H2 storage",
-                            process_code,
-                            "OPEX",
-                            opex * storage_factor,
-                        )
-                    )
             else:
                 opex_t = step_data["OPEX-T"]
                 dist_transport = step_data["DIST"]
@@ -126,15 +68,6 @@ class PtxCalc:
                 opex = (opex_o + opex_ot) * main_output_value
                 results.append((result_process_type, process_code, "OPEX", opex))
 
-                if not (is_shipping_or_pre_post or is_pipeline_or_pre_post):
-                    results.append(
-                        (
-                            "Electricity and H2 storage",
-                            process_code,
-                            "OPEX",
-                            opex * storage_factor,
-                        )
-                    )
             # create flows for process step
             for flow_code, conv in step_data["CONV"].items():
                 flow_value = main_output_value * conv
@@ -165,23 +98,6 @@ class PtxCalc:
                     results.append(
                         (sec_result_process_type, sec_process_code, "OPEX", opex)
                     )
-                    if not (is_shipping_or_pre_post or is_pipeline_or_pre_post):
-                        results.append(
-                            (
-                                "Electricity and H2 storage",
-                                sec_process_code,
-                                "OPEX",  # NOTE: in old app, storage is always OPEX
-                                capex_ann * storage_factor,
-                            )
-                        )
-                        results.append(
-                            (
-                                "Electricity and H2 storage",
-                                sec_process_code,
-                                "OPEX",
-                                opex * storage_factor,
-                            )
-                        )
 
                     for sec_flow_code, sec_conv in sec_process_data["CONV"].items():
                         sec_flow_value = flow_value * sec_conv
@@ -205,15 +121,6 @@ class PtxCalc:
                                 sec_flow_cost,
                             )
                         )
-                        if not (is_shipping_or_pre_post or is_pipeline_or_pre_post):
-                            results.append(
-                                (
-                                    "Electricity and H2 storage",
-                                    sec_process_code,
-                                    "OPEX",  # NOTE: in old app, storage is always OPEX
-                                    sec_flow_cost * storage_factor,
-                                )
-                            )
 
                 else:
                     # use market
@@ -235,19 +142,13 @@ class PtxCalc:
                     results.append(
                         (flow_result_process_type, process_code, "FLOW", flow_cost)
                     )
-                    if not (is_shipping_or_pre_post or is_pipeline_or_pre_post):
-                        results.append(
-                            (
-                                "Electricity and H2 storage",
-                                process_code,
-                                "OPEX",  # NOTE: in old app, storage is always OPEX
-                                flow_cost * storage_factor,
-                            )
-                        )
 
         # convert to DataFrame
         dim_columns = ["process_type", "process_subtype", "cost_type"]
         results = pd.DataFrame(results, columns=dim_columns + ["values"])
+
+        # sum over dim_columns
+        results = results.groupby(dim_columns).sum().reset_index()
 
         # normalization:
         # scale so that we star twith 1 EL input,

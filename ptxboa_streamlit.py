@@ -6,14 +6,15 @@ Execution:
 >>> streamlit run  ptxboa_streamlit.py
 """
 
-__version__ = "0.2.1"
+__version__ = "0.5.0"
 
-# TODO how do I use the treamlit logger?
 import logging
+import warnings
 
 import pandas as pd
 import streamlit as st
 import streamlit_antd_components as sac
+from pypsa import Network
 
 from app.context_data import load_context_data
 from app.layout_elements import display_footer
@@ -27,33 +28,58 @@ from app.tab_info import content_info
 from app.tab_input_data import content_input_data
 from app.tab_literature import content_literature
 from app.tab_market_scanning import content_market_scanning
+from app.tab_optimization import content_optimization
 from app.tab_sustainability import content_sustainability
 from app.user_data import display_user_changes
 from app.user_data_from_file import download_user_data, upload_user_data
+from ptxboa import DEFAULT_CACHE_DIR, DEFAULT_DATA_DIR
 from ptxboa.api import PtxboaAPI
+
+warnings.filterwarnings(  # filter pandas warning from pypsa optimizer
+    action="ignore",
+    category=FutureWarning,
+    message=(
+        r".*A value is trying to be set on a copy of a DataFrame or Series "
+        r"through chained assignment using an inplace method.*"
+    ),
+)
+warnings.filterwarnings(  # filter DeprecationWarning for read network
+    action="ignore",
+    category=DeprecationWarning,
+)
+
 
 # setup logging
 # level can be changed on strartup with: --logger.level=LEVEL
 loglevel = st.logger.get_logger(__name__).level
-
-
-logger = logging.getLogger()  # do not ude __name__ so we can resue it in submodules
+logger = logging.getLogger()  # do not use __name__ so we can resue it in submodules
 logger.setLevel(loglevel)
-log_handler = logging.StreamHandler()
-log_handler.setFormatter(
-    logging.Formatter(
-        "[%(asctime)s %(levelname)7s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+if not logger.handlers:
+    # only add one handler
+    logger.handlers.append(logging.StreamHandler())
+for handler in logger.handlers:
+    handler.setFormatter(
+        logging.Formatter(
+            "[%(asctime)s %(levelname)7s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+        )
     )
-)
-logger.addHandler(log_handler)
 
-
-logger.debug("Updating app...")
 
 # app layout:
 
+st.set_page_config(
+    page_title="PtX Business Opportunity Analyzer", page_icon="./data/favicon-16x16.png"
+)
+
 # Set the pandas display option to format floats with 2 decimal places
 pd.set_option("display.float_format", "{:.2f}".format)
+
+if "network" not in st.session_state:
+    st.session_state["network"] = Network()
+
+if "model_status" not in st.session_state:
+    st.session_state["model_status"] = "not yet solved"
+
 
 if "user_changes_df" not in st.session_state:
     st.session_state["user_changes_df"] = None
@@ -69,7 +95,10 @@ css = """
 """
 st.markdown(css, unsafe_allow_html=True)
 
-api = st.cache_resource(PtxboaAPI)()
+api = st.cache_resource(PtxboaAPI)(
+    data_dir=DEFAULT_DATA_DIR,
+    cache_dir=DEFAULT_CACHE_DIR,  # TODO: maybe disable in test environment?
+)
 
 st.title("PtX Business Opportunity Analyzer")
 
@@ -105,6 +134,7 @@ tabs = (
     "Certification schemes",
     "Sustainability",
     "Literature",
+    "Optimization",
 )
 
 tabs_icons = {
@@ -141,9 +171,7 @@ if "colors" not in st.session_state:
 
 # calculate results over different data dimensions:
 costs_per_region = calculate_results_list(
-    api,
-    parameter_to_change="region",
-    parameter_list=None,
+    api, parameter_to_change="region", parameter_list=None
 )
 costs_per_scenario = calculate_results_list(
     api,
@@ -231,5 +259,8 @@ if st.session_state[st.session_state["tab_key"]] == "Literature":
 
 if st.session_state[st.session_state["tab_key"]] == "Info":
     content_info()
+
+if st.session_state[st.session_state["tab_key"]] == "Optimization":
+    content_optimization(api)
 
 display_footer()

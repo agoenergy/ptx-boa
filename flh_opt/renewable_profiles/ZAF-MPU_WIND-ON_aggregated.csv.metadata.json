@@ -1,0 +1,9 @@
+{
+  "filehash_md5": "edf1cca527415aa1149d33247a5c873b",
+  "noTypicalPeriods": 8,
+  "hoursPerPeriod": 168,
+  "representationMethod": "distributionAndMinMaxRepresentation",
+  "distributionPeriodWise": false,
+  "clusterMethod": "hierarchical",
+  "index_included": true
+}
