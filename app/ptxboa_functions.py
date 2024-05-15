@@ -7,13 +7,14 @@ import pandas as pd
 import streamlit as st
 
 from ptxboa.api import PtxboaAPI
+from ptxboa.utils import is_test
 
 
 def calculate_results_single(
     _api: PtxboaAPI,
     settings: dict,
     user_data: pd.DataFrame | None = None,
-    optimize_flh: bool = False,
+    optimize_flh: bool = True,
 ) -> pd.DataFrame:
     """Calculate results for a single set of settings.
 
@@ -88,6 +89,10 @@ def calculate_results_list(
     # copy settings from session_state:
     settings = {key: st.session_state[key] for key in setting_keys}
 
+    # in test environment: do not optimize by default
+    # NOTE: does not work in global, must be called here in a function
+    optimize_flh = not is_test()
+
     # update settings from session state with custom values
     if override_session_state is not None:
         if not set(override_session_state.keys()).issubset(set(setting_keys)):
@@ -109,10 +114,7 @@ def calculate_results_list(
     for parameter in parameter_list:
         settings.update({parameter_to_change: parameter})
         # only optimize when using actual chosen parameter set:
-        if st.session_state[parameter_to_change] == parameter:
-            optimize_flh = True
-        else:
-            optimize_flh = False
+
         res_single = calculate_results_single(
             api,
             settings,

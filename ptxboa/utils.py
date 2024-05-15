@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Utilities."""
 
+import os
+
 
 def annuity(rate: float, periods: int, value: float) -> float:
     """Calculate annuity.
@@ -38,3 +40,10 @@ class SingletonMeta(type):
         if key not in cls._instances:
             cls._instances[key] = super().__call__(*args)
         return cls._instances[key]
+
+
+def is_test():
+    return (
+        "PYTEST_CURRENT_TEST" in os.environ
+        or "STREAMLIT_GLOBAL_UNIT_TEST" in os.environ
+    )
