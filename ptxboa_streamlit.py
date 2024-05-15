@@ -153,14 +153,14 @@ if "tab_key" not in st.session_state:
 if st.session_state["tab_key"] not in st.session_state:
     st.session_state[st.session_state["tab_key"]] = "Costs"
 
-sac.tabs(
-    [sac.TabsItem(label=i, icon=tabs_icons.get(i, None)) for i in tabs],
+sac.buttons(
+    [sac.ButtonsItem(label=i, icon=tabs_icons.get(i, None)) for i in tabs],
     index=tabs.index(st.session_state[st.session_state["tab_key"]]),
     format_func="title",
     align="center",
     key=st.session_state["tab_key"],
 )
-
+st.divider()
 # create sidebar:
 make_sidebar(api)
 
@@ -169,56 +169,85 @@ if "colors" not in st.session_state:
     colors = pd.read_csv("data/Agora_Industry_Colours.csv")
     st.session_state["colors"] = colors["Hex Code"].to_list()
 
-# calculate results over different data dimensions:
-costs_per_region = calculate_results_list(
-    api, parameter_to_change="region", parameter_list=None
-)
-costs_per_scenario = calculate_results_list(
-    api,
-    parameter_to_change="scenario",
-    parameter_list=None,
-)
-costs_per_res_gen = calculate_results_list(
-    api,
-    parameter_to_change="res_gen",
-    # TODO: here we remove PV tracking manually, this needs to be fixed in data
-    parameter_list=[
-        x for x in api.get_dimension("res_gen").index.to_list() if x != "PV tracking"
-    ],
-)
-costs_per_chain = calculate_results_list(
-    api,
-    parameter_to_change="chain",
-    parameter_list=None,
-    override_session_state={"output_unit": "USD/MWh"},
-)
+if st.session_state[st.session_state["tab_key"]] in [
+    "Costs",
+    "Market scanning",
+    "Input data",
+    "Deep-dive countries",
+]:
+    # calculate results over different data dimensions:
+    costs_per_region = calculate_results_list(
+        api, parameter_to_change="region", parameter_list=None
+    )
+    costs_per_scenario = calculate_results_list(
+        api,
+        parameter_to_change="scenario",
+        parameter_list=None,
+    )
+    costs_per_res_gen = calculate_results_list(
+        api,
+        parameter_to_change="res_gen",
+        # TODO: here we remove PV tracking manually, this needs to be fixed in data
+        parameter_list=[
+            x
+            for x in api.get_dimension("res_gen").index.to_list()
+            if x != "PV tracking"
+        ],
+    )
+    costs_per_chain = calculate_results_list(
+        api,
+        parameter_to_change="chain",
+        parameter_list=None,
+        override_session_state={"output_unit": "USD/MWh"},
+    )
 
-# calculate results over different data dimensions (without user changes):
-costs_per_region_without_user_changes = calculate_results_list(
-    api, parameter_to_change="region", parameter_list=None, apply_user_data=False
-)
-costs_per_scenario_without_user_changes = calculate_results_list(
-    api, parameter_to_change="scenario", parameter_list=None, apply_user_data=False
-)
-costs_per_res_gen_without_user_changes = calculate_results_list(
-    api,
-    parameter_to_change="res_gen",
-    # TODO: here we remove PV tracking manually, this needs to be fixed in data
-    parameter_list=[
-        x for x in api.get_dimension("res_gen").index.to_list() if x != "PV tracking"
-    ],
-    apply_user_data=False,
-)
-costs_per_chain_without_user_changes = calculate_results_list(
-    api,
-    parameter_to_change="chain",
-    parameter_list=None,
-    override_session_state={"output_unit": "USD/MWh"},
-    apply_user_data=False,
-)
+    if st.session_state["user_changes_df"] is not None:
+        # calculate results over different data dimensions (without user changes):
+        costs_per_region_without_user_changes = calculate_results_list(
+            api,
+            parameter_to_change="region",
+            parameter_list=None,
+            apply_user_data=False,
+        )
+        costs_per_scenario_without_user_changes = calculate_results_list(
+            api,
+            parameter_to_change="scenario",
+            parameter_list=None,
+            apply_user_data=False,
+        )
+        costs_per_res_gen_without_user_changes = calculate_results_list(
+            api,
+            parameter_to_change="res_gen",
+            # TODO: here we remove PV tracking manually, this needs to be fixed in data
+            parameter_list=[
+                x
+                for x in api.get_dimension("res_gen").index.to_list()
+                if x != "PV tracking"
+            ],
+            apply_user_data=False,
+        )
+        costs_per_chain_without_user_changes = calculate_results_list(
+            api,
+            parameter_to_change="chain",
+            parameter_list=None,
+            override_session_state={"output_unit": "USD/MWh"},
+            apply_user_data=False,
+        )
+    else:
+        costs_per_region_without_user_changes = None
+        costs_per_scenario_without_user_changes = None
+        costs_per_res_gen_without_user_changes = None
+        costs_per_chain_without_user_changes = None
 
-# import context data:
-cd = load_context_data()
+if st.session_state[st.session_state["tab_key"]] in [
+    "Country fact sheets",
+    "Certification schemes",
+    "Sustainability",
+    "Literature",
+    "Market scanning",
+]:
+    # import context data:
+    cd = load_context_data()
 
 # costs:
 if st.session_state[st.session_state["tab_key"]] == "Costs":
