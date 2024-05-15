@@ -6,12 +6,16 @@ import pypsa
 import streamlit as st
 
 from app.network_download import download_network_as_netcdf
+from app.ptxboa_functions import read_markdown_file
 from ptxboa.api import PtxboaAPI
 
 
 def content_optimization(api: PtxboaAPI) -> None:
     st.subheader("Optimization results")
     st.warning("Warning: Preliminary debugging results. ")
+
+    with st.expander("What is this?"):
+        st.markdown(read_markdown_file("md/whatisthis_optimization.md"))
 
     try:
         n, metadata = api.get_flh_opt_network(
