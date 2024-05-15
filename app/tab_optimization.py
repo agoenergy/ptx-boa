@@ -53,7 +53,17 @@ def content_optimization(api: PtxboaAPI) -> None:
         with st.container(border=True):
             st.subheader("Capacities, full load hours and costs")
             st.markdown(read_markdown_file("md/info_optimization_results.md"))
-            st.dataframe(res.round(2), use_container_width=True)
+            st.dataframe(
+                res,
+                use_container_width=True,
+                column_config={
+                    "Capacity (kW)": st.column_config.NumberColumn(format="%.1f"),
+                    "Output (kWh/a)": st.column_config.NumberColumn(format="%.0f"),
+                    "Full load hours (h)": st.column_config.NumberColumn(format="%.0f"),
+                    "Curtailment (%)": st.column_config.NumberColumn(format="%.1f %%"),
+                    "Cost (USD/MWh)": st.column_config.NumberColumn(format="%.1f"),
+                },
+            )
 
         with st.container(border=True):
             st.subheader("Download model")
@@ -163,6 +173,8 @@ def calc_aggregate_statistics(
         / 8760
         * 1000
     )
+
+    res["Output (MWh/a)"] = res["Output (kWh/a)"] / 1000
 
     # rename components:
     rename_list = {
