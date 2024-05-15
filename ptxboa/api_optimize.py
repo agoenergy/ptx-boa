@@ -11,6 +11,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
+import pandas as pd
 from pypsa import Network
 
 from flh_opt import __version__ as flh_opt_version
@@ -106,11 +107,85 @@ class ProfilesHashes(metaclass=SingletonMeta):
         return result
 
 
+class ProfilesFLH(metaclass=SingletonMeta):
+    """Only instanciated once for profiles_path."""
+
+    PATTERN = re.compile(r"^(?P<region>[^_]+)_(?P<res>.+)_aggregated.csv$")
+
+    def __init__(self, profiles_path: Path):
+        self.profiles_path = profiles_path
+        self.data = self._load_all()
+
+    def _available_profiles(self) -> list[tuple[str, str]]:
+        region_res = []
+        for f in self.profiles_path.iterdir():
+            match = self.PATTERN.match(f.name)
+            if not match:
+                continue
+            region_res.append(match.groups())
+        return region_res
+
+    def _load_all(self) -> dict:
+        """Load all FLH data from profiles.
+
+        Profiles need to be weighted first.
+        """
+        logger.info("load flh from profiles data")
+        profile_data = []
+        for region, res_location in self._available_profiles():
+            profiles_file = (
+                self.profiles_path / f"{region}_{res_location}_aggregated.csv"
+            )
+            weights_file = (
+                self.profiles_path / f"{region}_{res_location}_aggregated.weights.csv"
+            )
+            pr = pd.read_csv(profiles_file, index_col=["period_id", "TimeStep"])
+            we = pd.read_csv(weights_file, index_col=["period_id", "TimeStep"])
+            # multiply columns in profiles with weightings
+            pr_weighted = (
+                pr.mul(we.squeeze(), axis=0)
+                .reset_index(drop=True)
+                .stack()
+                .rename("specific_generation")
+            )
+            pr_weighted.index = pr_weighted.index.set_names("re_source", level=-1)
+            pr_weighted = pr_weighted.reset_index()
+            pr_weighted["re_location"] = res_location
+            pr_weighted["source_region"] = region
+            profile_data.append(pr_weighted)
+
+        profile_data = pd.concat(profile_data)
+
+        flh = (
+            profile_data.groupby(["source_region", "re_location", "re_source"])[
+                "specific_generation"
+            ]
+            .sum()
+            .rename("value")
+            .reset_index()
+        )
+
+        # combine re_location and re_source to res_gen code
+        def combine_location_and_source(re_location, re_source):
+            if re_location == re_source:
+                return re_source
+            else:
+                return f"{re_location}-{re_source}"
+
+        flh["res_gen"] = flh.apply(
+            lambda x: combine_location_and_source(x["re_location"], x["re_source"]),
+            axis=1,
+        )
+
+        return flh[["source_region", "res_gen", "value"]]
+
+
 class PtxOpt:
 
     def __init__(self, profiles_path: Path, cache_dir: Path):
         self.cache_dir = cache_dir
         self.profiles_hashes = ProfilesHashes(profiles_path)
+        self.profiles_flh = ProfilesFLH(profiles_path)
 
     def _save(
         self, filepath: str, data: object, network: Network, metadata: dict

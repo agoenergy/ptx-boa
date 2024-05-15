@@ -74,7 +74,8 @@ def content_deep_dive_countries(
                     "Wind Onshore",
                     "Wind Offshore",
                     "PV tilted",
-                    "Wind-PV-Hybrid",
+                    "Wind Onshore (hybrid)",
+                    "PV tilted (hybrid)",
                 ],
                 key="ddc_flh_map_parameter",
             )

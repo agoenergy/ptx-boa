@@ -267,6 +267,25 @@ def get_data_type_from_input_data(
     -------
     pd.DataFrame
     """
+    if data_type == "full load hours":
+        input_data = api.get_optimization_flh_input_data()
+        df = subset_and_pivot_input_data(
+            input_data,
+            source_region_code=None,
+            parameter_code=None,
+            process_code=None,
+            index="source_region",
+            columns="res_gen",
+            values="value",
+        )
+        if scope == "world":
+            df = remove_subregions(
+                api=api, df=df, country_name=st.session_state["country"]
+            )
+        if scope in ["Argentina", "Morocco", "South Africa"]:
+            df = select_subregions(df, scope)
+        return df
+
     input_data = api.get_input_data(
         st.session_state["scenario"],
         user_data=st.session_state["user_changes_df"],
@@ -359,7 +378,7 @@ def get_data_type_from_input_data(
             processes["is_transport"] & processes["is_transformation"], "process_name"
         ].to_list()
 
-    if data_type in ["CAPEX", "full load hours", "interest rate"]:
+    if data_type in ["CAPEX", "interest rate"]:
         source_region_code = None
         parameter_code = [data_type]
         index = "source_region_code"
@@ -368,13 +387,12 @@ def get_data_type_from_input_data(
         columns = "parameter_code"
         process_code = [""]
 
-    if data_type in ["CAPEX", "full load hours"]:
+    if data_type == "CAPEX":
         columns = "process_code"
         process_code = [
             "Wind Onshore",
             "Wind Offshore",
             "PV tilted",
-            "Wind-PV-Hybrid",
         ]
 
     df = subset_and_pivot_input_data(
