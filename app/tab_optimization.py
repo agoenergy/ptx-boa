@@ -164,8 +164,6 @@ def calc_aggregate_statistics(
         * 1000
     )
 
-    res.at["Total", "Cost (USD/MWh)"] = res["Cost (USD/MWh)"].sum()
-
     # rename components:
     rename_list = {
         "PV-FIX": "PV tilted",
@@ -186,11 +184,27 @@ def calc_aggregate_statistics(
             [
                 "Capacity (kW)",
                 "Output (kWh/a)",
-                "Curtailment (%)",
                 "Full load hours (h)",
+                "Curtailment (%)",
                 "Cost (USD/MWh)",
             ]
         ]
+
+        res = res[
+            res.index.isin(
+                [
+                    "PV tilted",
+                    "Wind onshore",
+                    "Wind offshore",
+                    "Electrolyzer",
+                    "Derivate production",
+                ]
+            )
+        ]
+
+    # calculate total costs:
+    res.at["Total", "Cost (USD/MWh)"] = res["Cost (USD/MWh)"].sum()
+
     return res
 
 
