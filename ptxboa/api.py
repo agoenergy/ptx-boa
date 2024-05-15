@@ -122,7 +122,7 @@ class PtxboaAPI:
         output_unit: OutputUnitType = "USD/MWh",
         user_data: pd.DataFrame | None = None,
         optimize_flh: bool = True,
-        use_user_data_for_optimize_flh: bool = True,
+        use_user_data_for_optimize_flh: bool = False,
     ) -> Tuple[pd.DataFrame, object]:
         """Calculate results based on user selection.
 

@@ -661,7 +661,7 @@ class DataHandler:
         use_ship: bool,
         ship_own_fuel: bool,
         optimize_flh: bool,
-        use_user_data_for_optimize_flh: bool = True,
+        use_user_data_for_optimize_flh: bool = False,
     ) -> CalculateDataType:
         """Create data for calculation.
 
@@ -705,9 +705,9 @@ class DataHandler:
         # get optimizedFLH?
         if optimize_flh:
 
-            # if we have user data nd it should NOT be used for optimization
+            # if we have user data BUT it should NOT be used for optimization
             # get a different dataset for optimization
-            if self.user_data is None or use_user_data_for_optimize_flh:
+            if self.user_data is not None and not use_user_data_for_optimize_flh:
                 data_opt = self._get_calculation_data(
                     secondary_processes=secondary_processes,
                     chain_name=chain_name,

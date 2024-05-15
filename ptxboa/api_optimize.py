@@ -417,6 +417,9 @@ class PtxOpt:
 
         if not cache_exists:
             # must run optimizer
+            logger.info(f"Run new optimizazion: {hash_sum}")
+            logger.debug(opt_input_data)
+
             opt_output_data, network = optimize(
                 opt_input_data, profiles_path=self.profiles_hashes.profiles_path
             )
