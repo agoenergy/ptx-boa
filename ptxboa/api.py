@@ -289,6 +289,7 @@ class PtxboaAPI:
             ship_own_fuel=ship_own_fuel,
             user_data=user_data,
             optimize_flh=True,
+            use_user_data_for_optimize_flh=True,  # always consider user data
         )
         hashsum = metadata.get("flh_opt_hash", {}).get("hash_md5")
         if not hashsum:
