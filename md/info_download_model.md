@@ -1,1 +1,1 @@
-You can download the PyPSA model as a NetCDF file for deeper inspection or as a starting point for your own modeling exercises. Check the PyPSA documentation [(link)](<https://pypsa.readthedocs.io/en/latest/import_export.html>) on how to read model data from a NetCDF file.
+You can download the PyPSA model as a NetCDF file for deeper inspection or as a starting point for your own modeling exercises. Check the [PyPSA documentation](<https://pypsa.readthedocs.io/en/latest/import_export.html>) on how to read model data from a NetCDF file.
