@@ -383,7 +383,9 @@ class PtxOpt:
         hashsum = get_data_hash_md5(hash_data)
         return hash_data, hashsum
 
-    def get_data(self, data: CalculateDataType) -> CalculateDataType:
+    def get_data(
+        self, data_opt: CalculateDataType, data: CalculateDataType
+    ) -> CalculateDataType:
         """Get calculation data including optimized FLH.
 
         Parameters
@@ -399,12 +401,12 @@ class PtxOpt:
         """
         # prepare data for optimization
         # (even if we dont optimize, we needit to get hashsum)
-        opt_input_data = self._prepare_data(data)
+        opt_input_data = self._prepare_data(data_opt)
 
         use_cache = bool(self.cache_dir)
 
         # get hashsum (and metadata opt metadata)
-        opt_metadata, hash_sum = self._get_hashsum(data, opt_input_data)
+        opt_metadata, hash_sum = self._get_hashsum(data_opt, opt_input_data)
 
         if use_cache:
             hash_filepath = self._get_cache_filepath(hash_sum)
@@ -415,6 +417,9 @@ class PtxOpt:
 
         if not cache_exists:
             # must run optimizer
+            logger.info(f"Run new optimizazion: {hash_sum}")
+            logger.debug(opt_input_data)
+
             opt_output_data, network = optimize(
                 opt_input_data, profiles_path=self.profiles_hashes.profiles_path
             )

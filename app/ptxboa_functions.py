@@ -10,11 +10,13 @@ from ptxboa.api import PtxboaAPI
 from ptxboa.utils import is_test
 
 
+@st.cache_data
 def calculate_results_single(
     _api: PtxboaAPI,
     settings: dict,
     user_data: pd.DataFrame | None = None,
     optimize_flh: bool = True,
+    use_user_data_for_optimize_flh: bool = False,
 ) -> pd.DataFrame:
     """Calculate results for a single set of settings.
 
@@ -32,7 +34,10 @@ def calculate_results_single(
         same format as for :meth:`~ptxboa.api.PtxboaAPI.calculate()`
     """
     res, _metadata = _api.calculate(
-        user_data=user_data, **settings, optimize_flh=optimize_flh
+        user_data=user_data,
+        **settings,
+        optimize_flh=optimize_flh,
+        use_user_data_for_optimize_flh=use_user_data_for_optimize_flh,
     )
 
     return res
@@ -113,13 +118,19 @@ def calculate_results_list(
     res_list = []
     for parameter in parameter_list:
         settings.update({parameter_to_change: parameter})
-        # only optimize when using actual chosen parameter set:
+
+        # consider user data in optimization only for parameter set in session state
+        if st.session_state[parameter_to_change] == parameter:
+            use_user_data_for_optimize_flh = True
+        else:
+            use_user_data_for_optimize_flh = False
 
         res_single = calculate_results_single(
             api,
             settings,
             user_data=st.session_state["user_changes_df"] if apply_user_data else None,
             optimize_flh=optimize_flh,
+            use_user_data_for_optimize_flh=use_user_data_for_optimize_flh,
         )
         res_list.append(res_single)
     res_details = pd.concat(res_list)

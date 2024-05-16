@@ -122,6 +122,7 @@ class PtxboaAPI:
         output_unit: OutputUnitType = "USD/MWh",
         user_data: pd.DataFrame | None = None,
         optimize_flh: bool = True,
+        use_user_data_for_optimize_flh: bool = False,
     ) -> Tuple[pd.DataFrame, object]:
         """Calculate results based on user selection.
 
@@ -152,6 +153,8 @@ class PtxboaAPI:
             contains only rows of scenario_data that have been modified.
             ids are expected to come as long names. Needs to have the columns
             ["source_region_code", "process_code", "parameter_code", "value"].
+        use_user_data_for_optimize_flh: bool
+            If True: use user data as input for flh optimization as well.
 
         Returns
         -------
@@ -201,6 +204,7 @@ class PtxboaAPI:
             use_ship=(transport == "Ship"),
             ship_own_fuel=ship_own_fuel,
             optimize_flh=optimize_flh,
+            use_user_data_for_optimize_flh=use_user_data_for_optimize_flh,
         )
 
         result_df = PtxCalc.calculate(data)
@@ -285,6 +289,7 @@ class PtxboaAPI:
             ship_own_fuel=ship_own_fuel,
             user_data=user_data,
             optimize_flh=True,
+            use_user_data_for_optimize_flh=True,  # always consider user data
         )
         hashsum = metadata.get("flh_opt_hash", {}).get("hash_md5")
         if not hashsum:
