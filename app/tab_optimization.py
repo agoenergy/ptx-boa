@@ -1,18 +1,26 @@
 # -*- coding: utf-8 -*-
 """Content of optimization tab."""
 import pandas as pd
-import plotly.graph_objects as go
 import pypsa
 import streamlit as st
 
 from app.network_download import download_network_as_netcdf
+from app.plot_functions import (
+    create_profile_figure_capacity_factors,
+    create_profile_figure_generation,
+    create_profile_figure_soc,
+    prepare_data_for_profile_figures,
+)
+from app.ptxboa_functions import read_markdown_file
 from ptxboa.api import PtxboaAPI
 
 
 def content_optimization(api: PtxboaAPI) -> None:
-    st.subheader("Optimization results")
-    st.warning("Warning: Preliminary debugging results. ")
 
+    with st.expander("What is this?"):
+        st.markdown(read_markdown_file("md/whatisthis_optimization.md"))
+
+    # load netcdf file:
     try:
         n, metadata = api.get_flh_opt_network(
             scenario=st.session_state["scenario"],
@@ -33,13 +41,54 @@ def content_optimization(api: PtxboaAPI) -> None:
     if metadata["model_status"] == ["ok", "optimal"]:
 
         res = calc_aggregate_statistics(n)
-        with st.expander("Aggregate statistics"):
-            st.dataframe(res.round(2), use_container_width=True)
+        res_debug = calc_aggregate_statistics(n, include_debugging_output=True)
+        df_sel = prepare_data_for_profile_figures(n)
 
-        with st.expander("Profiles"):
-            create_profile_figure(n)
+        with st.container(border=True):
+            st.subheader("Generation profiles")
+            st.markdown(read_markdown_file("md/info_generation_profile_figure.md"))
+            fig = create_profile_figure_generation(df_sel)
+            st.plotly_chart(fig, use_container_width=True)
 
-        with st.expander("Input data"):
+        with st.container(border=True):
+            st.subheader("Capacities, full load hours and costs")
+            st.markdown(read_markdown_file("md/info_optimization_results.md"))
+            st.dataframe(
+                res,
+                use_container_width=True,
+                column_config={
+                    "Capacity (kW)": st.column_config.NumberColumn(format="%.1f"),
+                    "Output (kWh/a)": st.column_config.NumberColumn(format="%.0f"),
+                    "Full load hours (h)": st.column_config.NumberColumn(format="%.0f"),
+                    "Curtailment (%)": st.column_config.NumberColumn(format="%.1f %%"),
+                    "Cost (USD/MWh)": st.column_config.NumberColumn(format="%.1f"),
+                },
+            )
+
+        with st.container(border=True):
+            st.subheader("Download model")
+            st.markdown(read_markdown_file("md/info_download_model.md"))
+            download_network_as_netcdf(st.session_state["network"], "network.nc")
+
+        with st.expander("Debugging output"):
+            st.warning(
+                "This output is for debugging only. It will be hidden from end users by default."  # noqa
+            )
+            st.markdown("#### Aggregate statistics:")
+            st.dataframe(res_debug)
+
+            st.markdown("#### Storage state of charge")
+            fig = create_profile_figure_soc(df_sel)
+            st.plotly_chart(fig, use_container_width=True)
+
+            st.markdown("#### Capacity factors")
+            fig = create_profile_figure_capacity_factors(df_sel)
+            st.plotly_chart(fig, use_container_width=True)
+
+            st.markdown("#### Profile data")
+            st.dataframe(df_sel, use_container_width=True)
+
+            st.markdown("#### Input data")
             show_input_data(n)
 
     else:
@@ -47,11 +96,11 @@ def content_optimization(api: PtxboaAPI) -> None:
             f"No optimal solution! -> model status is {st.session_state['model_status']}"  # noqa
         )
 
-    download_network_as_netcdf(st.session_state["network"], "network.nc")
-
 
 # calculate aggregate statistics:
-def calc_aggregate_statistics(n: pypsa.Network) -> pd.DataFrame:
+def calc_aggregate_statistics(
+    n: pypsa.Network, include_debugging_output: bool = False
+) -> pd.DataFrame:
     res = pd.DataFrame()
     for g in [
         "PV-FIX",
@@ -65,6 +114,19 @@ def calc_aggregate_statistics(n: pypsa.Network) -> pd.DataFrame:
             ).sum()
             res.at[g, "CAPEX (USD/kW)"] = n.generators.at[g, "capital_cost"]
             res.at[g, "OPEX (USD/kWh)"] = n.generators.at[g, "marginal_cost"]
+            res.at[g, "Full load hours before curtailment (h)"] = (
+                n.generators_t["p_max_pu"][g] * n.snapshot_weightings["generators"]
+            ).sum()
+            res.at[g, "Curtailment (kWh/a)"] = (
+                res.at[g, "Capacity (kW)"]
+                * res.at[g, "Full load hours before curtailment (h)"]
+                - res.at[g, "Output (kWh/a)"]
+            )
+            res.at[g, "Curtailment (%)"] = (
+                100
+                * res.at[g, "Curtailment (kWh/a)"]
+                / (res.at[g, "Output (kWh/a)"] + res.at[g, "Curtailment (kWh/a)"])
+            )
 
     for g in ["ELY", "DERIV", "H2_STR_in"]:
         if g in n.links.index:
@@ -112,7 +174,7 @@ def calc_aggregate_statistics(n: pypsa.Network) -> pd.DataFrame:
         * 1000
     )
 
-    res.at["Total", "Cost (USD/MWh)"] = res["Cost (USD/MWh)"].sum()
+    res["Output (MWh/a)"] = res["Output (kWh/a)"] / 1000
 
     # rename components:
     rename_list = {
@@ -127,211 +189,35 @@ def calc_aggregate_statistics(n: pypsa.Network) -> pd.DataFrame:
         "H2O-L_supply": "Water supply",
     }
     res = res.rename(rename_list, axis=0)
-    return res
 
-
-def create_profile_figure(n: pypsa.Network) -> None:
-    def transform_time_series(
-        df: pd.DataFrame, parameter: str = "Power"
-    ) -> pd.DataFrame:
-        res = df.reset_index().melt(
-            id_vars=["timestep", "period"],
-            var_name="Component",
-            value_name="MW (MWh for SOC)",
-        )
-        res["Parameter"] = parameter
-        return res
-
-    df_p_max_pu = n.generators_t["p_max_pu"]
-    df_p_max_pu = transform_time_series(df_p_max_pu, parameter="cap. factor")
-    df_gen = n.generators_t["p"]
-    df_gen = transform_time_series(df_gen)
-    df_links = -n.links_t["p1"]
-    df_links = transform_time_series(df_links)
-    df_store = n.stores_t["e"]
-    df_store = transform_time_series(df_store)
-    df_storageunit = n.storage_units_t["state_of_charge"]
-    df_storageunit = transform_time_series(df_storageunit)
-
-    df = pd.concat([df_p_max_pu, df_gen, df_links, df_store, df_storageunit])
-
-    # selection:
-    df = df.loc[
-        df["Component"].isin(
+    # drop unwanted columns:
+    if not include_debugging_output:
+        res = res[
             [
-                "PV-FIX",
-                "WIND-ON",
-                "WIND-OFF",
-                "ELY",
-                "DERIV",
-                "H2_STR_store",
-                "EL_STR",
-                "final_product_storage",
+                "Capacity (kW)",
+                "Output (kWh/a)",
+                "Full load hours (h)",
+                "Curtailment (%)",
+                "Cost (USD/MWh)",
             ]
-        )
-    ]
+        ]
 
-    # rename components:
-    rename_list = {
-        "PV-FIX": "PV tilted",
-        "WIND-ON": "Wind onshore",
-        "WIND-OFF": "Wind offshore",
-        "ELY": "Electrolyzer",
-        "DERIV": "Derivate production",
-        "H2_STR_in": "H2 storage",
-        "H2_STR_store": "H2 storage",
-        "final_product_storage": "Final product storage",
-        "EL_STR": "Electricity storage",
-        "CO2-G_supply": "CO2 supply",
-        "H2O-L_supply": "Water supply",
-    }
-    df = df.replace(rename_list)
-
-    df_sel = df
-
-    # add continous time index:
-    df_sel["period"] = df_sel["period"].astype(int)
-    df_sel["timestep"] = df_sel["timestep"].astype(int)
-    df_sel["time"] = 7 * 24 * df_sel["period"] + df_sel["timestep"]
-    df_sel = df_sel.sort_values("time")
-
-    # generation:
-    st.subheader("Output")
-    fig = go.Figure()
-
-    def add_vertical_lines(fig: go.Figure):
-        """Add vertical lines between periods."""
-        for x in range(7 * 24, 7 * 8 * 24, 7 * 24):
-            fig.add_vline(x=x, line_color="black", line_width=0.5)
-
-    def add_to_figure(
-        df: pd.DataFrame,
-        fig: go.Figure,
-        component: str,
-        parameter: str,
-        color: str,
-        fill: bool = False,
-    ):
-        df_plot = df[(df["Component"] == component)]
-        df_plot = df_plot[(df_plot["Parameter"] == parameter)]
-        if fill:
-            fig.add_trace(
-                go.Line(
-                    x=df_plot["time"],
-                    y=df_plot["MW (MWh for SOC)"],
-                    name=component,
-                    line_color=color,
-                    stackgroup="one",
-                )
+        res = res[
+            res.index.isin(
+                [
+                    "PV tilted",
+                    "Wind onshore",
+                    "Wind offshore",
+                    "Electrolyzer",
+                    "Derivate production",
+                ]
             )
-        else:
-            fig.add_trace(
-                go.Line(
-                    x=df_plot["time"],
-                    y=df_plot["MW (MWh for SOC)"],
-                    name=component,
-                    line_color=color,
-                )
-            )
+        ]
 
-    add_to_figure(
-        df_sel, fig, component="PV tilted", parameter="Power", fill=True, color="yellow"
-    )
-    add_to_figure(
-        df_sel,
-        fig,
-        component="Wind onshore",
-        parameter="Power",
-        fill=True,
-        color="blue",
-    )
-    add_to_figure(
-        df_sel,
-        fig,
-        component="Wind offshore",
-        parameter="Power",
-        fill=True,
-        color="blue",
-    )
-    add_to_figure(
-        df_sel, fig, component="Electrolyzer", parameter="Power", color="black"
-    )
-    add_to_figure(
-        df_sel, fig, component="Derivate production", parameter="Power", color="red"
-    )
+    # calculate total costs:
+    res.at["Total", "Cost (USD/MWh)"] = res["Cost (USD/MWh)"].sum()
 
-    add_vertical_lines(fig)
-
-    fig.update_layout(
-        xaxis={"title": "time (h)"},
-        yaxis={"title": "output (MW)"},
-    )
-
-    st.plotly_chart(fig, use_container_width=True)
-
-    st.subheader("Storage state of charge")
-    include_final_product_storage = st.toggle("Show final product storage", value=False)
-    # storage figure:
-    fig = go.Figure()
-
-    add_to_figure(
-        df_sel,
-        fig,
-        component="Electricity storage",
-        parameter="Power",
-        color="black",
-    )
-
-    add_to_figure(
-        df_sel,
-        fig,
-        component="H2 storage",
-        parameter="Power",
-        color="red",
-    )
-    if include_final_product_storage:
-        add_to_figure(
-            df_sel,
-            fig,
-            component="Final product storage",
-            parameter="Power",
-            color="blue",
-        )
-
-    add_vertical_lines(fig)
-
-    fig.update_layout(
-        xaxis={"title": "time (h)"},
-        yaxis={"title": "state of charge (MWh)"},
-    )
-
-    st.plotly_chart(fig, use_container_width=True)
-
-    st.subheader("Capacity factors")
-
-    fig = go.Figure()
-    add_to_figure(
-        df_sel, fig, component="PV tilted", parameter="cap. factor", color="yellow"
-    )
-    add_to_figure(
-        df_sel,
-        fig,
-        component="Wind onshore",
-        parameter="cap. factor",
-        color="blue",
-    )
-    add_to_figure(
-        df_sel,
-        fig,
-        component="Wind offshore",
-        parameter="cap. factor",
-        color="blue",
-    )
-    add_vertical_lines(fig)
-    st.plotly_chart(fig, use_container_width=True)
-
-    st.subheader("Profile data")
-    st.dataframe(df_sel, use_container_width=True)
+    return res
 
 
 def show_filtered_df(
