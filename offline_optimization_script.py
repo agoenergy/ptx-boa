@@ -91,8 +91,8 @@ def main(
         "transport": "Ship",
         "ship_own_fuel": False,
         "country": "Germany",
-        "secproc_water": "specific costs",
-        "secproc_co2": "specific costs",
+        "secproc_water": "Specific costs",
+        "secproc_co2": "Specific costs",
     }
 
     n_total = np.prod([len(x) for x in param_arrays.values()])
