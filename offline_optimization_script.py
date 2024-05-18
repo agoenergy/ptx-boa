@@ -75,7 +75,10 @@ def main(
     # these are the parameter dimensions that are relevant for the optimization
     param_arrays = {
         "scenario": api.get_dimension("scenario").index.tolist(),
-        "res_gen": api.get_dimension("res_gen").index.tolist(),
+        # skip PV tracking: TODO: also skip Wind Offshore for some regions?
+        "res_gen": [
+            x for x in api.get_dimension("res_gen").index.tolist() if x != "PV tracking"
+        ],
         "region": api.get_dimension("region")["region_name"].tolist(),
         # reconversion does not affect optimization of FLH
         "chain": [
