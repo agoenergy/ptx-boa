@@ -24,6 +24,7 @@ Here is a list of tabs and what you can find there:
 - **Certification schemes**: contains information on standards, regulation and certification schemes around PtX
 - **Sustainability:** provides information on sustainability aspects that should be considered when working with PtX.
 - **Literature:** contains a list of references for further reading.
+- **Optimization**: shows results of the optimization for the currently selected scenario.
 
 ##### General hints on how to use the app
 

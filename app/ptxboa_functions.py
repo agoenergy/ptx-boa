@@ -10,11 +10,13 @@ from ptxboa.api import PtxboaAPI
 from ptxboa.utils import is_test
 
 
+@st.cache_data
 def calculate_results_single(
     _api: PtxboaAPI,
     settings: dict,
     user_data: pd.DataFrame | None = None,
     optimize_flh: bool = True,
+    use_user_data_for_optimize_flh: bool = False,
 ) -> pd.DataFrame:
     """Calculate results for a single set of settings.
 
@@ -32,7 +34,10 @@ def calculate_results_single(
         same format as for :meth:`~ptxboa.api.PtxboaAPI.calculate()`
     """
     res, _metadata = _api.calculate(
-        user_data=user_data, **settings, optimize_flh=optimize_flh
+        user_data=user_data,
+        **settings,
+        optimize_flh=optimize_flh,
+        use_user_data_for_optimize_flh=use_user_data_for_optimize_flh,
     )
 
     return res
@@ -113,13 +118,19 @@ def calculate_results_list(
     res_list = []
     for parameter in parameter_list:
         settings.update({parameter_to_change: parameter})
-        # only optimize when using actual chosen parameter set:
+
+        # consider user data in optimization only for parameter set in session state
+        if st.session_state[parameter_to_change] == parameter:
+            use_user_data_for_optimize_flh = True
+        else:
+            use_user_data_for_optimize_flh = False
 
         res_single = calculate_results_single(
             api,
             settings,
             user_data=st.session_state["user_changes_df"] if apply_user_data else None,
             optimize_flh=optimize_flh,
+            use_user_data_for_optimize_flh=use_user_data_for_optimize_flh,
         )
         res_list.append(res_single)
     res_details = pd.concat(res_list)
@@ -267,6 +278,25 @@ def get_data_type_from_input_data(
     -------
     pd.DataFrame
     """
+    if data_type == "full load hours":
+        input_data = api.get_optimization_flh_input_data()
+        df = subset_and_pivot_input_data(
+            input_data,
+            source_region_code=None,
+            parameter_code=None,
+            process_code=None,
+            index="source_region",
+            columns="res_gen",
+            values="value",
+        )
+        if scope == "world":
+            df = remove_subregions(
+                api=api, df=df, country_name=st.session_state["country"]
+            )
+        if scope in ["Argentina", "Morocco", "South Africa"]:
+            df = select_subregions(df, scope)
+        return df
+
     input_data = api.get_input_data(
         st.session_state["scenario"],
         user_data=st.session_state["user_changes_df"],
@@ -359,7 +389,7 @@ def get_data_type_from_input_data(
             processes["is_transport"] & processes["is_transformation"], "process_name"
         ].to_list()
 
-    if data_type in ["CAPEX", "full load hours", "interest rate"]:
+    if data_type in ["CAPEX", "interest rate"]:
         source_region_code = None
         parameter_code = [data_type]
         index = "source_region_code"
@@ -368,13 +398,12 @@ def get_data_type_from_input_data(
         columns = "parameter_code"
         process_code = [""]
 
-    if data_type in ["CAPEX", "full load hours"]:
+    if data_type == "CAPEX":
         columns = "process_code"
         process_code = [
             "Wind Onshore",
             "Wind Offshore",
             "PV tilted",
-            "Wind-PV-Hybrid",
         ]
 
     df = subset_and_pivot_input_data(
@@ -391,6 +420,13 @@ def get_data_type_from_input_data(
         df = remove_subregions(api=api, df=df, country_name=st.session_state["country"])
     if scope in ["Argentina", "Morocco", "South Africa"]:
         df = select_subregions(df, scope)
+
+    # transform data to match unit [%] for 'interest_rate' and 'efficieny'
+    if data_type == "interest rate":
+        df = df * 100
+
+    if "efficiency" in df.columns:
+        df["efficiency"] = df["efficiency"] * 100
 
     return df
 
@@ -497,7 +533,7 @@ def get_column_config() -> dict:
         "CAPEX": st.column_config.NumberColumn(format="%.0f USD/kW", min_value=0),
         "OPEX (fix)": st.column_config.NumberColumn(format="%.0f USD/kW", min_value=0),
         "efficiency": st.column_config.NumberColumn(
-            format="%.2f", min_value=0, max_value=1
+            format="%.2f %%", min_value=0, max_value=100
         ),
         "lifetime / amortization period": st.column_config.NumberColumn(
             format="%.0f a",

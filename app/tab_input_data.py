@@ -36,14 +36,24 @@ def content_input_data(api: PtxboaAPI) -> None:
         with st.expander("**Map**", expanded=True):
 
             if data_selection in ["full load hours", "CAPEX"]:
-                map_parameter = st.selectbox(
-                    "Select parameter to display on map:",
-                    [
+                if data_selection == "full load hours":
+                    select_options = [
                         "Wind Onshore",
                         "Wind Offshore",
                         "PV tilted",
-                        "Wind-PV-Hybrid",
-                    ],
+                        "Wind Onshore (hybrid)",
+                        "PV tilted (hybrid)",
+                    ]
+                if data_selection == "CAPEX":
+                    select_options = [
+                        "Wind Onshore",
+                        "Wind Offshore",
+                        "PV tilted",
+                    ]
+
+                map_parameter = st.selectbox(
+                    "Select parameter to display on map:",
+                    select_options,
                     key="input_data_map_parameter",
                 )
             else:
@@ -70,7 +80,7 @@ def content_input_data(api: PtxboaAPI) -> None:
             if data_selection == "full load hours":
                 ylabel = "full load hours (h/a)"
             if data_selection == "interest rate":
-                ylabel = "interest rate (per unit)"
+                ylabel = "interest rate (%)"
             fig = px.box(df)
             fig.update_layout(xaxis_title=None, yaxis_title=ylabel)
             st.plotly_chart(fig, use_container_width=True)
@@ -108,6 +118,14 @@ def content_input_data(api: PtxboaAPI) -> None:
                 key="input_data_reconversion_processes",
             )
         with st.expander("**Direct air capture and desalination**"):
+            st.markdown(
+                (
+                    "Units for CAPEX and OPEX (fix) are per kg of CO<sub>2</sub> for "
+                    "direct air capture and per kg of H<sub>2</sub>0 for sea water "
+                    "desalination, respectively."
+                ),
+                unsafe_allow_html=True,
+            )
             display_and_edit_input_data(
                 api,
                 data_type="dac_and_desalination",

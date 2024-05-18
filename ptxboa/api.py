@@ -122,6 +122,7 @@ class PtxboaAPI:
         output_unit: OutputUnitType = "USD/MWh",
         user_data: pd.DataFrame | None = None,
         optimize_flh: bool = True,
+        use_user_data_for_optimize_flh: bool = False,
     ) -> Tuple[pd.DataFrame, object]:
         """Calculate results based on user selection.
 
@@ -152,6 +153,8 @@ class PtxboaAPI:
             contains only rows of scenario_data that have been modified.
             ids are expected to come as long names. Needs to have the columns
             ["source_region_code", "process_code", "parameter_code", "value"].
+        use_user_data_for_optimize_flh: bool
+            If True: use user data as input for flh optimization as well.
 
         Returns
         -------
@@ -201,6 +204,7 @@ class PtxboaAPI:
             use_ship=(transport == "Ship"),
             ship_own_fuel=ship_own_fuel,
             optimize_flh=optimize_flh,
+            use_user_data_for_optimize_flh=use_user_data_for_optimize_flh,
         )
 
         result_df = PtxCalc.calculate(data)
@@ -285,6 +289,7 @@ class PtxboaAPI:
             ship_own_fuel=ship_own_fuel,
             user_data=user_data,
             optimize_flh=True,
+            use_user_data_for_optimize_flh=True,  # always consider user data
         )
         hashsum = metadata.get("flh_opt_hash", {}).get("hash_md5")
         if not hashsum:
@@ -329,3 +334,47 @@ class PtxboaAPI:
         )
         res_techs = res_techs.map(res_gen_code_to_name).to_list()
         return res_techs
+
+    def get_optimization_flh_input_data(self, long_names: bool = True) -> pd.DataFrame:
+        """
+        Return full load hours of renewables used by the optimization.
+
+        Parameters
+        ----------
+        long_names : bool, optional
+            Whether to return long names or internal codes, by default True
+
+        Returns
+        -------
+        : pd.DataFrame
+            long format data
+            columns: source_region, res_gen, value
+        """
+        optimizer = PtxOpt(profiles_path=PROFILES_DIR, cache_dir=None)
+        data = optimizer.profiles_flh.data.copy()
+        if long_names:
+            regions = self.get_dimension("region")
+            region_code_to_name = pd.Series(
+                regions["region_name"].to_list(),
+                index=regions["region_code"],
+            )
+            data["source_region"] = data["source_region"].map(region_code_to_name)
+
+            res_gen = self.get_dimension("res_gen")
+            res_gen_code_to_name = pd.Series(
+                res_gen["process_name"].to_list(),
+                index=res_gen["process_code"],
+            )
+            # TODO: we could define names and codes in ptxboa\static\dim_process.csv
+            # process_code, process_name
+            # RES-HYBR-PV-FIX, PV tilted (hybrid)
+            # RES-HYBR-WIND-ON, Wind Onshore (hybrid)
+            # hard coded names for hybrid location:
+            res_gen_code_to_name["RES-HYBR-PV-FIX"] = "PV tilted (hybrid)"
+            res_gen_code_to_name["RES-HYBR-WIND-ON"] = "Wind Onshore (hybrid)"
+
+            data["res_gen"] = data["res_gen"].map(res_gen_code_to_name)
+            return data
+
+        else:
+            return data

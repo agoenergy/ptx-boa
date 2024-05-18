@@ -10,15 +10,15 @@ After cloning the repository, create a virtual python environment
 in a subdirectory `.env` and activate it:
 
 ```bash
-$ python -m venv .\.env
-$ .env\Scripts\activate.bat
+python -m venv .\.env
+.env\Scripts\activate.bat
 ```
 
 Install the necessary dependencies:
 
 ```bash
-$ python -m pip install --upgrade pip
-$ pip install -r requirements-dev.txt
+python -m pip install --upgrade pip
+pip install -r requirements-dev.txt
 ```
 
 The code is autoformatted and checked with [pre-commit](https://pre-commit.com/).
@@ -43,6 +43,13 @@ In order to run the tests locally run [pytest](https://pytest.org) in the root d
 pytest
 ```
 
+### Download optimization cache for local development
+
+````bash
+cd ptxboa\cache
+scp -r ptxboa2:ptx-boa_offline_optimization/optimization_cache/* .
+````
+
 ## Release Procedure
 
 - merge all relevant branches into develop
@@ -61,7 +68,7 @@ pytest
 # connect to server
 ssh ptxboa
 # pull latest image from dockerhub
-VERSION=0.5.0
+VERSION=0.6.0
 docker pull wingechr/ptx-boa:$VERSION
 # stop and delete the currently running container "app"
 docker stop app

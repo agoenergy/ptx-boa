@@ -165,6 +165,57 @@ def display_footer():
             st.image("img/PtX-Hub_Logo_international_612x306.png")
 
 
+def _form_data_editor(
+    key,
+    df,
+    df_orig,
+    index,
+    columns,
+    missing_index_name,
+    missing_index_value,
+    column_config,
+):
+    if f"{key}_number" not in st.session_state:
+        st.session_state[f"{key}_number"] = 0
+    editor_key = f"{key}_{st.session_state[f'{key}_number']}"
+
+    with st.form(key=f"{key}_form", border=False):
+        st.info(
+            (
+                "You can edit data directly in the table. When done, click the "
+                "**Apply changes** button below to rerun calculations."
+            )
+        )
+
+        st.form_submit_button(
+            "Apply changes",
+            type="primary",
+            on_click=register_user_changes,
+            kwargs={
+                "missing_index_name": missing_index_name,
+                "missing_index_value": missing_index_value,
+                "index": index,
+                "columns": columns,
+                "values": "value",
+                "df_tab": df,
+                "df_orig": df_orig,
+                "key": key,
+                "editor_key": editor_key,
+            },
+        )
+
+        df = st.data_editor(
+            df,
+            use_container_width=True,
+            key=editor_key,
+            num_rows="fixed",
+            disabled=[index],
+            column_config=column_config,
+        )
+
+    return df
+
+
 def display_and_edit_input_data(
     api: PtxboaAPI,
     data_type: Literal[
@@ -243,9 +294,9 @@ def display_and_edit_input_data(
         missing_index_name = "source_region_code"
         missing_index_value = None
         column_config = {
-            "CAPEX": st.column_config.NumberColumn(format="%.2e USD/kg", min_value=0),
+            "CAPEX": st.column_config.NumberColumn(format="%.5f USD/kg", min_value=0),
             "OPEX (fix)": st.column_config.NumberColumn(
-                format="%.2e USD/kg", min_value=0
+                format="%.5f USD/kg", min_value=0
             ),
             "efficiency": st.column_config.NumberColumn(
                 format="%.2f", min_value=0, max_value=1
@@ -263,7 +314,9 @@ def display_and_edit_input_data(
         missing_index_name = "parameter_code"
         missing_index_value = "interest rate"
         column_config = {
-            c: st.column_config.NumberColumn(format="%.3f", min_value=0, max_value=1)
+            c: st.column_config.NumberColumn(
+                format="%.2f %%", min_value=0, max_value=100
+            )
             for c in df.columns
         }
 
@@ -307,42 +360,23 @@ def display_and_edit_input_data(
 
     # if editing is enabled, store modifications in session_state:
     if st.session_state["edit_input_data"]:
-        if f"{key}_number" not in st.session_state:
-            st.session_state[f"{key}_number"] = 0
-        editor_key = f"{key}_{st.session_state[f'{key}_number']}"
-
-        with st.form(key=f"{key}_form", border=False):
-            st.info(
-                (
-                    "You can edit data directly in the table. When done, click the "
-                    "**Apply changes** button below to rerun calculations."
-                )
-            )
-
-            st.form_submit_button(
-                "Apply changes",
-                type="primary",
-                on_click=register_user_changes,
-                kwargs={
-                    "missing_index_name": missing_index_name,
-                    "missing_index_value": missing_index_value,
-                    "index": index,
-                    "columns": columns,
-                    "values": "value",
-                    "df_tab": df,
-                    "df_orig": df_orig,
-                    "key": key,
-                    "editor_key": editor_key,
-                },
-            )
-
-            df = st.data_editor(
+        if data_type == "full load hours":
+            st.info("Full load hours data cannot be modified.")
+            st.dataframe(
                 df,
                 use_container_width=True,
-                key=editor_key,
-                num_rows="fixed",
-                disabled=[index],
                 column_config=column_config,
+            )
+        else:
+            df = _form_data_editor(
+                key,
+                df,
+                df_orig,
+                index,
+                columns,
+                missing_index_name,
+                missing_index_value,
+                column_config,
             )
 
     else:

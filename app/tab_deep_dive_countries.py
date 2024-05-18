@@ -53,7 +53,11 @@ def content_deep_dive_countries(
 
         display_costs(
             select_subregions(costs_per_region, ddc),
-            select_subregions(costs_per_region_without_user_changes, ddc),
+            (
+                select_subregions(costs_per_region_without_user_changes, ddc)
+                if st.session_state["user_changes_df"] is not None
+                else None
+            ),
             key="region",
             titlestring="Costs per subregion",
             key_suffix=ddc,
@@ -74,7 +78,8 @@ def content_deep_dive_countries(
                     "Wind Onshore",
                     "Wind Offshore",
                     "PV tilted",
-                    "Wind-PV-Hybrid",
+                    "Wind Onshore (hybrid)",
+                    "PV tilted (hybrid)",
                 ],
                 key="ddc_flh_map_parameter",
             )

@@ -57,6 +57,13 @@ def register_user_changes(
         # Replace the 'id' values with the corresponding index elements from df_tab
         res[index] = res[index].map(lambda x: df_tab.index[x])
 
+        # convert the interest rate from [%] to [decimals]
+        res["value"] = res["value"].astype(float)
+        for param_code in ["interest rate", "efficiency"]:
+            res.loc[res["parameter_code"] == param_code, "value"] = (
+                res.loc[res["parameter_code"] == param_code, "value"] / 100
+            )
+
         if st.session_state["user_changes_df"] is None:
             st.session_state["user_changes_df"] = pd.DataFrame(
                 columns=[
@@ -70,7 +77,7 @@ def register_user_changes(
 
         # only track the last changes if a duplicate entry is found.
         st.session_state["user_changes_df"] = pd.concat(
-            [st.session_state["user_changes_df"], res]
+            [st.session_state["user_changes_df"].astype(res.dtypes), res]
         ).drop_duplicates(
             subset=[
                 "source_region_code",
@@ -91,14 +98,49 @@ def reset_user_changes():
         st.session_state["user_changes_df"] = None
 
 
+def _custom_unit_based_on_process_and_parameter(process, parameter, unaffected):
+    mapping = {
+        ("Direct Air Capture", "CAPEX"): "USD/kg of CO₂",
+        ("Sea Water desalination", "CAPEX"): "USD/kg of H₂O",
+        ("Direct Air Capture", "OPEX (fix)"): "USD/kg of CO₂",
+        ("Sea Water desalination", "OPEX (fix)"): "USD/kg of H₂O",
+    }
+    return mapping.get((process, parameter), unaffected)
+
+
+def _custom_unit_based_on_parameter(parameter, unaffected):
+    mapping = {"efficiency": "%", "interest rate": "%"}
+    return mapping.get(parameter, unaffected)
+
+
 def display_user_changes(api):
     """Display input data changes made by user."""
     if st.session_state["user_changes_df"] is not None:
         df = st.session_state["user_changes_df"].copy()
+
+        # convert the values for 'interest rate' and 'efficiency' from [decimals] to [%]
+        for param_code in ["interest rate", "efficiency"]:
+            df.loc[df["parameter_code"] == param_code, "value"] = (
+                df.loc[df["parameter_code"] == param_code, "value"] * 100
+            )
+
         parameters = api.get_dimension("parameter")
         df["Unit"] = df["parameter_code"].map(
             pd.Series(parameters["unit"].tolist(), index=parameters["parameter_name"])
         )
+
+        df["Unit"] = df.apply(
+            lambda x: _custom_unit_based_on_process_and_parameter(
+                x["process_code"], x["parameter_code"], x["Unit"]
+            ),
+            axis=1,
+        )
+
+        df["Unit"] = df.apply(
+            lambda x: _custom_unit_based_on_parameter(x["parameter_code"], x["Unit"]),
+            axis=1,
+        )
+
         st.dataframe(
             df.rename(
                 columns={
@@ -110,6 +152,7 @@ def display_user_changes(api):
                 }
             ).style.format(precision=3),
             hide_index=True,
+            use_container_width=True,
         )
     else:
         st.write("You have not changed any values yet.")

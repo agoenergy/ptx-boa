@@ -7,12 +7,13 @@ from typing import Literal
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import pypsa
 import streamlit as st
 
 from app.ptxboa_functions import (
+    get_data_type_from_input_data,
     remove_subregions,
     select_subregions,
-    subset_and_pivot_input_data,
 )
 from ptxboa.api import PtxboaAPI
 
@@ -99,7 +100,12 @@ def plot_input_data_on_map(
     api: PtxboaAPI,
     data_type: Literal["CAPEX", "full load hours", "interest rate"],
     color_col: Literal[
-        "PV tilted", "Wind Offshore", "Wind Onshore", "Wind-PV-Hybrid", "interest rate"
+        "PV tilted",
+        "Wind Offshore",
+        "Wind Onshore",
+        "Wind Onshore (hybrid)",
+        "PV tilted (hybrid)",
+        "interest rate",
     ],
     scope: Literal["world", "Argentina", "Morocco", "South Africa"] = "world",
 ) -> go.Figure:
@@ -122,46 +128,37 @@ def plot_input_data_on_map(
     -------
     go.Figure
     """
-    input_data = api.get_input_data(
-        scenario=st.session_state["scenario"],
-        user_data=st.session_state["user_changes_df"],
-    )
+    input_data = get_data_type_from_input_data(api, data_type=data_type, scope=None)
 
-    units = {"CAPEX": "USD/kW", "full load hours": "h/a", "interest rate": ""}
+    units = {"CAPEX": "USD/kW", "full load hours": "h/a", "interest rate": "%"}
 
     if data_type == "interest rate":
         assert color_col == "interest rate"
-        columns = "parameter_code"
-        process_code = [""]
-        custom_data_func_kwargs = {"float_precision": 3}
-    else:
+        custom_data_func_kwargs = {"float_precision": 2}
+    if data_type == "full load hours":
         assert color_col in [
             "PV tilted",
             "Wind Offshore",
             "Wind Onshore",
-            "Wind-PV-Hybrid",
+            "Wind Onshore (hybrid)",
+            "PV tilted (hybrid)",
         ]
         custom_data_func_kwargs = {"float_precision": 0}
-        columns = "process_code"
-        process_code = [
-            "Wind Onshore",
-            "Wind Offshore",
+    if data_type == "CAPEX":
+        assert color_col in [
             "PV tilted",
-            "Wind-PV-Hybrid",
+            "Wind Offshore",
+            "Wind Onshore",
         ]
+        custom_data_func_kwargs = {"float_precision": 0}
+
     custom_data_func_kwargs["unit"] = units[data_type]
     custom_data_func_kwargs["data_type"] = data_type
     custom_data_func_kwargs["map_variable"] = color_col
 
-    input_data = subset_and_pivot_input_data(
-        input_data=input_data,
-        source_region_code=None,
-        parameter_code=[data_type],
-        process_code=process_code,
-        index="source_region_code",
-        columns=columns,
-        values="value",
-    )
+    # transform data to % for interest rate
+    if data_type == "interest rate":
+        input_data = input_data * 100
 
     if scope == "world":
         # Create a choropleth world map:
@@ -318,15 +315,18 @@ def _make_inputs_hoverdata(df, data_type, map_variable, unit, float_precision):
     custom_hover_data = []
     if data_type == "interest rate":
         for idx, row in df.iterrows():
-            hover = f"<b>{idx} | {data_type} </b><br><br>{row['interest rate']}"
+            hover = (
+                f"<b>{idx} | {data_type} </b><br><br>"
+                f"{row['interest rate']:.{float_precision}f} {unit}"
+            )
             custom_hover_data.append(hover)
     else:
         for idx, row in df.iterrows():
             hover = f"<b>{idx} | {data_type} </b><br>"
             for i, v in zip(row.index, row):
-                hover += f"<br><b>{i}</b>: {v:.{float_precision}f}{unit}"
+                hover += f"<br><b>{i}</b>: {v:.{float_precision}f} {unit}"
                 if i == map_variable:
-                    hover += " (displayed on map)"
+                    hover += " ← <i>displayed on map</i>"
             custom_hover_data.append(hover)
     return [custom_hover_data]
 
@@ -486,3 +486,214 @@ def create_scatter_plot(df_res, settings: dict):
     fig.update_traces(texttemplate="%{text}", textposition="top center")
     st.plotly_chart(fig)
     st.write(df_res)
+
+
+def add_vertical_lines(fig: go.Figure):
+    """Add vertical lines between periods."""
+    for x in range(7 * 24, 7 * 8 * 24, 7 * 24):
+        fig.add_vline(x=x, line_color="black", line_width=0.5)
+
+
+def add_trace_to_figure(
+    df: pd.DataFrame,
+    fig: go.Figure,
+    component: str,
+    parameter: str,
+    color: str,
+    fill: bool = False,
+):
+    """Add line (trace) to profile figure."""
+    df_plot = df[(df["Component"] == component)]
+    df_plot = df_plot[(df_plot["Parameter"] == parameter)]
+    if fill:
+        fig.add_trace(
+            go.Line(
+                x=df_plot["time"],
+                y=df_plot["MW (MWh for SOC)"],
+                name=component,
+                line_color=color,
+                stackgroup="one",
+            )
+        )
+    else:
+        fig.add_trace(
+            go.Line(
+                x=df_plot["time"],
+                y=df_plot["MW (MWh for SOC)"],
+                name=component,
+                line_color=color,
+            )
+        )
+
+
+def prepare_data_for_profile_figures(n: pypsa.Network) -> pd.DataFrame:
+    def transform_time_series(
+        df: pd.DataFrame, parameter: str = "Power"
+    ) -> pd.DataFrame:
+        res = df.reset_index().melt(
+            id_vars=["timestep", "period"],
+            var_name="Component",
+            value_name="MW (MWh for SOC)",
+        )
+        res["Parameter"] = parameter
+        return res
+
+    df_p_max_pu = n.generators_t["p_max_pu"]
+    df_p_max_pu = transform_time_series(df_p_max_pu, parameter="cap. factor")
+    df_gen = n.generators_t["p"]
+    df_gen = transform_time_series(df_gen)
+    df_links = -n.links_t["p1"]
+    df_links = transform_time_series(df_links)
+    df_store = n.stores_t["e"]
+    df_store = transform_time_series(df_store)
+    df_storageunit = n.storage_units_t["state_of_charge"]
+    df_storageunit = transform_time_series(df_storageunit)
+
+    df = pd.concat([df_p_max_pu, df_gen, df_links, df_store, df_storageunit])
+
+    # selection:
+    df = df.loc[
+        df["Component"].isin(
+            [
+                "PV-FIX",
+                "WIND-ON",
+                "WIND-OFF",
+                "ELY",
+                "DERIV",
+                "H2_STR_store",
+                "EL_STR",
+                "final_product_storage",
+            ]
+        )
+    ]
+
+    # rename components:
+    rename_list = {
+        "PV-FIX": "PV tilted",
+        "WIND-ON": "Wind onshore",
+        "WIND-OFF": "Wind offshore",
+        "ELY": "Electrolyzer",
+        "DERIV": "Derivate production",
+        "H2_STR_in": "H2 storage",
+        "H2_STR_store": "H2 storage",
+        "final_product_storage": "Final product storage",
+        "EL_STR": "Electricity storage",
+        "CO2-G_supply": "CO2 supply",
+        "H2O-L_supply": "Water supply",
+    }
+    df = df.replace(rename_list)
+
+    df_sel = df
+
+    # add continous time index:
+    df_sel["period"] = df_sel["period"].astype(int)
+    df_sel["timestep"] = df_sel["timestep"].astype(int)
+    df_sel["time"] = 7 * 24 * df_sel["period"] + df_sel["timestep"]
+    df_sel = df_sel.sort_values("time")
+
+    return df_sel
+
+
+def create_profile_figure_generation(df_sel: pd.DataFrame) -> go.Figure:
+    """Create generation profile figure."""
+    fig = go.Figure()
+
+    add_trace_to_figure(
+        df_sel, fig, component="PV tilted", parameter="Power", fill=True, color="yellow"
+    )
+    add_trace_to_figure(
+        df_sel,
+        fig,
+        component="Wind onshore",
+        parameter="Power",
+        fill=True,
+        color="blue",
+    )
+    add_trace_to_figure(
+        df_sel,
+        fig,
+        component="Wind offshore",
+        parameter="Power",
+        fill=True,
+        color="blue",
+    )
+    add_trace_to_figure(
+        df_sel, fig, component="Electrolyzer", parameter="Power", color="black"
+    )
+    add_trace_to_figure(
+        df_sel, fig, component="Derivate production", parameter="Power", color="red"
+    )
+
+    add_vertical_lines(fig)
+
+    fig.update_layout(
+        xaxis={"title": "time (h)"},
+        yaxis={"title": "output (MW)"},
+    )
+
+    return fig
+
+
+def create_profile_figure_soc(df_sel: pd.DataFrame) -> go.Figure:
+    """Create storage state of charge figure."""
+    include_final_product_storage = st.toggle("Show final product storage", value=False)
+    # storage figure:
+    fig = go.Figure()
+
+    add_trace_to_figure(
+        df_sel,
+        fig,
+        component="Electricity storage",
+        parameter="Power",
+        color="black",
+    )
+
+    add_trace_to_figure(
+        df_sel,
+        fig,
+        component="H2 storage",
+        parameter="Power",
+        color="red",
+    )
+    if include_final_product_storage:
+        add_trace_to_figure(
+            df_sel,
+            fig,
+            component="Final product storage",
+            parameter="Power",
+            color="blue",
+        )
+
+    add_vertical_lines(fig)
+
+    fig.update_layout(
+        xaxis={"title": "time (h)"},
+        yaxis={"title": "state of charge (MWh)"},
+    )
+
+    return fig
+
+
+def create_profile_figure_capacity_factors(df_sel: pd.DataFrame) -> go.Figure:
+    """Create capacity factors profile figure."""
+    fig = go.Figure()
+    add_trace_to_figure(
+        df_sel, fig, component="PV tilted", parameter="cap. factor", color="yellow"
+    )
+    add_trace_to_figure(
+        df_sel,
+        fig,
+        component="Wind onshore",
+        parameter="cap. factor",
+        color="blue",
+    )
+    add_trace_to_figure(
+        df_sel,
+        fig,
+        component="Wind offshore",
+        parameter="cap. factor",
+        color="blue",
+    )
+    add_vertical_lines(fig)
+
+    return fig

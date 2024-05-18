@@ -10,7 +10,9 @@ import pandas as pd
 import pypsa
 import pytest
 
+from app.tab_optimization import calc_aggregate_statistics
 from flh_opt.api_opt import get_profiles_and_weights, optimize
+from ptxboa import DEFAULT_CACHE_DIR
 from ptxboa.api import PtxboaAPI
 
 logging.basicConfig(level=logging.INFO)
@@ -112,7 +114,7 @@ def test_profile_import(settings):
 
 @pytest.fixture()
 def api():
-    return PtxboaAPI(data_dir=ptxdata_dir_static)
+    return PtxboaAPI(data_dir=ptxdata_dir_static, cache_dir=DEFAULT_CACHE_DIR)
 
 
 @pytest.mark.parametrize("chain", ["Methane (AEL)", "Hydrogen (AEL)"])
@@ -166,3 +168,28 @@ def test_e_cyclic_period_minimal_example():
     res = n.optimize.solve_model(solver_name="highs")
     assert res[1] == "optimal"
     n.statistics()
+
+
+@pytest.fixture
+def network(api) -> pypsa.Network:
+    settings = {
+        "region": "Morocco",
+        "country": "Germany",
+        "chain": "Methane (AEL)",
+        "res_gen": "PV tilted",
+        "scenario": "2040 (medium)",
+        "secproc_co2": "Specific costs",
+        "secproc_water": "Specific costs",
+        "transport": "Pipeline",
+        "ship_own_fuel": False,
+        "user_data": None,
+    }
+    n, metadata = api.get_flh_opt_network(**settings)
+    assert metadata["model_status"] == ["ok", "optimal"], "Model status not optimal"
+
+    return n
+
+
+def test_calc_aggregate_statistics(network):
+    res = calc_aggregate_statistics(network)
+    assert isinstance(res, pd.DataFrame)
