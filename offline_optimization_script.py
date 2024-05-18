@@ -74,17 +74,26 @@ def main(
 
     # these are the parameter dimensions that are relevant for the optimization
     param_arrays = {
-        "secproc_water": api.get_dimension("secproc_water").index.tolist(),
-        "secproc_co2": api.get_dimension("secproc_co2").index.tolist(),
         "scenario": api.get_dimension("scenario").index.tolist(),
         "res_gen": api.get_dimension("res_gen").index.tolist(),
         "region": api.get_dimension("region")["region_name"].tolist(),
-        "chain": api.get_dimension("chain").index.tolist(),
+        # reconversion does not affect optimization of FLH
+        "chain": [
+            c
+            for c in api.get_dimension("chain").index.tolist()
+            if not c.endswith("+ reconv. to H2")
+        ],
     }
 
     # specify parameter dimensions not relevant for optimization
     # we choose arbritray values for those
-    static_params = {"transport": "Ship", "ship_own_fuel": False, "country": "Germany"}
+    static_params = {
+        "transport": "Ship",
+        "ship_own_fuel": False,
+        "country": "Germany",
+        "secproc_water": "Specific costs",
+        "secproc_co2": "Specific costs",
+    }
 
     n_total = np.prod([len(x) for x in param_arrays.values()])
     logging.info(f"Total number of parameter combinations: {n_total}")
