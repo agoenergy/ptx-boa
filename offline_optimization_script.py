@@ -38,6 +38,7 @@ import progress.bar
 
 # suppress most of the solver output from
 # linopy and HIGHs
+# (I cant get rid of the Copyright print from HIGHs)
 # MUST be set before importing ptxboa
 os.environ["HIGHS_OUTPUT_FLAG"] = "false"
 os.environ["TQDM_DISABLE"] = "1"
@@ -60,22 +61,7 @@ def product_dict(**kwargs):
         yield dict(zip(keys, instance))
 
 
-def generate_param_sets(api):
-    # these are the parameter dimensions that are relevant for the optimization
-    param_arrays = {
-        "scenario": api.get_dimension("scenario").index.tolist(),
-        # skip PV tracking: TODO: also skip Wind Offshore for some regions?
-        "res_gen": [
-            x for x in api.get_dimension("res_gen").index.tolist() if x != "PV tracking"
-        ],
-        "region": api.get_dimension("region")["region_name"].tolist(),
-        # reconversion does not affect optimization of FLH
-        "chain": [
-            c
-            for c in api.get_dimension("chain").index.tolist()
-            if not c.endswith("+ reconv. to H2")
-        ],
-    }
+def generate_param_sets(api: PtxboaAPI):
 
     # specify parameter dimensions not relevant for optimization
     # we choose arbritray values for those
@@ -87,9 +73,24 @@ def generate_param_sets(api):
         "secproc_co2": "Specific costs",
     }
 
-    param_sets = [
-        param_set | static_params for param_set in product_dict(**param_arrays)
+    # these are the parameter dimensions that are relevant for the optimization
+    scenarios = api.get_dimension("scenario").index.tolist()
+    regions = api.get_dimension("region")["region_name"].tolist()
+    chains = [
+        c
+        for c in api.get_dimension("chain").index.tolist()
+        if not c.endswith("+ reconv. to H2")
     ]
+
+    param_sets = []
+    for region in regions:
+        # only get availabe technologies for this region
+        res_gens = api.get_res_technologies(region)
+        param_sets += [
+            p | static_params | {"region": region}
+            for p in product_dict(scenario=scenarios, chain=chains, res_gen=res_gens)
+        ]
+
     return param_sets
 
 
@@ -129,7 +130,6 @@ def main(
             "eta %(eta_td)s"
         )
     ).iter(param_sets):
-
         result = {"params": params}
         try:
             logging.info(f"calculating parameter set {params}")
