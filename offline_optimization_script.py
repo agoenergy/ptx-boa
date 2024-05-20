@@ -28,13 +28,27 @@ import argparse
 import itertools
 import json
 import logging
+import os
 from pathlib import Path
 from typing import Literal
 
-import numpy as np
+# don't use tqdm, because we want to suppress
+# tqdm bars of optimization process (from linopy)
+import progress.bar
 
-from ptxboa import DEFAULT_CACHE_DIR, DEFAULT_DATA_DIR
-from ptxboa.api import PtxboaAPI
+# suppress most of the solver output from
+# linopy and HIGHs
+# (I cant get rid of the Copyright print from HIGHs)
+# MUST be set before importing ptxboa
+os.environ["HIGHS_OUTPUT_FLAG"] = "false"
+os.environ["TQDM_DISABLE"] = "1"
+
+
+from ptxboa import (  # noqa E402 module level import not at top
+    DEFAULT_CACHE_DIR,
+    DEFAULT_DATA_DIR,
+)
+from ptxboa.api import PtxboaAPI  # noqa E402 module level import not at top
 
 
 def product_dict(**kwargs):
@@ -45,6 +59,39 @@ def product_dict(**kwargs):
     keys = kwargs.keys()
     for instance in itertools.product(*kwargs.values()):
         yield dict(zip(keys, instance))
+
+
+def generate_param_sets(api: PtxboaAPI):
+
+    # specify parameter dimensions not relevant for optimization
+    # we choose arbritray values for those
+    static_params = {
+        "transport": "Ship",
+        "ship_own_fuel": False,
+        "country": "Germany",
+        "secproc_water": "Specific costs",
+        "secproc_co2": "Specific costs",
+    }
+
+    # these are the parameter dimensions that are relevant for the optimization
+    scenarios = api.get_dimension("scenario").index.tolist()
+    regions = api.get_dimension("region")["region_name"].tolist()
+    chains = [
+        c
+        for c in api.get_dimension("chain").index.tolist()
+        if not c.endswith("+ reconv. to H2")
+    ]
+
+    param_sets = []
+    for region in regions:
+        # only get availabe technologies for this region
+        res_gens = api.get_res_technologies(region)
+        param_sets += [
+            p | static_params | {"region": region}
+            for p in product_dict(scenario=scenarios, chain=chains, res_gen=res_gens)
+        ]
+
+    return param_sets
 
 
 def main(
@@ -58,6 +105,7 @@ def main(
     out_dir = Path(out_dir) if out_dir else cache_dir
     out_dir.mkdir(exist_ok=True)
 
+    # set up logging
     fmt = "[%(asctime)s %(levelname)7s] %(message)s"
     datefmt = "%Y-%m-%d %H:%M:%S"
     logging.basicConfig(
@@ -66,52 +114,28 @@ def main(
         datefmt=datefmt,
         handlers=[
             logging.FileHandler(cache_dir / "offline_optimization_script.log"),
-            logging.StreamHandler(),
         ],
     )
     logging.info(f"starting offline optimization script with cache_dir: {cache_dir}")
     api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR, cache_dir=cache_dir)
 
-    # these are the parameter dimensions that are relevant for the optimization
-    param_arrays = {
-        "scenario": api.get_dimension("scenario").index.tolist(),
-        "res_gen": api.get_dimension("res_gen").index.tolist(),
-        "region": api.get_dimension("region")["region_name"].tolist(),
-        # reconversion does not affect optimization of FLH
-        "chain": [
-            c
-            for c in api.get_dimension("chain").index.tolist()
-            if not c.endswith("+ reconv. to H2")
-        ],
-    }
-
-    # specify parameter dimensions not relevant for optimization
-    # we choose arbritray values for those
-    static_params = {
-        "transport": "Ship",
-        "ship_own_fuel": False,
-        "country": "Germany",
-        "secproc_water": "Specific costs",
-        "secproc_co2": "Specific costs",
-    }
-
-    n_total = np.prod([len(x) for x in param_arrays.values()])
-    logging.info(f"Total number of parameter combinations: {n_total}")
-    one_percent = n_total // 100
-    assert len(list(product_dict(**param_arrays))) == n_total
+    param_sets = generate_param_sets(api)
 
     results = []  # save results
-    for i, param_set in enumerate(product_dict(**param_arrays)):
-        logging.info(f"parameter combination {i} of {n_total}")
-        if i % one_percent == 0:
-            p = i / n_total * 100
-            logging.info(f"{p:.2f} % of all parameter combinations calculated")
-
-        params = param_set | static_params
+    for params in progress.bar.Bar(
+        suffix=(
+            "%(index)s/%(max)s, "
+            "%(percent)d%%, "
+            "elapsed %(elapsed_td)s, "
+            "eta %(eta_td)s"
+        )
+    ).iter(param_sets):
         result = {"params": params}
         try:
             logging.info(f"calculating parameter set {params}")
+
             _df, metadata = api.calculate(optimize_flh=True, **params)
+
             result["error"] = None
             result["result"] = metadata.get("flh_opt_hash")
         except Exception as e:
