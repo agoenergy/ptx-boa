@@ -7,7 +7,15 @@ from app.user_data import reset_user_changes
 from ptxboa.api import PtxboaAPI
 
 
+@st.cache_resource()
+def sidebar_logo():
+    st.image("img/agora-energiewende_logo_612x306.png")
+
+
 def make_sidebar(api: PtxboaAPI):
+    with st.sidebar:
+        sidebar_logo()
+
     st.sidebar.subheader("Main settings:")
 
     # get list of regions that does not contain subregions:
