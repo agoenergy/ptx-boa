@@ -54,11 +54,17 @@ def display_costs(
         df_res = df_costs.copy()
 
     with c1:
+        if len(df_res) > 13:
+            select_options = ["All", "Cheapest 10", "Manual select"]
+            default_select = 1
+        else:
+            select_options = ["All", "Manual select"]
+            default_select = 0
         # select filter:
         show_which_data = st.radio(
             "Select elements to display:",
-            ["All", "Manual select"],
-            index=0,
+            select_options,
+            index=default_select,
             horizontal=True,
             key=f"show_which_data_{key}_{key_suffix}",
         )
@@ -73,12 +79,23 @@ def display_costs(
             )
             df_res = df_res.loc[ind_select]
 
-        # sort:
-        sort_ascending = st.toggle(
-            "Sort by total costs?",
-            value=True,
-            key=f"sort_data_{key}_{key_suffix}",
-        )
+        if show_which_data == "Cheapest 10":
+            ind_select = (
+                df_res.sort_values(["Total"], ascending=True).iloc[:11].index.to_list()
+            )
+            if st.session_state[key] not in ind_select:
+                ind_select.append(st.session_state[key])
+            df_res = df_res.loc[ind_select]
+            sort_ascending = False
+
+        else:
+            # sort:
+            sort_ascending = st.toggle(
+                "Sort by total costs?",
+                value=True,
+                key=f"sort_data_{key}_{key_suffix}",
+            )
+
     if sort_ascending:
         df_res = df_res.sort_values(["Total"], ascending=True)
 
