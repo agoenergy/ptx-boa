@@ -13,8 +13,17 @@ def sidebar_logo():
 
 
 def make_sidebar(api: PtxboaAPI):
-    with st.sidebar:
-        sidebar_logo()
+    st.logo(
+        image="img/logos_wide_text_1000x100.png",  # gets scaled to 240x24 by streamlit
+        icon_image="img/agora-energiewende_logo_612x306.png",
+        link="https://agora-energiewende.org",
+    )
+
+    # st.logo(  # noqa E800
+    #     image="img/logos_wide_no_text_1000x100.png",  # noqa E800
+    #     icon_image="img/logo_agora_no_text_257x100.png",  # noqa E800
+    #     link="https://agora-energiewende.org",  # noqa E800
+    # )  # noqa E800
 
     st.sidebar.subheader("Main settings:")
 
