@@ -113,6 +113,7 @@ def display_costs(
     return None
 
 
+@st.cache_resource()
 def display_footer():
     with st.container(border=True):
         c1, c2, c3 = st.columns(3)
@@ -134,7 +135,8 @@ def display_footer():
                 Agora Energiewende<br/>
                 Anna-Louisa-Karsch-Str. 2<br/>
                 D-10178 Berlin<br/>
-                www.agora-energiewende.de
+                www.agora-industry.org<br/>
+                www.agora-energiewende.org
                 """,
                 unsafe_allow_html=True,
             )
@@ -392,3 +394,8 @@ def display_and_edit_input_data(
     prepare_and_download_df_as_excel(df, filename=fn)
 
     return df
+
+
+def what_is_a_boxplot():
+    with st.popover("What is a boxplot?"):
+        st.image("img/boxplot_explanation.png")

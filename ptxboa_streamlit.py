@@ -6,10 +6,9 @@ Execution:
 >>> streamlit run  ptxboa_streamlit.py
 """
 
-__version__ = "0.6.0"
+__version__ = "0.6.1"
 
 import logging
-import warnings
 
 import pandas as pd
 import streamlit as st
@@ -34,20 +33,6 @@ from app.user_data import display_user_changes
 from app.user_data_from_file import download_user_data, upload_user_data
 from ptxboa import DEFAULT_CACHE_DIR, DEFAULT_DATA_DIR
 from ptxboa.api import PtxboaAPI
-
-warnings.filterwarnings(  # filter pandas warning from pypsa optimizer
-    action="ignore",
-    category=FutureWarning,
-    message=(
-        r".*A value is trying to be set on a copy of a DataFrame or Series "
-        r"through chained assignment using an inplace method.*"
-    ),
-)
-warnings.filterwarnings(  # filter DeprecationWarning for read network
-    action="ignore",
-    category=DeprecationWarning,
-)
-
 
 # setup logging
 # level can be changed on strartup with: --logger.level=LEVEL

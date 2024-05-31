@@ -2,6 +2,7 @@
 """Common Paths and settings."""
 import logging
 import os
+import warnings
 from pathlib import Path
 
 KEY_SEPARATOR = ","
@@ -16,3 +17,16 @@ DEFAULT_DATA_DIR = _THIS_DIR / "data"
 
 
 logger = logging.getLogger()
+
+warnings.filterwarnings(  # filter pandas warning from pypsa optimizer
+    action="ignore",
+    category=FutureWarning,
+    message=(
+        r".*A value is trying to be set on a copy of a DataFrame or Series "
+        r"through chained assignment using an inplace method.*"
+    ),
+)
+warnings.filterwarnings(  # filter DeprecationWarning for read network
+    action="ignore",
+    category=DeprecationWarning,
+)

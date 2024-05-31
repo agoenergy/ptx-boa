@@ -4,7 +4,7 @@ import pandas as pd
 import streamlit as st
 from plotly.subplots import make_subplots
 
-from app.layout_elements import display_costs
+from app.layout_elements import display_costs, what_is_a_boxplot
 from app.plot_functions import (
     create_bar_chart_costs,
     create_box_plot,
@@ -68,6 +68,8 @@ def content_costs(
         )
 
         st.plotly_chart(doublefig, use_container_width=True)
+
+        what_is_a_boxplot()
 
         st.button(
             "More Info on Supply Region and Demand Country",
