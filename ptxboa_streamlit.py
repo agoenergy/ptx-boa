@@ -6,7 +6,7 @@ Execution:
 >>> streamlit run  ptxboa_streamlit.py
 """
 
-__version__ = "0.6.0"
+__version__ = "0.6.1"
 
 import logging
 
