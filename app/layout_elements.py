@@ -394,3 +394,8 @@ def display_and_edit_input_data(
     prepare_and_download_df_as_excel(df, filename=fn)
 
     return df
+
+
+def what_is_a_boxplot():
+    with st.popover("What is a boxplot?"):
+        st.image("img/boxplot_explanation.png")
