@@ -68,7 +68,7 @@ def content_optimization(api: PtxboaAPI) -> None:
         with st.container(border=True):
             st.subheader("Download model")
             st.markdown(read_markdown_file("md/info_download_model.md"))
-            download_network_as_netcdf(st.session_state["network"], "network.nc")
+            download_network_as_netcdf(n=n, filename="network.nc")
 
         with st.expander("Debugging output"):
             st.warning(
