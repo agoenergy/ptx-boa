@@ -187,7 +187,6 @@ def optimize(
             )
 
     # add links:
-    # TODO: account for water demand
     n.add(
         "Link",
         name="ELY",
