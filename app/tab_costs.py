@@ -25,7 +25,7 @@ def content_costs(
     costs_per_res_gen_without_user_changes: pd.DataFrame,
     costs_per_chain_without_user_changes: pd.DataFrame,
 ):
-    with st.expander("What is this?"):
+    with st.popover("*Help*", use_container_width=True):
         st.markdown(read_markdown_file("md/whatisthis_costs.md"))
 
     with st.container(border=True):
