@@ -399,16 +399,23 @@ def create_bar_chart_costs(
 
     # add highlight for current selection:
     if current_selection is not None and current_selection in res_costs.index:
+        if (res_costs["Total"] < 0).all():
+            y = 1.2 * min(res_costs["Total"])
+            ay = 30
+        else:
+            y = 1.2 * max(res_costs["Total"])
+            ay = -30
+
         fig.add_annotation(
             x=current_selection,
-            y=1.2 * max(res_costs["Total"]),
+            y=y,
             text="current selection",
             showarrow=True,
             arrowhead=2,
             arrowsize=1,
             arrowwidth=2,
             ax=0,
-            ay=-30,
+            ay=ay,
         )
 
     if output_unit is None:
