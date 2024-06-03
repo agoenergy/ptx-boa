@@ -136,6 +136,32 @@ def test_issue_312_fix_fhl_optimization_errors(api, chain):
     assert len(res) > 0
 
 
+@pytest.mark.parametrize("chain", ["Methane (AEL)", "Hydrogen (AEL)", "LOHC (AEL)"])
+def test_issue_403_fix_no_heat_demand_for_methane_production(api, chain):
+    """See https://github.com/agoenergy/ptx-boa/issues/403.
+
+    Heat costs should be zero for Methane and Hydrogen, and >0 for LOHC.
+    """
+    settings = {
+        "region": "Morocco",
+        "country": "Germany",
+        "chain": chain,
+        "res_gen": "PV tilted",
+        "scenario": "2040 (medium)",
+        "secproc_co2": "Specific costs",
+        "secproc_water": "Specific costs",
+        "transport": "Pipeline",
+        "ship_own_fuel": False,
+        "output_unit": "USD/t",
+    }
+    res = api.calculate(**settings, optimize_flh=True)
+    df = res[0]
+    if chain != "LOHC (AEL)":
+        assert sum(df["process_type"] == "Heat") == 0
+    else:
+        assert df.loc[df["process_type"] == "Heat", "values"].values[0] > 0
+
+
 # expected to fail because of pypsa bug https://github.com/PyPSA/PyPSA/issues/866
 @pytest.mark.xfail()
 @pytest.mark.filterwarnings("always")
