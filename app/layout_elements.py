@@ -25,6 +25,8 @@ def display_costs(
     titlestring: str,
     key_suffix: str = "",
     output_unit: str | None = None,
+    default_select: int = 0,
+    default_manual_select: str | None = None,
 ):
     """Display costs as table and bar chart."""
     if output_unit is None:
@@ -39,7 +41,7 @@ def display_costs(
         with c2:
             st.info("Input data has been modified. Select which data to display.")
             select_data = st.radio(
-                "Select data to display",
+                "Data to display",
                 ["With Modifications", "Without Modifications", "Difference"],
                 horizontal=True,
                 key=f"select_user_modificatons_data_{key}_{key_suffix}",
@@ -53,32 +55,59 @@ def display_costs(
     else:
         df_res = df_costs.copy()
 
+    if default_manual_select is None:
+        default_manual_select = df_res.index.values
+
     with c1:
+        if len(df_res) > 13:
+            select_options = [
+                "All",
+                "Manual selection",
+                "Cheapest 10",
+            ]
+        else:
+            select_options = ["All", "Manual selection"]
         # select filter:
         show_which_data = st.radio(
-            "Select elements to display:",
-            ["All", "Manual select"],
-            index=0,
+            "Elements to display:",
+            select_options,
+            index=default_select,
             horizontal=True,
             key=f"show_which_data_{key}_{key_suffix}",
         )
 
         # apply filter:
-        if show_which_data == "Manual select":
+        if show_which_data == "Manual selection":
             ind_select = st.multiselect(
-                "Select regions:",
+                "Select elements:",
                 df_res.index.values,
-                default=df_res.index.values,
+                default=default_manual_select,
                 key=f"select_data_{key}_{key_suffix}",
+                label_visibility="collapsed",
             )
             df_res = df_res.loc[ind_select]
 
-        # sort:
-        sort_ascending = st.toggle(
-            "Sort by total costs?",
-            value=True,
-            key=f"sort_data_{key}_{key_suffix}",
-        )
+        if show_which_data == "Cheapest 10":
+            ind_select = (
+                df_res.sort_values(["Total"], ascending=True).iloc[:10].index.to_list()
+            )
+            # append the setting from the sidebar if not in cheapest 10
+            if (
+                st.session_state[key] not in ind_select
+                and st.session_state[key] in df_res.index
+            ):
+                ind_select.append(st.session_state[key])
+            df_res = df_res.loc[ind_select]
+            sort_ascending = False
+
+        else:
+            # sort:
+            sort_ascending = st.toggle(
+                "Sort by total costs?",
+                value=True,
+                key=f"sort_data_{key}_{key_suffix}",
+            )
+
     if sort_ascending:
         df_res = df_res.sort_values(["Total"], ascending=True)
 
@@ -95,9 +124,16 @@ def display_costs(
 
     # add explainer for costs by supply chain comparison:
     if titlestring == "Costs by supply chain":
+        if st.session_state["output_unit"] == "USD/t":
+            unit_note = (
+                "The output unit is set to USD/MWh in order to compare energy carriers"
+                " with different densities. "
+            )
+        else:
+            unit_note = ""
         st.caption(
             (
-                "**Note**: Green Iron is not shown in this comparison "
+                f"**Note**: {unit_note}Green Iron is not shown in this comparison "
                 "as it is not an energy carrier."
             )
         )
