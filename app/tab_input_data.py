@@ -77,11 +77,18 @@ def content_input_data(api: PtxboaAPI) -> None:
             # create plot:
             if data_selection == "CAPEX":
                 ylabel = "CAPEX (USD/kW)"
+                hover_name = "process_code"
             if data_selection == "full load hours":
                 ylabel = "full load hours (h/a)"
+                hover_name = "res_gen"
             if data_selection == "interest rate":
                 ylabel = "interest rate (%)"
-            fig = px.box(df)
+                hover_name = "parameter_code"
+            fig = px.box(
+                df,
+                hover_data=[df.index],
+                hover_name=hover_name,
+            )
             fig.update_layout(xaxis_title=None, yaxis_title=ylabel)
             st.plotly_chart(fig, use_container_width=True)
             what_is_a_boxplot()
