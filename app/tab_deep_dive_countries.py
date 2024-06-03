@@ -5,7 +5,11 @@ import plotly.express as px
 import streamlit as st
 from streamlit_antd_components import SegmentedItem, segmented
 
-from app.layout_elements import display_and_edit_input_data, display_costs
+from app.layout_elements import (
+    display_and_edit_input_data,
+    display_costs,
+    what_is_a_boxplot,
+)
 from app.plot_functions import plot_costs_on_map, plot_input_data_on_map
 from app.ptxboa_functions import read_markdown_file, select_subregions
 from ptxboa.api import PtxboaAPI
@@ -105,3 +109,4 @@ def content_deep_dive_countries(
             fig = px.box(df)
             fig.update_layout(xaxis_title=None)
             st.plotly_chart(fig, use_container_width=True)
+            what_is_a_boxplot()

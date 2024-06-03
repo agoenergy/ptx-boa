@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Utility functions for streamlit app."""
+import logging
 from pathlib import Path
 from typing import Literal
 
@@ -125,14 +126,21 @@ def calculate_results_list(
         else:
             use_user_data_for_optimize_flh = False
 
-        res_single = calculate_results_single(
-            api,
-            settings,
-            user_data=st.session_state["user_changes_df"] if apply_user_data else None,
-            optimize_flh=optimize_flh,
-            use_user_data_for_optimize_flh=use_user_data_for_optimize_flh,
-        )
-        res_list.append(res_single)
+        # catch all api errors so that the tool is stable
+        try:
+            res_single = calculate_results_single(
+                api,
+                settings,
+                user_data=(
+                    st.session_state["user_changes_df"] if apply_user_data else None
+                ),
+                optimize_flh=optimize_flh,
+                use_user_data_for_optimize_flh=use_user_data_for_optimize_flh,
+            )
+            res_list.append(res_single)
+        except Exception as exc:
+            logging.info(f"could not get data: {exc}")
+
     res_details = pd.concat(res_list)
 
     return aggregate_costs(res_details, parameter_to_change)
@@ -460,6 +468,11 @@ def remove_subregions(api: PtxboaAPI, df: pd.DataFrame, country_name: str):
     if country_name in region_list_without_subregions:
         region_list_without_subregions.remove(country_name)
 
+    # sometimes, not all regions exist
+    region_list_without_subregions = [
+        r for r in region_list_without_subregions if r in df.index
+    ]
+
     df = df.loc[region_list_without_subregions]
 
     return df
@@ -554,35 +567,35 @@ def get_column_config() -> dict:
             help=read_markdown_file("md/helptext_columns_specific_costs.md"),
         ),
         "bunker fuel": st.column_config.NumberColumn(
-            format="%.2e fraction per km",
+            format="%.2e",
             min_value=0,
             help=read_markdown_file("md/helptext_columns_bunker_fuel.md"),
         ),
         "FT e-fuels": st.column_config.NumberColumn(
-            format="%.2e fraction per km",
+            format="%.2e",
             min_value=0,
             help=read_markdown_file("md/helptext_columns_ft_e_fuels.md"),
         ),
         "carbon dioxide": st.column_config.NumberColumn(
-            format="%.3f kgCO2 per main output",
+            format="%.3f",
             help=read_markdown_file("md/helptext_columns_carbon_dioxide.md"),
         ),
         "electricity": st.column_config.NumberColumn(
-            format="%.3f kWh per main output",
+            format="%.3f",
             min_value=0,
             help=read_markdown_file("md/helptext_columns_electricity.md"),
         ),
         "heat": st.column_config.NumberColumn(
-            format="%.3f kWh per main output",
+            format="%.3f",
             help=read_markdown_file("md/helptext_columns_heat.md"),
         ),
         "nitrogen": st.column_config.NumberColumn(
-            format="%.3f kWh per main output",
+            format="%.3f",
             min_value=0,
             help=read_markdown_file("md/helptext_columns_nitrogen.md"),
         ),
         "water": st.column_config.NumberColumn(
-            format="%.3f kWh per main output",
+            format="%.3f",
             help=read_markdown_file("md/helptext_columns_water.md"),
         ),
     }

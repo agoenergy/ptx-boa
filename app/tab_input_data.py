@@ -3,7 +3,7 @@
 import plotly.express as px
 import streamlit as st
 
-from app.layout_elements import display_and_edit_input_data
+from app.layout_elements import display_and_edit_input_data, what_is_a_boxplot
 from app.plot_functions import plot_input_data_on_map
 from app.ptxboa_functions import read_markdown_file
 from ptxboa.api import PtxboaAPI
@@ -84,6 +84,7 @@ def content_input_data(api: PtxboaAPI) -> None:
             fig = px.box(df)
             fig.update_layout(xaxis_title=None, yaxis_title=ylabel)
             st.plotly_chart(fig, use_container_width=True)
+            what_is_a_boxplot()
 
     with st.container(border=True):
         st.subheader("Global data")

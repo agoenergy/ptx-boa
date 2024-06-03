@@ -369,7 +369,11 @@ class PtxOpt:
                 break
 
         key = (src_reg, res)
-        profiles_filehash_md5 = self.profiles_hashes.data[key]["filehash_md5"]
+        try:
+            profiles_filehash_md5 = self.profiles_hashes.data[key]["filehash_md5"]
+        except KeyError:
+            # raise more descriptive error
+            raise KeyError("No profiles data exists for region=%s, RES=%s." % key)
 
         hash_data = {
             "opt_input_data": opt_input_data,
