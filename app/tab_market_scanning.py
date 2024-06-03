@@ -25,7 +25,7 @@ def content_market_scanning(api: PtxboaAPI, res_costs: pd.DataFrame, cd: dict) -
     cd: dict
         context data.
     """
-    with st.expander("What is this?"):
+    with st.popover("*Help*", use_container_width=True):
         st.markdown(read_markdown_file("md/whatisthis_market_scanning.md"))
 
     # get input data:

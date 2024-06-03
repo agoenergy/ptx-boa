@@ -33,7 +33,7 @@ def content_deep_dive_countries(
     ------
     None
     """
-    with st.expander("What is this?"):
+    with st.popover("*Help*", use_container_width=True):
         st.markdown(read_markdown_file("md/whatisthis_deep_dive_countries.md"))
 
     st.write("Select which country to display:")

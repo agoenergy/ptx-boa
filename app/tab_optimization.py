@@ -17,7 +17,7 @@ from ptxboa.api import PtxboaAPI
 
 def content_optimization(api: PtxboaAPI) -> None:
 
-    with st.expander("What is this?"):
+    with st.popover("*Help*", use_container_width=True):
         st.markdown(read_markdown_file("md/whatisthis_optimization.md"))
 
     # load netcdf file:

@@ -21,7 +21,7 @@ def content_input_data(api: PtxboaAPI) -> None:
     ------
     None
     """
-    with st.expander("What is this?"):
+    with st.popover("*Help*", use_container_width=True):
         st.markdown(read_markdown_file("md/whatisthis_input_data.md"))
 
     with st.container(border=True):
