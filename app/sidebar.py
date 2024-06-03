@@ -49,6 +49,7 @@ def main_settings(api):
         index=region_list.get_loc("Morocco"),  # Morocco as default
     )
     st.session_state["region"] = region
+    st.session_state["subregion"] = None
 
     # If a deep dive country has been selected, add option to select subregion:
     if region in ["Argentina", "Morocco", "South Africa"]:
@@ -64,6 +65,7 @@ def main_settings(api):
         )
         if subregion is not None:
             st.session_state["region"] = subregion
+            st.session_state["subregion"] = subregion
 
     # select demand country:
     countries = api.get_dimension("country").index

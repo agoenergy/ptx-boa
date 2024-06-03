@@ -79,12 +79,18 @@ def content_costs(
 
     with st.container(border=True):
         display_costs(
-            remove_subregions(api, costs_per_region, st.session_state["country"]),
+            remove_subregions(
+                api,
+                costs_per_region,
+                st.session_state["country"],
+                keep=st.session_state["subregion"],
+            ),
             (
                 remove_subregions(
                     api,
                     costs_per_region_without_user_changes,
                     st.session_state["country"],
+                    keep=st.session_state["subregion"],
                 )
                 if st.session_state["user_changes_df"] is not None
                 else None
