@@ -439,7 +439,9 @@ def get_data_type_from_input_data(
     return df
 
 
-def remove_subregions(api: PtxboaAPI, df: pd.DataFrame, country_name: str):
+def remove_subregions(
+    api: PtxboaAPI, df: pd.DataFrame, country_name: str, keep: str | None = None
+):
     """Remove subregions from a dataframe.
 
     Parameters
@@ -452,6 +454,9 @@ def remove_subregions(api: PtxboaAPI, df: pd.DataFrame, country_name: str):
 
     country_name : str
         name of target country. Is removed from region list if it is also in there.
+
+    keep : str or None, by default None
+        can be used to keep data for a specific subregion
 
     Returns
     -------
@@ -472,6 +477,9 @@ def remove_subregions(api: PtxboaAPI, df: pd.DataFrame, country_name: str):
     region_list_without_subregions = [
         r for r in region_list_without_subregions if r in df.index
     ]
+
+    if keep is not None:
+        region_list_without_subregions.append(keep)
 
     df = df.loc[region_list_without_subregions]
 
