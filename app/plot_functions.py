@@ -156,10 +156,6 @@ def plot_input_data_on_map(
     custom_data_func_kwargs["data_type"] = data_type
     custom_data_func_kwargs["map_variable"] = color_col
 
-    # transform data to % for interest rate
-    if data_type == "interest rate":
-        input_data = input_data * 100
-
     if scope == "world":
         # Create a choropleth world map:
         fig = _choropleth_map_world(
