@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Functions for plotting input data and results (cost_data)."""
-import json
 from pathlib import Path
 from typing import Literal
 
@@ -232,7 +231,8 @@ def _choropleth_map_deep_dive_country(
     if custom_data_func_kwargs is None:
         custom_data_func_kwargs = {}
     # subsetting 'df' for the selected deep dive country
-    df = select_subregions(df, deep_dive_country)
+    # missing value removal necessary for wind offshore
+    df = select_subregions(df, deep_dive_country).dropna(subset=color_col)
     # need to calculate custom data befor is03166 column is appended.
     hover_data = custom_data_func(df, **custom_data_func_kwargs)
     # get dataframe with info about iso 3166-2 codes and map them to res_costs
@@ -240,22 +240,25 @@ def _choropleth_map_deep_dive_country(
     df["iso3166_code"] = df.index.map(
         pd.Series(ddc_info["iso3166_code"], index=ddc_info["region_name"])
     )
-
-    geojson_file = (
-        Path(__file__).parent.parent.resolve()
-        / "data"
-        / f"{deep_dive_country.lower().replace(' ', '_')}_subregions.geojson"
+    # load representative points data
+    lon_lat = pd.read_csv(
+        (
+            Path(__file__).parent.parent.resolve()
+            / "data"
+            / "subregion_representative_points.csv"
+        )
     )
-    with geojson_file.open("r", encoding="utf-8") as f:
-        subregion_shapes = json.load(f)
+    # merge points to data
+    df = df.merge(lon_lat, left_on="iso3166_code", right_on="iso_3166_2")
 
-    fig = px.choropleth(
-        locations=df["iso3166_code"],
-        featureidkey="properties.iso_3166_2",
+    fig = px.scatter_geo(
+        lon=df["lon"],
+        lat=df["lat"],
         color=df[color_col],
-        geojson=subregion_shapes,
         custom_data=hover_data,
         color_continuous_scale=agora_continuous_color_scale(),
+        size=[15] * len(df.index),
+        opacity=1,
     )
 
     fig.update_geos(
