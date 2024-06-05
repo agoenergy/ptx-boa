@@ -7,7 +7,20 @@ from app.user_data import reset_user_changes
 from ptxboa.api import PtxboaAPI
 
 
+@st.cache_resource()
+def sidebar_logo():
+    st.image("img/agora-energiewende_logo_612x306.png")
+
+
 def make_sidebar(api: PtxboaAPI):
+    st.logo(
+        image="img/transparent_10x10.png",  # placeholder when sidebar is expanded
+        icon_image="img/agora-energiewende_logo_612x306.png",
+    )
+
+    with st.sidebar:
+        sidebar_logo()
+
     with st.sidebar.expander("**Main settings**", expanded=True):
         main_settings(api)
 

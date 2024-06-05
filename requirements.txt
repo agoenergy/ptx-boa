@@ -1,6 +1,6 @@
 pandas==2.2.1
 numpy==1.26.4
-streamlit
+streamlit==1.35.0
 openpyxl==3.1.2
 plotly==5.19.0
 streamlit-antd-components
