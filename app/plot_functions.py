@@ -209,12 +209,14 @@ def _choropleth_map_world(
     if custom_data_func_kwargs is None:
         custom_data_func_kwargs = {}
     df = remove_subregions(api=api, df=df, country_name=st.session_state["country"])
-    fig = px.choropleth(
+    fig = px.scatter_geo(
         locations=df.index,
         locationmode="country names",
         color=df[color_col],
         custom_data=custom_data_func(df, **custom_data_func_kwargs),
         color_continuous_scale=agora_continuous_color_scale(),
+        size=[15] * len(df.index),
+        opacity=1,
     )
     return fig
 
@@ -285,10 +287,9 @@ def _set_map_layout(fig: go.Figure, colorbar_title: str) -> go.Figure:
     """
     # update layout:
     fig.update_geos(
-        showcountries=True,  # Show country borders
+        resolution=50,
+        showcountries=False,  # do not show country borders
         showcoastlines=True,  # Show coastlines
-        countrycolor="black",  # Set default border color for other countries
-        countrywidth=0.2,  # Set border width
         coastlinewidth=0.2,  # coastline width
         coastlinecolor="black",  # coastline color
         showland=True,  # show land areas
