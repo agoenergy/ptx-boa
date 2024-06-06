@@ -210,6 +210,11 @@ def optimize(
         carriers_sec.append("seawater")
         input_data["SPECCOST"]["seawater"] = 0
 
+    # if using DAC, add air supply:
+    if input_data.get("CO2"):
+        carriers_sec.append("air")
+        input_data["SPECCOST"]["air"] = 0
+
     # add RE generators:
     for g in input_data["RES"]:
         n.add("Carrier", name=g["PROCESS_CODE"])
@@ -251,6 +256,10 @@ def optimize(
     if input_data.get("H2O"):
         n.remove("Generator", "H2O-L_supply")
 
+    # if using DAC, remove external CO2 supply:
+    if input_data.get("CO2"):
+        n.remove("Generator", "CO2-G_supply")
+
     # add links:
     _add_link(
         n=n,
@@ -277,6 +286,15 @@ def optimize(
         bus0="seawater",
         bus1="H2O-L",
         carrier="H2O-L",
+    )
+
+    _add_link(
+        n=n,
+        input_data=input_data,
+        name="CO2",
+        bus0="air",
+        bus1="CO2-G",
+        carrier="CO2-G",
     )
 
     # add loads:
