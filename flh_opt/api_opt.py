@@ -117,7 +117,7 @@ def optimize(
                     "H2O-L": -0.15
                 }
             },
-            "DESAL": {
+            "H2O": {
                 "CAPEX_A": 0.07726085034488815,
                 "OPEX_F": 0.0356900588308774,
                 "OPEX_O": 0,
@@ -125,7 +125,7 @@ def optimize(
                     "EL": 0.003,
                 }
             },
-            "DAC": {
+            "CO2": {
                 "CAPEX_A": 0.07726085034488815,
                 "OPEX_F": 0.0356900588308774,
                 "OPEX_O": 0,
@@ -206,12 +206,12 @@ def optimize(
         n.add("Carrier", "final_product")
 
     # if using water desalination, add seawater supply:
-    if input_data.get("DESAL"):
+    if input_data.get("H2O"):
         carriers_sec.append("seawater")
         input_data["SPECCOST"]["seawater"] = 0
 
     # if using DAC, add air supply:
-    if input_data.get("DAC"):
+    if input_data.get("CO2"):
         carriers_sec.append("air")
         input_data["SPECCOST"]["air"] = 0
 
@@ -253,12 +253,12 @@ def optimize(
             )
 
     # if using water desalination, remove external water supply:
-    if input_data.get("DESAL"):
+    if input_data.get("H2O"):
         n.remove("Generator", "H2O-L_supply")
         n.remove("Generator", "seawater_sink")
 
     # if using DAC, remove external CO2 supply:
-    if input_data.get("DAC"):
+    if input_data.get("CO2"):
         n.remove("Generator", "CO2-G_supply")
         n.remove("Generator", "air_sink")
 
@@ -284,7 +284,7 @@ def optimize(
     _add_link(
         n=n,
         input_data=input_data,
-        name="DESAL",
+        name="H2O",
         bus0="seawater",
         bus1="H2O-L",
         carrier="H2O-L",
@@ -293,7 +293,7 @@ def optimize(
     _add_link(
         n=n,
         input_data=input_data,
-        name="DAC",
+        name="CO2",
         bus0="air",
         bus1="CO2-G",
         carrier="CO2-G",
@@ -451,7 +451,7 @@ def optimize(
             result_data["RES"].append(d)
 
         # Calculate FLH for ELY, DERIV, DAC and DESAL:
-        for c in ["ELY", "DERIV", "DAC", "DESAL"]:
+        for c in ["ELY", "DERIV", "CO2", "H2O"]:
             if input_data.get(c):
                 result_data[c] = {}
                 result_data[c]["FLH"] = get_flh(n, c, "Link")

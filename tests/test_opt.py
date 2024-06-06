@@ -220,8 +220,8 @@ def test_calc_aggregate_statistics(network):
     assert isinstance(res, pd.DataFrame)
 
 
-def test_prepare_data_for_optimize():
-
+def test_prepare_data_for_optimize_incl_sec_proc():
+    """Data for optimization should include data for secondary processes."""
     settings = {
         "region": "Morocco",
         "country": "Germany",
@@ -278,7 +278,7 @@ def test_prepare_data_for_optimize():
     opt_input_data = data_handler.optimizer._prepare_data(data)
 
     # check that some values exist
-    assert opt_input_data["DESAL"]["CAPEX_A"]
-    assert opt_input_data["DESAL"]["CONV"]
-    assert opt_input_data["DAC"]["CAPEX_A"]
-    assert opt_input_data["DAC"]["CONV"]
+    assert opt_input_data["H2O"]["CAPEX_A"]
+    assert opt_input_data["H2O"]["CONV"]
+    assert opt_input_data["CO2"]["CAPEX_A"]
+    assert opt_input_data["CO2"]["CONV"]
