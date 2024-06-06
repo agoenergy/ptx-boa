@@ -60,6 +60,106 @@
         "expected_ojective_value": 2480.8292413355575
     },
     {
+        "id": "CH4, hybrid, with DAC and DESAL",
+        "input_data": {
+            "SOURCE_REGION_CODE": "ARG",
+            "RES": [
+                {
+                    "CAPEX_A": 30,
+                    "OPEX_F": 1,
+                    "OPEX_O": 0.001,
+                    "PROCESS_CODE": "PV-FIX"
+                },
+                {
+                    "CAPEX_A": 80,
+                    "OPEX_F": 1,
+                    "OPEX_O": 0.002,
+                    "PROCESS_CODE": "WIND-ON"
+                }
+            ],
+            "ELY": {
+                "EFF": 0.75,
+                "CAPEX_A": 25,
+                "OPEX_F": 10,
+                "OPEX_O": 0,
+                "CONV": {
+                    "H2O-L": 0.3
+                }
+            },
+            "DERIV": {
+                "EFF": 0.8,
+                "CAPEX_A": 30,
+                "OPEX_F": 20,
+                "OPEX_O": 0,
+                "PROCESS_CODE": "CH4SYN",
+                "CONV": {
+                    "CO2-G": 0.2,
+                    "HEAT": -0.2,
+                    "H2O-L": -0.15
+                }
+            },
+            "H2O": {
+                "CAPEX_A": 0.07726085034488815,
+                "OPEX_F": 0.0356900588308774,
+                "OPEX_O": 0,
+                "CONV": {
+                    "EL": 0.003
+                }
+            },
+            "CO2": {
+                "CAPEX_A": 0.07726085034488815,
+                "OPEX_F": 0.0356900588308774,
+                "OPEX_O": 0,
+                "CONV": {
+                    "EL": 0.4515,
+                    "HEAT": 1.743,
+                    "H2O-L": -1.4
+                }
+            },
+            "EL_STR": {
+                "EFF": 0.9,
+                "CAPEX_A": 50,
+                "OPEX_F": 0,
+                "OPEX_O": 0
+            },
+            "H2_STR": {
+                "EFF": 0.9,
+                "CAPEX_A": 5,
+                "OPEX_F": 0,
+                "OPEX_O": 0
+            },
+            "SPECCOST": {
+                "H2O-L": 0.001,
+                "CO2-G": 0.04,
+                "HEAT": 0.05
+            }
+        },
+        "expected_output": {
+            "RES": [
+                {
+                    "PROCESS_CODE": "PV-FIX",
+                    "FLH": 0,
+                    "SHARE_FACTOR": -0.0
+                },
+                {
+                    "PROCESS_CODE": "WIND-ON",
+                    "FLH": 0.345701024478453,
+                    "SHARE_FACTOR": 1.0
+                }
+            ],
+            "ELY": {
+                "FLH": 0.5124598171364299
+            },
+            "EL_STR": {
+                "CAP_F": -0.0
+            },
+            "H2_STR": {
+                "CAP_F": 122.44991931269928
+            }
+        },
+        "expected_ojective_value": 1748.871332914744
+    },
+    {
         "id": "CH4, hybrid",
         "input_data": {
             "SOURCE_REGION_CODE": "ARG",
