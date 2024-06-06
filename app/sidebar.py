@@ -111,7 +111,7 @@ def main_settings(api):
             [
                 "AEL",
                 "PEM",
-                "SEOC",
+                "SOEC",
             ],
             help=read_markdown_file("md/helptext_sidebar_electrolyzer_type.md"),
             index=0,  # AEL as default
