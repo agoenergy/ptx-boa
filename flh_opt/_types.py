@@ -89,6 +89,8 @@ class OptOutputDataType(TypedDict):
     RES: List[ProcessOutputResType]
     ELY: Dict[Literal["FLH"], float]
     DERIV: Dict[Literal["FLH"], float]
+    CO2: Dict[Literal["FLH"], float]
+    H2O: Dict[Literal["FLH"], float]
     EL_STR: Dict[Literal["CAP_F"], float]
     H2_STR: Dict[Literal["CAP_F"], float]
 

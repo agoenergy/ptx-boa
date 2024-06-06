@@ -450,9 +450,11 @@ def optimize(
             )
             result_data["RES"].append(d)
 
-        # Calculate FLH for electrolyzer:
-        result_data["ELY"] = {}
-        result_data["ELY"]["FLH"] = get_flh(n, "ELY", "Link")
+        # Calculate FLH for ELY, DERIV, DAC and DESAL:
+        for c in ["ELY", "DERIV", "CO2", "H2O"]:
+            if input_data.get(c):
+                result_data[c] = {}
+                result_data[c]["FLH"] = get_flh(n, c, "Link")
 
         # calculate capacity factor for storage units:
         # we use charging capacity (p_nom) per final product demand
@@ -461,7 +463,5 @@ def optimize(
         if input_data.get("DERIV"):
             result_data["H2_STR"] = {}
             result_data["H2_STR"]["CAP_F"] = n.links.at["H2_STR_in", "p_nom_opt"]
-            result_data["DERIV"] = {}
-            result_data["DERIV"]["FLH"] = get_flh(n, "DERIV", "Link")
 
     return result_data, n
