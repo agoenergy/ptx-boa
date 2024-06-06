@@ -3,7 +3,7 @@
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-from streamlit_antd_components import SegmentedItem, segmented
+import streamlit_antd_components as sac
 
 from app.layout_elements import (
     display_and_edit_input_data,
@@ -37,11 +37,11 @@ def content_deep_dive_countries(
         st.markdown(read_markdown_file("md/whatisthis_deep_dive_countries.md"))
 
     st.write("Select which country to display:")
-    ddc = segmented(
+    ddc = sac.buttons(
         items=[
-            SegmentedItem(label="Argentina"),
-            SegmentedItem(label="Morocco"),
-            SegmentedItem(label="South Africa"),
+            sac.ButtonsItem(label="Argentina"),
+            sac.ButtonsItem(label="Morocco"),
+            sac.ButtonsItem(label="South Africa"),
         ],
         use_container_width=True,
     )
