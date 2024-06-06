@@ -183,7 +183,7 @@ class ProfilesFLH(metaclass=SingletonMeta):
 class PtxOpt:
 
     def __init__(self, profiles_path: Path, cache_dir: Path):
-        self.cache_dir = cache_dir
+        self.cache_dir = Path(cache_dir) if cache_dir else None
         self.profiles_hashes = ProfilesHashes(profiles_path)
         self.profiles_flh = ProfilesFLH(profiles_path)
 
@@ -374,6 +374,13 @@ class PtxOpt:
                     step["FLH"] = opt_output_data["ELY"]["FLH"] * 8760
                 elif step["step"] == "DERIV":
                     step["FLH"] = opt_output_data["DERIV"]["FLH"] * 8760
+            # secondary processes
+            for step, flow_code in [("H2O", "H2O-L"), ("CO2", "CO2-G")]:
+                sec_process_data = input_data["secondary_process"].get(flow_code)
+                if not sec_process_data:
+                    continue
+                sec_process_data["FLH"] = opt_output_data[step]["FLH"] * 8760
+
         else:
             logger.warning("Optimization not successful.")
             logger.warning(f"Solver status:{opt_output_data['model_status'][0]}")

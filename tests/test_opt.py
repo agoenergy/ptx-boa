@@ -234,51 +234,83 @@ def test_prepare_data_for_optimize_incl_sec_proc():
         "ship_own_fuel": False,
         "user_data": None,
     }
-    data_handler = DataHandler(
-        scenario=settings["scenario"],
-        cache_dir=DEFAULT_CACHE_DIR,
-        data_dir=ptxdata_dir_static,
+    secondary_processes = {
+        "H2O-L": (
+            DataHandler.get_dimensions_parameter_code(
+                "secproc_water", settings["secproc_water"]
+            )
+            if settings["secproc_water"]
+            else None
+        ),
+        "CO2-G": (
+            DataHandler.get_dimensions_parameter_code(
+                "secproc_co2", settings["secproc_co2"]
+            )
+            if settings["secproc_co2"]
+            else None
+        ),
+    }
+    chain_name = settings["chain"]
+    process_code_res = DataHandler.get_dimensions_parameter_code(
+        "res_gen", settings["res_gen"]
     )
-
-    # prepare data in the same way as in PtxboaAPI.calculate():
-    data = data_handler.get_calculation_data(
-        secondary_processes={
-            "H2O-L": (
-                DataHandler.get_dimensions_parameter_code(
-                    "secproc_water", settings["secproc_water"]
-                )
-                if settings["secproc_water"]
-                else None
-            ),
-            "CO2-G": (
-                DataHandler.get_dimensions_parameter_code(
-                    "secproc_co2", settings["secproc_co2"]
-                )
-                if settings["secproc_co2"]
-                else None
-            ),
-        },
-        chain_name=settings["chain"],
-        process_code_res=DataHandler.get_dimensions_parameter_code(
-            "res_gen", settings["res_gen"]
-        ),
-        source_region_code=DataHandler.get_dimensions_parameter_code(
-            "region", settings["region"]
-        ),
-        target_country_code=DataHandler.get_dimensions_parameter_code(
-            "country", settings["country"]
-        ),
-        use_ship=(settings["transport"] == "Ship"),
-        ship_own_fuel=settings["ship_own_fuel"],
-        optimize_flh=True,
-        use_user_data_for_optimize_flh=False,
+    source_region_code = DataHandler.get_dimensions_parameter_code(
+        "region", settings["region"]
     )
+    target_country_code = DataHandler.get_dimensions_parameter_code(
+        "country", settings["country"]
+    )
+    use_ship = settings["transport"] == "Ship"
+    ship_own_fuel = settings["ship_own_fuel"]
 
-    # prepare data same way as in PtxOpt.get_data()
-    opt_input_data = data_handler.optimizer._prepare_data(data)
+    with TemporaryDirectory() as cache_dir:
+        data_handler = DataHandler(
+            scenario=settings["scenario"],
+            cache_dir=cache_dir,
+            data_dir=ptxdata_dir_static,
+        )
 
-    # check that some values exist
-    assert opt_input_data["H2O"]["CAPEX_A"]
-    assert opt_input_data["H2O"]["CONV"]
-    assert opt_input_data["CO2"]["CAPEX_A"]
-    assert opt_input_data["CO2"]["CONV"]
+        # prepare data in the same way as in PtxboaAPI.calculate():
+        data = data_handler._get_calculation_data(
+            secondary_processes=secondary_processes,
+            chain_name=chain_name,
+            process_code_res=process_code_res,
+            source_region_code=source_region_code,
+            target_country_code=target_country_code,
+            use_ship=use_ship,
+            ship_own_fuel=ship_own_fuel,
+            use_user_data=False,
+        )
+
+        # prepare data same way as in PtxOpt.get_data()
+        opt_input_data = data_handler.optimizer._prepare_data(data)
+
+        # check that some values exist
+        assert opt_input_data["H2O"]["CAPEX_A"]
+        assert opt_input_data["H2O"]["CONV"]
+        assert opt_input_data["CO2"]["CAPEX_A"]
+        assert opt_input_data["CO2"]["CONV"]
+
+        # actually call optimizer as in PtxOpt.get_data()
+        opt_output_data, _network = optimize(
+            opt_input_data,
+            profiles_path=data_handler.optimizer.profiles_hashes.profiles_path,
+        )
+
+        # check that some values exist
+        assert opt_output_data["H2O"]["FLH"]
+        assert opt_output_data["CO2"]["FLH"]
+
+        # do the same using the proper api call
+
+        data = data_handler.get_calculation_data(
+            secondary_processes=secondary_processes,
+            chain_name=chain_name,
+            process_code_res=process_code_res,
+            source_region_code=source_region_code,
+            target_country_code=target_country_code,
+            use_ship=use_ship,
+            ship_own_fuel=ship_own_fuel,
+            optimize_flh=True,
+            use_user_data_for_optimize_flh=False,
+        )
