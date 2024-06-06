@@ -262,7 +262,7 @@ def display_and_edit_input_data(
         "transportation_processes",
         "reconversion_processes" "CAPEX",
         "full load hours",
-        "interest rate",
+        "WACC",
         "specific_costs",
         "conversion_coefficients",
         "dac_and_desalination",
@@ -283,7 +283,7 @@ def display_and_edit_input_data(
     data_type : str
         the data type which should be selected. Needs to be one of
         "electricity_generation", "conversion_processes", "transportation_processes",
-        "reconversion_processes", "CAPEX", "full load hours", "interest rate",
+        "reconversion_processes", "CAPEX", "full load hours", "WACC",
         "specific costs", "conversion_coefficients" and "dac_and_desalination"
     scope : Literal[None, "world", "Argentina", "Morocco", "South Africa"]
         The regional scope. Is automatically set to None for data of
@@ -346,11 +346,11 @@ def display_and_edit_input_data(
             ),
         }
 
-    if data_type == "interest rate":
+    if data_type == "WACC":
         index = "source_region_code"
         columns = "parameter_code"
         missing_index_name = "parameter_code"
-        missing_index_value = "interest rate"
+        missing_index_value = "WACC"
         column_config = {
             c: st.column_config.NumberColumn(
                 format="%.2f %%", min_value=0, max_value=100

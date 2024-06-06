@@ -254,7 +254,7 @@ def get_data_type_from_input_data(
         "reconversion_processes",
         "CAPEX",
         "full load hours",
-        "interest rate",
+        "WACC",
         "specific_costs",
         "conversion_coefficients",
         "dac_and_desalination",
@@ -275,7 +275,7 @@ def get_data_type_from_input_data(
     data_type : str
         the data type which should be selected. Needs to be one of
         "electricity_generation", "conversion_processes", "transportation_processes",
-        "reconversion_processes", "CAPEX", "full load hours", "interest rate",
+        "reconversion_processes", "CAPEX", "full load hours", "WACC",
         "specific costs", "conversion_coefficients" and "dac_and_desalination".
     scope : Literal[None, "world", "Argentina", "Morocco", "South Africa"]
         The regional scope. Is automatically set to None for data of
@@ -397,12 +397,12 @@ def get_data_type_from_input_data(
             processes["is_transport"] & processes["is_transformation"], "process_name"
         ].to_list()
 
-    if data_type in ["CAPEX", "interest rate"]:
+    if data_type in ["CAPEX", "WACC"]:
         source_region_code = None
         parameter_code = [data_type]
         index = "source_region_code"
 
-    if data_type == "interest rate":
+    if data_type == "WACC":
         columns = "parameter_code"
         process_code = [""]
 
@@ -429,8 +429,8 @@ def get_data_type_from_input_data(
     if scope in ["Argentina", "Morocco", "South Africa"]:
         df = select_subregions(df, scope)
 
-    # transform data to match unit [%] for 'interest_rate' and 'efficieny'
-    if data_type == "interest rate":
+    # transform data to match unit [%] for 'WACC' and 'efficieny'
+    if data_type == "WACC":
         df = df * 100
 
     if "efficiency" in df.columns:

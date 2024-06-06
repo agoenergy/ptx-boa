@@ -98,14 +98,14 @@ def plot_costs_on_map(
 
 def plot_input_data_on_map(
     api: PtxboaAPI,
-    data_type: Literal["CAPEX", "full load hours", "interest rate"],
+    data_type: Literal["CAPEX", "full load hours", "WACC"],
     color_col: Literal[
         "PV tilted",
         "Wind Offshore",
         "Wind Onshore",
         "Wind Onshore (hybrid)",
         "PV tilted (hybrid)",
-        "interest rate",
+        "WACC",
     ],
     scope: Literal["world", "Argentina", "Morocco", "South Africa"] = "world",
 ) -> go.Figure:
@@ -115,7 +115,7 @@ def plot_input_data_on_map(
     Parameters
     ----------
     api : PtxboaAPI
-    data_type : Literal["CAPEX", "full load hours", "interest rate"]
+    data_type : Literal["CAPEX", "full load hours", "WACC"]
         The data type from which a parameter is plotted
     color_col : Literal[ "PV tilted", "Wind Offshore", "Wind Onshore", "Wind
         the parameter to plot on the map
@@ -130,10 +130,10 @@ def plot_input_data_on_map(
     """
     input_data = get_data_type_from_input_data(api, data_type=data_type, scope=None)
 
-    units = {"CAPEX": "USD/kW", "full load hours": "h/a", "interest rate": "%"}
+    units = {"CAPEX": "USD/kW", "full load hours": "h/a", "WACC": "%"}
 
-    if data_type == "interest rate":
-        assert color_col == "interest rate"
+    if data_type == "WACC":
+        assert color_col == "WACC"
         custom_data_func_kwargs = {"float_precision": 2}
     if data_type == "full load hours":
         assert color_col in [
@@ -309,11 +309,11 @@ def _set_map_layout(fig: go.Figure, colorbar_title: str) -> go.Figure:
 
 def _make_inputs_hoverdata(df, data_type, map_variable, unit, float_precision):
     custom_hover_data = []
-    if data_type == "interest rate":
+    if data_type == "WACC":
         for idx, row in df.iterrows():
             hover = (
                 f"<b>{idx} | {data_type} </b><br><br>"
-                f"{row['interest rate']:.{float_precision}f} {unit}"
+                f"{row['WACC']:.{float_precision}f} {unit}"
             )
             custom_hover_data.append(hover)
     else:

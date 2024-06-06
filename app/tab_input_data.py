@@ -29,7 +29,7 @@ def content_input_data(api: PtxboaAPI) -> None:
 
         data_selection = st.radio(
             "Select data type",
-            ["CAPEX", "full load hours", "interest rate"],
+            ["CAPEX", "full load hours", "WACC"],
             horizontal=True,
         )
 
@@ -57,7 +57,7 @@ def content_input_data(api: PtxboaAPI) -> None:
                     key="input_data_map_parameter",
                 )
             else:
-                map_parameter = "interest rate"
+                map_parameter = "WACC"
             fig = plot_input_data_on_map(
                 api=api,
                 data_type=data_selection,
@@ -81,8 +81,8 @@ def content_input_data(api: PtxboaAPI) -> None:
             if data_selection == "full load hours":
                 ylabel = "full load hours (h/a)"
                 hover_name = "res_gen"
-            if data_selection == "interest rate":
-                ylabel = "interest rate (%)"
+            if data_selection == "WACC":
+                ylabel = "WACC (%)"
                 hover_name = "parameter_code"
             fig = px.box(
                 df,

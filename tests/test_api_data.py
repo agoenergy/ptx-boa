@@ -21,7 +21,7 @@ def user_data_01():
             ("Argentina", "PV tilted", 2000, "full load hours", None),
             ("Costa Rica", "Wind-PV-Hybrid", 2000, "full load hours", None),
             ("Australia", "Wind Onshore", 4000, "full load hours", None),
-            ("Costa Rica", None, 0.12, "interest rate", None),
+            ("Costa Rica", None, 0.12, "WACC", None),
         ],
         columns=[
             "source_region_code",
