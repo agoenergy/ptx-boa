@@ -106,7 +106,7 @@ def main_settings(api):
             index=4,  # Methane as default
         )
     with c2:
-        ely = st.selectbox(
+        st.session_state["electrolyzer"] = st.selectbox(
             "Electrolyzer type:",
             [
                 "AEL",
@@ -126,7 +126,7 @@ def main_settings(api):
     else:
         use_reconversion = False
 
-    st.session_state["chain"] = f"{product} ({ely})"
+    st.session_state["chain"] = f"{product} ({st.session_state['electrolyzer']})"
     if use_reconversion:
         st.session_state["chain"] = f"{st.session_state['chain']} + reconv. to H2"
 

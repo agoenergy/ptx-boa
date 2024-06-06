@@ -122,4 +122,10 @@ def content_costs(
             "chain",
             "Costs by supply chain",
             output_unit="USD/MWh",
+            default_select=1,
+            default_manual_select=[
+                x
+                for x in costs_per_chain.index
+                if st.session_state["electrolyzer"] in x
+            ],
         )
