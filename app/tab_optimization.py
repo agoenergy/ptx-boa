@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Content of optimization tab."""
+import numpy as np
 import pandas as pd
 import pypsa
 import streamlit as st
@@ -190,6 +191,8 @@ def calc_aggregate_statistics(
 
     # drop unwanted columns:
     if not include_debugging_output:
+
+        # filter columns:
         res = res[
             [
                 "Capacity (MW)",
@@ -200,6 +203,7 @@ def calc_aggregate_statistics(
             ]
         ]
 
+        # filter rows:
         res = res[
             res.index.isin(
                 [
@@ -208,9 +212,28 @@ def calc_aggregate_statistics(
                     "Wind offshore",
                     "Electrolyzer",
                     "Derivate production",
+                    "Electricity storage",
+                    "H2 storage",
                 ]
             )
         ]
+
+        # remove unwanted entries:
+        for i in ["Electricity storage", "H2 storage"]:
+            for c in [
+                "Output (MWh/a)",
+                "Full load hours (h)",
+                "Curtailment (%)",
+            ]:
+                if i in res.index:
+                    res.at[i, c] = np.nan
+
+        for i in [
+            "Electrolyzer",
+            "Derivate production",
+        ]:
+            if i in res.index:
+                res.at[i, "Curtailment (%)"] = np.nan
 
     # calculate total costs:
     res.at["Total", "Cost (USD/MWh)"] = res["Cost (USD/MWh)"].sum()
