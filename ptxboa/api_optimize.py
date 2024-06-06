@@ -250,8 +250,8 @@ class PtxOpt:
             },
             "EL_STR": None,
             "H2_STR": None,
-            "CO2": None,
-            "H2O": None,
+            "DAC": None,
+            "DESAL": None,
         }
 
         for step in input_data["main_process_chain"]:
@@ -323,7 +323,7 @@ class PtxOpt:
                 }
 
         # data for secondary processes
-        for step, flow_code in [("H2O", "H2O-L"), ("CO2", "CO2-G")]:
+        for step, flow_code in [("DESAL", "H2O-L"), ("DAC", "CO2-G")]:
             sec_process_data = input_data["secondary_process"].get(flow_code)
             if not sec_process_data:
                 continue
