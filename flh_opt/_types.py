@@ -75,8 +75,8 @@ class OptInputDataType(TypedDict):
     EL_STR: ProcessStorageInputDataType
     H2_STR: ProcessStorageInputDataType
     SPECCOST: Dict[Literal["H2O-L"], float]
-    CO2: SecProcessInputDataType
-    H2O: SecProcessInputDataType
+    DAC: SecProcessInputDataType
+    DESAL: SecProcessInputDataType
 
 
 class ProcessOutputResType(TypedDict):
@@ -89,8 +89,8 @@ class OptOutputDataType(TypedDict):
     RES: List[ProcessOutputResType]
     ELY: Dict[Literal["FLH"], float]
     DERIV: Dict[Literal["FLH"], float]
-    CO2: Dict[Literal["FLH"], float]
-    H2O: Dict[Literal["FLH"], float]
+    DAC: Dict[Literal["FLH"], float]
+    DESAL: Dict[Literal["FLH"], float]
     EL_STR: Dict[Literal["CAP_F"], float]
     H2_STR: Dict[Literal["CAP_F"], float]
 
