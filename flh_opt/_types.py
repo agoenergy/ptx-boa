@@ -59,6 +59,14 @@ class ProcessDerivInputData(TypedDict):
     CONV: Dict[SecondaryFlowType, float]
 
 
+class SecProcessInputDataType(TypedDict):
+    # EFF: Does not use EFF parameter
+    CAPEX_A: float
+    OPEX_F: float
+    OPEX_O: float
+    CONV: Dict[SecondaryFlowType, float]
+
+
 class OptInputDataType(TypedDict):
     SOURCE_REGION_CODE: str
     RES: List[ProcessResInputDataType]
@@ -67,6 +75,8 @@ class OptInputDataType(TypedDict):
     EL_STR: ProcessStorageInputDataType
     H2_STR: ProcessStorageInputDataType
     SPECCOST: Dict[Literal["H2O-L"], float]
+    CO2: SecProcessInputDataType
+    H2O: SecProcessInputDataType
 
 
 class ProcessOutputResType(TypedDict):

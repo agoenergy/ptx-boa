@@ -13,7 +13,7 @@ import pytest
 from app.tab_optimization import calc_aggregate_statistics
 from flh_opt.api_opt import get_profiles_and_weights, optimize
 from ptxboa import DEFAULT_CACHE_DIR
-from ptxboa.api import PtxboaAPI
+from ptxboa.api import DataHandler, PtxboaAPI
 
 logging.basicConfig(level=logging.INFO)
 
@@ -219,3 +219,67 @@ def network(api) -> pypsa.Network:
 def test_calc_aggregate_statistics(network):
     res = calc_aggregate_statistics(network)
     assert isinstance(res, pd.DataFrame)
+
+
+def test_prepare_data_for_optimize():
+
+    settings = {
+        "region": "Morocco",
+        "country": "Germany",
+        "chain": "Methane (AEL)",
+        "res_gen": "PV tilted",
+        "scenario": "2040 (medium)",
+        "secproc_co2": "Direct Air Capture",
+        "secproc_water": "Sea Water desalination",
+        "transport": "Pipeline",
+        "ship_own_fuel": False,
+        "user_data": None,
+    }
+    data_handler = DataHandler(
+        scenario=settings["scenario"],
+        cache_dir=DEFAULT_CACHE_DIR,
+        data_dir=ptxdata_dir_static,
+    )
+
+    # prepare data in the same way as in PtxboaAPI.calculate():
+    data = data_handler.get_calculation_data(
+        secondary_processes={
+            "H2O-L": (
+                DataHandler.get_dimensions_parameter_code(
+                    "secproc_water", settings["secproc_water"]
+                )
+                if settings["secproc_water"]
+                else None
+            ),
+            "CO2-G": (
+                DataHandler.get_dimensions_parameter_code(
+                    "secproc_co2", settings["secproc_co2"]
+                )
+                if settings["secproc_co2"]
+                else None
+            ),
+        },
+        chain_name=settings["chain"],
+        process_code_res=DataHandler.get_dimensions_parameter_code(
+            "res_gen", settings["res_gen"]
+        ),
+        source_region_code=DataHandler.get_dimensions_parameter_code(
+            "region", settings["region"]
+        ),
+        target_country_code=DataHandler.get_dimensions_parameter_code(
+            "country", settings["country"]
+        ),
+        use_ship=(settings["transport"] == "Ship"),
+        ship_own_fuel=settings["ship_own_fuel"],
+        optimize_flh=True,
+        use_user_data_for_optimize_flh=False,
+    )
+
+    # prepare data same way as in PtxOpt.get_data()
+    opt_input_data = data_handler.optimizer._prepare_data(data)
+
+    # check that some values exist
+    assert opt_input_data["H2O"]["CAPEX_A"]
+    assert opt_input_data["H2O"]["CONV"]
+    assert opt_input_data["CO2"]["CAPEX_A"]
+    assert opt_input_data["CO2"]["CONV"]
