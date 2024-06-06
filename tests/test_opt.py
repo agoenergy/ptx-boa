@@ -64,7 +64,6 @@ def test_optimize_export_to_netcdf(call_optimize):
         n.export_to_netcdf(f"{export_dir}/{input_data['id']}.nc")
 
 
-@pytest.mark.xfail()
 def test_optimize_expected_objective_value(call_optimize):
     """Test for expected objective value."""
     [res, n, input_data] = call_optimize

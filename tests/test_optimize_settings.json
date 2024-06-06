@@ -57,7 +57,7 @@
                 "CAP_F": 348.33524817139295
             }
         },
-        "expected_ojective_value": 2480.8292413355575
+        "expected_ojective_value": 424.8982813167353
     },
     {
         "id": "CH4, hybrid, with DAC and DESAL",
@@ -157,7 +157,7 @@
                 "CAP_F": 122.44991931269928
             }
         },
-        "expected_ojective_value": 1748.871332914744
+        "expected_ojective_value": 706.2792852401756
     },
     {
         "id": "CH4, hybrid",
@@ -239,7 +239,7 @@
                 "CAP_F": 122.44991931269928
             }
         },
-        "expected_ojective_value": 1748.871332914744
+        "expected_ojective_value": 706.2792852401756
     },
     {
         "id": "H2, hybrid",
@@ -310,6 +310,6 @@
                 "CAP_F": 122.44991931269928
             }
         },
-        "expected_ojective_value": 1748.871332914744
+        "expected_ojective_value": 375.00268190093993
     }
 ]
