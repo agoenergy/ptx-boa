@@ -49,6 +49,10 @@ def _add_link(
 ):
     """Add link component to network."""
     if input_data.get(name):
+
+        # default efficiency = 1 (for DAC and DESAL):
+        if not input_data[name].get("EFF"):
+            input_data[name]["EFF"] = 1
         n.add(
             "Link",
             name=name,
@@ -201,6 +205,11 @@ def optimize(
         n.add("Bus", "final_product", carrier="final_product")
         n.add("Carrier", "final_product")
 
+    # if using water desalination, add seawater supply:
+    if input_data.get("H2O"):
+        carriers_sec.append("seawater")
+        input_data["SPECCOST"]["seawater"] = 0
+
     # add RE generators:
     for g in input_data["RES"]:
         n.add("Carrier", name=g["PROCESS_CODE"])
@@ -238,6 +247,10 @@ def optimize(
                 p_nom=100,
             )
 
+    # if using water desalination, remove external water supply:
+    if input_data.get("H2O"):
+        n.remove("Generator", "H2O-L_supply")
+
     # add links:
     _add_link(
         n=n,
@@ -255,6 +268,15 @@ def optimize(
         bus0="H2",
         bus1="final_product",
         carrier="final_product",
+    )
+
+    _add_link(
+        n=n,
+        input_data=input_data,
+        name="H2O",
+        bus0="seawater",
+        bus1="H2O-L",
+        carrier="H2O-L",
     )
 
     # add loads:
