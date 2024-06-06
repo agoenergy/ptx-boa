@@ -261,9 +261,19 @@ def _choropleth_map_deep_dive_country(
         opacity=1,
     )
 
+    bboxes = {
+        "Argentina": (-73.4154357571, -55.25, -53.628348965, -21.8323104794),
+        "Morocco": (-17.0204284327, 21.4207341578, -1.12455115397, 35.7599881048),
+        "South Africa": (16.3449768409, -34.8191663551, 32.830120477, -22.0913127581),
+    }
+
+    bbox = bboxes[deep_dive_country]
+    pad = 3
     fig.update_geos(
-        fitbounds="locations",
-        visible=True,
+        center_lon=(bbox[0] + bbox[2]) / 2.0,
+        center_lat=(bbox[1] + bbox[3]) / 2.0,
+        lonaxis_range=[bbox[0] - pad, bbox[2] + pad],
+        lataxis_range=[bbox[1] - pad, bbox[3] + pad],
     )
     return fig
 
