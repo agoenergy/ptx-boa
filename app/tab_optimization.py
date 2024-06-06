@@ -117,15 +117,15 @@ def calc_aggregate_statistics(
             res.at[g, "Full load hours before curtailment (h)"] = (
                 n.generators_t["p_max_pu"][g] * n.snapshot_weightings["generators"]
             ).sum()
-            res.at[g, "Curtailment (kWh/a)"] = (
+            res.at[g, "Curtailment (MWh/a)"] = (
                 res.at[g, "Capacity (MW)"]
                 * res.at[g, "Full load hours before curtailment (h)"]
                 - res.at[g, "Output (MWh/a)"]
             )
             res.at[g, "Curtailment (%)"] = (
                 100
-                * res.at[g, "Curtailment (kWh/a)"]
-                / (res.at[g, "Output (MWh/a)"] + res.at[g, "Curtailment (kWh/a)"])
+                * res.at[g, "Curtailment (MWh/a)"]
+                / (res.at[g, "Output (MWh/a)"] + res.at[g, "Curtailment (MWh/a)"])
             )
 
     for g in ["ELY", "DERIV", "H2_STR_in"]:
