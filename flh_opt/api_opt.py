@@ -255,10 +255,12 @@ def optimize(
     # if using water desalination, remove external water supply:
     if input_data.get("H2O"):
         n.remove("Generator", "H2O-L_supply")
+        n.remove("Generator", "seawater_sink")
 
     # if using DAC, remove external CO2 supply:
     if input_data.get("CO2"):
         n.remove("Generator", "CO2-G_supply")
+        n.remove("Generator", "air_sink")
 
     # add links:
     _add_link(
