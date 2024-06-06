@@ -39,6 +39,40 @@ def get_profiles_and_weights(
     return data, weights_and_period_ids
 
 
+def _add_link(
+    n: Network,
+    input_data: OptInputDataType,
+    name: str,
+    bus0: str,
+    bus1: str,
+    carrier: str,
+):
+    """Add link component to network."""
+    if input_data.get(name):
+        n.add(
+            "Link",
+            name=name,
+            bus0=bus0,
+            bus1=bus1,
+            carrier=carrier,
+            efficiency=input_data[name]["EFF"],
+            # input data is per main output,
+            # pypsa link parameters are defined per main input
+            capital_cost=(input_data[name]["CAPEX_A"] + input_data[name]["OPEX_F"])
+            / input_data[name]["EFF"],
+            marginal_cost=input_data[name]["OPEX_O"] / input_data[name]["EFF"],
+            p_nom_extendable=True,
+        )
+        # add conversion efficiencies and buses for secondary input / output
+        for i, c in enumerate(input_data[name]["CONV"].keys()):
+            n.links.at[name, f"bus{i+2}"] = c
+            # input data is per main output,
+            # pypsa link parameters are defined per main input
+            n.links.at[name, f"efficiency{i+2}"] = (
+                -input_data[name]["CONV"][c] / input_data[name]["EFF"]
+            )
+
+
 def optimize(
     input_data: OptInputDataType, profiles_path: str = "flh_opt/renewable_profiles"
 ) -> tuple[OptOutputDataType, Network]:
@@ -205,48 +239,23 @@ def optimize(
             )
 
     # add links:
-    n.add(
-        "Link",
+    _add_link(
+        n=n,
+        input_data=input_data,
         name="ELY",
         bus0="EL",
         bus1="H2",
-        bus2="H2O-L",
         carrier="H2",
-        efficiency=input_data["ELY"]["EFF"],
-        # input data is per main output,
-        # pypsa link parameters are defined per main input
-        efficiency2=-input_data["ELY"]["CONV"]["H2O-L"] / input_data["ELY"]["EFF"],
-        capital_cost=(input_data["ELY"]["CAPEX_A"] + input_data["ELY"]["OPEX_F"])
-        / input_data["ELY"]["EFF"],
-        marginal_cost=input_data["ELY"]["OPEX_O"] / input_data["ELY"]["EFF"],
-        p_nom_extendable=True,
     )
 
-    if input_data.get("DERIV"):
-        n.add(
-            "Link",
-            name="DERIV",
-            bus0="H2",
-            bus1="final_product",
-            carrier="final_product",
-            efficiency=input_data["DERIV"]["EFF"],
-            # input data is per main output,
-            # pypsa link parameters are defined per main input
-            capital_cost=(
-                input_data["DERIV"]["CAPEX_A"] + input_data["DERIV"]["OPEX_F"]
-            )
-            / input_data["DERIV"]["EFF"],
-            marginal_cost=input_data["DERIV"]["OPEX_O"] / input_data["DERIV"]["EFF"],
-            p_nom_extendable=True,
-        )
-        # add conversion efficiencies and buses for secondary input / output
-        for i, c in enumerate(input_data["DERIV"]["CONV"].keys()):
-            n.links.at["DERIV", f"bus{i+2}"] = c
-            # input data is per main output,
-            # pypsa link parameters are defined per main input
-            n.links.at["DERIV", f"efficiency{i+2}"] = (
-                -input_data["DERIV"]["CONV"][c] / input_data["DERIV"]["EFF"]
-            )
+    _add_link(
+        n=n,
+        input_data=input_data,
+        name="DERIV",
+        bus0="H2",
+        bus1="final_product",
+        carrier="final_product",
+    )
 
     # add loads:
     if input_data.get("DERIV"):
