@@ -15,7 +15,7 @@ import pandas as pd
 from pypsa import Network
 
 from flh_opt import __version__ as flh_opt_version
-from flh_opt._types import OptInputDataType, OptOutputDataType
+from flh_opt._types import OptInputDataType, OptOutputDataType, SecProcessInputDataType
 from flh_opt.api_opt import optimize
 from ptxboa import logger
 from ptxboa.static._types import CalculateDataType
@@ -183,7 +183,7 @@ class ProfilesFLH(metaclass=SingletonMeta):
 class PtxOpt:
 
     def __init__(self, profiles_path: Path, cache_dir: Path):
-        self.cache_dir = cache_dir
+        self.cache_dir = Path(cache_dir) if cache_dir else None
         self.profiles_hashes = ProfilesHashes(profiles_path)
         self.profiles_flh = ProfilesFLH(profiles_path)
 
@@ -248,6 +248,10 @@ class PtxOpt:
                 "N2-G": input_data["parameter"]["SPECCOST"]["N2-G"],
                 "HEAT": input_data["parameter"]["SPECCOST"]["HEAT"],
             },
+            "EL_STR": None,
+            "H2_STR": None,
+            "CO2": None,
+            "H2O": None,
         }
 
         for step in input_data["main_process_chain"]:
@@ -318,6 +322,24 @@ class PtxOpt:
                     "OPEX_O": step["OPEX-O"],
                 }
 
+        # data for secondary processes
+        for step, flow_code in [("H2O", "H2O-L"), ("CO2", "CO2-G")]:
+            sec_process_data = input_data["secondary_process"].get(flow_code)
+            if not sec_process_data:
+                continue
+
+            result_sec_process_data: SecProcessInputDataType = {
+                "CAPEX_A": annuity(
+                    periods=sec_process_data["LIFETIME"],
+                    rate=input_data["parameter"]["WACC"],
+                    value=sec_process_data["CAPEX"],
+                ),
+                "OPEX_F": sec_process_data["OPEX-F"],
+                "OPEX_O": sec_process_data["OPEX-O"],
+                "CONV": sec_process_data["CONV"],
+            }
+            result[step] = result_sec_process_data
+
         return result
 
     @staticmethod
@@ -352,6 +374,13 @@ class PtxOpt:
                     step["FLH"] = opt_output_data["ELY"]["FLH"] * 8760
                 elif step["step"] == "DERIV":
                     step["FLH"] = opt_output_data["DERIV"]["FLH"] * 8760
+            # secondary processes
+            for step, flow_code in [("H2O", "H2O-L"), ("CO2", "CO2-G")]:
+                sec_process_data = input_data["secondary_process"].get(flow_code)
+                if not sec_process_data:
+                    continue
+                sec_process_data["FLH"] = opt_output_data[step]["FLH"] * 8760
+
         else:
             logger.warning("Optimization not successful.")
             logger.warning(f"Solver status:{opt_output_data['model_status'][0]}")

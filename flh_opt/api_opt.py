@@ -39,6 +39,44 @@ def get_profiles_and_weights(
     return data, weights_and_period_ids
 
 
+def _add_link(
+    n: Network,
+    input_data: OptInputDataType,
+    name: str,
+    bus0: str,
+    bus1: str,
+    carrier: str,
+):
+    """Add link component to network."""
+    if input_data.get(name):
+
+        # default efficiency = 1 (for DAC and DESAL):
+        if not input_data[name].get("EFF"):
+            input_data[name]["EFF"] = 1
+        n.add(
+            "Link",
+            name=name,
+            bus0=bus0,
+            bus1=bus1,
+            carrier=carrier,
+            efficiency=input_data[name]["EFF"],
+            # input data is per main output,
+            # pypsa link parameters are defined per main input
+            capital_cost=(input_data[name]["CAPEX_A"] + input_data[name]["OPEX_F"])
+            / input_data[name]["EFF"],
+            marginal_cost=input_data[name]["OPEX_O"] / input_data[name]["EFF"],
+            p_nom_extendable=True,
+        )
+        # add conversion efficiencies and buses for secondary input / output
+        for i, c in enumerate(input_data[name]["CONV"].keys()):
+            n.links.at[name, f"bus{i+2}"] = c
+            # input data is per main output,
+            # pypsa link parameters are defined per main input
+            n.links.at[name, f"efficiency{i+2}"] = (
+                -input_data[name]["CONV"][c] / input_data[name]["EFF"]
+            )
+
+
 def optimize(
     input_data: OptInputDataType, profiles_path: str = "flh_opt/renewable_profiles"
 ) -> tuple[OptOutputDataType, Network]:
@@ -77,6 +115,24 @@ def optimize(
                     "CO2-G": 0.2,
                     "HEAT": -0.2,
                     "H2O-L": -0.15
+                }
+            },
+            "H2O": {
+                "CAPEX_A": 0.07726085034488815,
+                "OPEX_F": 0.0356900588308774,
+                "OPEX_O": 0,
+                "CONV": {
+                    "EL": 0.003,
+                }
+            },
+            "CO2": {
+                "CAPEX_A": 0.07726085034488815,
+                "OPEX_F": 0.0356900588308774,
+                "OPEX_O": 0,
+                "CONV": {
+                    "EL": 0.4515,
+                    "HEAT": 1.743,
+                    "H2O-L": -1.4
                 }
             },
             "EL_STR": {
@@ -149,6 +205,16 @@ def optimize(
         n.add("Bus", "final_product", carrier="final_product")
         n.add("Carrier", "final_product")
 
+    # if using water desalination, add seawater supply:
+    if input_data.get("H2O"):
+        carriers_sec.append("seawater")
+        input_data["SPECCOST"]["seawater"] = 0
+
+    # if using DAC, add air supply:
+    if input_data.get("CO2"):
+        carriers_sec.append("air")
+        input_data["SPECCOST"]["air"] = 0
+
     # add RE generators:
     for g in input_data["RES"]:
         n.add("Carrier", name=g["PROCESS_CODE"])
@@ -186,50 +252,52 @@ def optimize(
                 p_nom=100,
             )
 
+    # if using water desalination, remove external water supply:
+    if input_data.get("H2O"):
+        n.remove("Generator", "H2O-L_supply")
+        n.remove("Generator", "seawater_sink")
+
+    # if using DAC, remove external CO2 supply:
+    if input_data.get("CO2"):
+        n.remove("Generator", "CO2-G_supply")
+        n.remove("Generator", "air_sink")
+
     # add links:
-    # TODO: account for water demand
-    n.add(
-        "Link",
+    _add_link(
+        n=n,
+        input_data=input_data,
         name="ELY",
         bus0="EL",
         bus1="H2",
-        bus2="H2O-L",
         carrier="H2",
-        efficiency=input_data["ELY"]["EFF"],
-        # input data is per main output,
-        # pypsa link parameters are defined per main input
-        efficiency2=-input_data["ELY"]["CONV"]["H2O-L"] / input_data["ELY"]["EFF"],
-        capital_cost=(input_data["ELY"]["CAPEX_A"] + input_data["ELY"]["OPEX_F"])
-        / input_data["ELY"]["EFF"],
-        marginal_cost=input_data["ELY"]["OPEX_O"] / input_data["ELY"]["EFF"],
-        p_nom_extendable=True,
     )
 
-    if input_data.get("DERIV"):
-        n.add(
-            "Link",
-            name="DERIV",
-            bus0="H2",
-            bus1="final_product",
-            carrier="final_product",
-            efficiency=input_data["DERIV"]["EFF"],
-            # input data is per main output,
-            # pypsa link parameters are defined per main input
-            capital_cost=(
-                input_data["DERIV"]["CAPEX_A"] + input_data["DERIV"]["OPEX_F"]
-            )
-            / input_data["DERIV"]["EFF"],
-            marginal_cost=input_data["DERIV"]["OPEX_O"] / input_data["DERIV"]["EFF"],
-            p_nom_extendable=True,
-        )
-        # add conversion efficiencies and buses for secondary input / output
-        for i, c in enumerate(input_data["DERIV"]["CONV"].keys()):
-            n.links.at["DERIV", f"bus{i+2}"] = c
-            # input data is per main output,
-            # pypsa link parameters are defined per main input
-            n.links.at["DERIV", f"efficiency{i+2}"] = (
-                -input_data["DERIV"]["CONV"][c] / input_data["DERIV"]["EFF"]
-            )
+    _add_link(
+        n=n,
+        input_data=input_data,
+        name="DERIV",
+        bus0="H2",
+        bus1="final_product",
+        carrier="final_product",
+    )
+
+    _add_link(
+        n=n,
+        input_data=input_data,
+        name="H2O",
+        bus0="seawater",
+        bus1="H2O-L",
+        carrier="H2O-L",
+    )
+
+    _add_link(
+        n=n,
+        input_data=input_data,
+        name="CO2",
+        bus0="air",
+        bus1="CO2-G",
+        carrier="CO2-G",
+    )
 
     # add loads:
     if input_data.get("DERIV"):
@@ -382,9 +450,11 @@ def optimize(
             )
             result_data["RES"].append(d)
 
-        # Calculate FLH for electrolyzer:
-        result_data["ELY"] = {}
-        result_data["ELY"]["FLH"] = get_flh(n, "ELY", "Link")
+        # Calculate FLH for ELY, DERIV, DAC and DESAL:
+        for c in ["ELY", "DERIV", "CO2", "H2O"]:
+            if input_data.get(c):
+                result_data[c] = {}
+                result_data[c]["FLH"] = get_flh(n, c, "Link")
 
         # calculate capacity factor for storage units:
         # we use charging capacity (p_nom) per final product demand
@@ -393,7 +463,5 @@ def optimize(
         if input_data.get("DERIV"):
             result_data["H2_STR"] = {}
             result_data["H2_STR"]["CAP_F"] = n.links.at["H2_STR_in", "p_nom_opt"]
-            result_data["DERIV"] = {}
-            result_data["DERIV"]["FLH"] = get_flh(n, "DERIV", "Link")
 
     return result_data, n

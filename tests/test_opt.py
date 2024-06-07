@@ -13,7 +13,7 @@ import pytest
 from app.tab_optimization import calc_aggregate_statistics
 from flh_opt.api_opt import get_profiles_and_weights, optimize
 from ptxboa import DEFAULT_CACHE_DIR
-from ptxboa.api import PtxboaAPI
+from ptxboa.api import DataHandler, PtxboaAPI
 
 logging.basicConfig(level=logging.INFO)
 
@@ -64,7 +64,6 @@ def test_optimize_export_to_netcdf(call_optimize):
         n.export_to_netcdf(f"{export_dir}/{input_data['id']}.nc")
 
 
-@pytest.mark.xfail()
 def test_optimize_expected_objective_value(call_optimize):
     """Test for expected objective value."""
     [res, n, input_data] = call_optimize
@@ -136,6 +135,32 @@ def test_issue_312_fix_fhl_optimization_errors(api, chain):
     assert len(res) > 0
 
 
+@pytest.mark.parametrize("chain", ["Methane (AEL)", "Hydrogen (AEL)", "LOHC (AEL)"])
+def test_issue_403_fix_no_heat_demand_for_methane_production(api, chain):
+    """See https://github.com/agoenergy/ptx-boa/issues/403.
+
+    Heat costs should be zero for Methane and Hydrogen, and >0 for LOHC.
+    """
+    settings = {
+        "region": "Morocco",
+        "country": "Germany",
+        "chain": chain,
+        "res_gen": "PV tilted",
+        "scenario": "2040 (medium)",
+        "secproc_co2": "Specific costs",
+        "secproc_water": "Specific costs",
+        "transport": "Pipeline",
+        "ship_own_fuel": False,
+        "output_unit": "USD/t",
+    }
+    res = api.calculate(**settings, optimize_flh=True)
+    df = res[0]
+    if chain != "LOHC (AEL)":
+        assert sum(df["process_type"] == "Heat") == 0
+    else:
+        assert df.loc[df["process_type"] == "Heat", "values"].values[0] > 0
+
+
 # expected to fail because of pypsa bug https://github.com/PyPSA/PyPSA/issues/866
 @pytest.mark.xfail()
 @pytest.mark.filterwarnings("always")
@@ -193,3 +218,99 @@ def network(api) -> pypsa.Network:
 def test_calc_aggregate_statistics(network):
     res = calc_aggregate_statistics(network)
     assert isinstance(res, pd.DataFrame)
+
+
+def test_prepare_data_for_optimize_incl_sec_proc():
+    """Data for optimization should include data for secondary processes."""
+    settings = {
+        "region": "Morocco",
+        "country": "Germany",
+        "chain": "Methane (AEL)",
+        "res_gen": "PV tilted",
+        "scenario": "2040 (medium)",
+        "secproc_co2": "Direct Air Capture",
+        "secproc_water": "Sea Water desalination",
+        "transport": "Pipeline",
+        "ship_own_fuel": False,
+        "user_data": None,
+    }
+    secondary_processes = {
+        "H2O-L": (
+            DataHandler.get_dimensions_parameter_code(
+                "secproc_water", settings["secproc_water"]
+            )
+            if settings["secproc_water"]
+            else None
+        ),
+        "CO2-G": (
+            DataHandler.get_dimensions_parameter_code(
+                "secproc_co2", settings["secproc_co2"]
+            )
+            if settings["secproc_co2"]
+            else None
+        ),
+    }
+    chain_name = settings["chain"]
+    process_code_res = DataHandler.get_dimensions_parameter_code(
+        "res_gen", settings["res_gen"]
+    )
+    source_region_code = DataHandler.get_dimensions_parameter_code(
+        "region", settings["region"]
+    )
+    target_country_code = DataHandler.get_dimensions_parameter_code(
+        "country", settings["country"]
+    )
+    use_ship = settings["transport"] == "Ship"
+    ship_own_fuel = settings["ship_own_fuel"]
+
+    with TemporaryDirectory() as cache_dir:
+        data_handler = DataHandler(
+            scenario=settings["scenario"],
+            cache_dir=cache_dir,
+            data_dir=ptxdata_dir_static,
+        )
+
+        # prepare data in the same way as in PtxboaAPI.calculate():
+        data = data_handler._get_calculation_data(
+            secondary_processes=secondary_processes,
+            chain_name=chain_name,
+            process_code_res=process_code_res,
+            source_region_code=source_region_code,
+            target_country_code=target_country_code,
+            use_ship=use_ship,
+            ship_own_fuel=ship_own_fuel,
+            use_user_data=False,
+        )
+
+        # prepare data same way as in PtxOpt.get_data()
+        opt_input_data = data_handler.optimizer._prepare_data(data)
+
+        # check that some values exist
+        assert opt_input_data["H2O"]["CAPEX_A"]
+        assert opt_input_data["H2O"]["CONV"]
+        assert opt_input_data["CO2"]["CAPEX_A"]
+        assert opt_input_data["CO2"]["CONV"]
+
+        # actually call optimizer as in PtxOpt.get_data()
+        opt_output_data, _network = optimize(
+            opt_input_data,
+            profiles_path=data_handler.optimizer.profiles_hashes.profiles_path,
+        )
+
+        # check that some values exist
+        assert opt_output_data["H2O"]["FLH"]
+        assert opt_output_data["CO2"]["FLH"]
+
+        # do the same using the proper api call
+
+        data = data_handler.get_calculation_data(
+            secondary_processes=secondary_processes,
+            chain_name=chain_name,
+            process_code_res=process_code_res,
+            source_region_code=source_region_code,
+            target_country_code=target_country_code,
+            use_ship=use_ship,
+            ship_own_fuel=ship_own_fuel,
+            optimize_flh=True,
+            use_user_data_for_optimize_flh=False,
+        )
