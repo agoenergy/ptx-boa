@@ -182,7 +182,7 @@ def _validate_param_in_range(result):
         "OPEX (fix)": (0, np.inf),
         "efficiency": (0, 1),
         "lifetime / amortization period": (0, np.inf),
-        "interest rate": (0, 1),
+        "WACC": (0, 1),
         "full load hours": (0, 8760),
         "specific costs": (0, np.inf),
         "losses (own fuel, transport)": (0, np.inf),

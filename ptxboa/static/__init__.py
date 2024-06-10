@@ -573,7 +573,6 @@ ParameterNameType = Literal[
     "conversion factors",
     "efficiency",
     "full load hours",
-    "interest rate",
     "levelized costs",
     "lifetime / amortization period",
     "losses (own fuel, transport)",
@@ -585,6 +584,7 @@ ParameterNameType = Literal[
     "shipping distance",
     "specific costs",
     "transport capacity",
+    "WACC",
 ]
 ParameterNameValues = [
     "calorific values",
@@ -592,7 +592,6 @@ ParameterNameValues = [
     "conversion factors",
     "efficiency",
     "full load hours",
-    "interest rate",
     "levelized costs",
     "lifetime / amortization period",
     "losses (own fuel, transport)",
@@ -604,6 +603,7 @@ ParameterNameValues = [
     "shipping distance",
     "specific costs",
     "transport capacity",
+    "WACC",
 ]
 
 

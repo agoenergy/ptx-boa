@@ -57,9 +57,9 @@ def register_user_changes(
         # Replace the 'id' values with the corresponding index elements from df_tab
         res[index] = res[index].map(lambda x: df_tab.index[x])
 
-        # convert the interest rate from [%] to [decimals]
+        # convert the WACC from [%] to [decimals]
         res["value"] = res["value"].astype(float)
-        for param_code in ["interest rate", "efficiency"]:
+        for param_code in ["WACC", "efficiency"]:
             res.loc[res["parameter_code"] == param_code, "value"] = (
                 res.loc[res["parameter_code"] == param_code, "value"] / 100
             )
@@ -109,7 +109,7 @@ def _custom_unit_based_on_process_and_parameter(process, parameter, unaffected):
 
 
 def _custom_unit_based_on_parameter(parameter, unaffected):
-    mapping = {"efficiency": "%", "interest rate": "%"}
+    mapping = {"efficiency": "%", "WACC": "%"}
     return mapping.get(parameter, unaffected)
 
 
@@ -118,8 +118,8 @@ def display_user_changes(api):
     if st.session_state["user_changes_df"] is not None:
         df = st.session_state["user_changes_df"].copy()
 
-        # convert the values for 'interest rate' and 'efficiency' from [decimals] to [%]
-        for param_code in ["interest rate", "efficiency"]:
+        # convert the values for 'WACC' and 'efficiency' from [decimals] to [%]
+        for param_code in ["WACC", "efficiency"]:
             df.loc[df["parameter_code"] == param_code, "value"] = (
                 df.loc[df["parameter_code"] == param_code, "value"] * 100
             )
