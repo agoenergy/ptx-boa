@@ -4,7 +4,7 @@ import pandas as pd
 import streamlit as st
 
 
-@st.cache_data()
+@st.cache_data(show_spinner=False)
 def load_context_data():
     """Import context data from excel file."""
     filename = "data/context_data.xlsx"
