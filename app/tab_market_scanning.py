@@ -77,13 +77,31 @@ def content_market_scanning(api: PtxboaAPI, res_costs: pd.DataFrame, cd: dict) -
     df = df.astype(float)
 
     # do not show subregions:
-    df = remove_subregions(api, df, st.session_state["country"])
+    df = remove_subregions(
+        api, df, st.session_state["country"], keep=st.session_state["subregion"]
+    )
+
+    # if a subregion is selected, distribute country potential equally across
+    # subregions:
+    if st.session_state["subregion"] is not None:
+        region = st.session_state["region"].split(" (")[0]
+        number_of_subregions = (
+            api.get_dimension("region")["region_name"].str.startswith(region).sum() - 1
+        )
+        for par in [
+            "RE technical potential (PTX Atlas) (TWh/a)",
+            "RE technical potential (EWI) (TWh/a)",
+        ]:
+            df.at[st.session_state["subregion"], par] = (
+                df.at[region, par] / number_of_subregions
+            )
 
     with st.container(border=True):
         st.markdown(
             "### Costs and transportation distances from different supply regions"
             f" to {st.session_state['country']}"
         )
+
         c1, c2 = st.columns(2)
         with c1:
             # select which distance to show:
@@ -102,6 +120,7 @@ def content_market_scanning(api: PtxboaAPI, res_costs: pd.DataFrame, cd: dict) -
                     "RE technical potential (PTX Atlas) (TWh/a)",
                     "None",
                 ],
+                help=read_markdown_file("md/helptext_technical_potential.md"),
             )
 
         # create plot:
