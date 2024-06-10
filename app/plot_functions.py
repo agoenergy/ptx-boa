@@ -525,9 +525,10 @@ def add_trace_to_figure(
     if fill:
         if df_plot["MW (MWh for SOC)"].sum() > 0:
             fig.add_trace(
-                go.Line(
+                go.Scatter(
                     x=df_plot["time"],
                     y=df_plot["MW (MWh for SOC)"],
+                    mode="lines",
                     name=component,
                     line_color=color,
                     stackgroup="one",
@@ -535,9 +536,10 @@ def add_trace_to_figure(
             )
     else:
         fig.add_trace(
-            go.Line(
+            go.Scatter(
                 x=df_plot["time"],
                 y=df_plot["MW (MWh for SOC)"],
+                mode="lines",
                 name=component,
                 line_color=color,
             )
