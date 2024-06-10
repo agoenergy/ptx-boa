@@ -643,7 +643,7 @@ def create_profile_figure_generation(df_sel: pd.DataFrame) -> go.Figure:
         df_sel, fig, component="Electrolyzer", parameter="Power", color="#0C0C0C"
     )
     add_trace_to_figure(
-        df_sel, fig, component="Derivate production", parameter="Power", color="#C3A5D3"
+        df_sel, fig, component="Derivate production", parameter="Power", color="#408B2E"
     )
 
     add_vertical_lines(fig)
