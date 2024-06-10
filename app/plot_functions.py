@@ -616,7 +616,12 @@ def create_profile_figure_generation(df_sel: pd.DataFrame) -> go.Figure:
     fig = go.Figure()
 
     add_trace_to_figure(
-        df_sel, fig, component="PV tilted", parameter="Power", fill=True, color="yellow"
+        df_sel,
+        fig,
+        component="PV tilted",
+        parameter="Power",
+        fill=True,
+        color="#FFE000",
     )
     add_trace_to_figure(
         df_sel,
@@ -624,7 +629,7 @@ def create_profile_figure_generation(df_sel: pd.DataFrame) -> go.Figure:
         component="Wind onshore",
         parameter="Power",
         fill=True,
-        color="blue",
+        color="#1E78C2",
     )
     add_trace_to_figure(
         df_sel,
@@ -632,13 +637,13 @@ def create_profile_figure_generation(df_sel: pd.DataFrame) -> go.Figure:
         component="Wind offshore",
         parameter="Power",
         fill=True,
-        color="blue",
+        color="#0061A4",
     )
     add_trace_to_figure(
-        df_sel, fig, component="Electrolyzer", parameter="Power", color="black"
+        df_sel, fig, component="Electrolyzer", parameter="Power", color="#0C0C0C"
     )
     add_trace_to_figure(
-        df_sel, fig, component="Derivate production", parameter="Power", color="red"
+        df_sel, fig, component="Derivate production", parameter="Power", color="#408B2E"
     )
 
     add_vertical_lines(fig)
