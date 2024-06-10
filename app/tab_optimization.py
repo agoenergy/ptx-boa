@@ -20,23 +20,24 @@ def content_optimization(api: PtxboaAPI) -> None:
     with st.popover("*Help*", use_container_width=True):
         st.markdown(read_markdown_file("md/whatisthis_optimization.md"))
 
-    # load netcdf file:
-    try:
-        n, metadata = api.get_flh_opt_network(
-            scenario=st.session_state["scenario"],
-            secproc_co2=st.session_state["secproc_co2"],
-            secproc_water=st.session_state["secproc_water"],
-            chain=st.session_state["chain"],
-            res_gen=st.session_state["res_gen"],
-            region=st.session_state["region"],
-            country=st.session_state["country"],
-            transport=st.session_state["transport"],
-            ship_own_fuel=st.session_state["ship_own_fuel"],
-            user_data=st.session_state["user_changes_df"],
-        )
-    except FileNotFoundError:
-        st.error("No optimization model could be loaded")
-        return
+    with st.spinner("Please wait. Running optimization model..."):
+        # load netcdf file:
+        try:
+            n, metadata = api.get_flh_opt_network(
+                scenario=st.session_state["scenario"],
+                secproc_co2=st.session_state["secproc_co2"],
+                secproc_water=st.session_state["secproc_water"],
+                chain=st.session_state["chain"],
+                res_gen=st.session_state["res_gen"],
+                region=st.session_state["region"],
+                country=st.session_state["country"],
+                transport=st.session_state["transport"],
+                ship_own_fuel=st.session_state["ship_own_fuel"],
+                user_data=st.session_state["user_changes_df"],
+            )
+        except FileNotFoundError:
+            st.error("No optimization model could be loaded")
+            return
 
     if metadata["model_status"] == ["ok", "optimal"]:
 
