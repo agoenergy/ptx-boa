@@ -155,7 +155,6 @@ if st.session_state[st.session_state["tab_key"]] in [
     "Market scanning",
     "Input data",
     "Deep-dive countries",
-    "Optimization",
 ]:
     with st.spinner("Please wait. Running optimization model..."):
         # calculate results over different data dimensions:
