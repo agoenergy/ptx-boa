@@ -2,7 +2,7 @@ pandas==2.2.1
 numpy==1.26.4
 streamlit==1.35.0
 openpyxl==3.1.2
-plotly==5.19.0
+plotly==5.22.0
 streamlit-antd-components
 XlsxWriter==3.2.0
 pypsa==0.27
