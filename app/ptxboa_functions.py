@@ -562,7 +562,12 @@ def get_column_config() -> dict:
             help=read_markdown_file("md/helptext_columns_lifetime.md"),
         ),
         "levelized costs": st.column_config.NumberColumn(
-            format="%.2e USD/(kW km)", min_value=0
+            format="%.2e USD/([unit] km)",
+            min_value=0,
+            help=(
+                "unit is [t] for Green iron ship (bunker fuel consumption) and [MW] "
+                "for all other processes."
+            ),
         ),
         "losses (own fuel, transport)": st.column_config.NumberColumn(
             format="%.2e fraction per km",
@@ -627,6 +632,7 @@ def change_index_names(df: pd.DataFrame, mapping: dict | None = None) -> pd.Data
             "process_code": "Process",
             "source_region_code": "Source region",
             "region": "Source region",
+            "source_region": "Source region",
             "scenario": "Scenario",
             "res_gen": "RE source",
             "chain": "Chain",

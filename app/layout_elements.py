@@ -260,7 +260,8 @@ def display_and_edit_input_data(
         "electricity_generation",
         "conversion_processes",
         "transportation_processes",
-        "reconversion_processes" "CAPEX",
+        "reconversion_processes",
+        "CAPEX",
         "full load hours",
         "WACC",
         "specific_costs",
@@ -325,6 +326,27 @@ def display_and_edit_input_data(
         missing_index_name = "source_region_code"
         missing_index_value = None
         column_config = get_column_config()
+
+    if data_type == "conversion_processes":
+        custom_column_config = {
+            "CAPEX": st.column_config.NumberColumn(
+                format="%.0f USD/[unit]",
+                min_value=0,
+                help=(
+                    "unit is [t] for Green iron reduction and [MW] for all other "
+                    "processes."
+                ),
+            ),
+            "OPEX (fix)": st.column_config.NumberColumn(
+                format="%.0f USD/[unit]",
+                min_value=0,
+                help=(
+                    "unit is [t] for Green iron reduction and [MW] for all other "
+                    "processes."
+                ),
+            ),
+        }
+        column_config.update(custom_column_config)
 
     if data_type == "dac_and_desalination":
         index = "process_code"

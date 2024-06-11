@@ -103,6 +103,12 @@ def content_input_data(api: PtxboaAPI) -> None:
                 key="input_data_electricity_generation",
             )
         with st.expander("**Electrolysis and derivate production**"):
+            st.caption(
+                (
+                    "The unit of CAPEX and OPEX (fix) is USD/t for Green iron "
+                    "reduction and USD/MW for all other processes."
+                )
+            )
             display_and_edit_input_data(
                 api,
                 data_type="conversion_processes",
@@ -110,6 +116,13 @@ def content_input_data(api: PtxboaAPI) -> None:
                 key="input_data_conversion_processes",
             )
         with st.expander("**Transportation (ships and pipelines)**"):
+            st.caption(
+                (
+                    "The unit of levelized costs is USD/(t km) for Green iron ship "
+                    "(bunker fuel consumption) and USD/(kW km) for all other "
+                    "processes."
+                )
+            )
             display_and_edit_input_data(
                 api,
                 data_type="transportation_processes",
@@ -126,7 +139,7 @@ def content_input_data(api: PtxboaAPI) -> None:
                 key="input_data_reconversion_processes",
             )
         with st.expander("**Direct air capture and desalination**"):
-            st.markdown(
+            st.caption(
                 (
                     "Units for CAPEX and OPEX (fix) are per kg of CO<sub>2</sub> for "
                     "direct air capture and per kg of H<sub>2</sub>0 for sea water "
