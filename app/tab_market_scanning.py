@@ -209,8 +209,8 @@ def content_market_scanning(api: PtxboaAPI, res_costs: pd.DataFrame, cd: dict) -
         df.at["USA", "h2_demand_2030"] = 10
 
         # EU data is missing completely in context_data.xlsx:
-        df.at["EU", "shipping distance"] = 1104
-        df.at["EU", "pipeline distance"] = 2000
+        df.at["EU", "shipping distance"] = df.at["France", "shipping distance"]
+        df.at["EU", "pipeline distance"] = df.at["France", "pipeline distance"]
         df.at["EU", "h2_demand_2030"] = 20
 
         df["h2_demand_2030"] = df["h2_demand_2030"].astype(float)
