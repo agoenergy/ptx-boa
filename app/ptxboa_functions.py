@@ -120,6 +120,19 @@ def calculate_results_list(
     for parameter in parameter_list:
         settings.update({parameter_to_change: parameter})
 
+        if parameter_to_change == "chain":
+            needs_co2 = check_if_input_is_needed(
+                api,
+                flow_code="CO2-G",
+                chain=settings["chain"],
+                scenario=settings["scenario"],
+            )
+            # if the current chain does not need CO2, set "secproc_co2" to None
+            if needs_co2:
+                settings.update({"secproc_co2": st.session_state["secproc_co2"]})
+            else:
+                settings.update({"secproc_co2": None})
+
         # consider user data in optimization only for parameter set in session state
         if st.session_state[parameter_to_change] == parameter:
             use_user_data_for_optimize_flh = True
@@ -637,16 +650,21 @@ def change_index_names(df: pd.DataFrame, mapping: dict | None = None) -> pd.Data
     return df
 
 
-def check_if_input_is_needed(api: PtxboaAPI, flow_code: str) -> bool:
+def check_if_input_is_needed(
+    api: PtxboaAPI, flow_code: str, chain: str = None, scenario: str = None
+) -> bool:
     """Check if a certain input is required by the selected process chain."""
+    if chain is None:
+        chain = st.session_state["chain"]
+    if scenario is None:
+        scenario = st.session_state["scenario"]
+
     # get list of processes in selected chain:
-    process_codes = (
-        api.get_dimension("chain").loc[st.session_state["chain"]][:-1].to_list()
-    )
+    process_codes = api.get_dimension("chain").loc[chain][:-1].to_list()
     process_codes = [p for p in process_codes if p != ""]
 
     # get list of conversion coefficients for these processes:
-    df = api.get_input_data(scenario=st.session_state["scenario"], long_names=False)
+    df = api.get_input_data(scenario=scenario, long_names=False)
     flow_codes = df.loc[
         (df["process_code"].isin(process_codes)) & (df["parameter_code"] == "CONV"),
         "flow_code",
