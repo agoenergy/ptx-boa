@@ -271,6 +271,7 @@ def get_data_type_from_input_data(
         "specific_costs",
         "conversion_coefficients",
         "dac_and_desalination",
+        "storage",
     ],
     scope: Literal[None, "world", "Argentina", "Morocco", "South Africa"],
 ) -> pd.DataFrame:
@@ -329,6 +330,7 @@ def get_data_type_from_input_data(
         "transportation_processes",
         "reconversion_processes",
         "dac_and_desalination",
+        "storage",
     ]:
         scope = None
         source_region_code = [""]
@@ -398,6 +400,8 @@ def get_data_type_from_input_data(
         process_code = processes.loc[
             processes["is_transport"] & ~processes["is_transformation"], "process_name"
         ].to_list()
+        # remove storage processes
+        process_code = [c for c in process_code if "storage" not in c]
 
     if data_type == "reconversion_processes":
         parameter_code = [
@@ -426,6 +430,17 @@ def get_data_type_from_input_data(
             "Wind Offshore",
             "PV tilted",
         ]
+
+    if data_type == "storage":
+        parameter_code = [
+            "CAPEX",
+            "OPEX (fix)",
+            "lifetime / amortization period",
+            "efficiency",
+        ]
+        process_code = processes.loc[
+            processes["process_name"].str.contains("storage"), "process_name"
+        ].to_list()
 
     df = subset_and_pivot_input_data(
         input_data,

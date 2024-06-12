@@ -115,6 +115,15 @@ def content_input_data(api: PtxboaAPI) -> None:
                 scope=None,
                 key="input_data_conversion_processes",
             )
+        with st.expander("**Storage**"):
+            st.caption("Assumptions for storage")
+            display_and_edit_input_data(
+                api,
+                data_type="storage",
+                scope=None,
+                key="input_data_storage",
+            )
+
         with st.expander("**Transportation (ships and pipelines)**"):
             st.caption(
                 (
