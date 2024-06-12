@@ -424,6 +424,10 @@ def get_data_type_from_input_data(
         values="value",
     )
 
+    # remove electricity from specific costs
+    if data_type == "specific_costs":
+        df = df[~(df.index == "electricity")]
+
     if scope == "world":
         df = remove_subregions(api=api, df=df, country_name=st.session_state["country"])
     if scope in ["Argentina", "Morocco", "South Africa"]:
