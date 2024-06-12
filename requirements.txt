@@ -6,4 +6,4 @@ plotly==5.22.0
 streamlit-antd-components
 XlsxWriter==3.2.0
 pypsa==0.27
-highspy==1.5.3
+highspy==1.7.1
