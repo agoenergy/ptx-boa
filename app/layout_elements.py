@@ -311,7 +311,7 @@ def display_and_edit_input_data(
     -------
     pd.DataFrame
     """
-    df = get_data_type_from_input_data(api, data_type=data_type, scope=scope)
+    df, sources = get_data_type_from_input_data(api, data_type=data_type, scope=scope)
     df_orig = df.copy()
 
     if data_type in [
@@ -417,7 +417,8 @@ def display_and_edit_input_data(
         column_config = get_column_config()
 
     df = change_index_names(df)
-
+    if len(sources) > 0:
+        st.markdown(f"Data sources: {', '.join(sources)}")
     # if editing is enabled, store modifications in session_state:
     if st.session_state["edit_input_data"]:
         if data_type == "full load hours":
