@@ -6,6 +6,7 @@ import streamlit as st
 
 from app.excel_download import prepare_and_download_df_as_excel
 from app.ptxboa_functions import (
+    change_index_names,
     config_number_columns,
     read_markdown_file,
     remove_subregions,
@@ -209,8 +210,11 @@ def content_market_scanning(api: PtxboaAPI, res_costs: pd.DataFrame, cd: dict) -
         df.at["USA", "h2_demand_2030"] = 10
 
         # EU data is missing completely in context_data.xlsx:
-        df.at["EU", "shipping distance"] = 1104
-        df.at["EU", "pipeline distance"] = 2000
+        df.at["EU", "shipping distance"] = df.at["France", "shipping distance"]
+        try:
+            df.at["EU", "pipeline distance"] = df.at["France", "pipeline distance"]
+        except KeyError:
+            df.at["EU", "pipeline distance"] = None
         df.at["EU", "h2_demand_2030"] = 20
 
         df["h2_demand_2030"] = df["h2_demand_2030"].astype(float)
@@ -234,6 +238,7 @@ def content_market_scanning(api: PtxboaAPI, res_costs: pd.DataFrame, cd: dict) -
         )
 
         # create plot:
+        df = change_index_names(df, mapping={"target_country_code": "Target country"})
         df_plot = df.copy().round(0)
 
         # distinguish between selected region and others:
