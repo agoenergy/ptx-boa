@@ -10,6 +10,7 @@ import pypsa
 import streamlit as st
 
 from app.ptxboa_functions import (
+    change_index_names,
     get_data_type_from_input_data,
     remove_subregions,
     select_subregions,
@@ -83,6 +84,7 @@ def plot_costs_on_map(
             color_col=cost_component,
             custom_data_func=_make_costs_hoverdata,
         )
+        fig = _highlight_selected_region_world(fig)
     else:
         fig = _choropleth_map_deep_dive_country(
             api=api,
@@ -210,9 +212,9 @@ def _choropleth_map_world(
         color=df[color_col],
         custom_data=custom_data_func(df, **custom_data_func_kwargs),
         color_continuous_scale=agora_continuous_color_scale(),
-        size=[15] * len(df.index),
         opacity=1,
     )
+    fig.update_traces({"marker": {"size": 30}})
     return fig
 
 
@@ -245,7 +247,8 @@ def _choropleth_map_deep_dive_country(
         )
     )
     # merge points to data
-    df = df.merge(lon_lat, left_on="iso3166_code", right_on="iso_3166_2")
+    df = change_index_names(df, mapping={"source_region": "region"})
+    df = df.reset_index().merge(lon_lat, left_on="iso3166_code", right_on="iso_3166_2")
 
     fig = px.scatter_geo(
         lon=df["lon"],
@@ -253,9 +256,11 @@ def _choropleth_map_deep_dive_country(
         color=df[color_col],
         custom_data=hover_data,
         color_continuous_scale=agora_continuous_color_scale(),
-        size=[15] * len(df.index),
         opacity=1,
     )
+    fig.update_traces({"marker": {"size": 30}})
+
+    fig = _highlight_selected_subregion(df, fig)
 
     bboxes = {
         "Argentina": (-73.4154357571, -55.25, -53.628348965, -21.8323104794),
@@ -270,6 +275,51 @@ def _choropleth_map_deep_dive_country(
         center_lat=(bbox[1] + bbox[3]) / 2.0,
         lonaxis_range=[bbox[0] - pad, bbox[2] + pad],
         lataxis_range=[bbox[1] - pad, bbox[3] + pad],
+    )
+    return fig
+
+
+def _highlight_selected_subregion(df, fig):
+    if st.session_state["region"] in df["region"].tolist():
+        subreg = st.session_state["region"]
+        fig.add_trace(
+            go.Scattergeo(
+                lon=df.loc[df["region"] == subreg, "lon"].tolist(),
+                lat=df.loc[df["region"] == subreg, "lat"].tolist(),
+                marker={
+                    "size": 31,
+                    "color": "rgba(0, 0, 0, 0)",
+                    "line": {"width": 3, "color": "black"},
+                },
+                hoverinfo="skip",
+                customdata=["selected supply subregion"],
+                name="selected region",
+                showlegend=False,
+            )
+        )
+    return fig
+
+
+def _highlight_selected_region_world(fig: go.Figure) -> go.Figure:
+    if st.session_state["subregion"] is not None:
+        region = st.session_state["region"].split(" (")[0]
+    else:
+        region = st.session_state["region"]
+
+    fig.add_trace(
+        go.Scattergeo(
+            locations=[region],
+            locationmode="country names",
+            marker={
+                "size": 31,
+                "color": "rgba(0, 0, 0, 0)",
+                "line": {"width": 3, "color": "black"},
+            },
+            hoverinfo="skip",
+            customdata=["selected supply region"],
+            name="selected region",
+            showlegend=False,
+        )
     )
     return fig
 
