@@ -116,7 +116,19 @@ def content_input_data(api: PtxboaAPI) -> None:
                 key="input_data_conversion_processes",
             )
         with st.expander("**Storage**"):
-            st.caption("Assumptions for storage")
+            st.caption(
+                (
+                    "- Storage CAPEX are defined per charging power.\n"
+                    "- Efficiencies are round-trip.\n"
+                    "- Time-dependent losses are neglected.\n"
+                    "- For electricity storage (batteries) we assume a fixed ratio of 4"
+                    " MWh storage capacity per MW charging power\n"
+                    " and equal charging/discharging power.\n"
+                    "- For hydrogen storage (tanks) we assume storage capacity and"
+                    " discharge power to be non-binding because the comporessor is by"
+                    " far the most expensive component."
+                )
+            )
             display_and_edit_input_data(
                 api,
                 data_type="storage",
