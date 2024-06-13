@@ -3,6 +3,7 @@
 from pathlib import Path
 from typing import Literal
 
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -84,7 +85,7 @@ def plot_costs_on_map(
             color_col=cost_component,
             custom_data_func=_make_costs_hoverdata,
         )
-        fig = _highlight_selected_region_world(fig)
+
     else:
         fig = _choropleth_map_deep_dive_country(
             api=api,
@@ -205,7 +206,9 @@ def _choropleth_map_world(
     """
     if custom_data_func_kwargs is None:
         custom_data_func_kwargs = {}
-    df = remove_subregions(api=api, df=df, country_name=st.session_state["country"])
+    df = remove_subregions(
+        api=api, df=df, country_name=st.session_state["country"]
+    ).dropna(subset=color_col)
     fig = px.scatter_geo(
         locations=df.index,
         locationmode="country names",
@@ -215,6 +218,7 @@ def _choropleth_map_world(
         opacity=1,
     )
     fig.update_traces({"marker": {"size": 30}})
+    fig = _highlight_selected_region_world(fig)
     return fig
 
 
@@ -384,7 +388,11 @@ def _make_inputs_hoverdata(df, data_type, map_variable, unit, float_precision):
         for idx, row in df.iterrows():
             hover = f"<b>{idx} | {data_type} </b><br>"
             for i, v in zip(row.index, row):
-                hover += f"<br><b>{i}</b>: {v:.{float_precision}f} {unit}"
+                if np.isnan(v):
+                    value = "no data"
+                else:
+                    value = f"{v:.{float_precision}f} {unit}"
+                hover += f"<br><b>{i}</b>: {value}"
                 if i == map_variable:
                     hover += " ← <i>displayed on map</i>"
             custom_hover_data.append(hover)
@@ -392,16 +400,17 @@ def _make_inputs_hoverdata(df, data_type, map_variable, unit, float_precision):
 
 
 def _make_costs_hoverdata(res_costs: pd.DataFrame) -> list[pd.Series]:
-    custom_hover_data = res_costs.apply(
+    custom_hover_data = res_costs.map("{:,.1f}".format).apply(
         lambda x: f"<b>{x.name}</b><br><br>"
         + "<br>".join(
             [
-                f"<b>{col}</b>: {x[col]:.1f}" f"{st.session_state['output_unit']}"
+                f"<b>{col}</b>: {x[col] if x[col] != 'nan' else 'not applicable'} "
+                f"{st.session_state['output_unit'] if x[col] != 'nan' else ''}"
                 for col in res_costs.columns[:-1]
             ]
             + [
                 f"──────────<br><b>{res_costs.columns[-1]}</b>: "
-                f"{x[res_costs.columns[-1]]:.1f}"
+                f"{x[res_costs.columns[-1]]}"
                 f"{st.session_state['output_unit']}"
             ]
         ),
