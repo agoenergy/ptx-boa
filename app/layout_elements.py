@@ -267,6 +267,7 @@ def display_and_edit_input_data(
         "specific_costs",
         "conversion_coefficients",
         "dac_and_desalination",
+        "storage",
     ],
     scope: Literal["world", "Argentina", "Morocco", "South Africa"],
     key: str,
@@ -320,6 +321,7 @@ def display_and_edit_input_data(
         "transportation_processes",
         "reconversion_processes",
         "dac_and_desalination",
+        "storage",
     ]:
         index = "process_code"
         columns = "parameter_code"
@@ -415,6 +417,11 @@ def display_and_edit_input_data(
         missing_index_name = "parameter_code"
         missing_index_value = "conversion factors"
         column_config = get_column_config()
+
+    if data_type == "storage":
+        column_config["OPEX (fix)"] = st.column_config.NumberColumn(
+            format="%.2f USD/kW", min_value=0
+        )
 
     df = change_index_names(df)
 
