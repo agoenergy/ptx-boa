@@ -197,7 +197,7 @@ def sort_cost_type_columns_by_position_in_chain(df):
         "Electricity generation",
         "Electrolysis",
         "Electricity and H2 storage",
-        "Derivate production",
+        "Derivative production",
         "Heat",
         "Water",
         "Carbon",

@@ -228,7 +228,7 @@ def cli(out_file: Path, cache_dir: Path, loglevel) -> None:
         region="all",
         chain="all",
         process_type_filter=[
-            "Derivate production",
+            "Derivative production",
             "Electricity and H2 storage",
             "Electricity generation",
             "Electrolysis",

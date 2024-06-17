@@ -44,7 +44,7 @@ def agora_discrete_colors_cost_categories() -> dict:
         "Electrolysis",
         "Electricity generation",
         "Electricity and H2 storage",
-        "Derivate production",
+        "Derivative production",
         "Heat",
         "Carbon",
         # TODO: add missing category (GH #145)
@@ -652,7 +652,7 @@ def prepare_data_for_profile_figures(n: pypsa.Network) -> pd.DataFrame:
         "WIND-ON": "Wind onshore",
         "WIND-OFF": "Wind offshore",
         "ELY": "Electrolyzer",
-        "DERIV": "Derivate production",
+        "DERIV": "Derivative production",
         "H2_STR_in": "H2 storage",
         "H2_STR_store": "H2 storage",
         "final_product_storage": "Final product storage",
@@ -705,7 +705,11 @@ def create_profile_figure_generation(df_sel: pd.DataFrame) -> go.Figure:
         df_sel, fig, component="Electrolyzer", parameter="Power", color="#0C0C0C"
     )
     add_trace_to_figure(
-        df_sel, fig, component="Derivate production", parameter="Power", color="#408B2E"
+        df_sel,
+        fig,
+        component="Derivative production",
+        parameter="Power",
+        color="#408B2E",
     )
 
     add_vertical_lines(fig)
