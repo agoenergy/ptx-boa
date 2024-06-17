@@ -14,7 +14,6 @@ from app.ptxboa_functions import (
     get_region_list_without_subregions,
     move_to_tab,
     read_markdown_file,
-    remove_subregions,
 )
 from ptxboa.api import PtxboaAPI
 
@@ -85,22 +84,8 @@ def content_costs(api: PtxboaAPI):
 
     with st.container(border=True):
         display_costs(
-            remove_subregions(
-                api,
-                costs_per_region,
-                st.session_state["country"],
-                keep=st.session_state["subregion"],
-            ),
-            (
-                remove_subregions(
-                    api,
-                    costs_per_region_without_user_changes,
-                    st.session_state["country"],
-                    keep=st.session_state["subregion"],
-                )
-                if st.session_state["user_changes_df"] is not None
-                else None
-            ),
+            costs_per_region,
+            costs_per_region_without_user_changes,
             "region",
             "Costs by region",
         )

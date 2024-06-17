@@ -11,7 +11,6 @@ from app.ptxboa_functions import (
     config_number_columns,
     get_region_list_without_subregions,
     read_markdown_file,
-    remove_subregions,
 )
 from ptxboa.api import PtxboaAPI
 
@@ -88,11 +87,6 @@ def content_market_scanning(api: PtxboaAPI, cd: dict) -> None:
     # replace nan entries:
     df = df.replace({"no potential": None, "no analysis ": None})
     df = df.astype(float)
-
-    # do not show subregions:
-    df = remove_subregions(
-        api, df, st.session_state["country"], keep=st.session_state["subregion"]
-    )
 
     # if a subregion is selected, distribute country potential equally across
     # subregions:
