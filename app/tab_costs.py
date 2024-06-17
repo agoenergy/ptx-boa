@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Content of costs tab."""
-import pandas as pd
 import streamlit as st
 from plotly.subplots import make_subplots
 
@@ -10,25 +9,35 @@ from app.plot_functions import (
     create_box_plot,
     plot_costs_on_map,
 )
-from app.ptxboa_functions import move_to_tab, read_markdown_file, remove_subregions
+from app.ptxboa_functions import (
+    costs_over_dimension,
+    get_region_list_without_subregions,
+    move_to_tab,
+    read_markdown_file,
+)
 from ptxboa.api import PtxboaAPI
 
 
-def content_costs(
-    api: PtxboaAPI,
-    costs_per_region: pd.DataFrame,
-    costs_per_scenario: pd.DataFrame,
-    costs_per_res_gen: pd.DataFrame,
-    costs_per_chain: pd.DataFrame,
-    costs_per_region_without_user_changes: pd.DataFrame,
-    costs_per_scenario_without_user_changes: pd.DataFrame,
-    costs_per_res_gen_without_user_changes: pd.DataFrame,
-    costs_per_chain_without_user_changes: pd.DataFrame,
-):
+def content_costs(api: PtxboaAPI):
     with st.popover("*Help*", use_container_width=True):
         st.markdown(read_markdown_file("md/whatisthis_costs.md"))
 
     with st.container(border=True):
+        with st.spinner(
+            "Please wait. Calculating results for different source regions"
+        ):
+            costs_per_region, costs_per_region_without_user_changes = (
+                costs_over_dimension(
+                    api,
+                    dim="region",
+                    parameter_list=get_region_list_without_subregions(
+                        api,
+                        country_name=st.session_state["country"],
+                        keep=st.session_state["subregion"],
+                    ),
+                )
+            )
+
         title_string = (
             f"Cost of exporting "
             f"{st.session_state['chain']} to "
@@ -79,27 +88,22 @@ def content_costs(
 
     with st.container(border=True):
         display_costs(
-            remove_subregions(
-                api,
-                costs_per_region,
-                st.session_state["country"],
-                keep=st.session_state["subregion"],
-            ),
-            (
-                remove_subregions(
-                    api,
-                    costs_per_region_without_user_changes,
-                    st.session_state["country"],
-                    keep=st.session_state["subregion"],
-                )
-                if st.session_state["user_changes_df"] is not None
-                else None
-            ),
+            costs_per_region,
+            costs_per_region_without_user_changes,
             "region",
             "Costs by region",
         )
 
     with st.container(border=True):
+        with st.spinner(
+            "Please wait. Calculating results for different data scenarios."
+        ):
+            costs_per_scenario, costs_per_scenario_without_user_changes = (
+                costs_over_dimension(
+                    api,
+                    dim="scenario",
+                )
+            )
         display_costs(
             costs_per_scenario,
             costs_per_scenario_without_user_changes,
@@ -108,6 +112,24 @@ def content_costs(
         )
 
     with st.container(border=True):
+        with st.spinner(
+            (
+                "Please wait. Calculating results for different renewable electricity "
+                "sources."
+            )
+        ):
+            costs_per_res_gen, costs_per_res_gen_without_user_changes = (
+                costs_over_dimension(
+                    api,
+                    dim="res_gen",
+                    # TODO: here we remove PV tracking manually, fix in data
+                    parameter_list=[
+                        x
+                        for x in api.get_dimension("res_gen").index.to_list()
+                        if x != "PV tracking"
+                    ],
+                )
+            )
         display_costs(
             costs_per_res_gen,
             costs_per_res_gen_without_user_changes,
@@ -116,6 +138,16 @@ def content_costs(
         )
 
     with st.container(border=True):
+        with st.spinner(
+            "Please wait. Calculating results for different supply chains."
+        ):
+            costs_per_chain, costs_per_chain_without_user_changes = (
+                costs_over_dimension(
+                    api,
+                    dim="chain",
+                    override_session_state={"output_unit": "USD/MWh"},
+                )
+            )
         display_costs(
             costs_per_chain,
             costs_per_chain_without_user_changes,
