@@ -19,7 +19,7 @@ from flh_opt._types import OptInputDataType, OptOutputDataType, SecProcessInputD
 from flh_opt.api_opt import optimize
 from ptxboa import logger
 from ptxboa.static._types import CalculateDataType
-from ptxboa.utils import SingletonMeta, annuity
+from ptxboa.utils import SingletonMeta, annuity, serialize_for_hashing
 
 
 def get_data_hash_md5(key: object) -> str:
@@ -36,7 +36,7 @@ def get_data_hash_md5(key: object) -> str:
         md5 hash of a standardized byte representation of the input data
     """
     # serialize to str, make sure to sort keys
-    sdata = json.dumps(key, sort_keys=True, ensure_ascii=False, indent=0)
+    sdata = serialize_for_hashing(key)
     # to bytes (only bytes can be hashed)
     bdata = sdata.encode()
     # create hash
