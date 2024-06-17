@@ -25,6 +25,8 @@ def display_costs(
     titlestring: str,
     key_suffix: str = "",
     output_unit: str | None = None,
+    default_select: int = 0,
+    default_manual_select: str | None = None,
 ):
     """Display costs as table and bar chart."""
     if output_unit is None:
@@ -39,7 +41,7 @@ def display_costs(
         with c2:
             st.info("Input data has been modified. Select which data to display.")
             select_data = st.radio(
-                "Select data to display",
+                "Data to display",
                 ["With Modifications", "Without Modifications", "Difference"],
                 horizontal=True,
                 key=f"select_user_modificatons_data_{key}_{key_suffix}",
@@ -53,32 +55,59 @@ def display_costs(
     else:
         df_res = df_costs.copy()
 
+    if default_manual_select is None:
+        default_manual_select = df_res.index.values
+
     with c1:
+        if len(df_res) > 13:
+            select_options = [
+                "All",
+                "Manual selection",
+                "Cheapest 10",
+            ]
+        else:
+            select_options = ["All", "Manual selection"]
         # select filter:
         show_which_data = st.radio(
-            "Select elements to display:",
-            ["All", "Manual select"],
-            index=0,
+            "Elements to display:",
+            select_options,
+            index=default_select,
             horizontal=True,
             key=f"show_which_data_{key}_{key_suffix}",
         )
 
         # apply filter:
-        if show_which_data == "Manual select":
+        if show_which_data == "Manual selection":
             ind_select = st.multiselect(
-                "Select regions:",
+                "Select elements:",
                 df_res.index.values,
-                default=df_res.index.values,
+                default=default_manual_select,
                 key=f"select_data_{key}_{key_suffix}",
+                label_visibility="collapsed",
             )
             df_res = df_res.loc[ind_select]
 
-        # sort:
-        sort_ascending = st.toggle(
-            "Sort by total costs?",
-            value=True,
-            key=f"sort_data_{key}_{key_suffix}",
-        )
+        if show_which_data == "Cheapest 10":
+            ind_select = (
+                df_res.sort_values(["Total"], ascending=True).iloc[:10].index.to_list()
+            )
+            # append the setting from the sidebar if not in cheapest 10
+            if (
+                st.session_state[key] not in ind_select
+                and st.session_state[key] in df_res.index
+            ):
+                ind_select.append(st.session_state[key])
+            df_res = df_res.loc[ind_select]
+            sort_ascending = False
+
+        else:
+            # sort:
+            sort_ascending = st.toggle(
+                "Sort by total costs?",
+                value=True,
+                key=f"sort_data_{key}_{key_suffix}",
+            )
+
     if sort_ascending:
         df_res = df_res.sort_values(["Total"], ascending=True)
 
@@ -95,9 +124,16 @@ def display_costs(
 
     # add explainer for costs by supply chain comparison:
     if titlestring == "Costs by supply chain":
+        if st.session_state["output_unit"] == "USD/t":
+            unit_note = (
+                "The output unit is set to USD/MWh in order to compare energy carriers"
+                " with different densities. "
+            )
+        else:
+            unit_note = ""
         st.caption(
             (
-                "**Note**: Green Iron is not shown in this comparison "
+                f"**Note**: {unit_note}Green Iron is not shown in this comparison "
                 "as it is not an energy carrier."
             )
         )
@@ -224,12 +260,14 @@ def display_and_edit_input_data(
         "electricity_generation",
         "conversion_processes",
         "transportation_processes",
-        "reconversion_processes" "CAPEX",
+        "reconversion_processes",
+        "CAPEX",
         "full load hours",
-        "interest rate",
+        "WACC",
         "specific_costs",
         "conversion_coefficients",
         "dac_and_desalination",
+        "storage",
     ],
     scope: Literal["world", "Argentina", "Morocco", "South Africa"],
     key: str,
@@ -247,7 +285,7 @@ def display_and_edit_input_data(
     data_type : str
         the data type which should be selected. Needs to be one of
         "electricity_generation", "conversion_processes", "transportation_processes",
-        "reconversion_processes", "CAPEX", "full load hours", "interest rate",
+        "reconversion_processes", "CAPEX", "full load hours", "WACC",
         "specific costs", "conversion_coefficients" and "dac_and_desalination"
     scope : Literal[None, "world", "Argentina", "Morocco", "South Africa"]
         The regional scope. Is automatically set to None for data of
@@ -283,12 +321,34 @@ def display_and_edit_input_data(
         "transportation_processes",
         "reconversion_processes",
         "dac_and_desalination",
+        "storage",
     ]:
         index = "process_code"
         columns = "parameter_code"
         missing_index_name = "source_region_code"
         missing_index_value = None
         column_config = get_column_config()
+
+    if data_type == "conversion_processes":
+        custom_column_config = {
+            "CAPEX": st.column_config.NumberColumn(
+                format="%.0f USD/[unit]",
+                min_value=0,
+                help=(
+                    "unit is [t] for Green iron reduction and [MW] for all other "
+                    "processes."
+                ),
+            ),
+            "OPEX (fix)": st.column_config.NumberColumn(
+                format="%.0f USD/[unit]",
+                min_value=0,
+                help=(
+                    "unit is [t] for Green iron reduction and [MW] for all other "
+                    "processes."
+                ),
+            ),
+        }
+        column_config.update(custom_column_config)
 
     if data_type == "dac_and_desalination":
         index = "process_code"
@@ -310,11 +370,11 @@ def display_and_edit_input_data(
             ),
         }
 
-    if data_type == "interest rate":
+    if data_type == "WACC":
         index = "source_region_code"
         columns = "parameter_code"
         missing_index_name = "parameter_code"
-        missing_index_value = "interest rate"
+        missing_index_value = "WACC"
         column_config = {
             c: st.column_config.NumberColumn(
                 format="%.2f %%", min_value=0, max_value=100
@@ -357,6 +417,11 @@ def display_and_edit_input_data(
         missing_index_name = "parameter_code"
         missing_index_value = "conversion factors"
         column_config = get_column_config()
+
+    if data_type == "storage":
+        column_config["OPEX (fix)"] = st.column_config.NumberColumn(
+            format="%.2f USD/kW", min_value=0
+        )
 
     df = change_index_names(df)
 

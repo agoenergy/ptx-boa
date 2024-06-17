@@ -5,6 +5,9 @@
     textColor="#262730"
     font="sans serif"
 
+[client]
+    toolbarMode = "minimal"
+
 [logger]
     level="INFO"
 

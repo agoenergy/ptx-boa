@@ -7,7 +7,20 @@ from app.user_data import reset_user_changes
 from ptxboa.api import PtxboaAPI
 
 
+@st.cache_resource()
+def sidebar_logo():
+    st.image("img/agora-energiewende_logo_612x306.png")
+
+
 def make_sidebar(api: PtxboaAPI):
+    st.logo(
+        image="img/transparent_10x10.png",  # placeholder when sidebar is expanded
+        icon_image="img/agora-energiewende_logo_612x306.png",
+    )
+
+    with st.sidebar:
+        sidebar_logo()
+
     with st.sidebar.expander("**Main settings**", expanded=True):
         main_settings(api)
 
@@ -49,6 +62,7 @@ def main_settings(api):
         index=region_list.get_loc("Morocco"),  # Morocco as default
     )
     st.session_state["region"] = region
+    st.session_state["subregion"] = None
 
     # If a deep dive country has been selected, add option to select subregion:
     if region in ["Argentina", "Morocco", "South Africa"]:
@@ -64,6 +78,7 @@ def main_settings(api):
         )
         if subregion is not None:
             st.session_state["region"] = subregion
+            st.session_state["subregion"] = subregion
 
     # select demand country:
     countries = api.get_dimension("country").index
@@ -91,12 +106,12 @@ def main_settings(api):
             index=4,  # Methane as default
         )
     with c2:
-        ely = st.selectbox(
+        st.session_state["electrolyzer"] = st.selectbox(
             "Electrolyzer type:",
             [
                 "AEL",
                 "PEM",
-                "SEOC",
+                "SOEC",
             ],
             help=read_markdown_file("md/helptext_sidebar_electrolyzer_type.md"),
             index=0,  # AEL as default
@@ -111,7 +126,7 @@ def main_settings(api):
     else:
         use_reconversion = False
 
-    st.session_state["chain"] = f"{product} ({ely})"
+    st.session_state["chain"] = f"{product} ({st.session_state['electrolyzer']})"
     if use_reconversion:
         st.session_state["chain"] = f"{st.session_state['chain']} + reconv. to H2"
 

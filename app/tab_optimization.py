@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Content of optimization tab."""
+import numpy as np
 import pandas as pd
 import pypsa
 import streamlit as st
@@ -17,26 +18,27 @@ from ptxboa.api import PtxboaAPI
 
 def content_optimization(api: PtxboaAPI) -> None:
 
-    with st.expander("What is this?"):
+    with st.popover("*Help*", use_container_width=True):
         st.markdown(read_markdown_file("md/whatisthis_optimization.md"))
 
-    # load netcdf file:
-    try:
-        n, metadata = api.get_flh_opt_network(
-            scenario=st.session_state["scenario"],
-            secproc_co2=st.session_state["secproc_co2"],
-            secproc_water=st.session_state["secproc_water"],
-            chain=st.session_state["chain"],
-            res_gen=st.session_state["res_gen"],
-            region=st.session_state["region"],
-            country=st.session_state["country"],
-            transport=st.session_state["transport"],
-            ship_own_fuel=st.session_state["ship_own_fuel"],
-            user_data=st.session_state["user_changes_df"],
-        )
-    except FileNotFoundError:
-        st.error("No optimization model could be loaded")
-        return
+    with st.spinner("Please wait. Running optimization model..."):
+        # load netcdf file:
+        try:
+            n, metadata = api.get_flh_opt_network(
+                scenario=st.session_state["scenario"],
+                secproc_co2=st.session_state["secproc_co2"],
+                secproc_water=st.session_state["secproc_water"],
+                chain=st.session_state["chain"],
+                res_gen=st.session_state["res_gen"],
+                region=st.session_state["region"],
+                country=st.session_state["country"],
+                transport=st.session_state["transport"],
+                ship_own_fuel=st.session_state["ship_own_fuel"],
+                user_data=st.session_state["user_changes_df"],
+            )
+        except FileNotFoundError:
+            st.error("No optimization model could be loaded")
+            return
 
     if metadata["model_status"] == ["ok", "optimal"]:
 
@@ -57,8 +59,8 @@ def content_optimization(api: PtxboaAPI) -> None:
                 res,
                 use_container_width=True,
                 column_config={
-                    "Capacity (kW)": st.column_config.NumberColumn(format="%.1f"),
-                    "Output (kWh/a)": st.column_config.NumberColumn(format="%.0f"),
+                    "Capacity (MW)": st.column_config.NumberColumn(format="%.1f"),
+                    "Output (MWh/a)": st.column_config.NumberColumn(format="%.0f"),
                     "Full load hours (h)": st.column_config.NumberColumn(format="%.0f"),
                     "Curtailment (%)": st.column_config.NumberColumn(format="%.1f %%"),
                     "Cost (USD/MWh)": st.column_config.NumberColumn(format="%.1f"),
@@ -68,7 +70,7 @@ def content_optimization(api: PtxboaAPI) -> None:
         with st.container(border=True):
             st.subheader("Download model")
             st.markdown(read_markdown_file("md/info_download_model.md"))
-            download_network_as_netcdf(st.session_state["network"], "network.nc")
+            download_network_as_netcdf(n=n, filename="network.nc")
 
         with st.expander("Debugging output"):
             st.warning(
@@ -108,8 +110,8 @@ def calc_aggregate_statistics(
         "WIND-OFF",
     ]:
         if g in n.generators.index:
-            res.at[g, "Capacity (kW)"] = n.generators.at[g, "p_nom_opt"]
-            res.at[g, "Output (kWh/a)"] = (
+            res.at[g, "Capacity (MW)"] = n.generators.at[g, "p_nom_opt"]
+            res.at[g, "Output (MWh/a)"] = (
                 n.generators_t["p"][g] * n.snapshot_weightings["generators"]
             ).sum()
             res.at[g, "CAPEX (USD/kW)"] = n.generators.at[g, "capital_cost"]
@@ -117,23 +119,23 @@ def calc_aggregate_statistics(
             res.at[g, "Full load hours before curtailment (h)"] = (
                 n.generators_t["p_max_pu"][g] * n.snapshot_weightings["generators"]
             ).sum()
-            res.at[g, "Curtailment (kWh/a)"] = (
-                res.at[g, "Capacity (kW)"]
+            res.at[g, "Curtailment (MWh/a)"] = (
+                res.at[g, "Capacity (MW)"]
                 * res.at[g, "Full load hours before curtailment (h)"]
-                - res.at[g, "Output (kWh/a)"]
+                - res.at[g, "Output (MWh/a)"]
             )
             res.at[g, "Curtailment (%)"] = (
                 100
-                * res.at[g, "Curtailment (kWh/a)"]
-                / (res.at[g, "Output (kWh/a)"] + res.at[g, "Curtailment (kWh/a)"])
+                * res.at[g, "Curtailment (MWh/a)"]
+                / (res.at[g, "Output (MWh/a)"] + res.at[g, "Curtailment (MWh/a)"])
             )
 
     for g in ["ELY", "DERIV", "H2_STR_in"]:
         if g in n.links.index:
-            res.at[g, "Capacity (kW)"] = (
+            res.at[g, "Capacity (MW)"] = (
                 n.links.at[g, "p_nom_opt"] * n.links.at[g, "efficiency"]
             )
-            res.at[g, "Output (kWh/a)"] = (
+            res.at[g, "Output (MWh/a)"] = (
                 -n.links_t["p1"][g] * n.snapshot_weightings["generators"]
             ).sum()
             res.at[g, "CAPEX (USD/kW)"] = (
@@ -143,8 +145,8 @@ def calc_aggregate_statistics(
 
     for g in ["EL_STR"]:
         if g in n.storage_units.index:
-            res.at[g, "Capacity (kW)"] = n.storage_units.at[g, "p_nom_opt"]
-            res.at[g, "Output (kWh/a)"] = (
+            res.at[g, "Capacity (MW)"] = n.storage_units.at[g, "p_nom_opt"]
+            res.at[g, "Output (MWh/a)"] = (
                 n.storage_units_t["p_dispatch"][g] * n.snapshot_weightings["generators"]
             ).sum()
             res.at[g, "CAPEX (USD/kW)"] = n.storage_units.at[g, "capital_cost"]
@@ -157,24 +159,22 @@ def calc_aggregate_statistics(
         "N2-G_supply",
     ]:
         if g in n.generators.index:
-            res.at[g, "Output (kWh/a)"] = (
+            res.at[g, "Output (MWh/a)"] = (
                 n.generators_t["p"][g] * n.snapshot_weightings["generators"]
             ).sum()
             res.at[g, "OPEX (USD/kWh)"] = n.generators.at[g, "marginal_cost"]
 
     res = res.fillna(0)
 
-    res["Full load hours (h)"] = res["Output (kWh/a)"] / res["Capacity (kW)"]
+    res["Full load hours (h)"] = res["Output (MWh/a)"] / res["Capacity (MW)"]
     res["Cost (USD/MWh)"] = (
         (
-            res["Capacity (kW)"] * res["CAPEX (USD/kW)"]
-            + res["Output (kWh/a)"] * res["OPEX (USD/kWh)"]
+            res["Capacity (MW)"] * res["CAPEX (USD/kW)"]
+            + res["Output (MWh/a)"] * res["OPEX (USD/kWh)"]
         )
         / 8760
         * 1000
     )
-
-    res["Output (MWh/a)"] = res["Output (kWh/a)"] / 1000
 
     # rename components:
     rename_list = {
@@ -192,16 +192,19 @@ def calc_aggregate_statistics(
 
     # drop unwanted columns:
     if not include_debugging_output:
+
+        # filter columns:
         res = res[
             [
-                "Capacity (kW)",
-                "Output (kWh/a)",
+                "Capacity (MW)",
+                "Output (MWh/a)",
                 "Full load hours (h)",
                 "Curtailment (%)",
                 "Cost (USD/MWh)",
             ]
         ]
 
+        # filter rows:
         res = res[
             res.index.isin(
                 [
@@ -210,9 +213,28 @@ def calc_aggregate_statistics(
                     "Wind offshore",
                     "Electrolyzer",
                     "Derivate production",
+                    "Electricity storage",
+                    "H2 storage",
                 ]
             )
         ]
+
+        # remove unwanted entries:
+        for i in ["Electricity storage", "H2 storage"]:
+            for c in [
+                "Output (MWh/a)",
+                "Full load hours (h)",
+                "Curtailment (%)",
+            ]:
+                if i in res.index:
+                    res.at[i, c] = np.nan
+
+        for i in [
+            "Electrolyzer",
+            "Derivate production",
+        ]:
+            if i in res.index:
+                res.at[i, "Curtailment (%)"] = np.nan
 
     # calculate total costs:
     res.at["Total", "Cost (USD/MWh)"] = res["Cost (USD/MWh)"].sum()

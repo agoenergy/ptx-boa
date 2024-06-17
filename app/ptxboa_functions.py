@@ -11,7 +11,7 @@ from ptxboa.api import PtxboaAPI
 from ptxboa.utils import is_test
 
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def calculate_results_single(
     _api: PtxboaAPI,
     settings: dict,
@@ -119,6 +119,19 @@ def calculate_results_list(
     res_list = []
     for parameter in parameter_list:
         settings.update({parameter_to_change: parameter})
+
+        if parameter_to_change == "chain":
+            needs_co2 = check_if_input_is_needed(
+                api,
+                flow_code="CO2-G",
+                chain=settings["chain"],
+                scenario=settings["scenario"],
+            )
+            # if the current chain does not need CO2, set "secproc_co2" to None
+            if needs_co2:
+                settings.update({"secproc_co2": st.session_state["secproc_co2"]})
+            else:
+                settings.update({"secproc_co2": None})
 
         # consider user data in optimization only for parameter set in session state
         if st.session_state[parameter_to_change] == parameter:
@@ -254,10 +267,11 @@ def get_data_type_from_input_data(
         "reconversion_processes",
         "CAPEX",
         "full load hours",
-        "interest rate",
+        "WACC",
         "specific_costs",
         "conversion_coefficients",
         "dac_and_desalination",
+        "storage",
     ],
     scope: Literal[None, "world", "Argentina", "Morocco", "South Africa"],
 ) -> pd.DataFrame:
@@ -275,7 +289,7 @@ def get_data_type_from_input_data(
     data_type : str
         the data type which should be selected. Needs to be one of
         "electricity_generation", "conversion_processes", "transportation_processes",
-        "reconversion_processes", "CAPEX", "full load hours", "interest rate",
+        "reconversion_processes", "CAPEX", "full load hours", "WACC",
         "specific costs", "conversion_coefficients" and "dac_and_desalination".
     scope : Literal[None, "world", "Argentina", "Morocco", "South Africa"]
         The regional scope. Is automatically set to None for data of
@@ -316,6 +330,7 @@ def get_data_type_from_input_data(
         "transportation_processes",
         "reconversion_processes",
         "dac_and_desalination",
+        "storage",
     ]:
         scope = None
         source_region_code = [""]
@@ -385,6 +400,8 @@ def get_data_type_from_input_data(
         process_code = processes.loc[
             processes["is_transport"] & ~processes["is_transformation"], "process_name"
         ].to_list()
+        # remove storage processes
+        process_code = [c for c in process_code if "storage" not in c]
 
     if data_type == "reconversion_processes":
         parameter_code = [
@@ -397,12 +414,12 @@ def get_data_type_from_input_data(
             processes["is_transport"] & processes["is_transformation"], "process_name"
         ].to_list()
 
-    if data_type in ["CAPEX", "interest rate"]:
+    if data_type in ["CAPEX", "WACC"]:
         source_region_code = None
         parameter_code = [data_type]
         index = "source_region_code"
 
-    if data_type == "interest rate":
+    if data_type == "WACC":
         columns = "parameter_code"
         process_code = [""]
 
@@ -414,6 +431,17 @@ def get_data_type_from_input_data(
             "PV tilted",
         ]
 
+    if data_type == "storage":
+        parameter_code = [
+            "CAPEX",
+            "OPEX (fix)",
+            "lifetime / amortization period",
+            "efficiency",
+        ]
+        process_code = processes.loc[
+            processes["process_name"].str.contains("storage"), "process_name"
+        ].to_list()
+
     df = subset_and_pivot_input_data(
         input_data,
         source_region_code=source_region_code,
@@ -424,13 +452,17 @@ def get_data_type_from_input_data(
         values="value",
     )
 
+    # remove electricity from specific costs
+    if data_type == "specific_costs":
+        df = df[~(df.index == "electricity")]
+
     if scope == "world":
         df = remove_subregions(api=api, df=df, country_name=st.session_state["country"])
     if scope in ["Argentina", "Morocco", "South Africa"]:
         df = select_subregions(df, scope)
 
-    # transform data to match unit [%] for 'interest_rate' and 'efficieny'
-    if data_type == "interest rate":
+    # transform data to match unit [%] for 'WACC' and 'efficieny'
+    if data_type == "WACC":
         df = df * 100
 
     if "efficiency" in df.columns:
@@ -439,7 +471,9 @@ def get_data_type_from_input_data(
     return df
 
 
-def remove_subregions(api: PtxboaAPI, df: pd.DataFrame, country_name: str):
+def remove_subregions(
+    api: PtxboaAPI, df: pd.DataFrame, country_name: str, keep: str | None = None
+):
     """Remove subregions from a dataframe.
 
     Parameters
@@ -452,6 +486,9 @@ def remove_subregions(api: PtxboaAPI, df: pd.DataFrame, country_name: str):
 
     country_name : str
         name of target country. Is removed from region list if it is also in there.
+
+    keep : str or None, by default None
+        can be used to keep data for a specific subregion
 
     Returns
     -------
@@ -472,6 +509,9 @@ def remove_subregions(api: PtxboaAPI, df: pd.DataFrame, country_name: str):
     region_list_without_subregions = [
         r for r in region_list_without_subregions if r in df.index
     ]
+
+    if keep is not None:
+        region_list_without_subregions.append(keep)
 
     df = df.loc[region_list_without_subregions]
 
@@ -554,7 +594,12 @@ def get_column_config() -> dict:
             help=read_markdown_file("md/helptext_columns_lifetime.md"),
         ),
         "levelized costs": st.column_config.NumberColumn(
-            format="%.2e USD/(kW km)", min_value=0
+            format="%.2e USD/([unit] km)",
+            min_value=0,
+            help=(
+                "unit is [t] for Green iron ship (bunker fuel consumption) and [MW] "
+                "for all other processes."
+            ),
         ),
         "losses (own fuel, transport)": st.column_config.NumberColumn(
             format="%.2e fraction per km",
@@ -619,6 +664,7 @@ def change_index_names(df: pd.DataFrame, mapping: dict | None = None) -> pd.Data
             "process_code": "Process",
             "source_region_code": "Source region",
             "region": "Source region",
+            "source_region": "Source region",
             "scenario": "Scenario",
             "res_gen": "RE source",
             "chain": "Chain",
@@ -629,16 +675,21 @@ def change_index_names(df: pd.DataFrame, mapping: dict | None = None) -> pd.Data
     return df
 
 
-def check_if_input_is_needed(api: PtxboaAPI, flow_code: str) -> bool:
+def check_if_input_is_needed(
+    api: PtxboaAPI, flow_code: str, chain: str = None, scenario: str = None
+) -> bool:
     """Check if a certain input is required by the selected process chain."""
+    if chain is None:
+        chain = st.session_state["chain"]
+    if scenario is None:
+        scenario = st.session_state["scenario"]
+
     # get list of processes in selected chain:
-    process_codes = (
-        api.get_dimension("chain").loc[st.session_state["chain"]][:-1].to_list()
-    )
+    process_codes = api.get_dimension("chain").loc[chain][:-1].to_list()
     process_codes = [p for p in process_codes if p != ""]
 
     # get list of conversion coefficients for these processes:
-    df = api.get_input_data(scenario=st.session_state["scenario"], long_names=False)
+    df = api.get_input_data(scenario=scenario, long_names=False)
     flow_codes = df.loc[
         (df["process_code"].isin(process_codes)) & (df["parameter_code"] == "CONV"),
         "flow_code",

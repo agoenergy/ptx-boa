@@ -6,6 +6,7 @@ import streamlit as st
 
 from app.excel_download import prepare_and_download_df_as_excel
 from app.ptxboa_functions import (
+    change_index_names,
     config_number_columns,
     read_markdown_file,
     remove_subregions,
@@ -25,7 +26,7 @@ def content_market_scanning(api: PtxboaAPI, res_costs: pd.DataFrame, cd: dict) -
     cd: dict
         context data.
     """
-    with st.expander("What is this?"):
+    with st.popover("*Help*", use_container_width=True):
         st.markdown(read_markdown_file("md/whatisthis_market_scanning.md"))
 
     # get input data:
@@ -77,13 +78,31 @@ def content_market_scanning(api: PtxboaAPI, res_costs: pd.DataFrame, cd: dict) -
     df = df.astype(float)
 
     # do not show subregions:
-    df = remove_subregions(api, df, st.session_state["country"])
+    df = remove_subregions(
+        api, df, st.session_state["country"], keep=st.session_state["subregion"]
+    )
+
+    # if a subregion is selected, distribute country potential equally across
+    # subregions:
+    if st.session_state["subregion"] is not None:
+        region = st.session_state["region"].split(" (")[0]
+        number_of_subregions = (
+            api.get_dimension("region")["region_name"].str.startswith(region).sum() - 1
+        )
+        for par in [
+            "RE technical potential (PTX Atlas) (TWh/a)",
+            "RE technical potential (EWI) (TWh/a)",
+        ]:
+            df.at[st.session_state["subregion"], par] = (
+                df.at[region, par] / number_of_subregions
+            )
 
     with st.container(border=True):
         st.markdown(
             "### Costs and transportation distances from different supply regions"
             f" to {st.session_state['country']}"
         )
+
         c1, c2 = st.columns(2)
         with c1:
             # select which distance to show:
@@ -102,6 +121,7 @@ def content_market_scanning(api: PtxboaAPI, res_costs: pd.DataFrame, cd: dict) -
                     "RE technical potential (PTX Atlas) (TWh/a)",
                     "None",
                 ],
+                help=read_markdown_file("md/helptext_technical_potential.md"),
             )
 
         # create plot:
@@ -190,8 +210,11 @@ def content_market_scanning(api: PtxboaAPI, res_costs: pd.DataFrame, cd: dict) -
         df.at["USA", "h2_demand_2030"] = 10
 
         # EU data is missing completely in context_data.xlsx:
-        df.at["EU", "shipping distance"] = 1104
-        df.at["EU", "pipeline distance"] = 2000
+        df.at["EU", "shipping distance"] = df.at["France", "shipping distance"]
+        try:
+            df.at["EU", "pipeline distance"] = df.at["France", "pipeline distance"]
+        except KeyError:
+            df.at["EU", "pipeline distance"] = None
         df.at["EU", "h2_demand_2030"] = 20
 
         df["h2_demand_2030"] = df["h2_demand_2030"].astype(float)
@@ -215,6 +238,7 @@ def content_market_scanning(api: PtxboaAPI, res_costs: pd.DataFrame, cd: dict) -
         )
 
         # create plot:
+        df = change_index_names(df, mapping={"target_country_code": "Target country"})
         df_plot = df.copy().round(0)
 
         # distinguish between selected region and others:

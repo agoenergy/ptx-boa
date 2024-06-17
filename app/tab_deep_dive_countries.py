@@ -3,7 +3,7 @@
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-from streamlit_antd_components import SegmentedItem, segmented
+import streamlit_antd_components as sac
 
 from app.layout_elements import (
     display_and_edit_input_data,
@@ -33,15 +33,15 @@ def content_deep_dive_countries(
     ------
     None
     """
-    with st.expander("What is this?"):
+    with st.popover("*Help*", use_container_width=True):
         st.markdown(read_markdown_file("md/whatisthis_deep_dive_countries.md"))
 
     st.write("Select which country to display:")
-    ddc = segmented(
+    ddc = sac.buttons(
         items=[
-            SegmentedItem(label="Argentina"),
-            SegmentedItem(label="Morocco"),
-            SegmentedItem(label="South Africa"),
+            sac.ButtonsItem(label="Argentina"),
+            sac.ButtonsItem(label="Morocco"),
+            sac.ButtonsItem(label="South Africa"),
         ],
         use_container_width=True,
     )
@@ -106,7 +106,11 @@ def content_deep_dive_countries(
         with c_0_1:
             st.markdown("**Regional distribution**")
         with c_1_1:
-            fig = px.box(df)
+            fig = px.box(
+                df,
+                hover_data=[df.index],
+                hover_name="res_gen",
+            )
             fig.update_layout(xaxis_title=None)
             st.plotly_chart(fig, use_container_width=True)
             what_is_a_boxplot()

@@ -121,7 +121,7 @@ class TestApi(unittest.TestCase):
         settings = {
             "region": "Argentina (Chaco)",
             "country": "Japan",
-            "chain": "Methanol (SEOC)",
+            "chain": "Methanol (SOEC)",
             "res_gen": "Wind Onshore",
             "scenario": "2040 (high)",
             "secproc_co2": "Specific costs",

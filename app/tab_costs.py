@@ -25,7 +25,7 @@ def content_costs(
     costs_per_res_gen_without_user_changes: pd.DataFrame,
     costs_per_chain_without_user_changes: pd.DataFrame,
 ):
-    with st.expander("What is this?"):
+    with st.popover("*Help*", use_container_width=True):
         st.markdown(read_markdown_file("md/whatisthis_costs.md"))
 
     with st.container(border=True):
@@ -79,12 +79,18 @@ def content_costs(
 
     with st.container(border=True):
         display_costs(
-            remove_subregions(api, costs_per_region, st.session_state["country"]),
+            remove_subregions(
+                api,
+                costs_per_region,
+                st.session_state["country"],
+                keep=st.session_state["subregion"],
+            ),
             (
                 remove_subregions(
                     api,
                     costs_per_region_without_user_changes,
                     st.session_state["country"],
+                    keep=st.session_state["subregion"],
                 )
                 if st.session_state["user_changes_df"] is not None
                 else None
@@ -116,4 +122,10 @@ def content_costs(
             "chain",
             "Costs by supply chain",
             output_unit="USD/MWh",
+            default_select=1,
+            default_manual_select=[
+                x
+                for x in costs_per_chain.index
+                if st.session_state["electrolyzer"] in x
+            ],
         )

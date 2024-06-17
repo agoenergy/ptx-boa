@@ -21,7 +21,7 @@ def content_input_data(api: PtxboaAPI) -> None:
     ------
     None
     """
-    with st.expander("What is this?"):
+    with st.popover("*Help*", use_container_width=True):
         st.markdown(read_markdown_file("md/whatisthis_input_data.md"))
 
     with st.container(border=True):
@@ -29,7 +29,7 @@ def content_input_data(api: PtxboaAPI) -> None:
 
         data_selection = st.radio(
             "Select data type",
-            ["CAPEX", "full load hours", "interest rate"],
+            ["CAPEX", "full load hours", "WACC"],
             horizontal=True,
         )
 
@@ -57,7 +57,7 @@ def content_input_data(api: PtxboaAPI) -> None:
                     key="input_data_map_parameter",
                 )
             else:
-                map_parameter = "interest rate"
+                map_parameter = "WACC"
             fig = plot_input_data_on_map(
                 api=api,
                 data_type=data_selection,
@@ -77,11 +77,18 @@ def content_input_data(api: PtxboaAPI) -> None:
             # create plot:
             if data_selection == "CAPEX":
                 ylabel = "CAPEX (USD/kW)"
+                hover_name = "process_code"
             if data_selection == "full load hours":
                 ylabel = "full load hours (h/a)"
-            if data_selection == "interest rate":
-                ylabel = "interest rate (%)"
-            fig = px.box(df)
+                hover_name = "res_gen"
+            if data_selection == "WACC":
+                ylabel = "WACC (%)"
+                hover_name = "parameter_code"
+            fig = px.box(
+                df,
+                hover_data=[df.index],
+                hover_name=hover_name,
+            )
             fig.update_layout(xaxis_title=None, yaxis_title=ylabel)
             st.plotly_chart(fig, use_container_width=True)
             what_is_a_boxplot()
@@ -96,13 +103,47 @@ def content_input_data(api: PtxboaAPI) -> None:
                 key="input_data_electricity_generation",
             )
         with st.expander("**Electrolysis and derivate production**"):
+            st.caption(
+                (
+                    "The unit of CAPEX and OPEX (fix) is USD/t for Green iron "
+                    "reduction and USD/MW for all other processes."
+                )
+            )
             display_and_edit_input_data(
                 api,
                 data_type="conversion_processes",
                 scope=None,
                 key="input_data_conversion_processes",
             )
+        with st.expander("**Storage**"):
+            st.caption(
+                (
+                    "- Storage CAPEX are defined per charging power.\n"
+                    "- Efficiencies are round-trip.\n"
+                    "- Time-dependent losses are neglected.\n"
+                    "- For electricity storage (batteries) we assume a fixed ratio of 4"
+                    " MWh storage capacity per MW charging power\n"
+                    " and equal charging/discharging power.\n"
+                    "- For hydrogen storage (tanks) we assume storage capacity and"
+                    " discharge power to be non-binding because the comporessor is by"
+                    " far the most expensive component."
+                )
+            )
+            display_and_edit_input_data(
+                api,
+                data_type="storage",
+                scope=None,
+                key="input_data_storage",
+            )
+
         with st.expander("**Transportation (ships and pipelines)**"):
+            st.caption(
+                (
+                    "The unit of levelized costs is USD/(t km) for Green iron ship "
+                    "(bunker fuel consumption) and USD/(kW km) for all other "
+                    "processes."
+                )
+            )
             display_and_edit_input_data(
                 api,
                 data_type="transportation_processes",
@@ -119,7 +160,7 @@ def content_input_data(api: PtxboaAPI) -> None:
                 key="input_data_reconversion_processes",
             )
         with st.expander("**Direct air capture and desalination**"):
-            st.markdown(
+            st.caption(
                 (
                     "Units for CAPEX and OPEX (fix) are per kg of CO<sub>2</sub> for "
                     "direct air capture and per kg of H<sub>2</sub>0 for sea water "

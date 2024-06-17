@@ -49,7 +49,7 @@ to meet basic sustainability needs.
 
 
 def content_sustainability(context_data: dict):
-    with st.expander("What is this?"):
+    with st.popover("*Help*", use_container_width=True):
         st.markdown(read_markdown_file("md/whatisthis_sustainability.md"))
 
     st.markdown("## Dimensions of sustainability")

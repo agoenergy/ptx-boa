@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """Functions for plotting input data and results (cost_data)."""
-import json
 from pathlib import Path
 from typing import Literal
 
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -11,6 +11,7 @@ import pypsa
 import streamlit as st
 
 from app.ptxboa_functions import (
+    change_index_names,
     get_data_type_from_input_data,
     remove_subregions,
     select_subregions,
@@ -84,6 +85,7 @@ def plot_costs_on_map(
             color_col=cost_component,
             custom_data_func=_make_costs_hoverdata,
         )
+
     else:
         fig = _choropleth_map_deep_dive_country(
             api=api,
@@ -98,14 +100,14 @@ def plot_costs_on_map(
 
 def plot_input_data_on_map(
     api: PtxboaAPI,
-    data_type: Literal["CAPEX", "full load hours", "interest rate"],
+    data_type: Literal["CAPEX", "full load hours", "WACC"],
     color_col: Literal[
         "PV tilted",
         "Wind Offshore",
         "Wind Onshore",
         "Wind Onshore (hybrid)",
         "PV tilted (hybrid)",
-        "interest rate",
+        "WACC",
     ],
     scope: Literal["world", "Argentina", "Morocco", "South Africa"] = "world",
 ) -> go.Figure:
@@ -115,7 +117,7 @@ def plot_input_data_on_map(
     Parameters
     ----------
     api : PtxboaAPI
-    data_type : Literal["CAPEX", "full load hours", "interest rate"]
+    data_type : Literal["CAPEX", "full load hours", "WACC"]
         The data type from which a parameter is plotted
     color_col : Literal[ "PV tilted", "Wind Offshore", "Wind Onshore", "Wind
         the parameter to plot on the map
@@ -130,10 +132,10 @@ def plot_input_data_on_map(
     """
     input_data = get_data_type_from_input_data(api, data_type=data_type, scope=None)
 
-    units = {"CAPEX": "USD/kW", "full load hours": "h/a", "interest rate": "%"}
+    units = {"CAPEX": "USD/kW", "full load hours": "h/a", "WACC": "%"}
 
-    if data_type == "interest rate":
-        assert color_col == "interest rate"
+    if data_type == "WACC":
+        assert color_col == "WACC"
         custom_data_func_kwargs = {"float_precision": 2}
     if data_type == "full load hours":
         assert color_col in [
@@ -155,10 +157,6 @@ def plot_input_data_on_map(
     custom_data_func_kwargs["unit"] = units[data_type]
     custom_data_func_kwargs["data_type"] = data_type
     custom_data_func_kwargs["map_variable"] = color_col
-
-    # transform data to % for interest rate
-    if data_type == "interest rate":
-        input_data = input_data * 100
 
     if scope == "world":
         # Create a choropleth world map:
@@ -208,14 +206,19 @@ def _choropleth_map_world(
     """
     if custom_data_func_kwargs is None:
         custom_data_func_kwargs = {}
-    df = remove_subregions(api=api, df=df, country_name=st.session_state["country"])
-    fig = px.choropleth(
+    df = remove_subregions(
+        api=api, df=df, country_name=st.session_state["country"]
+    ).dropna(subset=color_col)
+    fig = px.scatter_geo(
         locations=df.index,
         locationmode="country names",
         color=df[color_col],
         custom_data=custom_data_func(df, **custom_data_func_kwargs),
         color_continuous_scale=agora_continuous_color_scale(),
+        opacity=1,
     )
+    fig.update_traces({"marker": {"size": 30}})
+    fig = _highlight_selected_region_world(fig)
     return fig
 
 
@@ -230,7 +233,8 @@ def _choropleth_map_deep_dive_country(
     if custom_data_func_kwargs is None:
         custom_data_func_kwargs = {}
     # subsetting 'df' for the selected deep dive country
-    df = select_subregions(df, deep_dive_country)
+    # missing value removal necessary for wind offshore
+    df = select_subregions(df, deep_dive_country).dropna(subset=color_col)
     # need to calculate custom data befor is03166 column is appended.
     hover_data = custom_data_func(df, **custom_data_func_kwargs)
     # get dataframe with info about iso 3166-2 codes and map them to res_costs
@@ -238,27 +242,88 @@ def _choropleth_map_deep_dive_country(
     df["iso3166_code"] = df.index.map(
         pd.Series(ddc_info["iso3166_code"], index=ddc_info["region_name"])
     )
-
-    geojson_file = (
-        Path(__file__).parent.parent.resolve()
-        / "data"
-        / f"{deep_dive_country.lower().replace(' ', '_')}_subregions.geojson"
+    # load representative points data
+    lon_lat = pd.read_csv(
+        (
+            Path(__file__).parent.parent.resolve()
+            / "data"
+            / "subregion_representative_points.csv"
+        )
     )
-    with geojson_file.open("r", encoding="utf-8") as f:
-        subregion_shapes = json.load(f)
+    # merge points to data
+    df = change_index_names(df, mapping={"source_region": "region"})
+    df = df.reset_index().merge(lon_lat, left_on="iso3166_code", right_on="iso_3166_2")
 
-    fig = px.choropleth(
-        locations=df["iso3166_code"],
-        featureidkey="properties.iso_3166_2",
+    fig = px.scatter_geo(
+        lon=df["lon"],
+        lat=df["lat"],
         color=df[color_col],
-        geojson=subregion_shapes,
         custom_data=hover_data,
         color_continuous_scale=agora_continuous_color_scale(),
+        opacity=1,
     )
+    fig.update_traces({"marker": {"size": 30}})
 
+    fig = _highlight_selected_subregion(df, fig)
+
+    bboxes = {
+        "Argentina": (-73.4154357571, -55.25, -53.628348965, -21.8323104794),
+        "Morocco": (-17.0204284327, 21.4207341578, -1.12455115397, 35.7599881048),
+        "South Africa": (16.3449768409, -34.8191663551, 32.830120477, -22.0913127581),
+    }
+
+    bbox = bboxes[deep_dive_country]
+    pad = 3
     fig.update_geos(
-        fitbounds="locations",
-        visible=True,
+        center_lon=(bbox[0] + bbox[2]) / 2.0,
+        center_lat=(bbox[1] + bbox[3]) / 2.0,
+        lonaxis_range=[bbox[0] - pad, bbox[2] + pad],
+        lataxis_range=[bbox[1] - pad, bbox[3] + pad],
+    )
+    return fig
+
+
+def _highlight_selected_subregion(df, fig):
+    if st.session_state["region"] in df["region"].tolist():
+        subreg = st.session_state["region"]
+        fig.add_trace(
+            go.Scattergeo(
+                lon=df.loc[df["region"] == subreg, "lon"].tolist(),
+                lat=df.loc[df["region"] == subreg, "lat"].tolist(),
+                marker={
+                    "size": 31,
+                    "color": "rgba(0, 0, 0, 0)",
+                    "line": {"width": 3, "color": "black"},
+                },
+                hoverinfo="skip",
+                customdata=["selected supply subregion"],
+                name="selected region",
+                showlegend=False,
+            )
+        )
+    return fig
+
+
+def _highlight_selected_region_world(fig: go.Figure) -> go.Figure:
+    if st.session_state["subregion"] is not None:
+        region = st.session_state["region"].split(" (")[0]
+    else:
+        region = st.session_state["region"]
+
+    fig.add_trace(
+        go.Scattergeo(
+            locations=[region],
+            locationmode="country names",
+            marker={
+                "size": 31,
+                "color": "rgba(0, 0, 0, 0)",
+                "line": {"width": 3, "color": "black"},
+            },
+            hoverinfo="skip",
+            customdata=["selected supply region"],
+            name="selected region",
+            showlegend=False,
+        )
     )
     return fig
 
@@ -285,10 +350,9 @@ def _set_map_layout(fig: go.Figure, colorbar_title: str) -> go.Figure:
     """
     # update layout:
     fig.update_geos(
-        showcountries=True,  # Show country borders
+        resolution=50,
+        showcountries=False,  # do not show country borders
         showcoastlines=True,  # Show coastlines
-        countrycolor="black",  # Set default border color for other countries
-        countrywidth=0.2,  # Set border width
         coastlinewidth=0.2,  # coastline width
         coastlinecolor="black",  # coastline color
         showland=True,  # show land areas
@@ -313,18 +377,22 @@ def _set_map_layout(fig: go.Figure, colorbar_title: str) -> go.Figure:
 
 def _make_inputs_hoverdata(df, data_type, map_variable, unit, float_precision):
     custom_hover_data = []
-    if data_type == "interest rate":
+    if data_type == "WACC":
         for idx, row in df.iterrows():
             hover = (
                 f"<b>{idx} | {data_type} </b><br><br>"
-                f"{row['interest rate']:.{float_precision}f} {unit}"
+                f"{row['WACC']:.{float_precision}f} {unit}"
             )
             custom_hover_data.append(hover)
     else:
         for idx, row in df.iterrows():
             hover = f"<b>{idx} | {data_type} </b><br>"
             for i, v in zip(row.index, row):
-                hover += f"<br><b>{i}</b>: {v:.{float_precision}f} {unit}"
+                if np.isnan(v):
+                    value = "no data"
+                else:
+                    value = f"{v:.{float_precision}f} {unit}"
+                hover += f"<br><b>{i}</b>: {value}"
                 if i == map_variable:
                     hover += " ← <i>displayed on map</i>"
             custom_hover_data.append(hover)
@@ -332,16 +400,17 @@ def _make_inputs_hoverdata(df, data_type, map_variable, unit, float_precision):
 
 
 def _make_costs_hoverdata(res_costs: pd.DataFrame) -> list[pd.Series]:
-    custom_hover_data = res_costs.apply(
+    custom_hover_data = res_costs.map("{:,.1f}".format).apply(
         lambda x: f"<b>{x.name}</b><br><br>"
         + "<br>".join(
             [
-                f"<b>{col}</b>: {x[col]:.1f}" f"{st.session_state['output_unit']}"
+                f"<b>{col}</b>: {x[col] if x[col] != 'nan' else 'not applicable'} "
+                f"{st.session_state['output_unit'] if x[col] != 'nan' else ''}"
                 for col in res_costs.columns[:-1]
             ]
             + [
                 f"──────────<br><b>{res_costs.columns[-1]}</b>: "
-                f"{x[res_costs.columns[-1]]:.1f}"
+                f"{x[res_costs.columns[-1]]}"
                 f"{st.session_state['output_unit']}"
             ]
         ),
@@ -399,16 +468,23 @@ def create_bar_chart_costs(
 
     # add highlight for current selection:
     if current_selection is not None and current_selection in res_costs.index:
+        if (res_costs["Total"] < 0).all():
+            y = 1.2 * min(res_costs["Total"])
+            ay = 30
+        else:
+            y = 1.2 * max(res_costs["Total"])
+            ay = -30
+
         fig.add_annotation(
             x=current_selection,
-            y=1.2 * max(res_costs["Total"]),
+            y=y,
             text="current selection",
             showarrow=True,
             arrowhead=2,
             arrowsize=1,
             arrowwidth=2,
             ax=0,
-            ay=-30,
+            ay=ay,
         )
 
     if output_unit is None:
@@ -506,20 +582,23 @@ def add_trace_to_figure(
     df_plot = df[(df["Component"] == component)]
     df_plot = df_plot[(df_plot["Parameter"] == parameter)]
     if fill:
-        fig.add_trace(
-            go.Line(
-                x=df_plot["time"],
-                y=df_plot["MW (MWh for SOC)"],
-                name=component,
-                line_color=color,
-                stackgroup="one",
+        if df_plot["MW (MWh for SOC)"].sum() > 0:
+            fig.add_trace(
+                go.Scatter(
+                    x=df_plot["time"],
+                    y=df_plot["MW (MWh for SOC)"],
+                    mode="lines",
+                    name=component,
+                    line_color=color,
+                    stackgroup="one",
+                )
             )
-        )
     else:
         fig.add_trace(
-            go.Line(
+            go.Scatter(
                 x=df_plot["time"],
                 y=df_plot["MW (MWh for SOC)"],
+                mode="lines",
                 name=component,
                 line_color=color,
             )
@@ -599,7 +678,12 @@ def create_profile_figure_generation(df_sel: pd.DataFrame) -> go.Figure:
     fig = go.Figure()
 
     add_trace_to_figure(
-        df_sel, fig, component="PV tilted", parameter="Power", fill=True, color="yellow"
+        df_sel,
+        fig,
+        component="PV tilted",
+        parameter="Power",
+        fill=True,
+        color="#FFE000",
     )
     add_trace_to_figure(
         df_sel,
@@ -607,7 +691,7 @@ def create_profile_figure_generation(df_sel: pd.DataFrame) -> go.Figure:
         component="Wind onshore",
         parameter="Power",
         fill=True,
-        color="blue",
+        color="#1E78C2",
     )
     add_trace_to_figure(
         df_sel,
@@ -615,13 +699,13 @@ def create_profile_figure_generation(df_sel: pd.DataFrame) -> go.Figure:
         component="Wind offshore",
         parameter="Power",
         fill=True,
-        color="blue",
+        color="#0061A4",
     )
     add_trace_to_figure(
-        df_sel, fig, component="Electrolyzer", parameter="Power", color="black"
+        df_sel, fig, component="Electrolyzer", parameter="Power", color="#0C0C0C"
     )
     add_trace_to_figure(
-        df_sel, fig, component="Derivate production", parameter="Power", color="red"
+        df_sel, fig, component="Derivate production", parameter="Power", color="#408B2E"
     )
 
     add_vertical_lines(fig)
