@@ -30,15 +30,18 @@ def content_market_scanning(api: PtxboaAPI, cd: dict) -> None:
     with st.popover("*Help*", use_container_width=True):
         st.markdown(read_markdown_file("md/whatisthis_market_scanning.md"))
 
-    res_costs = calculate_results_list(
-        api,
-        parameter_to_change="region",
-        parameter_list=get_region_list_without_subregions(
+    with st.spinner(
+        "Please wait. Running optimization model for different source regions"
+    ):
+        res_costs = calculate_results_list(
             api,
-            country_name=st.session_state["country"],
-            keep=st.session_state["subregion"],
-        ),
-    )
+            parameter_to_change="region",
+            parameter_list=get_region_list_without_subregions(
+                api,
+                country_name=st.session_state["country"],
+                keep=st.session_state["subregion"],
+            ),
+        )
 
     # get input data:
     input_data = api.get_input_data(st.session_state["scenario"])

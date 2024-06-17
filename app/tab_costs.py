@@ -22,18 +22,22 @@ def content_costs(api: PtxboaAPI):
     with st.popover("*Help*", use_container_width=True):
         st.markdown(read_markdown_file("md/whatisthis_costs.md"))
 
-    (
-        costs_per_region,
-        costs_per_scenario,
-        costs_per_res_gen,
-        costs_per_chain,
-        costs_per_region_without_user_changes,
-        costs_per_scenario_without_user_changes,
-        costs_per_res_gen_without_user_changes,
-        costs_per_chain_without_user_changes,
-    ) = calculate_results_for_costs_tab(api)
-
     with st.container(border=True):
+        with st.spinner(
+            "Please wait. Running optimization model for different source regions"
+        ):
+            costs_per_region, costs_per_region_without_user_changes = (
+                costs_over_dimension(
+                    api,
+                    dim="region",
+                    parameter_list=get_region_list_without_subregions(
+                        api,
+                        country_name=st.session_state["country"],
+                        keep=st.session_state["subregion"],
+                    ),
+                )
+            )
+
         title_string = (
             f"Cost of exporting "
             f"{st.session_state['chain']} to "
@@ -91,6 +95,15 @@ def content_costs(api: PtxboaAPI):
         )
 
     with st.container(border=True):
+        with st.spinner(
+            ("Please wait. Running optimization model for different " "data scenarios.")
+        ):
+            costs_per_scenario, costs_per_scenario_without_user_changes = (
+                costs_over_dimension(
+                    api,
+                    dim="scenario",
+                )
+            )
         display_costs(
             costs_per_scenario,
             costs_per_scenario_without_user_changes,
@@ -99,6 +112,24 @@ def content_costs(api: PtxboaAPI):
         )
 
     with st.container(border=True):
+        with st.spinner(
+            (
+                "Please wait. Running optimization model for different renewable "
+                "electricity sources."
+            )
+        ):
+            costs_per_res_gen, costs_per_res_gen_without_user_changes = (
+                costs_over_dimension(
+                    api,
+                    dim="res_gen",
+                    # TODO: here we remove PV tracking manually, fix in data
+                    parameter_list=[
+                        x
+                        for x in api.get_dimension("res_gen").index.to_list()
+                        if x != "PV tracking"
+                    ],
+                )
+            )
         display_costs(
             costs_per_res_gen,
             costs_per_res_gen_without_user_changes,
@@ -107,6 +138,16 @@ def content_costs(api: PtxboaAPI):
         )
 
     with st.container(border=True):
+        with st.spinner(
+            "Please wait. Running optimization model for different supply chains."
+        ):
+            costs_per_chain, costs_per_chain_without_user_changes = (
+                costs_over_dimension(
+                    api,
+                    dim="chain",
+                    override_session_state={"output_unit": "USD/MWh"},
+                )
+            )
         display_costs(
             costs_per_chain,
             costs_per_chain_without_user_changes,
@@ -120,52 +161,3 @@ def content_costs(api: PtxboaAPI):
                 if st.session_state["electrolyzer"] in x
             ],
         )
-
-
-def calculate_results_for_costs_tab(api):
-    with st.spinner("Please wait. Running optimization model..."):
-        # calculate results over different data dimensions:
-        costs_per_region, costs_per_region_without_user_changes = costs_over_dimension(
-            api,
-            dim="region",
-            parameter_list=get_region_list_without_subregions(
-                api,
-                country_name=st.session_state["country"],
-                keep=st.session_state["subregion"],
-            ),
-        )
-
-        costs_per_scenario, costs_per_scenario_without_user_changes = (
-            costs_over_dimension(
-                api,
-                dim="scenario",
-            )
-        )
-        costs_per_res_gen, costs_per_res_gen_without_user_changes = (
-            costs_over_dimension(
-                api,
-                dim="res_gen",
-                # TODO: here we remove PV tracking manually, fix in data
-                parameter_list=[
-                    x
-                    for x in api.get_dimension("res_gen").index.to_list()
-                    if x != "PV tracking"
-                ],
-            )
-        )
-        costs_per_chain, costs_per_chain_without_user_changes = costs_over_dimension(
-            api,
-            dim="chain",
-            override_session_state={"output_unit": "USD/MWh"},
-        )
-
-    return (
-        costs_per_region,
-        costs_per_scenario,
-        costs_per_res_gen,
-        costs_per_chain,
-        costs_per_region_without_user_changes,
-        costs_per_scenario_without_user_changes,
-        costs_per_res_gen_without_user_changes,
-        costs_per_chain_without_user_changes,
-    )
