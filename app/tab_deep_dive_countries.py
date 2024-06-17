@@ -45,9 +45,7 @@ def content_deep_dive_countries(api: PtxboaAPI) -> None:
         use_container_width=True,
     )
 
-    with st.spinner(
-        "Please wait. Running optimization model for different source regions"
-    ):
+    with st.spinner("Please wait. Calculating results for different source regions"):
         costs_per_region, costs_per_region_without_user_changes = costs_over_dimension(
             api,
             dim="region",

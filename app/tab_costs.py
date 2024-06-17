@@ -24,7 +24,7 @@ def content_costs(api: PtxboaAPI):
 
     with st.container(border=True):
         with st.spinner(
-            "Please wait. Running optimization model for different source regions"
+            "Please wait. Calculating results for different source regions"
         ):
             costs_per_region, costs_per_region_without_user_changes = (
                 costs_over_dimension(
@@ -96,7 +96,7 @@ def content_costs(api: PtxboaAPI):
 
     with st.container(border=True):
         with st.spinner(
-            ("Please wait. Running optimization model for different " "data scenarios.")
+            "Please wait. Calculating results for different data scenarios."
         ):
             costs_per_scenario, costs_per_scenario_without_user_changes = (
                 costs_over_dimension(
@@ -114,8 +114,8 @@ def content_costs(api: PtxboaAPI):
     with st.container(border=True):
         with st.spinner(
             (
-                "Please wait. Running optimization model for different renewable "
-                "electricity sources."
+                "Please wait. Calculating results for different renewable electricity "
+                "sources."
             )
         ):
             costs_per_res_gen, costs_per_res_gen_without_user_changes = (
@@ -139,7 +139,7 @@ def content_costs(api: PtxboaAPI):
 
     with st.container(border=True):
         with st.spinner(
-            "Please wait. Running optimization model for different supply chains."
+            "Please wait. Calculating results for different supply chains."
         ):
             costs_per_chain, costs_per_chain_without_user_changes = (
                 costs_over_dimension(
