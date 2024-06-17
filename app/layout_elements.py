@@ -221,12 +221,14 @@ def _form_data_editor(
         st.info(
             (
                 "You can edit data directly in the table. When done, click the "
-                "**Apply changes** button below to rerun calculations."
+                "**Register changes** button below. If you "
+                "switch to one of the tabs *Cost*, *Market Scanning* or "
+                "*Deep Dive Countries*, the results will be recalculated."
             )
         )
 
         st.form_submit_button(
-            "Apply changes",
+            "Register changes",
             type="primary",
             on_click=register_user_changes,
             kwargs={
