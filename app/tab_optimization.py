@@ -182,7 +182,7 @@ def calc_aggregate_statistics(
         "WIND-ON": "Wind onshore",
         "WIND-OFF": "Wind offshore",
         "ELY": "Electrolyzer",
-        "DERIV": "Derivate production",
+        "DERIV": "Derivative production",
         "H2_STR_in": "H2 storage",
         "EL_STR": "Electricity storage",
         "CO2-G_supply": "CO2 supply",
@@ -212,7 +212,7 @@ def calc_aggregate_statistics(
                     "Wind onshore",
                     "Wind offshore",
                     "Electrolyzer",
-                    "Derivate production",
+                    "Derivative production",
                     "Electricity storage",
                     "H2 storage",
                 ]
@@ -231,7 +231,7 @@ def calc_aggregate_statistics(
 
         for i in [
             "Electrolyzer",
-            "Derivate production",
+            "Derivative production",
         ]:
             if i in res.index:
                 res.at[i, "Curtailment (%)"] = np.nan
