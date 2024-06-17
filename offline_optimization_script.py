@@ -98,6 +98,8 @@ def main(
     cache_dir: Path = DEFAULT_CACHE_DIR,
     out_dir=None,
     loglevel: Literal["debug", "info", "warning", "error"] = "info",
+    index_from: int = None,
+    index_to: int = None,
 ):
     cache_dir = Path(cache_dir)
     cache_dir.mkdir(exist_ok=True)
@@ -120,6 +122,11 @@ def main(
     api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR, cache_dir=cache_dir)
 
     param_sets = generate_param_sets(api)
+
+    # filter for batch
+    index_from = index_from or 0
+    index_to = index_to or len(param_sets)
+    param_sets = param_sets[index_from:index_to]
 
     results = []  # save results
     for params in progress.bar.Bar(
@@ -186,6 +193,18 @@ if __name__ == "__main__":
         choices=["debug", "info", "warning", "error"],
         help="Log level for the console.",
     )
+    parser.add_argument(
+        "-f",
+        "--index_from",
+        type=int,
+        help="starting index for prallel runs",
+    )
+    parser.add_argument(
+        "-t",
+        "--index_to",
+        type=int,
+        help="final index (exlusive) for prallel runs",
+    )
 
     args = parser.parse_args()
-    main(cache_dir=args.cache_dir, out_dir=args.out_dir, loglevel=args.loglevel)
+    main(**vars(args))

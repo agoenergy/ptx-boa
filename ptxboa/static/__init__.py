@@ -687,7 +687,7 @@ ScenarioValues = [
 
 ResultClassType = Literal[
     "Carbon",
-    "Derivate production",
+    "Derivative production",
     "Electricity and H2 storage",
     "Electricity generation",
     "Electrolysis",
@@ -698,7 +698,7 @@ ResultClassType = Literal[
 ]
 ResultClassValues = [
     "Carbon",
-    "Derivate production",
+    "Derivative production",
     "Electricity and H2 storage",
     "Electricity generation",
     "Electrolysis",

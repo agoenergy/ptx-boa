@@ -16,7 +16,6 @@ import streamlit_antd_components as sac
 
 from app.context_data import load_context_data
 from app.layout_elements import display_footer
-from app.ptxboa_functions import calculate_results_list
 from app.sidebar import make_sidebar
 from app.tab_certification_schemes import content_certification_schemes
 from app.tab_costs import content_costs
@@ -151,77 +150,6 @@ if "colors" not in st.session_state:
     st.session_state["colors"] = colors["Hex Code"].to_list()
 
 if st.session_state[st.session_state["tab_key"]] in [
-    "Costs",
-    "Market scanning",
-    "Input data",
-    "Deep-dive countries",
-]:
-    with st.spinner("Please wait. Running optimization model..."):
-        # calculate results over different data dimensions:
-        costs_per_region = calculate_results_list(
-            api, parameter_to_change="region", parameter_list=None
-        )
-        costs_per_scenario = calculate_results_list(
-            api,
-            parameter_to_change="scenario",
-            parameter_list=None,
-        )
-        costs_per_res_gen = calculate_results_list(
-            api,
-            parameter_to_change="res_gen",
-            # TODO: here we remove PV tracking manually, this needs to be fixed in data
-            parameter_list=[
-                x
-                for x in api.get_dimension("res_gen").index.to_list()
-                if x != "PV tracking"
-            ],
-        )
-        costs_per_chain = calculate_results_list(
-            api,
-            parameter_to_change="chain",
-            parameter_list=None,
-            override_session_state={"output_unit": "USD/MWh"},
-        )
-
-        if st.session_state["user_changes_df"] is not None:
-            # calculate results over different data dimensions (without user changes):
-            costs_per_region_without_user_changes = calculate_results_list(
-                api,
-                parameter_to_change="region",
-                parameter_list=None,
-                apply_user_data=False,
-            )
-            costs_per_scenario_without_user_changes = calculate_results_list(
-                api,
-                parameter_to_change="scenario",
-                parameter_list=None,
-                apply_user_data=False,
-            )
-            costs_per_res_gen_without_user_changes = calculate_results_list(
-                api,
-                parameter_to_change="res_gen",
-                # TODO: here we remove PV tracking manually, needs to be fixed in data
-                parameter_list=[
-                    x
-                    for x in api.get_dimension("res_gen").index.to_list()
-                    if x != "PV tracking"
-                ],
-                apply_user_data=False,
-            )
-            costs_per_chain_without_user_changes = calculate_results_list(
-                api,
-                parameter_to_change="chain",
-                parameter_list=None,
-                override_session_state={"output_unit": "USD/MWh"},
-                apply_user_data=False,
-            )
-        else:
-            costs_per_region_without_user_changes = None
-            costs_per_scenario_without_user_changes = None
-            costs_per_res_gen_without_user_changes = None
-            costs_per_chain_without_user_changes = None
-
-if st.session_state[st.session_state["tab_key"]] in [
     "Market scanning",
     "Deep-dive countries",
     "Country fact sheets",
@@ -234,28 +162,16 @@ if st.session_state[st.session_state["tab_key"]] in [
 
 # costs:
 if st.session_state[st.session_state["tab_key"]] == "Costs":
-    content_costs(
-        api,
-        costs_per_region=costs_per_region,
-        costs_per_scenario=costs_per_scenario,
-        costs_per_res_gen=costs_per_res_gen,
-        costs_per_chain=costs_per_chain,
-        costs_per_region_without_user_changes=costs_per_region_without_user_changes,
-        costs_per_scenario_without_user_changes=costs_per_scenario_without_user_changes,
-        costs_per_res_gen_without_user_changes=costs_per_res_gen_without_user_changes,
-        costs_per_chain_without_user_changes=costs_per_chain_without_user_changes,
-    )
+    content_costs(api)
 
 if st.session_state[st.session_state["tab_key"]] == "Market scanning":
-    content_market_scanning(api, costs_per_region, cd)
+    content_market_scanning(api, cd)
 
 if st.session_state[st.session_state["tab_key"]] == "Input data":
     content_input_data(api)
 
 if st.session_state[st.session_state["tab_key"]] == "Deep-dive countries":
-    content_deep_dive_countries(
-        api, costs_per_region, costs_per_region_without_user_changes
-    )
+    content_deep_dive_countries(api)
 
 if st.session_state[st.session_state["tab_key"]] == "Country fact sheets":
     content_country_fact_sheets(cd, api)
