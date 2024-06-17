@@ -6,15 +6,17 @@ import streamlit as st
 
 from app.excel_download import prepare_and_download_df_as_excel
 from app.ptxboa_functions import (
+    calculate_results_list,
     change_index_names,
     config_number_columns,
+    get_region_list_without_subregions,
     read_markdown_file,
     remove_subregions,
 )
 from ptxboa.api import PtxboaAPI
 
 
-def content_market_scanning(api: PtxboaAPI, res_costs: pd.DataFrame, cd: dict) -> None:
+def content_market_scanning(api: PtxboaAPI, cd: dict) -> None:
     """Create content for the "market scanning" sheet.
 
     Parameters
@@ -28,6 +30,16 @@ def content_market_scanning(api: PtxboaAPI, res_costs: pd.DataFrame, cd: dict) -
     """
     with st.popover("*Help*", use_container_width=True):
         st.markdown(read_markdown_file("md/whatisthis_market_scanning.md"))
+
+    res_costs = calculate_results_list(
+        api,
+        parameter_to_change="region",
+        parameter_list=get_region_list_without_subregions(
+            api,
+            country_name=st.session_state["country"],
+            keep=st.session_state["subregion"],
+        ),
+    )
 
     # get input data:
     input_data = api.get_input_data(st.session_state["scenario"])

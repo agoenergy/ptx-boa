@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Content of costs tab."""
-import pandas as pd
 import streamlit as st
 from plotly.subplots import make_subplots
 
@@ -10,23 +9,30 @@ from app.plot_functions import (
     create_box_plot,
     plot_costs_on_map,
 )
-from app.ptxboa_functions import move_to_tab, read_markdown_file, remove_subregions
+from app.ptxboa_functions import (
+    costs_over_dimension,
+    get_region_list_without_subregions,
+    move_to_tab,
+    read_markdown_file,
+    remove_subregions,
+)
 from ptxboa.api import PtxboaAPI
 
 
-def content_costs(
-    api: PtxboaAPI,
-    costs_per_region: pd.DataFrame,
-    costs_per_scenario: pd.DataFrame,
-    costs_per_res_gen: pd.DataFrame,
-    costs_per_chain: pd.DataFrame,
-    costs_per_region_without_user_changes: pd.DataFrame,
-    costs_per_scenario_without_user_changes: pd.DataFrame,
-    costs_per_res_gen_without_user_changes: pd.DataFrame,
-    costs_per_chain_without_user_changes: pd.DataFrame,
-):
+def content_costs(api: PtxboaAPI):
     with st.popover("*Help*", use_container_width=True):
         st.markdown(read_markdown_file("md/whatisthis_costs.md"))
+
+    (
+        costs_per_region,
+        costs_per_scenario,
+        costs_per_res_gen,
+        costs_per_chain,
+        costs_per_region_without_user_changes,
+        costs_per_scenario_without_user_changes,
+        costs_per_res_gen_without_user_changes,
+        costs_per_chain_without_user_changes,
+    ) = calculate_results_for_costs_tab(api)
 
     with st.container(border=True):
         title_string = (
@@ -129,3 +135,52 @@ def content_costs(
                 if st.session_state["electrolyzer"] in x
             ],
         )
+
+
+def calculate_results_for_costs_tab(api):
+    with st.spinner("Please wait. Running optimization model..."):
+        # calculate results over different data dimensions:
+        costs_per_region, costs_per_region_without_user_changes = costs_over_dimension(
+            api,
+            dim="region",
+            parameter_list=get_region_list_without_subregions(
+                api,
+                country_name=st.session_state["country"],
+                keep=st.session_state["subregion"],
+            ),
+        )
+
+        costs_per_scenario, costs_per_scenario_without_user_changes = (
+            costs_over_dimension(
+                api,
+                dim="scenario",
+            )
+        )
+        costs_per_res_gen, costs_per_res_gen_without_user_changes = (
+            costs_over_dimension(
+                api,
+                dim="res_gen",
+                # TODO: here we remove PV tracking manually, fix in data
+                parameter_list=[
+                    x
+                    for x in api.get_dimension("res_gen").index.to_list()
+                    if x != "PV tracking"
+                ],
+            )
+        )
+        costs_per_chain, costs_per_chain_without_user_changes = costs_over_dimension(
+            api,
+            dim="chain",
+            override_session_state={"output_unit": "USD/MWh"},
+        )
+
+    return (
+        costs_per_region,
+        costs_per_scenario,
+        costs_per_res_gen,
+        costs_per_chain,
+        costs_per_region_without_user_changes,
+        costs_per_scenario_without_user_changes,
+        costs_per_res_gen_without_user_changes,
+        costs_per_chain_without_user_changes,
+    )
