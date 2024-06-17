@@ -22,7 +22,7 @@ def content_info():
                 "General",
                 "Electricity generation",
                 "Electrolysis",
-                "Derivate production",
+                "Derivative production",
                 "Transport",
             ],
             horizontal=True,

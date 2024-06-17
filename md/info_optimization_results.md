@@ -1,6 +1,6 @@
 This table shows aggregated results of the optimization:
 
-- the installed generation, electrolyzer and derivate production capacities and their annual output that are required to produce 8760 MWh of final product per year
+- the installed generation, electrolyzer and derivative production capacities and their annual output that are required to produce 8760 MWh of final product per year
 - the realized full load hours of said components  
 - the curtailment of renewable generation
 - the costs per MWh of final product.

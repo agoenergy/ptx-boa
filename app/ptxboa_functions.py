@@ -197,7 +197,7 @@ def sort_cost_type_columns_by_position_in_chain(df):
         "Electricity generation",
         "Electrolysis",
         "Electricity and H2 storage",
-        "Derivate production",
+        "Derivative production",
         "Heat",
         "Water",
         "Carbon",
@@ -495,6 +495,39 @@ def remove_subregions(
     pandas DataFrame with subregions removed from index.
     """
     # do not show subregions:
+    region_list_without_subregions = get_region_list_without_subregions(
+        api, country_name=country_name, keep=keep
+    )
+
+    # sometimes, not all regions exist
+    region_list_without_subregions = [
+        r for r in region_list_without_subregions if r in df.index
+    ]
+
+    df = df.loc[region_list_without_subregions]
+
+    return df
+
+
+def get_region_list_without_subregions(api, country_name, keep):
+    """Get list of regions with subregions removed.
+
+    Parameters
+    ----------
+    api : :class:`~ptxboa.api.PtxboaAPI`
+        an instance of the api class
+
+
+    country_name : str
+        name of target country. Is removed from region list if it is also in there.
+
+    keep : str or None, by default None
+        can be used to keep data for a specific subregion
+
+    Returns
+    -------
+    list[str]
+    """
     region_list_without_subregions = (
         api.get_dimension("region")
         .loc[api.get_dimension("region")["subregion_code"] == ""]
@@ -505,17 +538,10 @@ def remove_subregions(
     if country_name in region_list_without_subregions:
         region_list_without_subregions.remove(country_name)
 
-    # sometimes, not all regions exist
-    region_list_without_subregions = [
-        r for r in region_list_without_subregions if r in df.index
-    ]
-
     if keep is not None:
         region_list_without_subregions.append(keep)
 
-    df = df.loc[region_list_without_subregions]
-
-    return df
+    return sorted(region_list_without_subregions)
 
 
 def select_subregions(
@@ -696,3 +722,24 @@ def check_if_input_is_needed(
     ].to_list()
 
     return flow_code in flow_codes
+
+
+def costs_over_dimension(api, dim, parameter_list=None, override_session_state=None):
+    df = calculate_results_list(
+        api,
+        parameter_to_change=dim,
+        parameter_list=parameter_list,
+        apply_user_data=True,
+        override_session_state=override_session_state,
+    )
+    if st.session_state["user_changes_df"] is not None:
+        not_modified = calculate_results_list(
+            api,
+            parameter_to_change=dim,
+            parameter_list=parameter_list,
+            apply_user_data=False,
+            override_session_state=override_session_state,
+        )
+    else:
+        not_modified = None
+    return df, not_modified

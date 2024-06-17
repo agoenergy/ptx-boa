@@ -102,7 +102,7 @@ def content_input_data(api: PtxboaAPI) -> None:
                 scope=None,
                 key="input_data_electricity_generation",
             )
-        with st.expander("**Electrolysis and derivate production**"):
+        with st.expander("**Electrolysis and derivative production**"):
             st.caption(
                 (
                     "The unit of CAPEX and OPEX (fix) is USD/t for Green iron "

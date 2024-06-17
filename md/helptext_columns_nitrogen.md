@@ -1,1 +1,1 @@
-Nitrogen is required by some derivate production processes.
+Nitrogen is required by some derivative production processes.
