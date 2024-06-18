@@ -582,11 +582,11 @@ def add_trace_to_figure(
     df_plot = df[(df["Component"] == component)]
     df_plot = df_plot[(df_plot["Parameter"] == parameter)]
     if fill:
-        if df_plot["MW (MWh for SOC)"].sum() > 0:
+        if df_plot["MW"].sum() > 0:
             fig.add_trace(
                 go.Scatter(
                     x=df_plot["time"],
-                    y=df_plot["MW (MWh for SOC)"],
+                    y=df_plot["MW"],
                     mode="lines",
                     name=component,
                     line_color=color,
@@ -597,7 +597,7 @@ def add_trace_to_figure(
         fig.add_trace(
             go.Scatter(
                 x=df_plot["time"],
-                y=df_plot["MW (MWh for SOC)"],
+                y=df_plot["MW"],
                 mode="lines",
                 name=component,
                 line_color=color,
@@ -612,7 +612,7 @@ def prepare_data_for_profile_figures(n: pypsa.Network) -> pd.DataFrame:
         res = df.reset_index().melt(
             id_vars=["timestep", "period"],
             var_name="Component",
-            value_name="MW (MWh for SOC)",
+            value_name="MW",
         )
         res["Parameter"] = parameter
         return res
@@ -623,9 +623,9 @@ def prepare_data_for_profile_figures(n: pypsa.Network) -> pd.DataFrame:
     df_gen = transform_time_series(df_gen)
     df_links = -n.links_t["p1"]
     df_links = transform_time_series(df_links)
-    df_store = n.stores_t["e"]
+    df_store = n.stores_t["p"]
     df_store = transform_time_series(df_store)
-    df_storageunit = n.storage_units_t["state_of_charge"]
+    df_storageunit = n.storage_units_t["p"]
     df_storageunit = transform_time_series(df_storageunit)
 
     df = pd.concat([df_p_max_pu, df_gen, df_links, df_store, df_storageunit])
@@ -710,6 +710,17 @@ def create_profile_figure_generation(df_sel: pd.DataFrame) -> go.Figure:
         component="Derivative production",
         parameter="Power",
         color="#408B2E",
+    )
+    add_trace_to_figure(
+        df_sel,
+        fig,
+        component="Electricity storage",
+        parameter="Power",
+        color="#D05094",
+    )
+
+    add_trace_to_figure(
+        df_sel, fig, component="H2 storage", parameter="Power", color="#733E88"
     )
 
     add_vertical_lines(fig)
