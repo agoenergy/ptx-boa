@@ -728,6 +728,7 @@ def create_profile_figure_generation(df_sel: pd.DataFrame) -> go.Figure:
     fig.update_layout(
         xaxis={"title": "time (h)"},
         yaxis={"title": "output (MW)"},
+        legend={"traceorder": "normal"},
     )
 
     return fig
@@ -768,6 +769,7 @@ def create_profile_figure_soc(df_sel: pd.DataFrame) -> go.Figure:
     fig.update_layout(
         xaxis={"title": "time (h)"},
         yaxis={"title": "state of charge (MWh)"},
+        legend={"traceorder": "normal"},
     )
 
     return fig
