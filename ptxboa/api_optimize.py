@@ -41,6 +41,9 @@ def get_data_hash_md5(key: object) -> str:
     bdata = sdata.encode()
     # create hash
     hash_md5 = hashlib.md5(bdata).hexdigest()  # noqa: S324 (md5 is fine)
+
+    logger.debug(f"HASH: {hash_md5} for: {sdata}")
+
     return hash_md5
 
 
@@ -451,6 +454,7 @@ class PtxOpt:
         if not cache_exists:
             # must run optimizer
             logger.info(f"Run new optimizazion: {hash_sum}")
+            logger.debug(hash_filepath)
             logger.debug(opt_input_data)
 
             opt_output_data, network = optimize(

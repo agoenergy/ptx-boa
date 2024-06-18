@@ -6,7 +6,7 @@ Execution:
 >>> streamlit run  ptxboa_streamlit.py
 """
 
-__version__ = "0.8.0"
+__version__ = "0.8.1"
 
 import logging
 
@@ -51,7 +51,7 @@ for handler in logger.handlers:
 # app layout:
 
 st.set_page_config(
-    page_title="PtX Business Opportunity Analyzer", page_icon="./data/favicon-16x16.png"
+    page_title="PtX Business Opportunity Analyser", page_icon="./data/favicon-16x16.png"
 )
 
 # Set the pandas display option to format floats with 2 decimal places
@@ -75,12 +75,21 @@ css = """
 """
 st.markdown(css, unsafe_allow_html=True)
 
+# https://discuss.streamlit.io/t/delete-red-bar-at-the-top-of-the-app/9658
+hide_decoration_bar_style = """
+    <style>
+        header {visibility: hidden;}
+    </style>
+"""
+st.markdown(hide_decoration_bar_style, unsafe_allow_html=True)
+
 api = st.cache_resource(PtxboaAPI)(
     data_dir=DEFAULT_DATA_DIR,
     cache_dir=DEFAULT_CACHE_DIR,  # TODO: maybe disable in test environment?
 )
 
-st.title("PtX Business Opportunity Analyzer")
+
+st.title("PtX Business Opportunity Analyser")
 
 with st.container():
     st.error(

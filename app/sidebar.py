@@ -103,7 +103,7 @@ def main_settings(api):
                 "FT e-fuels",
             ],
             help=read_markdown_file("md/helptext_sidebar_product.md"),
-            index=4,  # Methane as default
+            index=0,  # Ammonia as default
         )
     with c2:
         st.session_state["electrolyzer"] = st.selectbox(
@@ -164,7 +164,7 @@ def additional_settings(api):
     needs_co2 = check_if_input_is_needed(api, flow_code="CO2-G")
     if needs_co2:
         st.session_state["secproc_co2"] = st.radio(
-            "Carbon source:",
+            "CO2 source:",
             api.get_dimension("secproc_co2").index,
             horizontal=True,
             help=read_markdown_file("md/helptext_sidebar_carbon_source.md"),

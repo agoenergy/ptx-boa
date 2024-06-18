@@ -1,4 +1,4 @@
-# PtX-BOA: PtX Business Opportunity Analyzer
+# PtX-BOA: PtX Business Opportunity Analyser
 
 PtX-BOA is a tool that aims to promote the export of a wide range of PtX molecules, including amongst others, green ammonia, e-methanol and synthetic fuels. Users can calculate the delivered cost of PtX molecules from an export country to an import country, with a detailed cost breakdown comparison highlighting the competitive edge of one country against another.
 
@@ -68,7 +68,7 @@ scp -r ptxboa2:ptx-boa_offline_optimization/optimization_cache/* .
 # connect to server
 ssh ptxboa
 # pull latest image from dockerhub
-VERSION=0.8.0
+VERSION=0.8.1
 docker pull wingechr/ptx-boa:$VERSION
 # stop and delete the currently running container "app"
 docker stop app
