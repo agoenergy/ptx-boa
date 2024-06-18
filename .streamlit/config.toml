@@ -9,7 +9,7 @@
     toolbarMode = "minimal"
 
 [logger]
-    level="DEBUG"
+    level="INFO"
 
 [browser]
     gatherUsageStats = false
