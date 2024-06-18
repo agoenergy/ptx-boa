@@ -51,7 +51,7 @@ for handler in logger.handlers:
 # app layout:
 
 st.set_page_config(
-    page_title="PtX Business Opportunity Analyzer", page_icon="./data/favicon-16x16.png"
+    page_title="PtX Business Opportunity Analyser", page_icon="./data/favicon-16x16.png"
 )
 
 # Set the pandas display option to format floats with 2 decimal places
@@ -89,7 +89,7 @@ api = st.cache_resource(PtxboaAPI)(
 )
 
 
-st.title("PtX Business Opportunity Analyzer")
+st.title("PtX Business Opportunity Analyser")
 
 with st.container():
     st.error(
