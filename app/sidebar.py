@@ -103,7 +103,7 @@ def main_settings(api):
                 "FT e-fuels",
             ],
             help=read_markdown_file("md/helptext_sidebar_product.md"),
-            index=4,  # Methane as default
+            index=0,  # Ammonia as default
         )
     with c2:
         st.session_state["electrolyzer"] = st.selectbox(
