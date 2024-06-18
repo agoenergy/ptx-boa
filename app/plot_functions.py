@@ -215,9 +215,9 @@ def _choropleth_map_world(
         color=df[color_col],
         custom_data=custom_data_func(df, **custom_data_func_kwargs),
         color_continuous_scale=agora_continuous_color_scale(),
-        opacity=1,
+        opacity=0.8,
     )
-    fig.update_traces({"marker": {"size": 30}})
+    fig.update_traces({"marker": {"size": 20}})
     fig = _highlight_selected_region_world(fig)
     return fig
 
@@ -260,9 +260,9 @@ def _choropleth_map_deep_dive_country(
         color=df[color_col],
         custom_data=hover_data,
         color_continuous_scale=agora_continuous_color_scale(),
-        opacity=1,
+        opacity=0.8,
     )
-    fig.update_traces({"marker": {"size": 30}})
+    fig.update_traces({"marker": {"size": 20}})
 
     fig = _highlight_selected_subregion(df, fig)
 
@@ -291,7 +291,7 @@ def _highlight_selected_subregion(df, fig):
                 lon=df.loc[df["region"] == subreg, "lon"].tolist(),
                 lat=df.loc[df["region"] == subreg, "lat"].tolist(),
                 marker={
-                    "size": 31,
+                    "size": 21,
                     "color": "rgba(0, 0, 0, 0)",
                     "line": {"width": 3, "color": "black"},
                 },
@@ -315,7 +315,7 @@ def _highlight_selected_region_world(fig: go.Figure) -> go.Figure:
             locations=[region],
             locationmode="country names",
             marker={
-                "size": 31,
+                "size": 21,
                 "color": "rgba(0, 0, 0, 0)",
                 "line": {"width": 3, "color": "black"},
             },
