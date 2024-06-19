@@ -10,6 +10,7 @@ import pandas as pd
 import pypsa
 import pytest
 
+from app.plot_functions import prepare_data_for_profile_figures
 from app.tab_optimization import calc_aggregate_statistics
 from flh_opt.api_opt import get_profiles_and_weights, optimize
 from ptxboa import DEFAULT_CACHE_DIR
@@ -314,3 +315,13 @@ def test_prepare_data_for_optimize_incl_sec_proc():
             optimize_flh=True,
             use_user_data_for_optimize_flh=False,
         )
+
+
+def test_prepare_data_for_profile_figures(call_optimize):
+    """Test if solver finds optimal solution."""
+    [res, n, input_data] = call_optimize
+    print(n)
+    df_sel = prepare_data_for_profile_figures(n)
+
+    assert isinstance(df_sel, pd.DataFrame)
+    assert len(df_sel) > 0
