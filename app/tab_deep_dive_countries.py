@@ -56,6 +56,16 @@ def content_deep_dive_countries(api: PtxboaAPI) -> None:
 
     with st.container(border=True):
         st.subheader("Costs per subregion")
+
+        st.markdown(
+            (
+                "This map shows delivered costs for the selected product and demand"
+                f" country, for different subregions of {ddc}."
+                " Move your mouse over a marker"
+                " for additional information."
+            )
+        )
+
         fig_map = plot_costs_on_map(
             api, costs_per_region, scope=ddc, cost_component="Total"
         )
@@ -63,6 +73,15 @@ def content_deep_dive_countries(api: PtxboaAPI) -> None:
 
         st.divider()
 
+        help_string = " ".join(
+            [
+                "This figure lets you compare total costs and cost components by"
+                " subregion."
+                "\n\n"
+                "By default, all subregions are shown, and they are sorted by"
+                " total costs. You can change this in the filter settings."
+            ]
+        )
         display_costs(
             select_subregions(costs_per_region, ddc),
             (
@@ -73,10 +92,22 @@ def content_deep_dive_countries(api: PtxboaAPI) -> None:
             key="region",
             titlestring="Costs per subregion",
             key_suffix=ddc,
+            help_string=help_string,
         )
 
     with st.container(border=True):
         st.subheader("Full load hours of renewable generation")
+
+        st.markdown(
+            (
+                "These figures allow you to inspect the regional distribution"
+                " of full load hours."
+                "The bar plot shows you the regional spread."
+                "You can select one parameter to be displayed on the map."
+                " Move your mouse over a marker"
+                " for additional information."
+            )
+        )
 
         # in order to keep the figures horizontally aligned, we create two st.columns
         # pairs, the columns are identified by c_{row}_{column}, zero indexed

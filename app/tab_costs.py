@@ -45,6 +45,14 @@ def content_costs(api: PtxboaAPI):
         )
         st.subheader(title_string)
 
+        st.markdown(
+            (
+                "This map shows delivered costs for the selected product and demand"
+                " country, for different source regions. Move your mouse over a marker"
+                " for additional information."
+            )
+        )
+
         fig_map = plot_costs_on_map(
             api, costs_per_region, scope="world", cost_component="Total"
         )
@@ -54,6 +62,14 @@ def content_costs(api: PtxboaAPI):
         st.plotly_chart(fig_map, use_container_width=True)
 
         st.subheader("Cost distribution and cost components")
+
+        st.markdown(
+            (
+                "These figures show the regional distribution of costs"
+                " and a breakdown by category for the selected source region."
+            )
+        )
+
         # create box plot and bar plot:
         fig1 = create_box_plot(costs_per_region)
         filtered_data = costs_per_region[
@@ -91,11 +107,19 @@ def content_costs(api: PtxboaAPI):
         )
 
     with st.container(border=True):
+        help_string = " ".join(
+            [
+                "This figure lets you compare total costs and cost components by source"
+                " region.\n\n By default, all regions are shown, and they are sorted by"
+                " total costs. You can change this in the filter settings."
+            ]
+        )
         display_costs(
             costs_per_region,
             costs_per_region_without_user_changes,
             "region",
-            "Costs by region",
+            "Costs for different source regions",
+            help_string=help_string,
         )
 
     with st.container(border=True):
@@ -108,11 +132,18 @@ def content_costs(api: PtxboaAPI):
                     dim="scenario",
                 )
             )
+        help_string = " ".join(
+            [
+                "This figure lets you compare total costs and cost components"
+                " by data scenario (2030/2040, low/medium/high costs)."
+            ]
+        )
         display_costs(
             costs_per_scenario,
             costs_per_scenario_without_user_changes,
             "scenario",
-            "Costs by data scenario",
+            "Costs for different data scenarios",
+            help_string=help_string,
         )
 
     with st.container(border=True):
@@ -134,11 +165,18 @@ def content_costs(api: PtxboaAPI):
                     ],
                 )
             )
+        help_string = " ".join(
+            [
+                "This figure lets you compare total costs and cost components"
+                "by renewable electricity source."
+            ]
+        )
         display_costs(
             costs_per_res_gen,
             costs_per_res_gen_without_user_changes,
             "res_gen",
-            "Costs by renewable electricity source",
+            "Costs for different renewable electricity sources",
+            help_string=help_string,
         )
 
     with st.container(border=True):
@@ -152,11 +190,21 @@ def content_costs(api: PtxboaAPI):
                     override_session_state={"output_unit": "USD/MWh"},
                 )
             )
+        help_string = " ".join(
+            [
+                "This figure lets you compare total costs and cost components"
+                " for different products and electrolyser types."
+                "\n\n"
+                "By default, all products are shown, and the electrolyser type"
+                " that is chosen in the sidebar is used."
+                " You can change this in the filter settings."
+            ]
+        )
         display_costs(
             costs_per_chain,
             costs_per_chain_without_user_changes,
             "chain",
-            "Costs by supply chain",
+            "Costs for different products and electrolyser types",
             output_unit="USD/MWh",
             default_select=1,
             default_manual_select=[
@@ -164,4 +212,5 @@ def content_costs(api: PtxboaAPI):
                 for x in costs_per_chain.index
                 if st.session_state["electrolyzer"] in x
             ],
+            help_string=help_string,
         )

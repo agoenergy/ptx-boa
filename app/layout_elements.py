@@ -27,12 +27,16 @@ def display_costs(
     output_unit: str | None = None,
     default_select: int = 0,
     default_manual_select: str | None = None,
+    help_string: str | None = None,
 ):
     """Display costs as table and bar chart."""
     if output_unit is None:
         output_unit = st.session_state["output_unit"]
     key_suffix = key_suffix.lower().replace(" ", "_")
     st.subheader(titlestring)
+
+    if help_string is not None:
+        st.markdown(help_string)
 
     c1, c2 = st.columns(2)
 
