@@ -76,6 +76,10 @@ def content_costs(api: PtxboaAPI):
             margin={"l": 10, "r": 10, "t": 20, "b": 20},
         )
 
+        # set ticklabel format:
+        doublefig.update_yaxes(tickformat=",")
+        doublefig.update_layout(separators="* .*")
+
         st.plotly_chart(doublefig, use_container_width=True)
 
         what_is_a_boxplot()
