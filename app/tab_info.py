@@ -4,6 +4,8 @@ import streamlit as st
 
 from app.ptxboa_functions import read_markdown_file
 
+__version__ = "0.8.3"
+
 
 def content_info():
     with st.container(border=True):
@@ -42,3 +44,16 @@ def content_info():
 
     with st.container(border=True):
         st.markdown(read_markdown_file("md/info_disclaimer.md"))
+        st.markdown(
+            (
+                "#### Licensing and quotation\n"
+                "This tool is licensed under the Creative Commons CC-BY 4.0 license"
+                " (<https://creativecommons.org/licenses/by/4.0/>).\n\n"
+                "The use of the methods and results are only authorised"
+                " in case the tool and its authors are properly cited.\n\n"
+                "Please cite it as:"
+                " Oeko-Institut, Agora Industry & Agora Energiewende  (2024):"
+                f" PTX Business Opportunity Analyser {__version__}"
+                " <https://ptxboa.agora-thinktanks.org/>)"
+            )
+        )
