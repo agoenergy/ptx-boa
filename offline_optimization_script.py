@@ -102,6 +102,7 @@ def main(
     loglevel: Literal["debug", "info", "warning", "error"] = "info",
     index_from: int = None,
     index_to: int = None,
+    count_only: bool = False,
 ):
     cache_dir = Path(cache_dir)
     cache_dir.mkdir(exist_ok=True)
@@ -112,6 +113,10 @@ def main(
     api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR, cache_dir=cache_dir)
 
     param_sets = generate_param_sets(api)
+
+    if count_only:
+        print(f"Number of parameter variations: {len(param_sets)}")
+        return
 
     # filter for batch
     index_from = index_from or 0
@@ -211,6 +216,12 @@ if __name__ == "__main__":
         "--index_to",
         type=int,
         help="final index (exlusive) for prallel runs",
+    )
+    parser.add_argument(
+        "-n",
+        "--count_only",
+        action="store_true",
+        help="only print number of parameter variations and quit.",
     )
 
     args = parser.parse_args()
