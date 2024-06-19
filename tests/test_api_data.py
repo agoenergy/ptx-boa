@@ -190,7 +190,7 @@ def test_get_dimensions_parameter_code(dimension, parameter_name, expected_code)
                 "target_country_code": "DEU",
                 "chain_name": "Ammonia (AEL) + reconv. to H2",
                 "process_code_res": "PV-FIX",
-                "secondary_processes": {"H2O": "DESAL"},
+                "secondary_processes": {"H2O-L": "DESAL"},
                 "ship_own_fuel": False,
                 "use_ship": True,
             },
@@ -295,7 +295,7 @@ def test_get_calculation_data(ptxdata_dir, scenario, kwargs, request):
             },
         ],
         "secondary_process": {
-            "H2O": {
+            "H2O-L": {
                 "EFF": 1.0,
                 "FLH": 7000,
                 "LIFETIME": 20.0,
@@ -334,7 +334,7 @@ def test_get_calculation_data(ptxdata_dir, scenario, kwargs, request):
                 "target_country_code": "DEU",
                 "chain_name": "Ammonia (AEL) + reconv. to H2",
                 "process_code_res": "RES-HYBR",
-                "secondary_processes": {"H2O": "DESAL"},
+                "secondary_processes": {"H2O-L": "DESAL"},
                 "ship_own_fuel": False,
                 "use_ship": True,
             },
