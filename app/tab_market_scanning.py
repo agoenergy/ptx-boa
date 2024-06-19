@@ -28,7 +28,10 @@ def content_market_scanning(api: PtxboaAPI, cd: dict) -> None:
         context data.
     """
     with st.popover("*Help*", use_container_width=True):
-        st.markdown(read_markdown_file("md/whatisthis_market_scanning.md"))
+        st.markdown(
+            read_markdown_file("md/whatisthis_market_scanning.md"),
+            unsafe_allow_html=True,
+        )
 
     with st.spinner("Please wait. Calculating results for different source regions"):
         res_costs = calculate_results_list(

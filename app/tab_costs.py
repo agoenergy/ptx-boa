@@ -20,7 +20,9 @@ from ptxboa.api import PtxboaAPI
 
 def content_costs(api: PtxboaAPI):
     with st.popover("*Help*", use_container_width=True):
-        st.markdown(read_markdown_file("md/whatisthis_costs.md"))
+        st.markdown(
+            read_markdown_file("md/whatisthis_costs.md"), unsafe_allow_html=True
+        )
 
     with st.container(border=True):
         with st.spinner(

@@ -76,7 +76,10 @@ IRENA & RMI (2023): Creating a global hydrogen market: certification to enable t
 
 def content_certification_schemes(context_data: dict):
     with st.popover("*Help*", use_container_width=True):
-        st.markdown(read_markdown_file("md/whatisthis_certification_schemes.md"))
+        st.markdown(
+            read_markdown_file("md/whatisthis_certification_schemes.md"),
+            unsafe_allow_html=True,
+        )
 
     helptext = "Select the certification scheme you want to know more about."
     scheme_name = st.selectbox(

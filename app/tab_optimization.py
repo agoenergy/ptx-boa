@@ -19,7 +19,9 @@ from ptxboa.api import PtxboaAPI
 def content_optimization(api: PtxboaAPI) -> None:
 
     with st.popover("*Help*", use_container_width=True):
-        st.markdown(read_markdown_file("md/whatisthis_optimization.md"))
+        st.markdown(
+            read_markdown_file("md/whatisthis_optimization.md"), unsafe_allow_html=True
+        )
 
     with st.spinner("Please wait. Running optimization model..."):
         # load netcdf file:
@@ -48,13 +50,19 @@ def content_optimization(api: PtxboaAPI) -> None:
 
         with st.container(border=True):
             st.subheader("Generation profiles")
-            st.markdown(read_markdown_file("md/info_generation_profile_figure.md"))
+            st.markdown(
+                read_markdown_file("md/info_generation_profile_figure.md"),
+                unsafe_allow_html=True,
+            )
             fig = create_profile_figure_generation(df_sel)
             st.plotly_chart(fig, use_container_width=True)
 
         with st.container(border=True):
             st.subheader("Capacities, full load hours and costs")
-            st.markdown(read_markdown_file("md/info_optimization_results.md"))
+            st.markdown(
+                read_markdown_file("md/info_optimization_results.md"),
+                unsafe_allow_html=True,
+            )
             st.dataframe(
                 res,
                 use_container_width=True,
@@ -69,7 +77,9 @@ def content_optimization(api: PtxboaAPI) -> None:
 
         with st.container(border=True):
             st.subheader("Download model")
-            st.markdown(read_markdown_file("md/info_download_model.md"))
+            st.markdown(
+                read_markdown_file("md/info_download_model.md"), unsafe_allow_html=True
+            )
             download_network_as_netcdf(n=n, filename="network.nc")
 
         with st.expander("Debugging output"):

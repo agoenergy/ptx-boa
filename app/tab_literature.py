@@ -22,7 +22,9 @@ def _is_valid_url(url: str) -> bool:
 
 def content_literature(context_data: dict):
     with st.popover("*Help*", use_container_width=True):
-        st.markdown(read_markdown_file("md/whatisthis_literature.md"))
+        st.markdown(
+            read_markdown_file("md/whatisthis_literature.md"), unsafe_allow_html=True
+        )
 
     st.markdown("## References")
     df = context_data["literature"]

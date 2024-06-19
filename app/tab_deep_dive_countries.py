@@ -33,7 +33,10 @@ def content_deep_dive_countries(api: PtxboaAPI) -> None:
     None
     """
     with st.popover("*Help*", use_container_width=True):
-        st.markdown(read_markdown_file("md/whatisthis_deep_dive_countries.md"))
+        st.markdown(
+            read_markdown_file("md/whatisthis_deep_dive_countries.md"),
+            unsafe_allow_html=True,
+        )
 
     st.write("Select which country to display:")
     ddc = sac.buttons(
