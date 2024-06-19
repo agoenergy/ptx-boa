@@ -162,6 +162,11 @@ def content_market_scanning(api: PtxboaAPI, cd: dict) -> None:
             )
             fig.update_traces(textposition="top center")
 
+        # set ticklabel format:
+        fig.update_xaxes(tickformat=",")
+        fig.update_yaxes(tickformat=",")
+        fig.update_layout(separators="* .*")
+
         st.plotly_chart(fig, use_container_width=True)
 
         # show data in tabular form:
@@ -261,6 +266,11 @@ def content_market_scanning(api: PtxboaAPI, cd: dict) -> None:
             text=df_plot.index,
         )
         fig.update_traces(textposition="top center")
+
+        # set ticklabel format:
+        fig.update_xaxes(tickformat=",")
+        fig.update_yaxes(tickformat=",")
+        fig.update_layout(separators="* .*")
 
         st.plotly_chart(fig, use_container_width=True)
 
