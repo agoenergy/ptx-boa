@@ -109,18 +109,6 @@ def main(
     out_dir = Path(out_dir) if out_dir else cache_dir
     out_dir.mkdir(exist_ok=True)
 
-    # set up logging
-    fmt = "[%(asctime)s %(levelname)7s] %(message)s"
-    datefmt = "%Y-%m-%d %H:%M:%S"
-    logging.basicConfig(
-        level=loglevel.upper(),
-        format=fmt,
-        datefmt=datefmt,
-        handlers=[
-            logging.FileHandler(cache_dir / "offline_optimization_script.log"),
-        ],
-    )
-    logging.info(f"starting offline optimization script with cache_dir: {cache_dir}")
     api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR, cache_dir=cache_dir)
 
     param_sets = generate_param_sets(api)
@@ -129,6 +117,21 @@ def main(
     index_from = index_from or 0
     index_to = index_to or len(param_sets)
     param_sets = param_sets[index_from:index_to]
+
+    # set up logging
+    fmt = "[%(asctime)s %(levelname)7s] %(message)s"
+    datefmt = "%Y-%m-%d %H:%M:%S"
+    logging.basicConfig(
+        level=loglevel.upper(),
+        format=fmt,
+        datefmt=datefmt,
+        handlers=[
+            logging.FileHandler(
+                cache_dir / f"offline_optimization_script.{index_from}-{index_to}.log"
+            ),
+        ],
+    )
+    logging.info(f"starting offline optimization script with cache_dir: {cache_dir}")
 
     results = []  # save results
     for params in progress.bar.Bar(
@@ -156,7 +159,9 @@ def main(
 
     # save result
     with open(
-        out_dir / "offline_optimization.results.json", "w", encoding="utf-8"
+        out_dir / f"offline_optimization.results.{index_from}-{index_to}.json",
+        "w",
+        encoding="utf-8",
     ) as file:
         json.dump(
             results,
