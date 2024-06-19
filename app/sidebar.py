@@ -9,13 +9,13 @@ from ptxboa.api import PtxboaAPI
 
 @st.cache_resource()
 def sidebar_logo():
-    st.image("img/agora-energiewende_logo_612x306.png")
+    st.image("img/Agora_Industry_logo_612x306.png")
 
 
 def make_sidebar(api: PtxboaAPI):
     st.logo(
         image="img/transparent_10x10.png",  # placeholder when sidebar is expanded
-        icon_image="img/agora-energiewende_logo_612x306.png",
+        icon_image="img/Agora_Industry_logo_612x306.png",
     )
 
     with st.sidebar:

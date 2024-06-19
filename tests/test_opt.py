@@ -10,6 +10,7 @@ import pandas as pd
 import pypsa
 import pytest
 
+from app.plot_functions import prepare_data_for_profile_figures
 from app.tab_optimization import calc_aggregate_statistics
 from flh_opt.api_opt import get_profiles_and_weights, optimize
 from ptxboa import DEFAULT_CACHE_DIR
@@ -225,10 +226,10 @@ def test_prepare_data_for_optimize_incl_sec_proc():
     settings = {
         "region": "Morocco",
         "country": "Germany",
-        "chain": "Methane (AEL)",
+        "chain": "Hydrogen (AEL)",
         "res_gen": "PV tilted",
         "scenario": "2040 (medium)",
-        "secproc_co2": "Direct Air Capture",
+        "secproc_co2": "Direct Air Capture",  # specified, but will not be used!
         "secproc_water": "Sea Water desalination",
         "transport": "Pipeline",
         "ship_own_fuel": False,
@@ -288,8 +289,15 @@ def test_prepare_data_for_optimize_incl_sec_proc():
         # check that some values exist
         assert opt_input_data["H2O"]["CAPEX_A"]
         assert opt_input_data["H2O"]["CONV"]
-        assert opt_input_data["CO2"]["CAPEX_A"]
-        assert opt_input_data["CO2"]["CONV"]
+        assert not opt_input_data.get("CO2")
+
+        opt_metadata, hash_sum = data_handler.optimizer._get_hashsum(
+            data, opt_input_data
+        )
+        assert not opt_metadata["opt_input_data"].get("CO2")
+        assert opt_metadata["opt_input_data"].get("H2O")
+        # will change if data changes
+        assert hash_sum == "15d51a4d030cd561e7a40aa705e35aab"
 
         # actually call optimizer as in PtxOpt.get_data()
         opt_output_data, _network = optimize(
@@ -299,7 +307,7 @@ def test_prepare_data_for_optimize_incl_sec_proc():
 
         # check that some values exist
         assert opt_output_data["H2O"]["FLH"]
-        assert opt_output_data["CO2"]["FLH"]
+        assert not opt_output_data.get("CO2")
 
         # do the same using the proper api call
 
@@ -314,3 +322,13 @@ def test_prepare_data_for_optimize_incl_sec_proc():
             optimize_flh=True,
             use_user_data_for_optimize_flh=False,
         )
+
+
+def test_prepare_data_for_profile_figures(call_optimize):
+    """Test if solver finds optimal solution."""
+    [res, n, input_data] = call_optimize
+    print(n)
+    df_sel = prepare_data_for_profile_figures(n)
+
+    assert isinstance(df_sel, pd.DataFrame)
+    assert len(df_sel) > 0
