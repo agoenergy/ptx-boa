@@ -65,13 +65,7 @@ def generate_param_sets(api: PtxboaAPI):
 
     # specify parameter dimensions not relevant for optimization
     # we choose arbritray values for those
-    static_params = {
-        "transport": "Ship",
-        "ship_own_fuel": False,
-        "country": "Germany",
-        "secproc_water": "Specific costs",
-        "secproc_co2": "Specific costs",
-    }
+    static_params = {"transport": "Ship", "ship_own_fuel": False, "country": "Germany"}
 
     # these are the parameter dimensions that are relevant for the optimization
     scenarios = api.get_dimension("scenario").index.tolist()
@@ -81,6 +75,8 @@ def generate_param_sets(api: PtxboaAPI):
         for c in api.get_dimension("chain").index.tolist()
         if not c.endswith("+ reconv. to H2")
     ]
+    secprocs_water = ["Specific costs", "Sea Water desalination"]
+    secprocs_co2 = ["Specific costs", "Direct Air Capture"]
 
     param_sets = []
     for region in regions:
@@ -88,7 +84,13 @@ def generate_param_sets(api: PtxboaAPI):
         res_gens = api.get_res_technologies(region)
         param_sets += [
             p | static_params | {"region": region}
-            for p in product_dict(scenario=scenarios, chain=chains, res_gen=res_gens)
+            for p in product_dict(
+                scenario=scenarios,
+                chain=chains,
+                res_gen=res_gens,
+                secproc_water=secprocs_water,
+                secproc_co2=secprocs_co2,
+            )
         ]
 
     return param_sets
@@ -100,12 +102,26 @@ def main(
     loglevel: Literal["debug", "info", "warning", "error"] = "info",
     index_from: int = None,
     index_to: int = None,
+    count_only: bool = False,
 ):
     cache_dir = Path(cache_dir)
     cache_dir.mkdir(exist_ok=True)
 
     out_dir = Path(out_dir) if out_dir else cache_dir
     out_dir.mkdir(exist_ok=True)
+
+    api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR, cache_dir=cache_dir)
+
+    param_sets = generate_param_sets(api)
+
+    if count_only:
+        print(f"Number of parameter variations: {len(param_sets)}")
+        return
+
+    # filter for batch
+    index_from = index_from or 0
+    index_to = index_to or len(param_sets)
+    param_sets = param_sets[index_from:index_to]
 
     # set up logging
     fmt = "[%(asctime)s %(levelname)7s] %(message)s"
@@ -115,18 +131,12 @@ def main(
         format=fmt,
         datefmt=datefmt,
         handlers=[
-            logging.FileHandler(cache_dir / "offline_optimization_script.log"),
+            logging.FileHandler(
+                cache_dir / f"offline_optimization_script.{index_from}-{index_to}.log"
+            ),
         ],
     )
     logging.info(f"starting offline optimization script with cache_dir: {cache_dir}")
-    api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR, cache_dir=cache_dir)
-
-    param_sets = generate_param_sets(api)
-
-    # filter for batch
-    index_from = index_from or 0
-    index_to = index_to or len(param_sets)
-    param_sets = param_sets[index_from:index_to]
 
     results = []  # save results
     for params in progress.bar.Bar(
@@ -154,7 +164,9 @@ def main(
 
     # save result
     with open(
-        out_dir / "offline_optimization.results.json", "w", encoding="utf-8"
+        out_dir / f"offline_optimization.results.{index_from}-{index_to}.json",
+        "w",
+        encoding="utf-8",
     ) as file:
         json.dump(
             results,
@@ -204,6 +216,12 @@ if __name__ == "__main__":
         "--index_to",
         type=int,
         help="final index (exlusive) for prallel runs",
+    )
+    parser.add_argument(
+        "-n",
+        "--count_only",
+        action="store_true",
+        help="only print number of parameter variations and quit.",
     )
 
     args = parser.parse_args()
