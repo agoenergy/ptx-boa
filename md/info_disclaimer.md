@@ -10,8 +10,8 @@ in case Öko-institut and Agora Energiewende is properly cited.
 
 #### Licensing and quotation
 
-This tool is licensed under the Creative Commons CC-BY-SA license
-(<https://creativecommons.org/licenses/by-sa/4.0/>).
+This tool is licensed under the Creative Commons CC-BY 4.0 license
+(<https://creativecommons.org/licenses/by/4.0/>).
 
 Please cite it as: Oeko-Institut, Agora Energiewende & Agora Industry (2023):
 PTX Business Opportunity Analyser
