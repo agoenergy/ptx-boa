@@ -65,13 +65,7 @@ def generate_param_sets(api: PtxboaAPI):
 
     # specify parameter dimensions not relevant for optimization
     # we choose arbritray values for those
-    static_params = {
-        "transport": "Ship",
-        "ship_own_fuel": False,
-        "country": "Germany",
-        "secproc_water": "Specific costs",
-        "secproc_co2": "Specific costs",
-    }
+    static_params = {"transport": "Ship", "ship_own_fuel": False, "country": "Germany"}
 
     # these are the parameter dimensions that are relevant for the optimization
     scenarios = api.get_dimension("scenario").index.tolist()
@@ -81,6 +75,8 @@ def generate_param_sets(api: PtxboaAPI):
         for c in api.get_dimension("chain").index.tolist()
         if not c.endswith("+ reconv. to H2")
     ]
+    secprocs_water = ["Specific costs", "Sea Water desalination"]
+    secprocs_co2 = ["Specific costs", "Direct Air Capture"]
 
     param_sets = []
     for region in regions:
@@ -88,7 +84,13 @@ def generate_param_sets(api: PtxboaAPI):
         res_gens = api.get_res_technologies(region)
         param_sets += [
             p | static_params | {"region": region}
-            for p in product_dict(scenario=scenarios, chain=chains, res_gen=res_gens)
+            for p in product_dict(
+                scenario=scenarios,
+                chain=chains,
+                res_gen=res_gens,
+                secproc_water=secprocs_water,
+                secproc_co2=secprocs_co2,
+            )
         ]
 
     return param_sets
