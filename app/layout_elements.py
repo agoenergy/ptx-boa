@@ -168,11 +168,10 @@ def display_footer():
             st.markdown(
                 """
                 ##### On behalf of
-                Agora Energiewende<br/>
+                Agora Industry<br/>
                 Anna-Louisa-Karsch-Str. 2<br/>
                 D-10178 Berlin<br/>
-                www.agora-industry.org<br/>
-                www.agora-energiewende.org
+                www.agora-industry.org
                 """,
                 unsafe_allow_html=True,
             )
@@ -192,13 +191,16 @@ def display_footer():
             )
 
         # TODO: fix uneven height and vertical alignment of logos
-        c1, c2, c3, c4 = st.columns(4, gap="medium")
+        c0, c1, c2, c3, c4, c5 = st.columns(
+            [1, 2, 2, 2, 2, 1],
+            gap="large",
+        )
         with c1:
-            st.image("img/oeko_logo_612x306.png")
+            st.image("img/Agora_Industry_logo_612x306.png")
         with c2:
             st.image("img/agora-energiewende_logo_612x306.png")
         with c3:
-            st.image("img/Agora_Industry_logo_612x306.png")
+            st.image("img/oeko_logo_612x306.png")
         with c4:
             st.image("img/PtX-Hub_Logo_international_612x306.png")
 
