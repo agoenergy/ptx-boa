@@ -809,15 +809,19 @@ class DataHandler:
             chain, transport_distances
         )
 
+        used_flows = set()
         for process_step in chain_steps_main:
             process_code = chain[process_step]
             res = pg.get_process_params(process_code)
             res["step"] = process_step
             res["process_code"] = process_code
             result["main_process_chain"].append(res)
+            used_flows = used_flows | set(res["CONV"])
 
         for flow_code, process_code in secondary_processes.items():
             if not process_code:
+                continue
+            if flow_code not in used_flows:
                 continue
             res = pg.get_process_params(process_code)
             res["process_code"] = process_code
