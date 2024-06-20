@@ -10,6 +10,12 @@ or make a contribution, please check out our Github repository:
 Visit our website for data documentation, additional resources and updates:
 <https://www.agora-energiewende.de/en/publications/business-opportunity-analyser-boa>
 
+#### Software that has been used
+
+- The optimization model has been implemented in [pypsa](https://pypsa.readthedocs.io/en/latest/).
+- Renewable power supply profiles have been created with  [atlite](https://atlite.readthedocs.io/en/latest/).
+- The aggregation of annual hourly time series by representing them via characteristic weeks has been done with [tsam](https://tsam.readthedocs.io/en/latest/).
+
 #### Disclaimer
 
 The PTX BOA uses technical reports published by third parties.
