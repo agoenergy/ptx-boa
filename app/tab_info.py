@@ -57,4 +57,3 @@ def content_info():
                 " <https://ptxboa.agora-thinktanks.org/>)"
             )
         )
-
