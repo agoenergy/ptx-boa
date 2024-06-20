@@ -7,9 +7,7 @@ import streamlit as st
 
 from app.network_download import download_network_as_netcdf
 from app.plot_functions import (
-    create_profile_figure_capacity_factors,
     create_profile_figure_generation,
-    create_profile_figure_soc,
     prepare_data_for_profile_figures,
 )
 from app.ptxboa_functions import read_markdown_file
@@ -45,7 +43,6 @@ def content_optimization(api: PtxboaAPI) -> None:
     if metadata["model_status"] == ["ok", "optimal"]:
 
         res = calc_aggregate_statistics(n)
-        res_debug = calc_aggregate_statistics(n, include_debugging_output=True)
         df_sel = prepare_data_for_profile_figures(n)
 
         with st.container(border=True):
@@ -81,27 +78,6 @@ def content_optimization(api: PtxboaAPI) -> None:
                 read_markdown_file("md/info_download_model.md"), unsafe_allow_html=True
             )
             download_network_as_netcdf(n=n, filename="network.nc")
-
-        with st.expander("Debugging output"):
-            st.warning(
-                "This output is for debugging only. It will be hidden from end users by default."  # noqa
-            )
-            st.markdown("#### Aggregate statistics:")
-            st.dataframe(res_debug)
-
-            st.markdown("#### Storage state of charge")
-            fig = create_profile_figure_soc(df_sel)
-            st.plotly_chart(fig, use_container_width=True)
-
-            st.markdown("#### Capacity factors")
-            fig = create_profile_figure_capacity_factors(df_sel)
-            st.plotly_chart(fig, use_container_width=True)
-
-            st.markdown("#### Profile data")
-            st.dataframe(df_sel, use_container_width=True)
-
-            st.markdown("#### Input data")
-            show_input_data(n)
 
     else:
         st.error(
