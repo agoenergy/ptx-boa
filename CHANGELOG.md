@@ -1,12 +1,18 @@
 # CHANGELOG.md
 
+## 0.9.2 (2024-06-21)
+
+- pre-launch release
+- all main features implemented
+- only cosmetic changes remaining
+
 ## 0.7.0 (2024-05-17)
 
 - for the two regions Sout Africa Kwazulu Natal and Indonesia a reduced quantile of 0.3 is
   used to determine Wind Onshore and hybrid locations.
 - frontend changes:
-    - point maps instead of choropleth maps
-    - include selected subregion in global cost comparison
+  - point maps instead of choropleth maps
+  - include selected subregion in global cost comparison
 
 ## 0.3.0 (2024-05-06)
 
