@@ -1,1 +1,3 @@
-If the transportation distance is smaller than 6000km, you can choose pipeline transport. Ship transport is always considered possible. For other source countries than the selected one, pipeline is chosen by default if possible.
+If this option is activated, pipelines are used for transport if the transportation distance is smaller than 6000km, and if the transported product is either Hydrogen or Methane.
+
+Ship transport is used in all other cases.
