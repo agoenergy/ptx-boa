@@ -174,7 +174,7 @@ def content_market_scanning(api: PtxboaAPI, cd: dict) -> None:
         # set ticklabel format:
         fig.update_xaxes(tickformat=",")
         fig.update_yaxes(tickformat=",")
-        fig.update_layout(separators="* .*")
+        fig.update_layout(separators=". ")
 
         st.plotly_chart(fig, use_container_width=True)
 
@@ -279,7 +279,7 @@ def content_market_scanning(api: PtxboaAPI, cd: dict) -> None:
         # set ticklabel format:
         fig.update_xaxes(tickformat=",")
         fig.update_yaxes(tickformat=",")
-        fig.update_layout(separators="* .*")
+        fig.update_layout(separators=". ")
 
         st.plotly_chart(fig, use_container_width=True)
 
