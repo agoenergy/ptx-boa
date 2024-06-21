@@ -12,7 +12,7 @@ Visit our website for data documentation, additional resources and updates:
 
 #### Software that has been used
 
-- The optimization model has been implemented in [pypsa](https://pypsa.readthedocs.io/en/latest/).
+- The optimization model has been implemented in [pypsa](https://pypsa.readthedocs.io/en/latest/) and solved with the [HiGHS](https://highs.dev/) solver.
 - Renewable power supply profiles have been created with  [atlite](https://atlite.readthedocs.io/en/latest/).
 - The aggregation of annual hourly time series by representing them via characteristic weeks has been done with [tsam](https://tsam.readthedocs.io/en/latest/).
 

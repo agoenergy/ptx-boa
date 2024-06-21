@@ -26,6 +26,8 @@ Here is a list of tabs and what you can find there:
 - **Literature:** contains a list of references for further reading.
 - **Optimization**: shows results of the optimization for the currently selected scenario.
 
+The contextual information on country facts, certification schemes and sustainability issues is based on the state of the literature at the end of November 2023.
+
 ##### General hints on how to use the app
 
 - Figures are interactive: You can click on legend entries to hide / unhide them, and moving your mouse over figure elements displays helpful information.
