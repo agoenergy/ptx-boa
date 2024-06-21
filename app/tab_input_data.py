@@ -22,7 +22,9 @@ def content_input_data(api: PtxboaAPI) -> None:
     None
     """
     with st.popover("*Help*", use_container_width=True):
-        st.markdown(read_markdown_file("md/whatisthis_input_data.md"))
+        st.markdown(
+            read_markdown_file("md/whatisthis_input_data.md"), unsafe_allow_html=True
+        )
 
     with st.container(border=True):
         st.subheader("Region specific data")
@@ -182,7 +184,10 @@ def content_input_data(api: PtxboaAPI) -> None:
                 key="input_data_specific_costs",
             )
         with st.expander("**Conversion coefficients**"):
-            st.caption(read_markdown_file("md/info_conversion_coefficients.md"))
+            st.caption(
+                read_markdown_file("md/info_conversion_coefficients.md"),
+                unsafe_allow_html=True,
+            )
             display_and_edit_input_data(
                 api,
                 data_type="conversion_coefficients",

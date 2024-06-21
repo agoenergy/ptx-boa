@@ -2,7 +2,7 @@
 """Sidebar creation."""
 import streamlit as st
 
-from app.ptxboa_functions import check_if_input_is_needed, read_markdown_file
+from app.ptxboa_functions import read_markdown_file
 from app.user_data import reset_user_changes
 from ptxboa.api import PtxboaAPI
 
@@ -160,17 +160,12 @@ def main_settings(api):
 
 
 def additional_settings(api):
-    # check if carbon is needed as input:
-    needs_co2 = check_if_input_is_needed(api, flow_code="CO2-G")
-    if needs_co2:
-        st.session_state["secproc_co2"] = st.radio(
-            "CO2 source:",
-            api.get_dimension("secproc_co2").index,
-            horizontal=True,
-            help=read_markdown_file("md/helptext_sidebar_carbon_source.md"),
-        )
-    else:
-        st.session_state["secproc_co2"] = None
+    st.session_state["secproc_co2"] = st.radio(
+        "CO2 source:",
+        api.get_dimension("secproc_co2").index,
+        horizontal=True,
+        help=read_markdown_file("md/helptext_sidebar_carbon_source.md"),
+    )
 
     st.session_state["secproc_water"] = st.radio(
         "Water source:",
@@ -179,32 +174,14 @@ def additional_settings(api):
         help=read_markdown_file("md/helptext_sidebar_water_source.md"),
     )
 
-    # determine transportation distance, only allow pipeline if <6000km:
-    res = api.get_input_data(st.session_state["scenario"])
-    distance = res.loc[
-        (res["source_region_code"] == st.session_state["region"])
-        & (res["target_country_code"] == st.session_state["country"])
-        & (res["parameter_code"] == "shipping distance"),
-        "value",
-    ].iloc[0]
+    st.session_state["transport"] = st.radio(
+        "Mode of transportation (for selected supply country):",
+        ["Ship", "Pipeline"],
+        horizontal=True,
+        help=read_markdown_file("md/helptext_sidebar_transport.md"),
+        index=1,  # 'Pipeline' as default
+    )
 
-    if distance < 6000:
-        st.session_state["transport"] = st.radio(
-            "Mode of transportation (for selected supply country):",
-            ["Ship", "Pipeline"],
-            horizontal=True,
-            help=read_markdown_file("md/helptext_sidebar_transport.md"),
-            index=1,  # 'Pipeline' as default
-        )
-    else:
-        st.session_state["transport"] = st.radio(
-            "Mode of transportation (for selected supply country):",
-            ["Ship", "Pipeline"],
-            horizontal=True,
-            help=read_markdown_file("md/helptext_sidebar_transport.md"),
-            index=0,  # select 'ship' and disable widget
-            disabled=True,
-        )
     if st.session_state["transport"] == "Ship":
         st.session_state["ship_own_fuel"] = st.toggle(
             "For shipping option: Use the product as own fuel?",

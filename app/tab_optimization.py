@@ -7,9 +7,7 @@ import streamlit as st
 
 from app.network_download import download_network_as_netcdf
 from app.plot_functions import (
-    create_profile_figure_capacity_factors,
     create_profile_figure_generation,
-    create_profile_figure_soc,
     prepare_data_for_profile_figures,
 )
 from app.ptxboa_functions import read_markdown_file
@@ -19,7 +17,9 @@ from ptxboa.api import PtxboaAPI
 def content_optimization(api: PtxboaAPI) -> None:
 
     with st.popover("*Help*", use_container_width=True):
-        st.markdown(read_markdown_file("md/whatisthis_optimization.md"))
+        st.markdown(
+            read_markdown_file("md/whatisthis_optimization.md"), unsafe_allow_html=True
+        )
 
     with st.spinner("Please wait. Running optimization model..."):
         # load netcdf file:
@@ -43,18 +43,23 @@ def content_optimization(api: PtxboaAPI) -> None:
     if metadata["model_status"] == ["ok", "optimal"]:
 
         res = calc_aggregate_statistics(n)
-        res_debug = calc_aggregate_statistics(n, include_debugging_output=True)
         df_sel = prepare_data_for_profile_figures(n)
 
         with st.container(border=True):
             st.subheader("Generation profiles")
-            st.markdown(read_markdown_file("md/info_generation_profile_figure.md"))
+            st.markdown(
+                read_markdown_file("md/info_generation_profile_figure.md"),
+                unsafe_allow_html=True,
+            )
             fig = create_profile_figure_generation(df_sel)
             st.plotly_chart(fig, use_container_width=True)
 
         with st.container(border=True):
             st.subheader("Capacities, full load hours and costs")
-            st.markdown(read_markdown_file("md/info_optimization_results.md"))
+            st.markdown(
+                read_markdown_file("md/info_optimization_results.md"),
+                unsafe_allow_html=True,
+            )
             st.dataframe(
                 res,
                 use_container_width=True,
@@ -69,29 +74,10 @@ def content_optimization(api: PtxboaAPI) -> None:
 
         with st.container(border=True):
             st.subheader("Download model")
-            st.markdown(read_markdown_file("md/info_download_model.md"))
-            download_network_as_netcdf(n=n, filename="network.nc")
-
-        with st.expander("Debugging output"):
-            st.warning(
-                "This output is for debugging only. It will be hidden from end users by default."  # noqa
+            st.markdown(
+                read_markdown_file("md/info_download_model.md"), unsafe_allow_html=True
             )
-            st.markdown("#### Aggregate statistics:")
-            st.dataframe(res_debug)
-
-            st.markdown("#### Storage state of charge")
-            fig = create_profile_figure_soc(df_sel)
-            st.plotly_chart(fig, use_container_width=True)
-
-            st.markdown("#### Capacity factors")
-            fig = create_profile_figure_capacity_factors(df_sel)
-            st.plotly_chart(fig, use_container_width=True)
-
-            st.markdown("#### Profile data")
-            st.dataframe(df_sel, use_container_width=True)
-
-            st.markdown("#### Input data")
-            show_input_data(n)
+            download_network_as_netcdf(n=n, filename="network.nc")
 
     else:
         st.error(

@@ -12,7 +12,9 @@ def _render_figure_and_introduction():
         "PtX-Hub-PtX.Sustainability-Dimensions-and-Concerns-Scoping-Paper.pdf)"
     )
     st.caption(captiontext)
-    st.markdown(read_markdown_file("md/sustainability_intro.md"))
+    st.markdown(
+        read_markdown_file("md/sustainability_intro.md"), unsafe_allow_html=True
+    )
 
 
 def _interactive_sustainability_dimension_info(context_data: dict):
@@ -50,7 +52,10 @@ to meet basic sustainability needs.
 
 def content_sustainability(context_data: dict):
     with st.popover("*Help*", use_container_width=True):
-        st.markdown(read_markdown_file("md/whatisthis_sustainability.md"))
+        st.markdown(
+            read_markdown_file("md/whatisthis_sustainability.md"),
+            unsafe_allow_html=True,
+        )
 
     st.markdown("## Dimensions of sustainability")
     with st.container(border=True):

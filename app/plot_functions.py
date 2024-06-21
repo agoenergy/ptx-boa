@@ -487,6 +487,10 @@ def create_bar_chart_costs(
             ay=ay,
         )
 
+    # set ticklabel format:
+    fig.update_yaxes(tickformat=",")
+    fig.update_layout(separators="* .*")
+
     if output_unit is None:
         output_unit = st.session_state["output_unit"]
 
@@ -730,71 +734,5 @@ def create_profile_figure_generation(df_sel: pd.DataFrame) -> go.Figure:
         yaxis={"title": "output (MW)"},
         legend={"traceorder": "normal"},
     )
-
-    return fig
-
-
-def create_profile_figure_soc(df_sel: pd.DataFrame) -> go.Figure:
-    """Create storage state of charge figure."""
-    include_final_product_storage = st.toggle("Show final product storage", value=False)
-    # storage figure:
-    fig = go.Figure()
-
-    add_trace_to_figure(
-        df_sel,
-        fig,
-        component="Electricity storage",
-        parameter="Power",
-        color="black",
-    )
-
-    add_trace_to_figure(
-        df_sel,
-        fig,
-        component="H2 storage",
-        parameter="Power",
-        color="red",
-    )
-    if include_final_product_storage:
-        add_trace_to_figure(
-            df_sel,
-            fig,
-            component="Final product storage",
-            parameter="Power",
-            color="blue",
-        )
-
-    add_vertical_lines(fig)
-
-    fig.update_layout(
-        xaxis={"title": "time (h)"},
-        yaxis={"title": "state of charge (MWh)"},
-        legend={"traceorder": "normal"},
-    )
-
-    return fig
-
-
-def create_profile_figure_capacity_factors(df_sel: pd.DataFrame) -> go.Figure:
-    """Create capacity factors profile figure."""
-    fig = go.Figure()
-    add_trace_to_figure(
-        df_sel, fig, component="PV tilted", parameter="cap. factor", color="yellow"
-    )
-    add_trace_to_figure(
-        df_sel,
-        fig,
-        component="Wind onshore",
-        parameter="cap. factor",
-        color="blue",
-    )
-    add_trace_to_figure(
-        df_sel,
-        fig,
-        component="Wind offshore",
-        parameter="cap. factor",
-        color="blue",
-    )
-    add_vertical_lines(fig)
 
     return fig

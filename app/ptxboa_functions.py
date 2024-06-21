@@ -95,6 +95,11 @@ def calculate_results_list(
     # copy settings from session_state:
     settings = {key: st.session_state[key] for key in setting_keys}
 
+    # check if carbon is needed as input:
+    needs_co2 = check_if_input_is_needed(api, flow_code="CO2-G")
+    if not needs_co2:
+        settings["secproc_co2"] = None
+
     # in test environment: do not optimize by default
     # NOTE: does not work in global, must be called here in a function
     optimize_flh = not is_test()
