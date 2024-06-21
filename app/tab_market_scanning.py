@@ -28,7 +28,10 @@ def content_market_scanning(api: PtxboaAPI, cd: dict) -> None:
         context data.
     """
     with st.popover("*Help*", use_container_width=True):
-        st.markdown(read_markdown_file("md/whatisthis_market_scanning.md"))
+        st.markdown(
+            read_markdown_file("md/whatisthis_market_scanning.md"),
+            unsafe_allow_html=True,
+        )
 
     with st.spinner("Please wait. Calculating results for different source regions"):
         res_costs = calculate_results_list(
@@ -162,6 +165,11 @@ def content_market_scanning(api: PtxboaAPI, cd: dict) -> None:
             )
             fig.update_traces(textposition="top center")
 
+        # set ticklabel format:
+        fig.update_xaxes(tickformat=",")
+        fig.update_yaxes(tickformat=",")
+        fig.update_layout(separators="* .*")
+
         st.plotly_chart(fig, use_container_width=True)
 
         # show data in tabular form:
@@ -261,6 +269,11 @@ def content_market_scanning(api: PtxboaAPI, cd: dict) -> None:
             text=df_plot.index,
         )
         fig.update_traces(textposition="top center")
+
+        # set ticklabel format:
+        fig.update_xaxes(tickformat=",")
+        fig.update_yaxes(tickformat=",")
+        fig.update_layout(separators="* .*")
 
         st.plotly_chart(fig, use_container_width=True)
 

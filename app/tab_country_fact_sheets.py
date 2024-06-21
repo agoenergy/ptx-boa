@@ -150,7 +150,10 @@ def _create_fact_sheet_supply_country(context_data: dict, api: PtxboaAPI):
 
 def content_country_fact_sheets(context_data, api):
     with st.popover("*Help*", use_container_width=True):
-        st.markdown(read_markdown_file("md/whatisthis_country_fact_sheets.md"))
+        st.markdown(
+            read_markdown_file("md/whatisthis_country_fact_sheets.md"),
+            unsafe_allow_html=True,
+        )
     with st.container(border=True):
         _create_fact_sheet_demand_country(context_data)
     with st.container(border=True):

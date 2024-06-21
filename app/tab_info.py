@@ -9,7 +9,7 @@ __version__ = "0.8.3"
 
 def content_info():
     with st.container(border=True):
-        st.markdown(read_markdown_file("md/info_intro.md"))
+        st.markdown(read_markdown_file("md/info_intro.md"), unsafe_allow_html=True)
 
         st.image("img/costs_of_hydrogen.png", width=800)
 
@@ -43,7 +43,7 @@ def content_info():
         )
 
     with st.container(border=True):
-        st.markdown(read_markdown_file("md/info_disclaimer.md"))
+        st.markdown(read_markdown_file("md/info_disclaimer.md"), unsafe_allow_html=True)
         st.markdown(
             (
                 "#### Licensing and quotation\n"
@@ -54,6 +54,6 @@ def content_info():
                 "Please cite it as:"
                 " Oeko-Institut, Agora Industry & Agora Energiewende  (2024):"
                 f" PTX Business Opportunity Analyser {__version__}"
-                " <https://ptxboa.agora-thinktanks.org/>)"
+                " <https://www.agora-industry.org/data-tools/ptx-business-opportunity-analyser-new>)"  # noqa
             )
         )
