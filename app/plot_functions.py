@@ -41,6 +41,7 @@ def agora_discrete_colors_cost_categories() -> dict:
     cost_categories = [
         "Water",
         "Transportation (Ship)",
+        "Transportation (Pipeline)",
         "Electrolysis",
         "Electricity generation",
         "Electricity and H2 storage",
