@@ -118,7 +118,7 @@ def main_settings(api):
         )
     if product in ["Ammonia", "Methane"]:
         use_reconversion = st.toggle(
-            "Include reconversion to H2",
+            "Include reconversion to H₂",
             help=(
                 read_markdown_file("md/helptext_sidebar_include_reconversion_to_h2.md")
             ),
@@ -130,11 +130,11 @@ def main_settings(api):
     if use_reconversion:
         st.session_state["chain"] = f"{st.session_state['chain']} + reconv. to H2"
 
-    available_res_gen = api.get_res_technologies(st.session_state["region"])
+    available_res_gen = sorted(api.get_res_technologies(st.session_state["region"]))
     st.session_state["res_gen"] = st.selectbox(
-        "Renewable electricity source (for selected supply region):",
+        "Renewable electricity source (only for selected supply region, other regions use Wind-PV hybrid):",  # noqaCO2 source
         available_res_gen,
-        index=available_res_gen.index("PV tilted"),
+        index=available_res_gen.index("Wind-PV-Hybrid"),
         help=read_markdown_file("md/helptext_sidebar_re_source.md"),
     )
 
@@ -161,7 +161,7 @@ def main_settings(api):
 
 def additional_settings(api):
     st.session_state["secproc_co2"] = st.radio(
-        "CO2 source:",
+        "CO₂ source:",
         api.get_dimension("secproc_co2").index,
         horizontal=True,
         help=read_markdown_file("md/helptext_sidebar_carbon_source.md"),
@@ -174,21 +174,20 @@ def additional_settings(api):
         help=read_markdown_file("md/helptext_sidebar_water_source.md"),
     )
 
-    st.session_state["transport"] = st.radio(
-        "Mode of transportation (for selected supply country):",
-        ["Ship", "Pipeline"],
-        horizontal=True,
+    allow_pipeline = st.toggle(
+        "Allow pipeline transport",
         help=read_markdown_file("md/helptext_sidebar_transport.md"),
-        index=1,  # 'Pipeline' as default
+        value=True,
     )
-
-    if st.session_state["transport"] == "Ship":
-        st.session_state["ship_own_fuel"] = st.toggle(
-            "For shipping option: Use the product as own fuel?",
-            help=read_markdown_file("md/helptext_sidebar_transport_use_own_fuel.md"),
-        )
+    if allow_pipeline:
+        st.session_state["transport"] = "Pipeline"
     else:
-        st.session_state["ship_own_fuel"] = False
+        st.session_state["transport"] = "Ship"
+
+    st.session_state["ship_own_fuel"] = st.toggle(
+        "For shipping option: Use the product as own fuel?",
+        help=read_markdown_file("md/helptext_sidebar_transport_use_own_fuel.md"),
+    )
 
     st.session_state["output_unit"] = st.radio(
         "Unit for delivered costs:",

@@ -30,7 +30,7 @@ def _create_fact_sheet_demand_country(context_data: dict):
     with st.expander("**Demand**"):
         c1, c2, c3 = st.columns(3)
         with c1:
-            st.markdown("**Projected H2 demand in 2030**")
+            st.markdown("**Projected H₂ demand in 2030**")
             if data["h2_demand_2030"] in ["", "-", "n/a"]:
                 st.markdown("no data")
             else:

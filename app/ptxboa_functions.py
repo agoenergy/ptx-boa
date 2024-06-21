@@ -2,7 +2,7 @@
 """Utility functions for streamlit app."""
 import logging
 from pathlib import Path
-from typing import Literal
+from typing import Dict, Literal
 
 import pandas as pd
 import streamlit as st
@@ -137,6 +137,10 @@ def calculate_results_list(
                 settings.update({"secproc_co2": st.session_state["secproc_co2"]})
             else:
                 settings.update({"secproc_co2": None})
+
+        # for all regions but the selected one, use Wind-PV-hybrid RE source:
+        if settings["region"] != st.session_state["region"]:
+            settings["res_gen"] = "Wind-PV-Hybrid"
 
         # consider user data in optimization only for parameter set in session state
         if st.session_state[parameter_to_change] == parameter:
@@ -570,7 +574,7 @@ def select_subregions(
     return df
 
 
-def config_number_columns(df: pd.DataFrame, **kwargs) -> {}:
+def config_number_columns(df: pd.DataFrame, **kwargs) -> Dict:
     """Create number column config info for st.dataframe() or st.data_editor."""
     column_config_all = {}
     for c in df.columns:

@@ -133,6 +133,12 @@ def content_market_scanning(api: PtxboaAPI, cd: dict) -> None:
                 ],
                 help=read_markdown_file("md/helptext_technical_potential.md"),
             )
+            st.markdown(
+                (
+                    "Sources: [EWI 2021](https://www.ewi.uni-koeln.de/de/tools/schaetzung-der-langfristigen-globalen-versorgungskosten-fuer-kohlenstoffarmen-wasserstoff/)"  # noqa
+                    ", [Fraunhofer IEE 2022](https://maps.iee.fraunhofer.de/ptx-atlas/)"
+                )
+            )
 
         # create plot:
         df_plot = df.copy().round(0)
@@ -168,7 +174,7 @@ def content_market_scanning(api: PtxboaAPI, cd: dict) -> None:
         # set ticklabel format:
         fig.update_xaxes(tickformat=",")
         fig.update_yaxes(tickformat=",")
-        fig.update_layout(separators="* .*")
+        fig.update_layout(separators=". ")
 
         st.plotly_chart(fig, use_container_width=True)
 
@@ -273,7 +279,7 @@ def content_market_scanning(api: PtxboaAPI, cd: dict) -> None:
         # set ticklabel format:
         fig.update_xaxes(tickformat=",")
         fig.update_yaxes(tickformat=",")
-        fig.update_layout(separators="* .*")
+        fig.update_layout(separators=". ")
 
         st.plotly_chart(fig, use_container_width=True)
 
