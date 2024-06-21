@@ -134,7 +134,7 @@ def main_settings(api):
     st.session_state["res_gen"] = st.selectbox(
         "Renewable electricity source (only for selected supply region, other regions use Wind-PV hybrid):",  # noqaCO2 source
         available_res_gen,
-        index=available_res_gen.index("PV tilted"),
+        index=available_res_gen.index("Wind-PV-Hybrid"),
         help=read_markdown_file("md/helptext_sidebar_re_source.md"),
     )
 
