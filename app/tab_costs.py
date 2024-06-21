@@ -96,7 +96,7 @@ def content_costs(api: PtxboaAPI):
 
         # set ticklabel format:
         doublefig.update_yaxes(tickformat=",")
-        doublefig.update_layout(separators="* .*")
+        doublefig.update_layout(separators=". ")
 
         st.plotly_chart(doublefig, use_container_width=True)
 

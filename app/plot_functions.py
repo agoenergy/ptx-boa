@@ -489,7 +489,7 @@ def create_bar_chart_costs(
 
     # set ticklabel format:
     fig.update_yaxes(tickformat=",")
-    fig.update_layout(separators="* .*")
+    fig.update_layout(separators=". ")
 
     if output_unit is None:
         output_unit = st.session_state["output_unit"]
