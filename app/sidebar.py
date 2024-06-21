@@ -130,7 +130,7 @@ def main_settings(api):
     if use_reconversion:
         st.session_state["chain"] = f"{st.session_state['chain']} + reconv. to H2"
 
-    available_res_gen = api.get_res_technologies(st.session_state["region"])
+    available_res_gen = sorted(api.get_res_technologies(st.session_state["region"]))
     st.session_state["res_gen"] = st.selectbox(
         "Renewable electricity source (only for selected supply region, other regions use Wind-PV hybrid):",  # noqaCO2 source
         available_res_gen,
