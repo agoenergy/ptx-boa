@@ -118,7 +118,7 @@ def main_settings(api):
         )
     if product in ["Ammonia", "Methane"]:
         use_reconversion = st.toggle(
-            "Include reconversion to H2",
+            "Include reconversion to H₂",
             help=(
                 read_markdown_file("md/helptext_sidebar_include_reconversion_to_h2.md")
             ),
@@ -161,7 +161,7 @@ def main_settings(api):
 
 def additional_settings(api):
     st.session_state["secproc_co2"] = st.radio(
-        "CO2 source:",
+        "CO₂ source:",
         api.get_dimension("secproc_co2").index,
         horizontal=True,
         help=read_markdown_file("md/helptext_sidebar_carbon_source.md"),

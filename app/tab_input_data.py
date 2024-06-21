@@ -164,8 +164,8 @@ def content_input_data(api: PtxboaAPI) -> None:
         with st.expander("**Direct air capture and desalination**"):
             st.caption(
                 (
-                    "Units for CAPEX and OPEX (fix) are per kg of CO<sub>2</sub> for "
-                    "direct air capture and per kg of H<sub>2</sub>0 for sea water "
+                    "Units for CAPEX and OPEX (fix) are per kg of CO₂ for "
+                    "direct air capture and per kg of H₂0 for sea water "
                     "desalination, respectively."
                 ),
                 unsafe_allow_html=True,
