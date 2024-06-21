@@ -138,6 +138,10 @@ def calculate_results_list(
             else:
                 settings.update({"secproc_co2": None})
 
+        # for all regions but the selected one, use Wind-PV-hybrid RE source:
+        if settings["region"] != st.session_state["region"]:
+            settings["res_gen"] = "Wind-PV-Hybrid"
+
         # consider user data in optimization only for parameter set in session state
         if st.session_state[parameter_to_change] == parameter:
             use_user_data_for_optimize_flh = True
