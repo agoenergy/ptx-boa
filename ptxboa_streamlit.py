@@ -117,13 +117,13 @@ tabs = (
     "Info",
     "Costs",
     "Market scanning",
-    "Input data",
     "Deep-dive countries",
+    "Optimization",
+    "Input data",
     "Country fact sheets",
     "Certification schemes",
     "Sustainability",
     "Literature",
-    "Optimization",
 )
 
 tabs_icons = {

@@ -2,7 +2,7 @@
 """Utility functions for streamlit app."""
 import logging
 from pathlib import Path
-from typing import Literal
+from typing import Dict, Literal
 
 import pandas as pd
 import streamlit as st
@@ -570,7 +570,7 @@ def select_subregions(
     return df
 
 
-def config_number_columns(df: pd.DataFrame, **kwargs) -> {}:
+def config_number_columns(df: pd.DataFrame, **kwargs) -> Dict:
     """Create number column config info for st.dataframe() or st.data_editor."""
     column_config_all = {}
     for c in df.columns:
