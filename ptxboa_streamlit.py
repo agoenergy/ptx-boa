@@ -92,13 +92,6 @@ api = st.cache_resource(PtxboaAPI)(
 st.title("PtX Business Opportunity Analyser")
 
 with st.container():
-    st.error(
-        f"**Draft version ({__version__})!** This app is under development."
-        " Results are preliminary, and there may be bugs or unexpected behaviour."
-        " Please do not cite."
-    )
-
-with st.container():
     if st.session_state["edit_input_data"]:
         st.info("Data editing mode **ON**")
         with st.expander("Modified data"):
