@@ -1,0 +1,4 @@
+- Realized full load hours may be lower due to curtailment.
+- For Wind-PV-Hybrid sites, combined full load hours are estimated for a fixed capacity relation of Wind Onshore and PV plants. The cost efficient capacity share is determined by optimization, which will also affect full load hours.
+- Full load hours of electrolyzer and derivate production are not shown because they are determined by optimization and vary between regions, generation sites, and process chains.
+- For the selected region and settings full load hours of all processes are shown in the **Optimization** tab.
