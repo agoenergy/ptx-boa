@@ -283,7 +283,17 @@ def content_market_scanning(api: PtxboaAPI, cd: dict) -> None:
 
         st.plotly_chart(fig, use_container_width=True)
 
+        st.caption(
+            (
+                "Notes:\n"
+                "- For EU, trasportation distance to France is used.\n"
+                "- Countries are not plotted if either distance or demand data"
+                " is missing."
+            )
+        )
+
         with st.expander("**Data**"):
             st.dataframe(df, use_container_width=True)
+            st.caption("Note: For EU, trasportation distance to France is used.")
             fn = "market_scanning_target_countries"
             prepare_and_download_df_as_excel(df, filename=fn)
