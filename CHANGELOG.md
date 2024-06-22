@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## 1.0.1 (2024-06-22)
+
+- fix bug in cost by RE source graph
+
 ## 1.0.0 (2024-06-22)
 
 - launch release
