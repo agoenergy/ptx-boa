@@ -69,6 +69,8 @@ def content_input_data(api: PtxboaAPI) -> None:
             st.plotly_chart(fig, use_container_width=True)
 
         with st.expander("**Data**"):
+            if data_selection == "full load hours":
+                st.caption(read_markdown_file("md/helptext_flh.md"))
             df = display_and_edit_input_data(
                 api,
                 data_type=data_selection,
@@ -98,6 +100,12 @@ def content_input_data(api: PtxboaAPI) -> None:
     with st.container(border=True):
         st.subheader("Global data")
         with st.expander("**Electricity generation**"):
+            st.caption(
+                (
+                    "CAPEX and full load hours of renewables"
+                    " are region specific and are shown above."
+                )
+            )
             display_and_edit_input_data(
                 api,
                 data_type="electricity_generation",
@@ -177,6 +185,10 @@ def content_input_data(api: PtxboaAPI) -> None:
                 key="input_data_dac_and_desalination",
             )
         with st.expander("**Specific costs for materials and energy carriers**"):
+            st.caption(
+                read_markdown_file("md/helptext_columns_specific_costs.md"),
+                unsafe_allow_html=True,
+            )
             display_and_edit_input_data(
                 api,
                 data_type="specific_costs",
