@@ -1,5 +1,10 @@
 # CHANGELOG.md
 
+## 1.0.0 (2024-06-22)
+
+- launch release
+- cosmetic changes
+
 ## 0.9.2 (2024-06-21)
 
 - pre-launch release

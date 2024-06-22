@@ -6,7 +6,7 @@ Execution:
 >>> streamlit run  ptxboa_streamlit.py
 """
 
-__version__ = "0.9.2"
+__version__ = "1.0.0"
 
 import logging
 
@@ -90,13 +90,6 @@ api = st.cache_resource(PtxboaAPI)(
 
 
 st.title("PtX Business Opportunity Analyser")
-
-with st.container():
-    st.error(
-        f"**Draft version ({__version__})!** This app is under development."
-        " Results are preliminary, and there may be bugs or unexpected behaviour."
-        " Please do not cite."
-    )
 
 with st.container():
     if st.session_state["edit_input_data"]:
