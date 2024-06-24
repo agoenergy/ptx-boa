@@ -1,5 +1,10 @@
 # CHANGELOG.md
 
+## 2.0.0 (2024-06-24)
+
+- rename "Autothermal reactor" to "Methane reconversion" ([#526](https://github.com/agoenergy/ptx-boa/pull/526))
+- add license file to repository ([#527](https://github.com/agoenergy/ptx-boa/pull/527))
+
 ## 1.0.1 (2024-06-22)
 
 - fix bug in cost by RE source graph
