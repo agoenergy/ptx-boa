@@ -54,6 +54,6 @@ def content_info():
                 "Please cite it as:"
                 " Oeko-Institut, Agora Industry & Agora Energiewende  (2024):"
                 f" PTX Business Opportunity Analyser {__version__}"
-                " <https://www.agora-industry.org/data-tools/ptx-business-opportunity-analyser-new>)"  # noqa
+                " <https://www.agora-industry.org/data-tools/ptx-business-opportunity-analyser>)"  # noqa
             )
         )
