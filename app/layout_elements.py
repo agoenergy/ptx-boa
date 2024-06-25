@@ -127,7 +127,7 @@ def display_costs(
     st.plotly_chart(fig, use_container_width=True)
 
     # add explainer for costs by supply chain comparison:
-    if titlestring == "Costs by supply chain":
+    if key == "chain":
         if st.session_state["output_unit"] == "USD/t":
             unit_note = (
                 "The output unit is set to USD/MWh in order to compare energy carriers"
