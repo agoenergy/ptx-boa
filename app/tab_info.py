@@ -4,7 +4,7 @@ import streamlit as st
 
 from app.ptxboa_functions import read_markdown_file
 
-__version__ = "2.0.0"
+__version__ = "2.0.1"
 
 
 def content_info():
@@ -54,6 +54,6 @@ def content_info():
                 "Please cite it as:"
                 " Oeko-Institut, Agora Industry & Agora Energiewende  (2024):"
                 f" PTX Business Opportunity Analyser {__version__}"
-                " <https://www.agora-industry.org/data-tools/ptx-business-opportunity-analyser-new>)"  # noqa
+                " <https://www.agora-industry.org/data-tools/ptx-business-opportunity-analyser>)"  # noqa
             )
         )
