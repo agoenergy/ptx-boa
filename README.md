@@ -80,7 +80,7 @@ docker run -d -p 9000:80 -v /home/ptxboa/ptx-boa_offline_optimization/optimizati
 docker logs --follow app
 ```
 
-### Claenup docker images from old versions
+### Cleanup docker images from old versions
 ```bash
 # check which docker images are downloaded
 docker image ls
