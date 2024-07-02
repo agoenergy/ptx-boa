@@ -79,3 +79,11 @@ docker run -d -p 9000:80 -v /home/ptxboa/ptx-boa_offline_optimization/optimizati
 # see logs
 docker logs --follow app
 ```
+
+### Cleanup docker images from old versions
+```bash
+# check which docker images are downloaded
+docker image ls
+# if there is an old image present (let's assume from v0.6.0), you can delete it with:
+docker image rm wingechr/ptx-boa:0.6.0
+```
