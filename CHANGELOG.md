@@ -1,5 +1,10 @@
 # CHANGELOG.md
 
+## 2.0.1 (2024-07-02)
+
+- add note about output unit and green iron to costs graph for different products/electrolyser types
+  ([#534](https://github.com/agoenergy/ptx-boa/pull/534))
+
 ## 2.0.0 (2024-06-24)
 
 - rename "Autothermal reactor" to "Methane reconversion" ([#526](https://github.com/agoenergy/ptx-boa/pull/526))
