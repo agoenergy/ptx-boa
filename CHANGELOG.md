@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## 2.0.3 (2024-07-15)
+
+- upgrade pypsa requirements to 0.28
+
 ## 2.0.2 (2024-07-15)
 
 - fix unit for electrolyzer CAPEX ([#538](https://github.com/agoenergy/ptx-boa/pull/539))
