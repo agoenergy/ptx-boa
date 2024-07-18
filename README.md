@@ -68,7 +68,7 @@ scp -r ptxboa2:ptx-boa_offline_optimization/optimization_cache/* .
 # connect to server
 ssh ptxboa
 # pull latest image from dockerhub
-VERSION=2.0.1
+VERSION=2.0.3
 docker pull wingechr/ptx-boa:$VERSION
 # stop and delete the currently running container "app"
 docker stop app
@@ -78,4 +78,12 @@ docker run -d -p 9000:80 -v /home/ptxboa/ptx-boa_offline_optimization/optimizati
 
 # see logs
 docker logs --follow app
+```
+
+### Cleanup docker images from old versions
+```bash
+# check which docker images are downloaded
+docker image ls
+# if there is an old image present (let's assume from v0.6.0), you can delete it with:
+docker image rm wingechr/ptx-boa:0.6.0
 ```

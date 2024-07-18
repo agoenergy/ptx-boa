@@ -1,5 +1,13 @@
 # CHANGELOG.md
 
+## 2.0.3 (2024-07-15)
+
+- upgrade pypsa requirements to 0.28
+
+## 2.0.2 (2024-07-15)
+
+- fix unit for electrolyzer CAPEX ([#538](https://github.com/agoenergy/ptx-boa/pull/539))
+
 ## 2.0.1 (2024-07-02)
 
 - add note about output unit and green iron to costs graph for different products/electrolyser types
