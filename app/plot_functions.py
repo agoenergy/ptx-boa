@@ -100,7 +100,7 @@ def plot_costs_on_map(
 
 def plot_input_data_on_map(
     api: PtxboaAPI,
-    data_type: Literal["CAPEX", "full load hours", "WACC"],
+    data_type: Literal["CAPEX", "full load hours", "WACC", "OPEX (fix)"],
     color_col: Literal[
         "PV tilted",
         "Wind Offshore",
@@ -132,7 +132,12 @@ def plot_input_data_on_map(
     """
     input_data = get_data_type_from_input_data(api, data_type=data_type, scope=None)
 
-    units = {"CAPEX": "USD/kW", "full load hours": "h/a", "WACC": "%"}
+    units = {
+        "CAPEX": "USD/kW",
+        "full load hours": "h/a",
+        "WACC": "%",
+        "OPEX (fix)": "USD/kW",
+    }
 
     if data_type == "WACC":
         assert color_col == "WACC"
@@ -146,13 +151,17 @@ def plot_input_data_on_map(
             "PV tilted (hybrid)",
         ]
         custom_data_func_kwargs = {"float_precision": 0}
-    if data_type == "CAPEX":
+    if data_type in ["CAPEX", "OPEX (fix)"]:
         assert color_col in [
             "PV tilted",
             "Wind Offshore",
             "Wind Onshore",
         ]
+
+    if data_type == "CAPEX":
         custom_data_func_kwargs = {"float_precision": 0}
+    if data_type == "OPEX (fix)":
+        custom_data_func_kwargs = {"float_precision": 2}
 
     custom_data_func_kwargs["unit"] = units[data_type]
     custom_data_func_kwargs["data_type"] = data_type
