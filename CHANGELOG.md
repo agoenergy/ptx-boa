@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## unreleased (xxxx-xx-xx)
+
+- show region specific OPEX (fix) data for RE generation in input data tab ([#545](https://github.com/agoenergy/ptx-boa/pull/545))
+
 ## 2.0.3 (2024-07-15)
 
 - upgrade pypsa requirements to 0.28
