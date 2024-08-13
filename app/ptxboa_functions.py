@@ -284,6 +284,7 @@ def get_data_type_from_input_data(
         "conversion_coefficients",
         "dac_and_desalination",
         "storage",
+        "OPEX (fix)",
     ],
     scope: Literal[None, "world", "Argentina", "Morocco", "South Africa"],
 ) -> pd.DataFrame:
@@ -302,7 +303,8 @@ def get_data_type_from_input_data(
         the data type which should be selected. Needs to be one of
         "electricity_generation", "conversion_processes", "transportation_processes",
         "reconversion_processes", "CAPEX", "full load hours", "WACC",
-        "specific costs", "conversion_coefficients" and "dac_and_desalination".
+        "specific costs", "conversion_coefficients", "dac_and_desalination"
+        and "OPEX (fix)".
     scope : Literal[None, "world", "Argentina", "Morocco", "South Africa"]
         The regional scope. Is automatically set to None for data of
         data type "conversion_processes" and "transportation_processes" which is not
@@ -426,7 +428,7 @@ def get_data_type_from_input_data(
             processes["is_transport"] & processes["is_transformation"], "process_name"
         ].to_list()
 
-    if data_type in ["CAPEX", "WACC"]:
+    if data_type in ["CAPEX", "WACC", "OPEX (fix)"]:
         source_region_code = None
         parameter_code = [data_type]
         index = "source_region_code"
@@ -435,7 +437,7 @@ def get_data_type_from_input_data(
         columns = "parameter_code"
         process_code = [""]
 
-    if data_type == "CAPEX":
+    if data_type in ["CAPEX", "OPEX (fix)"]:
         columns = "process_code"
         process_code = [
             "Wind Onshore",

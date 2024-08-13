@@ -276,6 +276,7 @@ def display_and_edit_input_data(
         "conversion_coefficients",
         "dac_and_desalination",
         "storage",
+        "OPEX (fix)",
     ],
     scope: Literal["world", "Argentina", "Morocco", "South Africa"],
     key: str,
@@ -294,7 +295,8 @@ def display_and_edit_input_data(
         the data type which should be selected. Needs to be one of
         "electricity_generation", "conversion_processes", "transportation_processes",
         "reconversion_processes", "CAPEX", "full load hours", "WACC",
-        "specific costs", "conversion_coefficients" and "dac_and_desalination"
+        "specific costs", "conversion_coefficients", "dac_and_desalination"
+        and "OPEX (fix)".
     scope : Literal[None, "world", "Argentina", "Morocco", "South Africa"]
         The regional scope. Is automatically set to None for data of
         data type "conversion_processes" and "transportation_processes" which is not
@@ -397,6 +399,16 @@ def display_and_edit_input_data(
         missing_index_value = "CAPEX"
         column_config = {
             c: st.column_config.NumberColumn(format="%.0f USD/kW", min_value=0)
+            for c in df.columns
+        }
+
+    if data_type == "OPEX (fix)":
+        index = "source_region_code"
+        columns = "process_code"
+        missing_index_name = "parameter_code"
+        missing_index_value = "OPEX (fix)"
+        column_config = {
+            c: st.column_config.NumberColumn(format="%.2f USD/kW", min_value=0)
             for c in df.columns
         }
 

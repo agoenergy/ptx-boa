@@ -31,13 +31,13 @@ def content_input_data(api: PtxboaAPI) -> None:
 
         data_selection = st.radio(
             "Select data type",
-            ["CAPEX", "full load hours", "WACC"],
+            ["CAPEX", "full load hours", "WACC", "OPEX (fix)"],
             horizontal=True,
         )
 
         with st.expander("**Map**", expanded=True):
 
-            if data_selection in ["full load hours", "CAPEX"]:
+            if data_selection in ["full load hours", "CAPEX", "OPEX (fix)"]:
                 if data_selection == "full load hours":
                     select_options = [
                         "Wind Onshore",
@@ -46,7 +46,7 @@ def content_input_data(api: PtxboaAPI) -> None:
                         "Wind Onshore (hybrid)",
                         "PV tilted (hybrid)",
                     ]
-                if data_selection == "CAPEX":
+                if data_selection in ["CAPEX", "OPEX (fix)"]:
                     select_options = [
                         "Wind Onshore",
                         "Wind Offshore",
@@ -81,6 +81,9 @@ def content_input_data(api: PtxboaAPI) -> None:
             # create plot:
             if data_selection == "CAPEX":
                 ylabel = "CAPEX (USD/kW)"
+                hover_name = "process_code"
+            if data_selection == "OPEX (fix)":
+                ylabel = "OPEX (fix) (USD/kW)"
                 hover_name = "process_code"
             if data_selection == "full load hours":
                 ylabel = "full load hours (h/a)"
