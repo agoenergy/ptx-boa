@@ -61,33 +61,83 @@ def product_dict(**kwargs):
         yield dict(zip(keys, instance))
 
 
-def generate_param_sets(api: PtxboaAPI):
+def check_all_params_defined(provided_options, available_options):
+    """Ensure that provided options are in available options."""
+    if not all(x in available_options for x in provided_options):
+        missing = [x for x in provided_options if x not in available_options]
+        msg = (
+            f"wrong parameters passed: {missing}\n\n"
+            f"available options: {available_options}"
+        )
+        raise ValueError(msg)
 
+
+def generate_param_sets(
+    api: PtxboaAPI,
+    scenarios: list[str] | None,
+    regions: list[str] | None,
+    chains: list[str] | None,
+    secprocs_water: list[str] | None,
+    secprocs_co2: list[str] | None,
+    res_gens: list[str] | None,
+):
     # specify parameter dimensions not relevant for optimization
     # we choose arbritray values for those
     static_params = {"transport": "Ship", "ship_own_fuel": False, "country": "Germany"}
 
     # these are the parameter dimensions that are relevant for the optimization
-    scenarios = api.get_dimension("scenario").index.tolist()
-    regions = api.get_dimension("region")["region_name"].tolist()
-    chains = [
-        c
-        for c in api.get_dimension("chain").index.tolist()
-        if not c.endswith("+ reconv. to H2")
-    ]
-    secprocs_water = ["Specific costs", "Sea Water desalination"]
-    secprocs_co2 = ["Specific costs", "Direct Air Capture"]
+    if scenarios is None:
+        scenarios = api.get_dimension("scenario").index.tolist()
+    else:
+        check_all_params_defined(
+            scenarios, api.get_dimension("scenario").index.tolist()
+        )
+
+    if regions is None:
+        regions = api.get_dimension("region")["region_name"].tolist()
+    else:
+        check_all_params_defined(
+            regions, api.get_dimension("region")["region_name"].tolist()
+        )
+
+    if chains is None:
+        chains = [
+            c
+            for c in api.get_dimension("chain").index.tolist()
+            if not c.endswith("+ reconv. to H2")
+        ]
+    else:
+        check_all_params_defined(chains, api.get_dimension("chain").index.tolist())
+
+    if secprocs_water is None:
+        secprocs_water = api.get_dimension("secproc_water").index.tolist()
+    else:
+        check_all_params_defined(
+            secprocs_water, api.get_dimension("secproc_water").index.tolist()
+        )
+
+    if secprocs_co2 is None:
+        secprocs_co2 = api.get_dimension("secproc_co2").index.tolist()
+    else:
+        check_all_params_defined(
+            secprocs_co2, api.get_dimension("secproc_co2").index.tolist()
+        )
+
+    if res_gens is None:
+        res_gens = api.get_dimension("res_gen").index.tolist()
+    else:
+        check_all_params_defined(res_gens, api.get_dimension("res_gen").index.tolist())
 
     param_sets = []
     for region in regions:
         # only get availabe technologies for this region
-        res_gens = api.get_res_technologies(region)
+        res_gens_region = [x for x in res_gens if x in api.get_res_technologies(region)]
         param_sets += [
             p | static_params | {"region": region}
             for p in product_dict(
                 scenario=scenarios,
                 chain=chains,
-                res_gen=res_gens,
+                res_gen=res_gens_region,
                 secproc_water=secprocs_water,
                 secproc_co2=secprocs_co2,
             )
@@ -103,6 +153,12 @@ def main(
     index_from: int = None,
     index_to: int = None,
     count_only: bool = False,
+    scenarios: list[str] | None = None,
+    regions: list[str] | None = None,
+    chains: list[str] | None = None,
+    secprocs_water: list[str] | None = None,
+    secprocs_co2: list[str] | None = None,
+    res_gens: list[str] | None = None,
 ):
     cache_dir = Path(cache_dir)
     cache_dir.mkdir(exist_ok=True)
@@ -112,7 +168,15 @@ def main(
 
     api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR, cache_dir=cache_dir)
 
-    param_sets = generate_param_sets(api)
+    param_sets = generate_param_sets(
+        api,
+        scenarios=scenarios,
+        regions=regions,
+        chains=chains,
+        secprocs_water=secprocs_water,
+        secprocs_co2=secprocs_co2,
+        res_gens=res_gens,
+    )
 
     if count_only:
         print(f"Number of parameter variations: {len(param_sets)}")
@@ -209,19 +273,79 @@ if __name__ == "__main__":
         "-f",
         "--index_from",
         type=int,
-        help="starting index for prallel runs",
+        help="starting index for parallel runs",
     )
     parser.add_argument(
         "-t",
         "--index_to",
         type=int,
-        help="final index (exlusive) for prallel runs",
+        help="final index (exlusive) for parallel runs",
     )
     parser.add_argument(
         "-n",
         "--count_only",
         action="store_true",
         help="only print number of parameter variations and quit.",
+    )
+    parser.add_argument(
+        "-scenarios",
+        action="append",
+        default=None,
+        type=str,
+        help=(
+            "pass this option multiple times for more than one parameter. "
+            "If not passed, all available parameters will be used."
+        ),
+    )
+    parser.add_argument(
+        "-regions",
+        action="append",
+        default=None,
+        type=str,
+        help=(
+            "pass this option multiple times for more than one parameter. "
+            "If not passed, all available parameters will be used."
+        ),
+    )
+    parser.add_argument(
+        "-chains",
+        action="append",
+        default=None,
+        type=str,
+        help=(
+            "pass this option multiple times for more than one parameter. "
+            "If not passed, all available parameters will be used."
+        ),
+    )
+    parser.add_argument(
+        "-secprocs_water",
+        action="append",
+        default=None,
+        type=str,
+        help=(
+            "pass this option multiple times for more than one parameter. "
+            "If not passed, all available parameters will be used."
+        ),
+    )
+    parser.add_argument(
+        "-secprocs_co2",
+        action="append",
+        default=None,
+        type=str,
+        help=(
+            "pass this option multiple times for more than one parameter. "
+            "If not passed, all available parameters will be used."
+        ),
+    )
+    parser.add_argument(
+        "-res_gens",
+        action="append",
+        default=None,
+        type=str,
+        help=(
+            "pass this option multiple times for more than one parameter. "
+            "If not passed, all available parameters will be used."
+        ),
     )
 
     args = parser.parse_args()
