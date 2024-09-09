@@ -2,7 +2,7 @@
 """API interface for FLH optimizer."""
 import math
 import os
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 import pandas as pd
 from pypsa import Network
@@ -75,6 +75,26 @@ def _add_link(
             n.links.at[name, f"efficiency{i+2}"] = (
                 -input_data[name]["CONV"][c] / input_data[name]["EFF"]
             )
+
+
+def get_flh(n: Network, g: str, component_type: Literal["Generator", "Link"]) -> float:
+    """Calculate full load hours.
+
+    Returns a value between 0 and 1.
+    """
+    if component_type == "Generator":
+        sw = n.snapshot_weightings["generators"]
+        gen = (n.generators_t["p"][g] * sw).sum()
+        p_nom = n.generators.at[g, "p_nom_opt"]
+    if component_type == "Link":
+        sw = n.snapshot_weightings["generators"]
+        gen = (n.links_t["p0"][g] * sw).sum()
+        p_nom = n.links.at[g, "p_nom_opt"]
+    if gen == 0:
+        flh = 0
+    else:
+        flh = gen / p_nom / 8760
+    return flh
 
 
 def optimize(
@@ -413,19 +433,6 @@ def optimize(
     model_status = n.optimize(solver_name="highs", solver_options=solver_options)
 
     # calculate results:
-
-    def get_flh(n: Network, g: str, component_type: str) -> float:
-        if component_type == "Generator":
-            gen = n.generators_t["p"][g].mean()
-            p_nom = n.generators.at[g, "p_nom_opt"]
-        if component_type == "Link":
-            gen = n.links_t["p0"][g].mean()
-            p_nom = n.links.at[g, "p_nom_opt"]
-        if gen == 0:
-            flh = 0
-        else:
-            flh = gen / p_nom
-        return flh
 
     result_data = {}
 
