@@ -404,7 +404,7 @@ def optimize(
 
     n.snapshot_weightings["generators"] = weights
     n.snapshot_weightings["objective"] = weights
-    n.snapshot_weightings["stores"] = 1
+    n.snapshot_weightings["stores"] = weights
 
     # import profiles to network:
     n.import_series_from_dataframe(res_profiles, "Generator", "p_max_pu")
