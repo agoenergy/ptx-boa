@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## Upcoming version
+
+- fix bug regarding snapshot weightings ([#548](https://github.com/agoenergy/ptx-boa/pull/549))
+
 ## 2.0.3 (2024-07-15)
 
 - upgrade pypsa requirements to 0.28
