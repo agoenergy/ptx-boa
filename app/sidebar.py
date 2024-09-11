@@ -95,7 +95,6 @@ def main_settings(api):
             "Product:",
             [
                 "Ammonia",
-                "Green Iron",
                 "Hydrogen",
                 "LOHC",
                 "Methane",
