@@ -6,7 +6,7 @@ Execution:
 >>> streamlit run  ptxboa_streamlit.py
 """
 
-__version__ = "2.0.3"
+__version__ = "2.0.4"
 
 import logging
 
@@ -90,6 +90,12 @@ api = st.cache_resource(PtxboaAPI)(
 
 
 st.title("PtX Business Opportunity Analyser")
+
+with st.container():
+    st.warning(
+        "**Info:** The calculation of costs for producing Green Iron"
+        " is currently under revision and will be released in the coming days."
+    )
 
 with st.container():
     if st.session_state["edit_input_data"]:
