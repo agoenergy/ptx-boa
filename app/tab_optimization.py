@@ -127,7 +127,9 @@ def calc_aggregate_statistics(
             res.at[g, "CAPEX (USD/kW)"] = (
                 n.links.at[g, "capital_cost"] / n.links.at[g, "efficiency"]
             )
-            res.at[g, "OPEX (USD/kWh)"] = n.links.at[g, "marginal_cost"]
+            res.at[g, "OPEX (USD/kWh)"] = (
+                n.links.at[g, "marginal_cost"] / n.links.at[g, "efficiency"]
+            )
 
     for g in ["EL_STR"]:
         if g in n.storage_units.index:

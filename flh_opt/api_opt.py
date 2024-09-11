@@ -63,8 +63,8 @@ def _add_link(
             # input data is per main output,
             # pypsa link parameters are defined per main input
             capital_cost=(input_data[name]["CAPEX_A"] + input_data[name]["OPEX_F"])
-            / input_data[name]["EFF"],
-            marginal_cost=input_data[name]["OPEX_O"] / input_data[name]["EFF"],
+            * input_data[name]["EFF"],
+            marginal_cost=input_data[name]["OPEX_O"] * input_data[name]["EFF"],
             p_nom_extendable=True,
         )
         # add conversion efficiencies and buses for secondary input / output
@@ -73,7 +73,7 @@ def _add_link(
             # input data is per main output,
             # pypsa link parameters are defined per main input
             n.links.at[name, f"efficiency{i+2}"] = (
-                -input_data[name]["CONV"][c] / input_data[name]["EFF"]
+                -input_data[name]["CONV"][c] * input_data[name]["EFF"]
             )
 
 
