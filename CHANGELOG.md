@@ -1,5 +1,10 @@
 # CHANGELOG.md
 
+## 2.0.4 (2024-09-11)
+
+- Disable Green Iron cost calculations for maintenance
+- add possiblity to define parameter space in offline optimization script
+
 ## 2.0.3 (2024-07-15)
 
 - upgrade pypsa requirements to 0.28
