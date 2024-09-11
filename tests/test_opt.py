@@ -216,6 +216,36 @@ def network(api) -> pypsa.Network:
     return n
 
 
+@pytest.fixture
+def network_green_iron(api) -> pypsa.Network:
+    settings = {
+        "region": "Morocco",
+        "country": "Germany",
+        "chain": "Green Iron (AEL)",
+        "res_gen": "Wind-PV-Hybrid",
+        "scenario": "2040 (medium)",
+        "secproc_co2": "Specific costs",
+        "secproc_water": "Specific costs",
+        "transport": "Pipeline",
+        "ship_own_fuel": False,
+        "user_data": None,
+    }
+    n, metadata = api.get_flh_opt_network(**settings)
+    assert metadata["model_status"] == ["ok", "optimal"], "Model status not optimal"
+
+    return n, metadata
+
+
+@pytest.mark.xfail
+def test_fix_green_iron(network_green_iron):
+    """Test optimize input data: CAPEX of electricity storage should not be zero.
+
+    See https://github.com/agoenergy/ptx-boa/issues/554
+    """
+    n, metadata = network_green_iron
+    assert metadata["opt_input_data"]["EL_STR"]["CAPEX_A"] != 0
+
+
 def test_calc_aggregate_statistics(network):
     res = calc_aggregate_statistics(network)
     assert isinstance(res, pd.DataFrame)
