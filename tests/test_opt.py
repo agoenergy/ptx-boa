@@ -246,6 +246,14 @@ def test_fix_green_iron(network_green_iron):
     assert metadata["opt_input_data"]["EL_STR"]["CAPEX_A"] != 0
 
 
+def test_output_of_final_product_is_8760mwh(network_green_iron):
+    """Test that output of final process step is 8760MWh/a."""
+    n, metadata = network_green_iron
+    res = calc_aggregate_statistics(n)
+
+    assert res.at["Derivative production", "Output (MWh/a)"] == pytest.approx(8760)
+
+
 def test_calc_aggregate_statistics(network):
     res = calc_aggregate_statistics(network)
     assert isinstance(res, pd.DataFrame)
