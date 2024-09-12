@@ -6,6 +6,9 @@ from typing import List, Literal, Optional
 
 import pandas as pd
 from pypsa import Network
+from pypsa.descriptors import get_bounds_pu
+from pypsa.optimization.common import reindex
+from xarray import DataArray
 
 from flh_opt._types import OptInputDataType, OptOutputDataType
 
@@ -95,6 +98,51 @@ def get_flh(n: Network, g: str, component_type: Literal["Generator", "Link"]) ->
     else:
         flh = gen / p_nom / 8760
     return flh
+
+
+def scale_storage_soc_upper_bounds(n: Network):
+    """Scale the upper bounds of storage SOC with snapshot weightings.
+
+    We need to do this because of the week scaling and the fixed correlation
+    between charge capacity and state of charge for electricity storage.
+    In the storage balance, the effect of charging and discharging on SOC
+    is scaled with snapshot weightings.
+
+    This function also scales the storage capacity itself
+    with the snapshot weightings.
+    """
+    # if model has not yet been created, do it now:
+    if not hasattr(n, "model"):
+        n.optimize.create_model()
+
+    # get list of extendable storage units:
+    ext_i = n.get_extendable_i("StorageUnit")
+
+    # get max_hours attribute of these storage units:
+    max_hours = get_bounds_pu(
+        n, "StorageUnit", n.snapshots, index=ext_i, attr="state_of_charge"
+    )[1]
+
+    # multiply max_hours with snapshot weightings:
+    scaled_bounds = max_hours.copy()
+    for c in max_hours.columns:
+        scaled_bounds[c] = max_hours[c] * n.snapshot_weightings["stores"]
+    sb = DataArray(scaled_bounds, dims=["snapshot", "StorageUnit-ext"])
+
+    # get state of charge and charge capacity variables:
+    soc = reindex(
+        n.model.variables["StorageUnit-state_of_charge"], "StorageUnit", ext_i
+    )
+    p_nom = n.model.variables["StorageUnit-p_nom"]
+
+    # create left hand side of equation:
+    lhs = soc - p_nom * sb
+
+    # remove old constraint:
+    n.model.remove_constraints("StorageUnit-ext-state_of_charge-upper")
+
+    # and add the new one:
+    n.model.add_constraints(lhs, "<=", 0, name="StorageUnit-ext-state_of_charge-upper")
 
 
 def optimize(
@@ -429,8 +477,13 @@ def optimize(
     # import profiles to network:
     n.import_series_from_dataframe(res_profiles, "Generator", "p_max_pu")
 
+    # scale storage SOC constraints:
+    scale_storage_soc_upper_bounds(n)
+
     # solve optimization problem:
-    model_status = n.optimize(solver_name="highs", solver_options=solver_options)
+    model_status = n.optimize.solve_model(
+        solver_name="highs", solver_options=solver_options
+    )
 
     # calculate results:
 
