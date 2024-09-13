@@ -216,6 +216,43 @@ def network(api) -> pypsa.Network:
     return n
 
 
+@pytest.fixture
+def network_green_iron(api) -> pypsa.Network:
+    settings = {
+        "region": "Morocco",
+        "country": "Germany",
+        "chain": "Green Iron (AEL)",
+        "res_gen": "Wind-PV-Hybrid",
+        "scenario": "2040 (medium)",
+        "secproc_co2": "Specific costs",
+        "secproc_water": "Specific costs",
+        "transport": "Pipeline",
+        "ship_own_fuel": False,
+        "user_data": None,
+    }
+    n, metadata = api.get_flh_opt_network(**settings)
+    assert metadata["model_status"] == ["ok", "optimal"], "Model status not optimal"
+
+    return n, metadata
+
+
+def test_fix_green_iron(network_green_iron):
+    """Test optimize input data: CAPEX of electricity storage should not be zero.
+
+    See https://github.com/agoenergy/ptx-boa/issues/554
+    """
+    n, metadata = network_green_iron
+    assert metadata["opt_input_data"]["EL_STR"]["CAPEX_A"] != 0
+
+
+def test_output_of_final_product_is_8760mwh(network_green_iron):
+    """Test that output of final process step is 8760MWh/a."""
+    n, metadata = network_green_iron
+    res = calc_aggregate_statistics(n)
+
+    assert res.at["Derivative production", "Output (MWh/a)"] == pytest.approx(8760)
+
+
 def test_calc_aggregate_statistics(network):
     res = calc_aggregate_statistics(network)
     assert isinstance(res, pd.DataFrame)
@@ -297,7 +334,7 @@ def test_prepare_data_for_optimize_incl_sec_proc():
         assert not opt_metadata["opt_input_data"].get("CO2")
         assert opt_metadata["opt_input_data"].get("H2O")
         # will change if data changes
-        assert hash_sum == "15d51a4d030cd561e7a40aa705e35aab"
+        assert hash_sum == "372bfe666946ac49f751d0656a670421"
 
         # actually call optimizer as in PtxOpt.get_data()
         opt_output_data, _network = optimize(
