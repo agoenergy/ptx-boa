@@ -392,6 +392,7 @@ def test_get_calculation_data_w_opt(ptxdata_dir, scenario, kwargs, request):
                 "CONV": {},
                 "step": "EL_STR",
                 "process_code": "EL-STR",
+                "CAP_F": 0.0,
             },
             {
                 "EFF": 0.715,
@@ -414,6 +415,7 @@ def test_get_calculation_data_w_opt(ptxdata_dir, scenario, kwargs, request):
                 "CONV": {},
                 "step": "H2_STR",
                 "process_code": "H2-STR",
+                "CAP_F": 0.6816605398116187,
             },
             {
                 "EFF": 0.819,
