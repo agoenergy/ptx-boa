@@ -334,7 +334,7 @@ def test_prepare_data_for_optimize_incl_sec_proc():
         assert not opt_metadata["opt_input_data"].get("CO2")
         assert opt_metadata["opt_input_data"].get("H2O")
         # will change if data changes
-        assert hash_sum == "8e0a568eb9452895540e81e10061dd9f"
+        assert hash_sum == "372bfe666946ac49f751d0656a670421"
 
         # actually call optimizer as in PtxOpt.get_data()
         opt_output_data, _network = optimize(

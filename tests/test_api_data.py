@@ -475,7 +475,7 @@ def test_get_calculation_data_w_opt(ptxdata_dir, scenario, kwargs, request):
         },
         "context": {"source_region_code": "ARG", "target_country_code": "DEU"},
         "flh_opt_hash": {
-            "hash_md5": "c43c05538b6edb06c61f497c70b14b85",
+            "hash_md5": "10f4f69711354343d67b81a86ae20cf3",
         },
     }
 
