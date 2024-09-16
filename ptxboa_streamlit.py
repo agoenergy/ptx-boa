@@ -92,12 +92,6 @@ api = st.cache_resource(PtxboaAPI)(
 st.title("PtX Business Opportunity Analyser")
 
 with st.container():
-    st.warning(
-        "**Info:** The calculation of costs for producing Green Iron"
-        " is currently under revision and will be released in the coming days."
-    )
-
-with st.container():
     if st.session_state["edit_input_data"]:
         st.info("Data editing mode **ON**")
         with st.expander("Modified data"):
