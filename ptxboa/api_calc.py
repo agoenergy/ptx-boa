@@ -24,6 +24,14 @@ class PtxCalc:
         # start main chain calculation
         main_output_value = 1  # start with normalized value of 1
 
+        # pre-calculate main_output_value before transport
+        # for correct scaling of storeages.
+        # storage units use capacity factor CAP_F
+        # per produced unit (before transport losses)
+        main_output_value_before_transport = main_output_value
+        for step_data in data["main_process_chain"]:
+            main_output_value_before_transport *= step_data["EFF"]
+
         # accumulate needed electric input
         sum_el = main_output_value
         results = []
@@ -51,10 +59,19 @@ class PtxCalc:
             if not is_transport:
                 flh = step_data["FLH"]
                 liefetime = step_data["LIFETIME"]
-                capex = step_data["CAPEX"]
+                capex_rel = step_data["CAPEX"]
                 opex_f = step_data["OPEX-F"]
-                capacity = main_output_value / flh
-                capex = capacity * capex
+
+                if "CAP_F" in step_data:
+                    # Storage unit: capacity
+                    # TODO: double check units (division by 8760 h)?
+                    capacity = (
+                        main_output_value_before_transport * step_data["CAP_F"] / 8760
+                    )
+                else:
+                    capacity = main_output_value / flh
+
+                capex = capacity * capex_rel
                 capex_ann = annuity(wacc, liefetime, capex)
                 opex = opex_f * capacity + opex_o * main_output_value
 

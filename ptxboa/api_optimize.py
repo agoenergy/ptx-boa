@@ -377,6 +377,11 @@ class PtxOpt:
                     step["FLH"] = opt_output_data["ELY"]["FLH"] * 8760
                 elif step["step"] == "DERIV":
                     step["FLH"] = opt_output_data["DERIV"]["FLH"] * 8760
+                elif step["step"] == "EL_STR":
+                    step["CAP_F"] = opt_output_data["EL_STR"]["CAP_F"]
+                elif step["step"] == "H2_STR":
+                    step["CAP_F"] = opt_output_data["H2_STR"]["CAP_F"]
+
             # secondary processes
             for step, flow_code in [("H2O", "H2O-L"), ("CO2", "CO2-G")]:
                 sec_process_data = input_data["secondary_process"].get(flow_code)
@@ -388,8 +393,6 @@ class PtxOpt:
             logger.warning("Optimization not successful.")
             logger.warning(f"Solver status:{opt_output_data['model_status'][0]}")
             logger.warning(f"Model status:{opt_output_data['model_status'][1]}")
-
-            # TODO: Storage: "CAP_F"
 
     def _get_hashsum(self, data, opt_input_data):
         src_reg = data["context"]["source_region_code"]

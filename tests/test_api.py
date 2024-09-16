@@ -4,6 +4,7 @@
 import logging
 import unittest
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import numpy as np
 import pytest
@@ -26,10 +27,19 @@ class TestApi(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Set up code for class."""
-        cls.api = PtxboaAPI(data_dir=ptxdata_dir_static)
+        cls.temp_dir = TemporaryDirectory()
+        # create cahce dir (start context)
+        cache_dir = cls.temp_dir.__enter__()
+        cls.api = PtxboaAPI(data_dir=ptxdata_dir_static, cache_dir=cache_dir)
 
-    def _test_api_call(self, settings):
-        res, _metadata = self.api.calculate(**settings, optimize_flh=False)
+    @classmethod
+    def tearDownClass(cls):
+        """Tear down code for class."""
+        # cleanup cache dir
+        cls.temp_dir.__exit__(None, None, None)
+
+    def _test_api_call(self, settings, optimize_flh=False):
+        res, _metadata = self.api.calculate(**settings, optimize_flh=optimize_flh)
         # test that settings are in results
         for k, v in settings.items():
             if k in ["ship_own_fuel", "output_unit"]:  # skip some
@@ -343,6 +353,41 @@ class TestApi(unittest.TestCase):
         self.assertAlmostEqual(annuity(0.1, 10, 1), 0.162745394882512)
         self.assertAlmostEqual(annuity(0.5, 10, 1), 0.5088237828522)
         self.assertAlmostEqual(annuity(1, 10, 1), 1.0009775171)
+
+    def test_issue_553_storage_cost(self):
+        """See https://github.com/agoenergy/ptx-boa/issues/553."""
+        settings = {
+            "region": "United Arab Emirates",
+            "country": "Germany",
+            "chain": "Ammonia (AEL) + reconv. to H2",
+            "res_gen": "PV tilted",
+            "scenario": "2040 (medium)",
+            "secproc_co2": "Direct Air Capture",
+            "secproc_water": "Sea Water desalination",
+            "transport": "Ship",
+            "ship_own_fuel": False,
+            "output_unit": "USD/t",
+        }
+        res = self._test_api_call(settings, optimize_flh=False)
+        res_opt = self._test_api_call(settings, optimize_flh=True)
+        self.assertAlmostEqual(
+            res.at[("Electricity and H2 storage", "CAPEX"), "values"],
+            896.432599,
+            places=4,
+        )
+        self.assertAlmostEqual(
+            res.at[("Electricity and H2 storage", "OPEX"), "values"], 4.396162, places=4
+        )
+        self.assertAlmostEqual(
+            res_opt.at[("Electricity and H2 storage", "CAPEX"), "values"],
+            221.907535,
+            places=4,
+        )
+        self.assertAlmostEqual(
+            res_opt.at[("Electricity and H2 storage", "OPEX"), "values"],
+            6.732894,
+            places=4,
+        )
 
 
 class TestRegression(unittest.TestCase):
