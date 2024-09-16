@@ -239,18 +239,17 @@ def network_green_iron(api) -> Tuple[pypsa.Network, dict, dict]:
     return n, metadata, settings
 
 
-@pytest.mark.xfail
 def test_issue_564(network_green_iron, api):
+    # calculate costs from optimization tab:
     n, metadata, settings = network_green_iron
     res_opt = calc_aggregate_statistics(n, include_debugging_output=True)
-    res_costs = api.calculate(**settings)
-    res_costs_agg = (
-        res_costs[0]
-        .pivot_table(
-            index="process_type", columns="cost_type", values="values", aggfunc=sum
-        )
-        .fillna(0)
-    )
+
+    # get costs from costs tab:
+    df_res_costs, _ = api.calculate(**settings)
+
+    res_costs_agg = df_res_costs.pivot_table(
+        index="process_type", columns="cost_type", values="values", aggfunc=sum
+    ).fillna(0)
 
     res_costs_agg["total"] = res_costs_agg.sum(axis=1)
     res_costs_agg.loc["Total"] = res_costs_agg.sum(axis=0)
@@ -282,14 +281,19 @@ def test_issue_564(network_green_iron, api):
         res_costs_agg["total_opt"] - res_costs_agg["total"]
     ).fillna(0)
 
+    # call optimize function directly:
+    res_optimize = optimize(metadata["opt_input_data"])[0]
+
     # write costs data to excel, and metadata to json:
     if not os.path.exists("tests/out"):
         os.makedirs("tests/out")
     res_costs_agg.to_excel("tests/out/test_issue_564.xlsx")
-    with open("tests/out/issue_564_metadata.json", "w") as f:
+    with open("tests/out/issue_564_metadata_optimize_input.json", "w") as f:
         dump(metadata, f)
+    with open("tests/out/issue_564_metadata_optimize_output.json", "w") as f:
+        dump(res_optimize, f)
 
-    # extract input data:
+    # extract DRI input data:
     input_data = api.get_input_data(scenario=settings["scenario"])
     input_data_dri = input_data.loc[
         input_data["process_code"] == "Green iron reduction"
@@ -308,6 +312,11 @@ def test_issue_564(network_green_iron, api):
 
     # annuized capex should match:
     assert capex_ann_input + opex_fix == pytest.approx(capex_ann_opt)
+
+    # FLH from optimization tab and optimize function output should match:
+    flh_opt_tab = res_opt.at["Derivative production", "Full load hours (h)"]
+    flh_opt_function = res_optimize["DERIV"]["FLH"] * 8760
+    assert flh_opt_tab == pytest.approx(flh_opt_function)
 
     # assert that differences between costs and opt tab are zero:
     # this currently fails

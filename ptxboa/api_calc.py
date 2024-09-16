@@ -58,7 +58,7 @@ class PtxCalc:
 
             if not is_transport:
                 flh = step_data["FLH"]
-                liefetime = step_data["LIFETIME"]
+                lifetime = step_data["LIFETIME"]
                 capex_rel = step_data["CAPEX"]
                 opex_f = step_data["OPEX-F"]
 
@@ -72,7 +72,7 @@ class PtxCalc:
                     capacity = main_output_value / flh
 
                 capex = capacity * capex_rel
-                capex_ann = annuity(wacc, liefetime, capex)
+                capex_ann = annuity(wacc, lifetime, capex)
                 opex = opex_f * capacity + opex_o * main_output_value
 
                 results.append((result_process_type, process_code, "CAPEX", capex_ann))
@@ -99,14 +99,14 @@ class PtxCalc:
                     ]
 
                     # no FLH
-                    liefetime = sec_process_data["LIFETIME"]
+                    lifetime = sec_process_data["LIFETIME"]
                     capex = sec_process_data["CAPEX"]
                     opex_f = sec_process_data["OPEX-F"]
                     opex_o = sec_process_data["OPEX-O"]
 
                     capacity = flow_value  # no FLH
                     capex = capacity * capex
-                    capex_ann = annuity(wacc, liefetime, capex)
+                    capex_ann = annuity(wacc, lifetime, capex)
                     opex = opex_f * capacity + opex_o * flow_value
 
                     results.append(
@@ -168,9 +168,16 @@ class PtxCalc:
         results = results.groupby(dim_columns).sum().reset_index()
 
         # normalization:
-        # scale so that we star twith 1 EL input,
+        # scale so that we start with 1 EL input,
         # rescale so that we have 1 unit output
-        norm_factor = sum_el / main_output_value
+        norm_factor = 1 / main_output_value
         results["values"] = results["values"] * norm_factor
+
+        # rescale again ONLY RES to account for additionally needed electricity
+        # sum_el is larger than 1.0
+        norm_factor_el = sum_el
+        idx = results["process_type"] == "Electricity generation"
+        assert idx.any()  # must have at least one entry
+        results.loc[idx, "values"] = results.loc[idx, "values"] * norm_factor_el
 
         return results
