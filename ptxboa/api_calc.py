@@ -120,7 +120,6 @@ class PtxCalc:
                         sec_flow_value = flow_value * sec_conv
                         if sec_flow_code == "EL":
                             sum_el += sec_flow_value
-                            # TODO: in this case: no cost?
 
                         sec_speccost = parameters["SPECCOST"][sec_flow_code]
                         sec_flow_cost = sec_flow_value * sec_speccost
@@ -144,10 +143,8 @@ class PtxCalc:
                     speccost = parameters["SPECCOST"][flow_code]
                     if flow_code == "EL":
                         sum_el += flow_value
-                        # TODO: in this case: no cost?
                     flow_cost = flow_value * speccost
 
-                    # TODO: not nice
                     if is_transport:
                         flow_cost = flow_cost * dist_transport
 
