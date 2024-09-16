@@ -50,10 +50,13 @@ class PtxCalc:
             }
             result_process_type = df_processes.at[process_code, "result_process_type"]
 
-            main_input_value = main_output_value
-
             eff = step_data["EFF"]
-            main_output_value = main_input_value * eff
+
+            # storage efficiency must not affect main chain scaling factors:
+            if process_code not in ["EL-STR", "H2-STR"]:
+                main_input_value = main_output_value
+                main_output_value = main_input_value * eff
+
             opex_o = step_data["OPEX-O"]
 
             if not is_transport:
