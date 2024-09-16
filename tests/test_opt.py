@@ -2,9 +2,11 @@
 """Test flh optimization."""
 
 import logging
-from json import load
+import os
+from json import dump, load
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Tuple
 
 import pandas as pd
 import pypsa
@@ -15,6 +17,7 @@ from app.tab_optimization import calc_aggregate_statistics
 from flh_opt.api_opt import get_profiles_and_weights, optimize
 from ptxboa import DEFAULT_CACHE_DIR
 from ptxboa.api import DataHandler, PtxboaAPI
+from ptxboa.utils import annuity
 
 logging.basicConfig(level=logging.INFO)
 
@@ -217,7 +220,7 @@ def network(api) -> pypsa.Network:
 
 
 @pytest.fixture
-def network_green_iron(api) -> pypsa.Network:
+def network_green_iron(api) -> Tuple[pypsa.Network, dict, dict]:
     settings = {
         "region": "Morocco",
         "country": "Germany",
@@ -233,7 +236,83 @@ def network_green_iron(api) -> pypsa.Network:
     n, metadata = api.get_flh_opt_network(**settings)
     assert metadata["model_status"] == ["ok", "optimal"], "Model status not optimal"
 
-    return n, metadata
+    return n, metadata, settings
+
+
+@pytest.mark.xfail
+def test_issue_564(network_green_iron, api):
+    n, metadata, settings = network_green_iron
+    res_opt = calc_aggregate_statistics(n, include_debugging_output=True)
+    res_costs = api.calculate(**settings)
+    res_costs_agg = (
+        res_costs[0]
+        .pivot_table(
+            index="process_type", columns="cost_type", values="values", aggfunc=sum
+        )
+        .fillna(0)
+    )
+
+    res_costs_agg["total"] = res_costs_agg.sum(axis=1)
+    res_costs_agg.loc["Total"] = res_costs_agg.sum(axis=0)
+
+    # combine both sources to single df:
+    res_costs_agg.at["Electricity generation", "total_opt"] = (
+        res_opt.at["PV tilted", "Cost (USD/MWh)"]
+        + res_opt.at["Wind onshore", "Cost (USD/MWh)"]
+    )
+
+    res_costs_agg.at["Derivative production", "total_opt"] = res_opt.at[
+        "Derivative production", "Cost (USD/MWh)"
+    ]
+
+    res_costs_agg.at["Electricity and H2 storage", "total_opt"] = (
+        res_opt.at["H2 storage", "Cost (USD/MWh)"]
+        + res_opt.at["Electricity storage", "Cost (USD/MWh)"]
+    )
+
+    res_costs_agg.at["Electrolysis", "total_opt"] = res_opt.at[
+        "Electrolyzer", "Cost (USD/MWh)"
+    ]
+
+    res_costs_agg.at["Water", "total_opt"] = res_opt.at[
+        "Water supply", "Cost (USD/MWh)"
+    ]
+
+    res_costs_agg["diff"] = (
+        res_costs_agg["total_opt"] - res_costs_agg["total"]
+    ).fillna(0)
+
+    # write costs data to excel, and metadata to json:
+    if not os.path.exists("tests/out"):
+        os.makedirs("tests/out")
+    res_costs_agg.to_excel("tests/out/test_issue_564.xlsx")
+    with open("tests/out/issue_564_metadata.json", "w") as f:
+        dump(metadata, f)
+
+    # extract input data:
+    input_data = api.get_input_data(scenario=settings["scenario"])
+    input_data_dri = input_data.loc[
+        input_data["process_code"] == "Green iron reduction"
+    ].set_index("parameter_code")
+    wacc = input_data.loc[
+        (input_data["parameter_code"] == "WACC")
+        & (input_data["source_region_code"] == settings["region"]),
+        "value",
+    ].values[0]
+    capex = input_data_dri.at["CAPEX", "value"]
+    periods = input_data_dri.at["lifetime / amortization period", "value"]
+    opex_fix = input_data_dri.at["OPEX (fix)", "value"]
+
+    capex_ann_input = annuity(wacc, periods, capex)
+    capex_ann_opt = res_opt.at["Derivative production", "CAPEX (USD/kW)"]
+
+    # annuized capex should match:
+    assert capex_ann_input + opex_fix == pytest.approx(capex_ann_opt)
+
+    # assert that differences between costs and opt tab are zero:
+    # this currently fails
+    for i in res_costs_agg["diff"]:
+        assert i == pytest.isclose(0)
 
 
 def test_fix_green_iron(network_green_iron):
@@ -241,13 +320,13 @@ def test_fix_green_iron(network_green_iron):
 
     See https://github.com/agoenergy/ptx-boa/issues/554
     """
-    n, metadata = network_green_iron
+    n, metadata, settings = network_green_iron
     assert metadata["opt_input_data"]["EL_STR"]["CAPEX_A"] != 0
 
 
 def test_output_of_final_product_is_8760mwh(network_green_iron):
     """Test that output of final process step is 8760MWh/a."""
-    n, metadata = network_green_iron
+    n, metadata, settings = network_green_iron
     res = calc_aggregate_statistics(n)
 
     assert res.at["Derivative production", "Output (MWh/a)"] == pytest.approx(8760)
