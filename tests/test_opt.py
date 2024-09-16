@@ -323,6 +323,33 @@ def test_issue_564(network_green_iron, api):
     assert res_costs_agg.at["Derivative production", "FLOW"] == 0
     assert input_data.loc["SPECCOST,,EL,,", "value"] == 0
 
+    # check power generation and consumption in optimization model:
+    power_gen = (
+        n.generators_t["p"]["PV-FIX"] * n.snapshot_weightings["generators"]
+    ).sum()
+    power_losses = (
+        -n.storage_units_t["p"]["EL_STR"] * n.snapshot_weightings["stores"]
+    ).sum()
+    power_cons_ely = (
+        n.links_t["p0"]["ELY"] * n._snapshot_weightings["generators"]
+    ).sum()
+    power_cons_deriv = (
+        n.links_t["p2"]["DERIV"] * n._snapshot_weightings["generators"]
+    ).sum()
+    power_balance = power_gen - power_losses - power_cons_ely - power_cons_deriv
+    assert power_balance == pytest.approx(0, abs=1e-6)
+
+    # check conversion coefficients of DRI:
+    # I dont write an assert statement, but the results look ok
+    df_deriv = pd.concat(
+        [n.links_t["p0"]["DERIV"], n.links_t["p1"]["DERIV"], n.links_t["p2"]["DERIV"]],
+        axis=1,
+        keys=["H2", "DRI", "EL"],
+    )
+    df_deriv["DRI_per_H2"] = df_deriv["DRI"] / df_deriv["H2"]
+    df_deriv["EL_per_DRI"] = df_deriv["EL"] / df_deriv["DRI"]
+    df_deriv = df_deriv.dropna()
+
     # assert that differences between costs and opt tab are zero:
     # this currently fails
     for i in res_costs_agg["diff"]:
