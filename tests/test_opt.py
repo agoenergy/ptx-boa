@@ -317,6 +317,12 @@ def test_issue_564(network_green_iron, api):
     flh_opt_function = res_optimize["DERIV"]["FLH"] * 8760
     assert flh_opt_tab == pytest.approx(flh_opt_function)
 
+    # for DRI, FLOW costs must be zero!
+    # because this process only comsumes electricity,
+    # and this should have zero specific cost
+    assert res_costs_agg.at["Derivative production", "FLOW"] == 0
+    assert input_data.loc["SPECCOST,,EL,,", "value"] == 0
+
     # assert that differences between costs and opt tab are zero:
     # this currently fails
     for i in res_costs_agg["diff"]:
