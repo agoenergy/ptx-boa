@@ -246,7 +246,6 @@ def test_issue_564(network_green_iron, api):
 
     # get costs from costs tab:
     df_res_costs, _ = api.calculate(**settings)
-
     res_costs_agg = df_res_costs.pivot_table(
         index="process_type", columns="cost_type", values="values", aggfunc=sum
     ).fillna(0)
