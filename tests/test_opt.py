@@ -225,7 +225,7 @@ def network_green_iron(api) -> Tuple[pypsa.Network, dict, dict]:
         "region": "Morocco",
         "country": "Germany",
         "chain": "Green Iron (AEL)",
-        "res_gen": "Wind-PV-Hybrid",
+        "res_gen": "PV tilted",
         "scenario": "2040 (medium)",
         "secproc_co2": "Specific costs",
         "secproc_water": "Specific costs",
@@ -254,10 +254,9 @@ def test_issue_564(network_green_iron, api):
     res_costs_agg.loc["Total"] = res_costs_agg.sum(axis=0)
 
     # combine both sources to single df:
-    res_costs_agg.at["Electricity generation", "total_opt"] = (
-        res_opt.at["PV tilted", "Cost (USD/MWh)"]
-        + res_opt.at["Wind onshore", "Cost (USD/MWh)"]
-    )
+    res_costs_agg.at["Electricity generation", "total_opt"] = res_opt.at[
+        "PV tilted", "Cost (USD/MWh)"
+    ]
 
     res_costs_agg.at["Derivative production", "total_opt"] = res_opt.at[
         "Derivative production", "Cost (USD/MWh)"
@@ -286,7 +285,8 @@ def test_issue_564(network_green_iron, api):
     # write costs data to excel, and metadata to json:
     if not os.path.exists("tests/out"):
         os.makedirs("tests/out")
-    res_costs_agg.to_excel("tests/out/test_issue_564.xlsx")
+    res_costs_agg.to_excel("tests/out/test_issue_564_res_costs_agg.xlsx")
+    res_opt.to_excel("tests/out/test_issue_564_res_opt.xlsx")
     with open("tests/out/issue_564_metadata_optimize_input.json", "w") as f:
         dump(metadata, f)
     with open("tests/out/issue_564_metadata_optimize_output.json", "w") as f:
@@ -320,7 +320,7 @@ def test_issue_564(network_green_iron, api):
     # assert that differences between costs and opt tab are zero:
     # this currently fails
     for i in res_costs_agg["diff"]:
-        assert i == pytest.isclose(0)
+        assert i == pytest.approx(0)
 
 
 def test_fix_green_iron(network_green_iron):
