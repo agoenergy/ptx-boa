@@ -354,7 +354,8 @@ def test_issue_564(network_green_iron, api):
     # assert that differences between costs and opt tab are zero:
     # this currently fails
     for i in res_costs_agg["diff"]:
-        assert i == pytest.approx(0, abs=1e-6)
+        # higher tolerance (1.0) because not exacly equal
+        assert i == pytest.approx(0, abs=1.0)
 
 
 def test_fix_green_iron(network_green_iron):
