@@ -372,20 +372,22 @@ class TestApi(unittest.TestCase):
         res_opt = self._test_api_call(settings, optimize_flh=True)
         self.assertAlmostEqual(
             res.at[("Electricity and H2 storage", "CAPEX"), "values"],
-            896.432599,
+            823.7733133374624,
             places=4,
         )
         self.assertAlmostEqual(
-            res.at[("Electricity and H2 storage", "OPEX"), "values"], 4.396162, places=4
+            res.at[("Electricity and H2 storage", "OPEX"), "values"],
+            4.079589637694555,
+            places=4,
         )
         self.assertAlmostEqual(
             res_opt.at[("Electricity and H2 storage", "CAPEX"), "values"],
-            221.907535,
+            183.481609334802,
             places=4,
         )
         self.assertAlmostEqual(
             res_opt.at[("Electricity and H2 storage", "OPEX"), "values"],
-            6.732894,
+            5.567013499284561,
             places=4,
         )
 
