@@ -126,12 +126,10 @@ class PtxCalc:
 
                         # electricity before transport will be handled by RES step
                         # after transport: market
-                        if sec_flow_code == "EL":
-                            if step_before_transport:
-                                sum_el += sec_flow_value
-                            else:
-                                # do not add SPECCOST below
-                                continue
+                        if sec_flow_code == "EL" and step_before_transport:
+                            sum_el += sec_flow_value
+                            # do not add SPECCOST below
+                            continue
 
                         sec_speccost = parameters["SPECCOST"][sec_flow_code]
                         sec_flow_cost = sec_flow_value * sec_speccost
@@ -156,12 +154,10 @@ class PtxCalc:
 
                     # electricity before transport will be handled by RES step
                     # after transport: market
-                    if flow_code == "EL":
-                        if step_before_transport:
-                            sum_el += flow_value
-                        else:
-                            # do not add SPECCOST below
-                            continue
+                    if flow_code == "EL" and step_before_transport:
+                        sum_el += flow_value
+                        # do not add SPECCOST below
+                        continue
 
                     flow_cost = flow_value * speccost
 
