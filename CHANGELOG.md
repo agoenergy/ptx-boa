@@ -1,5 +1,13 @@
 # CHANGELOG.md
 
+## Upcoming version
+
+## 2.1 (2024-09-17)
+
+- fix bug regarding snapshot weightings ([#548](https://github.com/agoenergy/ptx-boa/pull/549))
+- minor changes to calculation of electricity cost / cost scaling
+- changes in optimization module
+
 ## 2.0.4 (2024-09-11)
 
 - Disable Green Iron cost calculations for maintenance

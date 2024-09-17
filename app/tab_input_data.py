@@ -117,6 +117,9 @@ def content_input_data(api: PtxboaAPI) -> None:
                 (
                     "The unit of CAPEX and OPEX (fix) is USD/t for Green iron "
                     "reduction and USD/kW for all other processes."
+                    "\n\n"
+                    "The unit of efficiency is 0.01 t/MWh for Green Iron "
+                    "reduction and % for all other processes."
                 )
             )
             display_and_edit_input_data(

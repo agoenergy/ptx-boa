@@ -167,3 +167,6 @@ cython_debug/
 
 # cached optimization results:
 ptxboa/cache
+
+# tests output:
+tests/out
