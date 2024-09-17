@@ -33,6 +33,7 @@ class PtxCalc:
             main_output_value_before_transport *= step_data["EFF"]
 
         # accumulate needed electric input
+        step_before_transport = True
         sum_el = main_output_value
         results = []
 
@@ -50,15 +51,18 @@ class PtxCalc:
             }
             result_process_type = df_processes.at[process_code, "result_process_type"]
 
-            main_input_value = main_output_value
-
             eff = step_data["EFF"]
-            main_output_value = main_input_value * eff
+
+            # storage efficiency must not affect main chain scaling factors:
+            if process_code not in ["EL-STR", "H2-STR"]:
+                main_input_value = main_output_value
+                main_output_value = main_input_value * eff
+
             opex_o = step_data["OPEX-O"]
 
             if not is_transport:
                 flh = step_data["FLH"]
-                liefetime = step_data["LIFETIME"]
+                lifetime = step_data["LIFETIME"]
                 capex_rel = step_data["CAPEX"]
                 opex_f = step_data["OPEX-F"]
 
@@ -72,13 +76,14 @@ class PtxCalc:
                     capacity = main_output_value / flh
 
                 capex = capacity * capex_rel
-                capex_ann = annuity(wacc, liefetime, capex)
+                capex_ann = annuity(wacc, lifetime, capex)
                 opex = opex_f * capacity + opex_o * main_output_value
 
                 results.append((result_process_type, process_code, "CAPEX", capex_ann))
                 results.append((result_process_type, process_code, "OPEX", opex))
 
             else:
+                step_before_transport = False
                 opex_t = step_data["OPEX-T"]
                 dist_transport = step_data["DIST"]
                 opex_ot = opex_t * dist_transport
@@ -99,14 +104,14 @@ class PtxCalc:
                     ]
 
                     # no FLH
-                    liefetime = sec_process_data["LIFETIME"]
+                    lifetime = sec_process_data["LIFETIME"]
                     capex = sec_process_data["CAPEX"]
                     opex_f = sec_process_data["OPEX-F"]
                     opex_o = sec_process_data["OPEX-O"]
 
                     capacity = flow_value  # no FLH
                     capex = capacity * capex
-                    capex_ann = annuity(wacc, liefetime, capex)
+                    capex_ann = annuity(wacc, lifetime, capex)
                     opex = opex_f * capacity + opex_o * flow_value
 
                     results.append(
@@ -118,9 +123,13 @@ class PtxCalc:
 
                     for sec_flow_code, sec_conv in sec_process_data["CONV"].items():
                         sec_flow_value = flow_value * sec_conv
-                        if sec_flow_code == "EL":
+
+                        # electricity before transport will be handled by RES step
+                        # after transport: market
+                        if sec_flow_code == "EL" and step_before_transport:
                             sum_el += sec_flow_value
-                            # TODO: in this case: no cost?
+                            # do not add SPECCOST below
+                            continue
 
                         sec_speccost = parameters["SPECCOST"][sec_flow_code]
                         sec_flow_cost = sec_flow_value * sec_speccost
@@ -142,12 +151,16 @@ class PtxCalc:
                 else:
                     # use market
                     speccost = parameters["SPECCOST"][flow_code]
-                    if flow_code == "EL":
+
+                    # electricity before transport will be handled by RES step
+                    # after transport: market
+                    if flow_code == "EL" and step_before_transport:
                         sum_el += flow_value
-                        # TODO: in this case: no cost?
+                        # do not add SPECCOST below
+                        continue
+
                     flow_cost = flow_value * speccost
 
-                    # TODO: not nice
                     if is_transport:
                         flow_cost = flow_cost * dist_transport
 
@@ -168,9 +181,16 @@ class PtxCalc:
         results = results.groupby(dim_columns).sum().reset_index()
 
         # normalization:
-        # scale so that we star twith 1 EL input,
+        # scale so that we start with 1 EL input,
         # rescale so that we have 1 unit output
-        norm_factor = sum_el / main_output_value
+        norm_factor = 1 / main_output_value
         results["values"] = results["values"] * norm_factor
+
+        # rescale again ONLY RES to account for additionally needed electricity
+        # sum_el is larger than 1.0
+        norm_factor_el = sum_el
+        idx = results["process_type"] == "Electricity generation"
+        assert idx.any()  # must have at least one entry
+        results.loc[idx, "values"] = results.loc[idx, "values"] * norm_factor_el
 
         return results
