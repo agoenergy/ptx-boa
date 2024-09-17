@@ -33,6 +33,7 @@ class PtxCalc:
             main_output_value_before_transport *= step_data["EFF"]
 
         # accumulate needed electric input
+        step_before_transport = True
         sum_el = main_output_value
         results = []
 
@@ -82,6 +83,7 @@ class PtxCalc:
                 results.append((result_process_type, process_code, "OPEX", opex))
 
             else:
+                step_before_transport = False
                 opex_t = step_data["OPEX-T"]
                 dist_transport = step_data["DIST"]
                 opex_ot = opex_t * dist_transport
@@ -121,8 +123,15 @@ class PtxCalc:
 
                     for sec_flow_code, sec_conv in sec_process_data["CONV"].items():
                         sec_flow_value = flow_value * sec_conv
+
+                        # electricity before transport will be handled by RES step
+                        # after transport: market
                         if sec_flow_code == "EL":
-                            sum_el += sec_flow_value
+                            if step_before_transport:
+                                sum_el += sec_flow_value
+                            else:
+                                # do not add SPECCOST below
+                                continue
 
                         sec_speccost = parameters["SPECCOST"][sec_flow_code]
                         sec_flow_cost = sec_flow_value * sec_speccost
@@ -144,8 +153,16 @@ class PtxCalc:
                 else:
                     # use market
                     speccost = parameters["SPECCOST"][flow_code]
+
+                    # electricity before transport will be handled by RES step
+                    # after transport: market
                     if flow_code == "EL":
-                        sum_el += flow_value
+                        if step_before_transport:
+                            sum_el += sec_flow_value
+                        else:
+                            # do not add SPECCOST below
+                            continue
+
                     flow_cost = flow_value * speccost
 
                     if is_transport:
