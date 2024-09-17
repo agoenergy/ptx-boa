@@ -158,7 +158,7 @@ class PtxCalc:
                     # after transport: market
                     if flow_code == "EL":
                         if step_before_transport:
-                            sum_el += sec_flow_value
+                            sum_el += flow_value
                         else:
                             # do not add SPECCOST below
                             continue
