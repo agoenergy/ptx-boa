@@ -9,14 +9,13 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CALOR,,LOHC-L,,",CALOR,,LOHC-L,,,33.33,kWh H2 (l)/kg,Linde
 "CALOR,,NH3-L,,",CALOR,,NH3-L,,,5.199999999999999,kWh NH3 (l)/kg,Wikipedia with conversions
 "CAPEX,AEL-EL,,,",CAPEX,AEL-EL,,,,862.3926136507007,USD2023/kW,
-"CAPEX,ATR,,,",CAPEX,ATR,,,,895.7895675646487,USD2023/kW,Oni et al. 2022
 "CAPEX,CH3OHSYN,,,",CAPEX,CH3OHSYN,,,,907.838693097045,USD2023/kW,
 "CAPEX,CH4-COMP,,,",CAPEX,CH4-COMP,,,,166.74196584186356,USD2023/kW,DNV GL 2020
 "CAPEX,CH4-LIQ,,,",CAPEX,CH4-LIQ,,,,507.7527096777446,USD2023/kW,Hank et al. 2020
 "CAPEX,CH4SYN,,,",CAPEX,CH4SYN,,,,749.0358314504459,USD2023/kW,Öko-Institut 2020
 "CAPEX,DAC,,,",CAPEX,DAC,,,,1.0296581972708139,USD2023/ kg CO2 (g)*a,average low and high
 "CAPEX,DESAL,,,",CAPEX,DESAL,,,,0.002731203678453038,USD2023/l*a,Fraunhofer IEE
-"CAPEX,DRI,,,",CAPEX,DRI,,,,5289.972482521444,USD2023/kg DRI (s)/a*h,Agora Industry Transformation 2021
+"CAPEX,DRI,,,",CAPEX,DRI,,,,4552.838966249561,USD2023/kg DRI (s)/a*h,"Agora Industry, Wuppertal Institute and Lund University (2024)"
 "CAPEX,EFUELSYN,,,",CAPEX,EFUELSYN,,,,907.838693097045,USD2023/kW,
 "CAPEX,EL-STR,,,",CAPEX,EL-STR,,,,888.7736990592965,USD2023/kW,
 "CAPEX,H2-COMP,,,",CAPEX,H2-COMP,,,,166.74196584186356,USD2023/kW,DNV GL 2020
@@ -107,7 +106,6 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CAPEX,PV-FIX,,ZAF-NC,",CAPEX,PV-FIX,,ZAF-NC,,594.169255671429,USD2023/kW,
 "CAPEX,PV-FIX,,ZAF-NW,",CAPEX,PV-FIX,,ZAF-NW,,594.169255671429,USD2023/kW,
 "CAPEX,PV-FIX,,ZAF-WC,",CAPEX,PV-FIX,,ZAF-WC,,594.169255671429,USD2023/kW,
-"CAPEX,REGASATR,,,",CAPEX,REGASATR,,,,895.7895675646487,USD2023/kW,combined values
 "CAPEX,RES-HYBR,,ARE,",CAPEX,RES-HYBR,,ARE,,757.6012317518235,USD2023/kW,calculated. PV:  WIND-ON: 
 "CAPEX,RES-HYBR,,ARG,",CAPEX,RES-HYBR,,ARG,,775.1086255865526,USD2023/kW,calculated. PV:  WIND-ON: 
 "CAPEX,RES-HYBR,,ARG-BA,",CAPEX,RES-HYBR,,ARG-BA,,775.1086255865526,USD2023/kW,calculated. PV:  WIND-ON: 
@@ -369,7 +367,6 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CAP-T,,,RUS,CHN",CAP-T,,,RUS,CHN,1.0,kWh/a,
 "CAP-T,,,RUS,DEU",CAP-T,,,RUS,DEU,1.0,kWh/a,
 "CONV,AEL-EL,H2O-L,,",CONV,AEL-EL,H2O-L,,,0.3,kg H2O (l)/H2-G,
-"CONV,ATR,EL,,",CONV,ATR,EL,,,0.1077107710771077,kWh (el.)/H2-G,Oni et al. 2022
 "CONV,CH3OH-SB,BFUEL-L,,",CONV,CH3OH-SB,BFUEL-L,,,3.050988367317537e-06,kwh bunker fuel (l)/(km*CH3OH-L),calc_shipping
 "CONV,CH3OHSYN,CO2-G,,",CONV,CH3OHSYN,CO2-G,,,0.26448241206030154,kg CO2 (g)/kWh CH3OH (l),Frotier Economics 2021
 "CONV,CH3OHSYN,EL,,",CONV,CH3OHSYN,EL,,,0.039989420788151285,kWh (el.)/kWh CH3OH (l),Fasihi & Breyer 2018
@@ -383,7 +380,7 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CONV,DAC,H2O-L,,",CONV,DAC,H2O-L,,,-1.4,kg H2O (l)/kg CO2 (g),Fasihi et al. 2019
 "CONV,DAC,HEAT,,",CONV,DAC,HEAT,,,1.743,kWh (heat)/kg CO2 (g),average low and high
 "CONV,DESAL,EL,,",CONV,DESAL,EL,,,0.003,kWh (el.)/kg H2O (l),
-"CONV,DRI,EL,,",CONV,DRI,EL,,,0.1082967032967033,kWh (el.)/kg DRI (s),Agora Industry Transformation 2021
+"CONV,DRI,EL,,",CONV,DRI,EL,,,0.09255555555555554,kWh (el.)/kg DRI (s),"Agora Industry, Wuppertal Institute and Lund University (2024)"
 "CONV,EFUELSYN,CO2-G,,",CONV,EFUELSYN,CO2-G,,,0.2645581395348838,kg CO2 (g)/kwh CHx (l),Frontier Economics 2021
 "CONV,EFUELSYN,EL,,",CONV,EFUELSYN,EL,,,0.08577878103837472,kWh (el.)/kwh CHx (l),Fasihi & Breyer 2018
 "CONV,EFUELSYN,H2O-L,,",CONV,EFUELSYN,H2O-L,,,-0.24830699774266365,kg H2O (l)/kwh CHx (l),Fasihi & Breyer 2018
@@ -401,7 +398,6 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CONV,NH3SYN,EL,,",CONV,NH3SYN,EL,,,0.14192307692307693,kWh (el.)/kWh NH3 (l),Fasihi et al. 2021
 "CONV,NH3SYN,N2-G,,",CONV,NH3SYN,N2-G,,,0.15980769230769232,kg N2 (g)/kWh NH3 (l),Fasihi et al. 2021
 "CONV,PEM-EL,H2O-L,,",CONV,PEM-EL,H2O-L,,,0.3,kg H2O (l)/H2-G,
-"CONV,REGASATR,EL,,",CONV,REGASATR,EL,,,0.1077107710771077,kWh (el.)/H2-G,combined values
 "CONV,SOEC-EL,H2O-L,,",CONV,SOEC-EL,H2O-L,,,0.3,kg H2O (l)/H2-G,
 "CONV,SYN-S,CHX-L,,",CONV,SYN-S,CHX-L,,,1.264193639501289e-06,kwh CHx (l)/(km*CHX-L),calc_shipping
 "CONV,SYN-SB,BFUEL-L,,",CONV,SYN-SB,BFUEL-L,,,1.264193639501289e-06,kwh bunker fuel (l)/(km*CHX-L),calc_shipping
@@ -1256,12 +1252,11 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "DST-S-DP,,,VNM,JPN",DST-S-DP,,,VNM,JPN,4000.0,km,Research Susanne Krieger
 "DST-S-DP,,,VNM,KOR",DST-S-DP,,,VNM,KOR,5000.0,km,Research Susanne Krieger
 "EFF,AEL-EL,,,",EFF,AEL-EL,,,,0.715,various (output per main input),
-"EFF,ATR,,,",EFF,ATR,,,,0.79992,various (output per main input),Oni et al. 2022
 "EFF,CH3OHSYN,,,",EFF,CH3OHSYN,,,,0.803,various (output per main input),Frontier Economics 2021
 "EFF,CH4-RGAS,,,",EFF,CH4-RGAS,,,,0.98,various (output per main input),Pospíšil et al. 2019
 "EFF,CH4SYN,,,",EFF,CH4SYN,,,,0.83,various (output per main input),Öko-Institut 2020
 "EFF,DESAL,,,",EFF,DESAL,,,,1.0,various (output per main input),
-"EFF,DRI,,,",EFF,DRI,,,,0.3575989782886334,kg DRI (s)/kwhh2,Agora Industry Transformation 2021
+"EFF,DRI,,,",EFF,DRI,,,,0.43356936849754335,kg DRI (s)/kwhh2,"Agora Industry, Wuppertal Institute and Lund University (2024)"
 "EFF,EFUELSYN,,,",EFF,EFUELSYN,,,,0.73,various (output per main input),Frontier Economics 2021
 "EFF,EL-STR,,,",EFF,EL-STR,,,,0.9,various (output per main input),
 "EFF,H2-LIQ,,,",EFF,H2-LIQ,,,,1.0,various (output per main input),
@@ -1271,7 +1266,6 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "EFF,NH3-REC,,,",EFF,NH3-REC,,,,0.7466101694915254,various (output per main input),NGN; Equinor 2018
 "EFF,NH3SYN,,,",EFF,NH3SYN,,,,0.819,various (output per main input),Frotier Economics 2021
 "EFF,PEM-EL,,,",EFF,PEM-EL,,,,0.705,various (output per main input),
-"EFF,REGASATR,,,",EFF,REGASATR,,,,0.77992,various (output per main input),combined values
 "EFF,SOEC-EL,,,",EFF,SOEC-EL,,,,0.7733333333333332,various (output per main input),
 "FLH,AEL-EL,,,",FLH,AEL-EL,,,,3861.914191419142,h,average of PTX Atlas
 "FLH,DRI,,,",FLH,DRI,,,,7884.0,0,
@@ -1568,7 +1562,6 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "FLH,WIND-ON,,ZAF-NW,",FLH,WIND-ON,,ZAF-NW,,3092.6134290333307,h,
 "FLH,WIND-ON,,ZAF-WC,",FLH,WIND-ON,,ZAF-WC,,3346.6670672599976,h,
 "LIFETIME,AEL-EL,,,",LIFETIME,AEL-EL,,,,20.0,years,
-"LIFETIME,ATR,,,",LIFETIME,ATR,,,,25.0,years,Oni et al. 2022
 "LIFETIME,CH3OH-S,,,",LIFETIME,CH3OH-S,,,,30.0,years,UNSW Sydney 2021
 "LIFETIME,CH3OH-SB,,,",LIFETIME,CH3OH-SB,,,,30.0,years,UNSW Sydney 2021
 "LIFETIME,CH3OHSYN,,,",LIFETIME,CH3OHSYN,,,,30.0,years,Öko-Institut 2020
@@ -1583,7 +1576,7 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "LIFETIME,CH4SYN,,,",LIFETIME,CH4SYN,,,,30.0,years,Öko-Institut 2020
 "LIFETIME,DAC,,,",LIFETIME,DAC,,,,30.0,years,Kreidelmeyer et al. 2020
 "LIFETIME,DESAL,,,",LIFETIME,DESAL,,,,20.0,years,PTX Atlas
-"LIFETIME,DRI,,,",LIFETIME,DRI,,,,15.0,years,Agora Industry Transformation 2021
+"LIFETIME,DRI,,,",LIFETIME,DRI,,,,15.0,years,Agora Industry Transformation 2022
 "LIFETIME,EFUELSYN,,,",LIFETIME,EFUELSYN,,,,30.0,years,Öko-Institut 2020
 "LIFETIME,EL-STR,,,",LIFETIME,EL-STR,,,,20.0,years,
 "LIFETIME,EL-TRANS,,,",LIFETIME,EL-TRANS,,,,20.0,years,DUMMY
@@ -1607,7 +1600,6 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "LIFETIME,NH3SYN,,,",LIFETIME,NH3SYN,,,,30.0,years,Fasihi et al. 2021
 "LIFETIME,PEM-EL,,,",LIFETIME,PEM-EL,,,,20.0,years,
 "LIFETIME,PV-FIX,,,",LIFETIME,PV-FIX,,,,20.0,years,
-"LIFETIME,REGASATR,,,",LIFETIME,REGASATR,,,,25.0,years,combined values
 "LIFETIME,RES-HYBR,,,",LIFETIME,RES-HYBR,,,,20.0,years,
 "LIFETIME,SOEC-EL,,,",LIFETIME,SOEC-EL,,,,20.0,years,
 "LIFETIME,SYN-S,,,",LIFETIME,SYN-S,,,,30.0,years,UNSW Sydney 2021
@@ -1632,14 +1624,13 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "LOSS-T,NH3-S,,,",LOSS-T,NH3-S,,,,5.343656103416341e-06,fraction/km,calc_shipping
 "LOSS-T,NH3-SB,,,",LOSS-T,NH3-SB,,,,4.615015414151483e-07,fraction/km,calc_shipping
 "OPEX-F,AEL-EL,,,",OPEX-F,AEL-EL,,,,17.247852273014015,USD2023/kW,
-"OPEX-F,ATR,,,",OPEX-F,ATR,,,,43.73972497874261,USD2023/kW,Oni et al. 2022
 "OPEX-F,CH3OHSYN,,,",OPEX-F,CH3OHSYN,,,,27.235160792911355,USD2023/kW,Öko-Institut 2020
 "OPEX-F,CH4-COMP,,,",OPEX-F,CH4-COMP,,,,6.6696786336745415,USD2023/kW,DNV GL 2020
 "OPEX-F,CH4-LIQ,,,",OPEX-F,CH4-LIQ,,,,10.155054193554893,USD2023/kW,Hank et al. 2020
 "OPEX-F,CH4SYN,,,",OPEX-F,CH4SYN,,,,22.47107494351338,USD2023/kW,Öko-Institut 2020
 "OPEX-F,DAC,,,",OPEX-F,DAC,,,,0.041186327890832555,USD2023/ kg CO2 (g)*a,average low and high
 "OPEX-F,DESAL,,,",OPEX-F,DESAL,,,,0.00010924814713812152,USD2023/kW,
-"OPEX-F,DRI,,,",OPEX-F,DRI,,,,158.6991744756433,USD2023/kg DRI (s)/a*h,Agora Industry Transformation 2021
+"OPEX-F,DRI,,,",OPEX-F,DRI,,,,136.58516898748684,USD2023/kg DRI (s)/a*h,Agora Industry Transformation 2022
 "OPEX-F,EFUELSYN,,,",OPEX-F,EFUELSYN,,,,27.235160792911355,USD2023/kW,Öko-Institut 2020
 "OPEX-F,H2-COMP,,,",OPEX-F,H2-COMP,,,,6.6696786336745415,USD2023/kW,DNV GL 2020
 "OPEX-F,H2-LIQ,,,",OPEX-F,H2-LIQ,,,,67.27183479037932,USD2023/kW,IEA 2019
@@ -1729,7 +1720,6 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "OPEX-F,PV-FIX,,ZAF-NC,",OPEX-F,PV-FIX,,ZAF-NC,,10.100877346414293,USD2023/kW,
 "OPEX-F,PV-FIX,,ZAF-NW,",OPEX-F,PV-FIX,,ZAF-NW,,10.100877346414293,USD2023/kW,
 "OPEX-F,PV-FIX,,ZAF-WC,",OPEX-F,PV-FIX,,ZAF-WC,,10.100877346414293,USD2023/kW,
-"OPEX-F,REGASATR,,,",OPEX-F,REGASATR,,,,43.73972497874261,USD2023/kW,combined values
 "OPEX-F,RES-HYBR,,ARE,",OPEX-F,RES-HYBR,,ARE,,24.942990393361693,USD2023/kW,
 "OPEX-F,RES-HYBR,,ARG,",OPEX-F,RES-HYBR,,ARG,,26.958839885548045,USD2023/kW,
 "OPEX-F,RES-HYBR,,ARG-BA,",OPEX-F,RES-HYBR,,ARG-BA,,26.958839885548045,USD2023/kW,
@@ -1967,19 +1957,17 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "OPEX-F,WIND-ON,,ZAF-NC,",OPEX-F,WIND-ON,,ZAF-NC,,38.70063616676639,USD2023/kW,
 "OPEX-F,WIND-ON,,ZAF-NW,",OPEX-F,WIND-ON,,ZAF-NW,,38.70063616676639,USD2023/kW,
 "OPEX-F,WIND-ON,,ZAF-WC,",OPEX-F,WIND-ON,,ZAF-WC,,38.70063616676639,USD2023/kW,
-"OPEX-O,ATR,,,",OPEX-O,ATR,,,,0.010554962496249628,USD2023/kWh,George et al. (2022)
 "OPEX-O,CH3OH-S,,,",OPEX-O,CH3OH-S,,,,0.00012519788508432044,USD2023/kWh,UNSW Sydney 2021
 "OPEX-O,CH3OH-SB,,,",OPEX-O,CH3OH-SB,,,,0.00012519788508432044,USD2023/kWh,UNSW Sydney 2021
 "OPEX-O,CH4-S,,,",OPEX-O,CH4-S,,,,0.0003813147912294295,USD2023/kWh,UNSW Sydney 2021
 "OPEX-O,CH4-SB,,,",OPEX-O,CH4-SB,,,,0.0003813147912294295,USD2023/kWh,UNSW Sydney 2021
-"OPEX-O,DRI,,,",OPEX-O,DRI,,,,0.30762053723076915,USD2023/kg DRI (s),Agora Industry Transformation 2021
+"OPEX-O,DRI,,,",OPEX-O,DRI,,,,0.2622666327363948,USD2023/kg DRI (s),"Agora Industry, Wuppertal Institute and Lund University (2024)"
 "OPEX-O,H2-S,,,",OPEX-O,H2-S,,,,0.0022569810463972553,USD2023/kWh,UNSW Sydney 2021
 "OPEX-O,H2-SB,,,",OPEX-O,H2-SB,,,,0.0022569810463972553,USD2023/kWh,UNSW Sydney 2021
 "OPEX-O,LOHC-S,,,",OPEX-O,LOHC-S,,,,0.017747039773146154,USD2023/kWh,UNSW Sydney 2021
 "OPEX-O,LOHC-SB,,,",OPEX-O,LOHC-SB,,,,0.017747039773146154,USD2023/kWh,UNSW Sydney 2021
 "OPEX-O,NH3-S,,,",OPEX-O,NH3-S,,,,0.00048568553509583886,USD2023/kWh,UNSW Sydney 2021
 "OPEX-O,NH3-SB,,,",OPEX-O,NH3-SB,,,,0.00048568553509583886,USD2023/kWh,UNSW Sydney 2021
-"OPEX-O,REGASATR,,,",OPEX-O,REGASATR,,,,0.010554962496249628,USD2023/kWh,combined values
 "OPEX-O,SYN-S,,,",OPEX-O,SYN-S,,,,5.1963280337203155e-05,USD2023/kWh,UNSW Sydney 2021
 "OPEX-O,SYN-SB,,,",OPEX-O,SYN-SB,,,,5.1963280337203155e-05,USD2023/kWh,UNSW Sydney 2021
 "OPEX-T,CH3OH-S,,,",OPEX-T,CH3OH-S,,,,1.2518787005471605e-07,USD2023/(kWh*km),calc_shipping
