@@ -1,10 +1,10 @@
-default_stages: [commit]
+default_stages: [pre-commit]
 exclude: ^(data|archive)/
 
 repos:
   # ============== PRE-COMMIT HOOKS ===============
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
       - id: check-added-large-files
         args: ['--maxkb=5000'] # we need some data files and images in the repository
@@ -16,7 +16,7 @@ repos:
 
   # ==================== BLACK ====================
   - repo: https://github.com/psf/black
-    rev: 24.8.0
+    rev: 25.1.0
     hooks:
       - id: black
         args: ["--line-length", "88"]
@@ -24,7 +24,7 @@ repos:
 
   # ==================== ISORT ====================
   - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
+    rev: 6.0.1
     hooks:
       - id: isort
         name: isort (python)
@@ -32,7 +32,7 @@ repos:
 
   # =================== FLAKE8 ====================
   - repo: https://github.com/pycqa/flake8
-    rev: 7.1.1
+    rev: 7.1.2
     hooks:
       - id: flake8
         additional_dependencies:
