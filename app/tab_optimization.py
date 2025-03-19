@@ -68,7 +68,7 @@ def content_optimization(api: PtxboaAPI) -> None:
                     "Output (MWh/a)": st.column_config.NumberColumn(format="%.0f"),
                     "Full load hours (h)": st.column_config.NumberColumn(format="%.0f"),
                     "Curtailment (%)": st.column_config.NumberColumn(format="%.1f %%"),
-                    "Cost (USD/MWh)": st.column_config.NumberColumn(format="%.1f"),
+                    "Cost (USD2023/MWh)": st.column_config.NumberColumn(format="%.1f"),
                 },
             )
 
@@ -100,8 +100,8 @@ def calc_aggregate_statistics(
             res.at[g, "Output (MWh/a)"] = (
                 n.generators_t["p"][g] * n.snapshot_weightings["generators"]
             ).sum()
-            res.at[g, "CAPEX (USD/kW)"] = n.generators.at[g, "capital_cost"]
-            res.at[g, "OPEX (USD/kWh)"] = n.generators.at[g, "marginal_cost"]
+            res.at[g, "CAPEX (USD2023/kW)"] = n.generators.at[g, "capital_cost"]
+            res.at[g, "OPEX (USD2023/kWh)"] = n.generators.at[g, "marginal_cost"]
             res.at[g, "Full load hours before curtailment (h)"] = (
                 n.generators_t["p_max_pu"][g] * n.snapshot_weightings["generators"]
             ).sum()
@@ -124,10 +124,10 @@ def calc_aggregate_statistics(
             res.at[g, "Output (MWh/a)"] = (
                 -n.links_t["p1"][g] * n.snapshot_weightings["generators"]
             ).sum()
-            res.at[g, "CAPEX (USD/kW)"] = (
+            res.at[g, "CAPEX (USD2023/kW)"] = (
                 n.links.at[g, "capital_cost"] / n.links.at[g, "efficiency"]
             )
-            res.at[g, "OPEX (USD/kWh)"] = (
+            res.at[g, "OPEX (USD2023/kWh)"] = (
                 n.links.at[g, "marginal_cost"] / n.links.at[g, "efficiency"]
             )
 
@@ -137,8 +137,8 @@ def calc_aggregate_statistics(
             res.at[g, "Output (MWh/a)"] = (
                 n.storage_units_t["p_dispatch"][g] * n.snapshot_weightings["generators"]
             ).sum()
-            res.at[g, "CAPEX (USD/kW)"] = n.storage_units.at[g, "capital_cost"]
-            res.at[g, "OPEX (USD/kWh)"] = n.storage_units.at[g, "marginal_cost"]
+            res.at[g, "CAPEX (USD2023/kW)"] = n.storage_units.at[g, "capital_cost"]
+            res.at[g, "OPEX (USD2023/kWh)"] = n.storage_units.at[g, "marginal_cost"]
 
     for g in [
         "CO2-G_supply",
@@ -150,15 +150,15 @@ def calc_aggregate_statistics(
             res.at[g, "Output (MWh/a)"] = (
                 n.generators_t["p"][g] * n.snapshot_weightings["generators"]
             ).sum()
-            res.at[g, "OPEX (USD/kWh)"] = n.generators.at[g, "marginal_cost"]
+            res.at[g, "OPEX (USD2023/kWh)"] = n.generators.at[g, "marginal_cost"]
 
     res = res.fillna(0)
 
     res["Full load hours (h)"] = res["Output (MWh/a)"] / res["Capacity (MW)"]
-    res["Cost (USD/MWh)"] = (
+    res["Cost (USD2023/MWh)"] = (
         (
-            res["Capacity (MW)"] * res["CAPEX (USD/kW)"]
-            + res["Output (MWh/a)"] * res["OPEX (USD/kWh)"]
+            res["Capacity (MW)"] * res["CAPEX (USD2023/kW)"]
+            + res["Output (MWh/a)"] * res["OPEX (USD2023/kWh)"]
         )
         / 8760
         * 1000
@@ -188,7 +188,7 @@ def calc_aggregate_statistics(
                 "Output (MWh/a)",
                 "Full load hours (h)",
                 "Curtailment (%)",
-                "Cost (USD/MWh)",
+                "Cost (USD2023/MWh)",
             ]
         ]
 
@@ -225,7 +225,7 @@ def calc_aggregate_statistics(
                 res.at[i, "Curtailment (%)"] = np.nan
 
     # calculate total costs:
-    res.at["Total", "Cost (USD/MWh)"] = res["Cost (USD/MWh)"].sum()
+    res.at["Total", "Cost (USD2023/MWh)"] = res["Cost (USD2023/MWh)"].sum()
 
     return res
 

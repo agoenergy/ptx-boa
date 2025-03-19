@@ -28,7 +28,7 @@ Here is a list of tabs and what you can find there:
 
 The contextual information on country facts, certification schemes and sustainability issues is based on the state of the literature at the end of November 2023.
 
-Monetary units are denominated in 2023 US dollars (USD).
+Monetary units are denominated in 2023 US dollars (USD2023).
 
 ##### General hints on how to use the app
 

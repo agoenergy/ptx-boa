@@ -95,7 +95,9 @@ def plot_costs_on_map(
             custom_data_func=_make_costs_hoverdata,
         )
 
-    return _set_map_layout(fig, colorbar_title=st.session_state["output_unit"])
+    return _set_map_layout(
+        fig, colorbar_title=st.session_state["output_unit"].replace("USD", "USD2023")
+    )
 
 
 def plot_input_data_on_map(
@@ -132,7 +134,7 @@ def plot_input_data_on_map(
     """
     input_data = get_data_type_from_input_data(api, data_type=data_type, scope=None)
 
-    units = {"CAPEX": "USD/kW", "full load hours": "h/a", "WACC": "%"}
+    units = {"CAPEX": "USD2023/kW", "full load hours": "h/a", "WACC": "%"}
 
     if data_type == "WACC":
         assert color_col == "WACC"
@@ -400,18 +402,19 @@ def _make_inputs_hoverdata(df, data_type, map_variable, unit, float_precision):
 
 
 def _make_costs_hoverdata(res_costs: pd.DataFrame) -> list[pd.Series]:
+    unit = st.session_state["output_unit"].replace("USD", "USD2023")
     custom_hover_data = res_costs.map("{:,.1f}".format).apply(
         lambda x: f"<b>{x.name}</b><br><br>"
         + "<br>".join(
             [
                 f"<b>{col}</b>: {x[col] if x[col] != 'nan' else 'not applicable'} "
-                f"{st.session_state['output_unit'] if x[col] != 'nan' else ''}"
+                f"{unit if x[col] != 'nan' else ''}"
                 for col in res_costs.columns[:-1]
             ]
             + [
                 f"──────────<br><b>{res_costs.columns[-1]}</b>: "
                 f"{x[res_costs.columns[-1]]}"
-                f"{st.session_state['output_unit']}"
+                f"{unit}"
             ]
         ),
         axis=1,
@@ -492,7 +495,7 @@ def create_bar_chart_costs(
     fig.update_layout(separators=". ")
 
     if output_unit is None:
-        output_unit = st.session_state["output_unit"]
+        output_unit = st.session_state["output_unit"].replace("USD", "USD2023")
 
     fig.update_layout(yaxis_title=output_unit)
     fig.update_layout(legend_traceorder="reversed")
@@ -544,7 +547,7 @@ def create_box_plot(res_costs: pd.DataFrame):
     fig.update_layout(
         title="Cost distribution for all supply countries",
         xaxis={"title": ""},
-        yaxis={"title": st.session_state["output_unit"]},
+        yaxis={"title": st.session_state["output_unit"].replace("USD", "USD2023")},
         height=500,
     )
 

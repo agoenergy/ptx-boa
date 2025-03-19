@@ -621,8 +621,10 @@ def get_region_from_subregion(subregion: str) -> str:
 def get_column_config() -> dict:
     """Define column configuration for dataframe display."""
     column_config = {
-        "CAPEX": st.column_config.NumberColumn(format="%.0f USD/kW", min_value=0),
-        "OPEX (fix)": st.column_config.NumberColumn(format="%.0f USD/kW", min_value=0),
+        "CAPEX": st.column_config.NumberColumn(format="%.0f USD2023/kW", min_value=0),
+        "OPEX (fix)": st.column_config.NumberColumn(
+            format="%.0f USD2023/kW", min_value=0
+        ),
         "efficiency": st.column_config.NumberColumn(
             format="%.2f %%", min_value=0, max_value=100
         ),
@@ -632,7 +634,7 @@ def get_column_config() -> dict:
             help=read_markdown_file("md/helptext_columns_lifetime.md"),
         ),
         "levelized costs": st.column_config.NumberColumn(
-            format="%.2e USD/([unit] km)",
+            format="%.2e USD2023/([unit] km)",
             min_value=0,
             help=(
                 "unit is [t] for Green iron ship (bunker fuel consumption) and [MW] "

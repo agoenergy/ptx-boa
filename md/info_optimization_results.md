@@ -11,4 +11,4 @@ Please note that if Green Iron is selected as product, units differ for some dat
 
 - Capacity of the derivate production is t/h instead of MW
 - Output of the derivate production is t/a instead of MWh/a
-- Cost of all components are in USD/t instead of USD/MWh
+- Cost of all components are in USD2023/t instead of USD2023/MWh

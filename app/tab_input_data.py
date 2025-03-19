@@ -80,7 +80,7 @@ def content_input_data(api: PtxboaAPI) -> None:
         with st.expander("**Regional distribution**"):
             # create plot:
             if data_selection == "CAPEX":
-                ylabel = "CAPEX (USD/kW)"
+                ylabel = "CAPEX (USD2023/kW)"
                 hover_name = "process_code"
             if data_selection == "full load hours":
                 ylabel = "full load hours (h/a)"
@@ -115,8 +115,8 @@ def content_input_data(api: PtxboaAPI) -> None:
         with st.expander("**Electrolysis and derivative production**"):
             st.caption(
                 (
-                    "The unit of CAPEX and OPEX (fix) is USD/t for Green iron "
-                    "reduction and USD/kW for all other processes."
+                    "The unit of CAPEX and OPEX (fix) is USD2023/t for Green iron "
+                    "reduction and USD2023/kW for all other processes."
                     "\n\n"
                     "The unit of efficiency is 0.01 t/MWh for Green Iron "
                     "reduction and % for all other processes."
@@ -152,8 +152,8 @@ def content_input_data(api: PtxboaAPI) -> None:
         with st.expander("**Transportation (ships and pipelines)**"):
             st.caption(
                 (
-                    "The unit of levelized costs is USD/(t km) for Green iron ship "
-                    "(bunker fuel consumption) and USD/(kW km) for all other "
+                    "The unit of levelized costs is USD2023/(t km) for Green iron ship "
+                    "(bunker fuel consumption) and USD2023/(kW km) for all other "
                     "processes."
                 )
             )

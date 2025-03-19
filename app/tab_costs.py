@@ -88,7 +88,11 @@ def content_costs(api: PtxboaAPI):
 
         doublefig.update_layout(barmode="stack")
         doublefig.update_layout(legend_traceorder="reversed")
-        doublefig.update_yaxes(title_text=st.session_state["output_unit"], row=1, col=1)
+        doublefig.update_yaxes(
+            title_text=st.session_state["output_unit"].replace("USD", "USD2023"),
+            row=1,
+            col=1,
+        )
         doublefig.update_layout(
             height=350,
             margin={"l": 10, "r": 10, "t": 20, "b": 20},
@@ -207,7 +211,7 @@ def content_costs(api: PtxboaAPI):
             costs_per_chain_without_user_changes,
             "chain",
             "Costs for different products and electrolyser types",
-            output_unit="USD/MWh",
+            output_unit="USD2023/MWh",
             default_select=1,
             default_manual_select=[
                 x

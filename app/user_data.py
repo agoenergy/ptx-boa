@@ -100,10 +100,10 @@ def reset_user_changes():
 
 def _custom_unit_based_on_process_and_parameter(process, parameter, unaffected):
     mapping = {
-        ("Direct Air Capture", "CAPEX"): "USD/kg of CO₂",
-        ("Sea Water desalination", "CAPEX"): "USD/kg of H₂O",
-        ("Direct Air Capture", "OPEX (fix)"): "USD/kg of CO₂",
-        ("Sea Water desalination", "OPEX (fix)"): "USD/kg of H₂O",
+        ("Direct Air Capture", "CAPEX"): "USD2023/kg of CO₂",
+        ("Sea Water desalination", "CAPEX"): "USD2023/kg of H₂O",
+        ("Direct Air Capture", "OPEX (fix)"): "USD2023/kg of CO₂",
+        ("Sea Water desalination", "OPEX (fix)"): "USD2023/kg of H₂O",
     }
     return mapping.get((process, parameter), unaffected)
 

@@ -140,7 +140,7 @@ def _create_fact_sheet_supply_country(context_data: dict, api: PtxboaAPI):
         if value == "n/a":
             st.markdown("no data")
         else:
-            st.markdown(f"{value:.2f} USD/MWh\n\n*Source: {source}*")
+            st.markdown(f"{value:.2f} USD2023/MWh\n\n*Source: {source}*")
 
     with st.expander(
         "**Is there already a hydrogen strategy existing or in planning?**"

@@ -153,6 +153,6 @@ def content_deep_dive_countries(api: PtxboaAPI) -> None:
                 hover_data=[df.index],
                 hover_name="res_gen",
             )
-            fig.update_layout(xaxis_title=None)
+            fig.update_layout(xaxis_title=None, yaxis_title="h/a")
             st.plotly_chart(fig, use_container_width=True)
             what_is_a_boxplot()
