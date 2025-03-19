@@ -255,24 +255,24 @@ def test_issue_564(network_green_iron, api):
 
     # combine both sources to single df:
     res_costs_agg.at["Electricity generation", "total_opt"] = res_opt.at[
-        "PV tilted", "Cost (USD/MWh)"
+        "PV tilted", "Cost (USD2023/MWh)"
     ]
 
     res_costs_agg.at["Derivative production", "total_opt"] = res_opt.at[
-        "Derivative production", "Cost (USD/MWh)"
+        "Derivative production", "Cost (USD2023/MWh)"
     ]
 
     res_costs_agg.at["Electricity and H2 storage", "total_opt"] = (
-        res_opt.at["H2 storage", "Cost (USD/MWh)"]
-        + res_opt.at["Electricity storage", "Cost (USD/MWh)"]
+        res_opt.at["H2 storage", "Cost (USD2023/MWh)"]
+        + res_opt.at["Electricity storage", "Cost (USD2023/MWh)"]
     )
 
     res_costs_agg.at["Electrolysis", "total_opt"] = res_opt.at[
-        "Electrolyzer", "Cost (USD/MWh)"
+        "Electrolyzer", "Cost (USD2023/MWh)"
     ]
 
     res_costs_agg.at["Water", "total_opt"] = res_opt.at[
-        "Water supply", "Cost (USD/MWh)"
+        "Water supply", "Cost (USD2023/MWh)"
     ]
 
     res_costs_agg["diff"] = (
@@ -307,7 +307,7 @@ def test_issue_564(network_green_iron, api):
     opex_fix = input_data_dri.at["OPEX (fix)", "value"]
 
     capex_ann_input = annuity(wacc, periods, capex)
-    capex_ann_opt = res_opt.at["Derivative production", "CAPEX (USD/kW)"]
+    capex_ann_opt = res_opt.at["Derivative production", "CAPEX (USD2023/kW)"]
 
     # annuized capex should match:
     assert capex_ann_input + opex_fix == pytest.approx(capex_ann_opt)
