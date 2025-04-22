@@ -13,7 +13,7 @@ def update_csv(
 ) -> None:
     data_dir = data_dir or os.path.dirname(__file__)
     CS = (
-        "mssql+pyodbc://?odbc_connect=driver=sql server;server=sqldaek2;database=ptxboa"
+        "mssql+pyodbc://?odbc_connect=driver=sql server;server=sqldaek3;database=ptxboa"
     )
     engine = sa.create_engine(CS)
     df = pd.read_sql(

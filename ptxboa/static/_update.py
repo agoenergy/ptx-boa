@@ -11,7 +11,7 @@ PYTHON_FILE = os.path.dirname(__file__) + "/__init__.py"
 
 def sql_to_df(query: str) -> pd.DataFrame:
     CS = (
-        "mssql+pyodbc://?odbc_connect=driver=sql server;server=sqldaek2;database=ptxboa"
+        "mssql+pyodbc://?odbc_connect=driver=sql server;server=sqldaek3;database=ptxboa"
     )
     engine = sa.create_engine(CS)
     return pd.read_sql(
