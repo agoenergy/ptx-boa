@@ -81,9 +81,137 @@ docker logs --follow app
 ```
 
 ### Cleanup docker images from old versions
+
 ```bash
 # check which docker images are downloaded
 docker image ls
 # if there is an old image present (let's assume from v0.6.0), you can delete it with:
 docker image rm wingechr/ptx-boa:0.6.0
 ```
+
+## Internal documentation
+
+This section contains internal documenation on data flows, structure of the code base etc.
+
+### Structure of input data
+
+- csv file(s) with scalar data
+- RE profiles (flh and weighting coefficients)
+
+### Caching optimization results
+
+- location of cached files
+- hashing
+
+### Creating renewable generation profiles
+
+- atlite
+- methodology
+
+### The PyPSA model
+
+The pypsa optimization model is created and solved via the  `flh_opt.api_opt.optimize()` function <https://github.com/agoenergy/ptx-boa/blob/61a5915d3b885fb185056eac70afb50eb9b06e3a/flh_opt/api_opt.py#L148>.
+
+Function parameters are a dictionary with all required parameters, and the path to the folder with the renewable profiles data.
+
+Function output is a dictionary with the results of the optimization, and the pypsa network object that contains the solved model.
+
+#### Example input dict
+
+````json
+{
+  "SOURCE_REGION_CODE": "GYE",
+  "RES": [
+    {
+      "CAPEX_A": 0.826,
+      "OPEX_F": 0.209,
+      "OPEX_O": 0.025,
+      "PROCESS_CODE": "PV-FIX"
+    }
+  ],
+  "ELY": {
+    "EFF": 0.834,
+    "CAPEX_A": 0.52,
+    "OPEX_F": 0.131,
+    "OPEX_O": 0.2,
+    "CONV": {
+      "H2O-L": 0.677
+    }
+  },
+  "DERIV": {
+    "EFF": 0.717,
+    "CAPEX_A": 0.367,
+    "OPEX_F": 0.082,
+    "OPEX_O": 0.132,
+    "PROCESS_CODE": "CH4SYN",
+    "CONV": {
+      "CO2-G": 0.2,
+      "HEAT": -0.2,
+      "H2O-L": -0.15
+    }
+  },
+  "H2O": {
+    "CAPEX_A": 0.07726085034488815,
+    "OPEX_F": 0.0356900588308774,
+    "OPEX_O": 0,
+    "CONV": {
+      "EL": 0.003
+    }
+  },
+  "CO2": {
+    "CAPEX_A": 0.07726085034488815,
+    "OPEX_F": 0.0356900588308774,
+    "OPEX_O": 0,
+    "CONV": {
+      "EL": 0.4515,
+      "HEAT": 1.743,
+      "H2O-L": -1.4
+    }
+  },
+  "EL_STR": {
+    "EFF": 0.544,
+    "CAPEX_A": 0.385,
+    "OPEX_F": 0.835,
+    "OPEX_O": 0.501
+  },
+  "H2_STR": {
+    "EFF": 0.478,
+    "CAPEX_A": 0.342,
+    "OPEX_F": 0.764,
+    "OPEX_O": 0.167
+  },
+  "SPECCOST": {
+    "H2O-L": 0.658,
+    "CO2-G": 1.0
+  }
+}
+````
+
+#### Example output dict
+
+````json
+{
+  "RES": [
+    {
+      "SHARE_FACTOR": 0.519,
+      "FLH": 0.907,
+      "PROCESS_CODE": "PV-FIX"
+    }
+  ],
+  "ELY": {
+    "FLH": 0.548
+  },
+  "DERIV": {
+    "FLH": 0.548
+  },
+  "EL_STR": {
+    "CAP_F": 0.112
+  },
+  "H2_STR": {
+    "CAP_F": 0.698
+  }
+}
+````
+
+- TODO: model components
+- TODO: example flowchart
