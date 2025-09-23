@@ -214,4 +214,11 @@ Function output is a dictionary with the results of the optimization, and the py
 ````
 
 - TODO: model components
-- TODO: example flowchart
+
+#### Example flowchart
+
+This flowchart shows an example model as being created by the ``optimize`` function:
+
+![example flowchart][def]
+
+[def]: img/optimize_flowchart.png
