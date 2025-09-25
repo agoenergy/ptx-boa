@@ -7,3 +7,4 @@ streamlit-antd-components
 XlsxWriter==3.2.0
 pypsa==0.28
 highspy==1.7.1
+linopy==0.3.14 # dependency of pypsa, but newer versions create Error: 'LinearExpression' has no attribute 'fill_value'
