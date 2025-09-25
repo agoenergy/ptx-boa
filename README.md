@@ -1,13 +1,17 @@
 # PtX-BOA: PtX Business Opportunity Analyser
 
-PtX-BOA is a tool that aims to promote the export of a wide range of PtX molecules, including amongst others, green ammonia, e-methanol and synthetic fuels. Users can calculate the delivered cost of PtX molecules from an export country to an import country, with a detailed cost breakdown comparison highlighting the competitive edge of one country against another.
+PtX-BOA is a tool that aims to promote the export of a wide range of PtX
+molecules, including amongst others, green ammonia, e-methanol and synthetic
+fuels. Users can calculate the delivered cost of PtX molecules from an export
+country to an import country, with a detailed cost breakdown comparison
+highlighting the competitive edge of one country against another.
 
 ## Development
 
 ### Setup
 
-After cloning the repository, create a virtual python environment
-in a subdirectory `.env` and activate it:
+After cloning the repository, create a virtual python environment in a
+subdirectory `.env` and activate it:
 
 ```bash
 python -m venv .\.env
@@ -21,23 +25,24 @@ python -m pip install --upgrade pip
 pip install -r requirements-dev.txt
 ```
 
-The code is autoformatted and checked with [pre-commit](https://pre-commit.com/).
-If you make changes to the code that you want to commit back to the repository,
-please install pre-commit with:
+The code is autoformatted and checked with
+[pre-commit](https://pre-commit.com/). If you make changes to the code that you
+want to commit back to the repository, please install pre-commit with:
 
 ```bash
 pre-commit install
 ```
 
 If you have pre-commit installed, every file in a commit is checked to match a
-certain style and the commit is stopped if any rules are violated. Before committing,
-you can also check your staged files manually by running:
+certain style and the commit is stopped if any rules are violated. Before
+committing, you can also check your staged files manually by running:
 
 ```bash
 pre-commit run
 ```
 
-In order to run the tests locally run [pytest](https://pytest.org) in the root directory:
+In order to run the tests locally run [pytest](https://pytest.org) in the root
+directory:
 
 ```bash
 pytest
@@ -45,21 +50,21 @@ pytest
 
 ### Download optimization cache for local development
 
-````bash
+```bash
 cd ptxboa\cache
 scp -r ptxboa2:ptx-boa_offline_optimization/optimization_cache/* .
-````
+```
 
 ## Release Procedure
 
 - merge all relevant branches into develop
 - create a relase branch
 - change and commit `CHANGELOG.md` with description of changes
-- update version (`bumpversion patch|minor|major`).
-  This creates automatically a commit
+- update version (`bumpversion patch|minor|major`). This creates automatically a
+  commit
 - create pull requests to merge release into main
-- merging this will automatically (via git action) create
-  and publish the new docker image `wingechr/ptx-boa:<VERSION>`
+- merging this will automatically (via git action) create and publish the new
+  docker image `wingechr/ptx-boa:<VERSION>`
 - merge main back into develop
 
 ### Update docker image in production
@@ -91,7 +96,43 @@ docker image rm wingechr/ptx-boa:0.6.0
 
 ## Internal documentation
 
-This section contains internal documenation on data flows, structure of the code base etc.
+This section contains internal documenation on data flows, structure of the code
+base etc.
+
+```mermaid
+
+flowchart LR
+    subgraph app [PtX-BOA WebApp]
+        streamlit[ptxboa_streamlit.py]
+    end
+
+    subgraph api [PtX-BOA Calculation Api]
+        PtxboaAPI[ptxboa/api.py:PtxboaAPI]
+        PtxCalc[ptxboa/api_calc.py:PtxCalc]
+        DataHandler[ptxboa/api_data.py:DataHandler]
+        PtxOpt[ptxboa/api_optimize.py:PtxOpt]
+    end
+
+    subgraph opt [FLH Optimizer]
+        api_opt[flh_opt/api_opt.py:api_opt]
+    end
+
+    subgraph files [Files]
+        profiles[flh_opt/renewable_profiles/*.csv]
+        cache[ptxboa/cache/XX/XX/*.pickle]
+        data[ptxboa/data/*.csv]
+    end
+
+    streamlit <-->|user data, settings| PtxboaAPI
+    profiles --> api_opt
+    cache <-->|cache| PtxOpt
+    data --> DataHandler
+    PtxOpt --> api_opt
+    PtxboaAPI <--> PtxCalc
+    DataHandler <--> PtxOpt
+    PtxboaAPI <-->|user data| DataHandler
+
+```
 
 ### Structure of input data
 
@@ -110,15 +151,19 @@ This section contains internal documenation on data flows, structure of the code
 
 ### The PyPSA model
 
-The pypsa optimization model is created and solved via the  `flh_opt.api_opt.optimize()` function <https://github.com/agoenergy/ptx-boa/blob/61a5915d3b885fb185056eac70afb50eb9b06e3a/flh_opt/api_opt.py#L148>.
+The pypsa optimization model is created and solved via the
+`flh_opt.api_opt.optimize()` function
+<https://github.com/agoenergy/ptx-boa/blob/61a5915d3b885fb185056eac70afb50eb9b06e3a/flh_opt/api_opt.py#L148>.
 
-Function parameters are a dictionary with all required parameters, and the path to the folder with the renewable profiles data.
+Function parameters are a dictionary with all required parameters, and the path
+to the folder with the renewable profiles data.
 
-Function output is a dictionary with the results of the optimization, and the pypsa network object that contains the solved model.
+Function output is a dictionary with the results of the optimization, and the
+pypsa network object that contains the solved model.
 
 #### Example input dict
 
-````json
+```json
 {
   "SOURCE_REGION_CODE": "GYE",
   "RES": [
@@ -185,11 +230,11 @@ Function output is a dictionary with the results of the optimization, and the py
     "CO2-G": 1.0
   }
 }
-````
+```
 
 #### Example output dict
 
-````json
+```json
 {
   "RES": [
     {
@@ -211,13 +256,14 @@ Function output is a dictionary with the results of the optimization, and the py
     "CAP_F": 0.698
   }
 }
-````
+```
 
 - TODO: model components
 
 #### Example flowchart
 
-This flowchart shows an example model as being created by the ``optimize`` function:
+This flowchart shows an example model as being created by the `optimize`
+function:
 
 ![example flowchart][def]
 
