@@ -106,6 +106,10 @@ flowchart LR
         streamlit[ptxboa_streamlit.py]
     end
 
+    subgraph script [PtX-BOA WebApp]
+        offline_optimization[offline_optimization_script.py]
+    end
+
     subgraph api [PtX-BOA Calculation Api]
         PtxboaAPI[ptxboa/api.py:PtxboaAPI]
         PtxCalc[ptxboa/api_calc.py:PtxCalc]
@@ -131,6 +135,8 @@ flowchart LR
     PtxboaAPI <--> PtxCalc
     DataHandler <--> PtxOpt
     PtxboaAPI <-->|user data| DataHandler
+    offline_optimization --> cache
+    offline_optimization <--> api_opt
 
 ```
 
