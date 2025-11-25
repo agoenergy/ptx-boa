@@ -51,7 +51,7 @@ to meet basic sustainability needs.
 
 
 def content_sustainability(context_data: dict):
-    with st.popover("*Help*", use_container_width=True):
+    with st.popover("*Help*", width="stretch"):
         st.markdown(
             read_markdown_file("md/whatisthis_sustainability.md"),
             unsafe_allow_html=True,

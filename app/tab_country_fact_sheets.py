@@ -12,21 +12,7 @@ def _create_fact_sheet_demand_country(context_data: dict):
     df = context_data["demand_countries"]
     data = df.loc[df["country_name"] == country_name].iloc[0].to_dict()
 
-    flags_to_country_names = {
-        "France": ":flag-fr:",
-        "Germany": ":flag-de:",
-        "Netherlands": ":flag-nl:",
-        "Spain": ":flag-es:",
-        "China": ":flag-cn:",
-        "India": ":flag-in:",
-        "Japan": ":flag-jp:",
-        "South Korea": ":flag-kr:",
-        "USA": ":flag-us:",
-    }
-
-    st.subheader(
-        f"{flags_to_country_names[country_name]} Fact sheet for {country_name}"
-    )
+    st.subheader(f"Fact sheet for {country_name}")
     with st.expander("**Demand**"):
         c1, c2, c3 = st.columns(3)
         with c1:
@@ -86,8 +72,6 @@ def _create_fact_sheet_demand_country(context_data: dict):
 
 def _create_fact_sheet_supply_country(context_data: dict, api: PtxboaAPI):
     """Display information on a chosen supply country."""
-    alpha2_codes = api.get_dimension("region")["iso3166_code"].to_dict()
-
     # select region:
     country_name = st.session_state["region"]
 
@@ -96,9 +80,7 @@ def _create_fact_sheet_supply_country(context_data: dict, api: PtxboaAPI):
     df = context_data["supply"]
     data = df.loc[df["country_name"] == region_name].iloc[0].to_dict()
 
-    flag = f":flag-{alpha2_codes[region_name]}:".lower()
-
-    st.subheader(f"{flag} Fact sheet for {region_name}")
+    st.subheader(f"Fact sheet for {region_name}")
     with st.expander("**Technical potential for renewable electricity generation**"):
         try:
             val = float(data["re_tech_pot_EWI"])
@@ -132,7 +114,7 @@ def _create_fact_sheet_supply_country(context_data: dict, api: PtxboaAPI):
         if value == "n/a":
             st.markdown("no data")
         else:
-            st.markdown(f"**{value}**\n\n*Source: {source}*")
+            st.markdown(f"**{float(value)}**\n\n*Source: {source}*")
 
     with st.expander("**Electricity prices**"):
         value = data["elec_prices_IEA2020"]
@@ -140,7 +122,7 @@ def _create_fact_sheet_supply_country(context_data: dict, api: PtxboaAPI):
         if value == "n/a":
             st.markdown("no data")
         else:
-            st.markdown(f"{value:.2f} USD/MWh\n\n*Source: {source}*")
+            st.markdown(f"{float(value):.2f} USD/MWh\n\n*Source: {source}*")
 
     with st.expander(
         "**Is there already a hydrogen strategy existing or in planning?**"
@@ -149,7 +131,7 @@ def _create_fact_sheet_supply_country(context_data: dict, api: PtxboaAPI):
 
 
 def content_country_fact_sheets(context_data, api):
-    with st.popover("*Help*", use_container_width=True):
+    with st.popover("*Help*", width="stretch"):
         st.markdown(
             read_markdown_file("md/whatisthis_country_fact_sheets.md"),
             unsafe_allow_html=True,

@@ -75,7 +75,7 @@ IRENA & RMI (2023): Creating a global hydrogen market: certification to enable t
 
 
 def content_certification_schemes(context_data: dict):
-    with st.popover("*Help*", use_container_width=True):
+    with st.popover("*Help*", width="stretch"):
         st.markdown(
             read_markdown_file("md/whatisthis_certification_schemes.md"),
             unsafe_allow_html=True,

@@ -21,7 +21,7 @@ def content_input_data(api: PtxboaAPI) -> None:
     ------
     None
     """
-    with st.popover("*Help*", use_container_width=True):
+    with st.popover("*Help*", width="stretch"):
         st.markdown(
             read_markdown_file("md/whatisthis_input_data.md"), unsafe_allow_html=True
         )
@@ -66,7 +66,7 @@ def content_input_data(api: PtxboaAPI) -> None:
                 color_col=map_parameter,
                 scope="world",
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
         with st.expander("**Data**"):
             if data_selection == "full load hours":
@@ -94,7 +94,7 @@ def content_input_data(api: PtxboaAPI) -> None:
                 hover_name=hover_name,
             )
             fig.update_layout(xaxis_title=None, yaxis_title=ylabel)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
             what_is_a_boxplot()
 
     with st.container(border=True):

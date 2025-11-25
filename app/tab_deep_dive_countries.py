@@ -32,7 +32,7 @@ def content_deep_dive_countries(api: PtxboaAPI) -> None:
     ------
     None
     """
-    with st.popover("*Help*", use_container_width=True):
+    with st.popover("*Help*", width="stretch"):
         st.markdown(
             read_markdown_file("md/whatisthis_deep_dive_countries.md"),
             unsafe_allow_html=True,
@@ -72,7 +72,7 @@ def content_deep_dive_countries(api: PtxboaAPI) -> None:
         fig_map = plot_costs_on_map(
             api, costs_per_region, scope=ddc, cost_component="Total"
         )
-        st.plotly_chart(fig_map, use_container_width=True)
+        st.plotly_chart(fig_map, width="stretch")
 
         st.divider()
 
@@ -136,7 +136,7 @@ def content_deep_dive_countries(api: PtxboaAPI) -> None:
                 color_col=map_parameter,
                 scope=ddc,
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
         with st.expander("**Data**"):
             df = display_and_edit_input_data(
                 api,
@@ -154,5 +154,5 @@ def content_deep_dive_countries(api: PtxboaAPI) -> None:
                 hover_name="res_gen",
             )
             fig.update_layout(xaxis_title=None)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
             what_is_a_boxplot()

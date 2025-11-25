@@ -152,7 +152,7 @@ def display_user_changes(api):
                 }
             ).style.format(precision=3),
             hide_index=True,
-            use_container_width=True,
+            width="stretch",
         )
     else:
         st.write("You have not changed any values yet.")
