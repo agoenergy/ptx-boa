@@ -74,12 +74,12 @@ scp -r ptxboa2:ptx-boa_offline_optimization/optimization_cache/* .
 ssh ptxboa
 # pull latest image from dockerhub
 VERSION=2.1.1-main
-docker pull wingechr/ptx-boa:$VERSION-main
+docker pull wingechr/ptx-boa:$VERSION
 # stop and delete the currently running container "app"
 docker stop app
 docker rm app
 # start the latest image as "app"
-docker run -d -p 9000:80 -v /home/ptxboa/ptx-boa_offline_optimization/optimization_cache:/mnt/cache --name app --restart unless-stopped wingechr/ptx-boa:$VERSION-main
+docker run -d -p 9000:80 -v /home/ptxboa/ptx-boa_offline_optimization/optimization_cache:/mnt/cache --name app --restart unless-stopped wingechr/ptx-boa:$VERSION
 
 # see logs
 docker logs --follow app
