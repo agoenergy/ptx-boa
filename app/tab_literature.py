@@ -21,7 +21,7 @@ def _is_valid_url(url: str) -> bool:
 
 
 def content_literature(context_data: dict):
-    with st.popover("*Help*", use_container_width=True):
+    with st.popover("*Help*", width="stretch"):
         st.markdown(
             read_markdown_file("md/whatisthis_literature.md"), unsafe_allow_html=True
         )

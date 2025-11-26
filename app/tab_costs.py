@@ -19,7 +19,7 @@ from ptxboa.api import PtxboaAPI
 
 
 def content_costs(api: PtxboaAPI):
-    with st.popover("*Help*", use_container_width=True):
+    with st.popover("*Help*", width="stretch"):
         st.markdown(
             read_markdown_file("md/whatisthis_costs.md"), unsafe_allow_html=True
         )
@@ -61,7 +61,7 @@ def content_costs(api: PtxboaAPI):
         fig_map.update_layout(
             margin={"l": 10, "r": 10, "t": 10, "b": 10},
         )
-        st.plotly_chart(fig_map, use_container_width=True)
+        st.plotly_chart(fig_map, width="stretch")
 
         st.subheader("Cost distribution and cost components")
 
@@ -98,7 +98,7 @@ def content_costs(api: PtxboaAPI):
         doublefig.update_yaxes(tickformat=",")
         doublefig.update_layout(separators=". ")
 
-        st.plotly_chart(doublefig, use_container_width=True)
+        st.plotly_chart(doublefig, width="stretch")
 
         what_is_a_boxplot()
 

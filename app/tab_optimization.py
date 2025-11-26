@@ -16,7 +16,7 @@ from ptxboa.api import PtxboaAPI
 
 def content_optimization(api: PtxboaAPI) -> None:
 
-    with st.popover("*Help*", use_container_width=True):
+    with st.popover("*Help*", width="stretch"):
         st.markdown(
             read_markdown_file("md/whatisthis_optimization.md"), unsafe_allow_html=True
         )
@@ -52,7 +52,7 @@ def content_optimization(api: PtxboaAPI) -> None:
                 unsafe_allow_html=True,
             )
             fig = create_profile_figure_generation(df_sel)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
         with st.container(border=True):
             st.subheader("Capacities, full load hours and costs")
@@ -62,7 +62,7 @@ def content_optimization(api: PtxboaAPI) -> None:
             )
             st.dataframe(
                 res,
-                use_container_width=True,
+                width="stretch",
                 column_config={
                     "Capacity (MW)": st.column_config.NumberColumn(format="%.1f"),
                     "Output (MWh/a)": st.column_config.NumberColumn(format="%.0f"),

@@ -27,7 +27,7 @@ def content_market_scanning(api: PtxboaAPI, cd: dict) -> None:
     cd: dict
         context data.
     """
-    with st.popover("*Help*", use_container_width=True):
+    with st.popover("*Help*", width="stretch"):
         st.markdown(
             read_markdown_file("md/whatisthis_market_scanning.md"),
             unsafe_allow_html=True,
@@ -176,14 +176,14 @@ def content_market_scanning(api: PtxboaAPI, cd: dict) -> None:
         fig.update_yaxes(tickformat=",")
         fig.update_layout(separators=". ")
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
         # show data in tabular form:
         with st.expander("**Data**"):
             column_config = config_number_columns(df, format="%.0f")
             st.dataframe(
                 df,
-                use_container_width=True,
+                width="stretch",
                 column_config=column_config,
             )
 
@@ -281,7 +281,7 @@ def content_market_scanning(api: PtxboaAPI, cd: dict) -> None:
         fig.update_yaxes(tickformat=",")
         fig.update_layout(separators=". ")
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
         st.caption(
             (
@@ -293,7 +293,7 @@ def content_market_scanning(api: PtxboaAPI, cd: dict) -> None:
         )
 
         with st.expander("**Data**"):
-            st.dataframe(df, use_container_width=True)
+            st.dataframe(df, width="stretch")
             st.caption("Note: For EU, trasportation distance to France is used.")
             fn = "market_scanning_target_countries"
             prepare_and_download_df_as_excel(df, filename=fn)

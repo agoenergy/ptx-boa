@@ -124,7 +124,7 @@ def display_costs(
         current_selection=st.session_state[key],
         output_unit=output_unit,
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
     # add explainer for costs by supply chain comparison:
     if key == "chain":
@@ -144,7 +144,7 @@ def display_costs(
 
     with st.expander("**Data**"):
         column_config = config_number_columns(df_res, format=f"%.1f {output_unit}")
-        st.dataframe(df_res, use_container_width=True, column_config=column_config)
+        st.dataframe(df_res, width="stretch", column_config=column_config)
         fn = f"costs_per_{key}_{key_suffix}".strip("_")
         if st.session_state["user_changes_df"] is not None:
             fn = f"{fn}_{select_data}".lower().replace(" ", "_")
@@ -252,7 +252,7 @@ def _form_data_editor(
 
         df = st.data_editor(
             df,
-            use_container_width=True,
+            width="stretch",
             key=editor_key,
             num_rows="fixed",
             disabled=[index],
@@ -439,7 +439,7 @@ def display_and_edit_input_data(
             st.info("Full load hours data cannot be modified.")
             st.dataframe(
                 df,
-                use_container_width=True,
+                width="stretch",
                 column_config=column_config,
             )
         else:
@@ -457,7 +457,7 @@ def display_and_edit_input_data(
     else:
         st.dataframe(
             df,
-            use_container_width=True,
+            width="stretch",
             column_config=column_config,
         )
 
