@@ -10,7 +10,6 @@ repos:
         args: ['--maxkb=5000'] # we need some data files and images in the repository
       - id: check-merge-conflict
       - id: end-of-file-fixer
-      - id: fix-encoding-pragma
       - id: mixed-line-ending
       - id: no-commit-to-branch
 
