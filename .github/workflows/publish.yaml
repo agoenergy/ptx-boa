@@ -2,7 +2,7 @@ name: publish
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main","preview"]
 
 permissions:
   contents: read
@@ -23,4 +23,6 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: wingechr/ptx-boa:2.1.1
+          tags: wingechr/ptx-boa:2.1.1-${{ github.ref_name }}
+
+          
