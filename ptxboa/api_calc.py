@@ -10,6 +10,7 @@ from ptxboa.utils import annuity
 
 
 class PtxCalc:
+    """Main module for chain calculation."""
 
     @staticmethod
     def calculate(data: CalculateDataType) -> pd.DataFrame:
@@ -190,7 +191,8 @@ class PtxCalc:
         # sum_el is larger than 1.0
         norm_factor_el = sum_el
         idx = results["process_type"] == "Electricity generation"
-        assert idx.any()  # must have at least one entry
+        if not idx.any():
+            raise ValueError("Missing Electricity generation process")
         results.loc[idx, "values"] = results.loc[idx, "values"] * norm_factor_el
 
         return results
