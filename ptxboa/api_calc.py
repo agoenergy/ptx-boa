@@ -42,7 +42,7 @@ class PtxCalc:
             process_code = step_data["process_code"]
             is_transport = process_step in {
                 "SHP",
-                "SHP-OWN",
+                "SHP_OWN",
                 "PPLS",
                 "PPL",
                 "PPLX",

@@ -137,7 +137,7 @@ def main():
                 "POST_SHP",
                 "POST_PPL",
                 "SHP",
-                "SHP-OWN",
+                "SHP_OWN",
                 "PPLS",
                 "PPL",
                 "PPLX",
@@ -259,7 +259,7 @@ def main():
         ,"POST_SHP"
         ,"POST_PPL"
         ,"SHP"
-        ,"SHP-OWN"
+        ,"SHP_OWN"
         ,"PPLS"
         ,"PPL"
         ,"PPLX"

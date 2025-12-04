@@ -922,7 +922,7 @@ class DataHandler:
             if process_code:
                 result_main.append(process_step)
         is_shipping = transport_distances.get("SHP") or transport_distances.get(
-            "SHP-OWN"
+            "SHP_OWN"
         )
         is_pipeline = (
             transport_distances.get("PPLS")
@@ -985,7 +985,7 @@ class DataHandler:
         else:
             # use ship
             if ship_own_fuel:
-                dist_transp["SHP-OWN"] = dist_ship
+                dist_transp["SHP_OWN"] = dist_ship
             else:
                 dist_transp["SHP"] = dist_ship
 
