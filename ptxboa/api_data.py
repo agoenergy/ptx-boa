@@ -216,9 +216,15 @@ class _ParameterGetter:
 
     def get_process_params(self, process_code: ProcessCodeType):
         result = {}
-        result["EFF"] = self.get_parameter_value_w_default(
+        # https://github.com/agoenergy/ptx-boa/issues/581
+        # (new) effective efficiency = (process) efficiency * (1 - leakage)
+        eff = self.get_parameter_value_w_default(
             "EFF", process_code=process_code, default=1
         )
+        leakage = self.get_parameter_value_w_default(
+            "LKG", process_code=process_code, default=0
+        )
+        result["EFF"] = eff * (1 - leakage)
         result["FLH"] = self.get_parameter_value_w_default(
             "FLH", process_code=process_code, default=7000  # TODO: default?
         )
