@@ -400,6 +400,7 @@ ProcessCodeType = Literal[
     "DRI",
     "DRI-S",
     "DRI-SB",
+    "EAF",
     "EFUELSYN",
     "EL-STR",
     "EL-TRANS",
@@ -417,6 +418,7 @@ ProcessCodeType = Literal[
     "LOHC-REC",
     "LOHC-S",
     "LOHC-SB",
+    "NG-DRI",
     "NH3-REC",
     "NH3-S",
     "NH3-SB",
@@ -453,6 +455,7 @@ ProcessCodeValues = [
     "DRI",
     "DRI-S",
     "DRI-SB",
+    "EAF",
     "EFUELSYN",
     "EL-STR",
     "EL-TRANS",
@@ -470,6 +473,7 @@ ProcessCodeValues = [
     "LOHC-REC",
     "LOHC-S",
     "LOHC-SB",
+    "NG-DRI",
     "NH3-REC",
     "NH3-S",
     "NH3-SB",
@@ -500,6 +504,7 @@ FlowCodeType = Literal[
     "H2-L",
     "H2O-L",
     "HEAT",
+    "IOP-S",
     "LOHC-L",
     "N2-G",
     "NH3-L",
@@ -518,6 +523,7 @@ FlowCodeValues = [
     "H2-L",
     "H2O-L",
     "HEAT",
+    "IOP-S",
     "LOHC-L",
     "N2-G",
     "NH3-L",
@@ -636,6 +642,7 @@ ChainNameType = Literal[
     "Methanol (AEL)",
     "Methanol (PEM)",
     "Methanol (SOEC)",
+    "TODO: Blue Iron",
 ]
 ChainNameValues = [
     "Ammonia (AEL)",
@@ -665,6 +672,7 @@ ChainNameValues = [
     "Methanol (AEL)",
     "Methanol (PEM)",
     "Methanol (SOEC)",
+    "TODO: Blue Iron",
 ]
 
 

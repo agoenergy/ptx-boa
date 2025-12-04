@@ -142,6 +142,7 @@ def main():
                 "PPL",
                 "PPLX",
                 "PPLR",
+                "POST",
             ],
         ),
         create_literal("ResultCost", ["CAPEX", "OPEX", "FLOW", "LC"]),
