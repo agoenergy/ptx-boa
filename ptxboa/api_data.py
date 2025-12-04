@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Handle data queries for api calculation."""
 
 from functools import cache
@@ -10,10 +9,8 @@ import numpy as np
 import pandas as pd
 
 from ptxboa import KEY_SEPARATOR, PROFILES_DIR, STATIC_DATA_DIR
-from ptxboa.static._types import CalculateDataType
-
-from .api_optimize import PtxOpt
-from .static import (
+from ptxboa.api_optimize import PtxOpt
+from ptxboa.static import (
     ChainNameType,
     DimensionType,
     FlowCodeType,
@@ -31,9 +28,12 @@ from .static import (
     TransportValues,
     YearValues,
 )
+from ptxboa.static._types import CalculateDataType
 
 
-def _assign_key(df: pd.DataFrame, key_columns: str | List[str]) -> pd.DataFrame:
+def _assign_key(
+    df: pd.DataFrame, key_columns: str | List[str] | Tuple[str]
+) -> pd.DataFrame:
     if isinstance(key_columns, str):
         key_columns = [key_columns]
     key_columns = list(key_columns)  # in case we got tuple
@@ -45,13 +45,13 @@ def _assign_key(df: pd.DataFrame, key_columns: str | List[str]) -> pd.DataFrame:
 
 @cache
 def _load_data(
-    data_dir: str | Path, name: str, key_columns: str | Tuple[str] = None
+    data_dir: str | Path, name: str, key_columns: str | Tuple[str] | None = None
 ) -> pd.DataFrame:
     filepath = Path(data_dir) / f"{name}.csv"
     df = pd.read_csv(
         filepath,
         # need to define custom na values due to Alpha2 code of Namibia
-        na_values={
+        na_values=[
             "N/A",
             "n/a",
             "NULL",
@@ -62,7 +62,7 @@ def _load_data(
             "-nan",
             "",
             "None",
-        },
+        ],
         keep_default_na=False,
     ).drop(columns="key", errors="ignore")
     # numerical columns should never be empty, dimension columns
@@ -179,9 +179,9 @@ class _ParameterGetter:
     def get_parameter_value_w_default(
         self,
         parameter_code: ParameterCodeType,
-        process_code: ProcessCodeType = "",
-        flow_code: FlowCodeType = "",
-        default: float = None,
+        process_code: ProcessCodeType | Literal[""] = "",
+        flow_code: FlowCodeType | Literal[""] = "",
+        default: float | None = None,
     ):
         return self.data_handler._get_parameter_value(
             parameter_code=parameter_code,
@@ -216,9 +216,16 @@ class _ParameterGetter:
 
     def get_process_params(self, process_code: ProcessCodeType):
         result = {}
-        result["EFF"] = self.get_parameter_value_w_default(
+        # https://github.com/agoenergy/ptx-boa/issues/581
+        # (new) effective efficiency = (process) efficiency * (1 - leakage)
+        eff = self.get_parameter_value_w_default(
             "EFF", process_code=process_code, default=1
         )
+        leakage = self.get_parameter_value_w_default(
+            "LKG", process_code=process_code, default=0
+        )
+        result["EFF"] = eff * (1 - leakage)
+
         result["FLH"] = self.get_parameter_value_w_default(
             "FLH", process_code=process_code, default=7000  # TODO: default?
         )
@@ -283,11 +290,12 @@ class DataHandler:
         self,
         scenario: ScenarioType,
         user_data: None | pd.DataFrame = None,
-        data_dir: str = None,
-        cache_dir: str = None,
+        data_dir: str | None = None,
+        cache_dir: str | None = None,
     ):
 
-        assert scenario in ScenarioValues
+        if scenario not in ScenarioValues:
+            raise KeyError(scenario)
 
         self.scenario = scenario
         self.user_data = user_data
@@ -425,7 +433,7 @@ class DataHandler:
 
         # we only can user DataFrame.update with matching index values
         for key, value in user_data["value"].items():
-            scenario_data.at[key, "value"] = value
+            scenario_data.at[key, "value"] = value  # type:ignore
 
         return scenario_data
 
@@ -457,14 +465,14 @@ class DataHandler:
     def _get_parameter_value(
         self,
         parameter_code: ParameterCodeType,
-        process_code: ProcessCodeType = None,
-        flow_code: FlowCodeType = None,
-        source_region_code: SourceRegionCodeType = None,
-        target_country_code: TargetCountryCodeType = None,
-        process_code_res: ProcessCodeType = None,
-        process_code_ely: ProcessCodeType = None,
-        process_code_deriv: ProcessCodeType = None,
-        default: float = None,
+        process_code: ProcessCodeType | None = None,
+        flow_code: FlowCodeType | None = None,
+        source_region_code: SourceRegionCodeType | None = None,
+        target_country_code: TargetCountryCodeType | None = None,
+        process_code_res: ProcessCodeType | None = None,
+        process_code_ely: ProcessCodeType | None = None,
+        process_code_deriv: ProcessCodeType | None = None,
+        default: float | None = None,
         use_user_data: bool = True,
     ) -> float:
         """
@@ -608,12 +616,12 @@ class DataHandler:
 
         def _get_value(
             df: pd.DataFrame, params: dict, keys: list, required_keys: set
-        ) -> float:
+        ) -> float | None:
             key = KEY_SEPARATOR.join(
                 [params[k] if k in required_keys else "" for k in keys]
             )
             try:
-                return df.at[key, "value"]
+                return df.at[key, "value"]  # type:ignore
             except KeyError:
                 return None
 
@@ -741,7 +749,7 @@ class DataHandler:
         df_processes = self.get_dimension("process")
         df_flows = self.get_dimension("flow")
 
-        chain = dict(self.get_dimension("chain").loc[chain_name])
+        chain: dict = dict(self.get_dimension("chain").loc[chain_name])
         process_code_ely = chain["ELY"]
         process_code_deriv = chain["DERIV"]
         chain["RES"] = process_code_res
@@ -766,7 +774,7 @@ class DataHandler:
 
         # get general parameters
 
-        result = {
+        result: CalculateDataType = {
             "flh_opt_process": {},
             "main_process_chain": [],
             "transport_process_chain": [],
@@ -842,7 +850,8 @@ class DataHandler:
 
         # If RES=Hybrid: we also need PV and Wind-On
         if process_code_res == "RES-HYBR":
-            for pc in ["PV-FIX", "WIND-ON"]:
+            pc: ProcessCodeType
+            for pc in ["PV-FIX", "WIND-ON"]:  # type:ignore
                 result["flh_opt_process"][pc] = pg.get_process_params(pc)
 
         return result
@@ -878,7 +887,7 @@ class DataHandler:
             "region": "region",
             "country": "country",
         }
-        target_dim_name = dimension_parameter_mapping.get(dimension)
+        target_dim_name = dimension_parameter_mapping[dimension]
         df = cls.get_dimension(dimension)
         return df.loc[
             df[target_dim_name + "_name"] == parameter_name, target_dim_name + "_code"
@@ -889,18 +898,24 @@ class DataHandler:
         cls, process_codes: List[ProcessCodeType], final_flow_code: FlowCodeType
     ) -> None:
         df_processes = cls.get_dimension("process")
-        flow_code = ""  # initial flow code
+        flow_code: FlowCodeType | Literal[""] = ""  # initial flow code
         for process_code in process_codes:
             process = df_processes.loc[process_code]
             flow_code_in = process["main_flow_code_in"]
-            assert flow_code == flow_code_in
-            flow_code = process["main_flow_code_out"]
-        assert flow_code == final_flow_code
+            if flow_code != flow_code_in:
+                raise AssertionError(
+                    f"flow_code != flow_code_in: {flow_code} != {flow_code_in}"
+                )
+            flow_code = process["main_flow_code_out"]  # type:ignore
+        if flow_code != final_flow_code:
+            raise AssertionError(
+                f"flow_code != flow_code_in: {flow_code} != {final_flow_code}"
+            )
 
     @classmethod
     def _filter_chain_processes(
         cls, chain: dict, transport_distances: Dict[ProcessStepType, float]
-    ) -> List[ProcessStepType]:
+    ) -> tuple[list, list]:
         result_main = []
         result_transport = []
         for process_step in ["RES", "EL_STR", "ELY", "H2_STR", "DERIV"]:
@@ -925,7 +940,8 @@ class DataHandler:
 
         for k, v in transport_distances.items():
             if v:
-                assert chain[k]
+                if not chain[k]:
+                    raise ValueError(f"Missing: {k}")
                 result_transport.append(k)
 
         if is_shipping:

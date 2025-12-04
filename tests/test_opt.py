@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test flh optimization."""
 
 import logging

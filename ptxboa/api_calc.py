@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
 """Classes for main process chain calculation."""
-
 
 import pandas as pd
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Unittests for ptxboa_functions module."""
 
 import logging

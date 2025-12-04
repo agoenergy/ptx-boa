@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
 """Api for calculations for webapp."""
-
 
 from pathlib import Path
 from typing import List, Tuple

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Data interface for optimized data of FLH."""
 
 import datetime
@@ -10,19 +9,25 @@ import re
 import shutil
 import tempfile
 from pathlib import Path
+from typing import Union
 
 import pandas as pd
 from pypsa import Network
 
 from flh_opt import __version__ as flh_opt_version
-from flh_opt._types import OptInputDataType, OptOutputDataType, SecProcessInputDataType
+from flh_opt._types import (
+    OptInputDataType,
+    OptOutputDataType,
+    ProcessCodeResType,
+    SecProcessInputDataType,
+)
 from flh_opt.api_opt import optimize
 from ptxboa import logger
 from ptxboa.static._types import CalculateDataType
 from ptxboa.utils import SingletonMeta, annuity, serialize_for_hashing
 
 
-def get_data_hash_md5(key: object) -> str:
+def get_data_hash_md5(key: Union[None, int, float, str, bool, dict, list]) -> str:
     """Create md5 hash of data.
 
     Parameters
@@ -48,9 +53,10 @@ def get_data_hash_md5(key: object) -> str:
 
 
 class TempFile:
+    """Custom temporary file handler."""
+
     def __init__(self, filepath):
         self.filepath = filepath
-        self.filepath_tmp = None  # create in __enter__
 
     def __enter__(self):
         # check existing files
@@ -128,7 +134,7 @@ class ProfilesFLH(metaclass=SingletonMeta):
             region_res.append(match.groups())
         return region_res
 
-    def _load_all(self) -> dict:
+    def _load_all(self) -> pd.DataFrame:
         """Load all FLH data from profiles.
 
         Profiles need to be weighted first.
@@ -146,10 +152,10 @@ class ProfilesFLH(metaclass=SingletonMeta):
             we = pd.read_csv(weights_file, index_col=["period_id", "TimeStep"])
             # multiply columns in profiles with weightings
             pr_weighted = (
-                pr.mul(we.squeeze(), axis=0)
+                pr.mul(we.squeeze(), axis=0)  # type:ignore
                 .reset_index(drop=True)
                 .stack()
-                .rename("specific_generation")
+                .rename("specific_generation")  # type:ignore
             )
             pr_weighted.index = pr_weighted.index.set_names("re_source", level=-1)
             pr_weighted = pr_weighted.reset_index()
@@ -184,8 +190,9 @@ class ProfilesFLH(metaclass=SingletonMeta):
 
 
 class PtxOpt:
+    """Connection to optimizer module."""
 
-    def __init__(self, profiles_path: Path, cache_dir: Path):
+    def __init__(self, profiles_path: Path, cache_dir: str | None = None):
         self.cache_dir = Path(cache_dir) if cache_dir else None
         self.profiles_hashes = ProfilesHashes(profiles_path)
         self.profiles_flh = ProfilesFLH(profiles_path)
@@ -228,6 +235,8 @@ class PtxOpt:
         return network, metadata
 
     def _get_cache_filepath(self, hashsum: str, suffix=".pickle") -> str:
+        if not self.cache_dir:
+            raise FileNotFoundError("no cache defined")
         # group twice by first two chars (256 combinations)
         dirpath = self.cache_dir / hashsum[0:2] / hashsum[2:4]
         os.makedirs(dirpath, exist_ok=True)
@@ -240,7 +249,7 @@ class PtxOpt:
 
         src_reg = input_data["context"]["source_region_code"]
 
-        result = {
+        result: OptInputDataType = {
             "SOURCE_REGION_CODE": src_reg,
             "RES": [],
             "ELY": None,
@@ -255,12 +264,13 @@ class PtxOpt:
             "H2_STR": None,
             "CO2": None,
             "H2O": None,
-        }
+        }  # type:ignore # TODO: update OptInputDataType
 
         for step in input_data["main_process_chain"]:
             if step["step"] == "RES":
                 if step["process_code"] == "RES-HYBR":
-                    for pc in ["PV-FIX", "WIND-ON"]:
+                    pc: ProcessCodeResType
+                    for pc in ["PV-FIX", "WIND-ON"]:  # type:ignore
                         proc_data = input_data["flh_opt_process"][pc]
                         result["RES"].append(
                             {
@@ -355,7 +365,8 @@ class PtxOpt:
                 if step["step"] == "RES":
                     output_res = opt_output_data["RES"]
                     if step["process_code"] == "RES-HYBR":
-                        assert len(output_res) == 2
+                        if len(output_res) != 2:
+                            raise ValueError("RES-HYBR needs 2 RES processes")
                         step["FLH"] = sum(
                             x["FLH"] * x["SHARE_FACTOR"] for x in output_res
                         )
@@ -367,7 +378,9 @@ class PtxOpt:
                                 for x in output_res
                             )
                     else:
-                        assert len(output_res) == 1
+                        if len(output_res) != 1:
+                            raise ValueError("must specify exactly 1 RES process")
+
                         flh = output_res[0]["FLH"]
                         step["FLH"] = flh
 

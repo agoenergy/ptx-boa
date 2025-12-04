@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """Unittests for ptxboa api_data module."""
+
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
