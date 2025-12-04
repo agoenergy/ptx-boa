@@ -769,6 +769,7 @@ ProcessStepType = Literal[
     "PPL",
     "PPLX",
     "PPLR",
+    "POST",
 ]
 ProcessStepValues = [
     "EL_STR",
@@ -785,6 +786,7 @@ ProcessStepValues = [
     "PPL",
     "PPLX",
     "PPLR",
+    "POST",
 ]
 
 

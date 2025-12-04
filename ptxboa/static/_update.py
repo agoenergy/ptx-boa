@@ -264,6 +264,7 @@ def main():
         ,"PPL"
         ,"PPLX"
         ,"PPLR"
+        ,"POST"
         ,"FLOW_OUT"
         ,"CAN_PIPELINE"
         FROM "ptxboa_chains"

@@ -950,6 +950,10 @@ class DataHandler:
             if chain["POST_PPL"]:  # not all have preprocessing
                 result_transport.append("POST_PPL")
 
+        # optional postprocessing after transport in target country
+        if chain["POST"]:
+            result_transport.append("POST")
+
         # CHECK that flow chain is correct
         cls._validate_process_chain(
             [chain[p] for p in result_main + result_transport],
