@@ -3,7 +3,7 @@
 from functools import cache
 from itertools import product
 from pathlib import Path
-from typing import Dict, List, Literal, Tuple
+from typing import Dict, Iterable, List, Literal, Tuple
 
 import numpy as np
 import pandas as pd
@@ -262,13 +262,9 @@ class _ParameterGetter:
         result["CONV"] = self.flow_conv_params(process_code)
         return result
 
-    def get_flow_params(self):
-        # TODO: only get used flows?
-        secondary_flows = list(
-            self.df_flows.loc[self.df_flows["secondary_flow"], "flow_code"]
-        )
+    def get_flow_params(self, flow_codes: Iterable[FlowCodeType]):
         result = {}
-        for flow_code in secondary_flows:
+        for flow_code in flow_codes:
             result[flow_code] = self.get_parameter_value_w_default(
                 "SPECCOST", flow_code=flow_code
             )
@@ -789,7 +785,6 @@ class DataHandler:
         result["parameter"]["CALOR"] = pg.get_parameter_value_w_default(
             parameter_code="CALOR", flow_code=chain["FLOW_OUT"]
         )
-        result["parameter"]["SPECCOST"] = pg.get_flow_params()
 
         # get transport distances and options
         # TODO? add these also to data
@@ -816,36 +811,42 @@ class DataHandler:
             chain, transport_distances
         )
 
-        used_flows = set()
+        used_flows_main: set[FlowCodeType] = set()
         for process_step in chain_steps_main:
             process_code = chain[process_step]
-            res = pg.get_process_params(process_code)
-            res["step"] = process_step
-            res["process_code"] = process_code
-            result["main_process_chain"].append(res)
-            used_flows = used_flows | set(res["CONV"])
+            pp = pg.get_process_params(process_code)
+            pp["step"] = process_step
+            pp["process_code"] = process_code
+            result["main_process_chain"].append(pp)
+            used_flows_main = used_flows_main | set(pp["CONV"])
 
+        used_flows_secondary: set[FlowCodeType] = set()
+        provided_flows_secondary: set[FlowCodeType] = set()
         for flow_code, process_code in secondary_processes.items():
             if not process_code:
                 continue
-            if flow_code not in used_flows:
+            if flow_code not in used_flows_main:
                 continue
-            res = pg.get_process_params(process_code)
-            res["process_code"] = process_code
-            result["secondary_process"][flow_code] = res
+            pp = pg.get_process_params(process_code)
+            pp["process_code"] = process_code
+            result["secondary_process"][flow_code] = pp
+            used_flows_secondary = used_flows_secondary | set(pp["CONV"])
+            provided_flows_secondary.add(flow_code)
 
+        used_flows_transport: set[FlowCodeType] = set()
         for process_step in chain_steps_transport:
             process_code = chain[process_step]
             if not process_code:
                 raise Exception((process_step, chain))
             if process_step in transport_distances:
                 dist_transport = transport_distances[process_step]
-                res = pg.get_transport_process_params(process_code, dist_transport)
+                pp = pg.get_transport_process_params(process_code, dist_transport)
             else:  # pre/post
-                res = pg.get_process_params(process_code)
-            res["step"] = process_step
-            res["process_code"] = process_code
-            result["transport_process_chain"].append(res)
+                pp = pg.get_process_params(process_code)
+            pp["step"] = process_step
+            pp["process_code"] = process_code
+            result["transport_process_chain"].append(pp)
+            used_flows_transport = used_flows_transport | set(pp["CONV"])
 
         # If RES=Hybrid: we also need PV and Wind-On
         if process_code_res == "RES-HYBR":
@@ -853,6 +854,19 @@ class DataHandler:
             for pc in ["PV-FIX", "WIND-ON"]:  # type:ignore
                 result["flh_opt_process"][pc] = pg.get_process_params(pc)
 
+        used_flows_always_for_opt: set[FlowCodeType] = {
+            "H2O-L",
+            "CO2-G",
+            "N2-G",
+            "HEAT",
+        }
+        used_flows: set[FlowCodeType] = (
+            (used_flows_main - provided_flows_secondary)
+            | used_flows_secondary
+            | used_flows_transport
+            | used_flows_always_for_opt
+        )
+        result["parameter"]["SPECCOST"] = pg.get_flow_params(used_flows)
         return result
 
     @classmethod
