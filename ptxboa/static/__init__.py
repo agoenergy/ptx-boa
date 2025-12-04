@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """DO NOT EDIT (created by _update_static.py)."""
 
 from typing import Literal
@@ -424,7 +423,6 @@ ProcessCodeType = Literal[
     "NH3SYN",
     "PEM-EL",
     "PV-FIX",
-    "PV-TRK",
     "REGASATR",
     "RES-HYBR",
     "SOEC-EL",
@@ -478,7 +476,6 @@ ProcessCodeValues = [
     "NH3SYN",
     "PEM-EL",
     "PV-FIX",
-    "PV-TRK",
     "REGASATR",
     "RES-HYBR",
     "SOEC-EL",
@@ -717,20 +714,12 @@ SecProcH2OType = Literal["Sea Water desalination"]
 SecProcH2OValues = ["Sea Water desalination"]
 
 
-ResGenType = Literal[
-    "PV tilted", "PV tracking", "Wind-PV-Hybrid", "Wind Offshore", "Wind Onshore"
-]
-ResGenValues = [
-    "PV tilted",
-    "PV tracking",
-    "Wind-PV-Hybrid",
-    "Wind Offshore",
-    "Wind Onshore",
-]
+ResGenType = Literal["PV tilted", "Wind-PV-Hybrid", "Wind Offshore", "Wind Onshore"]
+ResGenValues = ["PV tilted", "Wind-PV-Hybrid", "Wind Offshore", "Wind Onshore"]
 
 
-ProcessCodeResType = Literal["PV-FIX", "PV-TRK", "RES-HYBR", "WIND-OFF", "WIND-ON"]
-ProcessCodeResValues = ["PV-FIX", "PV-TRK", "RES-HYBR", "WIND-OFF", "WIND-ON"]
+ProcessCodeResType = Literal["PV-FIX", "RES-HYBR", "WIND-OFF", "WIND-ON"]
+ProcessCodeResValues = ["PV-FIX", "RES-HYBR", "WIND-OFF", "WIND-ON"]
 
 
 DimensionType = Literal[

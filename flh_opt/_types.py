@@ -6,7 +6,7 @@ import random
 import string
 from typing import Dict, List, Literal, TypedDict, get_args, get_origin
 
-ProcessCodeResType = Literal["PV-FIX", "PV-TRK", "RES-HYBR", "WIND-OFF", "WIND-ON"]
+ProcessCodeResType = Literal["PV-FIX", "RES-HYBR", "WIND-OFF", "WIND-ON"]
 ProcessCodeDerivType = Literal["CH3OHSYN", "CH4SYN", "DRI", "EFUELSYN", "NH3SYN"]
 SecondaryFlowType = Literal[
     "BFUEL-L",
