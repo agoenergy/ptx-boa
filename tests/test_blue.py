@@ -147,7 +147,11 @@ def test_new_blue_chain(scenario, kwargs, request):
     # TODO: our output is only cost, we need to restructure
     # calculation module to also get flow values
     assert _rec_approx(values) == [
-        {"process_step": "DERIV", "main_output": 0.8, "flows": {"EL": 0.24}},
-        {"process_step": "SHP", "main_output": 0.8, "flows": {}},
-        {"process_step": "POST", "main_output": 0.72, "flows": {}},
+        {
+            "process_step": "DERIV",
+            "main_output": 1.111111111111111,
+            "flows": {"EL": 0.3333333333333333},
+        },
+        {"process_step": "SHP", "main_output": 1.111111111111111, "flows": {}},
+        {"process_step": "POST", "main_output": 1.0, "flows": {}},
     ]

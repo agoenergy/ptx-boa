@@ -201,6 +201,18 @@ class PtxCalc:
         norm_factor = 1 / main_output_value
         results_cost["values"] = results_cost["values"] * norm_factor
 
+        # rescale values
+        for results_flows in results_flows_chain:
+            results_flows["main_output"] *= norm_factor
+            for flow in results_flows["flows"]:
+                results_flows["flows"][flow] *= norm_factor
+
+        results_flows = {
+            "process_step": process_step,
+            "main_output": main_output_value,
+            "flows": {},
+        }
+
         # rescale again ONLY RES to account for additionally needed electricity
         # sum_el is larger than 1.0
 
@@ -213,5 +225,12 @@ class PtxCalc:
             results_cost.loc[idx, "values"] = (
                 results_cost.loc[idx, "values"] * norm_factor_el
             )
+            # rescale values
+            for results_flows in [
+                rf for rf in results_flows_chain if rf["process_step"] == "RES"
+            ]:
+                results_flows["main_output"] *= norm_factor
+                for flow in results_flows["flows"]:
+                    results_flows["flows"][flow] *= norm_factor
 
         return results_flows_chain, results_cost
