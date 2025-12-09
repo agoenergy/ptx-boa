@@ -59,14 +59,20 @@ def test_new_blue_chain(scenario, kwargs, request):
     user_data = pd.DataFrame(
         [
             {
-                "parameter_code": "LKG",
                 "process_code": "NG-DRI",
+                "parameter_code": "LKG",
                 "value": 0.2,
             },
             {
-                "parameter_code": "EFF",
                 "process_code": "EAF",
+                "parameter_code": "EFF",
                 "value": 0.9,
+            },
+            {
+                "process_code": "NG-DRI",
+                "flow_code": "EL",
+                "parameter_code": "CONV",
+                "value": 0.3,
             },
         ],
         columns=[
@@ -86,59 +92,62 @@ def test_new_blue_chain(scenario, kwargs, request):
     calculation_data = data_handler.get_calculation_data(**kwargs, optimize_flh=False)
 
     assert _rec_approx(calculation_data) == {
-        "context": {
-            "source_region_code": "MAR",
-            "target_country_code": "DEU",
-        },
         "flh_opt_process": {},
         "main_process_chain": [
             {
-                "CAPEX": 0,
-                "CONV": {},
-                "EFF": 1 * (1 - 0.2),  # !! effective efficency reduced by leakage
+                "EFF": 0.8,
                 "FLH": 7000,
                 "LIFETIME": 20,
+                "CAPEX": 0,
                 "OPEX-F": 0,
                 "OPEX-O": 0,
-                "process_code": "NG-DRI",
+                "CONV": {"EL": 0.3},
                 "step": "DERIV",
-            },
+                "process_code": "NG-DRI",
+            }
         ],
-        "parameter": {
-            "CALOR": 1.0,
-            "SPECCOST": {
-                "CO2-G": 0.0445186199587845,
-                "H2O-L": 0.0013737954502618,
-                "HEAT": 0.0577,
-                "N2-G": 0.01154,
-            },
-            "WACC": 0.0826130467109222,
-        },
-        "secondary_process": {},
         "transport_process_chain": [
             {
-                "CONV": {},
                 "DIST": 2668.15,
                 "EFF": 1.0,
-                "OPEX-O": 0,
                 "OPEX-T": 3.765382979887925e-07,
-                "process_code": "DRI-SB",
+                "OPEX-O": 0,
+                "CONV": {},
                 "step": "SHP",
+                "process_code": "DRI-SB",
             },
             {
-                "CAPEX": 0,
-                "CONV": {},
-                "EFF": 0.9,  # user data
+                "EFF": 0.9,
                 "FLH": 7000,
                 "LIFETIME": 20,
+                "CAPEX": 0,
                 "OPEX-F": 0,
                 "OPEX-O": 0,
-                "process_code": "EAF",
+                "CONV": {},
                 "step": "POST",
+                "process_code": "EAF",
             },
         ],
+        "secondary_process": {},
+        "parameter": {
+            "WACC": 0.0826130467109222,
+            "CALOR": 1.0,
+            "SPECCOST": {
+                "HEAT": 0.0577,
+                "EL": 0.08078,
+                "CO2-G": 0.0445186199587845,
+                "H2O-L": 0.0013737954502618,
+                "N2-G": 0.01154,
+            },
+        },
+        "context": {"source_region_code": "MAR", "target_country_code": "DEU"},
     }
 
-    cost_result_df = PtxCalc.calculate(calculation_data)  # noqa
+    values, _cost_result_df = PtxCalc.calculate(calculation_data)  # noqa
     # TODO: our output is only cost, we need to restructure
     # calculation module to also get flow values
+    assert _rec_approx(values) == [
+        {"process_step": "DERIV", "main_output": 0.8, "flows": {"EL": 0.24}},
+        {"process_step": "SHP", "main_output": 0.8, "flows": {}},
+        {"process_step": "POST", "main_output": 0.72, "flows": {}},
+    ]

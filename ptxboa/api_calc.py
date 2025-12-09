@@ -15,7 +15,7 @@ class PtxCalc:
     """Main module for chain calculation."""
 
     @staticmethod
-    def calculate(data: CalculateDataType) -> pd.DataFrame:
+    def calculate(data: CalculateDataType) -> tuple[list, pd.DataFrame]:
         """Calculate results."""
         df_processes = DataHandler.get_dimension("process")
         df_flows = DataHandler.get_dimension("flow")
@@ -38,10 +38,12 @@ class PtxCalc:
         # accumulate needed electric input
         step_before_transport = True
         sum_el = main_output_value
-        results = []
+        results_cost = []
+        results_flows_chain = []
 
         # iterate over steps in chain
         for step_data in data["main_process_chain"] + data["transport_process_chain"]:
+
             process_step = step_data["step"]
             process_code = step_data["process_code"]
             is_transport = process_step in {
@@ -56,10 +58,17 @@ class PtxCalc:
 
             eff = step_data["EFF"]
 
+            main_input_value = main_output_value
             # storage efficiency must not affect main chain scaling factors:
             if process_code not in ["EL-STR", "H2-STR"]:
-                main_input_value = main_output_value
                 main_output_value = main_input_value * eff
+
+            results_flows = {
+                "process_step": process_step,
+                "main_output": main_output_value,
+                "flows": {},
+            }
+            results_flows_chain.append(results_flows)
 
             opex_o = step_data["OPEX-O"]
 
@@ -82,8 +91,10 @@ class PtxCalc:
                 capex_ann = annuity(wacc, lifetime, capex)
                 opex = opex_f * capacity + opex_o * main_output_value
 
-                results.append((result_process_type, process_code, "CAPEX", capex_ann))
-                results.append((result_process_type, process_code, "OPEX", opex))
+                results_cost.append(
+                    (result_process_type, process_code, "CAPEX", capex_ann)
+                )
+                results_cost.append((result_process_type, process_code, "OPEX", opex))
 
             else:
                 step_before_transport = False
@@ -91,11 +102,12 @@ class PtxCalc:
                 dist_transport = step_data["DIST"]
                 opex_ot = opex_t * dist_transport
                 opex = (opex_o + opex_ot) * main_output_value
-                results.append((result_process_type, process_code, "OPEX", opex))
+                results_cost.append((result_process_type, process_code, "OPEX", opex))
 
             # create flows for process step
             for flow_code, conv in step_data["CONV"].items():
                 flow_value = main_output_value * conv
+                results_flows["flows"][flow_code] = flow_value
 
                 sec_process_data = data["secondary_process"].get(flow_code)
 
@@ -117,10 +129,10 @@ class PtxCalc:
                     capex_ann = annuity(wacc, lifetime, capex)
                     opex = opex_f * capacity + opex_o * flow_value
 
-                    results.append(
+                    results_cost.append(
                         (sec_result_process_type, sec_process_code, "CAPEX", capex_ann)
                     )
-                    results.append(
+                    results_cost.append(
                         (sec_result_process_type, sec_process_code, "OPEX", opex)
                     )
 
@@ -142,7 +154,7 @@ class PtxCalc:
                             or sec_result_process_type
                         )
 
-                        results.append(
+                        results_cost.append(
                             (
                                 sec_result_process_type,
                                 sec_process_code,
@@ -172,32 +184,34 @@ class PtxCalc:
                         or result_process_type
                     )
 
-                    results.append(
+                    results_cost.append(
                         (flow_result_process_type, process_code, "FLOW", flow_cost)
                     )
 
         # convert to DataFrame
         dim_columns = ["process_type", "process_subtype", "cost_type"]
-        results = pd.DataFrame(results, columns=dim_columns + ["values"])
+        results_cost = pd.DataFrame(results_cost, columns=dim_columns + ["values"])
 
         # sum over dim_columns
-        results = results.groupby(dim_columns).sum().reset_index()
+        results_cost = results_cost.groupby(dim_columns).sum().reset_index()
 
         # normalization:
         # scale so that we start with 1 EL input,
         # rescale so that we have 1 unit output
         norm_factor = 1 / main_output_value
-        results["values"] = results["values"] * norm_factor
+        results_cost["values"] = results_cost["values"] * norm_factor
 
         # rescale again ONLY RES to account for additionally needed electricity
         # sum_el is larger than 1.0
 
         # TODO: for blue hydrogen chains, there is no RES
-        norm_factor_el = sum_el
-        idx = results["process_type"] == "Electricity generation"
+        idx = results_cost["process_type"] == "Electricity generation"
         if not idx.any():
             logger.warning("Missing Electricity generation process")
         else:
-            results.loc[idx, "values"] = results.loc[idx, "values"] * norm_factor_el
+            norm_factor_el = sum_el
+            results_cost.loc[idx, "values"] = (
+                results_cost.loc[idx, "values"] * norm_factor_el
+            )
 
-        return results
+        return results_flows_chain, results_cost

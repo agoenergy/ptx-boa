@@ -93,6 +93,7 @@ class OptOutputDataType(TypedDict):
     DESAL: Dict[Literal["FLH"], float]
     EL_STR: Dict[Literal["CAP_F"], float]
     H2_STR: Dict[Literal["CAP_F"], float]
+    model_status: tuple
 
 
 def _create_example(t: type):

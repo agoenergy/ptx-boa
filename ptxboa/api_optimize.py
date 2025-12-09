@@ -198,7 +198,7 @@ class PtxOpt:
         self.profiles_flh = ProfilesFLH(profiles_path)
 
     def _save(
-        self, filepath: str, data: object, network: Network, metadata: dict
+        self, filepath: Path | str, data: object, network: Network, metadata: dict
     ) -> None:
 
         filepath = str(filepath)
@@ -217,12 +217,12 @@ class PtxOpt:
             with open(filepath_tmp, "w", encoding="utf-8") as file:
                 json.dump(metadata, file, indent=2, ensure_ascii=False)
 
-    def _load(self, filepath: str) -> object:
+    def _load(self, filepath: Path) -> object:
         with open(filepath, "rb") as file:
             data = pickle.load(file)  # noqa S301
         return data
 
-    def _load_network(self, filepath: str):
+    def _load_network(self, filepath: Path):
         filepath_nw = str(filepath) + ".network.nc"
 
         network = Network()
@@ -234,14 +234,14 @@ class PtxOpt:
 
         return network, metadata
 
-    def _get_cache_filepath(self, hashsum: str, suffix=".pickle") -> str:
+    def _get_cache_filepath(self, hashsum: str, suffix=".pickle") -> Path:
         if not self.cache_dir:
             raise FileNotFoundError("no cache defined")
         # group twice by first two chars (256 combinations)
         dirpath = self.cache_dir / hashsum[0:2] / hashsum[2:4]
         os.makedirs(dirpath, exist_ok=True)
         filepath = dirpath / f"{hashsum}{suffix}"
-        filepath = str(filepath.resolve())
+        filepath = filepath.resolve()
         return filepath
 
     @staticmethod
@@ -465,7 +465,7 @@ class PtxOpt:
         else:
             hash_filepath = None
 
-        cache_exists = use_cache and os.path.exists(hash_filepath)
+        cache_exists = use_cache and os.path.exists(str(hash_filepath))
 
         if not cache_exists:
             # must run optimizer
@@ -480,12 +480,14 @@ class PtxOpt:
             opt_metadata["datetime"] = datetime.datetime.now().strftime(
                 "%Y-%m-%d %H:%M:%S"
             )
-            if use_cache:
+            if hash_filepath and use_cache:
                 # save results
                 self._save(hash_filepath, opt_output_data, network, opt_metadata)
         else:
             # load existing results
-            opt_output_data = self._load(hash_filepath)
+            opt_output_data: OptOutputDataType = self._load(
+                hash_filepath  # type:ignore
+            )
 
         self._merge_data(data, opt_output_data)
 
