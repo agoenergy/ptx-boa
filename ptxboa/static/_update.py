@@ -42,7 +42,7 @@ def create_literal_from_db(name: str, column: str, table: str) -> str:
 def main():
 
     literals = [
-        '"""DO NOT EDIT (created by _update_static.py)."""',
+        '"""DO NOT EDIT (created by static/_update.py)."""',
         "from typing import Literal",
         create_literal_from_db("Year", "year", "ptxboa_year"),
         create_literal_from_query(
@@ -123,6 +123,7 @@ def main():
                 "secproc_co2",  # subset of process
                 "secproc_water",  # subset of process
                 "res_gen",  # subset of process
+                "parameter",
             ],
         ),
         create_literal(

@@ -1,10 +1,14 @@
 """Classes for main process chain calculation."""
 
+import logging
+
 import pandas as pd
 
 from ptxboa.api_data import DataHandler
 from ptxboa.static._types import CalculateDataType
 from ptxboa.utils import annuity
+
+logger = logging.getLogger()
 
 
 class PtxCalc:
@@ -187,10 +191,13 @@ class PtxCalc:
 
         # rescale again ONLY RES to account for additionally needed electricity
         # sum_el is larger than 1.0
+
+        # TODO: for blue hydrogen chains, there is no RES
         norm_factor_el = sum_el
         idx = results["process_type"] == "Electricity generation"
         if not idx.any():
-            raise ValueError("Missing Electricity generation process")
-        results.loc[idx, "values"] = results.loc[idx, "values"] * norm_factor_el
+            logger.warning("Missing Electricity generation process")
+        else:
+            results.loc[idx, "values"] = results.loc[idx, "values"] * norm_factor_el
 
         return results

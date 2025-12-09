@@ -1,9 +1,40 @@
 """Unittests for blue hydrogen version."""
 
+import pandas as pd
 import pytest
 
+from ptxboa.api import PtxCalc
 from ptxboa.api_data import DataHandler
 from tests.test_api import ptxdata_dir_static
+
+
+def _translate_user_data(user_data: pd.DataFrame) -> None:
+    # NOTE: the columns say *_code,
+    # but user data actually must be passed as names
+    for colname in user_data.columns:
+        if colname.endswith("_code"):
+            user_data[colname] = user_data[colname].fillna("")
+
+    for idx, row in user_data.iterrows():
+        for colname, value in row.items():
+            colname = str(colname)
+            if value and colname.endswith("_code"):
+                dimname = colname.replace("_code", "")
+                dim = DataHandler.dimensions[dimname]  # type:ignore
+                value = dim.loc[value, dimname + "_name"]
+                user_data.loc[idx, colname] = value  # type:ignore
+
+
+# recursively use pytest.approx
+def _rec_approx(x):
+    if isinstance(x, dict):
+        return {k: _rec_approx(v) for k, v in x.items()}
+    elif isinstance(x, list):
+        return [_rec_approx(v) for v in x]
+    elif isinstance(x, (int, float)):
+        return pytest.approx(x)
+    else:
+        return x
 
 
 @pytest.mark.parametrize(
@@ -25,21 +56,36 @@ from tests.test_api import ptxdata_dir_static
 )
 def test_new_blue_chain(scenario, kwargs, request):
     """Data test for blue iron chain."""
-    data_handler = DataHandler(data_dir=str(ptxdata_dir_static), scenario=scenario)
-    data = data_handler.get_calculation_data(**kwargs, optimize_flh=False)
+    user_data = pd.DataFrame(
+        [
+            {
+                "parameter_code": "LKG",
+                "process_code": "NG-DRI",
+                "value": 0.2,
+            },
+            {
+                "parameter_code": "EFF",
+                "process_code": "EAF",
+                "value": 0.9,
+            },
+        ],
+        columns=[
+            "parameter_code",
+            "process_code",
+            "flow_code",
+            "source_region_code",
+            "value",
+        ],
+    )
 
-    # recursively use pytest.approx
-    def rec_approx(x):
-        if isinstance(x, dict):
-            return {k: rec_approx(v) for k, v in x.items()}
-        elif isinstance(x, list):
-            return [rec_approx(v) for v in x]
-        elif isinstance(x, (int, float)):
-            return pytest.approx(x)
-        else:
-            return x
+    _translate_user_data(user_data)
 
-    assert rec_approx(data) == {
+    data_handler = DataHandler(
+        data_dir=ptxdata_dir_static, scenario=scenario, user_data=user_data
+    )
+    calculation_data = data_handler.get_calculation_data(**kwargs, optimize_flh=False)
+
+    assert _rec_approx(calculation_data) == {
         "context": {
             "source_region_code": "MAR",
             "target_country_code": "DEU",
@@ -49,7 +95,7 @@ def test_new_blue_chain(scenario, kwargs, request):
             {
                 "CAPEX": 0,
                 "CONV": {},
-                "EFF": 1,
+                "EFF": 1 * (1 - 0.2),  # !! effective efficency reduced by leakage
                 "FLH": 7000,
                 "LIFETIME": 20,
                 "OPEX-F": 0,
@@ -82,7 +128,7 @@ def test_new_blue_chain(scenario, kwargs, request):
             {
                 "CAPEX": 0,
                 "CONV": {},
-                "EFF": 1,
+                "EFF": 0.9,  # user data
                 "FLH": 7000,
                 "LIFETIME": 20,
                 "OPEX-F": 0,
@@ -92,3 +138,7 @@ def test_new_blue_chain(scenario, kwargs, request):
             },
         ],
     }
+
+    cost_result_df = PtxCalc.calculate(calculation_data)  # noqa
+    # TODO: our output is only cost, we need to restructure
+    # calculation module to also get flow values

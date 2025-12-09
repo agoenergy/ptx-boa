@@ -28,7 +28,9 @@ from .static import (
 
 
 class PtxboaAPI:
-    def __init__(self, data_dir: Path, cache_dir: Path = None):
+    """Main API class."""
+
+    def __init__(self, data_dir: Path, cache_dir: Path | None = None):
         self.data_dir = data_dir
         self.cache_dir = cache_dir
 
@@ -121,7 +123,7 @@ class PtxboaAPI:
         user_data: pd.DataFrame | None = None,
         optimize_flh: bool = True,
         use_user_data_for_optimize_flh: bool = False,
-    ) -> Tuple[pd.DataFrame, object]:
+    ) -> Tuple[pd.DataFrame, dict]:
         """Calculate results based on user selection.
 
         Parameters
@@ -241,7 +243,7 @@ class PtxboaAPI:
         transport: TransportType,
         ship_own_fuel: bool,
         user_data: pd.DataFrame | None = None,
-    ) -> Tuple[pypsa.Network, dict]:
+    ) -> Tuple[pypsa.Network, dict] | None:
         """Calculate results based on user selection.
 
         Parameters

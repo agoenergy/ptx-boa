@@ -1,4 +1,4 @@
-"""DO NOT EDIT (created by _update_static.py)."""
+"""DO NOT EDIT (created by static/_update.py)."""
 
 from typing import Literal
 
@@ -746,6 +746,7 @@ DimensionType = Literal[
     "secproc_co2",
     "secproc_water",
     "res_gen",
+    "parameter",
 ]
 DimensionValues = [
     "scenario",
@@ -759,6 +760,7 @@ DimensionValues = [
     "secproc_co2",
     "secproc_water",
     "res_gen",
+    "parameter",
 ]
 
 

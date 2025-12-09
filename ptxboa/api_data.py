@@ -16,7 +16,6 @@ from ptxboa.static import (
     FlowCodeType,
     OutputUnitValues,
     ParameterCodeType,
-    ParameterNameType,
     ParameterRangeValues,
     ProcessCodeResType,
     ProcessCodeType,
@@ -76,7 +75,7 @@ def _load_data(
     return df
 
 
-def _load_dimensions():
+def _load_dimensions() -> dict[DimensionType, pd.DataFrame]:
     dimensions = {}
 
     # NOTE / TODO: some are indexed by name,some by code
@@ -279,14 +278,14 @@ class DataHandler:
     combine it with set user data.
     """
 
-    dimensions = _load_dimensions()
+    dimensions: dict[DimensionType, pd.DataFrame] = _load_dimensions()
 
     def __init__(
         self,
         scenario: ScenarioType,
         user_data: None | pd.DataFrame = None,
-        data_dir: str | None = None,
-        cache_dir: str | None = None,
+        data_dir: Path | None = None,
+        cache_dir: Path | None = None,
     ):
 
         if scenario not in ScenarioValues:
@@ -374,8 +373,8 @@ class DataHandler:
 
         for dim in ["parameter", "process", "flow", "region", "country"]:
             mapping = pd.Series(
-                cls.dimensions[dim][f"{dim}_{out_type}"].to_list(),
-                index=cls.dimensions[dim][f"{dim}_{in_type}"],
+                cls.dimensions[dim][f"{dim}_{out_type}"].to_list(),  # type:ignore
+                index=cls.dimensions[dim][f"{dim}_{in_type}"],  # type:ignore
             )
             if dim not in ["region", "country"]:
                 column_name = f"{dim}_code"
@@ -606,7 +605,9 @@ class DataHandler:
                 "target_country_code",
             ]
             required_keys = set(
-                self.dimensions["parameter"].at[parameter_code, "dimensions"]
+                self.dimensions["parameter"].at[
+                    parameter_code, "dimensions"
+                ]  # type:ignore
             ) | {"parameter_code"}
 
         def _get_value(
@@ -873,7 +874,7 @@ class DataHandler:
     def get_dimensions_parameter_code(
         cls,
         dimension: DimensionType,
-        parameter_name: ParameterNameType,
+        parameter_name: str,
     ) -> str:
         """
         Get the internal code for a paremeter within a certain dimension.

@@ -192,7 +192,7 @@ class ProfilesFLH(metaclass=SingletonMeta):
 class PtxOpt:
     """Connection to optimizer module."""
 
-    def __init__(self, profiles_path: Path, cache_dir: str | None = None):
+    def __init__(self, profiles_path: Path, cache_dir: Path | None = None):
         self.cache_dir = Path(cache_dir) if cache_dir else None
         self.profiles_hashes = ProfilesHashes(profiles_path)
         self.profiles_flh = ProfilesFLH(profiles_path)
