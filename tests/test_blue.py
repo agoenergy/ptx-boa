@@ -1,5 +1,7 @@
 """Unittests for blue hydrogen version."""
 
+from pprint import pprint
+
 import pandas as pd
 import pytest
 
@@ -21,7 +23,10 @@ def _translate_user_data(user_data: pd.DataFrame) -> None:
             if value and colname.endswith("_code"):
                 dimname = colname.replace("_code", "")
                 dim = DataHandler.dimensions[dimname]  # type:ignore
-                value = dim.loc[value, dimname + "_name"]
+                try:
+                    value = dim.loc[value, dimname + "_name"]
+                except Exception:
+                    raise KeyError(f"{value} not in {dimname}: {dim.index}")
                 user_data.loc[idx, colname] = value  # type:ignore
 
 
@@ -59,18 +64,51 @@ def test_new_blue_chain(scenario, kwargs, request):
     user_data = pd.DataFrame(
         [
             {
+                "flow_code": "STL-S",
+                "parameter_code": "CALOR",
+                "value": 0,
+            },
+            {
+                "flow_code": "CH4-G",
+                "parameter_code": "SPECCOST",
+                "value": 0,
+            },
+            {
                 "process_code": "NG-DRI",
                 "parameter_code": "LKG",
-                "value": 0.2,
+                "value": 0.05,
+            },
+            {
+                "process_code": "NG-DRI",
+                "parameter_code": "EFF",
+                "value": 0.370370370370,
             },
             {
                 "process_code": "EAF",
                 "parameter_code": "EFF",
-                "value": 0.9,
+                "value": 1.23456790123,
             },
             {
                 "process_code": "NG-DRI",
                 "flow_code": "EL",
+                "parameter_code": "CONV",
+                "value": 0.5828271604938,
+            },
+            {
+                "process_code": "NG-DRI",
+                "flow_code": "CH4-G",
+                "parameter_code": "CONV",
+                "value": 2.187,
+            },
+            {
+                "process_code": "EAF",
+                "flow_code": "EL",
+                "parameter_code": "CONV",
+                "value": 0.349333333333,
+            },
+            {
+                "process_code": "EAF",
+                "flow_code": "CH4-G",
                 "parameter_code": "CONV",
                 "value": 0.3,
             },
@@ -90,68 +128,76 @@ def test_new_blue_chain(scenario, kwargs, request):
         data_dir=ptxdata_dir_static, scenario=scenario, user_data=user_data
     )
     calculation_data = data_handler.get_calculation_data(**kwargs, optimize_flh=False)
+    values, _cost_result_df = PtxCalc.calculate(calculation_data)  # noqa
+
+    pprint(calculation_data)
+    pprint(values)
 
     assert _rec_approx(calculation_data) == {
+        "context": {"source_region_code": "MAR", "target_country_code": "DEU"},
         "flh_opt_process": {},
         "main_process_chain": [
             {
-                "EFF": 0.8,
+                "CAPEX": 0,
+                "CONV": {"CH4-G": 2.187, "EL": 0.5828271604938},
+                "EFF": 0.3518518518515,
                 "FLH": 7000,
                 "LIFETIME": 20,
-                "CAPEX": 0,
                 "OPEX-F": 0,
                 "OPEX-O": 0,
-                "CONV": {"EL": 0.3},
-                "step": "DERIV",
                 "process_code": "NG-DRI",
+                "step": "DERIV",
             }
         ],
-        "transport_process_chain": [
-            {
-                "DIST": 2668.15,
-                "EFF": 1.0,
-                "OPEX-T": 3.765382979887925e-07,
-                "OPEX-O": 0,
-                "CONV": {},
-                "step": "SHP",
-                "process_code": "DRI-SB",
-            },
-            {
-                "EFF": 0.9,
-                "FLH": 7000,
-                "LIFETIME": 20,
-                "CAPEX": 0,
-                "OPEX-F": 0,
-                "OPEX-O": 0,
-                "CONV": {},
-                "step": "POST",
-                "process_code": "EAF",
-            },
-        ],
-        "secondary_process": {},
         "parameter": {
-            "WACC": 0.0826130467109222,
-            "CALOR": 1.0,
+            "CALOR": 0.0,
             "SPECCOST": {
-                "HEAT": 0.0577,
-                "EL": 0.08078,
+                "CH4-G": 0.0,
                 "CO2-G": 0.0445186199587845,
+                "EL": 0.08078,
                 "H2O-L": 0.0013737954502618,
+                "HEAT": 0.0577,
                 "N2-G": 0.01154,
             },
+            "WACC": 0.0826130467109222,
         },
-        "context": {"source_region_code": "MAR", "target_country_code": "DEU"},
+        "secondary_process": {},
+        "transport_process_chain": [
+            {
+                "CONV": {},
+                "DIST": 2668.15,
+                "EFF": 1.0,
+                "OPEX-O": 0,
+                "OPEX-T": 3.765382979887925e-07,
+                "process_code": "DRI-SB",
+                "step": "SHP",
+            },
+            {
+                "CAPEX": 0,
+                "CONV": {"CH4-G": 0.3, "EL": 0.349333333333},
+                "EFF": 1.23456790123,
+                "FLH": 7000,
+                "LIFETIME": 20,
+                "OPEX-F": 0,
+                "OPEX-O": 0,
+                "process_code": "EAF",
+                "step": "POST",
+            },
+        ],
     }
 
-    values, _cost_result_df = PtxCalc.calculate(calculation_data)  # noqa
     # TODO: our output is only cost, we need to restructure
     # calculation module to also get flow values
     assert _rec_approx(values) == [
         {
+            "flows": {"CH4-G": 1.7714700000065544, "EL": 0.47209000000172474},
+            "main_output": 0.810000000002997,
             "process_step": "DERIV",
-            "main_output": 1.111111111111111,
-            "flows": {"EL": 0.3333333333333333},
         },
-        {"process_step": "SHP", "main_output": 1.111111111111111, "flows": {}},
-        {"process_step": "POST", "main_output": 1.0, "flows": {}},
+        {"flows": {}, "main_output": 0.810000000002997, "process_step": "SHP"},
+        {
+            "flows": {"CH4-G": 0.3, "EL": 0.34933333333299993},
+            "main_output": 1.0,
+            "process_step": "POST",
+        },
     ]

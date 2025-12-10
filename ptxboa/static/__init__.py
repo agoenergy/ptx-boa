@@ -508,6 +508,7 @@ FlowCodeType = Literal[
     "LOHC-L",
     "N2-G",
     "NH3-L",
+    "STL-S",
 ]
 FlowCodeValues = [
     "BFUEL-L",
@@ -527,6 +528,7 @@ FlowCodeValues = [
     "LOHC-L",
     "N2-G",
     "NH3-L",
+    "STL-S",
 ]
 
 
