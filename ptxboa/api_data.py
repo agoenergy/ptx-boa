@@ -210,6 +210,14 @@ class _ParameterGetter:
                 # currently negative flows (i.e. additional output)
                 # has no value
                 continue
+
+            # new: leakage can reduce the effective conversion rate
+            leakage = self.get_parameter_value_w_default(
+                "LKG", process_code=process_code, flow_code=flow_code, default=0
+            )
+            if leakage:
+                conv = conv / (1 - leakage)
+
             result[flow_code] = conv
         return result
 
@@ -220,8 +228,11 @@ class _ParameterGetter:
         eff = self.get_parameter_value_w_default(
             "EFF", process_code=process_code, default=1
         )
+        # leakage that effects main efficiency: get parameter for
+        # main in flow
+        main_flow_code_in = self.df_processes.loc[process_code, "main_flow_code_in"]
         leakage = self.get_parameter_value_w_default(
-            "LKG", process_code=process_code, default=0
+            "LKG", process_code=process_code, flow_code=main_flow_code_in, default=0
         )
         result["EFF"] = eff * (1 - leakage)
         result["FLH"] = self.get_parameter_value_w_default(
@@ -912,11 +923,11 @@ class DataHandler:
         cls, process_codes: List[ProcessCodeType], final_flow_code: FlowCodeType
     ) -> None:
         df_processes = cls.get_dimension("process")
-        flow_code: FlowCodeType | Literal[""] = ""  # initial flow code
+        flow_code: FlowCodeType | None = None  # initial flow code: can be empty
         for process_code in process_codes:
             process = df_processes.loc[process_code]
             flow_code_in = process["main_flow_code_in"]
-            if flow_code != flow_code_in:
+            if flow_code and flow_code != flow_code_in:
                 raise AssertionError(
                     f"flow_code != flow_code_in: {flow_code} != {flow_code_in}"
                 )

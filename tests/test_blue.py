@@ -82,6 +82,7 @@ def test_new_blue_chain(scenario, kwargs, request):
             },
             {
                 "process_code": "NG-DRI",
+                "flow_code": "CH4-G",  # main flow in
                 "parameter_code": "LKG",
                 "value": 0.05,
             },
@@ -106,7 +107,7 @@ def test_new_blue_chain(scenario, kwargs, request):
                 "process_code": "EAF",
                 "parameter_code": "LKG",
                 "flow_code": "CH4-G",
-                "value": 0.05,
+                "value": 0.5,
             },
             {
                 "process_code": "EAF",
@@ -188,7 +189,7 @@ def test_new_blue_chain(scenario, kwargs, request):
             },
             {
                 "CAPEX": 0,
-                "CONV": {"CH4-G": 0.3, "EL": 0.651},
+                "CONV": {"CH4-G": 0.6, "EL": 0.651},
                 "EFF": 1.010101,
                 "FLH": 7000,
                 "LIFETIME": 20,
@@ -200,24 +201,22 @@ def test_new_blue_chain(scenario, kwargs, request):
         ],
     }
 
-    # TODO: our output is only cost, we need to restructure
-    # calculation module to also get flow values
     assert _rec_approx(values) == [
         {
-            "flows": {"EL": 0.4720904147209042, "IOP-S": 0.9801},
+            "flows": {"EL": 0.4720904147209042, "IOP-S": 0.9801000098010002},
             "main_input": 3.1014668681889135,
-            "main_output": 0.99,
+            "main_output": 0.9900000099000003,
             "process_step": "DERIV",
         },
         {
             "flows": {},
-            "main_input": 0.99,
-            "main_output": 0.99,
+            "main_input": 0.9900000099000003,
+            "main_output": 0.9900000099000003,
             "process_step": "SHP",
         },
         {
-            "flows": {"CH4-G": 0.3, "EL": 0.651},
-            "main_input": 0.99,
+            "flows": {"CH4-G": 0.6, "EL": 0.651},
+            "main_input": 0.9900000099000003,
             "main_output": 1.0,
             "process_step": "POST",
         },
