@@ -63,6 +63,8 @@ def test_new_blue_chain(scenario, kwargs, request):
     """Data test for blue iron chain."""
     user_data = pd.DataFrame(
         [
+            # FIXME: all flows are (in green tool) expected to have CALOR
+            # but doesit make sense for Steel?
             {
                 "flow_code": "STL-S",
                 "parameter_code": "CALOR",
@@ -74,6 +76,11 @@ def test_new_blue_chain(scenario, kwargs, request):
                 "value": 0,
             },
             {
+                "flow_code": "IOP-S",
+                "parameter_code": "SPECCOST",
+                "value": 0,
+            },
+            {
                 "process_code": "NG-DRI",
                 "parameter_code": "LKG",
                 "value": 0.05,
@@ -81,30 +88,36 @@ def test_new_blue_chain(scenario, kwargs, request):
             {
                 "process_code": "NG-DRI",
                 "parameter_code": "EFF",
-                "value": 0.370370370370,
+                "value": 0.336004,
+            },
+            {
+                "process_code": "NG-DRI",
+                "flow_code": "EL",
+                "parameter_code": "CONV",
+                "value": 0.476859,
+            },
+            {
+                "process_code": "NG-DRI",
+                "flow_code": "IOP-S",
+                "parameter_code": "CONV",
+                "value": 0.99,
+            },
+            {
+                "process_code": "EAF",
+                "parameter_code": "LKG",
+                "flow_code": "CH4-G",
+                "value": 0.05,
             },
             {
                 "process_code": "EAF",
                 "parameter_code": "EFF",
-                "value": 1.23456790123,
-            },
-            {
-                "process_code": "NG-DRI",
-                "flow_code": "EL",
-                "parameter_code": "CONV",
-                "value": 0.5828271604938,
-            },
-            {
-                "process_code": "NG-DRI",
-                "flow_code": "CH4-G",
-                "parameter_code": "CONV",
-                "value": 2.187,
+                "value": 1.010101,
             },
             {
                 "process_code": "EAF",
                 "flow_code": "EL",
                 "parameter_code": "CONV",
-                "value": 0.349333333333,
+                "value": 0.651000,
             },
             {
                 "process_code": "EAF",
@@ -139,8 +152,8 @@ def test_new_blue_chain(scenario, kwargs, request):
         "main_process_chain": [
             {
                 "CAPEX": 0,
-                "CONV": {"CH4-G": 2.187, "EL": 0.5828271604938},
-                "EFF": 0.3518518518515,
+                "CONV": {"EL": 0.476859, "IOP-S": 0.99},
+                "EFF": 0.3192038,
                 "FLH": 7000,
                 "LIFETIME": 20,
                 "OPEX-F": 0,
@@ -157,6 +170,7 @@ def test_new_blue_chain(scenario, kwargs, request):
                 "EL": 0.08078,
                 "H2O-L": 0.0013737954502618,
                 "HEAT": 0.0577,
+                "IOP-S": 0.0,
                 "N2-G": 0.01154,
             },
             "WACC": 0.0826130467109222,
@@ -174,8 +188,8 @@ def test_new_blue_chain(scenario, kwargs, request):
             },
             {
                 "CAPEX": 0,
-                "CONV": {"CH4-G": 0.3, "EL": 0.349333333333},
-                "EFF": 1.23456790123,
+                "CONV": {"CH4-G": 0.3, "EL": 0.651},
+                "EFF": 1.010101,
                 "FLH": 7000,
                 "LIFETIME": 20,
                 "OPEX-F": 0,
@@ -190,13 +204,20 @@ def test_new_blue_chain(scenario, kwargs, request):
     # calculation module to also get flow values
     assert _rec_approx(values) == [
         {
-            "flows": {"CH4-G": 1.7714700000065544, "EL": 0.47209000000172474},
-            "main_output": 0.810000000002997,
+            "flows": {"EL": 0.4720904147209042, "IOP-S": 0.9801},
+            "main_input": 3.1014668681889135,
+            "main_output": 0.99,
             "process_step": "DERIV",
         },
-        {"flows": {}, "main_output": 0.810000000002997, "process_step": "SHP"},
         {
-            "flows": {"CH4-G": 0.3, "EL": 0.34933333333299993},
+            "flows": {},
+            "main_input": 0.99,
+            "main_output": 0.99,
+            "process_step": "SHP",
+        },
+        {
+            "flows": {"CH4-G": 0.3, "EL": 0.651},
+            "main_input": 0.99,
             "main_output": 1.0,
             "process_step": "POST",
         },
