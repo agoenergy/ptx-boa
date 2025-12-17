@@ -203,9 +203,12 @@ def test_new_blue_chain(scenario, kwargs, request):
 
     assert _rec_approx(values) == [
         {
-            "flows": {"EL": 0.4720904147209042, "IOP-S": 0.9801000098010001},
-            "main_input": 3.0937132010184407,
-            "main_output": 0.99,
+            "flows": {
+                "EL": 0.4720904147209042,  # process_calc!E26
+                "IOP-S": 0.9801000098010001,  # process_calc!E27
+            },
+            "main_input": 3.0937132010184407,  # process_calc!E25
+            "main_output": 0.99,  # process_calc!E33
             "process_step": "DERIV",
         },
         {
@@ -215,8 +218,11 @@ def test_new_blue_chain(scenario, kwargs, request):
             "process_step": "SHP",
         },
         {
-            "flows": {"CH4-G": 0.315, "EL": 0.651},
-            "main_input": 0.99,
+            "flows": {
+                "CH4-G": 0.315,  # process_calc!J26
+                "EL": 0.651,  # process_calc!J27
+            },
+            "main_input": 0.99,  # process_calc!J25
             "main_output": 1.0,
             "process_step": "POST",
         },
