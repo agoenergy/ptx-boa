@@ -771,6 +771,7 @@ ProcessStepType = Literal[
     "ELY",
     "H2_STR",
     "DERIV",
+    "DERIV2",
     "PRE_SHP",
     "PRE_PPL",
     "POST_SHP",
@@ -781,13 +782,16 @@ ProcessStepType = Literal[
     "PPL",
     "PPLX",
     "PPLR",
-    "POST",
+    "ELY_I",
+    "DERIV_I",
+    "DERIV_I2",
 ]
 ProcessStepValues = [
     "EL_STR",
     "ELY",
     "H2_STR",
     "DERIV",
+    "DERIV2",
     "PRE_SHP",
     "PRE_PPL",
     "POST_SHP",
@@ -798,7 +802,9 @@ ProcessStepValues = [
     "PPL",
     "PPLX",
     "PPLR",
-    "POST",
+    "ELY_I",
+    "DERIV_I",
+    "DERIV_I2",
 ]
 
 

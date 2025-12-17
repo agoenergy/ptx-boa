@@ -25,7 +25,7 @@ def update_csv(query: str, filename: str, data_dir: str = None) -> None:
 
 def create_literal(name: str, items: list) -> str:
     items = ", ".join(f'"{x}"' for x in items)
-    return f"{name}Type = Literal[{items}]\n" f"{name}Values = [{items}]\n"
+    return f"{name}Type = Literal[{items}]\n{name}Values = [{items}]\n"
 
 
 def create_literal_from_query(name: str, column: str, query: str) -> str:
@@ -40,7 +40,6 @@ def create_literal_from_db(name: str, column: str, table: str) -> str:
 
 
 def main():
-
     literals = [
         '"""DO NOT EDIT (created by static/_update.py)."""',
         "from typing import Literal",
@@ -133,6 +132,7 @@ def main():
                 "ELY",
                 "H2_STR",  # storage H2
                 "DERIV",
+                "DERIV2",
                 "PRE_SHP",
                 "PRE_PPL",
                 "POST_SHP",
@@ -143,7 +143,9 @@ def main():
                 "PPL",
                 "PPLX",
                 "PPLR",
-                "POST",
+                "ELY_I",
+                "DERIV_I",
+                "DERIV_I2",
             ],
         ),
         create_literal("ResultCost", ["CAPEX", "OPEX", "FLOW", "LC"]),
@@ -256,6 +258,7 @@ def main():
         ,"ELY"
         ,"H2_STR"
         ,"DERIV"
+        ,"DERIV2"
         ,"PRE_SHP"
         ,"PRE_PPL"
         ,"POST_SHP"
@@ -266,7 +269,9 @@ def main():
         ,"PPL"
         ,"PPLX"
         ,"PPLR"
-        ,"POST"
+        ,"ELY_I"
+        ,"DERIV_I"
+        ,"DERIV_I2"
         ,"FLOW_OUT"
         ,"CAN_PIPELINE"
         FROM "ptxboa_chains"

@@ -150,7 +150,7 @@ def test_new_blue_chain(scenario, kwargs, request):
     assert _rec_approx(calculation_data) == {
         "context": {"source_region_code": "MAR", "target_country_code": "DEU"},
         "flh_opt_process": {},
-        "main_process_chain": [
+        "main_export_process_chain": [
             {
                 "CAPEX": 0,
                 "CONV": {"EL": 0.476859, "IOP-S": 0.99},
@@ -186,7 +186,9 @@ def test_new_blue_chain(scenario, kwargs, request):
                 "OPEX-T": 3.765382979887925e-07,
                 "process_code": "DRI-SB",
                 "step": "SHP",
-            },
+            }
+        ],
+        "main_import_process_chain": [
             {
                 "CAPEX": 0,
                 "CONV": {"CH4-G": 0.315, "EL": 0.651},
@@ -196,7 +198,7 @@ def test_new_blue_chain(scenario, kwargs, request):
                 "OPEX-F": 0,
                 "OPEX-O": 0,
                 "process_code": "EAF",
-                "step": "POST",
+                "step": "DERIV_I",
             },
         ],
     }
@@ -224,6 +226,6 @@ def test_new_blue_chain(scenario, kwargs, request):
             },
             "main_input": 0.99,  # process_calc!J25
             "main_output": 1.0,
-            "process_step": "POST",
+            "process_step": "DERIV_I",
         },
     ]

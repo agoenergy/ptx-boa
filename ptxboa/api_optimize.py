@@ -200,7 +200,6 @@ class PtxOpt:
     def _save(
         self, filepath: Path | str, data: object, network: Network, metadata: dict
     ) -> None:
-
         filepath = str(filepath)
 
         with TempFile(filepath) as filepath_tmp:
@@ -246,7 +245,6 @@ class PtxOpt:
 
     @staticmethod
     def _prepare_data(input_data: CalculateDataType) -> OptInputDataType:
-
         src_reg = input_data["context"]["source_region_code"]
 
         result: OptInputDataType = {
@@ -266,7 +264,7 @@ class PtxOpt:
             "H2O": None,
         }  # type:ignore # TODO: update OptInputDataType
 
-        for step in input_data["main_process_chain"]:
+        for step in input_data["main_export_process_chain"]:
             if step["step"] == "RES":
                 if step["process_code"] == "RES-HYBR":
                     pc: ProcessCodeResType
@@ -361,7 +359,7 @@ class PtxOpt:
 
         # only overwrite  flh if optimization was successful:
         if opt_output_data["model_status"][1] == "optimal":
-            for step in input_data["main_process_chain"]:
+            for step in input_data["main_export_process_chain"]:
                 if step["step"] == "RES":
                     output_res = opt_output_data["RES"]
                     if step["process_code"] == "RES-HYBR":
@@ -411,7 +409,7 @@ class PtxOpt:
         src_reg = data["context"]["source_region_code"]
         # find res
         res = None
-        for step in data["main_process_chain"]:
+        for step in data["main_export_process_chain"]:
             if step["step"] == "RES":
                 res = step["process_code"]
                 break

@@ -27,7 +27,7 @@ from ptxboa import DEFAULT_CACHE_DIR  # noqa E402
 
 def main(
     cache_dir: Path = DEFAULT_CACHE_DIR,
-    out_dir: Path = None,
+    out_dir: Path | None = None,
     loglevel: Literal["debug", "info", "warning", "error"] = "warning",
 ):
     fmt = "[%(asctime)s %(levelname)7s] %(message)s"
@@ -103,13 +103,13 @@ def main(
 
         results.append(result)
 
-    # extract record in "main_process_chain"
-    main_process_chain = extract_main_process_chain_data(results)
+    # extract record in "main_export_process_chain"
+    main_export_process_chain = extract_main_process_chain_data(results)
 
     secondary_process = extract_secondary_process_data(results)
 
     logging.info(f"writing collected data to {out_dir}")
-    main_process_chain.to_csv(
+    main_export_process_chain.to_csv(
         out_dir / "cached_optimization_data_main_process_chain.csv"
     )
     secondary_process.to_csv(out_dir / "cached_optimization_data_secondary_process.csv")
@@ -118,13 +118,13 @@ def main(
         network_statistics = pd.concat(network_statistics)
         network_statistics.to_csv(out_dir / "network_statistics.csv")
 
-    return main_process_chain
+    return main_export_process_chain
 
 
 def extract_secondary_process_data(results):
     secondary_process = pd.json_normalize(results)
     secondary_process = secondary_process.drop(
-        columns=["main_process_chain", "transport_process_chain"]
+        columns=["main_export_process_chain", "transport_process_chain"]
     )
 
     return secondary_process
@@ -133,14 +133,14 @@ def extract_secondary_process_data(results):
 def extract_main_process_chain_data(results):
     df = pd.json_normalize(
         results,
-        record_path=["main_process_chain"],
+        record_path=["main_export_process_chain"],
         meta=["context", "optimization_hash", "model_status"],
     )
     # normalize entries in "context" to single columns
     df = pd.concat(
         [
             df.drop(columns="context"),
-            pd.json_normalize(df["context"]),
+            pd.json_normalize(df["context"]),  # type:ignore
         ],
         axis=1,
     )

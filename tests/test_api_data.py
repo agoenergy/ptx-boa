@@ -7,8 +7,7 @@ import pandas as pd
 import pytest
 
 from ptxboa.api_data import DataHandler
-
-from .utils import assert_deep_equal
+from tests.utils import assert_deep_equal
 
 
 @pytest.fixture()
@@ -215,7 +214,7 @@ def test_get_calculation_data(ptxdata_dir, scenario, kwargs, request):
 
     assert rec_approx(data) == {
         "flh_opt_process": {},
-        "main_process_chain": [
+        "main_export_process_chain": [
             {
                 "EFF": 1,
                 "FLH": 1662.0,
@@ -294,6 +293,7 @@ def test_get_calculation_data(ptxdata_dir, scenario, kwargs, request):
                 "process_code": "NH3-REC",
             },
         ],
+        "main_import_process_chain": [],
         "secondary_process": {
             "H2O-L": {
                 "EFF": 1.0,
@@ -346,7 +346,7 @@ def test_get_calculation_data_w_opt(ptxdata_dir, scenario, kwargs, request):
     with TemporaryDirectory() as cache_dir:
         # use temporary dir as cache dir
         data_handler = DataHandler(
-            data_dir=ptxdata_dir, scenario=scenario, cache_dir=cache_dir
+            data_dir=ptxdata_dir, scenario=scenario, cache_dir=Path(cache_dir)
         )
         result = data_handler.get_calculation_data(**kwargs, optimize_flh=True)
     exp_result = {
@@ -370,7 +370,7 @@ def test_get_calculation_data_w_opt(ptxdata_dir, scenario, kwargs, request):
                 "CONV": {},
             },
         },
-        "main_process_chain": [
+        "main_export_process_chain": [
             {
                 "EFF": 1,
                 "FLH": 3041.279224698365,
@@ -451,6 +451,7 @@ def test_get_calculation_data_w_opt(ptxdata_dir, scenario, kwargs, request):
                 "process_code": "NH3-REC",
             },
         ],
+        "main_import_process_chain": [],
         "secondary_process": {
             "H2O-L": {
                 "EFF": 1.0,

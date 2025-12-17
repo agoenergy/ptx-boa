@@ -32,7 +32,7 @@ class PtxCalc:
         # storage units use capacity factor CAP_F
         # per produced unit (before transport losses)
         main_output_value_before_transport = main_output_value
-        for step_data in data["main_process_chain"]:
+        for step_data in data["main_export_process_chain"]:
             main_output_value_before_transport *= step_data["EFF"]
 
         # accumulate needed electric input
@@ -42,8 +42,11 @@ class PtxCalc:
         results_flows_chain = []
 
         # iterate over steps in chain
-        for step_data in data["main_process_chain"] + data["transport_process_chain"]:
-
+        for step_data in (
+            data["main_export_process_chain"]
+            + data["transport_process_chain"]
+            + data["main_import_process_chain"]
+        ):
             process_step = step_data["step"]
             process_code = step_data["process_code"]
             is_transport = process_step in {

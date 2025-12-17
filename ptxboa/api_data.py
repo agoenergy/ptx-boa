@@ -787,8 +787,9 @@ class DataHandler:
 
         result: CalculateDataType = {
             "flh_opt_process": {},
-            "main_process_chain": [],
+            "main_export_process_chain": [],
             "transport_process_chain": [],
+            "main_import_process_chain": [],
             "secondary_process": {},
             "parameter": {},
             "context": {
@@ -823,25 +824,25 @@ class DataHandler:
             existing_pipeline_cap,
         )
 
-        chain_steps_main, chain_steps_transport = self._filter_chain_processes(
-            chain, transport_distances
+        chain_steps_main_export, chain_steps_transport, chain_steps_main_import = (
+            self._filter_chain_processes(chain, transport_distances)
         )
 
-        used_flows_main: set[FlowCodeType] = set()
-        for process_step in chain_steps_main:
+        used_flows_main_export: set[FlowCodeType] = set()
+        for process_step in chain_steps_main_export:
             process_code = chain[process_step]
             pp = pg.get_process_params(process_code)
             pp["step"] = process_step
             pp["process_code"] = process_code
-            result["main_process_chain"].append(pp)
-            used_flows_main = used_flows_main | set(pp["CONV"])
+            result["main_export_process_chain"].append(pp)
+            used_flows_main_export = used_flows_main_export | set(pp["CONV"])
 
         used_flows_secondary: set[FlowCodeType] = set()
         provided_flows_secondary: set[FlowCodeType] = set()
         for flow_code, process_code in secondary_processes.items():
             if not process_code:
                 continue
-            if flow_code not in used_flows_main:
+            if flow_code not in used_flows_main_export:
                 continue
             pp = pg.get_process_params(process_code)
             pp["process_code"] = process_code
@@ -864,6 +865,17 @@ class DataHandler:
             result["transport_process_chain"].append(pp)
             used_flows_transport = used_flows_transport | set(pp["CONV"])
 
+        used_flows_main_import: set[FlowCodeType] = set()
+        for process_step in chain_steps_main_import:
+            process_code = chain[process_step]
+            if not process_code:
+                raise Exception((process_step, chain))
+            pp = pg.get_process_params(process_code)
+            pp["step"] = process_step
+            pp["process_code"] = process_code
+            result["main_import_process_chain"].append(pp)
+            used_flows_main_import = used_flows_main_import | set(pp["CONV"])
+
         # If RES=Hybrid: we also need PV and Wind-On
         if process_code_res == "RES-HYBR":
             pc: ProcessCodeType
@@ -877,11 +889,13 @@ class DataHandler:
             "HEAT",
         }
         used_flows: set[FlowCodeType] = (
-            (used_flows_main - provided_flows_secondary)
+            (used_flows_main_export - provided_flows_secondary)
             | used_flows_secondary
             | used_flows_transport
+            | used_flows_main_import
             | used_flows_always_for_opt
         )
+        # FIXME: used_flows_main_import may need to come from different country!!
         result["parameter"]["SPECCOST"] = pg.get_flow_params(used_flows)
         return result
 
@@ -944,13 +958,14 @@ class DataHandler:
     @classmethod
     def _filter_chain_processes(
         cls, chain: dict, transport_distances: Dict[ProcessStepType, float]
-    ) -> tuple[list, list]:
-        result_main = []
+    ) -> tuple[list, list, list]:
+        result_main_export = []
+        result_main_import = []
         result_transport = []
         for process_step in ["RES", "EL_STR", "ELY", "H2_STR", "DERIV"]:
             process_code = chain[process_step]
             if process_code:
-                result_main.append(process_step)
+                result_main_export.append(process_step)
         is_shipping = transport_distances.get("SHP") or transport_distances.get(
             "SHP_OWN"
         )
@@ -975,22 +990,29 @@ class DataHandler:
 
         if is_shipping:
             if chain["POST_SHP"]:  # not all have preprocessing
+                # TODO: should maybe be in result_main_import
                 result_transport.append("POST_SHP")
         elif is_pipeline:
             if chain["POST_PPL"]:  # not all have preprocessing
+                # TODO: should maybe be in result_main_import
                 result_transport.append("POST_PPL")
 
-        # optional postprocessing after transport in target country
-        if chain["POST"]:
-            result_transport.append("POST")
+        # optional postprocessing after transport in import country
+        for process_step in ["ELY_I", "DERIV_I", "DERIV_I2"]:
+            process_code = chain[process_step]
+            if process_code:
+                result_main_import.append(process_step)
 
         # CHECK that flow chain is correct
         cls._validate_process_chain(
-            [chain[p] for p in result_main + result_transport],
+            [
+                chain[p]
+                for p in result_main_export + result_transport + result_main_import
+            ],
             chain["FLOW_OUT"],
         )
 
-        return result_main, result_transport
+        return result_main_export, result_transport, result_main_import
 
     @staticmethod
     def _get_transport_distances(
