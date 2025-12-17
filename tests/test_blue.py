@@ -84,47 +84,47 @@ def test_new_blue_chain(scenario, kwargs, request):
                 "process_code": "NG-DRI",
                 "flow_code": "CH4-G",  # main flow in
                 "parameter_code": "LKG",
-                "value": 0.05,
+                "value": 0.05,  # process_calc!E7
             },
             {
                 "process_code": "NG-DRI",
                 "parameter_code": "EFF",
-                "value": 0.336004,
+                "value": 0.336004,  # process_calc!E3
             },
             {
                 "process_code": "NG-DRI",
                 "flow_code": "EL",
                 "parameter_code": "CONV",
-                "value": 0.476859,
+                "value": 0.476859,  # process_calc!E4
             },
             {
                 "process_code": "NG-DRI",
                 "flow_code": "IOP-S",
                 "parameter_code": "CONV",
-                "value": 0.99,
+                "value": 0.99,  # process_calc!E5
             },
             {
                 "process_code": "EAF",
                 "parameter_code": "LKG",
                 "flow_code": "CH4-G",
-                "value": 0.05,
+                "value": 0.05,  # process_calc!J7
             },
             {
                 "process_code": "EAF",
                 "parameter_code": "EFF",
-                "value": 1.010101,
+                "value": 1.010101,  # process_calc!J3
             },
             {
                 "process_code": "EAF",
                 "flow_code": "EL",
                 "parameter_code": "CONV",
-                "value": 0.651000,
+                "value": 0.651000,  # process_calc!J5
             },
             {
                 "process_code": "EAF",
                 "flow_code": "CH4-G",
                 "parameter_code": "CONV",
-                "value": 0.3,
+                "value": 0.3,  # process_calc!J4
             },
         ],
         columns=[
