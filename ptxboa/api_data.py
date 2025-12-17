@@ -216,16 +216,15 @@ class _ParameterGetter:
                 "LKG", process_code=process_code, flow_code=flow_code, default=0
             )
             if leakage:
-                conv = conv / (1 - leakage)
+                # see https://github.com/agoenergy/ptx-boa/issues/581
+                conv = conv * (1 + leakage)
 
             result[flow_code] = conv
         return result
 
     def get_process_params(self, process_code: ProcessCodeType):
         result = {}
-        # https://github.com/agoenergy/ptx-boa/issues/581
-        # (new) effective efficiency = (process) efficiency * (1 - leakage)
-        eff = self.get_parameter_value_w_default(
+        result["EFF"] = self.get_parameter_value_w_default(
             "EFF", process_code=process_code, default=1
         )
         # leakage that effects main efficiency: get parameter for
@@ -234,12 +233,19 @@ class _ParameterGetter:
         leakage = self.get_parameter_value_w_default(
             "LKG", process_code=process_code, flow_code=main_flow_code_in, default=0
         )
-        result["EFF"] = eff * (1 - leakage)
+        if leakage:
+            # see https://github.com/agoenergy/ptx-boa/issues/581
+            result["EFF"] = result["EFF"] / (1 + leakage)
+
         result["FLH"] = self.get_parameter_value_w_default(
-            "FLH", process_code=process_code, default=7000  # TODO: default?
+            "FLH",
+            process_code=process_code,
+            default=7000,  # TODO: default?
         )
         result["LIFETIME"] = self.get_parameter_value_w_default(
-            "LIFETIME", process_code=process_code, default=20  # TODO: default?
+            "LIFETIME",
+            process_code=process_code,
+            default=20,  # TODO: default?
         )
         result["CAPEX"] = self.get_parameter_value_w_default(
             "CAPEX", process_code=process_code, default=0
@@ -298,7 +304,6 @@ class DataHandler:
         data_dir: Path | None = None,
         cache_dir: Path | None = None,
     ):
-
         if scenario not in ScenarioValues:
             raise KeyError(scenario)
 
@@ -719,7 +724,6 @@ class DataHandler:
 
         # get optimizedFLH?
         if optimize_flh:
-
             # if we have user data BUT it should NOT be used for optimization
             # get a different dataset for optimization
             if self.user_data is not None and not use_user_data_for_optimize_flh:
