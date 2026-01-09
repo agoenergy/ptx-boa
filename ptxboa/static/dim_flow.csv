@@ -1,11 +1,15 @@
 flow_code,flow_name,unit,secondary_process,secondary_flow,result_process_type
+B-DRI-S,Blue iron,kg DRI (s),False,False,
 BFUEL-L,bunker fuel,kwh bunker fuel (l),False,True,
 CH3OH-L,methanol (liquid),kWh CH3OH (l),False,False,
 CH4-G,methane (gas),kWh CH4 (g),False,False,
 CH4-L,methane (liquid),kWh CH4 (l),False,False,
+CH4L-G,methane leakage (gasous),kWh CH4 (g),True,False,
 CHX-L,FT e-fuels,kwh CHx (l),False,False,
-CO2-G,carbon dioxide,kg CO2 (g),True,True,Carbon
+CO2-C,carbon dioxide (critical phase),kg CO2 (c),True,False,
+CO2-G,carbon dioxide (gas),kg CO2 (g),True,True,Carbon
 C-S,carbon,kg C (s),False,False,
+DIESEL-L,diesel (liquid),kWh diesel LHV,False,False,
 DRI-S,Green iron,kg DRI (s),False,False,
 EL,electricity,kWh (el.),False,True,
 H2-G,hydrogen (gas),kWh H2 (g),False,False,
@@ -15,5 +19,7 @@ HEAT,heat,kWh (heat),False,True,Heat
 IOP-S,iron ore pellets,kg IOP (s),False,True,
 LOHC-L,hydrogen (LOHC),kWh H2 (l),False,False,
 N2-G,nitrogen,kg N2 (g),False,True,
+NG-G,natural gas (gasous),kWh natural gas LHV,False,False,
+NG-L,natural gas (liquid),kWh natural gas LHV,False,False,
 NH3-L,ammonia (liquid),kWh NH3 (l),False,False,
 STL-S,crude steel,kg STL-S,False,False,
