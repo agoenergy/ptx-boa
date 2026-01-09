@@ -83,7 +83,7 @@ def test_new_blue_chain(scenario, kwargs, request):
             {
                 "process_code": "NG-DRI",
                 "flow_code": "CH4-G",  # main flow in
-                "parameter_code": "LKG",
+                "parameter_code": "LOSS",
                 "value": 0.05,  # process_calc!E7
             },
             {
@@ -105,7 +105,7 @@ def test_new_blue_chain(scenario, kwargs, request):
             },
             {
                 "process_code": "EAF",
-                "parameter_code": "LKG",
+                "parameter_code": "LOSS",
                 "flow_code": "CH4-G",
                 "value": 0.05,  # process_calc!J7
             },

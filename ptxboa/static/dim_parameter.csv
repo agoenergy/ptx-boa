@@ -8,7 +8,7 @@ DST-S-DP,pipeline distance,km,False,False,False,False,False,True,True,False,no,n
 EFF,efficiency,various (output per main input),False,True,False,False,True,False,False,False,extended,extended,"main output per main input. The unit is % if we assume that everything is normalized to energy content as far. Exceptions are material flows without energy content (water, nitrogen, carbon, CO2)",process_code
 FLH,full load hours,h,False,True,False,True,True,True,False,False,no,extended,,process_code/source_region_code
 LIFETIME,lifetime / amortization period,years,False,True,False,True,True,False,False,False,extended,extended,,process_code
-LKG,leakage,fraction,True,True,False,False,True,False,False,True,,,,flow_code/process_code
+LOSS,leakage,fraction,True,True,False,False,True,False,False,True,,,,flow_code/process_code
 LOSS-T,"losses (own fuel, transport)",fraction/km,False,False,True,False,True,False,False,False,advanced,advanced,for transportation efficiency (like losses) should depend on distance,process_code
 OPEX-F,OPEX (fix),USD2021/kW,False,True,False,True,True,True,False,True,extended,extended,,process_code/source_region_code
 OPEX-O,OPEX (other variable),USD2021/kWh,False,True,False,True,True,True,False,True,extended,extended,,process_code/source_region_code
