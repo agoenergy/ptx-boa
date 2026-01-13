@@ -212,13 +212,6 @@ class PtxCalc:
             for flow in results_flows["flows"]:
                 results_flows["flows"][flow] *= norm_factor
 
-        results_flows = {
-            "process_step": process_step,
-            "main_output": main_output_value,
-            "main_input": main_input_value,
-            "flows": {},
-        }
-
         # rescale again ONLY RES to account for additionally needed electricity
         # sum_el is larger than 1.0
 
