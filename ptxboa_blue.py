@@ -44,19 +44,13 @@ with st.container():
 
 tabs = (
     "Info",
-    "Overview",
     "Costs",
     "Emissions",
-    "Market scanning",
     "Input data",
-    "Country fact sheets",
-    "Certification schemes",
-    "Sustainability",
-    "Literature",
 )
 
 tabs_icons = {
-    "Overview": "house-fill",
+    "Costs": "house-fill",
     "Info": "question-circle-fill",
 }
 
@@ -69,7 +63,7 @@ if "tab_key" not in st.session_state:
 
 # initializing "tab at first round
 if st.session_state["tab_key"] not in st.session_state:
-    st.session_state[st.session_state["tab_key"]] = "Overview"
+    st.session_state[st.session_state["tab_key"]] = "Costs"
 
 sac.buttons(
     [sac.ButtonsItem(label=i, icon=tabs_icons.get(i, None)) for i in tabs],
@@ -105,27 +99,7 @@ But more complex because of different ways to split emissions:
 """
     )
 
-if st.session_state[st.session_state["tab_key"]] == "Market scanning":
-    st.text("Blue PtX Market scanning")
-
-
 if st.session_state[st.session_state["tab_key"]] == "Input data":
     st.text("Blue PtX Input data")
-
-
-if st.session_state[st.session_state["tab_key"]] == "Country fact sheets":
-    st.text("Blue PtX Country fact sheets")
-
-
-if st.session_state[st.session_state["tab_key"]] == "Certification schemes":
-    st.text("Blue PtX Certification schemes")
-
-
-if st.session_state[st.session_state["tab_key"]] == "Sustainability":
-    st.text("Blue PtX Sustainability")
-
-
-if st.session_state[st.session_state["tab_key"]] == "Literature":
-    st.text("Blue PtX Literature")
 
 display_footer()
