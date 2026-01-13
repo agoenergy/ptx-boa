@@ -184,6 +184,7 @@ def test_new_blue_chain(scenario, kwargs, request):
                 "LIFETIME": 20,
                 "OPEX-F": 0,
                 "OPEX-O": 0,
+                "LOSS": 0.05,
                 "process_code": "NG-DRI",
                 "step": "DERIV",
             }
@@ -222,6 +223,7 @@ def test_new_blue_chain(scenario, kwargs, request):
                 "LIFETIME": 20,
                 "OPEX-F": 0,
                 "OPEX-O": 0,
+                "LOSS_FLOW": {"NG-G": 0.05},
                 "process_code": "EAF",
                 "step": "DERIV_I",
             },
