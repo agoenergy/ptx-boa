@@ -211,13 +211,13 @@ class _ParameterGetter:
                 # has no value
                 continue
 
-            # new: leakage can reduce the effective conversion rate
-            leakage = self.get_parameter_value_w_default(
+            # new: loss can reduce the effective conversion rate
+            loss = self.get_parameter_value_w_default(
                 "LOSS", process_code=process_code, flow_code=flow_code, default=0
             )
-            if leakage:
+            if loss:
                 # see https://github.com/agoenergy/ptx-boa/issues/581
-                conv = conv * (1 + leakage)
+                conv = conv * (1 + loss)
 
             result[flow_code] = conv
         return result
@@ -227,15 +227,15 @@ class _ParameterGetter:
         result["EFF"] = self.get_parameter_value_w_default(
             "EFF", process_code=process_code, default=1
         )
-        # leakage that effects main efficiency: get parameter for
+        # loss that effects main efficiency: get parameter for
         # main in flow
         main_flow_code_in = self.df_processes.loc[process_code, "main_flow_code_in"]
-        leakage = self.get_parameter_value_w_default(
+        loss = self.get_parameter_value_w_default(
             "LOSS", process_code=process_code, flow_code=main_flow_code_in, default=0
         )
-        if leakage:
+        if loss:
             # see https://github.com/agoenergy/ptx-boa/issues/581
-            result["EFF"] = result["EFF"] / (1 + leakage)
+            result["EFF"] = result["EFF"] / (1 + loss)
 
         result["FLH"] = self.get_parameter_value_w_default(
             "FLH",
