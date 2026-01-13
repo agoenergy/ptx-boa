@@ -3,7 +3,7 @@
 import json
 import os
 from types import NoneType
-from typing import Union
+from typing import Any, Union
 
 
 def annuity(rate: float, periods: int, value: float) -> float:
@@ -97,3 +97,7 @@ def serialize_for_hashing(
         return "null"
     else:
         raise NotImplementedError(type(obj))
+
+
+def rescale_dict(d: dict[Any, float], factor: float) -> dict[Any, float]:
+    return {k: v * factor for k, v in d.items()}

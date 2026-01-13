@@ -239,12 +239,14 @@ def test_new_blue_chain(scenario, kwargs, request):
             "main_input": 3.0937132010184407,  # process_calc!E25
             "main_output": 0.99,  # process_calc!E33
             "process_step": "DERIV",
+            "emissions": {},
         },
         {
             "flows": {},
             "main_input": 0.99,
             "main_output": 0.99,
             "process_step": "SHP",
+            "emissions": {},
         },
         {
             "flows": {
@@ -254,5 +256,6 @@ def test_new_blue_chain(scenario, kwargs, request):
             "main_input": 0.99,  # process_calc!J25
             "main_output": 1.0,
             "process_step": "DERIV_I",
+            "emissions": {},
         },
     ]

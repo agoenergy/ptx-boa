@@ -1,14 +1,30 @@
 """Classes for main process chain calculation."""
 
 import logging
+from dataclasses import asdict, dataclass
+from typing import Optional
 
 import pandas as pd
 
 from ptxboa.api_data import DataHandler
 from ptxboa.static._types import CalculateDataType
-from ptxboa.utils import annuity
+from ptxboa.utils import annuity, rescale_dict
 
 logger = logging.getLogger()
+
+
+@dataclass(slots=True)
+class ResultsFlows:
+    process_step: str
+    main_input: float
+    main_output: float
+    flows: dict[str, float]
+    emissions: Optional[dict[str, float]] = None
+
+
+def calculate_emissions(results_flows: ResultsFlows, parameters: dict) -> dict:
+    parameters.get("LOSS", 0)
+    return {}
 
 
 class PtxCalc:
@@ -39,7 +55,7 @@ class PtxCalc:
         step_before_transport = True
         sum_el = main_output_value
         results_cost = []
-        results_flows_chain = []
+        results_flows_chain: list[ResultsFlows] = []
 
         # iterate over steps in chain
         for step_data in (
@@ -66,12 +82,12 @@ class PtxCalc:
             if process_code not in ["EL-STR", "H2-STR"]:
                 main_output_value = main_input_value * eff
 
-            results_flows = {
-                "process_step": process_step,
-                "main_input": main_input_value,
-                "main_output": main_output_value,
-                "flows": {},
-            }
+            results_flows = ResultsFlows(
+                process_step=process_step,
+                main_input=main_input_value,
+                main_output=main_output_value,
+                flows={},
+            )
             results_flows_chain.append(results_flows)
 
             opex_o = step_data["OPEX-O"]
@@ -111,7 +127,7 @@ class PtxCalc:
             # create flows for process step
             for flow_code, conv in step_data["CONV"].items():
                 flow_value = main_output_value * conv
-                results_flows["flows"][flow_code] = flow_value
+                results_flows.flows[flow_code] = flow_value
 
                 sec_process_data = data["secondary_process"].get(flow_code)
 
@@ -192,6 +208,8 @@ class PtxCalc:
                         (flow_result_process_type, process_code, "FLOW", flow_cost)
                     )
 
+            results_flows.emissions = calculate_emissions(results_flows, parameters)
+
         # convert to DataFrame
         dim_columns = ["process_type", "process_subtype", "cost_type"]
         results_cost = pd.DataFrame(results_cost, columns=dim_columns + ["values"])
@@ -207,10 +225,13 @@ class PtxCalc:
 
         # rescale values
         for results_flows in results_flows_chain:
-            results_flows["main_output"] *= norm_factor
-            results_flows["main_input"] *= norm_factor
-            for flow in results_flows["flows"]:
-                results_flows["flows"][flow] *= norm_factor
+            results_flows.main_output *= norm_factor
+            results_flows.main_input *= norm_factor
+            results_flows.flows = rescale_dict(results_flows.flows, norm_factor)
+            if results_flows.emissions:
+                results_flows.emissions = rescale_dict(
+                    results_flows.emissions, norm_factor
+                )
 
         # rescale again ONLY RES to account for additionally needed electricity
         # sum_el is larger than 1.0
@@ -226,12 +247,16 @@ class PtxCalc:
             )
             # rescale values
             for results_flows in [
-                rf for rf in results_flows_chain if rf["process_step"] == "RES"
+                rf for rf in results_flows_chain if rf.process_step == "RES"
             ]:
-                results_flows["main_output"] *= norm_factor_el
-                # RES does not really have an input, but we do it anyways
-                results_flows["main_input"] *= norm_factor_el
-                for flow in results_flows["flows"]:
-                    results_flows["flows"][flow] *= norm_factor_el
+                results_flows.main_output *= norm_factor_el
+                results_flows.main_input *= norm_factor_el
+                results_flows.flows = rescale_dict(results_flows.flows, norm_factor_el)
+                if results_flows.emissions:
+                    results_flows.emissions = rescale_dict(
+                        results_flows.emissions, norm_factor_el
+                    )
 
-        return results_flows_chain, results_cost
+        # TODO: currently for testing, we return dicts, not ResultsFlows
+        results_flows_chain_ = [asdict(rf) for rf in results_flows_chain]
+        return results_flows_chain_, results_cost
