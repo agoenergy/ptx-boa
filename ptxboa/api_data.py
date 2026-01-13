@@ -195,11 +195,30 @@ class _ParameterGetter:
             use_user_data=self.use_user_data,
         )
 
-    def flow_conv_params(self, process_code: ProcessCodeType):
-        result = {}
+    def get_secondary_flows(self, process_code: ProcessCodeType) -> list[FlowCodeType]:
         flows = self.df_processes.loc[process_code, "secondary_flows"]
-        flows = [x.strip() for x in flows if x.strip()]
-        for flow_code in flows:
+        flows = [x for x in flows if x]
+        return flows
+
+    def get_flow_loss_params(self, process_code: ProcessCodeType) -> dict:
+        result = {}
+        for flow_code in self.get_secondary_flows(process_code):
+            # new: loss can reduce the effective conversion rate
+            loss = self.get_parameter_value_w_default(
+                "LOSS", process_code=process_code, flow_code=flow_code, default=0
+            )
+            if loss:
+                result[flow_code] = loss
+        return result
+
+    def get_flow_conv_params(
+        self,
+        process_code: ProcessCodeType,
+        flow_loss_params: dict[FlowCodeType, float] | None = None,
+    ) -> dict:
+        flow_loss_params = flow_loss_params or {}
+        result = {}
+        for flow_code in self.get_secondary_flows(process_code):
             conv = self.get_parameter_value_w_default(
                 parameter_code="CONV",
                 process_code=process_code,
@@ -212,9 +231,7 @@ class _ParameterGetter:
                 continue
 
             # new: loss can reduce the effective conversion rate
-            loss = self.get_parameter_value_w_default(
-                "LOSS", process_code=process_code, flow_code=flow_code, default=0
-            )
+            loss = flow_loss_params.get(flow_code)
             if loss:
                 # see https://github.com/agoenergy/ptx-boa/issues/581
                 conv = conv * (1 + loss)
@@ -222,7 +239,7 @@ class _ParameterGetter:
             result[flow_code] = conv
         return result
 
-    def get_process_params(self, process_code: ProcessCodeType):
+    def get_process_params(self, process_code: ProcessCodeType) -> dict:
         result = {}
         result["EFF"] = self.get_parameter_value_w_default(
             "EFF", process_code=process_code, default=1
@@ -230,12 +247,14 @@ class _ParameterGetter:
         # loss that effects main efficiency: get parameter for
         # main in flow
         main_flow_code_in = self.df_processes.loc[process_code, "main_flow_code_in"]
-        loss = self.get_parameter_value_w_default(
+        main_loss_param = self.get_parameter_value_w_default(
             "LOSS", process_code=process_code, flow_code=main_flow_code_in, default=0
         )
-        if loss:
+        flow_loss_params = self.get_flow_loss_params(process_code)
+        if main_loss_param:
             # see https://github.com/agoenergy/ptx-boa/issues/581
-            result["EFF"] = result["EFF"] / (1 + loss)
+            result["EFF"] = result["EFF"] / (1 + main_loss_param)
+            result["LOSS"] = main_loss_param
 
         result["FLH"] = self.get_parameter_value_w_default(
             "FLH",
@@ -256,12 +275,16 @@ class _ParameterGetter:
         result["OPEX-O"] = self.get_parameter_value_w_default(
             "OPEX-O", process_code=process_code, default=0
         )
-        result["CONV"] = self.flow_conv_params(process_code)
+        result["CONV"] = self.get_flow_conv_params(
+            process_code, flow_loss_params=flow_loss_params
+        )
+        if flow_loss_params:
+            result["LOSS_FLOW"] = flow_loss_params
         return result
 
     def get_transport_process_params(
         self, process_code: ProcessCodeType, dist_transport: float
-    ):
+    ) -> dict:
         result = {}
         # TODO: also save in results
         loss_t = self.get_parameter_value_w_default(
@@ -275,7 +298,7 @@ class _ParameterGetter:
         result["OPEX-O"] = self.get_parameter_value_w_default(
             "OPEX-O", process_code=process_code, default=0
         )
-        result["CONV"] = self.flow_conv_params(process_code)
+        result["CONV"] = self.get_flow_conv_params(process_code)
         return result
 
     def get_flow_params(self, flow_codes: Iterable[FlowCodeType]):
