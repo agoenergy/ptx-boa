@@ -5,7 +5,7 @@ import streamlit_antd_components as sac
 
 from app.context_data import load_context_data
 from app.layout_elements import display_footer
-from app.sidebar import make_sidebar
+from app.sidebar import make_sidebar_green
 from app.tab_certification_schemes import content_certification_schemes
 from app.tab_costs import content_costs
 from app.tab_country_fact_sheets import content_country_fact_sheets
@@ -99,7 +99,7 @@ sac.buttons(
 )
 st.divider()
 # create sidebar:
-make_sidebar(api)
+make_sidebar_green(api)
 
 if st.session_state[st.session_state["tab_key"]] in [
     "Market scanning",

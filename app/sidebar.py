@@ -12,12 +12,19 @@ def sidebar_logo():
     st.image("img/Agora_Industry_logo_612x306.png")
 
 
+def make_sidebar_green(api: PtxboaAPI):
+    make_sidebar(api)
+
+
+def make_sidebar_blue(api: PtxboaAPI):
+    make_sidebar(api)
+
+
 def make_sidebar(api: PtxboaAPI):
     st.logo(
         image="img/transparent_10x10.png",  # placeholder when sidebar is expanded
         icon_image="img/Agora_Industry_logo_612x306.png",
     )
-
     with st.sidebar:
         sidebar_logo()
 

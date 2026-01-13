@@ -4,7 +4,9 @@ import streamlit as st
 import streamlit_antd_components as sac
 
 from app.layout_elements import display_footer
-from app.sidebar import make_sidebar
+from app.sidebar import make_sidebar_blue
+from app.user_data import display_user_changes
+from app.user_data_from_file import download_user_data, upload_user_data
 from ptxboa import DEFAULT_CACHE_DIR, DEFAULT_DATA_DIR
 from ptxboa.api import PtxboaAPI
 
@@ -17,7 +19,28 @@ st.set_page_config(
     page_title="Blue PtX Business Opportunity Analyser",
     page_icon="./data/favicon-16x16.png",
 )
+if "user_changes_df" not in st.session_state:
+    st.session_state["user_changes_df"] = None
+
+if "edit_input_data" not in st.session_state:
+    st.session_state["edit_input_data"] = False
+
 st.title("Blue PtX Business Opportunity Analyser")
+
+with st.container():
+    if st.session_state["edit_input_data"]:
+        st.info("Data editing mode **ON**")
+        with st.expander("Modified data"):
+            if st.session_state["user_changes_df"] is not None:
+                download_user_data()
+            display_user_changes(api)
+
+            with st.container():
+                st.divider()
+                st.markdown("##### Upload your data from a previous session")
+                upload_user_data(api)
+    else:
+        placeholder = st.empty()
 
 tabs = (
     "Info",
@@ -57,7 +80,7 @@ sac.buttons(
 )
 st.divider()
 # create sidebar:
-make_sidebar(api)
+make_sidebar_blue(api)
 
 if st.session_state[st.session_state["tab_key"]] == "Info":
     st.text("Blue PtX Info")
