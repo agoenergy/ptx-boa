@@ -22,11 +22,15 @@ def _translate_user_data(user_data: pd.DataFrame) -> None:
             colname = str(colname)
             if value and colname.endswith("_code"):
                 dimname = colname.replace("_code", "")
+                basename = dimname.replace("target_", "").replace("source_", "")
                 dim = DataHandler.dimensions[dimname]  # type:ignore
                 try:
-                    value = dim.loc[value, dimname + "_name"]
+                    value = dim.loc[value, basename + "_name"]
                 except Exception:
-                    raise KeyError(f"{value} not in {dimname}: {dim.index}")
+                    raise KeyError(
+                        f"{colname}={value} not in {dimname}: "
+                        f"{sorted(dim.index)}, {sorted(dim.columns)}"
+                    )
                 user_data.loc[idx, colname] = value  # type:ignore
 
 
@@ -49,7 +53,7 @@ def _rec_approx(x):
             "2040 (medium)",
             {
                 "chain_name": "TODO: Blue Iron",
-                "source_region_code": "MAR",
+                "source_region_code": "QAT",
                 "target_country_code": "DEU",
                 "process_code_res": None,
                 "secondary_processes": {},
@@ -65,6 +69,17 @@ def test_new_blue_chain(scenario, kwargs, request):
         [
             # FIXME: all flows are (in green tool) expected to have CALOR
             # but doesit make sense for Steel?
+            {
+                "source_region_code": "QAT",
+                "parameter_code": "WACC",
+                "value": 0,
+            },
+            {
+                "source_region_code": "QAT",
+                "target_country_code": "DEU",
+                "parameter_code": "DST-S-D",
+                "value": 999,
+            },
             {
                 "flow_code": "STL-S",
                 "parameter_code": "CALOR",
@@ -104,6 +119,18 @@ def test_new_blue_chain(scenario, kwargs, request):
                 "value": 0.99,  # process_calc!E5
             },
             {
+                "process_code": "NG-DRI",
+                "flow_code": "HEAT",
+                "parameter_code": "CONV",
+                "value": 0.01,  # process_calc!E6
+            },
+            {
+                "process_code": "EAF",
+                "flow_code": "HEAT",
+                "parameter_code": "CONV",
+                "value": 0.01,  # process_calc!J6
+            },
+            {
                 "process_code": "EAF",
                 "parameter_code": "LOSS",
                 "flow_code": "NG-G",
@@ -127,12 +154,12 @@ def test_new_blue_chain(scenario, kwargs, request):
                 "value": 0.3,  # process_calc!J4
             },
             {
-                "flow_code": "NG-G",
+                "process_code": "NG-DRI",
                 "parameter_code": "CO2CPT-S",
                 "value": 0.45,  # process_calc!E10
             },
             {
-                "flow_code": "EL",
+                "process_code": "NG-DRI",
                 "parameter_code": "CO2CPT-R",
                 "value": 0.9,  # process_calc!E13
             },
@@ -151,17 +178,41 @@ def test_new_blue_chain(scenario, kwargs, request):
                 "parameter_code": "CO2BOUND",
                 "value": 0.00396,  # process_calc!J16
             },
-        ],
-        columns=[
-            "parameter_code",
-            "process_code",
-            "flow_code",
-            "source_region_code",
-            "value",
-        ],
+            {
+                "parameter_code": "EF_M",
+                "flow_code": "NG-G",
+                "value": 201,  # emission_factors!D7
+            },
+            {
+                "parameter_code": "EF_M",
+                "flow_code": "EL",
+                "source_region_code": "QAT",
+                "value": 402,  # emission_factors!E7
+            },
+            {
+                "parameter_code": "EF_M",
+                "flow_code": "HEAT",
+                "source_region_code": "QAT",
+                "value": 250,  # emission_factors!G7
+            },
+            {
+                "parameter_code": "EF_M",
+                "flow_code": "EL",
+                "target_country_code": "DEU",
+                "value": 300,  # emission_factors!F7
+            },
+            {
+                "parameter_code": "EF_M",
+                "flow_code": "HEAT",
+                "target_country_code": "DEU",
+                "value": 250,  # emission_factors!H7
+            },
+        ]
     )
 
     _translate_user_data(user_data)
+
+    pprint(user_data)
 
     data_handler = DataHandler(
         data_dir=ptxdata_dir_static, scenario=scenario, user_data=user_data
@@ -173,22 +224,8 @@ def test_new_blue_chain(scenario, kwargs, request):
     pprint(values)
 
     assert _rec_approx(calculation_data) == {
-        "context": {"source_region_code": "MAR", "target_country_code": "DEU"},
+        "context": {"source_region_code": "QAT", "target_country_code": "DEU"},
         "flh_opt_process": {},
-        "main_export_process_chain": [
-            {
-                "CAPEX": 0,
-                "CONV": {"EL": 0.476859, "IOP-S": 0.99},
-                "EFF": 0.3200038095238095,
-                "FLH": 7000,
-                "LIFETIME": 20,
-                "OPEX-F": 0,
-                "OPEX-O": 0,
-                "LOSS": 0.05,
-                "process_code": "NG-DRI",
-                "step": "DERIV",
-            }
-        ],
         "parameter": {
             "CALOR": 0.0,
             "SPECCOST": {
@@ -200,13 +237,34 @@ def test_new_blue_chain(scenario, kwargs, request):
                 "IOP-S": 0.0,
                 "N2-G": 0.01154,
             },
-            "WACC": 0.0826130467109222,
+            "WACC": 0,
         },
+        "main_export_process_chain": [
+            {
+                "CAPEX": 0,
+                "CONV": {"EL": 0.476859, "IOP-S": 0.99, "HEAT": 0.01},
+                "EFF": 0.3200038095238095,
+                "FLH": 7000,
+                "LIFETIME": 20,
+                "OPEX-F": 0,
+                "OPEX-O": 0,
+                "LOSS": 0.05,
+                "CO2CPT-R": 0.9,
+                "CO2CPT-S": 0.45,
+                "process_code": "NG-DRI",
+                "step": "DERIV",
+                "CH4SHARE": {"NG-G": 0.909},
+                "CO2BOUND": {
+                    "NG-G": 0.0408116143367898,
+                },
+                "EF_M": {"NG-G": 201.0},
+            }
+        ],
         "secondary_process": {},
         "transport_process_chain": [
             {
                 "CONV": {},
-                "DIST": 2668.15,
+                "DIST": 999,
                 "EFF": 1.0,
                 "OPEX-O": 0,
                 "OPEX-T": 3.765382979887925e-07,
@@ -217,13 +275,23 @@ def test_new_blue_chain(scenario, kwargs, request):
         "main_import_process_chain": [
             {
                 "CAPEX": 0,
-                "CONV": {"NG-G": 0.315, "EL": 0.651},
+                "CONV": {"NG-G": 0.315, "EL": 0.651, "HEAT": 0.01},
                 "EFF": 1.010101,
                 "FLH": 7000,
                 "LIFETIME": 20,
                 "OPEX-F": 0,
                 "OPEX-O": 0,
                 "LOSS_FLOW": {"NG-G": 0.05},
+                "CH4SHARE": {
+                    "NG-G": 0.909,
+                },
+                "EF_M": {
+                    "NG-G": 201.0,
+                },
+                "CO2BOUND": {
+                    "NG-G": 0.0408116143367898,
+                    "STL-S": 0.00396,
+                },
                 "process_code": "EAF",
                 "step": "DERIV_I",
             },
@@ -235,27 +303,50 @@ def test_new_blue_chain(scenario, kwargs, request):
             "flows": {
                 "EL": 0.4720904147209042,  # process_calc!E26
                 "IOP-S": 0.9801000098010001,  # process_calc!E27
+                "HEAT": 0.0099,  # process_calc!E28
             },
             "main_input": 3.0937132010184407,  # process_calc!E25
             "main_output": 0.99,  # process_calc!E33
             "process_step": "DERIV",
-            "emissions": {},
+            "emissions": {
+                "co2_bound_output": 0.0,
+                "co2_captured": -0.04870006586817431,
+                "co2_emission_direct": 0.006012353810885717,
+                "co2_emission_from_bound": -0.07154701034954002,
+                "co2_indirect": 0.0,
+                "co2e_emission_direct": 3.996637207707444,
+            },
         },
         {
             "flows": {},
             "main_input": 0.99,
             "main_output": 0.99,
             "process_step": "SHP",
-            "emissions": {},
+            "emissions": {
+                "co2_bound_output": 0.0,
+                "co2_captured": 0.0,
+                "co2_emission_direct": 0.0,
+                "co2_emission_from_bound": 0.0,
+                "co2_indirect": 0.0,
+                "co2e_emission_direct": 0.0,
+            },
         },
         {
             "flows": {
                 "NG-G": 0.315,  # process_calc!J26
                 "EL": 0.651,  # process_calc!J27
+                "HEAT": 0.01,  # process_calc!J30
             },
             "main_input": 0.99,  # process_calc!J25
             "main_output": 1.0,
             "process_step": "DERIV_I",
-            "emissions": {},
+            "emissions": {
+                "co2_bound_output": 0.00396,
+                "co2_captured": -0.0,
+                "co2_emission_direct": 0.0006121742150518469,
+                "co2_emission_from_bound": -0.008283484301036939,
+                "co2_indirect": 63.315,
+                "co2e_emission_direct": 0.0006121742150518469,
+            },
         },
     ]

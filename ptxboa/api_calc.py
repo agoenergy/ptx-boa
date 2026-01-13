@@ -22,9 +22,64 @@ class ResultsFlows:
     emissions: Optional[dict[str, float]] = None
 
 
-def calculate_emissions(results_flows: ResultsFlows, parameters: dict) -> dict:
-    parameters.get("LOSS", 0)
-    return {}
+def calculate_emissions(
+    results_flows: ResultsFlows,
+    step_data: dict,
+    main_flow_code_in: str,
+    main_flow_code_out: str,
+) -> dict:
+    # TODO: speedup by not having to load process object every time?
+
+    CH4SHARE = step_data.get("CH4SHARE", {})
+    CO2BOUND = step_data.get("CO2BOUND", {})
+
+    CO2CPT = step_data.get("CO2CPT-R", 0) * step_data.get("CO2CPT-S", 0)
+    EF_M = step_data.get("EF_M", {})
+
+    METHANE_COeq = 29.8  # TODO
+
+    # see https://github.com/agoenergy/ptx-boa/issues/581
+    # Losses, interpreted as additional to net
+    main_input_gross = results_flows.main_input
+    factor_loss_main = step_data.get("LOSS", 0)
+    main_input_net = main_input_gross / (1 + factor_loss_main)
+    main_input_loss = main_input_net * factor_loss_main
+
+    co2_bound_output = results_flows.main_output * CO2BOUND.get(main_flow_code_out, 0)
+
+    co2_indirect = 0  # TODO: should we pass it on from step to step?
+    co2_bound_input = main_input_net * CO2BOUND.get(main_flow_code_in, 0)
+    co2_emission_direct = main_input_loss * CO2BOUND.get(main_flow_code_in, 0)
+    methane_emission_direct = main_input_loss * CH4SHARE.get(main_flow_code_in, 0)
+
+    parameters_loss_flow = step_data.get("LOSS_FLOW", {})
+    for flow_code, flow_input_gross in results_flows.flows.items():
+        # ignore negative flows
+        if flow_input_gross <= 0:
+            continue
+        factor_loss_flow = parameters_loss_flow.get(flow_code, 0)
+        flow_input_net = flow_input_gross / (1 + factor_loss_flow)
+        flow_input_loss = flow_input_net * factor_loss_flow
+
+        co2_indirect += flow_input_gross * EF_M.get(flow_code, 0)
+        co2_bound_input += flow_input_net * CO2BOUND.get(flow_code, 0)
+        co2_emission_direct += flow_input_loss * CO2BOUND.get(flow_code, 0)
+        methane_emission_direct += flow_input_loss * CH4SHARE.get(main_flow_code_in, 0)
+
+    co2_bound_delta = co2_bound_output - co2_bound_input
+    co2_captured = co2_bound_delta * CO2CPT
+    co2_emission_from_bound = co2_bound_delta - co2_captured
+
+    co2e_emission_direct = co2_emission_direct + methane_emission_direct * METHANE_COeq
+
+    return {
+        "co2_indirect": co2_indirect,
+        "co2_bound_output": co2_bound_output,
+        "co2_captured": co2_captured,
+        "co2_emission_from_bound": co2_emission_from_bound,
+        "co2_emission_direct": co2_emission_direct,
+        "co2e_emission_direct": co2e_emission_direct,
+    }
 
 
 class PtxCalc:
@@ -208,7 +263,14 @@ class PtxCalc:
                         (flow_result_process_type, process_code, "FLOW", flow_cost)
                     )
 
-            results_flows.emissions = calculate_emissions(results_flows, parameters)
+            proc = df_processes.loc[process_code]
+
+            results_flows.emissions = calculate_emissions(
+                results_flows,
+                step_data,
+                proc.main_flow_code_in,
+                proc.main_flow_code_out,
+            )
 
         # convert to DataFrame
         dim_columns = ["process_type", "process_subtype", "cost_type"]
