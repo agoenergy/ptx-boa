@@ -71,7 +71,7 @@ def test_new_blue_chain(scenario, kwargs, request):
                 "value": 0,
             },
             {
-                "flow_code": "CH4-G",
+                "flow_code": "NG-G",
                 "parameter_code": "SPECCOST",
                 "value": 0,
             },
@@ -82,7 +82,7 @@ def test_new_blue_chain(scenario, kwargs, request):
             },
             {
                 "process_code": "NG-DRI",
-                "flow_code": "CH4-G",  # main flow in
+                "flow_code": "NG-G",  # main flow in
                 "parameter_code": "LOSS",
                 "value": 0.05,  # process_calc!E7
             },
@@ -106,7 +106,7 @@ def test_new_blue_chain(scenario, kwargs, request):
             {
                 "process_code": "EAF",
                 "parameter_code": "LOSS",
-                "flow_code": "CH4-G",
+                "flow_code": "NG-G",
                 "value": 0.05,  # process_calc!J7
             },
             {
@@ -122,9 +122,34 @@ def test_new_blue_chain(scenario, kwargs, request):
             },
             {
                 "process_code": "EAF",
-                "flow_code": "CH4-G",
+                "flow_code": "NG-G",
                 "parameter_code": "CONV",
                 "value": 0.3,  # process_calc!J4
+            },
+            {
+                "flow_code": "NG-G",
+                "parameter_code": "CO2CPT-S",
+                "value": 0.45,  # process_calc!E10
+            },
+            {
+                "flow_code": "EL",
+                "parameter_code": "CO2CPT-R",
+                "value": 0.9,  # process_calc!E13
+            },
+            {
+                "flow_code": "NG-G",
+                "parameter_code": "CO2BOUND",
+                "value": 0.0408116143367898,  # process_calc!E16
+            },
+            {
+                "flow_code": "NG-G",
+                "parameter_code": "CH4SHARE",
+                "value": 0.909,  # process_calc!E18
+            },
+            {
+                "flow_code": "STL-S",
+                "parameter_code": "CO2BOUND",
+                "value": 0.00396,  # process_calc!J16
             },
         ],
         columns=[
@@ -166,7 +191,7 @@ def test_new_blue_chain(scenario, kwargs, request):
         "parameter": {
             "CALOR": 0.0,
             "SPECCOST": {
-                "CH4-G": 0.0,
+                "NG-G": 0.0,
                 "CO2-G": 0.0445186199587845,
                 "EL": 0.08078,
                 "H2O-L": 0.0013737954502618,
@@ -191,7 +216,7 @@ def test_new_blue_chain(scenario, kwargs, request):
         "main_import_process_chain": [
             {
                 "CAPEX": 0,
-                "CONV": {"CH4-G": 0.315, "EL": 0.651},
+                "CONV": {"NG-G": 0.315, "EL": 0.651},
                 "EFF": 1.010101,
                 "FLH": 7000,
                 "LIFETIME": 20,
@@ -221,7 +246,7 @@ def test_new_blue_chain(scenario, kwargs, request):
         },
         {
             "flows": {
-                "CH4-G": 0.315,  # process_calc!J26
+                "NG-G": 0.315,  # process_calc!J26
                 "EL": 0.651,  # process_calc!J27
             },
             "main_input": 0.99,  # process_calc!J25
