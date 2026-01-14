@@ -451,6 +451,12 @@ def create_bar_chart_costs(
         color_discrete_map=agora_discrete_colors_cost_categories(),
     )
 
+    # ensure stacked bars
+    fig.update_layout(barmode="relative")
+    for trace in fig.data:
+        if trace.type == "bar":
+            trace.update(offsetgroup=None)
+
     # Add the dot markers for the "total" column using plotly.graph_objects
     scatter_trace = go.Scatter(
         x=res_costs.index,
