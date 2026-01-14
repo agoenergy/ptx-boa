@@ -205,17 +205,14 @@ def main(
     results = []  # save results
     for params in progress.bar.Bar(
         suffix=(
-            "%(index)s/%(max)s, "
-            "%(percent)d%%, "
-            "elapsed %(elapsed_td)s, "
-            "eta %(eta_td)s"
+            "%(index)s/%(max)s, %(percent)d%%, elapsed %(elapsed_td)s, eta %(eta_td)s"
         )
     ).iter(param_sets):
         result = {"params": params}
         try:
             logging.info(f"calculating parameter set {params}")
 
-            _df, metadata = api.calculate(optimize_flh=True, **params)
+            metadata = api.calculate(optimize_flh=True, **params).metadata
 
             result["error"] = None
             result["result"] = metadata.get("flh_opt_hash")

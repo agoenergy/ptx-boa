@@ -126,14 +126,14 @@ def main(
             logging.warning(f"{i} of {n_total} parameter combinations")
         try:
             df_no_opt = (
-                api.calculate(optimize_flh=False, **param_set)[0]
-                .rename(columns={"values": no_optimized_col})
+                api.calculate(optimize_flh=False, **param_set)
+                .costs.rename(columns={"values": no_optimized_col})
                 .set_index(index_cols)
             )
             try:
                 df_opt = (
-                    api.calculate(optimize_flh=True, **param_set)[0]
-                    .rename(columns={"values": optimized_col})
+                    api.calculate(optimize_flh=True, **param_set)
+                    .costs.rename(columns={"values": optimized_col})
                     .set_index(index_cols)
                 )
                 df = pd.concat(

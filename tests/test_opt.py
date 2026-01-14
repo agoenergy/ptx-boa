@@ -120,7 +120,7 @@ def api():
 
 
 @pytest.mark.parametrize("chain", ["Methane (AEL)", "Hydrogen (AEL)"])
-def test_issue_312_fix_fhl_optimization_errors(api, chain):
+def test_issue_312_fix_fhl_optimization_errors(api: PtxboaAPI, chain):
     """See https://github.com/agoenergy/ptx-boa/issues/312."""
     settings = {
         "region": "Morocco",
@@ -134,12 +134,12 @@ def test_issue_312_fix_fhl_optimization_errors(api, chain):
         "ship_own_fuel": False,
         "output_unit": "USD/t",
     }
-    res = api.calculate(**settings, optimize_flh=True)
+    res = api.calculate(**settings, optimize_flh=True).costs
     assert len(res) > 0
 
 
 @pytest.mark.parametrize("chain", ["Methane (AEL)", "Hydrogen (AEL)", "LOHC (AEL)"])
-def test_issue_403_fix_no_heat_demand_for_methane_production(api, chain):
+def test_issue_403_fix_no_heat_demand_for_methane_production(api: PtxboaAPI, chain):
     """See https://github.com/agoenergy/ptx-boa/issues/403.
 
     Heat costs should be zero for Methane and Hydrogen, and >0 for LOHC.
@@ -157,7 +157,7 @@ def test_issue_403_fix_no_heat_demand_for_methane_production(api, chain):
         "output_unit": "USD/t",
     }
     res = api.calculate(**settings, optimize_flh=True)
-    df = res[0]
+    df = res.costs
     if chain != "LOHC (AEL)":
         assert sum(df["process_type"] == "Heat") == 0
     else:
@@ -238,13 +238,13 @@ def network_green_iron(api) -> Tuple[pypsa.Network, dict, dict]:
     return n, metadata, settings
 
 
-def test_issue_564(network_green_iron, api):
+def test_issue_564(network_green_iron, api: PtxboaAPI):
     # calculate costs from optimization tab:
     n, metadata, settings = network_green_iron
     res_opt = calc_aggregate_statistics(n, include_debugging_output=True)
 
     # get costs from costs tab:
-    df_res_costs, _ = api.calculate(**settings)
+    df_res_costs = api.calculate(**settings).costs
     res_costs_agg = df_res_costs.pivot_table(
         index="process_type", columns="cost_type", values="values", aggfunc=sum
     ).fillna(0)
