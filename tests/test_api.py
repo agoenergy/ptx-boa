@@ -39,7 +39,7 @@ class TestApi(unittest.TestCase):
         cls.temp_dir.__exit__(None, None, None)
 
     def _test_api_call(self, settings, optimize_flh=False):
-        res, _metadata = self.api.calculate(**settings, optimize_flh=optimize_flh)
+        res = self.api.calculate(**settings, optimize_flh=optimize_flh).costs
         # test that settings are in results
         for k, v in settings.items():
             if k in ["ship_own_fuel", "output_unit"]:  # skip some
@@ -399,7 +399,7 @@ class TestRegression(unittest.TestCase):
             "chain": "Ammonia (AEL) + reconv. to H2",
         }
         api = PtxboaAPI(data_dir=ptxdata_dir_static)
-        df = api.calculate(**param_set, optimize_flh=False)[0]
+        df = api.calculate(**param_set, optimize_flh=False).costs
         df = df.set_index(
             [
                 "process_type",
