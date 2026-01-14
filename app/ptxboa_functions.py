@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Utility functions for streamlit app."""
+
 import logging
 from pathlib import Path
 from typing import Dict, Literal
@@ -34,12 +35,12 @@ def calculate_results_single(
     pd.DataFrame
         same format as for :meth:`~ptxboa.api.PtxboaAPI.calculate()`
     """
-    res, _metadata = _api.calculate(
+    res = _api.calculate(
         user_data=user_data,
         **settings,
         optimize_flh=optimize_flh,
         use_user_data_for_optimize_flh=use_user_data_for_optimize_flh,
-    )
+    ).costs
 
     return res
 

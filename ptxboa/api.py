@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """Api for calculations for webapp."""
 
-
+from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import pandas as pd
 import pypsa
@@ -27,6 +27,13 @@ from .static import (
     TransportType,
     TransportValues,
 )
+
+
+@dataclass(slots=True)
+class ApiCalculateResult:
+    costs: pd.DataFrame
+    metadata: dict
+    emissions: Optional[pd.DataFrame] = None
 
 
 class PtxboaAPI:
@@ -123,7 +130,7 @@ class PtxboaAPI:
         user_data: pd.DataFrame | None = None,
         optimize_flh: bool = True,
         use_user_data_for_optimize_flh: bool = False,
-    ) -> Tuple[pd.DataFrame, object]:
+    ) -> ApiCalculateResult:
         """Calculate results based on user selection.
 
         Parameters
@@ -229,7 +236,11 @@ class PtxboaAPI:
         result_df["transport"] = transport
 
         metadata = {"flh_opt_hash": data.get("flh_opt_hash")}  # does not always exist
-        return result_df, metadata
+        return ApiCalculateResult(
+            metadata=metadata,
+            costs=result_df,
+            emissions=result_df.copy(),  # DUMMY for frontend development
+        )
 
     def get_flh_opt_network(
         self,
@@ -277,7 +288,7 @@ class PtxboaAPI:
         result : Tuple[pypsa-Network, dict]
             second part of tuple contains metadata
         """
-        _df, metadata = self.calculate(
+        metadata = self.calculate(
             scenario=scenario,
             secproc_co2=secproc_co2,
             secproc_water=secproc_water,
@@ -290,7 +301,7 @@ class PtxboaAPI:
             user_data=user_data,
             optimize_flh=True,
             use_user_data_for_optimize_flh=True,  # always consider user data
-        )
+        ).metadata
         hashsum = metadata.get("flh_opt_hash", {}).get("hash_md5")
         if not hashsum:
             return None
