@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Sidebar creation."""
+
 import streamlit as st
 
 from app.ptxboa_functions import read_markdown_file
@@ -7,52 +8,29 @@ from app.user_data import reset_user_changes
 from ptxboa.api import PtxboaAPI
 
 
-@st.cache_resource()
-def sidebar_logo():
-    st.image("img/Agora_Industry_logo_612x306.png")
-
-
 def make_sidebar_green(api: PtxboaAPI):
-    make_sidebar(api)
+    logo_section()
+    with main_settings_expander():
+        main_settings_green(api)
+    with additional_settings_expander():
+        additional_settings_green(api)
+    st.sidebar.divider()
+    edit_input_data_toggle()
+    input_data_reset_notice()
 
 
 def make_sidebar_blue(api: PtxboaAPI):
-    make_sidebar(api)
-
-
-def make_sidebar(api: PtxboaAPI):
-    st.logo(
-        image="img/transparent_10x10.png",  # placeholder when sidebar is expanded
-        icon_image="img/Agora_Industry_logo_612x306.png",
-    )
-    with st.sidebar:
-        sidebar_logo()
-
-    with st.sidebar.expander("**Main settings**", expanded=True):
-        main_settings(api)
-
-    with st.sidebar.expander("**Additional settings**", expanded=False):
-        additional_settings(api)
-
+    logo_section()
+    with main_settings_expander():
+        main_settings_blue(api)
+    with additional_settings_expander():
+        additional_settings_blue(api)
     st.sidebar.divider()
-
-    st.sidebar.toggle(
-        "Edit input data",
-        help=read_markdown_file("md/helptext_sidebar_edit_input_data.md"),
-        value=False,
-        key="edit_input_data",
-        on_change=reset_user_changes,
-    )
-    if (
-        st.session_state["edit_input_data"]
-        and st.session_state["user_changes_df"] is not None
-    ):
-        st.sidebar.info("Modified data is reset when turned **OFF**")
-
-    return
+    edit_input_data_toggle()
+    input_data_reset_notice()
 
 
-def main_settings(api):
+def main_settings_green(api):
     # get list of regions that does not contain subregions:
     region_list = (
         api.get_dimension("region")
@@ -166,14 +144,66 @@ def main_settings(api):
     st.session_state["scenario"] = f"{data_year} ({cost_scenario})"
 
 
-def additional_settings(api):
-    st.session_state["secproc_co2"] = st.radio(
-        "CO₂ source:",
-        api.get_dimension("secproc_co2").index,
-        horizontal=True,
-        help=read_markdown_file("md/helptext_sidebar_carbon_source.md"),
+def main_settings_blue(api: PtxboaAPI):
+    pass
+
+
+def additional_settings_green(api):
+    co2_source_selection(api)
+    water_source_selection(api)
+    allow_pipeline_toggle()
+    ship_own_fuel_toggle()
+    unit_selection_input()
+
+
+def additional_settings_blue(api: PtxboaAPI):
+    co2_source_selection(api)
+    allow_pipeline_toggle()
+    ship_own_fuel_toggle()
+    unit_selection_input()
+
+
+@st.cache_resource()
+def sidebar_logo():
+    st.image("img/Agora_Industry_logo_612x306.png")
+
+
+def logo_section():
+    st.logo(
+        image="img/transparent_10x10.png",  # placeholder when sidebar is expanded
+        icon_image="img/Agora_Industry_logo_612x306.png",
+    )
+    with st.sidebar:
+        sidebar_logo()
+
+
+def main_settings_expander():
+    return st.sidebar.expander("**Main settings**", expanded=True)
+
+
+def additional_settings_expander():
+    return st.sidebar.expander("**Additional settings**", expanded=False)
+
+
+def edit_input_data_toggle():
+    st.sidebar.toggle(
+        "Edit input data",
+        help=read_markdown_file("md/helptext_sidebar_edit_input_data.md"),
+        value=False,
+        key="edit_input_data",
+        on_change=reset_user_changes,
     )
 
+
+def input_data_reset_notice():
+    if (
+        st.session_state["edit_input_data"]
+        and st.session_state["user_changes_df"] is not None
+    ):
+        st.sidebar.info("Modified data is reset when turned **OFF**")
+
+
+def water_source_selection(api):
     st.session_state["secproc_water"] = st.radio(
         "Water source:",
         api.get_dimension("secproc_water").index,
@@ -181,6 +211,34 @@ def additional_settings(api):
         help=read_markdown_file("md/helptext_sidebar_water_source.md"),
     )
 
+
+def co2_source_selection(api):
+    st.session_state["secproc_co2"] = st.radio(
+        "CO₂ source:",
+        api.get_dimension("secproc_co2").index,
+        horizontal=True,
+        help=read_markdown_file("md/helptext_sidebar_carbon_source.md"),
+    )
+
+
+def ship_own_fuel_toggle():
+    st.session_state["ship_own_fuel"] = st.toggle(
+        "For shipping option: Use the product as own fuel?",
+        help=read_markdown_file("md/helptext_sidebar_transport_use_own_fuel.md"),
+    )
+
+
+def unit_selection_input():
+    st.session_state["output_unit"] = st.radio(
+        "Unit for delivered costs:",
+        ["USD/MWh", "USD/t"],
+        horizontal=True,
+        help=read_markdown_file("md/helptext_sidebar_cost_unit.md"),
+        index=1,  # 'USD/t' as default
+    )
+
+
+def allow_pipeline_toggle():
     allow_pipeline = st.toggle(
         "Allow pipeline transport",
         help=read_markdown_file("md/helptext_sidebar_transport.md"),
@@ -190,16 +248,3 @@ def additional_settings(api):
         st.session_state["transport"] = "Pipeline"
     else:
         st.session_state["transport"] = "Ship"
-
-    st.session_state["ship_own_fuel"] = st.toggle(
-        "For shipping option: Use the product as own fuel?",
-        help=read_markdown_file("md/helptext_sidebar_transport_use_own_fuel.md"),
-    )
-
-    st.session_state["output_unit"] = st.radio(
-        "Unit for delivered costs:",
-        ["USD/MWh", "USD/t"],
-        horizontal=True,
-        help=read_markdown_file("md/helptext_sidebar_cost_unit.md"),
-        index=1,  # 'USD/t' as default
-    )
