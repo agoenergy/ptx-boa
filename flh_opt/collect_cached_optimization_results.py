@@ -21,7 +21,7 @@ import pypsa
 from tqdm import tqdm
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
-from app.tab_optimization import calc_aggregate_statistics  # noqa E402
+from app.tab_green_optimization import calc_aggregate_statistics  # noqa E402
 from ptxboa import DEFAULT_CACHE_DIR  # noqa E402
 
 

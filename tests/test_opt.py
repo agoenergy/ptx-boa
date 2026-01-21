@@ -13,7 +13,7 @@ import pypsa
 import pytest
 
 from app.plot_functions import prepare_data_for_profile_figures
-from app.tab_optimization import calc_aggregate_statistics
+from app.tab_green_optimization import calc_aggregate_statistics
 from flh_opt.api_opt import get_profiles_and_weights, optimize
 from ptxboa import DEFAULT_CACHE_DIR
 from ptxboa.api import DataHandler, PtxboaAPI
