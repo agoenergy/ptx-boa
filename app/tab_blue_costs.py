@@ -1,0 +1,151 @@
+# -*- coding: utf-8 -*-
+"""Content of costs tab."""
+import streamlit as st
+from plotly.subplots import make_subplots
+
+from app.layout_elements import display_costs, what_is_a_boxplot
+from app.plot_functions import (
+    create_bar_chart_costs,
+    create_box_plot,
+    plot_costs_on_map,
+)
+from app.ptxboa_functions import (
+    blue_results_over_dimension,
+    get_region_list_without_subregions,
+    move_to_tab,
+    read_markdown_file,
+)
+from ptxboa.api import PtxboaAPI
+
+
+def content_costs(api: PtxboaAPI):
+    with st.popover("*Help*", width="stretch"):
+        st.markdown(
+            read_markdown_file("md/whatisthis_costs.md"), unsafe_allow_html=True
+        )
+
+    with st.container(border=True):
+        with st.spinner(
+            "Please wait. Calculating results for different source countries"
+        ):
+            costs_per_region, costs_per_region_without_user_changes = (
+                blue_results_over_dimension(
+                    api,
+                    dim="region",
+                    parameter_list=get_region_list_without_subregions(
+                        api,
+                        country_name=st.session_state["country"],
+                        keep=st.session_state["subregion"],
+                    ),
+                )
+            )
+
+        title_string = (
+            f"Cost of exporting "
+            f"{st.session_state['chain']} to "
+            f"{st.session_state['country']}"
+        )
+        st.subheader(title_string)
+
+        st.markdown(
+            (
+                "This map shows delivered costs for the selected product and demand"
+                " country, for different source countries. Move your mouse over a "
+                "marker for additional information."
+            )
+        )
+
+        fig_map = plot_costs_on_map(
+            api, costs_per_region, scope="world", cost_component="Total"
+        )
+        fig_map.update_layout(
+            margin={"l": 10, "r": 10, "t": 10, "b": 10},
+        )
+        st.plotly_chart(fig_map, width="stretch")
+
+        st.subheader("Cost distribution and cost components")
+
+        st.markdown(
+            (
+                "These figures show the regional distribution of costs"
+                " and a breakdown by category for the selected source country."
+            )
+        )
+
+        # create box plot and bar plot:
+        fig1 = create_box_plot(costs_per_region)
+        filtered_data = costs_per_region[
+            costs_per_region.index == st.session_state["region"]
+        ]
+        fig2 = create_bar_chart_costs(filtered_data)
+        doublefig = make_subplots(rows=1, cols=2, shared_yaxes=True)
+
+        for trace in fig1.data:
+            trace.showlegend = False
+            doublefig.add_trace(trace, row=1, col=1)
+        for trace in fig2.data:
+            doublefig.add_trace(trace, row=1, col=2)
+
+        doublefig.update_layout(barmode="stack")
+        doublefig.update_layout(legend_traceorder="reversed")
+        doublefig.update_yaxes(title_text=st.session_state["output_unit"], row=1, col=1)
+        doublefig.update_layout(
+            height=350,
+            margin={"l": 10, "r": 10, "t": 20, "b": 20},
+        )
+
+        # set ticklabel format:
+        doublefig.update_yaxes(tickformat=",")
+        doublefig.update_layout(separators=". ")
+
+        st.plotly_chart(doublefig, width="stretch")
+
+        what_is_a_boxplot()
+
+        st.button(
+            "More Info on Supply Region and Demand Country",
+            on_click=move_to_tab,
+            args=("Country fact sheets",),
+        )
+
+    with st.container(border=True):
+        help_string = " ".join(
+            [
+                "This figure lets you compare total costs and cost components by source"
+                " country.\n\n By default, all regions are shown, and they are sorted"
+                " by total costs. You can change this in the filter settings."
+            ]
+        )
+        display_costs(
+            costs_per_region,
+            costs_per_region_without_user_changes,
+            "region",
+            "Costs for different source countries",
+            help_string=help_string,
+        )
+
+    with st.container(border=True):
+        with st.spinner(
+            "Please wait. Calculating results for different carbon dioxide prices."
+        ):
+            costs_per_co2_price, costs_per_co2_price_without_user_changes = (
+                blue_results_over_dimension(
+                    api,
+                    dim="carbon_dioxide_price",
+                )
+            )
+
+        help_string = " ".join(
+            [
+                "This figure lets you compare total costs and cost components "
+                "by carbon dioxide price. "
+                "The value from input data is altered by +-10%."
+            ]
+        )
+        display_costs(
+            costs_per_co2_price,
+            costs_per_co2_price_without_user_changes,
+            "scenario",
+            "Costs for different carbon dioxide prices",
+            help_string=help_string,
+        )
