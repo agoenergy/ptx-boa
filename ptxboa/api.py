@@ -33,6 +33,7 @@ class ApiCalculateResult:
     costs: pd.DataFrame
     metadata: dict
     emissions: Optional[pd.DataFrame] = None
+    emission_mass: Optional[pd.DataFrame] = None
 
 
 class PtxboaAPI:
@@ -237,10 +238,21 @@ class PtxboaAPI:
         result_df["transport"] = transport
 
         metadata = {"flh_opt_hash": data.get("flh_opt_hash")}  # does not always exist
+
+        # emissions output unit is asways gCO2 equivalents
+        emissions = (
+            result_df.copy()
+            .drop(columns="cost_type")
+            .assign(emission_type="direct")
+            .assign(gas_type="CO2")
+        )
+        emissions_mass = emissions.copy()
+
         return ApiCalculateResult(
             metadata=metadata,
             costs=result_df,
-            emissions=result_df.copy(),  # DUMMY for frontend development
+            emissions=emissions,  # DUMMY for frontend development
+            emission_mass=emissions_mass,
         )
 
     def get_flh_opt_network(
