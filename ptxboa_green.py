@@ -6,16 +6,16 @@ import streamlit_antd_components as sac
 from app.context_data import load_context_data
 from app.layout_elements import display_footer
 from app.sidebar import make_sidebar_green
-from app.tab_certification_schemes import content_certification_schemes
-from app.tab_costs import content_costs
-from app.tab_country_fact_sheets import content_country_fact_sheets
-from app.tab_deep_dive_countries import content_deep_dive_countries
-from app.tab_info import content_info
-from app.tab_input_data import content_input_data
-from app.tab_literature import content_literature
-from app.tab_market_scanning import content_market_scanning
-from app.tab_optimization import content_optimization
-from app.tab_sustainability import content_sustainability
+from app.tab_green_certification_schemes import content_certification_schemes
+from app.tab_green_costs import content_costs
+from app.tab_green_country_fact_sheets import content_country_fact_sheets
+from app.tab_green_deep_dive_countries import content_deep_dive_countries
+from app.tab_green_info import content_info
+from app.tab_green_input_data import content_input_data
+from app.tab_green_literature import content_literature
+from app.tab_green_market_scanning import content_market_scanning
+from app.tab_green_optimization import content_optimization
+from app.tab_green_sustainability import content_sustainability
 from app.user_data import display_user_changes
 from app.user_data_from_file import download_user_data, upload_user_data
 from ptxboa import DEFAULT_CACHE_DIR, DEFAULT_DATA_DIR

@@ -45,7 +45,7 @@ def calculate_results_single(
     return res
 
 
-def calculate_results_list(
+def calculate_results_list_green(
     api: PtxboaAPI,
     parameter_to_change: str,
     parameter_list: list = None,
@@ -169,6 +169,193 @@ def calculate_results_list(
 
     res_details = pd.concat(res_list)
 
+    return aggregate_costs(res_details, parameter_to_change)
+
+
+def calculate_results_list_blue(
+    api: PtxboaAPI,
+    parameter_to_change: Literal["region", "chain", "carbon_dioxide_price"],
+    parameter_list: None | list | pd.Series | pd.Index = None,
+    override_session_state: dict | None = None,
+    apply_user_data: bool = True,
+) -> pd.DataFrame:
+    """
+    Blue version has fewer settings than green version: no res_gen, no data scenario.
+
+    Fewer dimensions can change.
+    Additionally, sensitivities can be calculated by modifying a specific parameter
+    value by a range of factors.
+    """
+    setting_keys = [
+        "chain",
+        "country",
+        "output_unit",
+        "region",
+        "secproc_co2",
+        "secproc_water",
+        "ship_own_fuel",
+        "transport",
+    ]
+
+    # copy settings from session_state:
+    settings = {key: st.session_state[key] for key in setting_keys}
+
+    # check if carbon is needed as input:
+    needs_co2 = check_if_input_is_needed(api, flow_code="CO2-G")
+    if not needs_co2:
+        settings["secproc_co2"] = None
+
+    # update settings from session state with custom values
+    if override_session_state is not None:
+        if not set(override_session_state.keys()).issubset(set(setting_keys)):
+            msg = (
+                f"keys in 'override_session_state' must be in dict_keys({setting_keys})"
+                f" but are currently {override_session_state.keys()}"
+            )
+            raise ValueError(msg)
+        settings.update(override_session_state)
+
+    # hardcoded values which are not relevant for blue version
+    settings["scenario"] = "2040 (medium)"
+    settings["res_gen"] = "Wind-PV-Hybrid"
+
+    if parameter_list is None:
+        if parameter_to_change in ["region", "chain"]:
+            parameter_list = api.get_dimension(parameter_to_change).index
+        elif parameter_to_change in ["carbon_dioxide_price"]:
+            parameter_list = [0.9, 0.95, 1.0, 1.05, 1.1]
+        else:
+            raise ValueError(f"invalid {parameter_to_change=}")
+
+    # drop Green Iron if comparing chains (because it is not an energy carrier)
+    if parameter_to_change == "chain":
+        parameter_list = parameter_list[~parameter_list.str.startswith("Green Iron")]
+
+    res_list = []
+    if parameter_to_change in ["region", "chain"]:
+        for change_factor in parameter_list:
+            settings.update({parameter_to_change: change_factor})
+            if parameter_to_change == "chain":
+                needs_co2 = check_if_input_is_needed(
+                    api,
+                    flow_code="CO2-G",
+                    chain=settings["chain"],
+                    scenario=settings["scenario"],
+                )
+                # if the current chain does not need CO2, set "secproc_co2" to None
+                if needs_co2:
+                    settings.update({"secproc_co2": st.session_state["secproc_co2"]})
+                else:
+                    settings.update({"secproc_co2": None})
+
+            try:
+                res_single = calculate_results_single(
+                    api,
+                    settings,
+                    user_data=(
+                        st.session_state["user_changes_df"] if apply_user_data else None
+                    ),
+                    optimize_flh=False,
+                    use_user_data_for_optimize_flh=False,
+                )
+                res_list.append(res_single)
+            except Exception as exc:
+                logging.info(f"could not get data: {exc}")
+
+    # sensitivity by changing specific data points by a range of factors
+    elif parameter_to_change in ["carbon_dioxide_price"]:
+        if parameter_to_change == "carbon_dioxide_price":
+            parameter_code = "specific costs"
+            process_code = ""
+            flow_code = "carbon dioxide"
+            source_region_code = ""
+
+        # get input data
+        df = api.get_input_data(
+            settings["scenario"],
+            user_data=(
+                st.session_state["user_changes_df"] if apply_user_data else None
+            ),
+        )
+        # get value from input data which is subject to change
+        value_df = df.loc[
+            (df["parameter_code"] == parameter_code)
+            & (df["process_code"] == process_code)
+            & (df["flow_code"] == flow_code)
+            & (df["source_region_code"] == source_region_code),
+            "value",
+        ]
+        if len(value_df) != 1:
+            raise IndexError(f"Not exactly one entry found: {value_df}")
+        value = value_df.iloc[0]
+
+        if apply_user_data and st.session_state["user_changes_df"] is not None:
+            user_data = st.session_state["user_changes_df"].fillna("")
+        else:
+            user_data = pd.DataFrame(
+                columns=[
+                    "source_region_code",
+                    "process_code",
+                    "parameter_code",
+                    "flow_code",
+                    "value",
+                ]
+            ).astype(
+                dtype={
+                    "source_region_code": "str",
+                    "process_code": "str",
+                    "parameter_code": "str",
+                    "flow_code": "str",
+                    "value": "float",
+                }
+            )
+
+        for change_factor in parameter_list:
+            modified = pd.DataFrame(
+                data={
+                    "source_region_code": source_region_code,
+                    "process_code": process_code,
+                    "parameter_code": parameter_code,
+                    "flow_code": flow_code,
+                    "value": value * change_factor,
+                },
+                index=[0],
+            )
+            user_data = pd.concat([user_data, modified]).drop_duplicates(
+                subset=[
+                    "source_region_code",
+                    "process_code",
+                    "parameter_code",
+                    "flow_code",
+                ],
+                keep="last",
+            )
+            try:
+                res_single = calculate_results_single(
+                    api,
+                    settings,
+                    user_data=user_data,
+                    optimize_flh=False,
+                    use_user_data_for_optimize_flh=False,
+                )
+
+                def get_label(change_factor, original_value):
+                    value_label = f"{(original_value * change_factor):.4f}"
+                    if change_factor == 1:
+                        return value_label
+                    else:
+                        pct_change = f"{int(round((change_factor - 1) * 100)):+}%"
+                        return f"{value_label} ({pct_change})"
+
+                label = get_label(change_factor, value)
+                res_single[parameter_to_change] = label
+                res_list.append(res_single)
+            except Exception as exc:
+                logging.info(f"could not get data: {exc}")
+    else:
+        raise ValueError(f"invalid {parameter_to_change=}")
+
+    res_details = pd.concat(res_list)
     return aggregate_costs(res_details, parameter_to_change)
 
 
@@ -714,8 +901,9 @@ def change_index_names(df: pd.DataFrame, mapping: dict | None = None) -> pd.Data
     return df
 
 
+@st.cache_data(show_spinner=False)
 def check_if_input_is_needed(
-    api: PtxboaAPI, flow_code: str, chain: str = None, scenario: str = None
+    _api: PtxboaAPI, flow_code: str, chain: str = None, scenario: str = None
 ) -> bool:
     """Check if a certain input is required by the selected process chain."""
     if chain is None:
@@ -724,11 +912,11 @@ def check_if_input_is_needed(
         scenario = st.session_state["scenario"]
 
     # get list of processes in selected chain:
-    process_codes = api.get_dimension("chain").loc[chain][:-1].to_list()
+    process_codes = _api.get_dimension("chain").loc[chain][:-1].to_list()
     process_codes = [p for p in process_codes if p != ""]
 
     # get list of conversion coefficients for these processes:
-    df = api.get_input_data(scenario=scenario, long_names=False)
+    df = _api.get_input_data(scenario=scenario, long_names=False)
     flow_codes = df.loc[
         (df["process_code"].isin(process_codes)) & (df["parameter_code"] == "CONV"),
         "flow_code",
@@ -737,8 +925,10 @@ def check_if_input_is_needed(
     return flow_code in flow_codes
 
 
-def costs_over_dimension(api, dim, parameter_list=None, override_session_state=None):
-    df = calculate_results_list(
+def green_costs_over_dimension(
+    api, dim, parameter_list=None, override_session_state=None
+):
+    df = calculate_results_list_green(
         api,
         parameter_to_change=dim,
         parameter_list=parameter_list,
@@ -746,7 +936,33 @@ def costs_over_dimension(api, dim, parameter_list=None, override_session_state=N
         override_session_state=override_session_state,
     )
     if st.session_state["user_changes_df"] is not None:
-        not_modified = calculate_results_list(
+        not_modified = calculate_results_list_green(
+            api,
+            parameter_to_change=dim,
+            parameter_list=parameter_list,
+            apply_user_data=False,
+            override_session_state=override_session_state,
+        )
+    else:
+        not_modified = None
+    return df, not_modified
+
+
+def blue_results_over_dimension(
+    api,
+    dim: Literal["region", "chain", "carbon_dioxide_price"],
+    parameter_list: None | list | pd.Series = None,
+    override_session_state=None,
+):
+    df = calculate_results_list_blue(
+        api,
+        parameter_to_change=dim,
+        parameter_list=parameter_list,
+        apply_user_data=True,
+        override_session_state=override_session_state,
+    )
+    if st.session_state["user_changes_df"] is not None:
+        not_modified = calculate_results_list_blue(
             api,
             parameter_to_change=dim,
             parameter_list=parameter_list,

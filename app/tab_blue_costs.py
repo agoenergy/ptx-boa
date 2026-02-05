@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """Content of costs tab."""
+
 import streamlit as st
 from plotly.subplots import make_subplots
 
@@ -10,7 +10,7 @@ from app.plot_functions import (
     plot_costs_on_map,
 )
 from app.ptxboa_functions import (
-    costs_over_dimension,
+    blue_results_over_dimension,
     get_region_list_without_subregions,
     move_to_tab,
     read_markdown_file,
@@ -26,10 +26,10 @@ def content_costs(api: PtxboaAPI):
 
     with st.container(border=True):
         with st.spinner(
-            "Please wait. Calculating results for different source regions"
+            "Please wait. Calculating results for different source countries"
         ):
             costs_per_region, costs_per_region_without_user_changes = (
-                costs_over_dimension(
+                blue_results_over_dimension(
                     api,
                     dim="region",
                     parameter_list=get_region_list_without_subregions(
@@ -50,8 +50,8 @@ def content_costs(api: PtxboaAPI):
         st.markdown(
             (
                 "This map shows delivered costs for the selected product and demand"
-                " country, for different source regions. Move your mouse over a marker"
-                " for additional information."
+                " country, for different source countries. Move your mouse over a "
+                "marker for additional information."
             )
         )
 
@@ -68,7 +68,7 @@ def content_costs(api: PtxboaAPI):
         st.markdown(
             (
                 "These figures show the regional distribution of costs"
-                " and a breakdown by category for the selected source region."
+                " and a breakdown by category for the selected source country."
             )
         )
 
@@ -112,107 +112,40 @@ def content_costs(api: PtxboaAPI):
         help_string = " ".join(
             [
                 "This figure lets you compare total costs and cost components by source"
-                " region.\n\n By default, all regions are shown, and they are sorted by"
-                " total costs. You can change this in the filter settings."
+                " country.\n\n By default, all regions are shown, and they are sorted"
+                " by total costs. You can change this in the filter settings."
             ]
         )
         display_costs(
             costs_per_region,
             costs_per_region_without_user_changes,
             "region",
-            "Costs for different source regions",
+            "Costs for different source countries",
             help_string=help_string,
         )
 
     with st.container(border=True):
         with st.spinner(
-            "Please wait. Calculating results for different data scenarios."
+            "Please wait. Calculating results for different carbon dioxide prices."
         ):
-            costs_per_scenario, costs_per_scenario_without_user_changes = (
-                costs_over_dimension(
+            costs_per_co2_price, costs_per_co2_price_without_user_changes = (
+                blue_results_over_dimension(
                     api,
-                    dim="scenario",
+                    dim="carbon_dioxide_price",
                 )
             )
+
         help_string = " ".join(
             [
-                "This figure lets you compare total costs and cost components"
-                " by data scenario (2030/2040, low/medium/high costs)."
+                "This figure lets you compare total costs and cost components "
+                "by carbon dioxide price. "
+                "The value from input data is altered by +-10%."
             ]
         )
         display_costs(
-            costs_per_scenario,
-            costs_per_scenario_without_user_changes,
+            costs_per_co2_price,
+            costs_per_co2_price_without_user_changes,
             "scenario",
-            "Costs for different data scenarios",
-            help_string=help_string,
-        )
-
-    with st.container(border=True):
-        with st.spinner(
-            (
-                "Please wait. Calculating results for different renewable electricity "
-                "sources."
-            )
-        ):
-            costs_per_res_gen, costs_per_res_gen_without_user_changes = (
-                costs_over_dimension(
-                    api,
-                    dim="res_gen",
-                    # TODO: here we remove PV tracking manually, fix in data
-                    parameter_list=[
-                        x
-                        for x in api.get_dimension("res_gen").index.to_list()
-                        if x != "PV tracking"
-                    ],
-                )
-            )
-        help_string = " ".join(
-            [
-                "This figure lets you compare total costs and cost components"
-                "by renewable electricity source."
-            ]
-        )
-        display_costs(
-            costs_per_res_gen,
-            costs_per_res_gen_without_user_changes,
-            "res_gen",
-            "Costs for different renewable electricity sources",
-            help_string=help_string,
-        )
-
-    with st.container(border=True):
-        with st.spinner(
-            "Please wait. Calculating results for different supply chains."
-        ):
-            costs_per_chain, costs_per_chain_without_user_changes = (
-                costs_over_dimension(
-                    api,
-                    dim="chain",
-                    override_session_state={"output_unit": "USD/MWh"},
-                )
-            )
-        help_string = " ".join(
-            [
-                "This figure lets you compare total costs and cost components"
-                " for different products and electrolyser types."
-                "\n\n"
-                "By default, all products are shown, and the electrolyser type"
-                " that is chosen in the sidebar is used."
-                " You can change this in the filter settings."
-            ]
-        )
-        display_costs(
-            costs_per_chain,
-            costs_per_chain_without_user_changes,
-            "chain",
-            "Costs for different products and electrolyser types",
-            output_unit="USD/MWh",
-            default_select=1,
-            default_manual_select=[
-                x
-                for x in costs_per_chain.index
-                if st.session_state["electrolyzer"] in x
-            ],
+            "Costs for different carbon dioxide prices",
             help_string=help_string,
         )

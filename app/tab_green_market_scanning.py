@@ -1,12 +1,12 @@
-# -*- coding: utf-8 -*-
 """Content of market scanning tab."""
+
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 
 from app.excel_download import prepare_and_download_df_as_excel
 from app.ptxboa_functions import (
-    calculate_results_list,
+    calculate_results_list_green,
     change_index_names,
     config_number_columns,
     get_region_list_without_subregions,
@@ -34,7 +34,7 @@ def content_market_scanning(api: PtxboaAPI, cd: dict) -> None:
         )
 
     with st.spinner("Please wait. Calculating results for different source regions"):
-        res_costs = calculate_results_list(
+        res_costs = calculate_results_list_green(
             api,
             parameter_to_change="region",
             parameter_list=get_region_list_without_subregions(
