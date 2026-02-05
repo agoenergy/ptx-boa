@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """Common Paths and settings."""
+
 import logging
 import os
 import warnings

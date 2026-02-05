@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Data interface for optimized data of FLH."""
 
 import datetime
@@ -10,19 +9,25 @@ import re
 import shutil
 import tempfile
 from pathlib import Path
+from typing import Union
 
 import pandas as pd
 from pypsa import Network
 
 from flh_opt import __version__ as flh_opt_version
-from flh_opt._types import OptInputDataType, OptOutputDataType, SecProcessInputDataType
+from flh_opt._types import (
+    OptInputDataType,
+    OptOutputDataType,
+    ProcessCodeResType,
+    SecProcessInputDataType,
+)
 from flh_opt.api_opt import optimize
 from ptxboa import logger
 from ptxboa.static._types import CalculateDataType
 from ptxboa.utils import SingletonMeta, annuity, serialize_for_hashing
 
 
-def get_data_hash_md5(key: object) -> str:
+def get_data_hash_md5(key: Union[None, int, float, str, bool, dict, list]) -> str:
     """Create md5 hash of data.
 
     Parameters
@@ -48,9 +53,10 @@ def get_data_hash_md5(key: object) -> str:
 
 
 class TempFile:
+    """Custom temporary file handler."""
+
     def __init__(self, filepath):
         self.filepath = filepath
-        self.filepath_tmp = None  # create in __enter__
 
     def __enter__(self):
         # check existing files
@@ -128,7 +134,7 @@ class ProfilesFLH(metaclass=SingletonMeta):
             region_res.append(match.groups())
         return region_res
 
-    def _load_all(self) -> dict:
+    def _load_all(self) -> pd.DataFrame:
         """Load all FLH data from profiles.
 
         Profiles need to be weighted first.
@@ -146,10 +152,10 @@ class ProfilesFLH(metaclass=SingletonMeta):
             we = pd.read_csv(weights_file, index_col=["period_id", "TimeStep"])
             # multiply columns in profiles with weightings
             pr_weighted = (
-                pr.mul(we.squeeze(), axis=0)
+                pr.mul(we.squeeze(), axis=0)  # type:ignore
                 .reset_index(drop=True)
                 .stack()
-                .rename("specific_generation")
+                .rename("specific_generation")  # type:ignore
             )
             pr_weighted.index = pr_weighted.index.set_names("re_source", level=-1)
             pr_weighted = pr_weighted.reset_index()
@@ -184,16 +190,16 @@ class ProfilesFLH(metaclass=SingletonMeta):
 
 
 class PtxOpt:
+    """Connection to optimizer module."""
 
-    def __init__(self, profiles_path: Path, cache_dir: Path):
+    def __init__(self, profiles_path: Path, cache_dir: Path | None = None):
         self.cache_dir = Path(cache_dir) if cache_dir else None
         self.profiles_hashes = ProfilesHashes(profiles_path)
         self.profiles_flh = ProfilesFLH(profiles_path)
 
     def _save(
-        self, filepath: str, data: object, network: Network, metadata: dict
+        self, filepath: Path | str, data: object, network: Network, metadata: dict
     ) -> None:
-
         filepath = str(filepath)
 
         with TempFile(filepath) as filepath_tmp:
@@ -210,12 +216,12 @@ class PtxOpt:
             with open(filepath_tmp, "w", encoding="utf-8") as file:
                 json.dump(metadata, file, indent=2, ensure_ascii=False)
 
-    def _load(self, filepath: str) -> object:
+    def _load(self, filepath: Path) -> object:
         with open(filepath, "rb") as file:
             data = pickle.load(file)  # noqa S301
         return data
 
-    def _load_network(self, filepath: str):
+    def _load_network(self, filepath: Path):
         filepath_nw = str(filepath) + ".network.nc"
 
         network = Network()
@@ -227,20 +233,21 @@ class PtxOpt:
 
         return network, metadata
 
-    def _get_cache_filepath(self, hashsum: str, suffix=".pickle") -> str:
+    def _get_cache_filepath(self, hashsum: str, suffix=".pickle") -> Path:
+        if not self.cache_dir:
+            raise FileNotFoundError("no cache defined")
         # group twice by first two chars (256 combinations)
         dirpath = self.cache_dir / hashsum[0:2] / hashsum[2:4]
         os.makedirs(dirpath, exist_ok=True)
         filepath = dirpath / f"{hashsum}{suffix}"
-        filepath = str(filepath.resolve())
+        filepath = filepath.resolve()
         return filepath
 
     @staticmethod
     def _prepare_data(input_data: CalculateDataType) -> OptInputDataType:
-
         src_reg = input_data["context"]["source_region_code"]
 
-        result = {
+        result: OptInputDataType = {
             "SOURCE_REGION_CODE": src_reg,
             "RES": [],
             "ELY": None,
@@ -255,12 +262,13 @@ class PtxOpt:
             "H2_STR": None,
             "CO2": None,
             "H2O": None,
-        }
+        }  # type:ignore # TODO: update OptInputDataType
 
-        for step in input_data["main_process_chain"]:
+        for step in input_data["main_export_process_chain"]:
             if step["step"] == "RES":
                 if step["process_code"] == "RES-HYBR":
-                    for pc in ["PV-FIX", "WIND-ON"]:
+                    pc: ProcessCodeResType
+                    for pc in ["PV-FIX", "WIND-ON"]:  # type:ignore
                         proc_data = input_data["flh_opt_process"][pc]
                         result["RES"].append(
                             {
@@ -351,11 +359,12 @@ class PtxOpt:
 
         # only overwrite  flh if optimization was successful:
         if opt_output_data["model_status"][1] == "optimal":
-            for step in input_data["main_process_chain"]:
+            for step in input_data["main_export_process_chain"]:
                 if step["step"] == "RES":
                     output_res = opt_output_data["RES"]
                     if step["process_code"] == "RES-HYBR":
-                        assert len(output_res) == 2
+                        if len(output_res) != 2:
+                            raise ValueError("RES-HYBR needs 2 RES processes")
                         step["FLH"] = sum(
                             x["FLH"] * x["SHARE_FACTOR"] for x in output_res
                         )
@@ -367,7 +376,9 @@ class PtxOpt:
                                 for x in output_res
                             )
                     else:
-                        assert len(output_res) == 1
+                        if len(output_res) != 1:
+                            raise ValueError("must specify exactly 1 RES process")
+
                         flh = output_res[0]["FLH"]
                         step["FLH"] = flh
 
@@ -398,7 +409,7 @@ class PtxOpt:
         src_reg = data["context"]["source_region_code"]
         # find res
         res = None
-        for step in data["main_process_chain"]:
+        for step in data["main_export_process_chain"]:
             if step["step"] == "RES":
                 res = step["process_code"]
                 break
@@ -452,7 +463,7 @@ class PtxOpt:
         else:
             hash_filepath = None
 
-        cache_exists = use_cache and os.path.exists(hash_filepath)
+        cache_exists = use_cache and os.path.exists(str(hash_filepath))
 
         if not cache_exists:
             # must run optimizer
@@ -467,12 +478,14 @@ class PtxOpt:
             opt_metadata["datetime"] = datetime.datetime.now().strftime(
                 "%Y-%m-%d %H:%M:%S"
             )
-            if use_cache:
+            if hash_filepath and use_cache:
                 # save results
                 self._save(hash_filepath, opt_output_data, network, opt_metadata)
         else:
             # load existing results
-            opt_output_data = self._load(hash_filepath)
+            opt_output_data: OptOutputDataType = self._load(
+                hash_filepath  # type:ignore
+            )
 
         self._merge_data(data, opt_output_data)
 

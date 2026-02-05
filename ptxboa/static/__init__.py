@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""DO NOT EDIT (created by _update_static.py)."""
+"""DO NOT EDIT (created by static/_update.py)."""
 
 from typing import Literal
 
@@ -72,6 +71,7 @@ SourceRegionCodeType = Literal[
     "NOR",
     "PER",
     "PRT",
+    "QAT",
     "RUS",
     "SAU",
     "SWE",
@@ -153,6 +153,7 @@ SourceRegionCodeValues = [
     "NOR",
     "PER",
     "PRT",
+    "QAT",
     "RUS",
     "SAU",
     "SWE",
@@ -250,6 +251,7 @@ SourceRegionNameType = Literal[
     "Norway",
     "Peru",
     "Portugal",
+    "Qatar",
     "Russia",
     "Saudi Arabia",
     "South Africa",
@@ -331,6 +333,7 @@ SourceRegionNameValues = [
     "Norway",
     "Peru",
     "Portugal",
+    "Qatar",
     "Russia",
     "Saudi Arabia",
     "South Africa",
@@ -401,6 +404,7 @@ ProcessCodeType = Literal[
     "DRI",
     "DRI-S",
     "DRI-SB",
+    "EAF",
     "EFUELSYN",
     "EL-STR",
     "EL-TRANS",
@@ -418,15 +422,19 @@ ProcessCodeType = Literal[
     "LOHC-REC",
     "LOHC-S",
     "LOHC-SB",
+    "NG-DRI",
+    "NG-DRI-C",
+    "NG-PROD",
     "NH3-REC",
     "NH3-S",
     "NH3-SB",
     "NH3SYN",
     "PEM-EL",
     "PV-FIX",
-    "PV-TRK",
     "REGASATR",
     "RES-HYBR",
+    "SMR",
+    "SMR-BF",
     "SOEC-EL",
     "SYN-S",
     "SYN-SB",
@@ -455,6 +463,7 @@ ProcessCodeValues = [
     "DRI",
     "DRI-S",
     "DRI-SB",
+    "EAF",
     "EFUELSYN",
     "EL-STR",
     "EL-TRANS",
@@ -472,15 +481,19 @@ ProcessCodeValues = [
     "LOHC-REC",
     "LOHC-S",
     "LOHC-SB",
+    "NG-DRI",
+    "NG-DRI-C",
+    "NG-PROD",
     "NH3-REC",
     "NH3-S",
     "NH3-SB",
     "NH3SYN",
     "PEM-EL",
     "PV-FIX",
-    "PV-TRK",
     "REGASATR",
     "RES-HYBR",
+    "SMR",
+    "SMR-BF",
     "SOEC-EL",
     "SYN-S",
     "SYN-SB",
@@ -490,40 +503,56 @@ ProcessCodeValues = [
 
 
 FlowCodeType = Literal[
+    "B-DRI-S",
     "BFUEL-L",
     "CH3OH-L",
     "CH4-G",
     "CH4-L",
+    "CH4L-G",
     "CHX-L",
+    "CO2-C",
     "CO2-G",
     "C-S",
+    "DIESEL-L",
     "DRI-S",
     "EL",
     "H2-G",
     "H2-L",
     "H2O-L",
     "HEAT",
+    "IOP-S",
     "LOHC-L",
     "N2-G",
+    "NG-G",
+    "NG-L",
     "NH3-L",
+    "STL-S",
 ]
 FlowCodeValues = [
+    "B-DRI-S",
     "BFUEL-L",
     "CH3OH-L",
     "CH4-G",
     "CH4-L",
+    "CH4L-G",
     "CHX-L",
+    "CO2-C",
     "CO2-G",
     "C-S",
+    "DIESEL-L",
     "DRI-S",
     "EL",
     "H2-G",
     "H2-L",
     "H2O-L",
     "HEAT",
+    "IOP-S",
     "LOHC-L",
     "N2-G",
+    "NG-G",
+    "NG-L",
     "NH3-L",
+    "STL-S",
 ]
 
 
@@ -531,12 +560,20 @@ ParameterCodeType = Literal[
     "CALOR",
     "CAPEX",
     "CAP-T",
+    "CH4SHARE",
+    "CO2BOUND",
+    "CO2CPT-R",
+    "CO2CPT-S",
+    "CO2-D",
     "CONV",
     "DST-S-D",
     "DST-S-DP",
+    "EF_E",
+    "EF_M",
     "EFF",
     "FLH",
     "LIFETIME",
+    "LOSS",
     "LOSS-T",
     "OPEX-F",
     "OPEX-O",
@@ -550,12 +587,20 @@ ParameterCodeValues = [
     "CALOR",
     "CAPEX",
     "CAP-T",
+    "CH4SHARE",
+    "CO2BOUND",
+    "CO2CPT-R",
+    "CO2CPT-S",
+    "CO2-D",
     "CONV",
     "DST-S-D",
     "DST-S-DP",
+    "EF_E",
+    "EF_M",
     "EFF",
     "FLH",
     "LIFETIME",
+    "LOSS",
     "LOSS-T",
     "OPEX-F",
     "OPEX-O",
@@ -570,12 +615,20 @@ ParameterCodeValues = [
 ParameterNameType = Literal[
     "calorific values",
     "CAPEX",
+    "capture rate by flow",
+    "CO2 bound in product",
+    "CO2 for capture share",
+    "CO2 transfer distance",
     "conversion factors",
     "efficiency",
+    "emission factor for emission balance",
+    "emission factor for mass balance",
     "full load hours",
     "levelized costs",
     "lifetime / amortization period",
+    "losses (own fuel)",
     "losses (own fuel, transport)",
+    "methane share",
     "OPEX (fix)",
     "OPEX (other variable)",
     "pipeline distance",
@@ -589,12 +642,20 @@ ParameterNameType = Literal[
 ParameterNameValues = [
     "calorific values",
     "CAPEX",
+    "capture rate by flow",
+    "CO2 bound in product",
+    "CO2 for capture share",
+    "CO2 transfer distance",
     "conversion factors",
     "efficiency",
+    "emission factor for emission balance",
+    "emission factor for mass balance",
     "full load hours",
     "levelized costs",
     "lifetime / amortization period",
+    "losses (own fuel)",
     "losses (own fuel, transport)",
+    "methane share",
     "OPEX (fix)",
     "OPEX (other variable)",
     "pipeline distance",
@@ -635,6 +696,7 @@ ChainNameType = Literal[
     "Methanol (AEL)",
     "Methanol (PEM)",
     "Methanol (SOEC)",
+    "TODO: Blue Iron",
 ]
 ChainNameValues = [
     "Ammonia (AEL)",
@@ -664,6 +726,7 @@ ChainNameValues = [
     "Methanol (AEL)",
     "Methanol (PEM)",
     "Methanol (SOEC)",
+    "TODO: Blue Iron",
 ]
 
 
@@ -717,20 +780,12 @@ SecProcH2OType = Literal["Sea Water desalination"]
 SecProcH2OValues = ["Sea Water desalination"]
 
 
-ResGenType = Literal[
-    "PV tilted", "PV tracking", "Wind-PV-Hybrid", "Wind Offshore", "Wind Onshore"
-]
-ResGenValues = [
-    "PV tilted",
-    "PV tracking",
-    "Wind-PV-Hybrid",
-    "Wind Offshore",
-    "Wind Onshore",
-]
+ResGenType = Literal["PV tilted", "Wind-PV-Hybrid", "Wind Offshore", "Wind Onshore"]
+ResGenValues = ["PV tilted", "Wind-PV-Hybrid", "Wind Offshore", "Wind Onshore"]
 
 
-ProcessCodeResType = Literal["PV-FIX", "PV-TRK", "RES-HYBR", "WIND-OFF", "WIND-ON"]
-ProcessCodeResValues = ["PV-FIX", "PV-TRK", "RES-HYBR", "WIND-OFF", "WIND-ON"]
+ProcessCodeResType = Literal["PV-FIX", "RES-HYBR", "WIND-OFF", "WIND-ON"]
+ProcessCodeResValues = ["PV-FIX", "RES-HYBR", "WIND-OFF", "WIND-ON"]
 
 
 DimensionType = Literal[
@@ -745,6 +800,7 @@ DimensionType = Literal[
     "secproc_co2",
     "secproc_water",
     "res_gen",
+    "parameter",
 ]
 DimensionValues = [
     "scenario",
@@ -758,6 +814,7 @@ DimensionValues = [
     "secproc_co2",
     "secproc_water",
     "res_gen",
+    "parameter",
 ]
 
 
@@ -766,32 +823,40 @@ ProcessStepType = Literal[
     "ELY",
     "H2_STR",
     "DERIV",
+    "DERIV2",
     "PRE_SHP",
     "PRE_PPL",
     "POST_SHP",
     "POST_PPL",
     "SHP",
-    "SHP-OWN",
+    "SHP_OWN",
     "PPLS",
     "PPL",
     "PPLX",
     "PPLR",
+    "ELY_I",
+    "DERIV_I",
+    "DERIV_I2",
 ]
 ProcessStepValues = [
     "EL_STR",
     "ELY",
     "H2_STR",
     "DERIV",
+    "DERIV2",
     "PRE_SHP",
     "PRE_PPL",
     "POST_SHP",
     "POST_PPL",
     "SHP",
-    "SHP-OWN",
+    "SHP_OWN",
     "PPLS",
     "PPL",
     "PPLX",
     "PPLR",
+    "ELY_I",
+    "DERIV_I",
+    "DERIV_I2",
 ]
 
 

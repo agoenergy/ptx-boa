@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Compare cost results and flh from optimized vs non-optimized FLH."""
 
 import itertools
@@ -13,8 +12,8 @@ import numpy as np
 import pandas as pd
 
 sys.path.append(str(Path(__file__).parent.parent))
-from ptxboa import DEFAULT_CACHE_DIR, DEFAULT_DATA_DIR
-from ptxboa.api import PtxboaAPI
+from ptxboa import DEFAULT_CACHE_DIR, DEFAULT_DATA_DIR  # noqa: E402
+from ptxboa.api import PtxboaAPI  # noqa: E402
 
 SERVER_CACHE_DIR = Path("/home/ptxboa/ptx-boa_offline_optimization/optimization_cache")
 

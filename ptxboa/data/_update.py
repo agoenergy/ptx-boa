@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Update csv files from Database."""
 
 import os

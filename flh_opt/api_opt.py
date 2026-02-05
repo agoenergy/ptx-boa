@@ -487,7 +487,7 @@ def optimize(
 
     # calculate results:
 
-    result_data = {}
+    result_data: OptOutputDataType = {}
 
     # store model status:
     result_data["model_status"] = model_status

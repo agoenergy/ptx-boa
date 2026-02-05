@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Api for calculations for webapp."""
 
 from dataclasses import dataclass
@@ -34,10 +33,13 @@ class ApiCalculateResult:
     costs: pd.DataFrame
     metadata: dict
     emissions: Optional[pd.DataFrame] = None
+    emission_mass: Optional[pd.DataFrame] = None
 
 
 class PtxboaAPI:
-    def __init__(self, data_dir: Path, cache_dir: Path = None):
+    """Main API class."""
+
+    def __init__(self, data_dir: Path, cache_dir: Path | None = None):
         self.data_dir = data_dir
         self.cache_dir = cache_dir
 
@@ -197,24 +199,24 @@ class PtxboaAPI:
                     if secproc_co2
                     else None
                 ),
-            },
+            },  # type:ignore
             chain_name=chain,
             process_code_res=DataHandler.get_dimensions_parameter_code(
                 "res_gen", res_gen
-            ),
+            ),  # type:ignore
             source_region_code=DataHandler.get_dimensions_parameter_code(
                 "region", region
-            ),
+            ),  # type:ignore
             target_country_code=DataHandler.get_dimensions_parameter_code(
                 "country", country
-            ),
+            ),  # type:ignore
             use_ship=(transport == "Ship"),
             ship_own_fuel=ship_own_fuel,
             optimize_flh=optimize_flh,
             use_user_data_for_optimize_flh=use_user_data_for_optimize_flh,
         )
 
-        result_df = PtxCalc.calculate(data)
+        _values, result_df = PtxCalc.calculate(data)
 
         # conversion to output unit
         if output_unit not in {"USD/MWh", "USD/t"}:
@@ -236,10 +238,21 @@ class PtxboaAPI:
         result_df["transport"] = transport
 
         metadata = {"flh_opt_hash": data.get("flh_opt_hash")}  # does not always exist
+
+        # emissions output unit is asways gCO2 equivalents
+        emissions = (
+            result_df.copy()
+            .drop(columns="cost_type")
+            .assign(emission_type="direct")
+            .assign(gas_type="CO2")
+        )
+        emissions_mass = emissions.copy()
+
         return ApiCalculateResult(
             metadata=metadata,
             costs=result_df,
-            emissions=result_df.copy(),  # DUMMY for frontend development
+            emissions=emissions,  # DUMMY for frontend development
+            emission_mass=emissions_mass,
         )
 
     def get_flh_opt_network(
@@ -254,7 +267,7 @@ class PtxboaAPI:
         transport: TransportType,
         ship_own_fuel: bool,
         user_data: pd.DataFrame | None = None,
-    ) -> Tuple[pypsa.Network, dict]:
+    ) -> Tuple[pypsa.Network, dict] | None:
         """Calculate results based on user selection.
 
         Parameters

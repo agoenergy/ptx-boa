@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
 """Utilities."""
+
 import json
 import os
 from types import NoneType
-from typing import Union
+from typing import Any, Union
 
 
 def annuity(rate: float, periods: int, value: float) -> float:
@@ -31,6 +31,8 @@ def annuity(rate: float, periods: int, value: float) -> float:
 
 
 class SingletonMeta(type):
+    """Make classes to Singleton."""
+
     _instances = {}
 
     def __call__(cls, *args):
@@ -44,7 +46,8 @@ class SingletonMeta(type):
         return cls._instances[key]
 
 
-def is_test():
+def is_test() -> bool:
+    """Return True if pytest is running."""
     return (
         "PYTEST_CURRENT_TEST" in os.environ
         or "STREAMLIT_GLOBAL_UNIT_TEST" in os.environ
@@ -94,3 +97,7 @@ def serialize_for_hashing(
         return "null"
     else:
         raise NotImplementedError(type(obj))
+
+
+def rescale_dict(d: dict[Any, float], factor: float) -> dict[Any, float]:
+    return {k: v * factor for k, v in d.items()}
