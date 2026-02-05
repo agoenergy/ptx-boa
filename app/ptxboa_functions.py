@@ -45,7 +45,7 @@ def calculate_results_single(
     return res
 
 
-def calculate_results_list(
+def calculate_results_list_green(
     api: PtxboaAPI,
     parameter_to_change: str,
     parameter_list: list = None,
@@ -925,8 +925,10 @@ def check_if_input_is_needed(
     return flow_code in flow_codes
 
 
-def costs_over_dimension(api, dim, parameter_list=None, override_session_state=None):
-    df = calculate_results_list(
+def green_costs_over_dimension(
+    api, dim, parameter_list=None, override_session_state=None
+):
+    df = calculate_results_list_green(
         api,
         parameter_to_change=dim,
         parameter_list=parameter_list,
@@ -934,7 +936,7 @@ def costs_over_dimension(api, dim, parameter_list=None, override_session_state=N
         override_session_state=override_session_state,
     )
     if st.session_state["user_changes_df"] is not None:
-        not_modified = calculate_results_list(
+        not_modified = calculate_results_list_green(
             api,
             parameter_to_change=dim,
             parameter_list=parameter_list,

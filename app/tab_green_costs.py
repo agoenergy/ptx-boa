@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """Content of costs tab."""
+
 import streamlit as st
 from plotly.subplots import make_subplots
 
@@ -10,8 +10,8 @@ from app.plot_functions import (
     plot_costs_on_map,
 )
 from app.ptxboa_functions import (
-    costs_over_dimension,
     get_region_list_without_subregions,
+    green_costs_over_dimension,
     move_to_tab,
     read_markdown_file,
 )
@@ -29,7 +29,7 @@ def content_costs(api: PtxboaAPI):
             "Please wait. Calculating results for different source regions"
         ):
             costs_per_region, costs_per_region_without_user_changes = (
-                costs_over_dimension(
+                green_costs_over_dimension(
                     api,
                     dim="region",
                     parameter_list=get_region_list_without_subregions(
@@ -129,7 +129,7 @@ def content_costs(api: PtxboaAPI):
             "Please wait. Calculating results for different data scenarios."
         ):
             costs_per_scenario, costs_per_scenario_without_user_changes = (
-                costs_over_dimension(
+                green_costs_over_dimension(
                     api,
                     dim="scenario",
                 )
@@ -156,7 +156,7 @@ def content_costs(api: PtxboaAPI):
             )
         ):
             costs_per_res_gen, costs_per_res_gen_without_user_changes = (
-                costs_over_dimension(
+                green_costs_over_dimension(
                     api,
                     dim="res_gen",
                     # TODO: here we remove PV tracking manually, fix in data
@@ -186,7 +186,7 @@ def content_costs(api: PtxboaAPI):
             "Please wait. Calculating results for different supply chains."
         ):
             costs_per_chain, costs_per_chain_without_user_changes = (
-                costs_over_dimension(
+                green_costs_over_dimension(
                     api,
                     dim="chain",
                     override_session_state={"output_unit": "USD/MWh"},

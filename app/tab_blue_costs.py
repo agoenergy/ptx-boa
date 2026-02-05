@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """Content of costs tab."""
+
 import streamlit as st
 from plotly.subplots import make_subplots
 
