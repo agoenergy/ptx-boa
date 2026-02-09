@@ -15,7 +15,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from app.ptxboa_functions import (
-    calculate_costs_cached,
+    calculate_cached,
     calculate_results_list_blue,
 )
 from ptxboa.api import PtxboaAPI
@@ -118,7 +118,7 @@ def aggregate_green_results(
                 logging.info(i)
             try:
                 costs.append(
-                    calculate_costs_cached(
+                    calculate_cached(
                         _api,
                         user_data=None,  # we do not respect user data here
                         optimize_flh=True,
@@ -127,7 +127,9 @@ def aggregate_green_results(
                         country=import_country,
                         output_unit=output_unit,
                         **param_set,
-                    )["values"].sum()
+                    )
+                    .costs["values"]
+                    .sum()
                 )
             except Exception as exc:
                 logging.info(f"could not get data: {exc}")

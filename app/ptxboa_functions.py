@@ -8,7 +8,7 @@ from typing import Dict, Literal
 import pandas as pd
 import streamlit as st
 
-from ptxboa.api import PtxboaAPI
+from ptxboa.api import ApiCalculateResult, PtxboaAPI
 from ptxboa.static import (
     ChainNameType,
     OutputUnitType,
@@ -24,7 +24,7 @@ from ptxboa.utils import is_test
 
 
 @st.cache_data(show_spinner=False)
-def calculate_costs_cached(
+def calculate_cached(
     _api: PtxboaAPI,
     scenario: ScenarioType,
     secproc_co2: SecProcCO2Type,
@@ -39,7 +39,7 @@ def calculate_costs_cached(
     user_data: pd.DataFrame | None = None,
     optimize_flh: bool = True,
     use_user_data_for_optimize_flh: bool = False,
-) -> pd.DataFrame:
+) -> ApiCalculateResult:
     """Calculate results for a single set of settings.
 
     Parameters
@@ -69,7 +69,7 @@ def calculate_costs_cached(
         user_data=user_data,
         optimize_flh=optimize_flh,
         use_user_data_for_optimize_flh=use_user_data_for_optimize_flh,
-    ).costs
+    )
 
     return res
 
@@ -183,7 +183,7 @@ def calculate_results_list_green(
 
         # catch all api errors so that the tool is stable
         try:
-            res_single = calculate_costs_cached(
+            res_single = calculate_cached(
                 api,
                 user_data=(
                     st.session_state["user_changes_df"] if apply_user_data else None
@@ -191,7 +191,7 @@ def calculate_results_list_green(
                 optimize_flh=optimize_flh,
                 use_user_data_for_optimize_flh=use_user_data_for_optimize_flh,
                 **settings,
-            )
+            ).costs
             res_list.append(res_single)
         except Exception as exc:
             logging.info(f"could not get data: {exc}")
@@ -260,7 +260,7 @@ def calculate_results_list_blue(
     if parameter_to_change == "chain":
         parameter_list = parameter_list[~parameter_list.str.startswith("Green Iron")]
 
-    res_list = []
+    cost_list = []
     if parameter_to_change in ["region", "chain", "scenario"]:
         for change_factor in parameter_list:
             settings.update({parameter_to_change: change_factor})
@@ -278,7 +278,7 @@ def calculate_results_list_blue(
                     settings.update({"secproc_co2": None})
 
             try:
-                res_single = calculate_costs_cached(
+                res_single = calculate_cached(
                     api,
                     user_data=(
                         st.session_state["user_changes_df"] if apply_user_data else None
@@ -287,7 +287,7 @@ def calculate_results_list_blue(
                     use_user_data_for_optimize_flh=False,
                     **settings,
                 )
-                res_list.append(res_single)
+                cost_list.append(res_single.costs)
             except Exception as exc:
                 logging.info(f"could not get data: {exc}")
 
@@ -360,7 +360,7 @@ def calculate_results_list_blue(
                 keep="last",
             )
             try:
-                res_single = calculate_costs_cached(
+                res_single = calculate_cached(
                     api,
                     user_data=user_data,
                     optimize_flh=False,
@@ -377,14 +377,15 @@ def calculate_results_list_blue(
                         return f"{value_label} ({pct_change})"
 
                 label = get_label(change_factor, value)
-                res_single[parameter_to_change] = label
-                res_list.append(res_single)
+                cost = res_single.costs
+                cost[parameter_to_change] = label
+                cost_list.append(cost)
             except Exception as exc:
                 logging.info(f"could not get data: {exc}")
     else:
         raise ValueError(f"invalid {parameter_to_change=}")
 
-    res_details = pd.concat(res_list)
+    res_details = pd.concat(cost_list)
     return aggregate_costs(res_details, parameter_to_change)
 
 
