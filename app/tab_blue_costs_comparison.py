@@ -46,8 +46,8 @@ def aggregate_green_results(
     _api: PtxboaAPI,
     scenarios: list[ScenarioType],
     import_country: TargetCountryNameType,
-    output_product: OutputUnitType,
-    output_unit: str,
+    output_product: str,
+    output_unit: OutputUnitType,
     green_param_set: Literal["restricted", "complete"] = "restricted",
 ):
     output_product_equivalents = {
@@ -120,8 +120,8 @@ def aggregate_green_results(
                 costs.append(
                     calculate_costs_cached(
                         _api,
-                        user_data=None,  # we do not respct user data
-                        optimize_flh=False,  # TODO @joAschauer set to True when ready
+                        user_data=None,  # we do not respect user data here
+                        optimize_flh=True,
                         use_user_data_for_optimize_flh=False,
                         scenario=scenario,
                         country=import_country,
@@ -173,7 +173,9 @@ def make_figure(
     green_lower_bound,
     green_upper_bound,
     blue,
-    output_product,
+    output_product: str,
+    xaxis_title: str,
+    yaxis_title: str,
 ) -> go.Figure:
     GREEN_COLOR = "#2fac66"
     BLUE_COLOR = "#1E83B3"
@@ -276,8 +278,8 @@ def make_figure(
     fig.update_layout(
         hovermode="x unified",
         legend_traceorder="reversed",
-        xaxis={"title": {"text": "Scenario"}},
-        yaxis={"title": {"text": st.session_state["output_unit"]}},
+        xaxis={"title": {"text": xaxis_title}},
+        yaxis={"title": {"text": yaxis_title}},
     )
     return fig
 
@@ -308,5 +310,7 @@ def content_costs_comparison(api):
             green_upper_bound="75%",
             blue="blue_Total",
             output_product=st.session_state["output_product"],
+            xaxis_title="Scenario",
+            yaxis_title=st.session_state["output_unit"],
         )
         st.plotly_chart(fig)
