@@ -9,13 +9,33 @@ import pandas as pd
 import streamlit as st
 
 from ptxboa.api import PtxboaAPI
+from ptxboa.static import (
+    ChainNameType,
+    OutputUnitType,
+    ResGenType,
+    ScenarioType,
+    SecProcCO2Type,
+    SecProcH2OType,
+    SourceRegionNameType,
+    TargetCountryNameType,
+    TransportType,
+)
 from ptxboa.utils import is_test
 
 
 @st.cache_data(show_spinner=False)
-def calculate_results_single(
+def calculate_costs_cached(
     _api: PtxboaAPI,
-    settings: dict,
+    scenario: ScenarioType,
+    secproc_co2: SecProcCO2Type,
+    secproc_water: SecProcH2OType,
+    chain: ChainNameType,
+    res_gen: ResGenType,
+    region: SourceRegionNameType,
+    country: TargetCountryNameType,
+    transport: TransportType,
+    ship_own_fuel: bool,
+    output_unit: OutputUnitType,
     user_data: pd.DataFrame | None = None,
     optimize_flh: bool = True,
     use_user_data_for_optimize_flh: bool = False,
@@ -36,8 +56,17 @@ def calculate_results_single(
         same format as for :meth:`~ptxboa.api.PtxboaAPI.calculate()`
     """
     res = _api.calculate(
+        scenario=scenario,
+        secproc_co2=secproc_co2,
+        secproc_water=secproc_water,
+        chain=chain,
+        res_gen=res_gen,
+        region=region,
+        country=country,
+        transport=transport,
+        ship_own_fuel=ship_own_fuel,
+        output_unit=output_unit,
         user_data=user_data,
-        **settings,
         optimize_flh=optimize_flh,
         use_user_data_for_optimize_flh=use_user_data_for_optimize_flh,
     ).costs
@@ -154,14 +183,14 @@ def calculate_results_list_green(
 
         # catch all api errors so that the tool is stable
         try:
-            res_single = calculate_results_single(
+            res_single = calculate_costs_cached(
                 api,
-                settings,
                 user_data=(
                     st.session_state["user_changes_df"] if apply_user_data else None
                 ),
                 optimize_flh=optimize_flh,
                 use_user_data_for_optimize_flh=use_user_data_for_optimize_flh,
+                **settings,
             )
             res_list.append(res_single)
         except Exception as exc:
@@ -174,7 +203,7 @@ def calculate_results_list_green(
 
 def calculate_results_list_blue(
     api: PtxboaAPI,
-    parameter_to_change: Literal["region", "chain", "carbon_dioxide_price"],
+    parameter_to_change: Literal["region", "chain", "carbon_dioxide_price", "scenario"],
     parameter_list: None | list | pd.Series | pd.Index = None,
     override_session_state: dict | None = None,
     apply_user_data: bool = True,
@@ -191,6 +220,7 @@ def calculate_results_list_blue(
         "country",
         "output_unit",
         "region",
+        "scenario",
         "secproc_co2",
         "secproc_water",
         "ship_own_fuel",
@@ -216,11 +246,10 @@ def calculate_results_list_blue(
         settings.update(override_session_state)
 
     # hardcoded values which are not relevant for blue version
-    settings["scenario"] = "2040 (medium)"
     settings["res_gen"] = "Wind-PV-Hybrid"
 
     if parameter_list is None:
-        if parameter_to_change in ["region", "chain"]:
+        if parameter_to_change in ["region", "chain", "scenario"]:
             parameter_list = api.get_dimension(parameter_to_change).index
         elif parameter_to_change in ["carbon_dioxide_price"]:
             parameter_list = [0.9, 0.95, 1.0, 1.05, 1.1]
@@ -232,7 +261,7 @@ def calculate_results_list_blue(
         parameter_list = parameter_list[~parameter_list.str.startswith("Green Iron")]
 
     res_list = []
-    if parameter_to_change in ["region", "chain"]:
+    if parameter_to_change in ["region", "chain", "scenario"]:
         for change_factor in parameter_list:
             settings.update({parameter_to_change: change_factor})
             if parameter_to_change == "chain":
@@ -249,14 +278,14 @@ def calculate_results_list_blue(
                     settings.update({"secproc_co2": None})
 
             try:
-                res_single = calculate_results_single(
+                res_single = calculate_costs_cached(
                     api,
-                    settings,
                     user_data=(
                         st.session_state["user_changes_df"] if apply_user_data else None
                     ),
                     optimize_flh=False,
                     use_user_data_for_optimize_flh=False,
+                    **settings,
                 )
                 res_list.append(res_single)
             except Exception as exc:
@@ -331,12 +360,12 @@ def calculate_results_list_blue(
                 keep="last",
             )
             try:
-                res_single = calculate_results_single(
+                res_single = calculate_costs_cached(
                     api,
-                    settings,
                     user_data=user_data,
                     optimize_flh=False,
                     use_user_data_for_optimize_flh=False,
+                    **settings,
                 )
 
                 def get_label(change_factor, original_value):
@@ -950,7 +979,7 @@ def green_costs_over_dimension(
 
 def blue_results_over_dimension(
     api,
-    dim: Literal["region", "chain", "carbon_dioxide_price"],
+    dim: Literal["region", "chain", "carbon_dioxide_price", "scenario"],
     parameter_list: None | list | pd.Series = None,
     override_session_state=None,
 ):

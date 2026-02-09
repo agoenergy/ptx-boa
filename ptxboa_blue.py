@@ -6,6 +6,7 @@ import streamlit_antd_components as sac
 from app.layout_elements import display_footer
 from app.sidebar import make_sidebar_blue
 from app.tab_blue_costs import content_costs
+from app.tab_blue_costs_comparison import content_costs_comparison
 from app.user_data import display_user_changes
 from app.user_data_from_file import download_user_data, upload_user_data
 from ptxboa import DEFAULT_CACHE_DIR, DEFAULT_DATA_DIR
@@ -46,6 +47,7 @@ with st.container():
 tabs = (
     "Info",
     "Costs",
+    "Costs Comparison",
     "Emissions",
     "Input data",
 )
@@ -84,12 +86,16 @@ st.session_state["chain"] = "Ammonia (AEL)"
 st.session_state["scenario"] = "2040 (medium)"
 st.session_state["secproc_water"] = "Specific costs"
 st.session_state["subregion"] = None
+st.session_state["output_product"] = "Ammonia"
 
 if st.session_state[st.session_state["tab_key"]] == "Info":
     st.text("Blue PtX Info")
 
 if st.session_state[st.session_state["tab_key"]] == "Costs":
     content_costs(api)
+
+if st.session_state[st.session_state["tab_key"]] == "Costs Comparison":
+    content_costs_comparison(api)
 
 if st.session_state[st.session_state["tab_key"]] == "Emissions":
     st.markdown(
