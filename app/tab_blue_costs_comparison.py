@@ -163,7 +163,7 @@ def get_data(
         parameter_list=scenarios,
         apply_user_data=True,
         override_session_state=None,
-    ).add_prefix("blue_")
+    )[0].add_prefix("blue_")
 
     return pd.concat([costs_green, costs_blue], axis=1).reset_index()
 
