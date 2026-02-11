@@ -4,6 +4,7 @@ LABEL version="2.1.7"
 RUN apt-get update
 RUN apt-get install -y git
 WORKDIR ptx-boa
+COPY . .
 RUN pip3 install -r requirements.txt
 EXPOSE 80
 # disable progress bar
