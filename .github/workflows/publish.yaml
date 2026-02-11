@@ -19,9 +19,13 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Checkout custom branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: wingechr/ptx-boa:2.1.5-${{ github.ref_name }}
-          context: "{{defaultContext}}#${{ github.ref_name }}"
+          tags: wingechr/ptx-boa:2.1.6-${{ github.ref_name }}
+          context: .
