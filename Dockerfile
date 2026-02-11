@@ -3,9 +3,7 @@ LABEL version="2.1.6"
 
 RUN apt-get update
 RUN apt-get install -y git
-RUN git clone https://github.com/agoenergy/ptx-boa.git
 WORKDIR ptx-boa
-RUN git checkout main
 RUN pip3 install -r requirements.txt
 EXPOSE 80
 # disable progress bar
