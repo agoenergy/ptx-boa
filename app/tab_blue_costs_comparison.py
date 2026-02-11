@@ -15,7 +15,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from app.ptxboa_functions import (
-    calculate_costs_cached,
+    calculate_cached,
     calculate_results_list_blue,
 )
 from ptxboa.api import PtxboaAPI
@@ -87,7 +87,7 @@ def aggregate_green_results(
     elif green_param_set == "restricted":
         dimensions = {
             "transport": ["Pipeline"],
-            "ship_own_fuel": [True],
+            "ship_own_fuel": [False],
             "secproc_water": ["Specific costs"],
             "secproc_co2": ["Specific costs"],
             "res_gen": ["Wind-PV-Hybrid"],
@@ -109,25 +109,24 @@ def aggregate_green_results(
         raise ValueError(f"Unknown {green_param_set=}")
 
     stats = []
-    i = 0
+
     for scenario in scenarios:
         costs = []
-        for param_set in product_dict(**dimensions):
-            i += 1
-            if i % 100 == 0:
-                logging.info(i)
+        for param_set in list(product_dict(**dimensions)):
             try:
                 costs.append(
-                    calculate_costs_cached(
+                    calculate_cached(
                         _api,
                         user_data=None,  # we do not respect user data here
-                        optimize_flh=True,
+                        optimize_flh=False,  # TODO revert to True when ready
                         use_user_data_for_optimize_flh=False,
                         scenario=scenario,
                         country=import_country,
                         output_unit=output_unit,
                         **param_set,
-                    )["values"].sum()
+                    )
+                    .costs["values"]
+                    .sum()
                 )
             except Exception as exc:
                 logging.info(f"could not get data: {exc}")
@@ -161,7 +160,7 @@ def get_data(
         parameter_list=scenarios,
         apply_user_data=True,
         override_session_state=None,
-    ).add_prefix("blue_")
+    )[0].add_prefix("blue_")
 
     return pd.concat([costs_green, costs_blue], axis=1).reset_index()
 

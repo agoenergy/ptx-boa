@@ -28,7 +28,7 @@ from .static import (
 )
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, frozen=True)
 class ApiCalculateResult:
     costs: pd.DataFrame
     metadata: dict

@@ -2,13 +2,14 @@
 """Utility functions for streamlit app."""
 
 import logging
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Literal
+from typing import Dict, Literal, Optional
 
 import pandas as pd
 import streamlit as st
 
-from ptxboa.api import PtxboaAPI
+from ptxboa.api import ApiCalculateResult, PtxboaAPI
 from ptxboa.static import (
     ChainNameType,
     OutputUnitType,
@@ -24,7 +25,7 @@ from ptxboa.utils import is_test
 
 
 @st.cache_data(show_spinner=False)
-def calculate_costs_cached(
+def calculate_cached(
     _api: PtxboaAPI,
     scenario: ScenarioType,
     secproc_co2: SecProcCO2Type,
@@ -39,7 +40,7 @@ def calculate_costs_cached(
     user_data: pd.DataFrame | None = None,
     optimize_flh: bool = True,
     use_user_data_for_optimize_flh: bool = False,
-) -> pd.DataFrame:
+) -> ApiCalculateResult:
     """Calculate results for a single set of settings.
 
     Parameters
@@ -69,7 +70,7 @@ def calculate_costs_cached(
         user_data=user_data,
         optimize_flh=optimize_flh,
         use_user_data_for_optimize_flh=use_user_data_for_optimize_flh,
-    ).costs
+    )
 
     return res
 
@@ -183,7 +184,7 @@ def calculate_results_list_green(
 
         # catch all api errors so that the tool is stable
         try:
-            res_single = calculate_costs_cached(
+            res_single = calculate_cached(
                 api,
                 user_data=(
                     st.session_state["user_changes_df"] if apply_user_data else None
@@ -191,7 +192,7 @@ def calculate_results_list_green(
                 optimize_flh=optimize_flh,
                 use_user_data_for_optimize_flh=use_user_data_for_optimize_flh,
                 **settings,
-            )
+            ).costs
             res_list.append(res_single)
         except Exception as exc:
             logging.info(f"could not get data: {exc}")
@@ -207,7 +208,7 @@ def calculate_results_list_blue(
     parameter_list: None | list | pd.Series | pd.Index = None,
     override_session_state: dict | None = None,
     apply_user_data: bool = True,
-) -> pd.DataFrame:
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Blue version has fewer settings than green version: no res_gen, no data scenario.
 
@@ -260,7 +261,10 @@ def calculate_results_list_blue(
     if parameter_to_change == "chain":
         parameter_list = parameter_list[~parameter_list.str.startswith("Green Iron")]
 
-    res_list = []
+    costs_list = []
+    emissions_list = []
+    emissions_mass_list = []
+
     if parameter_to_change in ["region", "chain", "scenario"]:
         for change_factor in parameter_list:
             settings.update({parameter_to_change: change_factor})
@@ -278,7 +282,7 @@ def calculate_results_list_blue(
                     settings.update({"secproc_co2": None})
 
             try:
-                res_single = calculate_costs_cached(
+                res_single = calculate_cached(
                     api,
                     user_data=(
                         st.session_state["user_changes_df"] if apply_user_data else None
@@ -287,7 +291,10 @@ def calculate_results_list_blue(
                     use_user_data_for_optimize_flh=False,
                     **settings,
                 )
-                res_list.append(res_single)
+                costs_list.append(res_single.costs)
+                emissions_list.append(res_single.emissions)
+                emissions_mass_list.append(res_single.emission_mass)
+
             except Exception as exc:
                 logging.info(f"could not get data: {exc}")
 
@@ -360,7 +367,7 @@ def calculate_results_list_blue(
                 keep="last",
             )
             try:
-                res_single = calculate_costs_cached(
+                res_single = calculate_cached(
                     api,
                     user_data=user_data,
                     optimize_flh=False,
@@ -377,15 +384,35 @@ def calculate_results_list_blue(
                         return f"{value_label} ({pct_change})"
 
                 label = get_label(change_factor, value)
-                res_single[parameter_to_change] = label
-                res_list.append(res_single)
+                costs = res_single.costs
+
+                costs_list.append(costs)
+                costs[parameter_to_change] = label
+
+                emissions = res_single.emissions
+                if emissions is not None:
+                    emissions[parameter_to_change] = label
+                    emissions_list.append(res_single.emissions)
+
+                emissions_mass = res_single.emission_mass
+                if emissions_mass is not None:
+                    emissions_mass[parameter_to_change] = label
+                    emissions_mass_list.append(res_single.emission_mass)
+
             except Exception as exc:
                 logging.info(f"could not get data: {exc}")
     else:
         raise ValueError(f"invalid {parameter_to_change=}")
 
-    res_details = pd.concat(res_list)
-    return aggregate_costs(res_details, parameter_to_change)
+    costs_details = pd.concat(costs_list)
+    emissions_details = pd.concat(emissions_list)
+    emissions_mass_details = pd.concat(emissions_mass_list)
+
+    return (
+        aggregate_costs(costs_details, parameter_to_change),
+        emissions_details,
+        emissions_mass_details,
+    )
 
 
 def aggregate_costs(
@@ -401,6 +428,22 @@ def aggregate_costs(
         aggfunc="sum",
     )
     # calculate total costs:
+    res["Total"] = res.sum(axis=1)
+
+    return sort_cost_type_columns_by_position_in_chain(res)
+
+
+def aggregate_emissions(
+    res_details: pd.DataFrame, parameter_to_change: str
+) -> pd.DataFrame:
+    """Aggregate detailed emissions."""
+    res = res_details.pivot_table(
+        index=parameter_to_change,
+        columns="process_type",
+        values="values",
+        aggfunc="sum",
+    )
+    # calculate total emissions:
     res["Total"] = res.sum(axis=1)
 
     return sort_cost_type_columns_by_position_in_chain(res)
@@ -820,6 +863,7 @@ def move_to_tab(tab_name):
     st.session_state[st.session_state["tab_key"]] = tab_name
 
 
+@st.cache_data(show_spinner=False)
 def read_markdown_file(markdown_file: str) -> str:
     """Import markdown file as string."""
     return Path(markdown_file).read_text(encoding="UTF-8")
@@ -977,21 +1021,32 @@ def green_costs_over_dimension(
     return df, not_modified
 
 
+@dataclass(slots=True)
+class BlueResultOverDimension:
+    costs: pd.DataFrame
+    emissions: pd.DataFrame
+    emissions_mass: pd.DataFrame
+    costs_not_modified: Optional[pd.DataFrame] = None
+    emissions_not_modified: Optional[pd.DataFrame] = None
+    emissions_mass_not_modified: Optional[pd.DataFrame] = None
+
+
 def blue_results_over_dimension(
     api,
     dim: Literal["region", "chain", "carbon_dioxide_price", "scenario"],
     parameter_list: None | list | pd.Series = None,
     override_session_state=None,
 ):
-    df = calculate_results_list_blue(
+    costs, emissions, emissions_mass = calculate_results_list_blue(
         api,
         parameter_to_change=dim,
         parameter_list=parameter_list,
         apply_user_data=True,
         override_session_state=override_session_state,
     )
+
     if st.session_state["user_changes_df"] is not None:
-        not_modified = calculate_results_list_blue(
+        costs_nm, emissions_nm, emissions_mass_nm = calculate_results_list_blue(
             api,
             parameter_to_change=dim,
             parameter_list=parameter_list,
@@ -999,5 +1054,15 @@ def blue_results_over_dimension(
             override_session_state=override_session_state,
         )
     else:
-        not_modified = None
-    return df, not_modified
+        costs_nm = None
+        emissions_nm = None
+        emissions_mass_nm = None
+
+    return BlueResultOverDimension(
+        costs=costs,
+        emissions=emissions,
+        emissions_mass=emissions_mass,
+        costs_not_modified=costs_nm,
+        emissions_not_modified=emissions_nm,
+        emissions_mass_not_modified=emissions_mass_nm,
+    )
