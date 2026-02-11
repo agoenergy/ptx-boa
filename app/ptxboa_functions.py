@@ -430,26 +430,25 @@ def aggregate_costs(
     # calculate total costs:
     res["Total"] = res.sum(axis=1)
 
-    return sort_cost_type_columns_by_position_in_chain(res)
+    return sort_columns_by_position_in_chain(res)
 
 
 def aggregate_emissions(
-    res_details: pd.DataFrame, parameter_to_change: str
+    res_details: pd.DataFrame, index: str, columns: str = "process_type"
 ) -> pd.DataFrame:
     """Aggregate detailed emissions."""
     res = res_details.pivot_table(
-        index=parameter_to_change,
-        columns="process_type",
+        index=index,
+        columns=columns,
         values="values",
         aggfunc="sum",
     )
     # calculate total emissions:
     res["Total"] = res.sum(axis=1)
+    return sort_columns_by_position_in_chain(res)
 
-    return sort_cost_type_columns_by_position_in_chain(res)
 
-
-def sort_cost_type_columns_by_position_in_chain(df):
+def sort_columns_by_position_in_chain(df):
     """Change cost type column order to match the occurrence in a chain.
 
     This is necessary for the order of the colors in the stacked barplots (GH #150).
@@ -475,9 +474,14 @@ def sort_cost_type_columns_by_position_in_chain(df):
         "Carbon",
         "Transportation (Pipeline)",
         "Transportation (Ship)",
+        "CO2",
         "Total",
     ]
-    assert [c in cost_type_order for c in df.columns]
+
+    unknown = set(df.columns) - set(cost_type_order)
+    if unknown:
+        raise ValueError(f"Unrecognized column(s): {', '.join(unknown)}")
+
     cols = [c for c in cost_type_order if c in df.columns]
     return df[cols]
 

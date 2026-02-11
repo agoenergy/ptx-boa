@@ -4,7 +4,7 @@ import pandas as pd
 import streamlit as st
 from plotly.subplots import make_subplots
 
-from app.layout_elements import what_is_a_boxplot
+from app.layout_elements import display_emissions, what_is_a_boxplot
 from app.plot_functions import (
     create_bar_chart_costs,
     create_box_plot,
@@ -67,9 +67,7 @@ def content_emissions(api: PtxboaAPI):
 
         # create box plot and bar plot:
         fig1 = create_box_plot(
-            aggregate_emissions(
-                results_per_region.emissions, parameter_to_change="region"
-            ),
+            aggregate_emissions(results_per_region.emissions, index="region"),
             unit=st.session_state["emissions_output_unit"],
             label="Total emissions distribution",
         )
@@ -82,9 +80,9 @@ def content_emissions(api: PtxboaAPI):
                 [
                     aggregate_emissions(
                         filtered_data.assign(region="Total emissions"),
-                        parameter_to_change="region",
+                        index="region",
                     ),  # here we aggregate all gas types
-                    aggregate_emissions(filtered_data, parameter_to_change="gas_type"),
+                    aggregate_emissions(filtered_data, index="gas_type"),
                 ]
             )
         )
@@ -114,6 +112,58 @@ def content_emissions(api: PtxboaAPI):
         st.plotly_chart(doublefig, width="stretch")
 
         what_is_a_boxplot()
+
+        with st.container(border=True):
+            help_string = " ".join(
+                [
+                    "This figure lets you compare total emissions and emissions by "
+                    "processing step for each source country.\n\n"
+                    "By default, all regions are shown, and they are sorted"
+                    " by total emissions. You can change this in the filter settings."
+                ]
+            )
+            display_emissions(
+                aggregate_emissions(results_per_region.emissions, index="region"),
+                (
+                    aggregate_emissions(
+                        results_per_region.emissions_not_modified, index="region"
+                    )
+                    if results_per_region.emissions_not_modified is not None
+                    else None
+                ),
+                key="region",
+                key_suffix="emissions_steps",
+                titlestring="Emissions per process step for different source countries",
+                help_string=help_string,
+            )
+
+        with st.container(border=True):
+            help_string = " ".join(
+                [
+                    "This figure lets you compare total emissions and emissions by "
+                    "gas type for each source country.\n\n"
+                    "By default, all regions are shown, and they are sorted"
+                    " by total emissions. You can change this in the filter settings."
+                ]
+            )
+            display_emissions(
+                aggregate_emissions(
+                    results_per_region.emissions, index="region", columns="gas_type"
+                ),
+                (
+                    aggregate_emissions(
+                        results_per_region.emissions_not_modified,
+                        index="region",
+                        columns="gas_type",
+                    )
+                    if results_per_region.emissions_not_modified is not None
+                    else None
+                ),
+                key="region",
+                key_suffix="emissions_gases",
+                titlestring="Emissions per gas type for different source countries",
+                help_string=help_string,
+            )
 
         st.divider()
         with st.expander("Detailed emissions data per region"):
