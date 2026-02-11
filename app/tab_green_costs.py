@@ -73,7 +73,7 @@ def content_costs(api: PtxboaAPI):
         )
 
         # create box plot and bar plot:
-        fig1 = create_box_plot(costs_per_region)
+        fig1 = create_box_plot(costs_per_region, unit=st.session_state["output_unit"])
         filtered_data = costs_per_region[
             costs_per_region.index == st.session_state["region"]
         ]

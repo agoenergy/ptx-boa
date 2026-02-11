@@ -7,6 +7,7 @@ from app.layout_elements import display_footer
 from app.sidebar import make_sidebar_blue
 from app.tab_blue_costs import content_costs
 from app.tab_blue_costs_comparison import content_costs_comparison
+from app.tab_blue_emissions import content_emissions
 from app.user_data import display_user_changes
 from app.user_data_from_file import download_user_data, upload_user_data
 from ptxboa import DEFAULT_CACHE_DIR, DEFAULT_DATA_DIR
@@ -47,9 +48,9 @@ with st.container():
 tabs = (
     "Info",
     "Costs",
-    "Costs Comparison",
     "Emissions",
     "Input data",
+    "Costs Comparison",
 )
 
 tabs_icons = {
@@ -98,18 +99,7 @@ if st.session_state[st.session_state["tab_key"]] == "Costs Comparison":
     content_costs_comparison(api)
 
 if st.session_state[st.session_state["tab_key"]] == "Emissions":
-    st.markdown(
-        """Bar charts showing emissions by source region, data
-scenario and product chains
-
-But more complex because of different ways to split emissions:
-- By process step (like in _Costs_ tab)
-- By GHG (CO2, CH4), or total (CO2 equivalents)
-- Combustion vs fugitive emissions (leakages)
-- Emitted vs captured
-- Supply country vs demand country
-"""
-    )
+    content_emissions(api)
 
 if st.session_state[st.session_state["tab_key"]] == "Input data":
     st.text("Blue PtX Input data")

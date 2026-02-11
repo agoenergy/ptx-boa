@@ -12,7 +12,6 @@ from app.plot_functions import (
 from app.ptxboa_functions import (
     blue_results_over_dimension,
     get_region_list_without_subregions,
-    move_to_tab,
     read_markdown_file,
 )
 from ptxboa.api import PtxboaAPI
@@ -21,7 +20,7 @@ from ptxboa.api import PtxboaAPI
 def content_costs(api: PtxboaAPI):
     with st.popover("*Help*", width="stretch"):
         st.markdown(
-            read_markdown_file("md/whatisthis_costs.md"), unsafe_allow_html=True
+            read_markdown_file("md/whatisthis_blue_costs.md"), unsafe_allow_html=True
         )
 
     with st.container(border=True):
@@ -71,7 +70,9 @@ def content_costs(api: PtxboaAPI):
         )
 
         # create box plot and bar plot:
-        fig1 = create_box_plot(results_per_region.costs)
+        fig1 = create_box_plot(
+            results_per_region.costs, unit=st.session_state["output_unit"]
+        )
         filtered_data = results_per_region.costs[
             results_per_region.costs.index == st.session_state["region"]
         ]
@@ -99,12 +100,6 @@ def content_costs(api: PtxboaAPI):
         st.plotly_chart(doublefig, width="stretch")
 
         what_is_a_boxplot()
-
-        st.button(
-            "More Info on Supply Region and Demand Country",
-            on_click=move_to_tab,
-            args=("Country fact sheets",),
-        )
 
     with st.container(border=True):
         help_string = " ".join(

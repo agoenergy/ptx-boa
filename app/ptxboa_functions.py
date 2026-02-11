@@ -433,6 +433,22 @@ def aggregate_costs(
     return sort_cost_type_columns_by_position_in_chain(res)
 
 
+def aggregate_emissions(
+    res_details: pd.DataFrame, parameter_to_change: str
+) -> pd.DataFrame:
+    """Aggregate detailed emissions."""
+    res = res_details.pivot_table(
+        index=parameter_to_change,
+        columns="process_type",
+        values="values",
+        aggfunc="sum",
+    )
+    # calculate total emissions:
+    res["Total"] = res.sum(axis=1)
+
+    return sort_cost_type_columns_by_position_in_chain(res)
+
+
 def sort_cost_type_columns_by_position_in_chain(df):
     """Change cost type column order to match the occurrence in a chain.
 
@@ -847,6 +863,7 @@ def move_to_tab(tab_name):
     st.session_state[st.session_state["tab_key"]] = tab_name
 
 
+@st.cache_data(show_spinner=False)
 def read_markdown_file(markdown_file: str) -> str:
     """Import markdown file as string."""
     return Path(markdown_file).read_text(encoding="UTF-8")

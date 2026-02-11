@@ -236,6 +236,9 @@ def unit_selection_input():
         help=read_markdown_file("md/helptext_sidebar_cost_unit.md"),
         index=1,  # 'USD/t' as default
     )
+    st.session_state["emissions_output_unit"] = st.session_state["output_unit"].replace(
+        "USD", "gCO₂eq"
+    )
 
 
 def allow_pipeline_toggle():
