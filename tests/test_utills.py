@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """Tests for utils module."""
+
 import json
 import unittest
 

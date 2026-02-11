@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """Content of input data tab."""
+
 import plotly.express as px
 import streamlit as st
 import streamlit_antd_components as sac
@@ -11,7 +11,7 @@ from app.layout_elements import (
 )
 from app.plot_functions import plot_costs_on_map, plot_input_data_on_map
 from app.ptxboa_functions import (
-    costs_over_dimension,
+    green_costs_over_dimension,
     read_markdown_file,
     select_subregions,
 )
@@ -49,12 +49,16 @@ def content_deep_dive_countries(api: PtxboaAPI) -> None:
     )
 
     with st.spinner("Please wait. Calculating results for different source regions"):
-        costs_per_region, costs_per_region_without_user_changes = costs_over_dimension(
-            api,
-            dim="region",
-            parameter_list=[
-                x for x in api.get_dimension("region").index if x.startswith(f"{ddc} (")
-            ],
+        costs_per_region, costs_per_region_without_user_changes = (
+            green_costs_over_dimension(
+                api,
+                dim="region",
+                parameter_list=[
+                    x
+                    for x in api.get_dimension("region").index
+                    if x.startswith(f"{ddc} (")
+                ],
+            )
         )
 
     with st.container(border=True):

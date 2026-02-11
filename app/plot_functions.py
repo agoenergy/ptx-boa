@@ -83,7 +83,8 @@ def plot_costs_on_map(
             api=api,
             df=res_costs,
             color_col=cost_component,
-            custom_data_func=_make_costs_hoverdata,
+            custom_data_func=_make_per_column_hoverdata,
+            custom_data_func_kwargs={"unit": st.session_state["output_unit"]},
         )
 
     else:
@@ -92,10 +93,46 @@ def plot_costs_on_map(
             df=res_costs,
             deep_dive_country=scope,
             color_col=cost_component,
-            custom_data_func=_make_costs_hoverdata,
+            custom_data_func=_make_per_column_hoverdata,
+            custom_data_func_kwargs={"unit": st.session_state["output_unit"]},
         )
 
     return _set_map_layout(fig, colorbar_title=st.session_state["output_unit"])
+
+
+def plot_emissions_on_map(
+    api: PtxboaAPI,
+    aggregated_results: pd.DataFrame,
+    color_col: str = "Total",
+) -> go.Figure:
+    """
+    Create map for emission result data.
+
+    Parameters
+    ----------
+    api : PtxboaAPI
+
+    aggregated_results : pd.DataFrame
+        Wide format results: rows: regions, columns: process steps or other components
+    color_col : str, optional
+        The cost component which should be displayed as color in the map. One of
+        the columns in 'aggregated_results', by default "Total"
+
+    Returns
+    -------
+    go.Figure
+    """
+    fig = _choropleth_map_world(
+        api=api,
+        df=aggregated_results,
+        color_col=color_col,
+        custom_data_func=_make_per_column_hoverdata,
+        custom_data_func_kwargs={"unit": st.session_state["emissions_output_unit"]},
+    )
+
+    return _set_map_layout(
+        fig, colorbar_title=st.session_state["emissions_output_unit"]
+    )
 
 
 def plot_input_data_on_map(
@@ -399,19 +436,19 @@ def _make_inputs_hoverdata(df, data_type, map_variable, unit, float_precision):
     return [custom_hover_data]
 
 
-def _make_costs_hoverdata(res_costs: pd.DataFrame) -> list[pd.Series]:
+def _make_per_column_hoverdata(res_costs: pd.DataFrame, unit: str) -> list[pd.Series]:
     custom_hover_data = res_costs.map("{:,.1f}".format).apply(
         lambda x: f"<b>{x.name}</b><br><br>"
         + "<br>".join(
             [
                 f"<b>{col}</b>: {x[col] if x[col] != 'nan' else 'not applicable'} "
-                f"{st.session_state['output_unit'] if x[col] != 'nan' else ''}"
+                f"{unit if x[col] != 'nan' else ''}"
                 for col in res_costs.columns[:-1]
             ]
             + [
                 f"──────────<br><b>{res_costs.columns[-1]}</b>: "
                 f"{x[res_costs.columns[-1]]}"
-                f"{st.session_state['output_unit']}"
+                f"{unit}"
             ]
         ),
         axis=1,
@@ -450,6 +487,12 @@ def create_bar_chart_costs(
         height=500,
         color_discrete_map=agora_discrete_colors_cost_categories(),
     )
+
+    # ensure stacked bars
+    fig.update_layout(barmode="relative")
+    for trace in fig.data:
+        if trace.type == "bar":
+            trace.update(offsetgroup=None)
 
     # Add the dot markers for the "total" column using plotly.graph_objects
     scatter_trace = go.Scatter(
@@ -499,7 +542,12 @@ def create_bar_chart_costs(
     return fig
 
 
-def create_box_plot(res_costs: pd.DataFrame):
+def create_box_plot(
+    res_costs: pd.DataFrame,
+    unit: str,
+    label: str = "Cost distribution",
+    title="Cost distribution for all supply countries",
+):
     """Create a subplot with one row and one column.
 
     Parameters
@@ -526,12 +574,12 @@ def create_box_plot(res_costs: pd.DataFrame):
         highlighted_value = 0
 
     # Add the box plot to the subplot
-    fig.add_trace(go.Box(y=res_costs["Total"], name="Cost distribution"))
+    fig.add_trace(go.Box(y=res_costs["Total"], name=label))
 
     # Add a scatter marker for the highlighted data point
     fig.add_trace(
         go.Scatter(
-            x=["Cost distribution"],
+            x=[label],
             y=[highlighted_value],
             mode="markers",
             marker={"size": 10, "color": "black"},
@@ -542,9 +590,9 @@ def create_box_plot(res_costs: pd.DataFrame):
 
     # Customize the layout as needed
     fig.update_layout(
-        title="Cost distribution for all supply countries",
+        title=title,
         xaxis={"title": ""},
-        yaxis={"title": st.session_state["output_unit"]},
+        yaxis={"title": unit},
         height=500,
     )
 

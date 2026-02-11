@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Functions for testing user data upload validation."""
 
 from pathlib import Path

@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """Compare cost results and flh from optimized vs non-optimized FLH."""
+
 import itertools
 import json
 import logging
@@ -12,8 +12,8 @@ import numpy as np
 import pandas as pd
 
 sys.path.append(str(Path(__file__).parent.parent))
-from ptxboa import DEFAULT_CACHE_DIR, DEFAULT_DATA_DIR
-from ptxboa.api import PtxboaAPI
+from ptxboa import DEFAULT_CACHE_DIR, DEFAULT_DATA_DIR  # noqa: E402
+from ptxboa.api import PtxboaAPI  # noqa: E402
 
 SERVER_CACHE_DIR = Path("/home/ptxboa/ptx-boa_offline_optimization/optimization_cache")
 
@@ -126,14 +126,14 @@ def main(
             logging.warning(f"{i} of {n_total} parameter combinations")
         try:
             df_no_opt = (
-                api.calculate(optimize_flh=False, **param_set)[0]
-                .rename(columns={"values": no_optimized_col})
+                api.calculate(optimize_flh=False, **param_set)
+                .costs.rename(columns={"values": no_optimized_col})
                 .set_index(index_cols)
             )
             try:
                 df_opt = (
-                    api.calculate(optimize_flh=True, **param_set)[0]
-                    .rename(columns={"values": optimized_col})
+                    api.calculate(optimize_flh=True, **param_set)
+                    .costs.rename(columns={"values": optimized_col})
                     .set_index(index_cols)
                 )
                 df = pd.concat(
