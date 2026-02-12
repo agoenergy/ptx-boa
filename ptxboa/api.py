@@ -78,6 +78,7 @@ class PtxboaAPI:
         scenario: ScenarioType,
         long_names: bool = True,
         user_data: pd.DataFrame | None = None,
+        tool_version_color: ToolVersionColorType = "green",
     ) -> pd.DataFrame:
         """Return scenario data.
 
@@ -117,6 +118,7 @@ class PtxboaAPI:
             user_data,
             data_dir=self.data_dir,
             cache_dir=None,  # dont need caching for input data
+            tool_version_color=tool_version_color,
         )
         return handler.get_input_data(long_names)
 
@@ -330,7 +332,11 @@ class PtxboaAPI:
             return None
 
         data_handler = DataHandler(
-            scenario, user_data, data_dir=self.data_dir, cache_dir=self.cache_dir
+            scenario,
+            user_data,
+            data_dir=self.data_dir,
+            cache_dir=self.cache_dir,
+            tool_version_color="green",  # no optimization in blue tool
         )
         filepath = data_handler.optimizer._get_cache_filepath(hashsum=hashsum)
         network = data_handler.optimizer._load_network(filepath=filepath)
