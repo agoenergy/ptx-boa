@@ -227,7 +227,9 @@ def main():
         "country_code",
         "country_name",
         "is_import",
-        "is_export"
+        "is_export",
+        "is_green",
+        "is_blue"
         FROM "ptxboa_target_country"
         ORDER BY "country_code"
         """,
@@ -243,7 +245,9 @@ def main():
         "subregion_code",
         "subregion_name",
         "is_coastal",
-        "iso3166_code"
+        "iso3166_code",
+        "is_green",
+        "is_blue"
         FROM "ptxboa_source_region"
         ORDER BY "region_code"
         """,
@@ -274,6 +278,8 @@ def main():
         ,"DERIV_I2"
         ,"FLOW_OUT"
         ,"CAN_PIPELINE"
+        ,"is_green"
+        ,"is_blue"
         FROM "ptxboa_chains"
         ORDER BY "chain"
         """,
