@@ -5,6 +5,7 @@ Ammonia (PEM),EL-STR,PEM-EL,H2-STR,NH3SYN,,,,,,NH3-SB,NH3-S,,,,,,,,NH3-L,False,1
 Ammonia (PEM) + reconv. to H2,EL-STR,PEM-EL,H2-STR,NH3SYN,,,,NH3-REC,NH3-REC,NH3-SB,NH3-S,,,,,,,,H2-G,False,1,0
 Ammonia (SOEC),EL-STR,SOEC-EL,H2-STR,NH3SYN,,,,,,NH3-SB,NH3-S,,,,,,,,NH3-L,False,1,0
 Ammonia (SOEC) + reconv. to H2,EL-STR,SOEC-EL,H2-STR,NH3SYN,,,,NH3-REC,NH3-REC,NH3-SB,NH3-S,,,,,,,,H2-G,False,1,0
+Blue Iron (blue),,,,NG-DRI,,,,,,DRI-SB,,,,,,,EAF,,STL-S,False,1,0
 FT e-fuels (AEL),EL-STR,AEL-EL,H2-STR,EFUELSYN,,,,,,SYN-SB,SYN-S,,,,,,,,CHX-L,False,1,0
 FT e-fuels (PEM),EL-STR,PEM-EL,H2-STR,EFUELSYN,,,,,,SYN-SB,SYN-S,,,,,,,,CHX-L,False,1,0
 FT e-fuels (SOEC),EL-STR,SOEC-EL,H2-STR,EFUELSYN,,,,,,SYN-SB,SYN-S,,,,,,,,CHX-L,False,1,0
@@ -26,4 +27,3 @@ Methane (SOEC) + reconv. to H2,EL-STR,SOEC-EL,H2-STR,CH4SYN,,CH4-LIQ,CH4-COMP,RE
 Methanol (AEL),EL-STR,AEL-EL,H2-STR,CH3OHSYN,,,,,,CH3OH-SB,CH3OH-S,,,,,,,,CH3OH-L,False,1,0
 Methanol (PEM),EL-STR,PEM-EL,H2-STR,CH3OHSYN,,,,,,CH3OH-SB,CH3OH-S,,,,,,,,CH3OH-L,False,1,0
 Methanol (SOEC),EL-STR,SOEC-EL,H2-STR,CH3OHSYN,,,,,,CH3OH-SB,CH3OH-S,,,,,,,,CH3OH-L,False,1,0
-TODO: Blue Iron,,,,NG-DRI,,,,,,DRI-SB,,,,,,,EAF,,STL-S,False,1,0

@@ -2,57 +2,57 @@ process_code,process_name,main_flow_code_out,main_flow_code_in,is_transformation
 AEL-EL,AEL electrolysis,H2-G,EL,True,False,False,False,ELY,True,False,Electrolysis,H2O-L,1,0
 ATR,Methane reconversion,H2-G,CH4-G,True,False,True,False,TRNSP-PP,False,False,Transportation (Pipeline),EL,1,0
 CH3OHREC,Methanol reconversion,H2-G,CH3OH-L,True,False,True,False,TRNSP-SP,False,False,Transportation (Ship),,1,0
-CH3OH-S,Methanol ship (own fuel consumption),CH3OH-L,CH3OH-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,1,0
-CH3OH-SB,Methanol ship (bunker fuel consumption),CH3OH-L,CH3OH-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,1,0
+CH3OH-S,Methanol ship (own fuel consumption),CH3OH-L,CH3OH-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,1,1
+CH3OH-SB,Methanol ship (bunker fuel consumption),CH3OH-L,CH3OH-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,1,1
 CH3OHSYN,Methanol Synthesis,CH3OH-L,H2-G,True,False,False,False,DERIV,False,True,Derivative production,CO2-G/EL,1,0
 CH4-COMP,Methane compression,CH4-G,CH4-G,True,False,True,False,TRNSP-PP,False,False,Transportation (Pipeline),EL,1,0
 CH4-LIQ,Methane Liquefaction,CH4-L,CH4-G,True,False,True,False,TRNSP-SP,False,False,Transportation (Ship),EL,1,0
-CH4-P-L,Methane land pipeline new,CH4-G,CH4-G,False,False,True,False,TRNSP-P,False,False,Transportation (Pipeline),,1,0
-CH4-P-LR,Methane land pipeline retrofitted,CH4-G,CH4-G,False,False,True,False,TRNSP-P,False,False,Transportation (Pipeline),,1,0
-CH4-P-S,Methane sea pipeline,CH4-G,CH4-G,False,False,True,False,TRNSP-P,False,False,Transportation (Pipeline),,1,0
-CH4-P-SR,Methane sea pipeline retrofitted,CH4-G,CH4-G,False,False,True,False,TRNSP-P,False,False,Transportation (Pipeline),,1,0
+CH4-P-L,Methane land pipeline new,CH4-G,CH4-G,False,False,True,False,TRNSP-P,False,False,Transportation (Pipeline),,1,1
+CH4-P-LR,Methane land pipeline retrofitted,CH4-G,CH4-G,False,False,True,False,TRNSP-P,False,False,Transportation (Pipeline),,1,1
+CH4-P-S,Methane sea pipeline,CH4-G,CH4-G,False,False,True,False,TRNSP-P,False,False,Transportation (Pipeline),,1,1
+CH4-P-SR,Methane sea pipeline retrofitted,CH4-G,CH4-G,False,False,True,False,TRNSP-P,False,False,Transportation (Pipeline),,1,1
 CH4-RGAS,Methane Regasification,CH4-G,CH4-L,True,False,True,False,TRNSP-SP,False,False,Transportation (Ship),,1,0
-CH4-S,LNG ship (own fuel consumption),CH4-L,CH4-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,1,0
-CH4-SB,LNG ship (bunker fuel consumption),CH4-L,CH4-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,1,0
+CH4-S,LNG ship (own fuel consumption),CH4-L,CH4-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,1,1
+CH4-SB,LNG ship (bunker fuel consumption),CH4-L,CH4-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,1,1
 CH4SYN,Methane Synthesis,CH4-G,H2-G,True,False,False,False,DERIV,False,True,Derivative production,CO2-G/H2O-L/HEAT,1,0
-DAC,Direct Air Capture,CO2-G,,False,False,False,True,PROV_C,False,False,Carbon,EL/H2O-L/HEAT,1,0
-DESAL,Sea Water desalination,H2O-L,,False,False,False,True,PROV_H2O,False,False,Water,EL,1,0
+DAC,Direct Air Capture,CO2-G,,False,False,False,True,PROV_C,False,False,Carbon,EL/H2O-L/HEAT,1,1
+DESAL,Sea Water desalination,H2O-L,,False,False,False,True,PROV_H2O,False,False,Water,EL,1,1
 DRI,Green iron reduction,DRI-S,H2-G,True,False,False,False,DERIV,False,True,Derivative production,EL,1,0
-DRI-S,Green iron ship,DRI-S,DRI-S,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,1,0
-DRI-SB,Green iron ship (bunker fuel consumption),DRI-S,DRI-S,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,1,0
-EAF,TODO:EAF,STL-S,DRI-S,True,False,True,False,TRNSP-SP,False,False,Transportation (Ship),DRI-S/EL/HEAT/NG-G,1,0
+DRI-S,Green iron ship,DRI-S,DRI-S,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,1,1
+DRI-SB,Green iron ship (bunker fuel consumption),DRI-S,DRI-S,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,1,1
+EAF,EAF (blue),STL-S,DRI-S,True,False,True,False,TRNSP-SP,False,False,Transportation (Ship),DRI-S/EL/HEAT/NG-G,1,0
 EFUELSYN,FT e-fuels Synthesis (Fischer-Tropsch),CHX-L,H2-G,True,False,False,False,DERIV,False,True,Derivative production,CO2-G/EL/H2O-L/HEAT,1,0
-EL-STR,electricity storage,EL,EL,False,False,True,False,STORE,False,False,Electricity and H2 storage,,1,0
-EL-TRANS,electricity transmission,EL,EL,False,False,True,False,TRNSP-E,False,False,Electricity generation,,1,0
+EL-STR,electricity storage,EL,EL,False,False,True,False,STORE,False,False,Electricity and H2 storage,,1,1
+EL-TRANS,electricity transmission,EL,EL,False,False,True,False,TRNSP-E,False,False,Electricity generation,,1,1
 H2-COMP,Hydrogen compression,H2-G,H2-G,True,False,True,False,TRNSP-PP,False,False,Transportation (Pipeline),EL,1,0
 H2-LIQ,Hydrogen Liquefaction,H2-L,H2-G,True,False,True,False,TRNSP-SP,False,False,Transportation (Ship),EL,1,0
-H2-P-L,Hydrogen land pipeline new,H2-G,H2-G,False,False,True,False,TRNSP-P,False,False,Transportation (Pipeline),,1,0
-H2-P-LR,Hydrogen land pipeline retrofitted,H2-G,H2-G,False,False,True,False,TRNSP-P,False,False,Transportation (Pipeline),,1,0
-H2-P-S,Hydrogen sea pipeline,H2-G,H2-G,False,False,True,False,TRNSP-P,False,False,Transportation (Pipeline),,1,0
-H2-P-SR,Hydrogen sea pipeline retrofitted,H2-G,H2-G,False,False,True,False,TRNSP-P,False,False,Transportation (Pipeline),,1,0
+H2-P-L,Hydrogen land pipeline new,H2-G,H2-G,False,False,True,False,TRNSP-P,False,False,Transportation (Pipeline),,1,1
+H2-P-LR,Hydrogen land pipeline retrofitted,H2-G,H2-G,False,False,True,False,TRNSP-P,False,False,Transportation (Pipeline),,1,1
+H2-P-S,Hydrogen sea pipeline,H2-G,H2-G,False,False,True,False,TRNSP-P,False,False,Transportation (Pipeline),,1,1
+H2-P-SR,Hydrogen sea pipeline retrofitted,H2-G,H2-G,False,False,True,False,TRNSP-P,False,False,Transportation (Pipeline),,1,1
 H2-RGAS,Hydrogen Regasification,H2-G,H2-L,True,False,True,False,TRNSP-SP,False,False,Transportation (Ship),,1,0
-H2-S,Hydrogen ship (own fuel consumption),H2-L,H2-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,1,0
-H2-SB,Hydrogen ship (bunker fuel consumption),H2-L,H2-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,1,0
-H2-STR,Hydrogen storage,H2-G,H2-G,False,False,True,False,STORE,False,False,Electricity and H2 storage,,1,0
+H2-S,Hydrogen ship (own fuel consumption),H2-L,H2-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,1,1
+H2-SB,Hydrogen ship (bunker fuel consumption),H2-L,H2-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,1,1
+H2-STR,Hydrogen storage,H2-G,H2-G,False,False,True,False,STORE,False,False,Electricity and H2 storage,,1,1
 LOHC-CON,LOHC conversion,LOHC-L,H2-G,True,False,True,False,TRNSP-SP,False,False,Transportation (Ship),EL,1,0
 LOHC-REC,LOHC reconversion,H2-G,LOHC-L,True,False,True,False,TRNSP-SP,False,False,Transportation (Ship),EL/HEAT,1,0
-LOHC-S,LOHC ship (own fuel consumption),LOHC-L,LOHC-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,1,0
-LOHC-SB,LOHC ship (bunker fuel consumption),LOHC-L,LOHC-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,1,0
-NG-DRI,TODO:NG-CCS-DRI,DRI-S,NG-G,True,False,False,False,DERIV,False,True,Derivative production,CH4-G/EL/HEAT/IOP-S,1,0
+LOHC-S,LOHC ship (own fuel consumption),LOHC-L,LOHC-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,1,1
+LOHC-SB,LOHC ship (bunker fuel consumption),LOHC-L,LOHC-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,1,1
+NG-DRI,NG-CCS-DRI (blue),DRI-S,NG-G,True,False,False,False,DERIV,False,True,Derivative production,CH4-G/EL/HEAT/IOP-S,1,0
 NG-DRI-C,NG-based iron reduction with CCS,DRI-S,NG-G,True,False,False,False,DERIV,False,True,Derivative production,,1,0
 NG-PROD,NG production,NG-G,NG-G,True,False,False,False,DERIV,False,True,Derivative production,,1,0
 NH3-REC,Ammonia reconversion,H2-G,NH3-L,True,False,True,False,TRNSP-SP,False,False,Transportation (Ship),EL,1,0
-NH3-S,Ammonia ship (own fuel consumption),NH3-L,NH3-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,1,0
-NH3-SB,Ammonia ship (bunker fuel consumption),NH3-L,NH3-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,1,0
+NH3-S,Ammonia ship (own fuel consumption),NH3-L,NH3-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,1,1
+NH3-SB,Ammonia ship (bunker fuel consumption),NH3-L,NH3-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,1,1
 NH3SYN,Ammonia Synthesis (Haber-Bosch),NH3-L,H2-G,True,False,False,False,DERIV,False,True,Derivative production,EL/N2-G,1,0
 PEM-EL,PEM electrolysis,H2-G,EL,True,False,False,False,ELY,True,False,Electrolysis,H2O-L,1,0
-PV-FIX,PV tilted,EL,,False,True,False,False,RE-GEN,False,False,Electricity generation,,1,0
+PV-FIX,PV tilted,EL,,False,True,False,False,RE-GEN,False,False,Electricity generation,,1,1
 REGASATR,Methane reconversion incl. regasification,H2-G,CH4-L,True,False,True,False,TRNSP-SP,False,False,Transportation (Ship),EL,1,0
-RES-HYBR,Wind-PV-Hybrid,EL,,False,True,False,False,RE-GEN,False,False,Electricity generation,,1,0
+RES-HYBR,Wind-PV-Hybrid,EL,,False,True,False,False,RE-GEN,False,False,Electricity generation,,1,1
 SMR,Methane reconversion SMR,H2-G,CH4-G,True,False,True,False,TRNSP-SP,False,False,Transportation (Ship),,1,0
 SMR-BF,Methane reconversion SMR Brownfield,H2-G,CH4-G,True,False,True,False,TRNSP-SP,False,False,Transportation (Ship),,1,0
 SOEC-EL,SOEC (high-temp) electrolysis,H2-G,EL,True,False,False,False,ELY,True,False,Electrolysis,H2O-L,1,0
-SYN-S,FT e-fuels ship (own fuel consumption),CHX-L,CHX-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,1,0
-SYN-SB,FT e-fuels ship (bunker fuel consumption),CHX-L,CHX-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,1,0
-WIND-OFF,Wind Offshore,EL,,False,True,False,False,RE-GEN,False,False,Electricity generation,,1,0
-WIND-ON,Wind Onshore,EL,,False,True,False,False,RE-GEN,False,False,Electricity generation,,1,0
+SYN-S,FT e-fuels ship (own fuel consumption),CHX-L,CHX-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,1,1
+SYN-SB,FT e-fuels ship (bunker fuel consumption),CHX-L,CHX-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,1,1
+WIND-OFF,Wind Offshore,EL,,False,True,False,False,RE-GEN,False,False,Electricity generation,,1,1
+WIND-ON,Wind Onshore,EL,,False,True,False,False,RE-GEN,False,False,Electricity generation,,1,1
