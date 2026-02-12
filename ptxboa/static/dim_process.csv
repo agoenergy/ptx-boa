@@ -20,7 +20,7 @@ DESAL,Sea Water desalination,H2O-L,,False,False,False,True,PROV_H2O,False,False,
 DRI,Green iron reduction,DRI-S,H2-G,True,False,False,False,DERIV,False,True,Derivative production,EL,1,0
 DRI-S,Green iron ship,DRI-S,DRI-S,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,1,1
 DRI-SB,Green iron ship (bunker fuel consumption),DRI-S,DRI-S,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,1,1
-EAF,EAF (blue),STL-S,DRI-S,True,False,True,False,TRNSP-SP,False,False,Transportation (Ship),DRI-S/EL/HEAT/NG-G,1,0
+EAF,EAF (blue),STL-S,DRI-S,True,False,True,False,TRNSP-SP,False,False,Transportation (Ship),DRI-S/EL/HEAT/NG-G,0,1
 EFUELSYN,FT e-fuels Synthesis (Fischer-Tropsch),CHX-L,H2-G,True,False,False,False,DERIV,False,True,Derivative production,CO2-G/EL/H2O-L/HEAT,1,0
 EL-STR,electricity storage,EL,EL,False,False,True,False,STORE,False,False,Electricity and H2 storage,,1,1
 EL-TRANS,electricity transmission,EL,EL,False,False,True,False,TRNSP-E,False,False,Electricity generation,,1,1
@@ -38,7 +38,7 @@ LOHC-CON,LOHC conversion,LOHC-L,H2-G,True,False,True,False,TRNSP-SP,False,False,
 LOHC-REC,LOHC reconversion,H2-G,LOHC-L,True,False,True,False,TRNSP-SP,False,False,Transportation (Ship),EL/HEAT,1,0
 LOHC-S,LOHC ship (own fuel consumption),LOHC-L,LOHC-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,1,1
 LOHC-SB,LOHC ship (bunker fuel consumption),LOHC-L,LOHC-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,1,1
-NG-DRI,NG-CCS-DRI (blue),DRI-S,NG-G,True,False,False,False,DERIV,False,True,Derivative production,CH4-G/EL/HEAT/IOP-S,1,0
+NG-DRI,NG-CCS-DRI (blue),DRI-S,NG-G,True,False,False,False,DERIV,False,True,Derivative production,CH4-G/EL/HEAT/IOP-S,0,1
 NG-DRI-C,NG-based iron reduction with CCS,DRI-S,NG-G,True,False,False,False,DERIV,False,True,Derivative production,,1,0
 NG-PROD,NG production,NG-G,NG-G,True,False,False,False,DERIV,False,True,Derivative production,,1,0
 NH3-REC,Ammonia reconversion,H2-G,NH3-L,True,False,True,False,TRNSP-SP,False,False,Transportation (Ship),EL,1,0
