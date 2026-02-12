@@ -215,7 +215,10 @@ def test_new_blue_chain(scenario, kwargs, request):
     pprint(user_data)
 
     data_handler = DataHandler(
-        data_dir=ptxdata_dir_static, scenario=scenario, user_data=user_data
+        data_dir=ptxdata_dir_static,
+        scenario=scenario,
+        user_data=user_data,
+        tool_version_color="blue",
     )
     calculation_data = data_handler.get_calculation_data(**kwargs, optimize_flh=False)
     values, _cost_result_df = PtxCalc.calculate(calculation_data)  # noqa

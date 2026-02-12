@@ -870,3 +870,7 @@ TransportValues = ["Ship", "Pipeline"]
 
 OutputUnitType = Literal["USD/MWh", "USD/t"]
 OutputUnitValues = ["USD/MWh", "USD/t"]
+
+
+ToolVersionColorType = Literal["blue", "green"]
+ToolVersionColorValues = ["blue", "green"]

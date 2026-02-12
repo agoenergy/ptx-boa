@@ -151,6 +151,7 @@ def main():
         create_literal("ResultCost", ["CAPEX", "OPEX", "FLOW", "LC"]),
         create_literal("Transport", ["Ship", "Pipeline"]),
         create_literal("OutputUnit", ["USD/MWh", "USD/t"]),
+        create_literal("ToolVersionColor", ["blue", "green"]),
     ]
 
     with open(PYTHON_FILE, "w", encoding="utf-8") as file:

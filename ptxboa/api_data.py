@@ -24,6 +24,7 @@ from ptxboa.static import (
     ScenarioValues,
     SourceRegionCodeType,
     TargetCountryCodeType,
+    ToolVersionColorType,
     TransportValues,
     YearValues,
 )
@@ -396,7 +397,7 @@ class DataHandler:
         user_data: None | pd.DataFrame = None,
         data_dir: Path | None = None,
         cache_dir: Path | None = None,
-        use_blue_data: bool = False,
+        tool_version_color: ToolVersionColorType = "green",
     ):
         if scenario not in ScenarioValues:
             raise KeyError(scenario)
@@ -406,7 +407,7 @@ class DataHandler:
         self.data_dir = data_dir
         self.cache_dir = cache_dir
         self.profiles_path = PROFILES_DIR
-        self.use_blue_data = use_blue_data  # NOTE: currently does nothing
+        self.tool_version_color = tool_version_color
 
         self.flh = _load_data(
             self.data_dir,
@@ -764,15 +765,22 @@ class DataHandler:
 
     @classmethod
     def get_dimension(
-        cls, dim: DimensionType, use_blue_data: bool = False
+        cls,
+        dim: DimensionType,
+        tool_version_color: ToolVersionColorType | None = None,
     ) -> pd.DataFrame:
         """Delegate get_dimension to underlying data class."""
         df = cls.dimensions[dim]
         # filter data for green / blue tool
-        if dim in {"chain", "region", "country", "process"}:
-            if use_blue_data:
+        if tool_version_color is not None and dim in {
+            "chain",
+            "region",
+            "country",
+            "process",
+        }:
+            if tool_version_color == "blue":
                 df = df.loc[df["is_blue"].astype(bool)]
-            else:
+            elif tool_version_color == "green":
                 df = df.loc[df["is_green"].astype(bool)]
 
         return df
