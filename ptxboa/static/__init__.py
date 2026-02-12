@@ -675,6 +675,7 @@ ChainNameType = Literal[
     "Ammonia (PEM) + reconv. to H2",
     "Ammonia (SOEC)",
     "Ammonia (SOEC) + reconv. to H2",
+    "Blue Iron (blue)",
     "FT e-fuels (AEL)",
     "FT e-fuels (PEM)",
     "FT e-fuels (SOEC)",
@@ -696,7 +697,6 @@ ChainNameType = Literal[
     "Methanol (AEL)",
     "Methanol (PEM)",
     "Methanol (SOEC)",
-    "TODO: Blue Iron",
 ]
 ChainNameValues = [
     "Ammonia (AEL)",
@@ -705,6 +705,7 @@ ChainNameValues = [
     "Ammonia (PEM) + reconv. to H2",
     "Ammonia (SOEC)",
     "Ammonia (SOEC) + reconv. to H2",
+    "Blue Iron (blue)",
     "FT e-fuels (AEL)",
     "FT e-fuels (PEM)",
     "FT e-fuels (SOEC)",
@@ -726,7 +727,6 @@ ChainNameValues = [
     "Methanol (AEL)",
     "Methanol (PEM)",
     "Methanol (SOEC)",
-    "TODO: Blue Iron",
 ]
 
 
@@ -870,3 +870,7 @@ TransportValues = ["Ship", "Pipeline"]
 
 OutputUnitType = Literal["USD/MWh", "USD/t"]
 OutputUnitValues = ["USD/MWh", "USD/t"]
+
+
+ToolVersionColorType = Literal["blue", "green"]
+ToolVersionColorValues = ["blue", "green"]
