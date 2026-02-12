@@ -118,24 +118,20 @@ def content_costs(api: PtxboaAPI):
         )
 
     with st.container(border=True):
-        with st.spinner(
-            "Please wait. Calculating results for different carbon dioxide prices."
-        ):
-            results_per_co2_price = blue_results_over_dimension(
-                api, dim="carbon_dioxide_price"
-            )
+        with st.spinner("Please wait. Calculating results for different WACC values."):
+            results_per_wacc = blue_results_over_dimension(api, dim="WACC")
 
         help_string = " ".join(
             [
                 "This figure lets you compare total costs and cost components "
-                "by carbon dioxide price. "
+                "by WACC in the supply country. "
                 "The value from input data is altered by +-10%."
             ]
         )
         display_costs(
-            results_per_co2_price.costs,
-            results_per_co2_price.costs_not_modified,
+            results_per_wacc.costs,
+            results_per_wacc.costs_not_modified,
             "scenario",
-            "Costs for different carbon dioxide prices",
+            "Costs for different WACC values in the supply country",
             help_string=help_string,
         )
