@@ -200,6 +200,8 @@ def main():
         /*,"class_name"*/
         ,"result_process_type"
         ,"secondary_flows"
+        ,"is_green"
+        ,"is_blue"
         FROM "ptxboa_process"
         ORDER BY "process_code"
         """,

@@ -769,7 +769,7 @@ class DataHandler:
         """Delegate get_dimension to underlying data class."""
         df = cls.dimensions[dim]
         # filter data for green / blue tool
-        if dim in {"chain", "region", "country"}:
+        if dim in {"chain", "region", "country", "process"}:
             if use_blue_data:
                 df = df.loc[df["is_blue"].astype(bool)]
             else:
