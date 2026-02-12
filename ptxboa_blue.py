@@ -81,8 +81,6 @@ st.divider()
 make_sidebar_blue(api)
 
 # DUMMIES:
-st.session_state["country"] = "Germany"
-st.session_state["region"] = "Morocco"
 st.session_state["chain"] = "Ammonia (AEL)"
 st.session_state["scenario"] = "2040 (medium)"
 st.session_state["secproc_water"] = "Specific costs"
