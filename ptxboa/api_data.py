@@ -396,6 +396,7 @@ class DataHandler:
         user_data: None | pd.DataFrame = None,
         data_dir: Path | None = None,
         cache_dir: Path | None = None,
+        use_blue_data: bool = False,
     ):
         if scenario not in ScenarioValues:
             raise KeyError(scenario)
@@ -405,6 +406,7 @@ class DataHandler:
         self.data_dir = data_dir
         self.cache_dir = cache_dir
         self.profiles_path = PROFILES_DIR
+        self.use_blue_data = use_blue_data  # NOTE: currently does nothing
 
         self.flh = _load_data(
             self.data_dir,
@@ -761,9 +763,19 @@ class DataHandler:
         return result
 
     @classmethod
-    def get_dimension(cls, dim: DimensionType) -> pd.DataFrame:
+    def get_dimension(
+        cls, dim: DimensionType, use_blue_data: bool = False
+    ) -> pd.DataFrame:
         """Delegate get_dimension to underlying data class."""
-        return cls.dimensions[dim]
+        df = cls.dimensions[dim]
+        # filter data for green / blue tool
+        if dim in {"chain", "region", "country"}:
+            if use_blue_data:
+                df = df.loc[df["is_blue"].astype(bool)]
+            else:
+                df = df.loc[df["is_green"].astype(bool)]
+
+        return df
 
     def get_calculation_data(
         self,

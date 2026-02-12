@@ -44,7 +44,7 @@ class PtxboaAPI:
         self.cache_dir = cache_dir
 
     @staticmethod
-    def get_dimension(dim: DimensionType) -> pd.DataFrame:
+    def get_dimension(dim: DimensionType, use_blue_data: bool = False) -> pd.DataFrame:
         """Return a dimension element to populate app dropdowns.
 
         Parameters
@@ -68,7 +68,7 @@ class PtxboaAPI:
         : pd.DataFrame
             The dimension the data as
         """
-        return DataHandler.get_dimension(dim)
+        return DataHandler.get_dimension(dim, use_blue_data=use_blue_data)
 
     def get_input_data(
         self,
@@ -132,6 +132,7 @@ class PtxboaAPI:
         user_data: pd.DataFrame | None = None,
         optimize_flh: bool = True,
         use_user_data_for_optimize_flh: bool = False,
+        use_blue_data: bool = False,
     ) -> ApiCalculateResult:
         """Calculate results based on user selection.
 
@@ -164,6 +165,8 @@ class PtxboaAPI:
             ["source_region_code", "process_code", "parameter_code", "value"].
         use_user_data_for_optimize_flh: bool
             If True: use user data as input for flh optimization as well.
+        use_blue_data: bool
+            If True: use separate dataset for blue hydrogen.
 
         Returns
         -------
@@ -177,7 +180,11 @@ class PtxboaAPI:
 
         """
         data_handler = DataHandler(
-            scenario, user_data, data_dir=self.data_dir, cache_dir=self.cache_dir
+            scenario,
+            user_data,
+            data_dir=self.data_dir,
+            cache_dir=self.cache_dir,
+            use_blue_data=use_blue_data,
         )
 
         if transport not in TransportValues:
