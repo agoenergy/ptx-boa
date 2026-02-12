@@ -204,7 +204,12 @@ def calculate_results_list_green(
 
 def calculate_results_list_blue(
     api: PtxboaAPI,
-    parameter_to_change: Literal["region", "chain", "carbon_dioxide_price", "scenario"],
+    parameter_to_change: Literal[
+        "region",
+        "chain",
+        "scenario",
+        "WACC",
+    ],
     parameter_list: None | list | pd.Series | pd.Index = None,
     override_session_state: dict | None = None,
     apply_user_data: bool = True,
@@ -252,7 +257,7 @@ def calculate_results_list_blue(
     if parameter_list is None:
         if parameter_to_change in ["region", "chain", "scenario"]:
             parameter_list = api.get_dimension(parameter_to_change).index
-        elif parameter_to_change in ["carbon_dioxide_price"]:
+        elif parameter_to_change in ["WACC"]:
             parameter_list = [0.9, 0.95, 1.0, 1.05, 1.1]
         else:
             raise ValueError(f"invalid {parameter_to_change=}")
@@ -299,12 +304,12 @@ def calculate_results_list_blue(
                 logging.info(f"could not get data: {exc}")
 
     # sensitivity by changing specific data points by a range of factors
-    elif parameter_to_change in ["carbon_dioxide_price"]:
-        if parameter_to_change == "carbon_dioxide_price":
-            parameter_code = "specific costs"
+    elif parameter_to_change in ["WACC"]:
+        if parameter_to_change == "WACC":
+            parameter_code = "WACC"
             process_code = ""
-            flow_code = "carbon dioxide"
-            source_region_code = ""
+            flow_code = ""
+            source_region_code = settings["region"]
 
         # get input data
         df = api.get_input_data(
@@ -1037,7 +1042,12 @@ class BlueResultOverDimension:
 
 def blue_results_over_dimension(
     api,
-    dim: Literal["region", "chain", "carbon_dioxide_price", "scenario"],
+    dim: Literal[
+        "region",
+        "chain",
+        "scenario",
+        "WACC",
+    ],
     parameter_list: None | list | pd.Series = None,
     override_session_state=None,
 ):

@@ -80,9 +80,10 @@ st.divider()
 # create sidebar:
 make_sidebar_blue(api)
 
+# display chain code
+st.subheader(f"CHAIN_CODE: `{st.session_state['chain']}`")
+
 # DUMMIES:
-st.session_state["country"] = "Germany"
-st.session_state["region"] = "Morocco"
 st.session_state["chain"] = "Ammonia (AEL)"
 st.session_state["scenario"] = "2040 (medium)"
 st.session_state["secproc_water"] = "Specific costs"

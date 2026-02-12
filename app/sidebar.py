@@ -30,10 +30,10 @@ def make_sidebar_blue(api: PtxboaAPI):
     input_data_reset_notice()
 
 
-def main_settings_green(api):
+def main_settings_green(api: PtxboaAPI):
     # get list of regions that does not contain subregions:
     region_list = (
-        api.get_dimension("region")
+        api.get_dimension("region", tool_version_color="green")
         .loc[api.get_dimension("region")["subregion_code"] == ""]
         .sort_index()
         .index
@@ -43,7 +43,7 @@ def main_settings_green(api):
     region = st.selectbox(
         "Supply country / region:",
         region_list,
-        help=(read_markdown_file("md/helptext_sidebar_supply_region.md")),
+        help=(read_markdown_file("md/helptext_sidebar_green_supply_region.md")),
         index=region_list.get_loc("Morocco"),  # Morocco as default
     )
     st.session_state["region"] = region
@@ -66,11 +66,11 @@ def main_settings_green(api):
             st.session_state["subregion"] = subregion
 
     # select demand country:
-    countries = api.get_dimension("country").index
+    countries = api.get_dimension("country", tool_version_color="green").index
     st.session_state["country"] = st.selectbox(
         "Demand country:",
         countries,
-        help=read_markdown_file("md/helptext_sidebar_demand_country.md"),
+        help=read_markdown_file("md/helptext_sidebar_green_demand_country.md"),
         index=countries.get_loc("Germany"),
     )
     # get chain as combination of product, electrolyzer type and reconversion option:
@@ -145,22 +145,131 @@ def main_settings_green(api):
 
 
 def main_settings_blue(api: PtxboaAPI):
-    pass
+    regions = (
+        api.get_dimension("region", tool_version_color="blue")
+        .loc[api.get_dimension("region")["subregion_code"] == ""]
+        .sort_index()
+        .index.to_list()
+    )
+
+    # select region:
+    st.selectbox(
+        "Supply country:",
+        regions,
+        help=read_markdown_file("md/helptext_sidebar_blue_supply_region.md"),
+        index=regions.index("Morocco"),  # Morocco as default
+        key="region",
+    )
+
+    countries = api.get_dimension("country", tool_version_color="blue").index.to_list()
+    st.selectbox(
+        "Demand country:",
+        countries,
+        help=read_markdown_file("md/helptext_sidebar_blue_demand_country.md"),
+        index=countries.index("Germany"),
+        key="country",
+    )
+
+    production_location = st.radio(
+        "Where does production take place:",
+        ["supply", "demand"],
+        horizontal=True,
+        format_func=lambda x: {
+            "supply": "Supply Country",
+            "demand": "Demand Country",
+        }.get(x, x),
+        help=read_markdown_file("md/helptext_sidebar_blue_ptx_production_country.md"),
+    )
+
+    product = st.selectbox(
+        label="Final Product:",
+        options=[
+            "NH3-L",
+            "CHX-L",
+            "DRI-S",
+            "H2-G",
+            "CH3OH-L",
+        ],
+        format_func=lambda x: {
+            "CHX-L": "FT e-fuels",
+            "DRI-S": "Green iron",
+            "NH3-L": "Ammonia",
+            "H2-G": "Hydrogen",
+            "CH3OH-L": "Methanol",
+        }.get(x, x),
+        help=read_markdown_file("md/helptext_sidebar_product.md"),
+        index=0,
+    )
+
+    conversion_options = [
+        "ATR_91%",
+        "SMR_52%",
+        "SMR_52%_BF",
+    ]
+
+    if product == "CH3OH-L":
+        conversion_options.append("CH3OHSYC")
+    if product == "CHX-L":
+        conversion_options.append("EFUELSYNC")
+    if product == "DRI-S":
+        conversion_options.append("NG-DRI-C")
+
+    conversion = st.selectbox(
+        label="Conversion:",
+        options=conversion_options,
+        format_func=lambda x: {
+            "ATR_91%": "ATR",
+            "SMR_52%": "SMR",
+            "SMR_52%_BF": "SMR Brownfield",
+        }.get(x, x),
+        help=read_markdown_file("md/helptext_sidebar_blue_conversion.md"),
+        index=0,
+    )
+
+    if product == "H2-G" and production_location == "supply":
+        nh3_transport = st.toggle(
+            "Transport NH₃ and reconvert to H₂",
+            value=False,
+            help=read_markdown_file(
+                "md/helptext_sidebar_blue_transport_NH3_and_reconvert_to_H2.md"
+            ),
+        )
+    else:
+        nh3_transport = False
+
+    # build chain:
+    chain = f"{product}__{conversion}__prod_in_{production_location}"
+    if nh3_transport:
+        chain += "__transport_NH3-L"
+
+    st.session_state["chain"] = chain
+
+    # scenario is combination of year and cost assumption
+    # for blue PtxBoa, we only use medium cost assumption
+    data_year = st.radio(
+        "Data year:",
+        [2030, 2040],
+        index=1,
+        help=read_markdown_file("md/helptext_sidebar_blue_data-year.md"),
+        horizontal=True,
+    )
+    cost_scenario = "medium"
+    st.session_state["scenario"] = f"{data_year} ({cost_scenario})"
 
 
 def additional_settings_green(api):
-    co2_source_selection(api)
-    water_source_selection(api)
+    co2_source_toggle(api)
+    water_source_radio(api)
     allow_pipeline_toggle()
     ship_own_fuel_toggle()
-    unit_selection_input()
+    unit_toggle_green()
 
 
 def additional_settings_blue(api: PtxboaAPI):
-    co2_source_selection(api)
+    co2_source_toggle(api)
     allow_pipeline_toggle()
     ship_own_fuel_toggle()
-    unit_selection_input()
+    unit_toggle_blue()
 
 
 @st.cache_resource()
@@ -203,7 +312,7 @@ def input_data_reset_notice():
         st.sidebar.info("Modified data is reset when turned **OFF**")
 
 
-def water_source_selection(api):
+def water_source_radio(api: PtxboaAPI):
     st.session_state["secproc_water"] = st.radio(
         "Water source:",
         api.get_dimension("secproc_water").index,
@@ -212,7 +321,7 @@ def water_source_selection(api):
     )
 
 
-def co2_source_selection(api):
+def co2_source_toggle(api: PtxboaAPI):
     st.session_state["secproc_co2"] = st.radio(
         "CO₂ source:",
         api.get_dimension("secproc_co2").index,
@@ -228,13 +337,27 @@ def ship_own_fuel_toggle():
     )
 
 
-def unit_selection_input():
+def unit_toggle_green():
     st.session_state["output_unit"] = st.radio(
         "Unit for delivered costs:",
         ["USD/MWh", "USD/t"],
         horizontal=True,
         help=read_markdown_file("md/helptext_sidebar_cost_unit.md"),
         index=1,  # 'USD/t' as default
+    )
+
+
+def unit_toggle_blue():
+    st.session_state["output_unit"] = st.radio(
+        "Unit per cost and emissions:",
+        ["USD/MWh", "USD/t"],
+        horizontal=True,
+        format_func=lambda x: {
+            "USD/MWh": "per MWh final product",
+            "USD/t": "per tonne final product",
+        }.get(x, x),
+        help=read_markdown_file("md/helptext_sidebar_blue_cost_unit.md"),
+        index=1,  # 'per/t' as default
     )
     st.session_state["emissions_output_unit"] = st.session_state["output_unit"].replace(
         "USD", "gCO₂eq"
