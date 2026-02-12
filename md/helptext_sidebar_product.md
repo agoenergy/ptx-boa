@@ -1,1 +1,1 @@
-The product you wnat to export.
+The product you want to export.
