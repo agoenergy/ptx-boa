@@ -50,16 +50,15 @@ def aggregate_green_results(
     output_unit: OutputUnitType,
     green_param_set: Literal["restricted", "complete"] = "restricted",
 ):
-    output_product_equivalents = {
-        "Ammonia": "NH3-L",
-        "Green Iron": "DRI-S",
-        "FT e-fuels": "CHX-L",
-        "Hydrogen": "H2-G",
-        "Methanol": "CH3OH-L",
-    }
 
-    if output_product not in output_product_equivalents:
-        return None
+    if output_product not in [
+        "NH3-L",
+        "DRI-S",
+        "CHX-L",
+        "H2-G",
+        "CH3OH-L",
+    ]:
+        raise ValueError(f"invalid {output_product=}")
 
     if green_param_set == "complete":
         # complete parame set is too slow without caching.
@@ -76,10 +75,7 @@ def aggregate_green_results(
             ),
             "chain": (
                 _api.get_dimension("chain")
-                .loc[
-                    _api.get_dimension("chain")["FLOW_OUT"]
-                    == output_product_equivalents[output_product]
-                ]
+                .loc[_api.get_dimension("chain")["FLOW_OUT"] == output_product]
                 .index.tolist()
             ),
         }
@@ -98,10 +94,7 @@ def aggregate_green_results(
             ),
             "chain": (
                 _api.get_dimension("chain")
-                .loc[
-                    _api.get_dimension("chain")["FLOW_OUT"]
-                    == output_product_equivalents[output_product]
-                ]
+                .loc[_api.get_dimension("chain")["FLOW_OUT"] == output_product]
                 .index.tolist()
             ),
         }
@@ -172,7 +165,7 @@ def make_figure(
     green_lower_bound,
     green_upper_bound,
     blue,
-    output_product: str,
+    output_product_label: str,
     xaxis_title: str,
     yaxis_title: str,
 ) -> go.Figure:
@@ -227,8 +220,8 @@ def make_figure(
     _add_line(
         fig=fig,
         df=data,
-        legend_label=f"25th - 75th percentile green {output_product}",
-        hover_label=f"75th percentile green {output_product}",
+        legend_label=f"25th - 75th percentile green {output_product_label}",
+        hover_label=f"75th percentile green {output_product_label}",
         x=x,
         y=green_upper_bound,
         line_color=GREEN_COLOR,
@@ -240,8 +233,8 @@ def make_figure(
     _add_line(
         fig=fig,
         df=data,
-        legend_label=f"Median green {output_product}",
-        hover_label=f"Median green {output_product}",
+        legend_label=f"Median green {output_product_label}",
+        hover_label=f"Median green {output_product_label}",
         x=x,
         y=green_median,
         line_color=GREEN_COLOR,
@@ -252,8 +245,8 @@ def make_figure(
     _add_line(
         fig=fig,
         df=data,
-        legend_label=f"25th - 75th percentile green {output_product}",
-        hover_label=f"25th percentile green {output_product}",
+        legend_label=f"25th - 75th percentile green {output_product_label}",
+        hover_label=f"25th percentile green {output_product_label}",
         x=x,
         y=green_lower_bound,
         line_color=GREEN_COLOR,
@@ -265,8 +258,8 @@ def make_figure(
     _add_line(
         fig=fig,
         df=data,
-        legend_label=f"Blue {output_product}",
-        hover_label=f"Blue {output_product}",
+        legend_label=f"Blue {output_product_label}",
+        hover_label=f"Blue {output_product_label}",
         x=x,
         y=blue,
         line_color=BLUE_COLOR,
@@ -297,7 +290,7 @@ def content_costs_comparison(api):
         )
         title_string = (
             f"Cost of importing "
-            f"{st.session_state['output_product']} to "
+            f"{st.session_state['output_product_label']} to "
             f"{st.session_state['country']}"
         )
         st.subheader(title_string)
@@ -308,7 +301,7 @@ def content_costs_comparison(api):
             green_lower_bound="25%",
             green_upper_bound="75%",
             blue="blue_Total",
-            output_product=st.session_state["output_product"],
+            output_product_label=st.session_state["output_product_label"],
             xaxis_title="Scenario",
             yaxis_title=st.session_state["output_unit"],
         )

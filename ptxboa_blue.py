@@ -85,10 +85,8 @@ st.subheader(f"CHAIN_CODE: `{st.session_state['chain']}`")
 
 # DUMMIES:
 st.session_state["chain"] = "Ammonia (AEL)"
-st.session_state["scenario"] = "2040 (medium)"
 st.session_state["secproc_water"] = "Specific costs"
 st.session_state["subregion"] = None
-st.session_state["output_product"] = "Ammonia"
 
 if st.session_state[st.session_state["tab_key"]] == "Info":
     st.text("Blue PtX Info")
