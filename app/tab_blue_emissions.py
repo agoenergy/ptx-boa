@@ -166,4 +166,5 @@ def content_emissions(api: PtxboaAPI):
 
         st.divider()
         with st.expander("Detailed emissions data per region"):
+            st.warning("Will be removed in final version.")
             st.dataframe(results_per_region.emissions)
