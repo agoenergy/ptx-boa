@@ -101,7 +101,12 @@ def main_settings_green(api: PtxboaAPI):
             help=read_markdown_file("md/helptext_sidebar_electrolyzer_type.md"),
             index=0,  # AEL as default
         )
-    if product in ["Ammonia", "Methane"]:
+    if (
+        product in ["Ammonia", "Methane"]
+        # reconversion is not working if the demand country is equal to supply country
+        # see https://github.com/agoenergy/ptx-boa/issues/615
+        and st.session_state["region"] != st.session_state["country"]
+    ):
         use_reconversion = st.toggle(
             "Include reconversion to H₂",
             help=(
