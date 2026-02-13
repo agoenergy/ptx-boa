@@ -8,6 +8,7 @@ from app.sidebar import make_sidebar_blue
 from app.tab_blue_costs import content_costs
 from app.tab_blue_costs_comparison import content_costs_comparison
 from app.tab_blue_emissions import content_emissions
+from app.tab_blue_input_data import content_input_data
 from app.user_data import display_user_changes
 from app.user_data_from_file import download_user_data, upload_user_data
 from ptxboa import DEFAULT_CACHE_DIR, DEFAULT_DATA_DIR
@@ -101,6 +102,6 @@ if st.session_state[st.session_state["tab_key"]] == "Emissions":
     content_emissions(api)
 
 if st.session_state[st.session_state["tab_key"]] == "Input data":
-    st.text("Blue PtX Input data")
+    content_input_data(api)
 
 display_footer()
