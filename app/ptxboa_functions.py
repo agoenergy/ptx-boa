@@ -195,7 +195,7 @@ def calculate_results_list_green(
             ).costs
             res_list.append(res_single)
         except Exception as exc:
-            logging.info(f"could not get data: {exc}")
+            logging.info(f"could not get data for {settings=}: {exc}")
 
     res_details = pd.concat(res_list)
 
@@ -301,7 +301,7 @@ def calculate_results_list_blue(
                 emissions_mass_list.append(res_single.emission_mass)
 
             except Exception as exc:
-                logging.info(f"could not get data: {exc}")
+                logging.info(f"could not get data for {settings=}: {exc}")
 
     # sensitivity by changing specific data points by a range of factors
     elif parameter_to_change in ["WACC"]:
@@ -405,7 +405,7 @@ def calculate_results_list_blue(
                     emissions_mass_list.append(res_single.emission_mass)
 
             except Exception as exc:
-                logging.info(f"could not get data: {exc}")
+                logging.info(f"could not get data for {settings=}: {exc}")
     else:
         raise ValueError(f"invalid {parameter_to_change=}")
 
