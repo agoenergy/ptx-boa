@@ -181,6 +181,14 @@ def main_settings_blue(api: PtxboaAPI):
         help=read_markdown_file("md/helptext_sidebar_blue_ptx_production_country.md"),
     )
 
+    product_labels = {
+        "CHX-L": "FT e-fuels",
+        "DRI-S": "Green iron",
+        "NH3-L": "Ammonia",
+        "H2-G": "Hydrogen",
+        "CH3OH-L": "Methanol",
+    }
+
     product = st.selectbox(
         label="Final Product:",
         options=[
@@ -190,16 +198,14 @@ def main_settings_blue(api: PtxboaAPI):
             "H2-G",
             "CH3OH-L",
         ],
-        format_func=lambda x: {
-            "CHX-L": "FT e-fuels",
-            "DRI-S": "Green iron",
-            "NH3-L": "Ammonia",
-            "H2-G": "Hydrogen",
-            "CH3OH-L": "Methanol",
-        }.get(x, x),
+        format_func=lambda x: product_labels.get(x, x),
         help=read_markdown_file("md/helptext_sidebar_product.md"),
         index=0,
+        key="output_product",
     )
+
+    # add product label to session state
+    st.session_state["output_product_label"] = product_labels.get(product, product)
 
     # different conversion options for each product
     conversion_options = {
