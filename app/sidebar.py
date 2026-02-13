@@ -201,26 +201,60 @@ def main_settings_blue(api: PtxboaAPI):
         index=0,
     )
 
-    conversion_options = [
-        "ATR_91%",
-        "SMR_52%",
-        "SMR_52%_BF",
-    ]
-
-    if product == "CH3OH-L":
-        conversion_options.append("CH3OHSYC")
-    if product == "CHX-L":
-        conversion_options.append("EFUELSYNC")
-    if product == "DRI-S":
-        conversion_options.append("NG-DRI-C")
+    # different conversion options for each product
+    conversion_options = {
+        "H2-G": [
+            "ATR_91%",
+            "SMR_52%",
+            "SMR_52%_BF",
+        ],
+        "NH3-L": [
+            "ATR_91%_NH3SYN",
+            "SMR_52%_NH3SYN",
+            "SMR_52%_BF_NH3SYN",
+        ],
+        "CH3OH-L": [
+            "ATR_91%_CH3OHSYN",
+            "SMR_52%_CH3OHSYN",
+            "SMR_52%_BF_CH3OHSYN",
+            "CH3OHSYC",
+        ],
+        "CHX-L": [
+            "ATR_91%_EFUELSYN",
+            "SMR_52%_EFUELSYN",
+            "SMR_52%_BF_EFUELSYN",
+            "EFUELSYNC",
+        ],
+        "DRI-S": [
+            "ATR_91%_DRI_EAF",
+            "SMR_52%_DRI_EAF",
+            "SMR_52%_BF_DRI_EAF",
+            "NG-DRI-C_EAF",
+        ],
+    }
 
     conversion = st.selectbox(
         label="Conversion:",
-        options=conversion_options,
+        options=conversion_options[product],
         format_func=lambda x: {
-            "ATR_91%": "ATR",
-            "SMR_52%": "SMR",
-            "SMR_52%_BF": "SMR Brownfield",
+            "ATR_91%": "H₂ with ATR",
+            "SMR_52%": "H₂ with SMR",
+            "SMR_52%_BF": "H₂ with SMR (Brownfield)",
+            "ATR_91%_NH3SYN": "H₂ with ATR + Synthesis",
+            "SMR_52%_NH3SYN": "H₂ with SMR + Synthesis",
+            "SMR_52%_BF_NH3SYN": "H₂ with SMR (Brownfield) + Synthesis",
+            "ATR_91%_CH3OHSYN": "H₂ with ATR + Synthesis",
+            "SMR_52%_CH3OHSYN": "H₂ with SMR + Synthesis",
+            "SMR_52%_BF_CH3OHSYN": "H₂ with SMR (Brownfield) + Synthesis",
+            "CH3OHSYC": "CH3OHSYC",
+            "ATR_91%_EFUELSYN": "H₂ with ATR + Synthesis",
+            "SMR_52%_EFUELSYN": "H₂ with SMR + Synthesis",
+            "SMR_52%_BF_EFUELSYN": "H₂ with SMR (Brownfield) + Synthesis",
+            "EFUELSYNC": "EFUELSYNC",
+            "ATR_91%_DRI_EAF": "H₂ with ATR + DRI + EAF",
+            "SMR_52%_DRI_EAF": "H₂ with SMR + DRI + EAF",
+            "SMR_52%_BF_DRI_EAF": "H₂ with SMR (Brownfield) + DRI + EAF",
+            "NG-DRI-C_EAF": "NG-DRI-C + EAF",
         }.get(x, x),
         help=read_markdown_file("md/helptext_sidebar_blue_conversion.md"),
         index=0,
