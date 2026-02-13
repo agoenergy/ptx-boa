@@ -243,9 +243,7 @@ def _choropleth_map_world(
     """
     if custom_data_func_kwargs is None:
         custom_data_func_kwargs = {}
-    df = remove_subregions(
-        api=api, df=df, country_name=st.session_state["country"]
-    ).dropna(subset=color_col)
+    df = remove_subregions(api=api, df=df).dropna(subset=color_col)
     fig = px.scatter_geo(
         locations=df.index,
         locationmode="country names",
