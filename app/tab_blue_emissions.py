@@ -42,7 +42,7 @@ def content_emissions(api: PtxboaAPI):
 
         title_string = (
             f"Total greenhouse gas emissions of exporting "
-            f"{st.session_state['chain']} to "
+            f"{st.session_state['output_product_label']} to "
             f"{st.session_state['country']}"
         )
         st.subheader(title_string)

@@ -73,7 +73,7 @@ scp -r ptxboa2:ptx-boa_offline_optimization/optimization_cache/* .
 # connect to server
 ssh ptxboa
 # pull latest image from dockerhub
-VERSION=2.1.10-main
+VERSION=2.1.11-main
 docker pull wingechr/ptx-boa:$VERSION
 # stop and delete the currently running container "app"
 docker stop app
