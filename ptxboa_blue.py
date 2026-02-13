@@ -82,7 +82,7 @@ st.divider()
 make_sidebar_blue(api)
 
 # display chain code
-st.subheader(f"CHAIN_CODE: `{st.session_state['chain']}`")
+st.markdown(f"CHAIN_CODE: `{st.session_state['chain']}`")
 
 # DUMMIES:
 st.session_state["chain"] = "Ammonia (AEL)"

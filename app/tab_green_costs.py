@@ -34,7 +34,6 @@ def content_costs(api: PtxboaAPI):
                     dim="region",
                     parameter_list=get_region_list_without_subregions(
                         api,
-                        country_name=st.session_state["country"],
                         keep=st.session_state["subregion"],
                     ),
                 )

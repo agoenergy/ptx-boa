@@ -35,7 +35,6 @@ def content_emissions(api: PtxboaAPI):
                 dim="region",
                 parameter_list=get_region_list_without_subregions(
                     api,
-                    country_name=st.session_state["country"],
                     keep=st.session_state["subregion"],
                 ),
             )
@@ -167,4 +166,5 @@ def content_emissions(api: PtxboaAPI):
 
         st.divider()
         with st.expander("Detailed emissions data per region"):
+            st.warning("Will be removed in final version.")
             st.dataframe(results_per_region.emissions)

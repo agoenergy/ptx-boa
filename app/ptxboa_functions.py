@@ -195,7 +195,7 @@ def calculate_results_list_green(
             ).costs
             res_list.append(res_single)
         except Exception as exc:
-            logging.info(f"could not get data: {exc}")
+            logging.info(f"could not get data for {settings=}: {exc}")
 
     res_details = pd.concat(res_list)
 
@@ -301,7 +301,7 @@ def calculate_results_list_blue(
                 emissions_mass_list.append(res_single.emission_mass)
 
             except Exception as exc:
-                logging.info(f"could not get data: {exc}")
+                logging.info(f"could not get data for {settings=}: {exc}")
 
     # sensitivity by changing specific data points by a range of factors
     elif parameter_to_change in ["WACC"]:
@@ -405,7 +405,7 @@ def calculate_results_list_blue(
                     emissions_mass_list.append(res_single.emission_mass)
 
             except Exception as exc:
-                logging.info(f"could not get data: {exc}")
+                logging.info(f"could not get data for {settings=}: {exc}")
     else:
         raise ValueError(f"invalid {parameter_to_change=}")
 
@@ -593,9 +593,7 @@ def get_data_type_from_input_data(
             values="value",
         )
         if scope == "world":
-            df = remove_subregions(
-                api=api, df=df, country_name=st.session_state["country"]
-            )
+            df = remove_subregions(api=api, df=df)
         if scope in ["Argentina", "Morocco", "South Africa"]:
             df = select_subregions(df, scope)
         return df
@@ -738,7 +736,7 @@ def get_data_type_from_input_data(
         df = df[~(df.index == "electricity")]
 
     if scope == "world":
-        df = remove_subregions(api=api, df=df, country_name=st.session_state["country"])
+        df = remove_subregions(api=api, df=df)
     if scope in ["Argentina", "Morocco", "South Africa"]:
         df = select_subregions(df, scope)
 
@@ -752,9 +750,7 @@ def get_data_type_from_input_data(
     return df
 
 
-def remove_subregions(
-    api: PtxboaAPI, df: pd.DataFrame, country_name: str, keep: str | None = None
-):
+def remove_subregions(api: PtxboaAPI, df: pd.DataFrame, keep: str | None = None):
     """Remove subregions from a dataframe.
 
     Parameters
@@ -765,9 +761,6 @@ def remove_subregions(
     df : pd.DataFrame
         pandas DataFrame with list of regions as index.
 
-    country_name : str
-        name of target country. Is removed from region list if it is also in there.
-
     keep : str or None, by default None
         can be used to keep data for a specific subregion
 
@@ -776,9 +769,7 @@ def remove_subregions(
     pandas DataFrame with subregions removed from index.
     """
     # do not show subregions:
-    region_list_without_subregions = get_region_list_without_subregions(
-        api, country_name=country_name, keep=keep
-    )
+    region_list_without_subregions = get_region_list_without_subregions(api, keep=keep)
 
     # sometimes, not all regions exist
     region_list_without_subregions = [
@@ -790,17 +781,13 @@ def remove_subregions(
     return df
 
 
-def get_region_list_without_subregions(api, country_name, keep):
+def get_region_list_without_subregions(api, keep):
     """Get list of regions with subregions removed.
 
     Parameters
     ----------
     api : :class:`~ptxboa.api.PtxboaAPI`
         an instance of the api class
-
-
-    country_name : str
-        name of target country. Is removed from region list if it is also in there.
 
     keep : str or None, by default None
         can be used to keep data for a specific subregion
@@ -814,10 +801,6 @@ def get_region_list_without_subregions(api, country_name, keep):
         .loc[api.get_dimension("region")["subregion_code"] == ""]
         .index.to_list()
     )
-
-    # ensure that target country is not in list of regions:
-    if country_name in region_list_without_subregions:
-        region_list_without_subregions.remove(country_name)
 
     if keep is not None:
         region_list_without_subregions.append(keep)
