@@ -479,6 +479,7 @@ def sort_columns_by_position_in_chain(df):
         "Carbon",
         "Transportation (Pipeline)",
         "Transportation (Ship)",
+        "CH4",
         "CO2",
         "Total",
     ]
