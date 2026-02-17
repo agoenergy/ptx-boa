@@ -51,7 +51,7 @@ tabs = (
     "Costs",
     "Emissions",
     "Input data",
-    "Costs Comparison",
+    "Cost comparison to renewable based product",
 )
 
 tabs_icons = {
@@ -95,7 +95,10 @@ if st.session_state[st.session_state["tab_key"]] == "Info":
 if st.session_state[st.session_state["tab_key"]] == "Costs":
     content_costs(api)
 
-if st.session_state[st.session_state["tab_key"]] == "Costs Comparison":
+if (
+    st.session_state[st.session_state["tab_key"]]
+    == "Cost comparison to renewable based product"
+):
     content_costs_comparison(api)
 
 if st.session_state[st.session_state["tab_key"]] == "Emissions":
