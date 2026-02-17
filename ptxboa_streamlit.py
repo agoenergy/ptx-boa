@@ -47,11 +47,6 @@ hide_decoration_bar_style = """
 """
 st.markdown(hide_decoration_bar_style, unsafe_allow_html=True)
 
-# import agora color scale:
-if "colors" not in st.session_state:
-    colors = pd.read_csv("data/Agora_Industry_Colours.csv")
-    st.session_state["colors"] = colors["Hex Code"].to_list()
-
 page = st.navigation(
     [
         st.Page(
