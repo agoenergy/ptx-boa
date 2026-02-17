@@ -276,11 +276,22 @@ def make_figure(
     return fig
 
 
+def crude_steel_warning():
+    st.warning(
+        "Cannot compare crude steel with available green PtX output products."
+        " Please use iron instead."
+    )
+
+
 def content_costs_comparison(api):
     with st.popover("*Help*", width="stretch"):
         st.markdown("User data not used to optimize FLH for green costs.")
 
     with st.container(border=True):
+        if st.session_state["output_product"] == "STL-S":
+            crude_steel_warning()
+            return
+
         costs = get_data(
             api,
             scenarios=["2030 (medium)", "2040 (medium)"],

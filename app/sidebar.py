@@ -175,20 +175,42 @@ def main_settings_blue(api: PtxboaAPI):
         key="country",
     )
 
-    production_location = st.radio(
-        "Where does production take place:",
-        ["supply", "demand"],
-        horizontal=True,
-        format_func=lambda x: {
-            "supply": "Supply Country",
-            "demand": "Demand Country",
-        }.get(x, x),
-        help=read_markdown_file("md/helptext_sidebar_blue_ptx_production_country.md"),
-    )
+    if st.session_state["region"] != st.session_state["country"]:
+        production_location = st.radio(
+            "Where does production take place:",
+            ["supply", "demand"],
+            horizontal=True,
+            format_func=lambda x: {
+                "supply": "Supply Country",
+                "demand": "Demand Country",
+            }.get(x, x),
+            help=read_markdown_file(
+                "md/helptext_sidebar_blue_ptx_production_country.md"
+            ),
+            key="production_location_radio1",
+        )
+    else:
+        # necessary to make a new st.radio to reset selected value to "supply"
+        production_location = st.radio(
+            "Where does production take place:",
+            ["supply", "demand"],
+            index=0,
+            horizontal=True,
+            format_func=lambda x: {
+                "supply": "Supply Country",
+                "demand": "Demand Country",
+            }.get(x, x),
+            help=read_markdown_file(
+                "md/helptext_sidebar_blue_ptx_production_country.md"
+            ),
+            key="production_location_radio2",
+            disabled=True,
+        )
 
     product_labels = {
         "CHX-L": "FT e-fuels",
-        "DRI-S": "Green iron",
+        "DRI-S": "Iron",
+        "STL-S": "Crude steel",
         "NH3-L": "Ammonia",
         "H2-G": "Hydrogen",
         "CH3OH-L": "Methanol",
@@ -199,6 +221,7 @@ def main_settings_blue(api: PtxboaAPI):
         options=[
             "NH3-L",
             "CHX-L",
+            "STL-S",
             "DRI-S",
             "H2-G",
             "CH3OH-L",
@@ -236,11 +259,17 @@ def main_settings_blue(api: PtxboaAPI):
             "SMR_52%_BF_EFUELSYN",
             "EFUELSYNC",
         ],
-        "DRI-S": [
+        "STL-S": [
             "ATR_91%_DRI_EAF",
             "SMR_52%_DRI_EAF",
             "SMR_52%_BF_DRI_EAF",
             "NG-DRI-C_EAF",
+        ],
+        "DRI-S": [
+            "ATR_91%_DRI",
+            "SMR_52%_DRI",
+            "SMR_52%_BF_DRI",
+            "NG-DRI-C",
         ],
     }
 
@@ -266,12 +295,20 @@ def main_settings_blue(api: PtxboaAPI):
             "SMR_52%_DRI_EAF": "H₂ with SMR + DRI + EAF",
             "SMR_52%_BF_DRI_EAF": "H₂ with SMR (Brownfield) + DRI + EAF",
             "NG-DRI-C_EAF": "NG-DRI-C + EAF",
+            "ATR_91%_DRI": "H₂ with ATR + DRI",
+            "SMR_52%_DRI": "H₂ with SMR + DRI",
+            "SMR_52%_BF_DRI": "H₂ with SMR (Brownfield) + DRI",
+            "NG-DRI-C": "NG-DRI-C",
         }.get(x, x),
         help=read_markdown_file("md/helptext_sidebar_blue_conversion.md"),
         index=0,
     )
 
-    if product == "H2-G" and production_location == "supply":
+    if (
+        product == "H2-G"
+        and production_location == "supply"
+        and st.session_state["region"] != st.session_state["country"]
+    ):
         nh3_transport = st.toggle(
             "Transport NH₃ and reconvert to H₂",
             value=False,

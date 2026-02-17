@@ -6,7 +6,7 @@ Execution:
 >>> streamlit run  ptxboa_streamlit.py
 """
 
-__version__ = "2.1.13"
+__version__ = "2.1.14"
 
 import logging
 
@@ -46,11 +46,6 @@ hide_decoration_bar_style = """
     </style>
 """
 st.markdown(hide_decoration_bar_style, unsafe_allow_html=True)
-
-# import agora color scale:
-if "colors" not in st.session_state:
-    colors = pd.read_csv("data/Agora_Industry_Colours.csv")
-    st.session_state["colors"] = colors["Hex Code"].to_list()
 
 page = st.navigation(
     [

@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional, Tuple
 
+import numpy as np
 import pandas as pd
 import pypsa
 
@@ -251,14 +252,18 @@ class PtxboaAPI:
 
         metadata = {"flh_opt_hash": data.get("flh_opt_hash")}  # does not always exist
 
-        # emissions output unit is asways gCO2 equivalents
+        # emissions output unit is gCO2eq/t or gCO2eq/MWh
         emissions = (
             result_df.copy()
+            .assign(
+                emission_type=lambda x: np.where(
+                    x["cost_type"].eq("FLOW"), "indirect", "direct"
+                ),
+                gas_type=lambda x: np.where(x["cost_type"].eq("CAPEX"), "CO2", "CH4"),
+            )
             .drop(columns="cost_type")
-            .assign(emission_type="direct")
-            .assign(gas_type="CO2")
         )
-        emissions_mass = emissions.copy()
+        emissions_mass = emissions.copy().assign(values=lambda x: x["values"] * 0.25)
 
         return ApiCalculateResult(
             metadata=metadata,
