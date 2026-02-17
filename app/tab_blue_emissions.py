@@ -83,7 +83,7 @@ def content_emissions(api: PtxboaAPI):
                     ),  # here we aggregate all gas types
                     aggregate_emissions(filtered_data, index="gas_type"),
                 ]
-            )
+            ).sort_index()
         )
         doublefig = make_subplots(rows=1, cols=2, shared_yaxes=True)
 

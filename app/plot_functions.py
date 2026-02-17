@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Functions for plotting input data and results (cost_data)."""
+
 from pathlib import Path
 from typing import Literal
 
@@ -19,7 +20,13 @@ from app.ptxboa_functions import (
 from ptxboa.api import PtxboaAPI
 
 
-def agora_continuous_color_scale() -> list[tuple]:
+@st.cache_data()
+def read_agora_colors() -> list[str]:
+    return pd.read_csv("data/Agora_Industry_Colours.csv")["Hex Code"].to_list()
+
+
+@st.cache_data()
+def continuous_color_scale() -> list[tuple]:
     """
     Get a continuous scale with agora colors.
 
@@ -30,15 +37,17 @@ def agora_continuous_color_scale() -> list[tuple]:
     -------
     list[tuple]
     """
+    colors = read_agora_colors()
     return [
-        (0, st.session_state["colors"][0]),  # Starting color at the minimum data value
-        (0.5, st.session_state["colors"][6]),
-        (1, st.session_state["colors"][9]),  # Ending color at the maximum data value
+        (0, colors[0]),  # Starting color at the minimum data value
+        (0.5, colors[6]),
+        (1, colors[9]),  # Ending color at the maximum data value
     ]
 
 
-def agora_discrete_colors_cost_categories() -> dict:
-    cost_categories = [
+@st.cache_data()
+def discrete_colors_process_type() -> dict:
+    process_type = [
         "Water",
         "Transportation (Ship)",
         "Electrolysis",
@@ -49,7 +58,20 @@ def agora_discrete_colors_cost_categories() -> dict:
         "Carbon",
         # TODO: add missing category (GH #145)
     ]
-    return {c: st.session_state["colors"][i] for i, c in enumerate(cost_categories)}
+    colors = read_agora_colors()
+    return {c: colors[i] for i, c in enumerate(process_type)}
+
+
+@st.cache_data()
+def discrete_colors_gas_type() -> dict[str, str]:
+    gas_type = ["CO2", "CH4"]
+    colors = read_agora_colors()
+    return {c: colors[i] for i, c in enumerate(gas_type)}
+
+
+@st.cache_data()
+def discrete_colors():
+    return discrete_colors_process_type() | discrete_colors_gas_type()
 
 
 def plot_costs_on_map(
@@ -249,7 +271,7 @@ def _choropleth_map_world(
         locationmode="country names",
         color=df[color_col],
         custom_data=custom_data_func(df, **custom_data_func_kwargs),
-        color_continuous_scale=agora_continuous_color_scale(),
+        color_continuous_scale=continuous_color_scale(),
         opacity=0.8,
     )
     fig.update_traces({"marker": {"size": 20}})
@@ -294,7 +316,7 @@ def _choropleth_map_deep_dive_country(
         lat=df["lat"],
         color=df[color_col],
         custom_data=hover_data,
-        color_continuous_scale=agora_continuous_color_scale(),
+        color_continuous_scale=continuous_color_scale(),
         opacity=0.8,
     )
     fig.update_traces({"marker": {"size": 20}})
@@ -436,18 +458,20 @@ def _make_inputs_hoverdata(df, data_type, map_variable, unit, float_precision):
 
 def _make_per_column_hoverdata(res_costs: pd.DataFrame, unit: str) -> list[pd.Series]:
     custom_hover_data = res_costs.map("{:,.1f}".format).apply(
-        lambda x: f"<b>{x.name}</b><br><br>"
-        + "<br>".join(
-            [
-                f"<b>{col}</b>: {x[col] if x[col] != 'nan' else 'not applicable'} "
-                f"{unit if x[col] != 'nan' else ''}"
-                for col in res_costs.columns[:-1]
-            ]
-            + [
-                f"──────────<br><b>{res_costs.columns[-1]}</b>: "
-                f"{x[res_costs.columns[-1]]}"
-                f"{unit}"
-            ]
+        lambda x: (
+            f"<b>{x.name}</b><br><br>"
+            + "<br>".join(
+                [
+                    f"<b>{col}</b>: {x[col] if x[col] != 'nan' else 'not applicable'} "
+                    f"{unit if x[col] != 'nan' else ''}"
+                    for col in res_costs.columns[:-1]
+                ]
+                + [
+                    f"──────────<br><b>{res_costs.columns[-1]}</b>: "
+                    f"{x[res_costs.columns[-1]]}"
+                    f"{unit}"
+                ]
+            )
         ),
         axis=1,
     )
@@ -483,7 +507,7 @@ def create_bar_chart_costs(
         x=res_costs.index,
         y=res_costs.columns[:-1],
         height=500,
-        color_discrete_map=agora_discrete_colors_cost_categories(),
+        color_discrete_map=discrete_colors(),
     )
 
     # ensure stacked bars
