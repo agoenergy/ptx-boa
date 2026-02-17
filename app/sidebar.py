@@ -175,16 +175,37 @@ def main_settings_blue(api: PtxboaAPI):
         key="country",
     )
 
-    production_location = st.radio(
-        "Where does production take place:",
-        ["supply", "demand"],
-        horizontal=True,
-        format_func=lambda x: {
-            "supply": "Supply Country",
-            "demand": "Demand Country",
-        }.get(x, x),
-        help=read_markdown_file("md/helptext_sidebar_blue_ptx_production_country.md"),
-    )
+    if st.session_state["region"] != st.session_state["country"]:
+        production_location = st.radio(
+            "Where does production take place:",
+            ["supply", "demand"],
+            horizontal=True,
+            format_func=lambda x: {
+                "supply": "Supply Country",
+                "demand": "Demand Country",
+            }.get(x, x),
+            help=read_markdown_file(
+                "md/helptext_sidebar_blue_ptx_production_country.md"
+            ),
+            key="production_location_radio1",
+        )
+    else:
+        # necessary to make a new st.radio to reset selected value to "supply"
+        production_location = st.radio(
+            "Where does production take place:",
+            ["supply", "demand"],
+            index=0,
+            horizontal=True,
+            format_func=lambda x: {
+                "supply": "Supply Country",
+                "demand": "Demand Country",
+            }.get(x, x),
+            help=read_markdown_file(
+                "md/helptext_sidebar_blue_ptx_production_country.md"
+            ),
+            key="production_location_radio2",
+            disabled=True,
+        )
 
     product_labels = {
         "CHX-L": "FT e-fuels",
@@ -283,7 +304,11 @@ def main_settings_blue(api: PtxboaAPI):
         index=0,
     )
 
-    if product == "H2-G" and production_location == "supply":
+    if (
+        product == "H2-G"
+        and production_location == "supply"
+        and st.session_state["region"] != st.session_state["country"]
+    ):
         nh3_transport = st.toggle(
             "Transport NH₃ and reconvert to H₂",
             value=False,
