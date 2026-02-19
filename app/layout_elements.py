@@ -303,7 +303,7 @@ def display_footer():
                 """
                 ##### Authors
                 Christoph Heinemann<br/>
-                Dr. Roman Mendelevitch<br/>
+                Roman Mendelevitch<br/>
                 Markus Haller<br/>
                 Christian Winger<br/>
                 Johannes Aschauer<br/>

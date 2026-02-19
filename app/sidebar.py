@@ -159,7 +159,7 @@ def main_settings_blue(api: PtxboaAPI):
 
     # select region:
     st.selectbox(
-        "Supply country:",
+        "Supply country (origin of natural gas)",
         regions,
         help=read_markdown_file("md/helptext_sidebar_blue_supply_region.md"),
         index=regions.index("Morocco"),  # Morocco as default
@@ -168,7 +168,7 @@ def main_settings_blue(api: PtxboaAPI):
 
     countries = api.get_dimension("country", tool_version_color="blue").index.to_list()
     st.selectbox(
-        "Demand country:",
+        "Demand country",
         countries,
         help=read_markdown_file("md/helptext_sidebar_blue_demand_country.md"),
         index=countries.index("Germany"),
@@ -176,35 +176,13 @@ def main_settings_blue(api: PtxboaAPI):
     )
 
     if st.session_state["region"] != st.session_state["country"]:
-        production_location = st.radio(
-            "Where does production take place:",
-            ["supply", "demand"],
-            horizontal=True,
-            format_func=lambda x: {
-                "supply": "Supply Country",
-                "demand": "Demand Country",
-            }.get(x, x),
-            help=read_markdown_file(
-                "md/helptext_sidebar_blue_ptx_production_country.md"
-            ),
-            key="production_location_radio1",
+        conversion_location = conversion_location_radio(
+            key="conversion_location_radio", disabled=False
         )
     else:
         # necessary to make a new st.radio to reset selected value to "supply"
-        production_location = st.radio(
-            "Where does production take place:",
-            ["supply", "demand"],
-            index=0,
-            horizontal=True,
-            format_func=lambda x: {
-                "supply": "Supply Country",
-                "demand": "Demand Country",
-            }.get(x, x),
-            help=read_markdown_file(
-                "md/helptext_sidebar_blue_ptx_production_country.md"
-            ),
-            key="production_location_radio2",
-            disabled=True,
+        conversion_location = conversion_location_radio(
+            key="conversion_location_radio_disabled", disabled=True
         )
 
     product_labels = {
@@ -217,7 +195,7 @@ def main_settings_blue(api: PtxboaAPI):
     }
 
     product = st.selectbox(
-        label="Final Product:",
+        label="Final Product",
         options=[
             "NH3-L",
             "CHX-L",
@@ -274,7 +252,7 @@ def main_settings_blue(api: PtxboaAPI):
     }
 
     conversion = st.selectbox(
-        label="Conversion:",
+        label="Conversion from natural gas (technology chain)",
         options=conversion_options[product],
         format_func=lambda x: {
             "ATR_91%": "H₂ (ATR)",
@@ -306,7 +284,7 @@ def main_settings_blue(api: PtxboaAPI):
 
     if (
         product == "H2-G"
-        and production_location == "supply"
+        and conversion_location == "supply"
         and st.session_state["region"] != st.session_state["country"]
     ):
         nh3_transport = st.toggle(
@@ -320,7 +298,7 @@ def main_settings_blue(api: PtxboaAPI):
         nh3_transport = False
 
     # build chain:
-    chain = f"{product}__{conversion}__prod_in_{production_location}"
+    chain = f"{product}__{conversion}__prod_in_{conversion_location}"
     if nh3_transport:
         chain += "__transport_NH3-L"
 
@@ -329,7 +307,7 @@ def main_settings_blue(api: PtxboaAPI):
     # scenario is combination of year and cost assumption
     # for blue PtxBoa, we only use medium cost assumption
     data_year = st.radio(
-        "Data year:",
+        "Data year",
         [2030, 2040],
         index=1,
         help=read_markdown_file("md/helptext_sidebar_blue_data-year.md"),
@@ -339,18 +317,34 @@ def main_settings_blue(api: PtxboaAPI):
     st.session_state["scenario"] = f"{data_year} ({cost_scenario})"
 
 
+def conversion_location_radio(key: str, disabled: bool):
+    return st.radio(
+        "Where does conversion from natural gas take place?",
+        ["supply", "demand"],
+        index=0,
+        horizontal=True,
+        format_func=lambda x: {
+            "supply": "Supply Country",
+            "demand": "Demand Country",
+        }.get(x, x),
+        help=read_markdown_file("md/helptext_sidebar_blue_ptx_production_country.md"),
+        key=key,
+        disabled=disabled,
+    )
+
+
 def additional_settings_green(api):
     co2_source_toggle(api)
     water_source_radio(api)
     allow_pipeline_toggle()
-    ship_own_fuel_toggle()
+    ship_own_fuel_toggle("For shipping option: Use the product as own fuel?")
     unit_toggle_green()
 
 
 def additional_settings_blue(api: PtxboaAPI):
     co2_source_toggle(api)
     allow_pipeline_toggle()
-    ship_own_fuel_toggle()
+    ship_own_fuel_toggle("For shipping option: Use the final product as own fuel?")
     unit_toggle_blue()
 
 
@@ -412,9 +406,9 @@ def co2_source_toggle(api: PtxboaAPI):
     )
 
 
-def ship_own_fuel_toggle():
+def ship_own_fuel_toggle(label: str):
     st.session_state["ship_own_fuel"] = st.toggle(
-        "For shipping option: Use the product as own fuel?",
+        label=label,
         help=read_markdown_file("md/helptext_sidebar_transport_use_own_fuel.md"),
     )
 
@@ -431,11 +425,11 @@ def unit_toggle_green():
 
 def unit_toggle_blue():
     st.session_state["output_unit"] = st.radio(
-        "Unit per cost and emissions:",
+        "Unit for costs and emissions:",
         ["USD/MWh", "USD/t"],
         horizontal=True,
         format_func=lambda x: {
-            "USD/MWh": "per MWh final product",
+            "USD/MWh": "per MWh (LHV) final product",
             "USD/t": "per tonne final product",
         }.get(x, x),
         help=read_markdown_file("md/helptext_sidebar_blue_cost_unit.md"),
