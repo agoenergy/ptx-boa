@@ -6,45 +6,45 @@ Ammonia (PEM) + reconv. to H2,Ammonia (PEM) + reconv. to H2,EL-STR,PEM-EL,H2-STR
 Ammonia (SOEC),Ammonia (SOEC),EL-STR,SOEC-EL,H2-STR,NH3SYN,,,,,,NH3-SB,NH3-S,,,,,,,,NH3-L,False,True,False
 Ammonia (SOEC) + reconv. to H2,Ammonia (SOEC) + reconv. to H2,EL-STR,SOEC-EL,H2-STR,NH3SYN,,,,NH3-REC,NH3-REC,NH3-SB,NH3-S,,,,,,,,H2-G,False,True,False
 Blue Iron (blue)*,Blue Iron (blue)*,,,,NG-DRI,,,,,,DRI-SB,,,,,,,EAF,,STL-S,False,False,True
-CH3OH-L__ATR_91%_CH3OHSYN__prod_in_demand,Methanol (ATR)*,,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-SB,CH4-S,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,ATR91%,CH3OHSYN,,CH3OH-L,True,False,True
-CH3OH-L__ATR_91%_CH3OHSYN__prod_in_supply,Methanol (ATR),,ATR91%,,CH3OHSYN,,,,,,CH3OH-SB,CH3OH-S,,,,,,,,CH3OH-L,False,False,True
+CH3OH-L__ATR_91%_CH3OHSYN__prod_in_demand,Methanol (ATR)*,,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-SB,CH4-S,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,ATR_91%,CH3OHSYN,,CH3OH-L,True,False,True
+CH3OH-L__ATR_91%_CH3OHSYN__prod_in_supply,Methanol (ATR),,ATR_91%,,CH3OHSYN,,,,,,CH3OH-SB,CH3OH-S,,,,,,,,CH3OH-L,False,False,True
 CH3OH-L__CH3OHSYC__prod_in_demand,Methanol (NG-based)*,,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-SB,CH4-S,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,,CH3OHSYC,,CH3OH-L,True,False,True
 CH3OH-L__CH3OHSYC__prod_in_supply,Methanol (NG-based),,,,CH3OHSYC,,,,,,CH3OH-SB,CH3OH-S,,,,,,,,CH3OH-L,False,False,True
-CH3OH-L__SMR_52%_BF_CH3OHSYN__prod_in_demand,Methanol (SMR-BF)*,,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-SB,CH4-S,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,SMR52%BF,CH3OHSYN,,CH3OH-L,True,False,True
-CH3OH-L__SMR_52%_BF_CH3OHSYN__prod_in_supply,Methanol (SMR-BF),,SMR52%BF,,CH3OHSYN,,,,,,CH3OH-SB,CH3OH-S,,,,,,,,CH3OH-L,False,False,True
-CH3OH-L__SMR_52%_CH3OHSYN__prod_in_demand,Methanol (SMR)*,,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-SB,CH4-S,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,SMR52%,CH3OHSYN,,CH3OH-L,True,False,True
-CH3OH-L__SMR_52%_CH3OHSYN__prod_in_supply,Methanol (SMR),,SMR52%,,CH3OHSYN,,,,,,CH3OH-SB,CH3OH-S,,,,,,,,CH3OH-L,False,False,True
-CHX-L__ATR_91%_EFUELSYN__prod_in_demand,FT-fuel (ATR)*,,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-SB,CH4-S,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,ATR91%,EFUELSYN,,CHX-L,True,False,True
-CHX-L__ATR_91%_EFUELSYN__prod_in_supply,FT-fuel (ATR),,ATR91%,,EFUELSYN,,,,,,SYN-SB,SYN-S,,,,,,,,CHX-L,False,False,True
-CHX-L__EFUELSYNC__prod_in_demand,FT-fuel (NG-based)*,,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-SB,CH4-S,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,,EFUELSYC,,CHX-L,True,False,True
-CHX-L__EFUELSYNC__prod_in_supply,FT-fuel (NG-based),,,,EFUELSYC,,,,,,SYN-SB,SYN-S,,,,,,,,CHX-L,False,False,True
-CHX-L__SMR_52%_BF_EFUELSYN__prod_in_demand,FT-fuel (SMR-BF)*,,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-SB,CH4-S,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,SMR52%BF,EFUELSYN,,CHX-L,True,False,True
-CHX-L__SMR_52%_BF_EFUELSYN__prod_in_supply,FT-fuel (SMR-BF),,SMR52%BF,,EFUELSYN,,,,,,SYN-SB,SYN-S,,,,,,,,CHX-L,False,False,True
-CHX-L__SMR_52%_EFUELSYN__prod_in_demand,FT-fuel (SMR)*,,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-SB,CH4-S,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,SMR52%,EFUELSYN,,CHX-L,True,False,True
-CHX-L__SMR_52%_EFUELSYN__prod_in_supply,FT-fuel (SMR),,SMR52%,,EFUELSYN,,,,,,SYN-SB,SYN-S,,,,,,,,CHX-L,False,False,True
-DRI-S__ATR_91%_DRI__prod_in_demand,Direct Reduced Iron (ATR)*,,ATR91%,,DRI,,,,,,DRI-SB,,,,,,,,,DRI-S,False,False,True
-DRI-S__ATR_91%_DRI__prod_in_supply,Direct Reduced Iron (ATR),,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-SB,CH4-S,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,ATR91%,DRI,,DRI-S,True,False,True
+CH3OH-L__SMR_52%_BF_CH3OHSYN__prod_in_demand,Methanol (SMR-BF)*,,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-SB,CH4-S,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,SMR_52%_BF,CH3OHSYN,,CH3OH-L,True,False,True
+CH3OH-L__SMR_52%_BF_CH3OHSYN__prod_in_supply,Methanol (SMR-BF),,SMR_52%_BF,,CH3OHSYN,,,,,,CH3OH-SB,CH3OH-S,,,,,,,,CH3OH-L,False,False,True
+CH3OH-L__SMR_52%_CH3OHSYN__prod_in_demand,Methanol (SMR)*,,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-SB,CH4-S,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,SMR_52%,CH3OHSYN,,CH3OH-L,True,False,True
+CH3OH-L__SMR_52%_CH3OHSYN__prod_in_supply,Methanol (SMR),,SMR_52%,,CH3OHSYN,,,,,,CH3OH-SB,CH3OH-S,,,,,,,,CH3OH-L,False,False,True
+CHX-L__ATR_91%_EFUELSYN__prod_in_demand,FT-fuel (ATR)*,,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-SB,CH4-S,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,ATR_91%,EFUELSYN,,CHX-L,True,False,True
+CHX-L__ATR_91%_EFUELSYN__prod_in_supply,FT-fuel (ATR),,ATR_91%,,EFUELSYN,,,,,,SYN-SB,SYN-S,,,,,,,,CHX-L,False,False,True
+CHX-L__EFUELSYNC__prod_in_demand,FT-fuel (NG-based)*,,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-SB,CH4-S,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,,EFUELSYNC,,CHX-L,True,False,True
+CHX-L__EFUELSYNC__prod_in_supply,FT-fuel (NG-based),,,,EFUELSYNC,,,,,,SYN-SB,SYN-S,,,,,,,,CHX-L,False,False,True
+CHX-L__SMR_52%_BF_EFUELSYN__prod_in_demand,FT-fuel (SMR-BF)*,,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-SB,CH4-S,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,SMR_52%_BF,EFUELSYN,,CHX-L,True,False,True
+CHX-L__SMR_52%_BF_EFUELSYN__prod_in_supply,FT-fuel (SMR-BF),,SMR_52%_BF,,EFUELSYN,,,,,,SYN-SB,SYN-S,,,,,,,,CHX-L,False,False,True
+CHX-L__SMR_52%_EFUELSYN__prod_in_demand,FT-fuel (SMR)*,,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-SB,CH4-S,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,SMR_52%,EFUELSYN,,CHX-L,True,False,True
+CHX-L__SMR_52%_EFUELSYN__prod_in_supply,FT-fuel (SMR),,SMR_52%,,EFUELSYN,,,,,,SYN-SB,SYN-S,,,,,,,,CHX-L,False,False,True
+DRI-S__ATR_91%_DRI__prod_in_demand,Direct Reduced Iron (ATR)*,,ATR_91%,,DRI,,,,,,DRI-SB,,,,,,,,,DRI-S,False,False,True
+DRI-S__ATR_91%_DRI__prod_in_supply,Direct Reduced Iron (ATR),,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-SB,CH4-S,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,ATR_91%,DRI,,DRI-S,True,False,True
 DRI-S__NG-DRI-C__prod_in_demand,Direct Reduced Iron (NG-based)*,,,,NG-DRI-C,,,,,,DRI-SB,,,,,,,,,DRI-S,False,False,True
 DRI-S__NG-DRI-C__prod_in_supply,Direct Reduced Iron (NG-based),,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-SB,CH4-S,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,,NG-DRI-C,,DRI-S,True,False,True
-DRI-S__SMR_52%_BF_DRI__prod_in_demand,Direct Reduced Iron (SMR-BF)*,,SMR52%BF,,DRI,,,,,,DRI-SB,,,,,,,,,DRI-S,False,False,True
-DRI-S__SMR_52%_BF_DRI__prod_in_supply,Direct Reduced Iron (SMR-BF),,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-SB,CH4-S,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,SMR52%BF,DRI,,DRI-S,True,False,True
-DRI-S__SMR_52%_DRI__prod_in_demand,Direct Reduced Iron (SMR)*,,SMR52%,,DRI,,,,,,DRI-SB,,,,,,,,,DRI-S,False,False,True
-DRI-S__SMR_52%_DRI__prod_in_supply,Direct Reduced Iron (SMR),,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-SB,CH4-S,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,SMR52%,DRI,,DRI-S,True,False,True
+DRI-S__SMR_52%_BF_DRI__prod_in_demand,Direct Reduced Iron (SMR-BF)*,,SMR_52%_BF,,DRI,,,,,,DRI-SB,,,,,,,,,DRI-S,False,False,True
+DRI-S__SMR_52%_BF_DRI__prod_in_supply,Direct Reduced Iron (SMR-BF),,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-SB,CH4-S,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,SMR_52%_BF,DRI,,DRI-S,True,False,True
+DRI-S__SMR_52%_DRI__prod_in_demand,Direct Reduced Iron (SMR)*,,SMR_52%,,DRI,,,,,,DRI-SB,,,,,,,,,DRI-S,False,False,True
+DRI-S__SMR_52%_DRI__prod_in_supply,Direct Reduced Iron (SMR),,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-SB,CH4-S,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,SMR_52%,DRI,,DRI-S,True,False,True
 FT e-fuels (AEL),FT e-fuels (AEL),EL-STR,AEL-EL,H2-STR,EFUELSYN,,,,,,SYN-SB,SYN-S,,,,,,,,CHX-L,False,True,False
 FT e-fuels (PEM),FT e-fuels (PEM),EL-STR,PEM-EL,H2-STR,EFUELSYN,,,,,,SYN-SB,SYN-S,,,,,,,,CHX-L,False,True,False
 FT e-fuels (SOEC),FT e-fuels (SOEC),EL-STR,SOEC-EL,H2-STR,EFUELSYN,,,,,,SYN-SB,SYN-S,,,,,,,,CHX-L,False,True,False
 Green Iron (AEL),Green Iron (AEL),EL-STR,AEL-EL,H2-STR,DRI,,,,,,DRI-SB,,,,,,,,,DRI-S,False,True,False
 Green Iron (PEM),Green Iron (PEM),EL-STR,PEM-EL,H2-STR,DRI,,,,,,DRI-SB,,,,,,,,,DRI-S,False,True,False
 Green Iron (SOEC),Green Iron (SOEC),EL-STR,SOEC-EL,H2-STR,DRI,,,,,,DRI-SB,,,,,,,,,DRI-S,False,True,False
-H2-G__ATR_91%__prod_in_demand,Hydrogen (ATR)*,,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-LIQ,CH4-LIQ,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,ATR91%,,,H2-G,True,False,True
-H2-G__ATR_91%__prod_in_supply,Hydrogen (ATR),,ATR91%,,,,H2-LIQ,H2-COMP,H2-RGAS,,H2-SB,H2-S,H2-P-S,H2-P-L,H2-P-SR,H2-P-LR,,,,H2-G,True,False,True
-H2-G__ATR_91%__prod_in_supply__transport_NH3-L,Ammonia (ATR) + reconv. to H2,,ATR91%,,NH3SYN,,,,,,NH3-SB,NH3-S,,,,,,NH3-REC,,H2-G,False,False,True
-H2-G__SMR_52%__prod_in_demand,Hydrogen (SMR)*,,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-LIQ,CH4-LIQ,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,SMR52%,,,H2-G,True,False,True
-H2-G__SMR_52%__prod_in_supply,Hydrogen (SMR),,SMR52%,,,,H2-LIQ,H2-COMP,H2-RGAS,,H2-SB,H2-S,H2-P-S,H2-P-L,H2-P-SR,H2-P-LR,,,,H2-G,True,False,True
-H2-G__SMR_52%__prod_in_supply__transport_NH3-L,Ammonia (SMR) + reconv. to H2,,SMR52%,,NH3SYN,,,,,,NH3-SB,NH3-S,,,,,,NH3-REC,,H2-G,False,False,True
-H2-G__SMR_52%_BF__prod_in_demand,Hydrogen (SMR-BF)*,,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-LIQ,CH4-LIQ,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,SMR52%BF,,,H2-G,True,False,True
-H2-G__SMR_52%_BF__prod_in_supply,Hydrogen (SMR-BF),,SMR52%BF,,,,H2-LIQ,H2-COMP,H2-RGAS,,H2-SB,H2-S,H2-P-S,H2-P-L,H2-P-SR,H2-P-LR,,,,H2-G,True,False,True
-H2-G__SMR_52%_BF__prod_in_supply__transport_NH3-L,Ammonia (SMR-BF) + reconv. to H2,,SMR52%BF,,NH3SYN,,,,,,NH3-SB,NH3-S,,,,,,NH3-REC,,H2-G,False,False,True
+H2-G__ATR_91%__prod_in_demand,Hydrogen (ATR)*,,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-LIQ,CH4-LIQ,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,ATR_91%,,,H2-G,True,False,True
+H2-G__ATR_91%__prod_in_supply,Hydrogen (ATR),,ATR_91%,,,,H2-LIQ,H2-COMP,H2-RGAS,,H2-SB,H2-S,H2-P-S,H2-P-L,H2-P-SR,H2-P-LR,,,,H2-G,True,False,True
+H2-G__ATR_91%__prod_in_supply__transport_NH3-L,Ammonia (ATR) + reconv. to H2,,ATR_91%,,NH3SYN,,,,,,NH3-SB,NH3-S,,,,,,NH3-REC,,H2-G,False,False,True
+H2-G__SMR_52%__prod_in_demand,Hydrogen (SMR)*,,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-LIQ,CH4-LIQ,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,SMR_52%,,,H2-G,True,False,True
+H2-G__SMR_52%__prod_in_supply,Hydrogen (SMR),,SMR_52%,,,,H2-LIQ,H2-COMP,H2-RGAS,,H2-SB,H2-S,H2-P-S,H2-P-L,H2-P-SR,H2-P-LR,,,,H2-G,True,False,True
+H2-G__SMR_52%__prod_in_supply__transport_NH3-L,Ammonia (SMR) + reconv. to H2,,SMR_52%,,NH3SYN,,,,,,NH3-SB,NH3-S,,,,,,NH3-REC,,H2-G,False,False,True
+H2-G__SMR_52%_BF__prod_in_demand,Hydrogen (SMR-BF)*,,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-LIQ,CH4-LIQ,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,SMR_52%_BF,,,H2-G,True,False,True
+H2-G__SMR_52%_BF__prod_in_supply,Hydrogen (SMR-BF),,SMR_52%_BF,,,,H2-LIQ,H2-COMP,H2-RGAS,,H2-SB,H2-S,H2-P-S,H2-P-L,H2-P-SR,H2-P-LR,,,,H2-G,True,False,True
+H2-G__SMR_52%_BF__prod_in_supply__transport_NH3-L,Ammonia (SMR-BF) + reconv. to H2,,SMR_52%_BF,,NH3SYN,,,,,,NH3-SB,NH3-S,,,,,,NH3-REC,,H2-G,False,False,True
 Hydrogen (AEL),Hydrogen (AEL),EL-STR,AEL-EL,,,,H2-LIQ,H2-COMP,H2-RGAS,,H2-SB,H2-S,H2-P-S,H2-P-L,H2-P-SR,H2-P-LR,,,,H2-G,True,True,False
 Hydrogen (PEM),Hydrogen (PEM),EL-STR,PEM-EL,,,,H2-LIQ,H2-COMP,H2-RGAS,,H2-SB,H2-S,H2-P-S,H2-P-L,H2-P-SR,H2-P-LR,,,,H2-G,True,True,False
 Hydrogen (SOEC),Hydrogen (SOEC),EL-STR,SOEC-EL,,,,H2-LIQ,H2-COMP,H2-RGAS,,H2-SB,H2-S,H2-P-S,H2-P-L,H2-P-SR,H2-P-LR,,,,H2-G,True,True,False
@@ -60,17 +60,17 @@ Methane (SOEC) + reconv. to H2,Methane (SOEC) + reconv. to H2,EL-STR,SOEC-EL,H2-
 Methanol (AEL),Methanol (AEL),EL-STR,AEL-EL,H2-STR,CH3OHSYN,,,,,,CH3OH-SB,CH3OH-S,,,,,,,,CH3OH-L,False,True,False
 Methanol (PEM),Methanol (PEM),EL-STR,PEM-EL,H2-STR,CH3OHSYN,,,,,,CH3OH-SB,CH3OH-S,,,,,,,,CH3OH-L,False,True,False
 Methanol (SOEC),Methanol (SOEC),EL-STR,SOEC-EL,H2-STR,CH3OHSYN,,,,,,CH3OH-SB,CH3OH-S,,,,,,,,CH3OH-L,False,True,False
-NH3-L__ATR_91%_NH3SYN__prod_in_demand,Ammonia (ATR)*,,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-LIQ,CH4-LIQ,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,ATR91%,NH3SYN,,NH3-L,True,False,True
-NH3-L__ATR_91%_NH3SYN__prod_in_supply,Ammonia (ATR),,ATR91%,,NH3SYN,,,,,,NH3-SB,NH3-S,,,,,,,,NH3-L,False,False,True
-NH3-L__SMR_52%_BF_NH3SYN__prod_in_demand,Ammonia (SMR-BF)*,,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-LIQ,CH4-LIQ,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,SMR52%BF,NH3SYN,,NH3-L,True,False,True
-NH3-L__SMR_52%_BF_NH3SYN__prod_in_supply,Ammonia (SMR-BF),,SMR52%BF,,NH3SYN,,,,,,NH3-SB,NH3-S,,,,,,,,NH3-L,False,False,True
-NH3-L__SMR_52%_NH3SYN__prod_in_demand,Ammonia (SMR)*,,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-LIQ,CH4-LIQ,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,SMR52%,NH3SYN,,NH3-L,True,False,True
-NH3-L__SMR_52%_NH3SYN__prod_in_supply,Ammonia (SMR),,SMR52%,,NH3SYN,,,,,,NH3-SB,NH3-S,,,,,,,,NH3-L,False,False,True
-STL-S__ATR_91%_DRI_EAF__prod_in_demand,Crude Steel (ATR)*,,ATR91%,,DRI,,,,,,DRI-SB,,,,,,,,EAF,STL-S,False,False,True
-STL-S__ATR_91%_DRI_EAF__prod_in_supply,Crude Steel (ATR),,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-SB,CH4-S,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,ATR91%,DRI,EAF,STL-S,True,False,True
+NH3-L__ATR_91%_NH3SYN__prod_in_demand,Ammonia (ATR)*,,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-LIQ,CH4-LIQ,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,ATR_91%,NH3SYN,,NH3-L,True,False,True
+NH3-L__ATR_91%_NH3SYN__prod_in_supply,Ammonia (ATR),,ATR_91%,,NH3SYN,,,,,,NH3-SB,NH3-S,,,,,,,,NH3-L,False,False,True
+NH3-L__SMR_52%_BF_NH3SYN__prod_in_demand,Ammonia (SMR-BF)*,,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-LIQ,CH4-LIQ,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,SMR_52%_BF,NH3SYN,,NH3-L,True,False,True
+NH3-L__SMR_52%_BF_NH3SYN__prod_in_supply,Ammonia (SMR-BF),,SMR_52%_BF,,NH3SYN,,,,,,NH3-SB,NH3-S,,,,,,,,NH3-L,False,False,True
+NH3-L__SMR_52%_NH3SYN__prod_in_demand,Ammonia (SMR)*,,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-LIQ,CH4-LIQ,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,SMR_52%,NH3SYN,,NH3-L,True,False,True
+NH3-L__SMR_52%_NH3SYN__prod_in_supply,Ammonia (SMR),,SMR_52%,,NH3SYN,,,,,,NH3-SB,NH3-S,,,,,,,,NH3-L,False,False,True
+STL-S__ATR_91%_DRI_EAF__prod_in_demand,Crude Steel (ATR)*,,ATR_91%,,DRI,,,,,,DRI-SB,,,,,,,,EAF,STL-S,False,False,True
+STL-S__ATR_91%_DRI_EAF__prod_in_supply,Crude Steel (ATR),,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-SB,CH4-S,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,ATR_91%,DRI,EAF,STL-S,True,False,True
 STL-S__NG-DRI-C_EAF__prod_in_demand,Crude Steel (NG-based)*,,,,NG-DRI-C,,,,,,DRI-SB,,,,,,,,EAF,STL-S,False,False,True
 STL-S__NG-DRI-C_EAF__prod_in_supply,Crude Steel (NG-based),,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-SB,CH4-S,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,,NG-DRI-C,EAF,STL-S,True,False,True
-STL-S__SMR_52%_BF_DRI_EAF__prod_in_demand,Crude Steel (SMR-BF)*,,SMR52%BF,,DRI,,,,,,DRI-SB,,,,,,,,EAF,STL-S,False,False,True
-STL-S__SMR_52%_BF_DRI_EAF__prod_in_supply,Crude Steel (SMR-BF),,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-SB,CH4-S,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,SMR52%BF,DRI,EAF,STL-S,True,False,True
-STL-S__SMR_52%_DRI_EAF__prod_in_demand,Crude Steel (SMR)*,,SMR52%,,DRI,,,,,,DRI-SB,,,,,,,,EAF,STL-S,False,False,True
-STL-S__SMR_52%_DRI_EAF__prod_in_supply,Crude Steel (SMR),,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-SB,CH4-S,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,SMR52%,DRI,EAF,STL-S,True,False,True
+STL-S__SMR_52%_BF_DRI_EAF__prod_in_demand,Crude Steel (SMR-BF)*,,SMR_52%_BF,,DRI,,,,,,DRI-SB,,,,,,,,EAF,STL-S,False,False,True
+STL-S__SMR_52%_BF_DRI_EAF__prod_in_supply,Crude Steel (SMR-BF),,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-SB,CH4-S,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,SMR_52%_BF,DRI,EAF,STL-S,True,False,True
+STL-S__SMR_52%_DRI_EAF__prod_in_demand,Crude Steel (SMR)*,,SMR_52%,,DRI,,,,,,DRI-SB,,,,,,,,EAF,STL-S,False,False,True
+STL-S__SMR_52%_DRI_EAF__prod_in_supply,Crude Steel (SMR),,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-SB,CH4-S,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,SMR_52%,DRI,EAF,STL-S,True,False,True
