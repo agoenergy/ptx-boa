@@ -162,7 +162,7 @@ def main_settings_blue(api: PtxboaAPI):
         "Supply country (origin of natural gas)",
         regions,
         help=read_markdown_file("md/helptext_sidebar_blue_supply_region.md"),
-        index=regions.index("Morocco"),  # Morocco as default
+        index=regions.index("Algeria"),  # Morocco not implemented in blue
         key="region",
     )
 
