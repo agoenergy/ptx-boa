@@ -8,7 +8,7 @@ from typing import Dict, Iterable, List, Literal, Tuple
 import numpy as np
 import pandas as pd
 
-from ptxboa import KEY_SEPARATOR, PROFILES_DIR, STATIC_DATA_DIR
+from ptxboa import KEY_SEPARATOR, PROFILES_DIR, STATIC_DATA_DIR, logger
 from ptxboa.api_optimize import PtxOpt
 from ptxboa.static import (
     ChainNameType,
@@ -749,18 +749,37 @@ class DataHandler:
             result = default
 
         if result is None:
-            raise ValueError(
-                f"""did not find a parameter value for:
-                parameter_code={parameter_code},
-                process_code={process_code},
-                flow_code={flow_code},
-                source_region_code={source_region_code},
-                target_country_code={target_country_code},
-                process_code_res={process_code_res},
-                process_code_ely={process_code_ely},
-                process_code_deriv={process_code_deriv},
-            """
-            )
+            # FIXME: temporary data
+            if self.tool_version_color == "blue":
+                result = 1  # FIXME DUMMY
+                logger.warning(
+                    f"""did not find a parameter value for:
+                    parameter_code={parameter_code},
+                    process_code={process_code},
+                    flow_code={flow_code},
+                    source_region_code={source_region_code},
+                    target_country_code={target_country_code},
+                    process_code_res={process_code_res},
+                    process_code_ely={process_code_ely},
+                    process_code_deriv={process_code_deriv},
+                    ({self.tool_version_color})
+                """
+                )
+
+            else:
+                raise ValueError(
+                    f"""did not find a parameter value for:
+                    parameter_code={parameter_code},
+                    process_code={process_code},
+                    flow_code={flow_code},
+                    source_region_code={source_region_code},
+                    target_country_code={target_country_code},
+                    process_code_res={process_code_res},
+                    process_code_ely={process_code_ely},
+                    process_code_deriv={process_code_deriv}
+                    ({self.tool_version_color})
+                """
+                )
         return result
 
     @classmethod
