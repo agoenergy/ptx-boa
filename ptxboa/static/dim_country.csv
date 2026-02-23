@@ -1,10 +1,10 @@
 country_code,country_name,is_import,is_export,is_green,is_blue
-CHN,China,True,True,1,1
-DEU,Germany,True,False,1,1
-ESP,Spain,True,True,1,1
-FRA,France,True,False,1,1
-IND,India,True,True,1,1
-JPN,Japan,True,False,1,1
-KOR,South Korea,True,False,1,1
-NLD,Netherlands,True,False,1,1
-USA,USA,True,True,1,1
+CHN,China,True,True,True,True
+DEU,Germany,True,False,True,True
+ESP,Spain,True,True,True,True
+FRA,France,True,False,True,False
+IND,India,True,True,True,True
+JPN,Japan,True,False,True,True
+KOR,South Korea,True,False,True,True
+NLD,Netherlands,True,False,True,True
+USA,USA,True,True,True,True
