@@ -149,7 +149,10 @@ def calculate_results_list_green(
         settings.update(override_session_state)
 
     if parameter_list is None:
-        parameter_list = api.get_dimension(parameter_to_change).index
+        # tool_version_color="green": especially important for "chain"
+        parameter_list = api.get_dimension(
+            parameter_to_change, tool_version_color="green"
+        ).index
 
     # drop Green Iron if comparing chains (because it is not an energy carrier)
     if parameter_to_change == "chain":
@@ -262,7 +265,9 @@ def calculate_results_list_blue(
 
     if parameter_list is None:
         if parameter_to_change in ["region", "chain", "scenario"]:
-            parameter_list = api.get_dimension(parameter_to_change).index
+            parameter_list = api.get_dimension(
+                parameter_to_change, tool_version_color="blue"
+            ).index
         elif parameter_to_change in ["WACC"]:
             parameter_list = [0.9, 0.95, 1.0, 1.05, 1.1]
         else:
@@ -765,7 +770,12 @@ def get_data_type_from_input_data(
     return df
 
 
-def remove_subregions(api: PtxboaAPI, df: pd.DataFrame, keep: str | None = None):
+def remove_subregions(
+    api: PtxboaAPI,
+    df: pd.DataFrame,
+    keep: str | None = None,
+    tool_version_color: ToolVersionColorType | None = None,
+):
     """Remove subregions from a dataframe.
 
     Parameters
@@ -784,7 +794,9 @@ def remove_subregions(api: PtxboaAPI, df: pd.DataFrame, keep: str | None = None)
     pandas DataFrame with subregions removed from index.
     """
     # do not show subregions:
-    region_list_without_subregions = get_region_list_without_subregions(api, keep=keep)
+    region_list_without_subregions = get_region_list_without_subregions(
+        api, keep=keep, tool_version_color=tool_version_color
+    )
 
     # sometimes, not all regions exist
     region_list_without_subregions = [
@@ -796,7 +808,11 @@ def remove_subregions(api: PtxboaAPI, df: pd.DataFrame, keep: str | None = None)
     return df
 
 
-def get_region_list_without_subregions(api, keep):
+def get_region_list_without_subregions(
+    api: PtxboaAPI,
+    keep: str | None,
+    tool_version_color: ToolVersionColorType | None = None,
+):
     """Get list of regions with subregions removed.
 
     Parameters
@@ -812,7 +828,7 @@ def get_region_list_without_subregions(api, keep):
     list[str]
     """
     region_list_without_subregions = (
-        api.get_dimension("region")
+        api.get_dimension("region", tool_version_color=tool_version_color)
         .loc[api.get_dimension("region")["subregion_code"] == ""]
         .index.to_list()
     )

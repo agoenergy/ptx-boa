@@ -38,8 +38,7 @@ def content_market_scanning(api: PtxboaAPI, cd: dict) -> None:
             api,
             parameter_to_change="region",
             parameter_list=get_region_list_without_subregions(
-                api,
-                keep=st.session_state["subregion"],
+                api, keep=st.session_state["subregion"], tool_version_color="green"
             ),
         )
 
