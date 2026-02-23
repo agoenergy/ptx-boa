@@ -3,6 +3,7 @@
 from functools import cache
 from itertools import product
 from pathlib import Path
+from random import random
 from typing import Dict, Iterable, List, Literal, Tuple
 
 import numpy as np
@@ -751,7 +752,7 @@ class DataHandler:
         if result is None:
             # FIXME: temporary data
             if self.tool_version_color == "blue":
-                result = 1  # FIXME DUMMY
+                result = random() * 0.1  # FIXME DUMMY # noqa: S311
                 logger.warning(
                     f"""did not find a parameter value for:
                     parameter_code={parameter_code},
