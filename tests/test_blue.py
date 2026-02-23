@@ -52,7 +52,7 @@ def _rec_approx(x):
         [
             "2040 (medium)",
             {
-                "chain_name": "Blue Iron (blue)",
+                "chain_name": "Blue Iron (blue)*",
                 "source_region_code": "QAT",
                 "target_country_code": "DEU",
                 "process_code_res": None,

@@ -19,6 +19,7 @@ from ptxboa.static import (
     SecProcH2OType,
     SourceRegionNameType,
     TargetCountryNameType,
+    ToolVersionColorType,
     TransportType,
 )
 from ptxboa.utils import is_test
@@ -40,6 +41,7 @@ def calculate_cached(
     user_data: pd.DataFrame | None = None,
     optimize_flh: bool = True,
     use_user_data_for_optimize_flh: bool = False,
+    tool_version_color: ToolVersionColorType = "green",
 ) -> ApiCalculateResult:
     """Calculate results for a single set of settings.
 
@@ -70,6 +72,7 @@ def calculate_cached(
         user_data=user_data,
         optimize_flh=optimize_flh,
         use_user_data_for_optimize_flh=use_user_data_for_optimize_flh,
+        tool_version_color=tool_version_color,
     )
 
     return res
@@ -146,7 +149,10 @@ def calculate_results_list_green(
         settings.update(override_session_state)
 
     if parameter_list is None:
-        parameter_list = api.get_dimension(parameter_to_change).index
+        # tool_version_color="green": especially important for "chain"
+        parameter_list = api.get_dimension(
+            parameter_to_change, tool_version_color="green"
+        ).index
 
     # drop Green Iron if comparing chains (because it is not an energy carrier)
     if parameter_to_change == "chain":
@@ -195,7 +201,10 @@ def calculate_results_list_green(
             ).costs
             res_list.append(res_single)
         except Exception as exc:
-            logging.info(f"could not get data for {settings=}: {exc}")
+            logging.warning(
+                "calculate_results_list_green: could not get data for "
+                f"{settings=}: {exc}"
+            )
 
     res_details = pd.concat(res_list)
 
@@ -256,7 +265,9 @@ def calculate_results_list_blue(
 
     if parameter_list is None:
         if parameter_to_change in ["region", "chain", "scenario"]:
-            parameter_list = api.get_dimension(parameter_to_change).index
+            parameter_list = api.get_dimension(
+                parameter_to_change, tool_version_color="blue"
+            ).index
         elif parameter_to_change in ["WACC"]:
             parameter_list = [0.9, 0.95, 1.0, 1.05, 1.1]
         else:
@@ -294,6 +305,7 @@ def calculate_results_list_blue(
                     ),
                     optimize_flh=False,
                     use_user_data_for_optimize_flh=False,
+                    tool_version_color="blue",
                     **settings,
                 )
                 costs_list.append(res_single.costs)
@@ -301,7 +313,10 @@ def calculate_results_list_blue(
                 emissions_mass_list.append(res_single.emission_mass)
 
             except Exception as exc:
-                logging.info(f"could not get data for {settings=}: {exc}")
+                logging.warning(
+                    "calculate_results_list_blue: could not get data for "
+                    f"{settings=}: {exc}"
+                )
 
     # sensitivity by changing specific data points by a range of factors
     elif parameter_to_change in ["WACC"]:
@@ -377,6 +392,7 @@ def calculate_results_list_blue(
                     user_data=user_data,
                     optimize_flh=False,
                     use_user_data_for_optimize_flh=False,
+                    tool_version_color="blue",
                     **settings,
                 )
 
@@ -405,7 +421,10 @@ def calculate_results_list_blue(
                     emissions_mass_list.append(res_single.emission_mass)
 
             except Exception as exc:
-                logging.info(f"could not get data for {settings=}: {exc}")
+                logging.warning(
+                    "calculate_results_list_blue: could not get data for "
+                    f"{settings=}: {exc}"
+                )
     else:
         raise ValueError(f"invalid {parameter_to_change=}")
 
@@ -494,9 +513,9 @@ def sort_columns_by_position_in_chain(df):
 
 def subset_and_pivot_input_data(
     input_data: pd.DataFrame,
-    source_region_code: list = None,
-    parameter_code: list = None,
-    process_code: list = None,
+    source_region_code: list | None = None,
+    parameter_code: list | None = None,
+    process_code: list | None = None,
     index: str = "source_region_code",
     columns: str = "process_code",
     values: str = "value",
@@ -751,7 +770,12 @@ def get_data_type_from_input_data(
     return df
 
 
-def remove_subregions(api: PtxboaAPI, df: pd.DataFrame, keep: str | None = None):
+def remove_subregions(
+    api: PtxboaAPI,
+    df: pd.DataFrame,
+    keep: str | None = None,
+    tool_version_color: ToolVersionColorType | None = None,
+):
     """Remove subregions from a dataframe.
 
     Parameters
@@ -770,7 +794,9 @@ def remove_subregions(api: PtxboaAPI, df: pd.DataFrame, keep: str | None = None)
     pandas DataFrame with subregions removed from index.
     """
     # do not show subregions:
-    region_list_without_subregions = get_region_list_without_subregions(api, keep=keep)
+    region_list_without_subregions = get_region_list_without_subregions(
+        api, keep=keep, tool_version_color=tool_version_color
+    )
 
     # sometimes, not all regions exist
     region_list_without_subregions = [
@@ -782,7 +808,11 @@ def remove_subregions(api: PtxboaAPI, df: pd.DataFrame, keep: str | None = None)
     return df
 
 
-def get_region_list_without_subregions(api, keep):
+def get_region_list_without_subregions(
+    api: PtxboaAPI,
+    keep: str | None,
+    tool_version_color: ToolVersionColorType | None = None,
+):
     """Get list of regions with subregions removed.
 
     Parameters
@@ -798,7 +828,7 @@ def get_region_list_without_subregions(api, keep):
     list[str]
     """
     region_list_without_subregions = (
-        api.get_dimension("region")
+        api.get_dimension("region", tool_version_color=tool_version_color)
         .loc[api.get_dimension("region")["subregion_code"] == ""]
         .index.to_list()
     )
