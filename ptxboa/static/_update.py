@@ -261,6 +261,7 @@ def main():
         """
         SELECT
         "chain"
+        ,"chain_name"
         ,"EL_STR"
         ,"ELY"
         ,"H2_STR"
