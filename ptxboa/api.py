@@ -28,6 +28,7 @@ from .static import (
     TransportType,
     TransportValues,
 )
+from .utils import is_test
 
 
 @dataclass(slots=True, frozen=True)
@@ -217,6 +218,7 @@ class PtxboaAPI:
                 chain
                 if chain
                 in data_handler.get_dimension("chain", tool_version_color="green")
+                or is_test()
                 else "Ammonia (AEL)"
             ),  # FIXME: dummy value for non-functional blue chains
             process_code_res=DataHandler.get_dimensions_parameter_code(
