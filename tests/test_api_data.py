@@ -6,6 +6,7 @@ from tempfile import TemporaryDirectory
 import pandas as pd
 import pytest
 
+from ptxboa import logger
 from ptxboa.api_data import DataHandler
 from tests.utils import assert_deep_equal
 
@@ -485,3 +486,53 @@ def test_get_calculation_data_w_opt(ptxdata_dir, scenario, kwargs, request):
     del result["flh_opt_hash"]["filepath"]  # dont test this
 
     assert_deep_equal(exp_result, result)
+
+
+def test_validate_chains():
+
+    errors = []
+    for tool_version_color in ["green", "blue"]:
+        process_code_res = "RES-HYBR" if tool_version_color == "green" else None
+
+        dh = DataHandler(
+            scenario="2030 (medium)",
+            tool_version_color=tool_version_color,
+            # specifically DON'T use test data here
+            # we want to validate the current chains
+        )
+        chains = dh.get_dimension("chain", tool_version_color=tool_version_color)[
+            "chain"
+        ].to_list()
+
+        for chain in chains:
+            for use_ship, ship_own_fuel in [
+                (False, False),
+                (True, False),
+            ]:
+                # _validate_process_chain called inside here
+
+                try:
+                    dh._get_calculation_data(
+                        secondary_processes={},
+                        chain_name=chain,
+                        process_code_res=process_code_res,
+                        source_region_code="ESP",
+                        target_country_code="DEU",
+                        use_ship=use_ship,
+                        ship_own_fuel=ship_own_fuel,
+                    )
+                except Exception as exc:
+                    errors.append(
+                        {
+                            "exception": exc,
+                            "chain": chain,
+                            "use_ship": use_ship,
+                            "ship_own_fuel": ship_own_fuel,
+                        }
+                    )
+
+    if errors:
+        for err in errors:
+            logger.error(err)
+
+        raise Exception(errors)
