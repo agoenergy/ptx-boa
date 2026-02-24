@@ -185,6 +185,8 @@ def main_settings_blue(api: PtxboaAPI):
             key="conversion_location_radio_disabled", disabled=True
         )
 
+    st.session_state["conversion_location"] = conversion_location
+
     product_labels = {
         "CHX-L": "FT e-fuels",
         "DRI-S": "Iron",
@@ -281,6 +283,17 @@ def main_settings_blue(api: PtxboaAPI):
         help=read_markdown_file("md/helptext_sidebar_blue_conversion.md"),
         index=0,
     )
+
+    def get_reformer(conversion: str):
+        if conversion.startswith("SMR_52%_BF"):
+            return "SMR52%BF"
+        if conversion.startswith("SMR_52%"):
+            return "SMR52%"
+        if conversion.startswith("ATR_91%"):
+            return "ATR91%"
+        return None
+
+    st.session_state["reformer"] = get_reformer(conversion)
 
     if (
         product == "H2-G"
