@@ -133,3 +133,87 @@ def content_costs(api: PtxboaAPI):
             "Costs for different WACC values in the supply country",
             help_string=help_string,
         )
+
+    blue_chains = api.get_dimension("chain", "blue")
+    with st.container(border=True):
+        with st.spinner(
+            "Please wait. Calculating results for different supply chains of output "
+            "product."
+        ):
+            equal_output_product_chains = blue_chains.loc[
+                blue_chains.index.str.endswith(
+                    f"prod_in_{st.session_state['conversion_location']}"
+                )
+                & (blue_chains["FLOW_OUT"] == st.session_state["output_product"])
+            ].index
+
+            results_equal_output_product = blue_results_over_dimension(
+                api,
+                dim="chain",
+                parameter_list=equal_output_product_chains,
+                override_session_state={"output_unit": "USD/MWh"},
+            )
+
+        help_string = " ".join(
+            [
+                "This figure lets you compare total costs and cost components"
+                " for different technology chains that produce "
+                f"{st.session_state['output_product_label']}."
+            ]
+        )
+
+        display_costs(
+            results_equal_output_product.costs,
+            results_equal_output_product.costs_not_modified,
+            key="chain",
+            key_suffix="equal_product",
+            titlestring="Costs for different technology chains",
+            output_unit="USD/MWh",
+            help_string=help_string,
+        )
+
+    with st.container(border=True):
+        with st.spinner(
+            "Please wait. Calculating results for different output products."
+        ):
+            if st.session_state["reformer"] is not None:
+                equal_reformer_chains = blue_chains.loc[
+                    blue_chains.index.str.endswith(
+                        f"prod_in_{st.session_state['conversion_location']}"
+                    )
+                    & (
+                        (blue_chains["ELY"] == st.session_state["reformer"])
+                        | (blue_chains["ELY_I"] == st.session_state["reformer"])
+                    )
+                ].index
+            else:
+                equal_reformer_chains = blue_chains.loc[
+                    blue_chains.index.str.endswith(
+                        f"prod_in_{st.session_state['conversion_location']}"
+                    )
+                    & ((blue_chains["ELY"] == "") & (blue_chains["ELY_I"] == ""))
+                ].index
+
+            results_equal_routes = blue_results_over_dimension(
+                api,
+                dim="chain",
+                parameter_list=equal_reformer_chains,
+                override_session_state={"output_unit": "USD/MWh"},
+            )
+
+        help_string = " ".join(
+            [
+                "This figure lets you compare total costs and cost components"
+                " for different products with comparable technology chains."
+            ]
+        )
+
+        display_costs(
+            results_equal_routes.costs,
+            results_equal_routes.costs_not_modified,
+            key="chain",
+            key_suffix="equal_reformer",
+            titlestring="Costs for different products",
+            output_unit="USD/MWh",
+            help_string=help_string,
+        )

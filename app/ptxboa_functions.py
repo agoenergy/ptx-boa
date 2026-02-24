@@ -235,6 +235,7 @@ def calculate_results_list_blue(
         "country",
         "output_unit",
         "region",
+        "res_gen",
         "scenario",
         "secproc_co2",
         "secproc_water",
@@ -259,9 +260,6 @@ def calculate_results_list_blue(
             )
             raise ValueError(msg)
         settings.update(override_session_state)
-
-    # hardcoded values which are not relevant for blue version
-    settings["res_gen"] = "Wind-PV-Hybrid"
 
     if parameter_list is None:
         if parameter_to_change in ["region", "chain", "scenario"]:
@@ -1062,7 +1060,7 @@ def blue_results_over_dimension(
         "scenario",
         "WACC",
     ],
-    parameter_list: None | list | pd.Series = None,
+    parameter_list: None | pd.Series | pd.Index = None,
     override_session_state=None,
 ):
     costs, emissions, emissions_mass = calculate_results_list_blue(
