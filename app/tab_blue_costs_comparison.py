@@ -116,6 +116,7 @@ def aggregate_green_results(
                         scenario=scenario,
                         country=import_country,
                         output_unit=output_unit,
+                        tool_version_color="blue",
                         **param_set,
                     )
                     .costs["values"]

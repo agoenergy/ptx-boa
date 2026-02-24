@@ -34,8 +34,7 @@ def content_emissions(api: PtxboaAPI):
                 api,
                 dim="region",
                 parameter_list=get_region_list_without_subregions(
-                    api,
-                    keep=st.session_state["subregion"],
+                    api, keep=st.session_state["subregion"], tool_version_color="blue"
                 ),
             )
 
