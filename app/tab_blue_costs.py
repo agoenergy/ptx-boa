@@ -137,6 +137,7 @@ def content_costs(api: PtxboaAPI):
         )
 
     blue_chains = api.get_dimension("chain", "blue")
+    blue_chain_labels = blue_chains["chain_name"].to_dict()
 
     with st.container(border=True):
         with st.spinner("Please wait. Calculating results for conversion locations."):
@@ -161,6 +162,7 @@ def content_costs(api: PtxboaAPI):
                 "by conversion location in supply or demand country"
             ]
         )
+
         display_costs(
             results_supply_demand.costs,
             results_supply_demand.costs_not_modified,
@@ -168,6 +170,13 @@ def content_costs(api: PtxboaAPI):
             key_suffix="demand_supply",
             titlestring="Costs for converting in supply or demand country",
             help_string=help_string,
+            x_label_mapping={
+                k: (
+                    f"{v}<br>conversion in "
+                    f"{'supply' if 'prod_in_supply' in k else 'demand'} country"
+                )
+                for k, v in blue_chain_labels.items()
+            },
         )
 
     with st.container(border=True):
@@ -205,6 +214,7 @@ def content_costs(api: PtxboaAPI):
             titlestring="Costs for different technology chains",
             output_unit="USD/MWh",
             help_string=help_string,
+            x_label_mapping=blue_chain_labels,
         )
 
     with st.container(border=True):
@@ -251,4 +261,5 @@ def content_costs(api: PtxboaAPI):
             titlestring="Costs for different products",
             output_unit="USD/MWh",
             help_string=help_string,
+            x_label_mapping=blue_chain_labels,
         )

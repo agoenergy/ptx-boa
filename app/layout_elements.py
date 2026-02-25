@@ -28,8 +28,12 @@ def display_costs(
     default_select: int = 0,
     default_manual_select: str | None = None,
     help_string: str | None = None,
+    x_label_mapping: dict[str, str] | None = None,
 ):
     """Display costs as table and bar chart."""
+    if x_label_mapping is None:
+        x_label_mapping = {}
+
     if output_unit is None:
         output_unit = st.session_state["output_unit"]
     key_suffix = key_suffix.lower().replace(" ", "_")
@@ -88,6 +92,7 @@ def display_costs(
                 default=default_manual_select,
                 key=f"select_data_{key}_{key_suffix}",
                 label_visibility="collapsed",
+                format_func=lambda k: x_label_mapping.get(k, k),
             )
             df_res = df_res.loc[ind_select]
 
@@ -115,13 +120,19 @@ def display_costs(
     if sort_ascending:
         df_res = df_res.sort_values(["Total"], ascending=True)
 
+    if x_label_mapping:
+        df_res = df_res.rename(index=x_label_mapping)
+        current_selection = x_label_mapping.get(st.session_state[key])
+    else:
+        current_selection = st.session_state[key]
+
     # fix index names
     change_index_names(df_res)
 
     # create graph:
     fig = create_bar_chart_costs(
         df_res,
-        current_selection=st.session_state[key],
+        current_selection=current_selection,
         output_unit=output_unit,
     )
     st.plotly_chart(fig, width="stretch")
