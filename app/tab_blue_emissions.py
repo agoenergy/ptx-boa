@@ -122,11 +122,19 @@ def content_emissions(api: PtxboaAPI):
         # graph with x axis: process_type, color: gas_type
         display_results_bar_and_table(
             aggregate_emissions(
-                current_region_data, index="process_type", columns="gas_type"
+                current_region_data.assign(
+                    gas_type=lambda x: x["gas_type"] + " (" + x["emission_type"] + ")"
+                ),
+                index="process_type",
+                columns="gas_type",
             ),
             (
                 aggregate_emissions(
-                    current_region_data_not_modified,
+                    current_region_data_not_modified.assign(
+                        gas_type=lambda x: (
+                            x["gas_type"] + " (" + x["emission_type"] + ")"
+                        )
+                    ),
                     index="process_type",
                     columns="gas_type",
                 )
@@ -178,11 +186,21 @@ def content_emissions(api: PtxboaAPI):
             )
             display_results_bar_and_table(
                 aggregate_emissions(
-                    results_per_region.emissions, index="region", columns="gas_type"
+                    results_per_region.emissions.assign(
+                        gas_type=lambda x: (
+                            x["gas_type"] + " (" + x["emission_type"] + ")"
+                        )
+                    ),
+                    index="region",
+                    columns="gas_type",
                 ),
                 (
                     aggregate_emissions(
-                        results_per_region.emissions_not_modified,
+                        results_per_region.emissions_not_modified.assign(
+                            gas_type=lambda x: (
+                                x["gas_type"] + " (" + x["emission_type"] + ")"
+                            )
+                        ),
                         index="region",
                         columns="gas_type",
                     )

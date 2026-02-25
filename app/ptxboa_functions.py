@@ -493,7 +493,11 @@ def sort_columns_by_position_in_chain(df):
         "Transportation (Pipeline)",
         "Transportation (Ship)",
         "CH4",
+        "CH4 (direct)",
+        "CH4 (indirect)",
         "CO2",
+        "CO2 (direct)",
+        "CO2 (indirect)",
         "Total",
     ]
 

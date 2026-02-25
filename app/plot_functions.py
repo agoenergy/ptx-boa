@@ -64,7 +64,14 @@ def discrete_colors_process_type() -> dict:
 
 @st.cache_data()
 def discrete_colors_gas_type() -> dict[str, str]:
-    gas_type = ["CO2", "CH4"]
+    gas_type = [
+        "CH4",
+        "CH4 (direct)",
+        "CH4 (indirect)",
+        "CO2",
+        "CO2 (direct)",
+        "CO2 (indirect)",
+    ]
     colors = read_agora_colors()
     return {c: colors[i] for i, c in enumerate(gas_type)}
 
