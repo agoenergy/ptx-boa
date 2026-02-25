@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Layout elements that get reused in several tabs."""
+
 from typing import Literal
 
 import pandas as pd
@@ -67,22 +68,25 @@ def display_costs(
         default_manual_select = df_res.index.values
 
     with c1:
-        if len(df_res) > 13:
-            select_options = [
-                "All",
-                "Manual selection",
-                "Cheapest 10",
-            ]
+        if len(df_res) < 7:
+            show_which_data = "All"
         else:
-            select_options = ["All", "Manual selection"]
-        # select filter:
-        show_which_data = st.radio(
-            "Elements to display:",
-            select_options,
-            index=default_select,
-            horizontal=True,
-            key=f"show_which_data_{key}_{key_suffix}",
-        )
+            if len(df_res) > 13:
+                select_options = [
+                    "All",
+                    "Manual selection",
+                    "Cheapest 10",
+                ]
+            else:
+                select_options = ["All", "Manual selection"]
+            # select filter:
+            show_which_data = st.radio(
+                "Elements to display:",
+                select_options,
+                index=default_select,
+                horizontal=True,
+                key=f"show_which_data_{key}_{key_suffix}",
+            )
 
         # apply filter:
         if show_which_data == "Manual selection":
@@ -109,8 +113,7 @@ def display_costs(
             df_res = df_res.loc[ind_select]
             sort_ascending = False
 
-        else:
-            # sort:
+        if show_which_data != "Cheapest 10":
             sort_ascending = st.toggle(
                 "Sort by total costs?",
                 value=True,
