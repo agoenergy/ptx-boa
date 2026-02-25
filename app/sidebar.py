@@ -347,7 +347,7 @@ def conversion_location_radio(key: str, disabled: bool):
 
 
 def additional_settings_green(api):
-    co2_source_toggle(api)
+    co2_source_toggle_green(api)
     water_source_radio(api)
     allow_pipeline_toggle()
     ship_own_fuel_toggle("For shipping option: Use the product as own fuel?")
@@ -355,7 +355,7 @@ def additional_settings_green(api):
 
 
 def additional_settings_blue(api: PtxboaAPI):
-    co2_source_toggle(api)
+    co2_source_toggle_blue(api)
     allow_pipeline_toggle()
     ship_own_fuel_toggle("For shipping option: Use the final product as own fuel?")
     unit_toggle_blue()
@@ -410,13 +410,56 @@ def water_source_radio(api: PtxboaAPI):
     )
 
 
-def co2_source_toggle(api: PtxboaAPI):
+def co2_source_toggle_green(api: PtxboaAPI):
     st.session_state["secproc_co2"] = st.radio(
         "CO₂ source:",
         api.get_dimension("secproc_co2").index,
         horizontal=True,
         help=read_markdown_file("md/helptext_sidebar_carbon_source.md"),
     )
+
+
+def co2_source_toggle_blue(api: PtxboaAPI):
+    co2_source = st.radio(
+        "CO₂ source:",
+        ["Direct Air Capture", "industrial_capture"],
+        format_func=lambda x: {
+            "industrial_capture": "captured  CO₂ from industrial process",
+        }.get(x, x),
+        horizontal=True,
+        help=read_markdown_file("md/helptext_sidebar_carbon_source.md"),  # FIXME
+    )
+
+    if co2_source == "industrial_capture":
+        co2_source = st.radio(
+            "Emission balance for captured industrial CO₂:",
+            ["industrial_full_accounting", "industrial_no_accounting"],
+            format_func=lambda x: {
+                "industrial_full_accounting": "fully accounted",
+                "industrial_no_accounting": "not accounted",
+            }.get(x, x),
+            horizontal=True,
+            help=read_markdown_file(
+                "md/helptext_sidebar_blue_industrial_co2_accounting.md"
+            ),
+        )
+
+    if co2_source not in [
+        "Direct Air Capture",
+        "industrial_full_accounting",
+        "industrial_no_accounting",
+    ]:
+        raise ValueError(f"invalid {co2_source=}")
+
+    if co2_source in [
+        "industrial_full_accounting",
+        "industrial_no_accounting",
+    ]:
+        # FIXME remove this fallback guard when backend ready
+        # see https://github.com/agoenergy/ptx-boa/issues/624
+        co2_source = "Specific costs"
+
+    st.session_state["secproc_co2"] = co2_source
 
 
 def ship_own_fuel_toggle(label: str):
