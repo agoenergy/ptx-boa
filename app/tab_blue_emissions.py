@@ -266,7 +266,7 @@ def content_emissions(api: PtxboaAPI):
             ),
             key="chain",
             key_suffix="equal_product",
-            titlestring="Costs for different technology chains",
+            titlestring="Emissions for different technology chains",
             help_string=help_string,
             x_label_mapping=blue_chain_labels,
             tool_version_color="blue",
