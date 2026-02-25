@@ -1,5 +1,6 @@
 """Content of costs tab."""
 
+import pandas as pd
 import streamlit as st
 from plotly.subplots import make_subplots
 
@@ -129,12 +130,46 @@ def content_costs(api: PtxboaAPI):
         display_costs(
             results_per_wacc.costs,
             results_per_wacc.costs_not_modified,
-            "scenario",
-            "Costs for different WACC values in the supply country",
+            key="scenario",
+            key_suffix="sensitivity_wacc",
+            titlestring="Costs for different WACC values in the supply country",
             help_string=help_string,
         )
 
     blue_chains = api.get_dimension("chain", "blue")
+
+    with st.container(border=True):
+        with st.spinner("Please wait. Calculating results for conversion locations."):
+            results_supply_demand = blue_results_over_dimension(
+                api,
+                dim="chain",
+                parameter_list=pd.Series(
+                    [
+                        st.session_state["chain"].replace(
+                            "__prod_in_demand", "__prod_in_supply"
+                        ),
+                        st.session_state["chain"].replace(
+                            "__prod_in_supply", "__prod_in_demand"
+                        ),
+                    ]
+                ),
+            )
+
+        help_string = " ".join(
+            [
+                "This figure lets you compare total costs and cost components "
+                "by conversion location in supply or demand country"
+            ]
+        )
+        display_costs(
+            results_supply_demand.costs,
+            results_supply_demand.costs_not_modified,
+            key="chain",
+            key_suffix="demand_supply",
+            titlestring="Costs for converting in supply or demand country",
+            help_string=help_string,
+        )
+
     with st.container(border=True):
         with st.spinner(
             "Please wait. Calculating results for different supply chains of output "
