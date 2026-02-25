@@ -427,7 +427,7 @@ def co2_source_toggle_blue(api: PtxboaAPI):
             "industrial_capture": "captured  CO₂ from industrial process",
         }.get(x, x),
         horizontal=True,
-        help=read_markdown_file("md/helptext_sidebar_carbon_source.md"),
+        help=read_markdown_file("md/helptext_sidebar_carbon_source.md"),  # FIXME
     )
 
     if co2_source == "industrial_capture":
@@ -439,6 +439,9 @@ def co2_source_toggle_blue(api: PtxboaAPI):
                 "industrial_no_accounting": "not accounted",
             }.get(x, x),
             horizontal=True,
+            help=read_markdown_file(
+                "md/helptext_sidebar_blue_industrial_co2_accounting.md"
+            ),
         )
 
     if co2_source not in [
