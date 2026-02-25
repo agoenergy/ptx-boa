@@ -6,7 +6,7 @@ import streamlit_antd_components as sac
 
 from app.layout_elements import (
     display_and_edit_input_data,
-    display_costs,
+    display_results_bar_and_table,
     what_is_a_boxplot,
 )
 from app.plot_functions import plot_costs_on_map, plot_input_data_on_map
@@ -89,7 +89,7 @@ def content_deep_dive_countries(api: PtxboaAPI) -> None:
                 " total costs. You can change this in the filter settings."
             ]
         )
-        display_costs(
+        display_results_bar_and_table(
             select_subregions(costs_per_region, ddc),
             (
                 select_subregions(costs_per_region_without_user_changes, ddc)

@@ -85,7 +85,7 @@ make_sidebar_blue(api)
 st.markdown(f"CHAIN_CODE: `{st.session_state['chain']}`")
 
 # hardcoded values which are not relevant for blue version
-st.session_state["res_gen"] = "Wind-PV-Hybrid"
+st.session_state["res_gen"] = None
 st.session_state["secproc_water"] = "Specific costs"
 st.session_state["subregion"] = None
 
