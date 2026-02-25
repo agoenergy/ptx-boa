@@ -4,7 +4,7 @@ import pandas as pd
 import streamlit as st
 from plotly.subplots import make_subplots
 
-from app.layout_elements import display_costs, what_is_a_boxplot
+from app.layout_elements import display_results_bar_and_table, what_is_a_boxplot
 from app.plot_functions import (
     create_bar_chart_costs,
     create_box_plot,
@@ -108,7 +108,7 @@ def content_costs(api: PtxboaAPI):
                 " by total costs. You can change this in the filter settings."
             ]
         )
-        display_costs(
+        display_results_bar_and_table(
             results_per_region.costs,
             results_per_region.costs_not_modified,
             "region",
@@ -128,7 +128,7 @@ def content_costs(api: PtxboaAPI):
                 "The value from input data is altered by +-10%."
             ]
         )
-        display_costs(
+        display_results_bar_and_table(
             results_per_wacc.costs,
             results_per_wacc.costs_not_modified,
             key="scenario",
@@ -165,7 +165,7 @@ def content_costs(api: PtxboaAPI):
             ]
         )
 
-        display_costs(
+        display_results_bar_and_table(
             results_supply_demand.costs,
             results_supply_demand.costs_not_modified,
             key="chain",
@@ -208,7 +208,7 @@ def content_costs(api: PtxboaAPI):
             ]
         )
 
-        display_costs(
+        display_results_bar_and_table(
             results_equal_output_product.costs,
             results_equal_output_product.costs_not_modified,
             key="chain",
@@ -255,7 +255,7 @@ def content_costs(api: PtxboaAPI):
             ]
         )
 
-        display_costs(
+        display_results_bar_and_table(
             results_equal_routes.costs,
             results_equal_routes.costs_not_modified,
             key="chain",

@@ -4,7 +4,7 @@ import pandas as pd
 import streamlit as st
 from plotly.subplots import make_subplots
 
-from app.layout_elements import display_emissions, what_is_a_boxplot
+from app.layout_elements import display_results_bar_and_table, what_is_a_boxplot
 from app.plot_functions import (
     create_bar_chart_costs,
     create_box_plot,
@@ -120,7 +120,7 @@ def content_emissions(api: PtxboaAPI):
                     " by total emissions. You can change this in the filter settings."
                 ]
             )
-            display_emissions(
+            display_results_bar_and_table(
                 aggregate_emissions(results_per_region.emissions, index="region"),
                 (
                     aggregate_emissions(
@@ -133,6 +133,8 @@ def content_emissions(api: PtxboaAPI):
                 key_suffix="emissions_steps",
                 titlestring="Emissions per process step for different source countries",
                 help_string=help_string,
+                tool_version_color="blue",
+                data_type="emissions",
             )
 
         with st.container(border=True):
@@ -144,7 +146,7 @@ def content_emissions(api: PtxboaAPI):
                     " by total emissions. You can change this in the filter settings."
                 ]
             )
-            display_emissions(
+            display_results_bar_and_table(
                 aggregate_emissions(
                     results_per_region.emissions, index="region", columns="gas_type"
                 ),
@@ -161,7 +163,177 @@ def content_emissions(api: PtxboaAPI):
                 key_suffix="emissions_gases",
                 titlestring="Emissions per gas type for different source countries",
                 help_string=help_string,
+                tool_version_color="blue",
+                data_type="emissions",
             )
+
+    blue_chains = api.get_dimension("chain", "blue")
+    blue_chain_labels = blue_chains["chain_name"].to_dict()
+
+    with st.container(border=True):
+        with st.spinner("Please wait. Calculating results for conversion locations."):
+            results_supply_demand = blue_results_over_dimension(
+                api,
+                dim="chain",
+                parameter_list=pd.Series(
+                    [
+                        st.session_state["chain"].replace(
+                            "__prod_in_demand", "__prod_in_supply"
+                        ),
+                        st.session_state["chain"].replace(
+                            "__prod_in_supply", "__prod_in_demand"
+                        ),
+                    ]
+                ),
+            )
+
+        help_string = " ".join(
+            [
+                "This figure lets you compare total emissions and emissions by",
+                "processing step conversion location in supply or demand country",
+            ]
+        )
+
+        display_results_bar_and_table(
+            aggregate_emissions(
+                results_supply_demand.emissions, index="chain", columns="process_type"
+            ),
+            (
+                aggregate_emissions(
+                    results_supply_demand.emissions_not_modified,
+                    index="chain",
+                    columns="process_type",
+                )
+                if results_supply_demand.emissions_not_modified is not None
+                else None
+            ),
+            key="chain",
+            key_suffix="demand_supply",
+            titlestring="Emissions for converting in supply or demand country",
+            help_string=help_string,
+            x_label_mapping={
+                k: (
+                    f"{v}<br>conversion in "
+                    f"{'supply' if 'prod_in_supply' in k else 'demand'} country"
+                )
+                for k, v in blue_chain_labels.items()
+            },
+            tool_version_color="blue",
+            data_type="emissions",
+        )
+
+    with st.container(border=True):
+        with st.spinner(
+            "Please wait. Calculating results for different supply chains of output "
+            "product."
+        ):
+            equal_output_product_chains = blue_chains.loc[
+                blue_chains.index.str.endswith(
+                    f"prod_in_{st.session_state['conversion_location']}"
+                )
+                & (blue_chains["FLOW_OUT"] == st.session_state["output_product"])
+            ].index
+
+            results_equal_output_product = blue_results_over_dimension(
+                api,
+                dim="chain",
+                parameter_list=equal_output_product_chains,
+            )
+
+        help_string = " ".join(
+            [
+                "This figure lets you comparetotal emissions and emissions by",
+                "processiong step",
+                "for different technology chains that produce ",
+                f"{st.session_state['output_product_label']}.",
+            ]
+        )
+
+        display_results_bar_and_table(
+            aggregate_emissions(
+                results_equal_output_product.emissions,
+                index="chain",
+                columns="process_type",
+            ),
+            (
+                aggregate_emissions(
+                    results_equal_output_product.emissions_not_modified,
+                    index="chain",
+                    columns="process_type",
+                )
+                if results_equal_output_product.emissions_not_modified is not None
+                else None
+            ),
+            key="chain",
+            key_suffix="equal_product",
+            titlestring="Emissions for different technology chains",
+            help_string=help_string,
+            x_label_mapping=blue_chain_labels,
+            tool_version_color="blue",
+            data_type="emissions",
+        )
+
+    with st.container(border=True):
+        with st.spinner(
+            "Please wait. Calculating results for different output products."
+        ):
+            if st.session_state["reformer"] is not None:
+                equal_reformer_chains = blue_chains.loc[
+                    blue_chains.index.str.endswith(
+                        f"prod_in_{st.session_state['conversion_location']}"
+                    )
+                    & (
+                        (blue_chains["ELY"] == st.session_state["reformer"])
+                        | (blue_chains["ELY_I"] == st.session_state["reformer"])
+                    )
+                ].index
+            else:
+                equal_reformer_chains = blue_chains.loc[
+                    blue_chains.index.str.endswith(
+                        f"prod_in_{st.session_state['conversion_location']}"
+                    )
+                    & ((blue_chains["ELY"] == "") & (blue_chains["ELY_I"] == ""))
+                ].index
+
+            results_equal_routes = blue_results_over_dimension(
+                api,
+                dim="chain",
+                parameter_list=equal_reformer_chains,
+                override_session_state={
+                    "output_unit": "USD/MWh"
+                },  # api always wants cost unit
+            )
+
+        help_string = " ".join(
+            [
+                "This figure lets you compare total emissions and emissions by",
+                "processiong step",
+                "for different products with comparable technology chains.",
+            ]
+        )
+
+        display_results_bar_and_table(
+            aggregate_emissions(
+                results_equal_routes.emissions, index="chain", columns="process_type"
+            ),
+            (
+                aggregate_emissions(
+                    results_equal_routes.emissions_not_modified,
+                    index="chain",
+                    columns="process_type",
+                )
+                if results_equal_routes.emissions_not_modified is not None
+                else None
+            ),
+            key="chain",
+            key_suffix="equal_reformer",
+            titlestring="Emissions for different products",
+            output_unit=st.session_state["emissions_output_unit"].replace("/t", "/MWh"),
+            help_string=help_string,
+            x_label_mapping=blue_chain_labels,
+            tool_version_color="blue",
+            data_type="emissions",
+        )
 
         st.divider()
         with st.expander("Detailed emissions data per region"):
