@@ -17,6 +17,7 @@ from app.ptxboa_functions import (
 )
 from app.user_data import register_user_changes
 from ptxboa.api import PtxboaAPI
+from ptxboa.static import ToolVersionColorType
 
 
 def display_costs(
@@ -30,6 +31,7 @@ def display_costs(
     default_manual_select: str | None = None,
     help_string: str | None = None,
     x_label_mapping: dict[str, str] | None = None,
+    tool_version_color: ToolVersionColorType = "green",
 ):
     """Display costs as table and bar chart."""
     if x_label_mapping is None:
@@ -141,7 +143,7 @@ def display_costs(
     st.plotly_chart(fig, width="stretch")
 
     # add explainer for costs by supply chain comparison:
-    if key == "chain":
+    if key == "chain" and tool_version_color == "green":
         if st.session_state["output_unit"] == "USD/t":
             unit_note = (
                 "The output unit is set to USD/MWh in order to compare products"

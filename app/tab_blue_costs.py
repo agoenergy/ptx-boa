@@ -114,6 +114,7 @@ def content_costs(api: PtxboaAPI):
             "region",
             "Costs for different source countries",
             help_string=help_string,
+            tool_version_color="blue",
         )
 
     with st.container(border=True):
@@ -134,6 +135,7 @@ def content_costs(api: PtxboaAPI):
             key_suffix="sensitivity_wacc",
             titlestring="Costs for different WACC values in the supply country",
             help_string=help_string,
+            tool_version_color="blue",
         )
 
     blue_chains = api.get_dimension("chain", "blue")
@@ -177,6 +179,7 @@ def content_costs(api: PtxboaAPI):
                 )
                 for k, v in blue_chain_labels.items()
             },
+            tool_version_color="blue",
         )
 
     with st.container(border=True):
@@ -215,6 +218,7 @@ def content_costs(api: PtxboaAPI):
             output_unit="USD/MWh",
             help_string=help_string,
             x_label_mapping=blue_chain_labels,
+            tool_version_color="blue",
         )
 
     with st.container(border=True):
@@ -262,4 +266,5 @@ def content_costs(api: PtxboaAPI):
             output_unit="USD/MWh",
             help_string=help_string,
             x_label_mapping=blue_chain_labels,
+            tool_version_color="blue",
         )

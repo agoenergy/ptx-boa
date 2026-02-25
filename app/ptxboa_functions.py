@@ -271,10 +271,6 @@ def calculate_results_list_blue(
         else:
             raise ValueError(f"invalid {parameter_to_change=}")
 
-    # drop Green Iron if comparing chains (because it is not an energy carrier)
-    if parameter_to_change == "chain":
-        parameter_list = parameter_list[~parameter_list.str.startswith("Green Iron")]
-
     costs_list = []
     emissions_list = []
     emissions_mass_list = []
