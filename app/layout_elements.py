@@ -20,9 +20,9 @@ from ptxboa.api import PtxboaAPI
 from ptxboa.static import ToolVersionColorType
 
 
-def display_costs(
-    df_costs: pd.DataFrame,
-    df_costs_without_user_changes: pd.DataFrame,
+def display_results_bar_and_table(
+    df: pd.DataFrame,
+    df_without_user_changes: pd.DataFrame,
     key: str,
     titlestring: str,
     key_suffix: str = "",
@@ -32,13 +32,22 @@ def display_costs(
     help_string: str | None = None,
     x_label_mapping: dict[str, str] | None = None,
     tool_version_color: ToolVersionColorType = "green",
+    data_type: Literal["costs", "emissions"] = "costs",
 ):
-    """Display costs as table and bar chart."""
+    """Display costs/emissions as table and bar chart."""
     if x_label_mapping is None:
         x_label_mapping = {}
 
-    if output_unit is None:
-        output_unit: str = st.session_state["output_unit"]
+    if data_type == "costs":
+        min_10_label = "Cheapest 10"
+        if output_unit is None:
+            output_unit: str = st.session_state["output_unit"]
+
+    if data_type == "emissions":
+        min_10_label = "Lowest 10"
+        if output_unit is None:
+            output_unit: str = st.session_state["emissions_output_unit"]
+
     key_suffix = key_suffix.lower().replace(" ", "_")
     st.subheader(titlestring)
 
@@ -58,13 +67,13 @@ def display_costs(
                 key=f"select_user_modificatons_data_{key}_{key_suffix}",
             )
         if select_data == "With Modifications":
-            df_res = df_costs
+            df_res = df
         if select_data == "Without Modifications":
-            df_res = df_costs_without_user_changes
+            df_res = df_without_user_changes
         if select_data == "Difference":
-            df_res = df_costs - df_costs_without_user_changes
+            df_res = df - df_without_user_changes
     else:
-        df_res = df_costs.copy()
+        df_res = df.copy()
 
     if default_manual_select is None:
         default_manual_select = df_res.index.values
@@ -77,7 +86,7 @@ def display_costs(
                 select_options = [
                     "All",
                     "Manual selection",
-                    "Cheapest 10",
+                    min_10_label,
                 ]
             else:
                 select_options = ["All", "Manual selection"]
@@ -102,7 +111,7 @@ def display_costs(
             )
             df_res = df_res.loc[ind_select]
 
-        if show_which_data == "Cheapest 10":
+        if show_which_data == min_10_label:
             ind_select = (
                 df_res.sort_values(["Total"], ascending=True).iloc[:10].index.to_list()
             )
@@ -115,9 +124,9 @@ def display_costs(
             df_res = df_res.loc[ind_select]
             sort_ascending = False
 
-        if show_which_data != "Cheapest 10":
+        if show_which_data != min_10_label:
             sort_ascending = st.toggle(
-                "Sort by total costs?",
+                f"Sort by total {data_type}?",
                 value=True,
                 key=f"sort_data_{key}_{key_suffix}",
             )
@@ -165,126 +174,7 @@ def display_costs(
     with st.expander("**Data**"):
         column_config = config_number_columns(df_res, format=f"%.1f {output_unit}")
         st.dataframe(df_res, width="stretch", column_config=column_config)
-        fn = f"costs_per_{key}_{key_suffix}".strip("_")
-        if st.session_state["user_changes_df"] is not None:
-            fn = f"{fn}_{select_data}".lower().replace(" ", "_")
-        prepare_and_download_df_as_excel(df_res, filename=fn)
-
-    return None
-
-
-def display_emissions(
-    wide_df: pd.DataFrame,
-    wide_df_without_user_changes: pd.DataFrame,
-    key: str,
-    titlestring: str,
-    key_suffix: str = "",
-    output_unit: str | None = None,
-    default_select: int = 0,
-    default_manual_select: str | None = None,
-    help_string: str | None = None,
-):
-    """Display emissions as table and bar chart."""
-    if output_unit is None:
-        output_unit = st.session_state["emissions_output_unit"]
-    key_suffix = key_suffix.lower().replace(" ", "_")
-    st.subheader(titlestring)
-
-    if help_string is not None:
-        st.markdown(help_string)
-
-    c1, c2 = st.columns(2)
-
-    # select which dataset to display:
-    if st.session_state["user_changes_df"] is not None:
-        with c2:
-            st.info("Input data has been modified. Select which data to display.")
-            select_data = st.radio(
-                "Data to display",
-                ["With Modifications", "Without Modifications", "Difference"],
-                horizontal=True,
-                key=f"select_user_modificatons_data_{key}_{key_suffix}",
-            )
-        if select_data == "With Modifications":
-            df_res = wide_df
-        if select_data == "Without Modifications":
-            df_res = wide_df_without_user_changes
-        if select_data == "Difference":
-            df_res = wide_df - wide_df_without_user_changes
-    else:
-        df_res = wide_df.copy()
-
-    if default_manual_select is None:
-        default_manual_select = df_res.index.values
-
-    with c1:
-        if len(df_res) > 13:
-            select_options = [
-                "All",
-                "Manual selection",
-                "Lowest 10",
-            ]
-        else:
-            select_options = ["All", "Manual selection"]
-        # select filter:
-        show_which_data = st.radio(
-            "Elements to display:",
-            select_options,
-            index=default_select,
-            horizontal=True,
-            key=f"show_which_data_{key}_{key_suffix}",
-        )
-
-        # apply filter:
-        if show_which_data == "Manual selection":
-            ind_select = st.multiselect(
-                "Select elements:",
-                df_res.index.values,
-                default=default_manual_select,
-                key=f"select_data_{key}_{key_suffix}",
-                label_visibility="collapsed",
-            )
-            df_res = df_res.loc[ind_select]
-
-        if show_which_data == "Lowest 10":
-            ind_select = (
-                df_res.sort_values(["Total"], ascending=True).iloc[:10].index.to_list()
-            )
-            # append the setting from the sidebar if not in cheapest 10
-            if (
-                st.session_state[key] not in ind_select
-                and st.session_state[key] in df_res.index
-            ):
-                ind_select.append(st.session_state[key])
-            df_res = df_res.loc[ind_select]
-            sort_ascending = False
-
-        else:
-            # sort:
-            sort_ascending = st.toggle(
-                "Sort by total emissions?",
-                value=True,
-                key=f"sort_data_{key}_{key_suffix}",
-            )
-
-    if sort_ascending:
-        df_res = df_res.sort_values(["Total"], ascending=True)
-
-    # fix index names
-    change_index_names(df_res)
-
-    # create graph:
-    fig = create_bar_chart_costs(
-        df_res,
-        current_selection=st.session_state[key],
-        output_unit=output_unit,
-    )
-    st.plotly_chart(fig, width="stretch")
-
-    with st.expander("**Data**"):
-        column_config = config_number_columns(df_res, format=f"%.1f {output_unit}")
-        st.dataframe(df_res, width="stretch", column_config=column_config)
-        fn = f"emissions_per_{key}_{key_suffix}".strip("_")
+        fn = f"{data_type}_per_{key}_{key_suffix}".strip("_")
         if st.session_state["user_changes_df"] is not None:
             fn = f"{fn}_{select_data}".lower().replace(" ", "_")
         prepare_and_download_df_as_excel(df_res, filename=fn)

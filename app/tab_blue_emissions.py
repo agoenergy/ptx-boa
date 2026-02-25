@@ -4,7 +4,7 @@ import pandas as pd
 import streamlit as st
 from plotly.subplots import make_subplots
 
-from app.layout_elements import display_emissions, what_is_a_boxplot
+from app.layout_elements import display_results_bar_and_table, what_is_a_boxplot
 from app.plot_functions import (
     create_bar_chart_costs,
     create_box_plot,
@@ -120,7 +120,7 @@ def content_emissions(api: PtxboaAPI):
                     " by total emissions. You can change this in the filter settings."
                 ]
             )
-            display_emissions(
+            display_results_bar_and_table(
                 aggregate_emissions(results_per_region.emissions, index="region"),
                 (
                     aggregate_emissions(
@@ -133,6 +133,7 @@ def content_emissions(api: PtxboaAPI):
                 key_suffix="emissions_steps",
                 titlestring="Emissions per process step for different source countries",
                 help_string=help_string,
+                data_type="emissions",
             )
 
         with st.container(border=True):
@@ -144,7 +145,7 @@ def content_emissions(api: PtxboaAPI):
                     " by total emissions. You can change this in the filter settings."
                 ]
             )
-            display_emissions(
+            display_results_bar_and_table(
                 aggregate_emissions(
                     results_per_region.emissions, index="region", columns="gas_type"
                 ),
@@ -161,6 +162,7 @@ def content_emissions(api: PtxboaAPI):
                 key_suffix="emissions_gases",
                 titlestring="Emissions per gas type for different source countries",
                 help_string=help_string,
+                data_type="emissions",
             )
 
         st.divider()

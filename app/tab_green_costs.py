@@ -3,7 +3,7 @@
 import streamlit as st
 from plotly.subplots import make_subplots
 
-from app.layout_elements import display_costs, what_is_a_boxplot
+from app.layout_elements import display_results_bar_and_table, what_is_a_boxplot
 from app.plot_functions import (
     create_bar_chart_costs,
     create_box_plot,
@@ -116,7 +116,7 @@ def content_costs(api: PtxboaAPI):
                 " total costs. You can change this in the filter settings."
             ]
         )
-        display_costs(
+        display_results_bar_and_table(
             costs_per_region,
             costs_per_region_without_user_changes,
             "region",
@@ -140,7 +140,7 @@ def content_costs(api: PtxboaAPI):
                 " by data scenario (2030/2040, low/medium/high costs)."
             ]
         )
-        display_costs(
+        display_results_bar_and_table(
             costs_per_scenario,
             costs_per_scenario_without_user_changes,
             "scenario",
@@ -173,7 +173,7 @@ def content_costs(api: PtxboaAPI):
                 "by renewable electricity source."
             ]
         )
-        display_costs(
+        display_results_bar_and_table(
             costs_per_res_gen,
             costs_per_res_gen_without_user_changes,
             "res_gen",
@@ -202,7 +202,7 @@ def content_costs(api: PtxboaAPI):
                 " You can change this in the filter settings."
             ]
         )
-        display_costs(
+        display_results_bar_and_table(
             costs_per_chain,
             costs_per_chain_without_user_changes,
             "chain",
