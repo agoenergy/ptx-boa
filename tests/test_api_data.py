@@ -485,3 +485,47 @@ def test_get_calculation_data_w_opt(ptxdata_dir, scenario, kwargs, request):
     del result["flh_opt_hash"]["filepath"]  # dont test this
 
     assert_deep_equal(exp_result, result)
+
+
+@pytest.mark.parametrize(
+    "chain, is_green, is_blue",
+    [
+        (x.chain, x.is_green, x.is_blue)
+        for x in DataHandler.get_dimension(
+            "chain", tool_version_color=None
+        ).itertuples()
+    ],
+)
+@pytest.mark.parametrize(
+    "use_ship, ship_own_fuel",
+    [
+        (False, False),
+        (True, False),
+        # (True, True),  # no ship own fuel because needs SHP_OWN specified # noqa E800
+    ],
+)
+def test_validate_chains(chain, is_green, is_blue, use_ship, ship_own_fuel):
+    if is_green and is_blue:
+        raise ValueError("chain is both green and blue")
+
+    tool_version_color = "green" if is_green else "blue"
+    process_code_res = "RES-HYBR" if is_green else None
+
+    dh = DataHandler(
+        scenario="2030 (medium)",
+        tool_version_color=tool_version_color,
+        # specifically DON'T use test data here
+        # we want to validate the current chains
+    )
+
+    # _validate_process_chain called inside here
+
+    dh._get_calculation_data(
+        secondary_processes={},
+        chain_name=chain,
+        process_code_res=process_code_res,
+        source_region_code="ESP",
+        target_country_code="DEU",
+        use_ship=use_ship,
+        ship_own_fuel=ship_own_fuel,
+    )

@@ -271,10 +271,6 @@ def calculate_results_list_blue(
         else:
             raise ValueError(f"invalid {parameter_to_change=}")
 
-    # drop Green Iron if comparing chains (because it is not an energy carrier)
-    if parameter_to_change == "chain":
-        parameter_list = parameter_list[~parameter_list.str.startswith("Green Iron")]
-
     costs_list = []
     emissions_list = []
     emissions_mass_list = []
@@ -497,7 +493,11 @@ def sort_columns_by_position_in_chain(df):
         "Transportation (Pipeline)",
         "Transportation (Ship)",
         "CH4",
+        "CH4 (direct)",
+        "CH4 (indirect)",
         "CO2",
+        "CO2 (direct)",
+        "CO2 (indirect)",
         "Total",
     ]
 
@@ -989,6 +989,7 @@ def change_index_names(df: pd.DataFrame, mapping: dict | None = None) -> pd.Data
             "res_gen": "RE source",
             "chain": "Chain",
             "flow_code": "Carrier/Material",
+            "process_type": "Processing step",
         }
     new_idx_names = [mapping.get(i, i) for i in df.index.names]
     df.index.names = new_idx_names

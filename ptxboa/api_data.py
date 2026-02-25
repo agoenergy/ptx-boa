@@ -9,7 +9,13 @@ from typing import Dict, Iterable, List, Literal, Tuple
 import numpy as np
 import pandas as pd
 
-from ptxboa import KEY_SEPARATOR, PROFILES_DIR, STATIC_DATA_DIR, logger
+from ptxboa import (
+    DEFAULT_DATA_DIR,
+    KEY_SEPARATOR,
+    PROFILES_DIR,
+    STATIC_DATA_DIR,
+    logger,
+)
 from ptxboa.api_optimize import PtxOpt
 from ptxboa.static import (
     ChainNameType,
@@ -396,7 +402,7 @@ class DataHandler:
         self,
         scenario: ScenarioType,
         user_data: None | pd.DataFrame = None,
-        data_dir: Path | None = None,
+        data_dir: Path = DEFAULT_DATA_DIR,
         cache_dir: Path | None = None,
         tool_version_color: ToolVersionColorType = "green",
     ):
@@ -1102,12 +1108,14 @@ class DataHandler:
             flow_code_in = process["main_flow_code_in"]
             if flow_code and flow_code != flow_code_in:
                 raise AssertionError(
-                    f"flow_code != flow_code_in: {flow_code} != {flow_code_in}"
+                    f"flow_code != flow_code_in in {process_code}: "
+                    f"{flow_code} != {flow_code_in}"
                 )
             flow_code = process["main_flow_code_out"]  # type:ignore
         if flow_code != final_flow_code:
             raise AssertionError(
-                f"flow_code != flow_code_in: {flow_code} != {final_flow_code}"
+                f"flow_code != final_flow_code in {process_code}: "
+                f"{flow_code} != {final_flow_code}"
             )
 
     @classmethod
