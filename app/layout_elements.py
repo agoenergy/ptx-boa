@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Layout elements that get reused in several tabs."""
+
 from typing import Literal
 
 import pandas as pd
@@ -16,6 +17,7 @@ from app.ptxboa_functions import (
 )
 from app.user_data import register_user_changes
 from ptxboa.api import PtxboaAPI
+from ptxboa.static import ToolVersionColorType
 
 
 def display_costs(
@@ -28,10 +30,15 @@ def display_costs(
     default_select: int = 0,
     default_manual_select: str | None = None,
     help_string: str | None = None,
+    x_label_mapping: dict[str, str] | None = None,
+    tool_version_color: ToolVersionColorType = "green",
 ):
     """Display costs as table and bar chart."""
+    if x_label_mapping is None:
+        x_label_mapping = {}
+
     if output_unit is None:
-        output_unit = st.session_state["output_unit"]
+        output_unit: str = st.session_state["output_unit"]
     key_suffix = key_suffix.lower().replace(" ", "_")
     st.subheader(titlestring)
 
@@ -63,22 +70,25 @@ def display_costs(
         default_manual_select = df_res.index.values
 
     with c1:
-        if len(df_res) > 13:
-            select_options = [
-                "All",
-                "Manual selection",
-                "Cheapest 10",
-            ]
+        if len(df_res) < 7:
+            show_which_data = "All"
         else:
-            select_options = ["All", "Manual selection"]
-        # select filter:
-        show_which_data = st.radio(
-            "Elements to display:",
-            select_options,
-            index=default_select,
-            horizontal=True,
-            key=f"show_which_data_{key}_{key_suffix}",
-        )
+            if len(df_res) > 13:
+                select_options = [
+                    "All",
+                    "Manual selection",
+                    "Cheapest 10",
+                ]
+            else:
+                select_options = ["All", "Manual selection"]
+            # select filter:
+            show_which_data = st.radio(
+                "Elements to display:",
+                select_options,
+                index=default_select,
+                horizontal=True,
+                key=f"show_which_data_{key}_{key_suffix}",
+            )
 
         # apply filter:
         if show_which_data == "Manual selection":
@@ -88,6 +98,7 @@ def display_costs(
                 default=default_manual_select,
                 key=f"select_data_{key}_{key_suffix}",
                 label_visibility="collapsed",
+                format_func=lambda k: x_label_mapping.get(k, k),
             )
             df_res = df_res.loc[ind_select]
 
@@ -104,8 +115,7 @@ def display_costs(
             df_res = df_res.loc[ind_select]
             sort_ascending = False
 
-        else:
-            # sort:
+        if show_which_data != "Cheapest 10":
             sort_ascending = st.toggle(
                 "Sort by total costs?",
                 value=True,
@@ -115,32 +125,42 @@ def display_costs(
     if sort_ascending:
         df_res = df_res.sort_values(["Total"], ascending=True)
 
+    if x_label_mapping:
+        df_res = df_res.rename(index=x_label_mapping)
+        current_selection = x_label_mapping.get(st.session_state[key])
+    else:
+        current_selection = st.session_state[key]
+
     # fix index names
     change_index_names(df_res)
 
     # create graph:
     fig = create_bar_chart_costs(
         df_res,
-        current_selection=st.session_state[key],
+        current_selection=current_selection,
         output_unit=output_unit,
     )
     st.plotly_chart(fig, width="stretch")
 
-    # add explainer for costs by supply chain comparison:
-    if key == "chain":
-        if st.session_state["output_unit"] == "USD/t":
-            unit_note = (
-                "The output unit is set to USD/MWh in order to compare products"
-                " with different energy densities. "
-            )
-        else:
-            unit_note = ""
-        st.caption(
-            (
-                f"**Note**: {unit_note}Green Iron is not shown in this comparison "
-                "as it is not an energy carrier."
-            )
+    if output_unit.endswith("/MWh") and st.session_state["output_unit"].endswith("/t"):
+        unit_note = (
+            "The output unit is set to per MWh in order to compare products"
+            " with different energy densities. "
         )
+    else:
+        unit_note = ""
+
+    # add explainer for costs by supply chain comparison:
+    if key == "chain" and tool_version_color == "green":
+        green_iron_note = (
+            "Green Iron is not shown in this comparison "
+            "as it is not an energy carrier. "
+        )
+    else:
+        green_iron_note = ""
+
+    if unit_note or green_iron_note:
+        st.caption(f"**Note**: {unit_note}{green_iron_note}")
 
     with st.expander("**Data**"):
         column_config = config_number_columns(df_res, format=f"%.1f {output_unit}")

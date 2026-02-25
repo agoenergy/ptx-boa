@@ -480,7 +480,7 @@ def _make_per_column_hoverdata(res_costs: pd.DataFrame, unit: str) -> list[pd.Se
 
 def create_bar_chart_costs(
     res_costs: pd.DataFrame,
-    current_selection: str = None,
+    current_selection: str | None = None,
     output_unit: str | None = None,
 ):
     """Create bar plot for costs by components, and dots for total costs.

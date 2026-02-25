@@ -1,5 +1,6 @@
 """Content of costs tab."""
 
+import pandas as pd
 import streamlit as st
 from plotly.subplots import make_subplots
 
@@ -113,6 +114,7 @@ def content_costs(api: PtxboaAPI):
             "region",
             "Costs for different source countries",
             help_string=help_string,
+            tool_version_color="blue",
         )
 
     with st.container(border=True):
@@ -129,12 +131,57 @@ def content_costs(api: PtxboaAPI):
         display_costs(
             results_per_wacc.costs,
             results_per_wacc.costs_not_modified,
-            "scenario",
-            "Costs for different WACC values in the supply country",
+            key="scenario",
+            key_suffix="sensitivity_wacc",
+            titlestring="Costs for different WACC values in the supply country",
             help_string=help_string,
+            tool_version_color="blue",
         )
 
     blue_chains = api.get_dimension("chain", "blue")
+    blue_chain_labels = blue_chains["chain_name"].to_dict()
+
+    with st.container(border=True):
+        with st.spinner("Please wait. Calculating results for conversion locations."):
+            results_supply_demand = blue_results_over_dimension(
+                api,
+                dim="chain",
+                parameter_list=pd.Series(
+                    [
+                        st.session_state["chain"].replace(
+                            "__prod_in_demand", "__prod_in_supply"
+                        ),
+                        st.session_state["chain"].replace(
+                            "__prod_in_supply", "__prod_in_demand"
+                        ),
+                    ]
+                ),
+            )
+
+        help_string = " ".join(
+            [
+                "This figure lets you compare total costs and cost components "
+                "by conversion location in supply or demand country"
+            ]
+        )
+
+        display_costs(
+            results_supply_demand.costs,
+            results_supply_demand.costs_not_modified,
+            key="chain",
+            key_suffix="demand_supply",
+            titlestring="Costs for converting in supply or demand country",
+            help_string=help_string,
+            x_label_mapping={
+                k: (
+                    f"{v}<br>conversion in "
+                    f"{'supply' if 'prod_in_supply' in k else 'demand'} country"
+                )
+                for k, v in blue_chain_labels.items()
+            },
+            tool_version_color="blue",
+        )
+
     with st.container(border=True):
         with st.spinner(
             "Please wait. Calculating results for different supply chains of output "
@@ -151,7 +198,6 @@ def content_costs(api: PtxboaAPI):
                 api,
                 dim="chain",
                 parameter_list=equal_output_product_chains,
-                override_session_state={"output_unit": "USD/MWh"},
             )
 
         help_string = " ".join(
@@ -168,8 +214,9 @@ def content_costs(api: PtxboaAPI):
             key="chain",
             key_suffix="equal_product",
             titlestring="Costs for different technology chains",
-            output_unit="USD/MWh",
             help_string=help_string,
+            x_label_mapping=blue_chain_labels,
+            tool_version_color="blue",
         )
 
     with st.container(border=True):
@@ -216,4 +263,6 @@ def content_costs(api: PtxboaAPI):
             titlestring="Costs for different products",
             output_unit="USD/MWh",
             help_string=help_string,
+            x_label_mapping=blue_chain_labels,
+            tool_version_color="blue",
         )
