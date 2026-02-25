@@ -198,7 +198,6 @@ def content_costs(api: PtxboaAPI):
                 api,
                 dim="chain",
                 parameter_list=equal_output_product_chains,
-                override_session_state={"output_unit": "USD/MWh"},
             )
 
         help_string = " ".join(
@@ -215,7 +214,6 @@ def content_costs(api: PtxboaAPI):
             key="chain",
             key_suffix="equal_product",
             titlestring="Costs for different technology chains",
-            output_unit="USD/MWh",
             help_string=help_string,
             x_label_mapping=blue_chain_labels,
             tool_version_color="blue",
