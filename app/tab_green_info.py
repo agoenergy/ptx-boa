@@ -4,7 +4,7 @@ import streamlit as st
 
 from app.ptxboa_functions import read_markdown_file
 
-__version__ = "2.1.15"
+__version__ = "2.1.16"
 
 
 def content_info():
