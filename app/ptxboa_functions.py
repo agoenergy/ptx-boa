@@ -985,6 +985,7 @@ def change_index_names(df: pd.DataFrame, mapping: dict | None = None) -> pd.Data
             "res_gen": "RE source",
             "chain": "Chain",
             "flow_code": "Carrier/Material",
+            "process_type": "Processing step",
         }
     new_idx_names = [mapping.get(i, i) for i in df.index.names]
     df.index.names = new_idx_names

@@ -69,18 +69,26 @@ def content_emissions(api: PtxboaAPI):
             unit=st.session_state["emissions_output_unit"],
             label="Total emissions distribution",
         )
-        filtered_data = results_per_region.emissions[
+        current_region_data = results_per_region.emissions[
             results_per_region.emissions["region"] == st.session_state["region"]
         ]
+        current_region_data_not_modified = (
+            results_per_region.emissions_not_modified[
+                results_per_region.emissions_not_modified["region"]
+                == st.session_state["region"]
+            ]
+            if results_per_region.emissions_not_modified is not None
+            else None
+        )
 
         fig2 = create_bar_chart_costs(
             pd.concat(
                 [
                     aggregate_emissions(
-                        filtered_data.assign(region="Total emissions"),
+                        current_region_data.assign(region="Total emissions"),
                         index="region",
                     ),  # here we aggregate all gas types
-                    aggregate_emissions(filtered_data, index="gas_type"),
+                    aggregate_emissions(current_region_data, index="gas_type"),
                 ]
             ).sort_index()
         )
@@ -110,6 +118,28 @@ def content_emissions(api: PtxboaAPI):
         st.plotly_chart(doublefig, width="stretch")
 
         what_is_a_boxplot()
+
+        # graph with x axis: process_type, color: gas_type
+        display_results_bar_and_table(
+            aggregate_emissions(
+                current_region_data, index="process_type", columns="gas_type"
+            ),
+            (
+                aggregate_emissions(
+                    current_region_data_not_modified,
+                    index="process_type",
+                    columns="gas_type",
+                )
+                if current_region_data_not_modified is not None
+                else None
+            ),
+            key="scenario",
+            key_suffix="gas_vs_process",
+            titlestring="Emissions per gas type for different processing steps",
+            help_string="",
+            tool_version_color="blue",
+            data_type="emissions",
+        )
 
         with st.container(border=True):
             help_string = " ".join(
