@@ -38,7 +38,7 @@ def display_costs(
         x_label_mapping = {}
 
     if output_unit is None:
-        output_unit = st.session_state["output_unit"]
+        output_unit: str = st.session_state["output_unit"]
     key_suffix = key_suffix.lower().replace(" ", "_")
     st.subheader(titlestring)
 
@@ -142,21 +142,25 @@ def display_costs(
     )
     st.plotly_chart(fig, width="stretch")
 
+    if output_unit.endswith("/MWh") and st.session_state["output_unit"].endswith("/t"):
+        unit_note = (
+            "The output unit is set to per MWh in order to compare products"
+            " with different energy densities. "
+        )
+    else:
+        unit_note = ""
+
     # add explainer for costs by supply chain comparison:
     if key == "chain" and tool_version_color == "green":
-        if st.session_state["output_unit"] == "USD/t":
-            unit_note = (
-                "The output unit is set to USD/MWh in order to compare products"
-                " with different energy densities. "
-            )
-        else:
-            unit_note = ""
-        st.caption(
-            (
-                f"**Note**: {unit_note}Green Iron is not shown in this comparison "
-                "as it is not an energy carrier."
-            )
+        green_iron_note = (
+            "Green Iron is not shown in this comparison "
+            "as it is not an energy carrier. "
         )
+    else:
+        green_iron_note = ""
+
+    if unit_note or green_iron_note:
+        st.caption(f"**Note**: {unit_note}{green_iron_note}")
 
     with st.expander("**Data**"):
         column_config = config_number_columns(df_res, format=f"%.1f {output_unit}")
