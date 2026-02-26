@@ -5,7 +5,7 @@ Ammonia (PEM),Ammonia (PEM),EL-STR,PEM-EL,H2-STR,NH3SYN,,,,,,NH3-SB,NH3-S,,,,,,,
 Ammonia (PEM) + reconv. to H2,Ammonia (PEM) + reconv. to H2,EL-STR,PEM-EL,H2-STR,NH3SYN,,,,NH3-REC,NH3-REC,NH3-SB,NH3-S,,,,,,,,H2-G,False,True,False
 Ammonia (SOEC),Ammonia (SOEC),EL-STR,SOEC-EL,H2-STR,NH3SYN,,,,,,NH3-SB,NH3-S,,,,,,,,NH3-L,False,True,False
 Ammonia (SOEC) + reconv. to H2,Ammonia (SOEC) + reconv. to H2,EL-STR,SOEC-EL,H2-STR,NH3SYN,,,,NH3-REC,NH3-REC,NH3-SB,NH3-S,,,,,,,,H2-G,False,True,False
-Blue Iron (blue)*,Blue Iron (blue)*,,,,NG-DRI,,,,,,DRI-SB,,,,,,,EAF,,STL-S,False,False,True
+Blue Iron (blue)*,TEST Blue Iron (blue)*,,,,NG-DRI,,,,,,DRI-SB,,,,,,,EAF,,STL-S,False,False,False
 CH3OH-L__ATR_91%_CH3OHSYN__prod_in_demand,Methanol (ATR)*,,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-SB,CH4-S,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,ATR_91%,CH3OHSYN,,CH3OH-L,True,False,True
 CH3OH-L__ATR_91%_CH3OHSYN__prod_in_supply,Methanol (ATR),,ATR_91%,,CH3OHSYN,,,,,,CH3OH-SB,CH3OH-S,,,,,,,,CH3OH-L,False,False,True
 CH3OH-L__CH3OHSYC__prod_in_demand,Methanol (NG-based)*,,,,,,CH4-LIQ,CH4-COMP,CH4-RGAS,,CH4-SB,CH4-S,CH4-P-S,CH4-P-L,CH4-P-SR,CH4-P-LR,,CH3OHSYC,,CH3OH-L,True,False,True
