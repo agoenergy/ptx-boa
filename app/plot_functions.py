@@ -64,7 +64,14 @@ def discrete_colors_process_type() -> dict:
 
 @st.cache_data()
 def discrete_colors_gas_type() -> dict[str, str]:
-    gas_type = ["CO2", "CH4"]
+    gas_type = [
+        "CH4",
+        "CH4 (direct)",
+        "CH4 (indirect)",
+        "CO2",
+        "CO2 (direct)",
+        "CO2 (indirect)",
+    ]
     colors = read_agora_colors()
     return {c: colors[i] for i, c in enumerate(gas_type)}
 
@@ -480,7 +487,7 @@ def _make_per_column_hoverdata(res_costs: pd.DataFrame, unit: str) -> list[pd.Se
 
 def create_bar_chart_costs(
     res_costs: pd.DataFrame,
-    current_selection: str = None,
+    current_selection: str | None = None,
     output_unit: str | None = None,
 ):
     """Create bar plot for costs by components, and dots for total costs.
