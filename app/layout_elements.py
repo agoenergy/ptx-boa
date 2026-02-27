@@ -33,6 +33,7 @@ def display_results_bar_and_table(
     x_label_mapping: dict[str, str] | None = None,
     tool_version_color: ToolVersionColorType = "green",
     data_type: Literal["costs", "emissions"] = "costs",
+    allow_sorting: bool = True,
 ):
     """Display costs/emissions as table and bar chart."""
     if x_label_mapping is None:
@@ -47,6 +48,9 @@ def display_results_bar_and_table(
         min_10_label = "Lowest 10"
         if output_unit is None:
             output_unit: str = st.session_state["emissions_output_unit"]
+
+    if not allow_sorting:
+        sort_ascending = False
 
     key_suffix = key_suffix.lower().replace(" ", "_")
     st.subheader(titlestring)
@@ -124,7 +128,7 @@ def display_results_bar_and_table(
             df_res = df_res.loc[ind_select]
             sort_ascending = False
 
-        if show_which_data != min_10_label:
+        if show_which_data != min_10_label and allow_sorting:
             sort_ascending = st.toggle(
                 f"Sort by total {data_type}?",
                 value=True,

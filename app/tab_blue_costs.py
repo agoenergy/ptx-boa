@@ -31,6 +31,7 @@ def content_costs(api: PtxboaAPI):
             results_per_region = blue_results_over_dimension(
                 api,
                 dim="region",
+                emissions_included=st.session_state["emissions_included"],
                 parameter_list=get_region_list_without_subregions(
                     api, keep=st.session_state["subregion"], tool_version_color="blue"
                 ),
@@ -119,7 +120,11 @@ def content_costs(api: PtxboaAPI):
 
     with st.container(border=True):
         with st.spinner("Please wait. Calculating results for different WACC values."):
-            results_per_wacc = blue_results_over_dimension(api, dim="WACC")
+            results_per_wacc = blue_results_over_dimension(
+                api,
+                dim="WACC",
+                emissions_included=st.session_state["emissions_included"],
+            )
 
         help_string = " ".join(
             [
@@ -146,6 +151,7 @@ def content_costs(api: PtxboaAPI):
             results_supply_demand = blue_results_over_dimension(
                 api,
                 dim="chain",
+                emissions_included=st.session_state["emissions_included"],
                 parameter_list=pd.Series(
                     [
                         st.session_state["chain"].replace(
@@ -197,6 +203,7 @@ def content_costs(api: PtxboaAPI):
             results_equal_output_product = blue_results_over_dimension(
                 api,
                 dim="chain",
+                emissions_included=st.session_state["emissions_included"],
                 parameter_list=equal_output_product_chains,
             )
 
@@ -244,6 +251,7 @@ def content_costs(api: PtxboaAPI):
             results_equal_routes = blue_results_over_dimension(
                 api,
                 dim="chain",
+                emissions_included=st.session_state["emissions_included"],
                 parameter_list=equal_reformer_chains,
                 override_session_state={"output_unit": "USD/MWh"},
             )

@@ -56,6 +56,7 @@ def discrete_colors_process_type() -> dict:
         "Derivative production",
         "Heat",
         "Carbon",
+        "Final use",
         # TODO: add missing category (GH #145)
     ]
     colors = read_agora_colors()
