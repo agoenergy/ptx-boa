@@ -355,6 +355,7 @@ def additional_settings_green(api):
 
 
 def additional_settings_blue(api: PtxboaAPI):
+    final_use_emissions_toggle()
     co2_source_toggle_blue(api)
     allow_pipeline_toggle()
     ship_own_fuel_toggle("For shipping option: Use the final product as own fuel?")
@@ -407,6 +408,17 @@ def water_source_radio(api: PtxboaAPI):
         api.get_dimension("secproc_water").index,
         horizontal=True,
         help=read_markdown_file("md/helptext_sidebar_water_source.md"),
+    )
+
+
+def final_use_emissions_toggle():
+    include_final_use = st.toggle(
+        "Include use-phase emissions",
+        value=True,
+        help=read_markdown_file("md/helptext_sidebar_blue_final_use_emissions.md"),
+    )
+    st.session_state["emissions_included"] = (
+        "upstream_and_final_use" if include_final_use else "upstream"
     )
 
 

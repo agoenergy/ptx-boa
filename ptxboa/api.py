@@ -263,7 +263,11 @@ class PtxboaAPI:
             )
             .drop(columns="cost_type")
         )
-        emissions_mass = emissions.copy().assign(values=lambda x: x["values"] * 0.25)
+        emissions_mass = emissions.copy().assign(
+            emission_type="direct",
+            process_type="Final use",
+            values=lambda x: x["values"] * 0.25,
+        )
 
         return ApiCalculateResult(
             metadata=metadata,
