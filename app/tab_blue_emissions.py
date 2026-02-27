@@ -15,6 +15,7 @@ from app.ptxboa_functions import (
     blue_results_over_dimension,
     get_region_list_without_subregions,
     read_markdown_file,
+    sort_by_position_in_chain,
 )
 from ptxboa.api import PtxboaAPI
 
@@ -122,22 +123,30 @@ def content_emissions(api: PtxboaAPI):
 
         # graph with x axis: process_type, color: gas_type
         display_results_bar_and_table(
-            aggregate_emissions(
-                current_region_data.assign(
-                    gas_type=lambda x: x["gas_type"] + " (" + x["emission_type"] + ")"
-                ),
-                index="process_type",
-                columns="gas_type",
-            ),
-            (
+            sort_by_position_in_chain(
                 aggregate_emissions(
-                    current_region_data_not_modified.assign(
+                    current_region_data.assign(
                         gas_type=lambda x: (
                             x["gas_type"] + " (" + x["emission_type"] + ")"
                         )
                     ),
                     index="process_type",
                     columns="gas_type",
+                ),
+                axis="index",
+            ),
+            (
+                sort_by_position_in_chain(
+                    aggregate_emissions(
+                        current_region_data_not_modified.assign(
+                            gas_type=lambda x: (
+                                x["gas_type"] + " (" + x["emission_type"] + ")"
+                            )
+                        ),
+                        index="process_type",
+                        columns="gas_type",
+                    ),
+                    axis="index",
                 )
                 if current_region_data_not_modified is not None
                 else None
@@ -148,6 +157,7 @@ def content_emissions(api: PtxboaAPI):
             help_string="",
             tool_version_color="blue",
             data_type="emissions",
+            allow_sorting=False,
         )
 
         with st.container(border=True):

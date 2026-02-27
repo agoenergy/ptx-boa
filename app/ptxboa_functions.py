@@ -448,7 +448,7 @@ def aggregate_costs(
     # calculate total costs:
     res["Total"] = res.sum(axis=1)
 
-    return sort_columns_by_position_in_chain(res)
+    return sort_by_position_in_chain(res)
 
 
 def aggregate_emissions(
@@ -463,25 +463,14 @@ def aggregate_emissions(
     )
     # calculate total emissions:
     res["Total"] = res.sum(axis=1)
-    return sort_columns_by_position_in_chain(res)
+    return sort_by_position_in_chain(res)
 
 
-def sort_columns_by_position_in_chain(df):
-    """Change cost type column order to match the occurrence in a chain.
-
-    This is necessary for the order of the colors in the stacked barplots (GH #150).
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        columns need to be in 'cost_type_order'
-
-    Returns
-    -------
-    pd.DataFrame
-        same data with changed order of columns.
-    """
-    #
+def sort_by_position_in_chain(
+    df: pd.DataFrame,
+    axis: Literal["columns", "index"] = "columns",
+) -> pd.DataFrame:
+    """Reorder columns OR index to match the occurrence in a chain."""
     cost_type_order = [
         "Electricity generation",
         "Electrolysis",
@@ -502,12 +491,17 @@ def sort_columns_by_position_in_chain(df):
         "Total",
     ]
 
-    unknown = set(df.columns) - set(cost_type_order)
-    if unknown:
-        raise ValueError(f"Unrecognized column(s): {', '.join(unknown)}")
+    labels = df.columns if axis == "columns" else df.index
 
-    cols = [c for c in cost_type_order if c in df.columns]
-    return df[cols]
+    unknown = set(labels) - set(cost_type_order)
+    if unknown:
+        what = "column(s)" if axis == "columns" else "index value(s)"
+        raise ValueError(f"Unrecognized {what}: {', '.join(map(str, unknown))}")
+
+    ordered = [x for x in cost_type_order if x in labels]
+
+    # reindex works for either axis
+    return df.reindex(ordered, axis=axis)
 
 
 def subset_and_pivot_input_data(
