@@ -448,7 +448,7 @@ def aggregate_costs(
     # calculate total costs:
     res["Total"] = res.sum(axis=1)
 
-    return sort_columns_by_position_in_chain(res)
+    return sort_by_position_in_chain(res)
 
 
 def aggregate_emissions(
@@ -463,25 +463,14 @@ def aggregate_emissions(
     )
     # calculate total emissions:
     res["Total"] = res.sum(axis=1)
-    return sort_columns_by_position_in_chain(res)
+    return sort_by_position_in_chain(res)
 
 
-def sort_columns_by_position_in_chain(df):
-    """Change cost type column order to match the occurrence in a chain.
-
-    This is necessary for the order of the colors in the stacked barplots (GH #150).
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        columns need to be in 'cost_type_order'
-
-    Returns
-    -------
-    pd.DataFrame
-        same data with changed order of columns.
-    """
-    #
+def sort_by_position_in_chain(
+    df: pd.DataFrame,
+    axis: Literal["columns", "index"] = "columns",
+) -> pd.DataFrame:
+    """Reorder columns OR index to match the occurrence in a chain."""
     cost_type_order = [
         "Electricity generation",
         "Electrolysis",
@@ -492,6 +481,7 @@ def sort_columns_by_position_in_chain(df):
         "Carbon",
         "Transportation (Pipeline)",
         "Transportation (Ship)",
+        "Final use",
         "CH4",
         "CH4 (direct)",
         "CH4 (indirect)",
@@ -501,12 +491,17 @@ def sort_columns_by_position_in_chain(df):
         "Total",
     ]
 
-    unknown = set(df.columns) - set(cost_type_order)
-    if unknown:
-        raise ValueError(f"Unrecognized column(s): {', '.join(unknown)}")
+    labels = df.columns if axis == "columns" else df.index
 
-    cols = [c for c in cost_type_order if c in df.columns]
-    return df[cols]
+    unknown = set(labels) - set(cost_type_order)
+    if unknown:
+        what = "column(s)" if axis == "columns" else "index value(s)"
+        raise ValueError(f"Unrecognized {what}: {', '.join(map(str, unknown))}")
+
+    ordered = [x for x in cost_type_order if x in labels]
+
+    # reindex works for either axis
+    return df.reindex(ordered, axis=axis)
 
 
 def subset_and_pivot_input_data(
@@ -1047,10 +1042,8 @@ def green_costs_over_dimension(
 class BlueResultOverDimension:
     costs: pd.DataFrame
     emissions: pd.DataFrame
-    emissions_mass: pd.DataFrame
     costs_not_modified: Optional[pd.DataFrame] = None
     emissions_not_modified: Optional[pd.DataFrame] = None
-    emissions_mass_not_modified: Optional[pd.DataFrame] = None
 
 
 def blue_results_over_dimension(
@@ -1061,9 +1054,29 @@ def blue_results_over_dimension(
         "scenario",
         "WACC",
     ],
+    emissions_included: Literal["upstream", "final_use", "upstream_and_final_use"],
     parameter_list: None | pd.Series | pd.Index = None,
     override_session_state=None,
 ):
+
+    def combine_emissions(
+        emissions: pd.DataFrame | None,
+        emissions_mass: pd.DataFrame | None,
+        included: Literal["upstream", "final_use", "upstream_and_final_use"],
+    ) -> pd.DataFrame | None:
+        if emissions is None and emissions_mass is None:
+            return None
+        if included == "upstream":
+            return emissions
+        if included == "final_use":
+            return emissions_mass
+        if included == "upstream_and_final_use":
+            if emissions is None:
+                return emissions_mass
+            if emissions_mass is None:
+                return emissions
+            return pd.concat([emissions, emissions_mass])
+
     costs, emissions, emissions_mass = calculate_results_list_blue(
         api,
         parameter_to_change=dim,
@@ -1087,9 +1100,11 @@ def blue_results_over_dimension(
 
     return BlueResultOverDimension(
         costs=costs,
-        emissions=emissions,
-        emissions_mass=emissions_mass,
+        emissions=combine_emissions(
+            emissions, emissions_mass, included=emissions_included
+        ),
         costs_not_modified=costs_nm,
-        emissions_not_modified=emissions_nm,
-        emissions_mass_not_modified=emissions_mass_nm,
+        emissions_not_modified=combine_emissions(
+            emissions_nm, emissions_mass_nm, included=emissions_included
+        ),
     )
