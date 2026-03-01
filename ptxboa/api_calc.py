@@ -301,7 +301,8 @@ class PtxCalc:
         # TODO: for blue hydrogen chains, there is no RES
         idx = results_cost["process_type"] == "Electricity generation"
         if not idx.any():
-            logger.warning("Missing Electricity generation process")
+            # TODO: in blue tool, we have no RES process, so should not warn
+            pass
         else:
             norm_factor_el = sum_el
             results_cost.loc[idx, "values"] = (
