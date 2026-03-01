@@ -15,6 +15,7 @@ logger = logging.getLogger()
 
 @dataclass(slots=True)
 class ResultsFlows:
+    process_code: str
     process_step: str
     main_input: float
     main_output: float
@@ -138,6 +139,7 @@ class PtxCalc:
                 main_output_value = main_input_value * eff
 
             results_flows = ResultsFlows(
+                process_code=process_code,
                 process_step=process_step,
                 main_input=main_input_value,
                 main_output=main_output_value,

@@ -5,7 +5,8 @@ from pprint import pprint
 import pandas as pd
 import pytest
 
-from ptxboa.api import PtxCalc
+from ptxboa import DEFAULT_DATA_DIR
+from ptxboa.api import PtxboaAPI, PtxCalc
 from ptxboa.api_data import DataHandler
 from tests.test_api import ptxdata_dir_static
 
@@ -63,7 +64,7 @@ def _rec_approx(x):
         ],
     ],
 )
-def test_new_blue_chain(scenario, kwargs, request):
+def test_new_blue_chain(scenario, kwargs):
     """Data test for blue iron chain."""
     user_data = pd.DataFrame(
         [
@@ -353,3 +354,31 @@ def test_new_blue_chain(scenario, kwargs, request):
             },
         },
     ]
+
+
+def test_new_blue_chain2():
+
+    api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR)
+
+    res = api.calculate(
+        scenario="2030 (medium)",
+        secproc_co2=None,
+        secproc_water=None,
+        chain="STL-S__NG-DRI-C_EAF__prod_in_demand",
+        res_gen=None,
+        region="Qatar",
+        country="Germany",
+        transport="Ship",
+        ship_own_fuel=False,
+        tool_version_color="blue",
+    )
+
+    print(res.costs)
+    print(res.emission_mass)
+    print(res.emissions)
+    pprint(res.todo_results_flows)
+    pprint(res.todo_data)
+
+
+if __name__ == "__main__":
+    test_new_blue_chain2()
