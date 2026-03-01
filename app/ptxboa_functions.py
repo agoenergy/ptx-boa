@@ -24,6 +24,8 @@ from ptxboa.static import (
 )
 from ptxboa.utils import is_test
 
+logger = logging.getLogger()
+
 
 @st.cache_data(show_spinner=False)
 def calculate_cached(
@@ -335,9 +337,19 @@ def calculate_results_list_blue(
             & (df["source_region_code"] == source_region_code),
             "value",
         ]
+
         if len(value_df) != 1:
-            raise IndexError(f"Not exactly one entry found: {value_df}")
-        value = value_df.iloc[0]
+            # FIXME
+            logger.error(
+                "Expected exactly 1, got %d results for %s in %s",
+                len(value_df),
+                settings,
+                value_df,
+            )
+            value = 0
+
+        else:
+            value = value_df.iloc[0]
 
         if apply_user_data and st.session_state["user_changes_df"] is not None:
             user_data = st.session_state["user_changes_df"].fillna("")

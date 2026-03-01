@@ -15,6 +15,7 @@ logger = logging.getLogger()
 
 @dataclass(slots=True)
 class ResultsFlows:
+    process_code: str
     process_step: str
     main_input: float
     main_output: float
@@ -138,6 +139,7 @@ class PtxCalc:
                 main_output_value = main_input_value * eff
 
             results_flows = ResultsFlows(
+                process_code=process_code,
                 process_step=process_step,
                 main_input=main_input_value,
                 main_output=main_output_value,
@@ -301,7 +303,8 @@ class PtxCalc:
         # TODO: for blue hydrogen chains, there is no RES
         idx = results_cost["process_type"] == "Electricity generation"
         if not idx.any():
-            logger.warning("Missing Electricity generation process")
+            # TODO: in blue tool, we have no RES process, so should not warn
+            pass
         else:
             norm_factor_el = sum_el
             results_cost.loc[idx, "values"] = (
