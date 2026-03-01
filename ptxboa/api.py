@@ -126,10 +126,10 @@ class PtxboaAPI:
     def calculate(
         self,
         scenario: ScenarioType,
-        secproc_co2: SecProcCO2Type,
-        secproc_water: SecProcH2OType,
+        secproc_co2: SecProcCO2Type | None,
+        secproc_water: SecProcH2OType | None,
         chain: ChainNameType,
-        res_gen: ResGenType,
+        res_gen: ResGenType | None,
         region: SourceRegionNameType,
         country: TargetCountryNameType,
         transport: TransportType,
@@ -185,6 +185,11 @@ class PtxboaAPI:
             * `cost_type`: one of {RESULT_COST_TYPES}
 
         """
+        # make sure optimize_flh=False in blue tool
+        if optimize_flh and tool_version_color == "blue":
+            logger.warning("optimize_flh should be False in blue tool.")
+            optimize_flh = False
+
         data_handler = DataHandler(
             scenario,
             user_data,
