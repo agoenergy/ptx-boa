@@ -5,7 +5,8 @@ from pprint import pprint
 import pandas as pd
 import pytest
 
-from ptxboa.api import PtxCalc
+from ptxboa import DEFAULT_DATA_DIR
+from ptxboa.api import PtxboaAPI, PtxCalc
 from ptxboa.api_data import DataHandler
 from tests.test_api import ptxdata_dir_static
 
@@ -63,7 +64,7 @@ def _rec_approx(x):
         ],
     ],
 )
-def test_new_blue_chain(scenario, kwargs, request):
+def test_new_blue_chain(scenario, kwargs):
     """Data test for blue iron chain."""
     user_data = pd.DataFrame(
         [
@@ -223,8 +224,7 @@ def test_new_blue_chain(scenario, kwargs, request):
     calculation_data = data_handler.get_calculation_data(**kwargs, optimize_flh=False)
     values, _cost_result_df = PtxCalc.calculate(calculation_data)  # noqa
 
-    pprint(calculation_data)
-    pprint(values)
+    print(calculation_data)
 
     assert _rec_approx(calculation_data) == {
         "context": {"source_region_code": "QAT", "target_country_code": "DEU"},
@@ -301,55 +301,84 @@ def test_new_blue_chain(scenario, kwargs, request):
         ],
     }
 
+    print(values)
+
     assert _rec_approx(values) == [
         {
+            "process_code": "NG-DRI",
+            "process_step": "DERIV",
+            "main_input": 3.0937132010184407,  # process_calc!E25
+            "main_output": 0.9900000099000001,  # process_calc!E33
             "flows": {
                 "EL": 0.4720904147209042,  # process_calc!E26
+                "HEAT": 0.009900000099000002,  # process_calc!E28
                 "IOP-S": 0.9801000098010001,  # process_calc!E27
-                "HEAT": 0.0099,  # process_calc!E28
             },
-            "main_input": 3.0937132010184407,  # process_calc!E25
-            "main_output": 0.99,  # process_calc!E33
-            "process_step": "DERIV",
             "emissions": {
+                "co2_indirect": 0.0,
                 "co2_bound_output": 0.0,
                 "co2_captured": -0.04870006586817431,
-                "co2_emission_direct": 0.006012353810885717,
                 "co2_emission_from_bound": -0.07154701034954002,
-                "co2_indirect": 0.0,
+                "co2_emission_direct": 0.006012353810885717,
                 "co2e_emission_direct": 3.996637207707444,
             },
         },
         {
-            "flows": {},
-            "main_input": 0.99,
-            "main_output": 0.99,
+            "process_code": "DRI-SB",
             "process_step": "SHP",
+            "main_input": 0.9900000099000001,
+            "main_output": 0.9900000099000001,
+            "flows": {},
             "emissions": {
+                "co2_indirect": 0.0,
                 "co2_bound_output": 0.0,
                 "co2_captured": 0.0,
-                "co2_emission_direct": 0.0,
                 "co2_emission_from_bound": 0.0,
-                "co2_indirect": 0.0,
+                "co2_emission_direct": 0.0,
                 "co2e_emission_direct": 0.0,
             },
         },
         {
-            "flows": {
-                "NG-G": 0.315,  # process_calc!J26
-                "EL": 0.651,  # process_calc!J27
-                "HEAT": 0.01,  # process_calc!J30
-            },
-            "main_input": 0.99,  # process_calc!J25
-            "main_output": 1.0,
+            "process_code": "EAF",
             "process_step": "DERIV_I",
+            "main_input": 0.9900000099000001,
+            "main_output": 1.0,
+            "flows": {
+                "EL": 0.6509999999999999,  # process_calc!J27
+                "HEAT": 0.009999999999999998,  # process_calc!J30
+                "NG-G": 0.31499999999999995,  # process_calc!J26
+            },
             "emissions": {
+                "co2_indirect": 63.315,
                 "co2_bound_output": 0.00396,
                 "co2_captured": -0.0,
-                "co2_emission_direct": 0.0006121742150518469,
                 "co2_emission_from_bound": -0.008283484301036939,
-                "co2_indirect": 63.315,
+                "co2_emission_direct": 0.0006121742150518469,
                 "co2e_emission_direct": 0.0006121742150518469,
             },
         },
     ]
+
+
+if __name__ == "__main__":
+    # TODO: convert into test function after
+    api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR)
+
+    res = api.calculate(
+        scenario="2030 (medium)",
+        secproc_co2=None,
+        secproc_water=None,
+        chain="STL-S__NG-DRI-C_EAF__prod_in_demand",
+        res_gen=None,
+        region="Qatar",
+        country="Germany",
+        transport="Ship",
+        ship_own_fuel=False,
+        tool_version_color="blue",
+    )
+
+    print(res.costs)
+    print(res.emission_mass)
+    print(res.emissions)
+    pprint(res.todo_results_flows)
+    pprint(res.todo_data)

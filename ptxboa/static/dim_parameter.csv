@@ -3,17 +3,17 @@ CALOR,calorific values,various (kWh per mass or volume),True,False,False,False,F
 CAPEX,CAPEX,USD2023/kW,False,True,False,True,True,True,False,True,extended,extended,,process_code/source_region_code
 CAP-T,transport capacity,kWh/a,False,False,False,False,False,True,True,False,0,1,,source_region_code/target_country_code
 CH4SHARE,methane share,fraction,True,False,False,False,False,False,False,True,,,,flow_code
-CO2BOUND,CO2 bound in product,kgC/Kg product,True,False,False,False,False,False,False,True,,,,flow_code
-CO2CPT-R,capture rate by flow,fraction,False,True,False,False,True,False,False,True,,,,process_code
-CO2CPT-S,CO2 for capture share,fraction,False,True,False,False,True,False,False,True,,,,process_code
+CO2BOUND,CO2 bound in product,kgC/Kg product,True,False,False,False,True,False,False,True,,,,flow_code/process_code
+CO2CPT-R,capture rate by flow,fraction,True,True,False,False,True,False,False,True,,,,flow_code/process_code
+CO2CPT-S,CO2 for capture share,fraction,True,True,False,False,True,False,False,True,,,,flow_code/process_code
 CO2-D,CO2 transfer distance,km,False,False,False,False,False,True,True,False,,,,source_region_code/target_country_code
-CONV,conversion factors,various (input per main output),True,True,True,False,True,False,False,False,advanced,advanced,defined per main output. Can be >0 (secondary output) or <0 (secondary input),flow_code/process_code
+CONV,conversion factors,various (input per main output),True,True,True,False,True,True,False,True,advanced,advanced,defined per main output. Can be >0 (secondary output) or <0 (secondary input),flow_code/process_code/source_region_code
 DST-S-D,shipping distance,km,False,False,False,False,False,True,True,False,no,no,,source_region_code/target_country_code
 DST-S-DP,pipeline distance,km,False,False,False,False,False,True,True,False,no,no,added 20221122 by mh. Data to be provided by rm. TODO: apply in calculations,source_region_code/target_country_code
 EF_E,emission factor for emission balance,gCO2/energy unit,True,False,False,False,False,False,False,True,,,,flow_code
 EF_M,emission factor for mass balance,gCO2/energy unit,True,False,False,False,False,False,False,True,,,,flow_code
 EFF,efficiency,various (output per main input),False,True,False,False,True,False,False,False,extended,extended,"main output per main input. The unit is % if we assume that everything is normalized to energy content as far. Exceptions are material flows without energy content (water, nitrogen, carbon, CO2)",process_code
-FLH,full load hours,h,False,True,False,True,True,True,False,False,no,extended,,process_code/source_region_code
+FLH,full load hours,h,False,True,False,True,True,True,False,True,no,extended,,process_code/source_region_code
 LIFETIME,lifetime / amortization period,years,False,True,False,True,True,False,False,False,extended,extended,,process_code
 LOSS,losses (own fuel),fraction,True,True,False,False,True,True,False,True,,,,flow_code/process_code/source_region_code
 LOSS-T,"losses (own fuel, transport)",fraction/km,False,False,True,False,True,False,False,False,advanced,advanced,for transportation efficiency (like losses) should depend on distance,process_code

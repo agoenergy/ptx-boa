@@ -36,6 +36,8 @@ class ApiCalculateResult:
     metadata: dict
     emissions: Optional[pd.DataFrame] = None
     emission_mass: Optional[pd.DataFrame] = None
+    todo_results_flows: Optional[list] = None
+    todo_data: Optional[object] = None
 
 
 class PtxboaAPI:
@@ -126,10 +128,10 @@ class PtxboaAPI:
     def calculate(
         self,
         scenario: ScenarioType,
-        secproc_co2: SecProcCO2Type,
-        secproc_water: SecProcH2OType,
+        secproc_co2: SecProcCO2Type | None,
+        secproc_water: SecProcH2OType | None,
         chain: ChainNameType,
-        res_gen: ResGenType,
+        res_gen: ResGenType | None,
         region: SourceRegionNameType,
         country: TargetCountryNameType,
         transport: TransportType,
@@ -185,6 +187,11 @@ class PtxboaAPI:
             * `cost_type`: one of {RESULT_COST_TYPES}
 
         """
+        # make sure optimize_flh=False in blue tool
+        if optimize_flh and tool_version_color == "blue":
+            logger.warning("optimize_flh should be False in blue tool.")
+            optimize_flh = False
+
         data_handler = DataHandler(
             scenario,
             user_data,
@@ -229,7 +236,7 @@ class PtxboaAPI:
             use_user_data_for_optimize_flh=use_user_data_for_optimize_flh,
         )
 
-        _values, result_df = PtxCalc.calculate(data)
+        results_flows_chain, result_df = PtxCalc.calculate(data)
 
         # conversion to output unit
         if output_unit not in {"USD/MWh", "USD/t"}:
@@ -274,6 +281,8 @@ class PtxboaAPI:
             costs=result_df,
             emissions=emissions,  # DUMMY for frontend development
             emission_mass=emissions_mass,
+            todo_results_flows=results_flows_chain,
+            todo_data=data,
         )
 
     def get_flh_opt_network(

@@ -3,7 +3,6 @@
 from functools import cache
 from itertools import product
 from pathlib import Path
-from random import random
 from typing import Dict, Iterable, List, Literal, Tuple
 
 import numpy as np
@@ -758,20 +757,25 @@ class DataHandler:
         if result is None:
             # FIXME: temporary data
             if self.tool_version_color == "blue":
-                result = random() * 0.1  # FIXME DUMMY # noqa: S311
-                logger.warning(
-                    f"""did not find a parameter value for:
-                    parameter_code={parameter_code},
-                    process_code={process_code},
-                    flow_code={flow_code},
-                    source_region_code={source_region_code},
-                    target_country_code={target_country_code},
-                    process_code_res={process_code_res},
-                    process_code_ely={process_code_ely},
-                    process_code_deriv={process_code_deriv},
-                    ({self.tool_version_color})
-                """
-                )
+                if parameter_code == "CALOR" and flow_code == "STL-S":
+                    result = 1
+                elif parameter_code == "WACC" and source_region_code == "QAT":
+                    result = 0
+                else:
+                    result = 0
+                    logger.warning(
+                        f"""did not find a parameter value for:
+                        parameter_code={parameter_code},
+                        process_code={process_code},
+                        flow_code={flow_code},
+                        source_region_code={source_region_code},
+                        target_country_code={target_country_code},
+                        process_code_res={process_code_res},
+                        process_code_ely={process_code_ely},
+                        process_code_deriv={process_code_deriv},
+                        ({self.tool_version_color})
+                    """
+                    )
 
             else:
                 raise ValueError(
