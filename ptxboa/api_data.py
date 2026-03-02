@@ -1129,7 +1129,16 @@ class DataHandler:
         result_main_export = []
         result_main_import = []
         result_transport = []
-        for process_step in ["RES", "EL_STR", "ELY", "H2_STR", "DERIV"]:
+
+        for process_step in [
+            "RES",
+            "NG_PROD",
+            "EL_STR",
+            "ELY",
+            "H2_STR",
+            "DERIV",
+            "DERIV2",
+        ]:
             process_code = chain[process_step]
             if process_code:
                 result_main_export.append(process_step)

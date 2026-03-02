@@ -25,7 +25,7 @@ CH4-S#B,LNG ship (own fuel consumption) (blue),CH4-L,CH4-L,False,False,True,Fals
 CH4-SB,LNG ship (bunker fuel consumption),CH4-L,CH4-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,True,False
 CH4-SB#B,LNG ship (bunker fuel consumption) (blue),CH4-L,CH4-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,False,True
 CH4SYN,Methane Synthesis,CH4-G,H2-G,True,False,False,False,DERIV,False,True,Derivative production,CO2-G/H2O-L/HEAT,True,False
-CO2-T+S,CO2 transport and storage,CO2-G,CO2-G,False,False,False,False,,False,False,,EL,False,True
+CO2-T+S,CO2 transport and storage,CO2-G,CO2-G,False,False,True,False,STORC,False,False,CO2 transport and storage,EL,False,True
 DAC,Direct Air Capture,CO2-G,,False,False,False,True,PROV_C,False,False,Carbon,EL/H2O-L/HEAT,True,False
 DAC#B,Direct Air Capture (blue),CO2-G,,False,False,False,True,PROV_C,False,False,Carbon,EL/HEAT,False,True
 DESAL,Sea Water desalination,H2O-L,,False,False,False,True,PROV_H2O,False,False,Water,EL,True,False
@@ -56,7 +56,7 @@ LOHC-REC,LOHC reconversion,H2-G,LOHC-L,True,False,True,False,TRNSP-SP,False,Fals
 LOHC-S,LOHC ship (own fuel consumption),LOHC-L,LOHC-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,True,False
 LOHC-SB,LOHC ship (bunker fuel consumption),LOHC-L,LOHC-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,True,False
 NG-DRI-C,NG-based iron reduction with CCS,DRI-S,CH4-G,True,False,False,False,DERIV,False,True,Derivative production,CH4-G/EL/IOP-S,False,True
-NG-PROD,NG production,NG-G,NG-G,True,False,False,False,DERIV,False,True,Derivative production,DIESEL-L/EL/NG-G,False,False
+NG-PROD,NG production,CH4-G,,False,False,False,False,NG,False,False,Natural gas production,DIESEL-L/EL/NG-G,False,False
 NH3-REC,Ammonia reconversion,H2-G,NH3-L,True,False,True,False,TRNSP-SP,False,False,Transportation (Ship),EL,True,True
 NH3-S,Ammonia ship (own fuel consumption),NH3-L,NH3-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,True,False
 NH3-S#B,Ammonia ship (own fuel consumption) (blue),NH3-L,NH3-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,False,True
