@@ -117,30 +117,30 @@ def test_new_blue_chain(scenario, kwargs):
                 "value": 0,
             },
             {
-                "process_code": "NG-DRI",
+                "process_code": "NG-DRI-C",
                 "flow_code": "NG-G",  # main flow in
                 "parameter_code": "LOSS",
                 "value": 0.05,  # process_calc!E7
             },
             {
-                "process_code": "NG-DRI",
+                "process_code": "NG-DRI-C",
                 "parameter_code": "EFF",
                 "value": 0.336004,  # process_calc!E3
             },
             {
-                "process_code": "NG-DRI",
+                "process_code": "NG-DRI-C",
                 "flow_code": "EL",
                 "parameter_code": "CONV",
                 "value": 0.476859,  # process_calc!E4
             },
             {
-                "process_code": "NG-DRI",
+                "process_code": "NG-DRI-C",
                 "flow_code": "IOP-S",
                 "parameter_code": "CONV",
                 "value": 0.99,  # process_calc!E5
             },
             {
-                "process_code": "NG-DRI",
+                "process_code": "NG-DRI-C",
                 "flow_code": "HEAT",
                 "parameter_code": "CONV",
                 "value": 0.01,  # process_calc!E6
@@ -175,12 +175,12 @@ def test_new_blue_chain(scenario, kwargs):
                 "value": 0.3,  # process_calc!J4
             },
             {
-                "process_code": "NG-DRI",
+                "process_code": "NG-DRI-C",
                 "parameter_code": "CO2CPT-S",
                 "value": 0.45,  # process_calc!E10
             },
             {
-                "process_code": "NG-DRI",
+                "process_code": "NG-DRI-C",
                 "parameter_code": "CO2CPT-R",
                 "value": 0.9,  # process_calc!E13
             },
@@ -254,19 +254,16 @@ def test_new_blue_chain(scenario, kwargs):
         "main_export_process_chain": [
             {
                 "CAPEX": 0,
-                "CH4SHARE": {"NG-G": 0.909},
-                "CO2BOUND": {"NG-G": 0.040812},
                 "CO2CPT-R": 0.9,
                 "CO2CPT-S": 0.45,
-                "CONV": {"EL": 0.476859, "HEAT": 0.01, "IOP-S": 0.99},
-                "EFF": 0.320004,
-                "EF_M": {"EL": 402.0, "HEAT": 250.0, "NG-G": 201.0},
+                "CONV": {"EL": 0.476859, "IOP-S": 0.99},
+                "EFF": 0.336004,
+                "EF_M": {"EL": 402.0},
                 "FLH": 7000,
                 "LIFETIME": 20,
-                "LOSS": 0.05,
                 "OPEX-F": 0,
                 "OPEX-O": 0,
-                "process_code": "NG-DRI",
+                "process_code": "NG-DRI-C",
                 "step": "DERIV",
             }
         ],
@@ -275,9 +272,9 @@ def test_new_blue_chain(scenario, kwargs):
                 "CAPEX": 0,
                 "CH4SHARE": {"NG-G": 0.909},
                 "CO2BOUND": {"NG-G": 0.040812, "STL-S": 0.00396},
-                "CONV": {"EL": 0.651, "HEAT": 0.01, "NG-G": 0.315},
+                "CONV": {"EL": 0.651, "NG-G": 0.315},
                 "EFF": 1.010101,
-                "EF_M": {"EL": 402.0, "HEAT": 250.0, "NG-G": 201.0},
+                "EF_M": {"EL": 402.0, "NG-G": 201.0},
                 "FLH": 7000,
                 "LIFETIME": 20,
                 "LOSS_FLOW": {"NG-G": 0.05},
@@ -322,16 +319,16 @@ def test_new_blue_chain(scenario, kwargs):
         {
             "emissions": {
                 "co2_bound_output": 0.0,
-                "co2_captured": -0.0487,
-                "co2_emission_direct": 0.006012,
-                "co2_emission_from_bound": -0.071547,
-                "co2_indirect": 192.255347,
-                "co2e_emission_direct": 3.996637,
+                "co2_captured": 0.0,
+                "co2_emission_direct": 0.0,
+                "co2_emission_from_bound": 0.0,
+                "co2_indirect": 189.780347,
+                "co2e_emission_direct": 0.0,
             },
-            "flows": {"EL": 0.47209, "HEAT": 0.0099, "IOP-S": 0.9801},
-            "main_input": 3.093713,
+            "flows": {"EL": 0.47209, "IOP-S": 0.9801},
+            "main_input": 2.946394,
             "main_output": 0.99,
-            "process_code": "NG-DRI",
+            "process_code": "NG-DRI-C",
             "process_step": "DERIV",
         },
         {
@@ -355,10 +352,10 @@ def test_new_blue_chain(scenario, kwargs):
                 "co2_captured": -0.0,
                 "co2_emission_direct": 0.000612,
                 "co2_emission_from_bound": -0.008283,
-                "co2_indirect": 327.517,
+                "co2_indirect": 325.017,
                 "co2e_emission_direct": 0.000612,
             },
-            "flows": {"EL": 0.651, "HEAT": 0.01, "NG-G": 0.315},
+            "flows": {"EL": 0.651, "NG-G": 0.315},
             "main_input": 0.99,
             "main_output": 1.0,
             "process_code": "EAF",
@@ -375,7 +372,7 @@ if __name__ == "__main__":
         scenario="2030 (medium)",
         secproc_co2=None,
         secproc_water=None,
-        chain="STL-S__NG-DRI-C_EAF__prod_in_demand",
+        chain="STL-S__NG-DRI-C-C_EAF__prod_in_demand",
         res_gen=None,
         region="Qatar",
         country="Germany",
@@ -384,8 +381,5 @@ if __name__ == "__main__":
         tool_version_color="blue",
     )
 
-    print(res.costs)
-    print(res.emission_mass)
-    print(res.emissions)
-    pprint(res.todo_results_flows)
-    pprint(res.todo_data)
+    for x in res.todo_results_flows:
+        pprint(_sort_nested(_round_nested(x)))
