@@ -1,1 +1,1 @@
-Supply country can be selected here.
+Country where natural gas production takes place. 
