@@ -63,19 +63,35 @@ def aggregate_green_results(
     if green_param_set == "complete":
         # complete parame set is too slow without caching.
         dimensions = {
-            "transport": _api.get_dimension("transport").index.tolist(),
+            "transport": _api.get_dimension(
+                "transport", tool_version_color="green"
+            ).index.tolist(),
             "ship_own_fuel": [True, False],
-            "secproc_water": _api.get_dimension("secproc_water").index.tolist(),
-            "secproc_co2": _api.get_dimension("secproc_co2").index.tolist(),
-            "res_gen": _api.get_dimension("res_gen").index.tolist(),
+            "secproc_water": _api.get_dimension(
+                "secproc_water", tool_version_color="green"
+            ).index.tolist(),
+            "secproc_co2": _api.get_dimension(
+                "secproc_co2", tool_version_color="green"
+            ).index.tolist(),
+            "res_gen": _api.get_dimension(
+                "res_gen", tool_version_color="green"
+            ).index.tolist(),
             "region": (
-                _api.get_dimension("region")
-                .loc[_api.get_dimension("region")["subregion_code"] == ""]
+                _api.get_dimension("region", tool_version_color="green")
+                .loc[
+                    _api.get_dimension("region", tool_version_color="green")[
+                        "subregion_code"
+                    ]
+                    == ""
+                ]
                 .index.to_list()
             ),
             "chain": (
-                _api.get_dimension("chain")
-                .loc[_api.get_dimension("chain")["FLOW_OUT"] == output_product]
+                _api.get_dimension("chain", tool_version_color="green")
+                .loc[
+                    _api.get_dimension("chain", tool_version_color="green")["FLOW_OUT"]
+                    == output_product
+                ]
                 .index.tolist()
             ),
         }
@@ -88,13 +104,21 @@ def aggregate_green_results(
             "secproc_co2": ["Specific costs"],
             "res_gen": ["Wind-PV-Hybrid"],
             "region": (
-                _api.get_dimension("region")
-                .loc[_api.get_dimension("region")["subregion_code"] == ""]
+                _api.get_dimension("region", tool_version_color="green")
+                .loc[
+                    _api.get_dimension("region", tool_version_color="green")[
+                        "subregion_code"
+                    ]
+                    == ""
+                ]
                 .index.to_list()
             ),
             "chain": (
-                _api.get_dimension("chain")
-                .loc[_api.get_dimension("chain")["FLOW_OUT"] == output_product]
+                _api.get_dimension("chain", tool_version_color="green")
+                .loc[
+                    _api.get_dimension("chain", tool_version_color="green")["FLOW_OUT"]
+                    == output_product
+                ]
                 .index.tolist()
             ),
         }
