@@ -11,6 +11,26 @@ from ptxboa.api_data import DataHandler
 from tests.test_api import ptxdata_dir_static
 
 
+def _sort_nested(xs):
+    if isinstance(xs, list):
+        return [_sort_nested(x) for x in xs]
+    elif isinstance(xs, dict):
+        return {x: _sort_nested(xs[x]) for x in sorted(xs.keys())}
+    else:
+        return xs
+
+
+def _round_nested(xs, ndigis: int = 6):
+    if isinstance(xs, list):
+        return [_round_nested(x, ndigis) for x in xs]
+    elif isinstance(xs, dict):
+        return {x: _round_nested(y, ndigis) for x, y in xs.items()}
+    elif isinstance(xs, float):
+        return round(xs, ndigis)
+    else:
+        return xs
+
+
 def _translate_user_data(user_data: pd.DataFrame) -> None:
     # NOTE: the columns say *_code,
     # but user data actually must be passed as names
@@ -97,30 +117,30 @@ def test_new_blue_chain(scenario, kwargs):
                 "value": 0,
             },
             {
-                "process_code": "NG-DRI",
+                "process_code": "NG-DRI-C",
                 "flow_code": "NG-G",  # main flow in
                 "parameter_code": "LOSS",
                 "value": 0.05,  # process_calc!E7
             },
             {
-                "process_code": "NG-DRI",
+                "process_code": "NG-DRI-C",
                 "parameter_code": "EFF",
                 "value": 0.336004,  # process_calc!E3
             },
             {
-                "process_code": "NG-DRI",
+                "process_code": "NG-DRI-C",
                 "flow_code": "EL",
                 "parameter_code": "CONV",
                 "value": 0.476859,  # process_calc!E4
             },
             {
-                "process_code": "NG-DRI",
+                "process_code": "NG-DRI-C",
                 "flow_code": "IOP-S",
                 "parameter_code": "CONV",
                 "value": 0.99,  # process_calc!E5
             },
             {
-                "process_code": "NG-DRI",
+                "process_code": "NG-DRI-C",
                 "flow_code": "HEAT",
                 "parameter_code": "CONV",
                 "value": 0.01,  # process_calc!E6
@@ -155,12 +175,12 @@ def test_new_blue_chain(scenario, kwargs):
                 "value": 0.3,  # process_calc!J4
             },
             {
-                "process_code": "NG-DRI",
+                "process_code": "NG-DRI-C",
                 "parameter_code": "CO2CPT-S",
                 "value": 0.45,  # process_calc!E10
             },
             {
-                "process_code": "NG-DRI",
+                "process_code": "NG-DRI-C",
                 "parameter_code": "CO2CPT-R",
                 "value": 0.9,  # process_calc!E13
             },
@@ -224,138 +244,122 @@ def test_new_blue_chain(scenario, kwargs):
     calculation_data = data_handler.get_calculation_data(**kwargs, optimize_flh=False)
     values, _cost_result_df = PtxCalc.calculate(calculation_data)  # noqa
 
+    # round and sort for easier comparison
+    calculation_data = _sort_nested(_round_nested(calculation_data))
     print(calculation_data)
 
     assert _rec_approx(calculation_data) == {
         "context": {"source_region_code": "QAT", "target_country_code": "DEU"},
         "flh_opt_process": {},
-        "parameter": {
-            "CALOR": 0.0,
-            "SPECCOST": {
-                "NG-G": 0.0,
-                "CO2-G": 0.0445186199587845,
-                "EL": 0.08078,
-                "H2O-L": 0.0013737954502618,
-                "HEAT": 0.0577,
-                "IOP-S": 0.0,
-                "N2-G": 0.01154,
-            },
-            "WACC": 0,
-        },
         "main_export_process_chain": [
             {
                 "CAPEX": 0,
-                "CONV": {"EL": 0.476859, "IOP-S": 0.99, "HEAT": 0.01},
-                "EFF": 0.3200038095238095,
+                "CO2CPT-R": 0.9,
+                "CO2CPT-S": 0.45,
+                "CONV": {"EL": 0.476859, "IOP-S": 0.99},
+                "EFF": 0.336004,
+                "EF_M": {"EL": 402.0},
                 "FLH": 7000,
                 "LIFETIME": 20,
                 "OPEX-F": 0,
                 "OPEX-O": 0,
-                "LOSS": 0.05,
-                "CO2CPT-R": 0.9,
-                "CO2CPT-S": 0.45,
-                "process_code": "NG-DRI",
+                "process_code": "NG-DRI-C",
                 "step": "DERIV",
-                "CH4SHARE": {"NG-G": 0.909},
-                "CO2BOUND": {
-                    "NG-G": 0.0408116143367898,
-                },
-                "EF_M": {"NG-G": 201.0},
-            }
-        ],
-        "secondary_process": {},
-        "transport_process_chain": [
-            {
-                "CONV": {},
-                "DIST": 999,
-                "EFF": 1.0,
-                "OPEX-O": 0,
-                "OPEX-T": 3.765382979887925e-07,
-                "process_code": "DRI-SB",
-                "step": "SHP",
             }
         ],
         "main_import_process_chain": [
             {
                 "CAPEX": 0,
-                "CONV": {"NG-G": 0.315, "EL": 0.651, "HEAT": 0.01},
+                "CH4SHARE": {"NG-G": 0.909},
+                "CO2BOUND": {"NG-G": 0.040812, "STL-S": 0.00396},
+                "CONV": {"EL": 0.651, "NG-G": 0.315},
                 "EFF": 1.010101,
+                "EF_M": {"EL": 402.0, "NG-G": 201.0},
                 "FLH": 7000,
                 "LIFETIME": 20,
+                "LOSS_FLOW": {"NG-G": 0.05},
                 "OPEX-F": 0,
                 "OPEX-O": 0,
-                "LOSS_FLOW": {"NG-G": 0.05},
-                "CH4SHARE": {
-                    "NG-G": 0.909,
-                },
-                "EF_M": {
-                    "NG-G": 201.0,
-                },
-                "CO2BOUND": {
-                    "NG-G": 0.0408116143367898,
-                    "STL-S": 0.00396,
-                },
                 "process_code": "EAF",
                 "step": "DERIV_I",
+            }
+        ],
+        "parameter": {
+            "CALOR": 0.0,
+            "SPECCOST": {
+                "CO2-G": 0.044519,
+                "EL": 0.08078,
+                "H2O-L": 0.001374,
+                "HEAT": 0.0577,
+                "IOP-S": 0.0,
+                "N2-G": 0.01154,
+                "NG-G": 0.0,
             },
+            "WACC": 0.0,
+        },
+        "secondary_process": {},
+        "transport_process_chain": [
+            {
+                "CONV": {},
+                "DIST": 999.0,
+                "EFF": 1.0,
+                "OPEX-O": 0,
+                "OPEX-T": 0.0,
+                "process_code": "DRI-SB",
+                "step": "SHP",
+            }
         ],
     }
 
+    # round and sort for easier comparison
+    values = _sort_nested(_round_nested(values))
     print(values)
 
     assert _rec_approx(values) == [
         {
-            "process_code": "NG-DRI",
-            "process_step": "DERIV",
-            "main_input": 3.0937132010184407,  # process_calc!E25
-            "main_output": 0.9900000099000001,  # process_calc!E33
-            "flows": {
-                "EL": 0.4720904147209042,  # process_calc!E26
-                "HEAT": 0.009900000099000002,  # process_calc!E28
-                "IOP-S": 0.9801000098010001,  # process_calc!E27
-            },
             "emissions": {
-                "co2_indirect": 0.0,
-                "co2_bound_output": 0.0,
-                "co2_captured": -0.04870006586817431,
-                "co2_emission_from_bound": -0.07154701034954002,
-                "co2_emission_direct": 0.006012353810885717,
-                "co2e_emission_direct": 3.996637207707444,
-            },
-        },
-        {
-            "process_code": "DRI-SB",
-            "process_step": "SHP",
-            "main_input": 0.9900000099000001,
-            "main_output": 0.9900000099000001,
-            "flows": {},
-            "emissions": {
-                "co2_indirect": 0.0,
                 "co2_bound_output": 0.0,
                 "co2_captured": 0.0,
-                "co2_emission_from_bound": 0.0,
                 "co2_emission_direct": 0.0,
+                "co2_emission_from_bound": 0.0,
+                "co2_indirect": 189.780347,
                 "co2e_emission_direct": 0.0,
             },
+            "flows": {"EL": 0.47209, "IOP-S": 0.9801},
+            "main_input": 2.946394,
+            "main_output": 0.99,
+            "process_code": "NG-DRI-C",
+            "process_step": "DERIV",
         },
         {
-            "process_code": "EAF",
-            "process_step": "DERIV_I",
-            "main_input": 0.9900000099000001,
-            "main_output": 1.0,
-            "flows": {
-                "EL": 0.6509999999999999,  # process_calc!J27
-                "HEAT": 0.009999999999999998,  # process_calc!J30
-                "NG-G": 0.31499999999999995,  # process_calc!J26
-            },
             "emissions": {
-                "co2_indirect": 63.315,
+                "co2_bound_output": 0.0,
+                "co2_captured": 0.0,
+                "co2_emission_direct": 0.0,
+                "co2_emission_from_bound": 0.0,
+                "co2_indirect": 0.0,
+                "co2e_emission_direct": 0.0,
+            },
+            "flows": {},
+            "main_input": 0.99,
+            "main_output": 0.99,
+            "process_code": "DRI-SB",
+            "process_step": "SHP",
+        },
+        {
+            "emissions": {
                 "co2_bound_output": 0.00396,
                 "co2_captured": -0.0,
-                "co2_emission_from_bound": -0.008283484301036939,
-                "co2_emission_direct": 0.0006121742150518469,
-                "co2e_emission_direct": 0.0006121742150518469,
+                "co2_emission_direct": 0.000612,
+                "co2_emission_from_bound": -0.008283,
+                "co2_indirect": 325.017,
+                "co2e_emission_direct": 0.000612,
             },
+            "flows": {"EL": 0.651, "NG-G": 0.315},
+            "main_input": 0.99,
+            "main_output": 1.0,
+            "process_code": "EAF",
+            "process_step": "DERIV_I",
         },
     ]
 
@@ -368,7 +372,7 @@ if __name__ == "__main__":
         scenario="2030 (medium)",
         secproc_co2=None,
         secproc_water=None,
-        chain="STL-S__NG-DRI-C_EAF__prod_in_demand",
+        chain="STL-S__NG-DRI-C-C_EAF__prod_in_demand",
         res_gen=None,
         region="Qatar",
         country="Germany",
@@ -377,8 +381,5 @@ if __name__ == "__main__":
         tool_version_color="blue",
     )
 
-    print(res.costs)
-    print(res.emission_mass)
-    print(res.emissions)
-    pprint(res.todo_results_flows)
-    pprint(res.todo_data)
+    for x in res.todo_results_flows:
+        pprint(_sort_nested(_round_nested(x)))

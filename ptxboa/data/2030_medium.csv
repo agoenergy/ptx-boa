@@ -447,6 +447,7 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CONV,CH4SYN,CO2-G,,",CONV,CH4SYN,CO2-G,,,0.20196,kg CO2 (g)/kWh CH4 (g),
 "CONV,CH4SYN,H2O-L,,",CONV,CH4SYN,H2O-L,,,-0.1426332288401254,kg H2O (l)/kWh CH4 (g),Fasihi & Breyer 2018
 "CONV,CH4SYN,HEAT,,",CONV,CH4SYN,HEAT,,,-0.1849529780564263,kWh (heat)/kWh CH4 (g),Fasihi & Breyer 2018
+"CONV,CO2-T+S,EL,,",CONV,CO2-T+S,EL,,,0.0,kWh (el.)/kg CO2 (g),
 "CONV,DAC#B,EL,,",CONV,DAC#B,EL,,,0.203,kg CO2 (g)/kWh (el.),Fasihi et al. 2019
 "CONV,DAC#B,HEAT,,",CONV,DAC#B,HEAT,,,1.286,kWh (heat)/kg CO2 (g),Fasihi et al. 2019
 "CONV,DAC,EL,,",CONV,DAC,EL,,,0.4624999999999999,kWh (el.)/kg CO2 (g),average low and high
@@ -535,6 +536,7 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CONV-OT,CH4-S#B,NG-L,,",CONV-OT,CH4-S#B,NG-L,,,3.191932945061948e-06,kWh natural gas LHV/kWh natural gas LHV*km,
 "CONV-OT,CH4-SB#B,BFUEL-L,,",CONV-OT,CH4-SB#B,BFUEL-L,,,3.3002590965851548e-06,kwh bunker fuel (l)/kWh natural gas LHV*km,
 "CONV-OT,CH4-SB#B,NG-L,,",CONV-OT,CH4-SB#B,NG-L,,,1.1537538535378709e-06,kWh natural gas LHV/kWh natural gas LHV*km,
+"CONV-OT,CO2-T+S,NG-L,,",CONV-OT,CO2-T+S,NG-L,,,3.3002590965851543e-06,kWh natural gas LHV/kWh natural gas LHV*km,
 "CONV-OT,H2-S#B,H2-L,,",CONV-OT,H2-S#B,H2-L,,,9.251193689684598e-06,kWh H2 (l)/kWh H2 (l),
 "CONV-OT,H2-SB#B,BFUEL-L,,",CONV-OT,H2-SB#B,BFUEL-L,,,3.3002590965851543e-06,kwh bunker fuel (l)/kWh H2 (l),
 "CONV-OT,NH3-S#B,NH3-L,,",CONV-OT,NH3-S#B,NH3-L,,,5.343656103416341e-06,kwh NH3 LHV (gasous)/kwh NH3 LHV (gasous),
@@ -1911,6 +1913,7 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "LOSS,CH4-LIQ#B,CH4-G,THA,",LOSS,CH4-LIQ#B,CH4-G,THA,,3e-05,kg CH4/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
 "LOSS,CH4-LIQ#B,CH4-G,USA,",LOSS,CH4-LIQ#B,CH4-G,USA,,7.000000000000001e-05,kg CH4/kWh natural gas LHV,UBA (2021)
 "LOSS,CH4-RGAS#B,NG-G,,",LOSS,CH4-RGAS#B,NG-G,,,4e-08,kWh natural gas LHV/kWh natural gas LHV,
+"LOSS,CO2-T+S,CO2-G,,",LOSS,CO2-T+S,CO2-G,,,0.01,kg CO2 (g)/kg CO2 (g),
 "LOSS,NG-PROD,CH4-G,AUS,",LOSS,NG-PROD,CH4-G,AUS,,0.0004,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
 "LOSS,NG-PROD,CH4-G,BRA,",LOSS,NG-PROD,CH4-G,BRA,,0.0012,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
 "LOSS,NG-PROD,CH4-G,CHN,",LOSS,NG-PROD,CH4-G,CHN,,0.0008,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
@@ -1933,6 +1936,7 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "LOSS-T,CH4-S#B,,,",LOSS-T,CH4-S#B,,,,1.0832615152320684e-07,kWh natural gas LHV/kWh natural gas LHV*km,
 "LOSS-T,CH4-S,,,",LOSS-T,CH4-S,,,,3.3002590965851543e-06,fraction/km,calc_shipping
 "LOSS-T,CH4-SB,,,",LOSS-T,CH4-SB,,,,1.1537538535378709e-06,fraction/km,calc_shipping
+"LOSS-T,CO2-T+S,,,",LOSS-T,CO2-T+S,,,,1.1537538535378709e-06,kWh natural gas LHV/kWh natural gas LHV*km,
 "LOSS-T,H2-P-L,,,",LOSS-T,H2-P-L,,,,1.6866666666666666e-05,fraction/km,
 "LOSS-T,H2-P-LR,,,",LOSS-T,H2-P-LR,,,,1.6866666666666666e-05,fraction/km,
 "LOSS-T,H2-P-S,,,",LOSS-T,H2-P-S,,,,1.6866666666666666e-05,fraction/km,

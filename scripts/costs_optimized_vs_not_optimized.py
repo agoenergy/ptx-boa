@@ -231,7 +231,7 @@ def cli(out_file: Path, cache_dir: Path, loglevel) -> None:
             "Derivative production",
             "Electricity and H2 storage",
             "Electricity generation",
-            "Electrolysis",
+            "H2 production",
         ],
     )
 

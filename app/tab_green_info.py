@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """Info tab."""
+
 import streamlit as st
 
 from app.ptxboa_functions import read_markdown_file
 
-__version__ = "2.1.18"
+__version__ = "2.1.19"
 
 
 def content_info():
@@ -23,7 +24,7 @@ def content_info():
             [
                 "General",
                 "Electricity generation",
-                "Electrolysis",
+                "H2 production",
                 "Derivative production",
                 "Transport",
             ],
