@@ -270,9 +270,24 @@ class PtxboaAPI:
             )
             .drop(columns="cost_type")
         )
+
+        bound_in_product = (
+            emissions.copy()
+            .loc[
+                (emissions["process_type"] == "Transportation (Ship)")
+                | (emissions["process_type"] == "Transportation (Pipeline)"),
+                :,
+            ]
+            .assign(
+                process_type="Bound in product",
+                gas_type="CO2",
+                values=lambda x: x["values"] * 0.5,
+            )
+        )
+
+        emissions = pd.concat([emissions, bound_in_product], axis=0)
+
         emissions_mass = emissions.copy().assign(
-            emission_type="direct",
-            process_type="Final use",
             values=lambda x: x["values"] * 0.25,
         )
 
