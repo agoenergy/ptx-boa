@@ -50,7 +50,7 @@ def discrete_colors_process_type() -> dict:
     process_type = [
         "Water",
         "Transportation (Ship)",
-        "Electrolysis",
+        "H2 production",
         "Electricity generation",
         "Electricity and H2 storage",
         "Derivative production",

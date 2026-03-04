@@ -266,7 +266,7 @@ def test_issue_564(network_green_iron, api: PtxboaAPI):
         + res_opt.at["Electricity storage", "Cost (USD/MWh)"]
     )
 
-    res_costs_agg.at["Electrolysis", "total_opt"] = res_opt.at[
+    res_costs_agg.at["H2 production", "total_opt"] = res_opt.at[
         "Electrolyzer", "Cost (USD/MWh)"
     ]
 
