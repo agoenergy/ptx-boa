@@ -1,1 +1,1 @@
-If activated, NH₃ is transported and reconverted to H₂ in the demand country.
+If activated, hydrogen is converted to ammonia, which is then transported to demand country and reconverted to H₂ in the demand country.
