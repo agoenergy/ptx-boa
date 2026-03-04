@@ -485,7 +485,8 @@ def sort_by_position_in_chain(
     """Reorder columns OR index to match the occurrence in a chain."""
     cost_type_order = [
         "Electricity generation",
-        "Electrolysis",
+        "Natural gas production",
+        "H2 production",
         "Electricity and H2 storage",
         "Derivative production",
         "Heat",

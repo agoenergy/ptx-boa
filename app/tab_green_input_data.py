@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Content of input data tab."""
+
 import plotly.express as px
 import streamlit as st
 
@@ -36,7 +37,6 @@ def content_input_data(api: PtxboaAPI) -> None:
         )
 
         with st.expander("**Map**", expanded=True):
-
             if data_selection in ["full load hours", "CAPEX"]:
                 if data_selection == "full load hours":
                     select_options = [
@@ -112,7 +112,7 @@ def content_input_data(api: PtxboaAPI) -> None:
                 scope=None,
                 key="input_data_electricity_generation",
             )
-        with st.expander("**Electrolysis and derivative production**"):
+        with st.expander("**H2 and derivative production**"):
             st.caption(
                 (
                     "The unit of CAPEX and OPEX (fix) is USD/t for Green iron "
