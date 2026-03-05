@@ -17,6 +17,7 @@ import streamlit as st
 from app.ptxboa_functions import (
     calculate_cached,
     calculate_results_list_blue,
+    read_markdown_file,
 )
 from ptxboa.api import PtxboaAPI
 from ptxboa.static import OutputUnitType, ScenarioType, TargetCountryNameType
@@ -303,14 +304,19 @@ def make_figure(
 
 def crude_steel_warning():
     st.warning(
-        "Cannot compare crude steel with available green PtX output products."
-        " Please use iron instead."
+        read_markdown_file(
+            "md/tab_blue_cost_comparison/crude_steel_comparison_warning.md"
+        )
     )
 
 
 def content_costs_comparison(api):
     with st.popover("*Help*", width="stretch"):
-        st.markdown("User data not used to optimize FLH for green costs.")
+        st.markdown(
+            read_markdown_file(
+                "md/tab_blue_cost_comparison/whatisthis_cost_comparison.md"
+            )
+        )
 
     with st.container(border=True):
         if st.session_state["output_product"] == "STL-S":

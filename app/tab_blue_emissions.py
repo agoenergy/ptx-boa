@@ -23,7 +23,7 @@ from ptxboa.api import PtxboaAPI
 def content_emissions(api: PtxboaAPI):
     with st.popover("*Help*", width="stretch"):
         st.markdown(
-            read_markdown_file("md/whatisthis_blue_emissions.md"),
+            read_markdown_file("md/tab_blue_emissions/whatisthis_blue_emissions.md"),
             unsafe_allow_html=True,
         )
 
@@ -46,6 +46,9 @@ def content_emissions(api: PtxboaAPI):
             f"{st.session_state['country']}"
         )
         st.subheader(title_string)
+        st.markdown(
+            read_markdown_file("md/tab_blue_emissions/description_emission_map.md")
+        )
 
         fig_map = plot_emissions_on_map(
             api, aggregate_emissions(results_per_region.emissions, "region")
@@ -55,13 +58,14 @@ def content_emissions(api: PtxboaAPI):
         )
         st.plotly_chart(fig_map, width="stretch")
 
-        st.subheader("Emission distribution and emission components")
-
+        st.subheader(
+            read_markdown_file(
+                "md/tab_blue_emissions/figure_title_emission_distribution.md"
+            )
+        )
         st.markdown(
-            (
-                "These figures show the regional distribution of total greenhous gas "
-                "emissions and a breakdown by category, and gas type for the "
-                "selected source country."
+            read_markdown_file(
+                "md/tab_blue_emissions/figure_description_emission_distribution.md"
             )
         )
 
@@ -153,22 +157,18 @@ def content_emissions(api: PtxboaAPI):
             ),
             key="scenario",
             key_suffix="gas_vs_process",
-            titlestring="Emissions per gas type for different processing steps",
-            help_string="",
+            titlestring=read_markdown_file(
+                "md/tab_blue_emissions/figure_title_emission_per_processing_step.md"
+            ),
+            help_string=read_markdown_file(
+                "md/tab_blue_emissions/figure_description_emission_per_processing_step.md"  # noqa E501
+            ),
             tool_version_color="blue",
             data_type="emissions",
             allow_sorting=False,
         )
 
         with st.container(border=True):
-            help_string = " ".join(
-                [
-                    "This figure lets you compare total emissions and emissions by "
-                    "processing step for each source country.\n\n"
-                    "By default, all regions are shown, and they are sorted"
-                    " by total emissions. You can change this in the filter settings."
-                ]
-            )
             display_results_bar_and_table(
                 aggregate_emissions(results_per_region.emissions, index="region"),
                 (
@@ -180,21 +180,17 @@ def content_emissions(api: PtxboaAPI):
                 ),
                 key="region",
                 key_suffix="emissions_steps",
-                titlestring="Emissions per process step for different source countries",
-                help_string=help_string,
+                titlestring=read_markdown_file(
+                    "md/tab_blue_emissions/figure_title_emission_per_region_color_step.md"  # noqa E501
+                ),
+                help_string=read_markdown_file(
+                    "md/tab_blue_emissions/figure_description_emission_per_region_color_step.md"  # noqa E501
+                ),
                 tool_version_color="blue",
                 data_type="emissions",
             )
 
         with st.container(border=True):
-            help_string = " ".join(
-                [
-                    "This figure lets you compare total emissions and emissions by "
-                    "gas type for each source country.\n\n"
-                    "By default, all regions are shown, and they are sorted"
-                    " by total emissions. You can change this in the filter settings."
-                ]
-            )
             display_results_bar_and_table(
                 aggregate_emissions(
                     results_per_region.emissions.assign(
@@ -220,8 +216,12 @@ def content_emissions(api: PtxboaAPI):
                 ),
                 key="region",
                 key_suffix="emissions_gases",
-                titlestring="Emissions per gas type for different source countries",
-                help_string=help_string,
+                titlestring=read_markdown_file(
+                    "md/tab_blue_emissions/figure_title_emission_per_region_color_gas.md"  # noqa E501
+                ),
+                help_string=read_markdown_file(
+                    "md/tab_blue_emissions/figure_description_emission_per_region_color_gas.md"  # noqa E501
+                ),
                 tool_version_color="blue",
                 data_type="emissions",
             )
@@ -247,13 +247,6 @@ def content_emissions(api: PtxboaAPI):
                 ),
             )
 
-        help_string = " ".join(
-            [
-                "This figure lets you compare total emissions and emissions by",
-                "processing step conversion location in supply or demand country",
-            ]
-        )
-
         display_results_bar_and_table(
             aggregate_emissions(
                 results_supply_demand.emissions, index="chain", columns="process_type"
@@ -269,8 +262,12 @@ def content_emissions(api: PtxboaAPI):
             ),
             key="chain",
             key_suffix="demand_supply",
-            titlestring="Emissions for converting in supply or demand country",
-            help_string=help_string,
+            titlestring=read_markdown_file(
+                "md/tab_blue_emissions/figure_title_emission_per_conversion_location.md"
+            ),
+            help_string=read_markdown_file(
+                "md/tab_blue_emissions/figure_description_emission_per_conversion_location.md"  # noqa E501
+            ),
             x_label_mapping={
                 k: (
                     f"{v}<br>conversion in "
@@ -301,15 +298,6 @@ def content_emissions(api: PtxboaAPI):
                 parameter_list=equal_output_product_chains,
             )
 
-        help_string = " ".join(
-            [
-                "This figure lets you comparetotal emissions and emissions by",
-                "processiong step",
-                "for different technology chains that produce ",
-                f"{st.session_state['output_product_label']}.",
-            ]
-        )
-
         display_results_bar_and_table(
             aggregate_emissions(
                 results_equal_output_product.emissions,
@@ -327,8 +315,13 @@ def content_emissions(api: PtxboaAPI):
             ),
             key="chain",
             key_suffix="equal_product",
-            titlestring="Emissions for different technology chains",
-            help_string=help_string,
+            titlestring=read_markdown_file(
+                "md/tab_blue_emissions/figure_title_emission_equal_product.md"
+            ),
+            help_string=read_markdown_file(
+                "md/tab_blue_emissions/figure_description_emission_equal_product.md"
+            )
+            + f" {st.session_state['output_product_label']}.",
             x_label_mapping=blue_chain_labels,
             tool_version_color="blue",
             data_type="emissions",
@@ -366,14 +359,6 @@ def content_emissions(api: PtxboaAPI):
                 },  # api always wants cost unit
             )
 
-        help_string = " ".join(
-            [
-                "This figure lets you compare total emissions and emissions by",
-                "processiong step",
-                "for different products with comparable technology chains.",
-            ]
-        )
-
         display_results_bar_and_table(
             aggregate_emissions(
                 results_equal_routes.emissions, index="chain", columns="process_type"
@@ -389,9 +374,13 @@ def content_emissions(api: PtxboaAPI):
             ),
             key="chain",
             key_suffix="equal_reformer",
-            titlestring="Emissions for different products",
+            titlestring=read_markdown_file(
+                "md/tab_blue_emissions/figure_title_emission_equal_reformer.md"
+            ),
+            help_string=read_markdown_file(
+                "md/tab_blue_emissions/figure_description_emission_equal_reformer.md"
+            ),
             output_unit=st.session_state["emissions_output_unit"].replace("/t", "/MWh"),
-            help_string=help_string,
             x_label_mapping=blue_chain_labels,
             tool_version_color="blue",
             data_type="emissions",
