@@ -43,7 +43,7 @@ def main_settings_green(api: PtxboaAPI):
     region = st.selectbox(
         "Supply country / region:",
         region_list,
-        help=(read_markdown_file("md/helptext_sidebar_green_supply_region.md")),
+        help=(read_markdown_file("md/sidebar/helptext_sidebar_green_supply_region.md")),
         index=region_list.get_loc("Morocco"),  # Morocco as default
     )
     st.session_state["region"] = region
@@ -59,7 +59,9 @@ def main_settings_green(api: PtxboaAPI):
             "Select subregion:",
             subregions,
             index=None,
-            help=(read_markdown_file("md/helptext_sidebar_supply_subregion.md")),
+            help=(
+                read_markdown_file("md/sidebar/helptext_sidebar_supply_subregion.md")
+            ),
         )
         if subregion is not None:
             st.session_state["region"] = subregion
@@ -70,7 +72,7 @@ def main_settings_green(api: PtxboaAPI):
     st.session_state["country"] = st.selectbox(
         "Demand country:",
         countries,
-        help=read_markdown_file("md/helptext_sidebar_green_demand_country.md"),
+        help=read_markdown_file("md/sidebar/helptext_sidebar_green_demand_country.md"),
         index=countries.get_loc("Germany"),
     )
     # get chain as combination of product, electrolyzer type and reconversion option:
@@ -87,7 +89,7 @@ def main_settings_green(api: PtxboaAPI):
                 "Methanol",
                 "FT e-fuels",
             ],
-            help=read_markdown_file("md/helptext_sidebar_product.md"),
+            help=read_markdown_file("md/sidebar/helptext_sidebar_product.md"),
             index=0,  # Ammonia as default
         )
     with c2:
@@ -98,7 +100,7 @@ def main_settings_green(api: PtxboaAPI):
                 "PEM",
                 "SOEC",
             ],
-            help=read_markdown_file("md/helptext_sidebar_electrolyzer_type.md"),
+            help=read_markdown_file("md/sidebar/helptext_sidebar_electrolyzer_type.md"),
             index=0,  # AEL as default
         )
     if (
@@ -110,7 +112,9 @@ def main_settings_green(api: PtxboaAPI):
         use_reconversion = st.toggle(
             "Include reconversion to H₂",
             help=(
-                read_markdown_file("md/helptext_sidebar_include_reconversion_to_h2.md")
+                read_markdown_file(
+                    "md/sidebar/helptext_sidebar_include_reconversion_to_h2.md"
+                )
             ),
         )
     else:
@@ -125,7 +129,7 @@ def main_settings_green(api: PtxboaAPI):
         "Renewable electricity source (only for selected supply region, other regions use Wind-PV hybrid):",  # noqaCO2 source
         available_res_gen,
         index=available_res_gen.index("Wind-PV-Hybrid"),
-        help=read_markdown_file("md/helptext_sidebar_re_source.md"),
+        help=read_markdown_file("md/sidebar/helptext_sidebar_re_source.md"),
     )
 
     # get scenario as combination of year and cost assumption:
@@ -135,7 +139,7 @@ def main_settings_green(api: PtxboaAPI):
             "Data year:",
             [2030, 2040],
             index=1,
-            help=read_markdown_file("md/helptext_sidebar_data-year.md"),
+            help=read_markdown_file("md/sidebar/helptext_sidebar_data-year.md"),
             horizontal=True,
         )
     with c2:
@@ -143,7 +147,7 @@ def main_settings_green(api: PtxboaAPI):
             "Cost assumptions:",
             ["high", "medium", "low"],
             index=1,
-            help=read_markdown_file("md/helptext_sidebar_cost_assumptions.md"),
+            help=read_markdown_file("md/sidebar/helptext_sidebar_cost_assumptions.md"),
             horizontal=True,
         )
     st.session_state["scenario"] = f"{data_year} ({cost_scenario})"
@@ -161,7 +165,7 @@ def main_settings_blue(api: PtxboaAPI):
     st.selectbox(
         "Supply country (origin of natural gas)",
         regions,
-        help=read_markdown_file("md/helptext_sidebar_blue_supply_region.md"),
+        help=read_markdown_file("md/sidebar/helptext_sidebar_blue_supply_region.md"),
         index=regions.index("Algeria"),  # Morocco not implemented in blue
         key="region",
     )
@@ -170,7 +174,7 @@ def main_settings_blue(api: PtxboaAPI):
     st.selectbox(
         "Demand country",
         countries,
-        help=read_markdown_file("md/helptext_sidebar_blue_demand_country.md"),
+        help=read_markdown_file("md/sidebar/helptext_sidebar_blue_demand_country.md"),
         index=countries.index("Germany"),
         key="country",
     )
@@ -207,7 +211,7 @@ def main_settings_blue(api: PtxboaAPI):
             "CH3OH-L",
         ],
         format_func=lambda x: product_labels.get(x, x),
-        help=read_markdown_file("md/helptext_sidebar_product.md"),
+        help=read_markdown_file("md/sidebar/helptext_sidebar_product.md"),
         index=0,
         key="output_product",
     )
@@ -280,7 +284,7 @@ def main_settings_blue(api: PtxboaAPI):
             "SMR_52%_BF_DRI": "H₂ (brownfield SMR) | iron making (DRI)",
             "NG-DRI-C": "natural gas-based iron making (DRI)",
         }.get(x, x),
-        help=read_markdown_file("md/helptext_sidebar_blue_conversion.md"),
+        help=read_markdown_file("md/sidebar/helptext_sidebar_blue_conversion.md"),
         index=0,
     )
 
@@ -304,7 +308,7 @@ def main_settings_blue(api: PtxboaAPI):
             "Transport NH₃ and reconvert to H₂",
             value=False,
             help=read_markdown_file(
-                "md/helptext_sidebar_blue_transport_NH3_and_reconvert_to_H2.md"
+                "md/sidebar/helptext_sidebar_blue_transport_NH3_and_reconvert_to_H2.md"
             ),
         )
     else:
@@ -323,7 +327,7 @@ def main_settings_blue(api: PtxboaAPI):
         "Data year",
         [2030, 2040],
         index=1,
-        help=read_markdown_file("md/helptext_sidebar_blue_data-year.md"),
+        help=read_markdown_file("md/sidebar/helptext_sidebar_blue_data-year.md"),
         horizontal=True,
     )
     cost_scenario = "medium"
@@ -340,7 +344,9 @@ def conversion_location_radio(key: str, disabled: bool):
             "supply": "Supply Country",
             "demand": "Demand Country",
         }.get(x, x),
-        help=read_markdown_file("md/helptext_sidebar_blue_ptx_production_country.md"),
+        help=read_markdown_file(
+            "md/sidebar/helptext_sidebar_blue_ptx_production_country.md"
+        ),
         key=key,
         disabled=disabled,
     )
@@ -387,7 +393,7 @@ def additional_settings_expander():
 def edit_input_data_toggle():
     st.sidebar.toggle(
         "Edit input data",
-        help=read_markdown_file("md/helptext_sidebar_edit_input_data.md"),
+        help=read_markdown_file("md/sidebar/helptext_sidebar_edit_input_data.md"),
         value=False,
         key="edit_input_data",
         on_change=reset_user_changes,
@@ -407,7 +413,7 @@ def water_source_radio(api: PtxboaAPI):
         "Water source:",
         api.get_dimension("secproc_water").index,
         horizontal=True,
-        help=read_markdown_file("md/helptext_sidebar_water_source.md"),
+        help=read_markdown_file("md/sidebar/helptext_sidebar_water_source.md"),
     )
 
 
@@ -415,7 +421,9 @@ def final_use_emissions_toggle():
     include_final_use = st.toggle(
         "Include use-phase emissions",
         value=True,
-        help=read_markdown_file("md/helptext_sidebar_blue_final_use_emissions.md"),
+        help=read_markdown_file(
+            "md/sidebar/helptext_sidebar_blue_final_use_emissions.md"
+        ),
     )
     st.session_state["emissions_included"] = (
         "upstream_and_final_use" if include_final_use else "upstream"
@@ -427,7 +435,7 @@ def co2_source_toggle_green(api: PtxboaAPI):
         "CO₂ source:",
         api.get_dimension("secproc_co2").index,
         horizontal=True,
-        help=read_markdown_file("md/helptext_sidebar_carbon_source.md"),
+        help=read_markdown_file("md/sidebar/helptext_sidebar_carbon_source.md"),
     )
 
 
@@ -439,7 +447,9 @@ def co2_source_toggle_blue(api: PtxboaAPI):
             "industrial_capture": "captured  CO₂ from industrial process",
         }.get(x, x),
         horizontal=True,
-        help=read_markdown_file("md/helptext_sidebar_carbon_source.md"),  # FIXME
+        help=read_markdown_file(
+            "md/sidebar/helptext_sidebar_carbon_source.md"
+        ),  # FIXME
     )
 
     if co2_source == "industrial_capture":
@@ -452,7 +462,7 @@ def co2_source_toggle_blue(api: PtxboaAPI):
             }.get(x, x),
             horizontal=True,
             help=read_markdown_file(
-                "md/helptext_sidebar_blue_industrial_co2_accounting.md"
+                "md/sidebar/helptext_sidebar_blue_industrial_co2_accounting.md"
             ),
         )
 
@@ -477,7 +487,9 @@ def co2_source_toggle_blue(api: PtxboaAPI):
 def ship_own_fuel_toggle(label: str):
     st.session_state["ship_own_fuel"] = st.toggle(
         label=label,
-        help=read_markdown_file("md/helptext_sidebar_transport_use_own_fuel.md"),
+        help=read_markdown_file(
+            "md/sidebar/helptext_sidebar_transport_use_own_fuel.md"
+        ),
     )
 
 
@@ -486,7 +498,7 @@ def unit_toggle_green():
         "Unit for delivered costs:",
         ["USD/MWh", "USD/t"],
         horizontal=True,
-        help=read_markdown_file("md/helptext_sidebar_cost_unit.md"),
+        help=read_markdown_file("md/sidebar/helptext_sidebar_cost_unit.md"),
         index=1,  # 'USD/t' as default
     )
 
@@ -500,7 +512,7 @@ def unit_toggle_blue():
             "USD/MWh": "per MWh (LHV) final product",
             "USD/t": "per tonne final product",
         }.get(x, x),
-        help=read_markdown_file("md/helptext_sidebar_blue_cost_unit.md"),
+        help=read_markdown_file("md/sidebar/helptext_sidebar_blue_cost_unit.md"),
         index=1,  # 'per/t' as default
     )
     st.session_state["emissions_output_unit"] = st.session_state["output_unit"].replace(
@@ -511,7 +523,7 @@ def unit_toggle_blue():
 def allow_pipeline_toggle():
     allow_pipeline = st.toggle(
         "Allow pipeline transport",
-        help=read_markdown_file("md/helptext_sidebar_transport.md"),
+        help=read_markdown_file("md/sidebar/helptext_sidebar_transport.md"),
         value=True,
     )
     if allow_pipeline:
