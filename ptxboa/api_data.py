@@ -326,7 +326,7 @@ class _ParameterGetter:
 
         for param in ["CO2CPT-R", "CO2CPT-S"]:
             value = self.get_parameter_value_w_default(
-                parameter_code=param,  # type:ignore
+                parameter_code=param,  # type: ignore
                 process_code=process_code,
                 default=0,
             )
@@ -336,7 +336,7 @@ class _ParameterGetter:
         for param in ["CO2BOUND", "CH4SHARE", "EF_M"]:
             value = self.get_flow_co2_params(
                 process_code, parameter_code=param
-            )  # type:ignore
+            )  # type: ignore
             if value:
                 result[param] = value
 
@@ -491,8 +491,8 @@ class DataHandler:
 
         for dim in ["parameter", "process", "flow", "region", "country"]:
             mapping = pd.Series(
-                cls.dimensions[dim][f"{dim}_{out_type}"].to_list(),  # type:ignore
-                index=cls.dimensions[dim][f"{dim}_{in_type}"],  # type:ignore
+                cls.dimensions[dim][f"{dim}_{out_type}"].to_list(),  # type: ignore
+                index=cls.dimensions[dim][f"{dim}_{in_type}"],  # type: ignore
             )
             if dim not in ["region", "country"]:
                 column_name = f"{dim}_code"
@@ -546,7 +546,7 @@ class DataHandler:
 
         # we only can user DataFrame.update with matching index values
         for key, value in user_data["value"].items():
-            scenario_data.at[key, "value"] = value  # type:ignore
+            scenario_data.at[key, "value"] = value  # type: ignore
 
         return scenario_data
 
@@ -726,7 +726,7 @@ class DataHandler:
             required_keys = set(
                 self.dimensions["parameter"].at[
                     parameter_code, "dimensions"
-                ]  # type:ignore
+                ]  # type: ignore
             ) | {"parameter_code"}
 
         def _get_value(
@@ -736,7 +736,7 @@ class DataHandler:
                 [params[k] if k in required_keys else "" for k in keys]
             )
             try:
-                return df.at[key, "value"]  # type:ignore
+                return df.at[key, "value"]  # type: ignore
             except KeyError:
                 return None
 
@@ -763,8 +763,7 @@ class DataHandler:
                     result = 0
                 else:
                     result = 0
-                    logger.warning(
-                        f"""did not find a parameter value for:
+                    logger.warning(f"""did not find a parameter value for:
                         parameter_code={parameter_code},
                         process_code={process_code},
                         flow_code={flow_code},
@@ -774,12 +773,10 @@ class DataHandler:
                         process_code_ely={process_code_ely},
                         process_code_deriv={process_code_deriv},
                         ({self.tool_version_color})
-                    """
-                    )
+                    """)
 
             else:
-                raise ValueError(
-                    f"""did not find a parameter value for:
+                raise ValueError(f"""did not find a parameter value for:
                     parameter_code={parameter_code},
                     process_code={process_code},
                     flow_code={flow_code},
@@ -789,8 +786,7 @@ class DataHandler:
                     process_code_ely={process_code_ely},
                     process_code_deriv={process_code_deriv}
                     ({self.tool_version_color})
-                """
-                )
+                """)
         return result
 
     @classmethod
@@ -1042,7 +1038,7 @@ class DataHandler:
         # If RES=Hybrid: we also need PV and Wind-On
         if process_code_res == "RES-HYBR":
             pc: ProcessCodeType
-            for pc in ["PV-FIX", "WIND-ON"]:  # type:ignore
+            for pc in ["PV-FIX", "WIND-ON"]:  # type: ignore
                 result["flh_opt_process"][pc] = pg.get_process_params(pc)
 
         used_flows_always_for_opt: set[FlowCodeType] = {
@@ -1115,7 +1111,7 @@ class DataHandler:
                     f"flow_code != flow_code_in in {process_code}: "
                     f"{flow_code} != {flow_code_in}"
                 )
-            flow_code = process["main_flow_code_out"]  # type:ignore
+            flow_code = process["main_flow_code_out"]  # type: ignore
         if flow_code != final_flow_code:
             raise AssertionError(
                 f"flow_code != final_flow_code in {process_code}: "

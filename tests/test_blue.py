@@ -44,7 +44,7 @@ def _translate_user_data(user_data: pd.DataFrame) -> None:
             if value and colname.endswith("_code"):
                 dimname = colname.replace("_code", "")
                 basename = dimname.replace("target_", "").replace("source_", "")
-                dim = DataHandler.dimensions[dimname]  # type:ignore
+                dim = DataHandler.dimensions[dimname]  # type: ignore
                 try:
                     value = dim.loc[value, basename + "_name"]
                 except Exception:
@@ -52,7 +52,7 @@ def _translate_user_data(user_data: pd.DataFrame) -> None:
                         f"{colname}={value} not in {dimname}: "
                         f"{sorted(dim.index)}, {sorted(dim.columns)}"
                     )
-                user_data.loc[idx, colname] = value  # type:ignore
+                user_data.loc[idx, colname] = value  # type: ignore
 
 
 # recursively use pytest.approx

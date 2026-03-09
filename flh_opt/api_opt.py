@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """API interface for FLH optimizer."""
+
 import math
 import os
 from typing import List, Literal, Optional

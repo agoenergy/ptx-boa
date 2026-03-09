@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Content of certification schemes tab."""
+
 import numpy as np
 import streamlit as st
 
@@ -36,8 +37,7 @@ def _render_scheme_info(context_data, scheme_name):
         st.markdown(f"- **Labels:** {data['label']}")
         st.markdown(f"- **Lifecycle scope:** {data['lifecycle_scope']}")
 
-        st.markdown(
-            """
+        st.markdown("""
 **Explanations**
 
 - Info on "Lifecycle scope":
@@ -46,8 +46,7 @@ def _render_scheme_info(context_data, scheme_name):
   - Further information on the life cycle scopes can be found in
 IRENA & RMI (2023): Creating a global hydrogen market: certification to enable trade,
  pp. 15-19
-"""
-        )
+""")
 
     with st.expander("**Scope**"):
         if data["scope_emissions"] != "not specified":
