@@ -21,7 +21,8 @@ from ptxboa.api import PtxboaAPI
 def content_costs(api: PtxboaAPI):
     with st.popover("*Help*", width="stretch"):
         st.markdown(
-            read_markdown_file("md/whatisthis_blue_costs.md"), unsafe_allow_html=True
+            read_markdown_file("md/tab_blue_costs/whatisthis_blue_costs.md"),
+            unsafe_allow_html=True,
         )
 
     with st.container(border=True):
@@ -44,13 +45,7 @@ def content_costs(api: PtxboaAPI):
         )
         st.subheader(title_string)
 
-        st.markdown(
-            (
-                "This map shows delivered costs for the selected product and demand"
-                " country, for different source countries. Move your mouse over a "
-                "marker for additional information."
-            )
-        )
+        st.markdown(read_markdown_file("md/tab_blue_costs/description_cost_map.md"))
 
         fig_map = plot_costs_on_map(
             api, results_per_region.costs, scope="world", cost_component="Total"
@@ -60,12 +55,12 @@ def content_costs(api: PtxboaAPI):
         )
         st.plotly_chart(fig_map, width="stretch")
 
-        st.subheader("Cost distribution and cost components")
-
+        st.subheader(
+            read_markdown_file("md/tab_blue_costs/figure_title_cost_distribution.md")
+        )
         st.markdown(
-            (
-                "These figures show the regional distribution of costs"
-                " and a breakdown by category for the selected source country."
+            read_markdown_file(
+                "md/tab_blue_costs/figure_description_cost_distribution.md"
             )
         )
 
@@ -102,19 +97,16 @@ def content_costs(api: PtxboaAPI):
         what_is_a_boxplot()
 
     with st.container(border=True):
-        help_string = " ".join(
-            [
-                "This figure lets you compare total costs and cost components by source"
-                " country.\n\n By default, all regions are shown, and they are sorted"
-                " by total costs. You can change this in the filter settings."
-            ]
-        )
         display_results_bar_and_table(
             results_per_region.costs,
             results_per_region.costs_not_modified,
             "region",
-            "Costs for different source countries",
-            help_string=help_string,
+            titlestring=read_markdown_file(
+                "md/tab_blue_costs/figure_title_cost_per_region.md"
+            ),
+            help_string=read_markdown_file(
+                "md/tab_blue_costs/figure_description_cost_per_region.md"
+            ),
             tool_version_color="blue",
         )
 
@@ -126,20 +118,17 @@ def content_costs(api: PtxboaAPI):
                 emissions_included=st.session_state["emissions_included"],
             )
 
-        help_string = " ".join(
-            [
-                "This figure lets you compare total costs and cost components "
-                "by WACC in the supply country. "
-                "The value from input data is altered by +-10%."
-            ]
-        )
         display_results_bar_and_table(
             results_per_wacc.costs,
             results_per_wacc.costs_not_modified,
             key="scenario",
             key_suffix="sensitivity_wacc",
-            titlestring="Costs for different WACC values in the supply country",
-            help_string=help_string,
+            titlestring=read_markdown_file(
+                "md/tab_blue_costs/figure_title_cost_per_WACC.md"
+            ),
+            help_string=read_markdown_file(
+                "md/tab_blue_costs/figure_description_cost_per_WACC.md"
+            ),
             tool_version_color="blue",
         )
 
@@ -164,20 +153,17 @@ def content_costs(api: PtxboaAPI):
                 ),
             )
 
-        help_string = " ".join(
-            [
-                "This figure lets you compare total costs and cost components "
-                "by conversion location in supply or demand country"
-            ]
-        )
-
         display_results_bar_and_table(
             results_supply_demand.costs,
             results_supply_demand.costs_not_modified,
             key="chain",
             key_suffix="demand_supply",
-            titlestring="Costs for converting in supply or demand country",
-            help_string=help_string,
+            titlestring=read_markdown_file(
+                "md/tab_blue_costs/figure_title_cost_per_conversion_location.md"
+            ),
+            help_string=read_markdown_file(
+                "md/tab_blue_costs/figure_description_cost_per_conversion_location.md"
+            ),
             x_label_mapping={
                 k: (
                     f"{v}<br>conversion in "
@@ -207,21 +193,18 @@ def content_costs(api: PtxboaAPI):
                 parameter_list=equal_output_product_chains,
             )
 
-        help_string = " ".join(
-            [
-                "This figure lets you compare total costs and cost components"
-                " for different technology chains that produce "
-                f"{st.session_state['output_product_label']}."
-            ]
-        )
-
         display_results_bar_and_table(
             results_equal_output_product.costs,
             results_equal_output_product.costs_not_modified,
             key="chain",
             key_suffix="equal_product",
-            titlestring="Costs for different technology chains",
-            help_string=help_string,
+            titlestring=read_markdown_file(
+                "md/tab_blue_costs/figure_title_cost_equal_product.md"
+            ),
+            help_string=read_markdown_file(
+                "md/tab_blue_costs/figure_description_cost_equal_product.md"
+            )
+            + f" {st.session_state['output_product_label']}.",
             x_label_mapping=blue_chain_labels,
             tool_version_color="blue",
         )
@@ -256,21 +239,18 @@ def content_costs(api: PtxboaAPI):
                 override_session_state={"output_unit": "USD/MWh"},
             )
 
-        help_string = " ".join(
-            [
-                "This figure lets you compare total costs and cost components"
-                " for different products with comparable technology chains."
-            ]
-        )
-
         display_results_bar_and_table(
             results_equal_routes.costs,
             results_equal_routes.costs_not_modified,
             key="chain",
             key_suffix="equal_reformer",
-            titlestring="Costs for different products",
+            titlestring=read_markdown_file(
+                "md/tab_blue_costs/figure_title_cost_equal_reformer.md"
+            ),
+            help_string=read_markdown_file(
+                "md/tab_blue_costs/figure_description_cost_equal_reformer.md"
+            ),
             output_unit="USD/MWh",
-            help_string=help_string,
             x_label_mapping=blue_chain_labels,
             tool_version_color="blue",
         )

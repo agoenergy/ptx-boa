@@ -494,7 +494,7 @@ def sort_by_position_in_chain(
         "Carbon",
         "Transportation (Pipeline)",
         "Transportation (Ship)",
-        "Final use",
+        "Bound in product",
         "CH4",
         "CH4 (direct)",
         "CH4 (indirect)",
@@ -1072,25 +1072,25 @@ def blue_results_over_dimension(
     override_session_state=None,
 ):
 
-    def combine_emissions(
+    def filter_co2_bound_in_product(
         emissions: pd.DataFrame | None,
-        emissions_mass: pd.DataFrame | None,
         included: Literal["upstream", "final_use", "upstream_and_final_use"],
     ) -> pd.DataFrame | None:
-        if emissions is None and emissions_mass is None:
+        BOUND_IN_PRODUCT_LABEL = "Bound in product"
+        if emissions is None:
             return None
         if included == "upstream":
-            return emissions
+            return emissions.loc[
+                (emissions["process_type"] != BOUND_IN_PRODUCT_LABEL), :
+            ]
         if included == "final_use":
-            return emissions_mass
+            return emissions.loc[
+                (emissions["process_type"] == BOUND_IN_PRODUCT_LABEL), :
+            ]
         if included == "upstream_and_final_use":
-            if emissions is None:
-                return emissions_mass
-            if emissions_mass is None:
-                return emissions
-            return pd.concat([emissions, emissions_mass])
+            return emissions
 
-    costs, emissions, emissions_mass = calculate_results_list_blue(
+    costs, emissions, _emissions_mass = calculate_results_list_blue(
         api,
         parameter_to_change=dim,
         parameter_list=parameter_list,
@@ -1099,7 +1099,7 @@ def blue_results_over_dimension(
     )
 
     if st.session_state["user_changes_df"] is not None:
-        costs_nm, emissions_nm, emissions_mass_nm = calculate_results_list_blue(
+        costs_nm, emissions_nm, _emissions_mass_nm = calculate_results_list_blue(
             api,
             parameter_to_change=dim,
             parameter_list=parameter_list,
@@ -1109,15 +1109,12 @@ def blue_results_over_dimension(
     else:
         costs_nm = None
         emissions_nm = None
-        emissions_mass_nm = None
 
     return BlueResultOverDimension(
         costs=costs,
-        emissions=combine_emissions(
-            emissions, emissions_mass, included=emissions_included
-        ),
+        emissions=filter_co2_bound_in_product(emissions, included=emissions_included),
         costs_not_modified=costs_nm,
-        emissions_not_modified=combine_emissions(
-            emissions_nm, emissions_mass_nm, included=emissions_included
+        emissions_not_modified=filter_co2_bound_in_product(
+            emissions_nm, included=emissions_included
         ),
     )

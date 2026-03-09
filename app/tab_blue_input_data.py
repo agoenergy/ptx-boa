@@ -14,7 +14,8 @@ from ptxboa.api import PtxboaAPI
 def content_input_data(api: PtxboaAPI) -> None:
     with st.popover("*Help*", width="stretch"):
         st.markdown(
-            read_markdown_file("md/whatisthis_input_data.md"), unsafe_allow_html=True
+            read_markdown_file("md/tab_blue_input_data/whatisthis_blue_input_data.md"),
+            unsafe_allow_html=True,
         )
 
     with st.container(border=True):
@@ -37,8 +38,6 @@ def content_input_data(api: PtxboaAPI) -> None:
             st.plotly_chart(fig, width="stretch")
 
         with st.expander("**Data**"):
-            if data_selection == "full load hours":
-                st.caption(read_markdown_file("md/helptext_flh.md"))
             df = display_and_edit_input_data(
                 api,
                 data_type=data_selection,
@@ -69,17 +68,7 @@ def content_input_data(api: PtxboaAPI) -> None:
 
         with st.expander("**Storage**"):
             st.caption(
-                (
-                    "- Storage CAPEX are defined per charging power.\n"
-                    "- Efficiencies are round-trip.\n"
-                    "- Time-dependent losses are neglected.\n"
-                    "- For electricity storage (batteries) we assume a fixed ratio of 4"
-                    " MWh storage capacity per MW charging power\n"
-                    " and equal charging/discharging power.\n"
-                    "- For hydrogen storage (tanks) we assume storage capacity and"
-                    " discharge power to be non-binding because the comporessor is by"
-                    " far the most expensive component."
-                )
+                read_markdown_file("md/tab_blue_input_data/description_storage.md")
             )
             display_and_edit_input_data(
                 api,
@@ -90,10 +79,8 @@ def content_input_data(api: PtxboaAPI) -> None:
 
         with st.expander("**Transportation (ships and pipelines)**"):
             st.caption(
-                (
-                    "The unit of levelized costs is USD/(t km) for Green iron ship "
-                    "(bunker fuel consumption) and USD/(kW km) for all other "
-                    "processes."
+                read_markdown_file(
+                    "md/tab_blue_input_data/description_transportation.md"
                 )
             )
             display_and_edit_input_data(
@@ -111,14 +98,11 @@ def content_input_data(api: PtxboaAPI) -> None:
                 scope=None,
                 key="input_data_reconversion_processes",
             )
-        with st.expander("**Direct air capture and desalination**"):
+        with st.expander("**Direct air capture**"):
             st.caption(
-                (
-                    "Units for CAPEX and OPEX (fix) are per kg of CO₂ for "
-                    "direct air capture and per kg of H₂0 for sea water "
-                    "desalination, respectively."
-                ),
-                unsafe_allow_html=True,
+                read_markdown_file(
+                    "md/tab_blue_input_data/description_direct_air_capture.md"
+                )
             )
             display_and_edit_input_data(
                 api,
@@ -128,8 +112,9 @@ def content_input_data(api: PtxboaAPI) -> None:
             )
         with st.expander("**Specific costs for materials and energy carriers**"):
             st.caption(
-                read_markdown_file("md/helptext_columns_specific_costs.md"),
-                unsafe_allow_html=True,
+                read_markdown_file(
+                    "md/tab_blue_input_data/description_specific_costs.md"
+                ),
             )
             display_and_edit_input_data(
                 api,
@@ -139,8 +124,9 @@ def content_input_data(api: PtxboaAPI) -> None:
             )
         with st.expander("**Conversion coefficients**"):
             st.caption(
-                read_markdown_file("md/info_conversion_coefficients.md"),
-                unsafe_allow_html=True,
+                read_markdown_file(
+                    "md/tab_blue_input_data/description_conversion_coefficients.md"
+                ),
             )
             display_and_edit_input_data(
                 api,

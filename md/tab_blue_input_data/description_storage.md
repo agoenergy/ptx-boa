@@ -1,0 +1,5 @@
+- Storage CAPEX are defined per charging power.
+- Efficiencies are round-trip.
+- Time-dependent losses are neglected.
+- For electricity storage (batteries) we assume a fixed ratio of 4 MWh storage capacity per MW charging power and equal charging/discharging power.
+- For hydrogen storage (tanks) we assume storage capacity and discharge power to be non-binding because the comporessor is by far the most expensive component.
