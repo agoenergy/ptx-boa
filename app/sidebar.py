@@ -419,7 +419,7 @@ def water_source_radio(api: PtxboaAPI):
 
 def final_use_emissions_toggle():
     include_final_use = st.toggle(
-        "Include use-phase emissions",
+        "Include emissions from final use",
         value=True,
         help=read_markdown_file(
             "md/sidebar/helptext_sidebar_blue_final_use_emissions.md"
