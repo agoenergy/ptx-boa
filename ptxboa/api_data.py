@@ -333,7 +333,7 @@ class _ParameterGetter:
             if value:
                 result[param] = value
 
-        for param in ["CO2BOUND", "CH4SHARE", "EF_M"]:
+        for param in ["CO2BOUND", "CH4SHARE", "EF_M", "EF_E"]:
             value = self.get_flow_co2_params(
                 process_code, parameter_code=param
             )  # type:ignore

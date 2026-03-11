@@ -35,7 +35,8 @@ def calculate_emissions(
     CO2BOUND = step_data.get("CO2BOUND", {})
 
     CO2CPT = step_data.get("CO2CPT-R", 0) * step_data.get("CO2CPT-S", 0)
-    EF_M = step_data.get("EF_M", {})
+    EF_M = step_data.get("EF_M", {})  # noqa: F841
+    EF_E = step_data.get("EF_E", {})
 
     METHANE_COeq = 29.8  # TODO
 
@@ -62,7 +63,7 @@ def calculate_emissions(
         flow_input_net = flow_input_gross / (1 + factor_loss_flow)
         flow_input_loss = flow_input_net * factor_loss_flow
 
-        co2_indirect += flow_input_gross * EF_M.get(flow_code, 0)
+        co2_indirect += flow_input_gross * EF_E.get(flow_code, 0)
         co2_bound_input += flow_input_net * CO2BOUND.get(flow_code, 0)
         co2_emission_direct += flow_input_loss * CO2BOUND.get(flow_code, 0)
         methane_emission_direct += flow_input_loss * CH4SHARE.get(main_flow_code_in, 0)
