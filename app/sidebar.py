@@ -200,16 +200,20 @@ def main_settings_blue(api: PtxboaAPI):
         "CH3OH-L": "Methanol",
     }
 
+    product_groups = {
+        "NH3-L": ["NH3-L", "CHX-L", "H2-G", "CH3OH-L"],
+        "CHX-L": ["NH3-L", "CHX-L", "H2-G", "CH3OH-L"],
+        "H2-G": ["NH3-L", "CHX-L", "H2-G", "CH3OH-L"],
+        "CH3OH-L": ["NH3-L", "CHX-L", "H2-G", "CH3OH-L"],
+        "STL-S": ["STL-S", "DRI-S"],
+        "DRI-S": ["STL-S", "DRI-S"],
+    }
+
+    product_options = ["NH3-L", "CHX-L", "H2-G", "CH3OH-L", "STL-S", "DRI-S"]
+
     product = st.selectbox(
         label="Final Product",
-        options=[
-            "NH3-L",
-            "CHX-L",
-            "H2-G",
-            "CH3OH-L",
-            "STL-S",
-            "DRI-S",
-        ],
+        options=product_options,
         format_func=lambda x: product_labels.get(x, x),
         help=read_markdown_file("md/sidebar/helptext_sidebar_product.md"),
         index=0,
@@ -218,6 +222,9 @@ def main_settings_blue(api: PtxboaAPI):
 
     # add product label to session state
     st.session_state["output_product_label"] = product_labels.get(product, product)
+    st.session_state["output_product_group"] = product_groups.get(
+        product, product_options
+    )
 
     # different conversion options for each product
     conversion_options = {
@@ -514,17 +521,27 @@ def unit_toggle_green():
 
 
 def unit_toggle_blue():
-    st.session_state["output_unit"] = st.radio(
-        "Unit for costs and emissions:",
-        ["USD/MWh", "USD/t"],
-        horizontal=True,
-        format_func=lambda x: {
-            "USD/MWh": "per MWh (LHV) final product",
-            "USD/t": "per tonne final product",
-        }.get(x, x),
-        help=read_markdown_file("md/sidebar/helptext_sidebar_blue_cost_unit.md"),
-        index=1,  # 'per/t' as default
-    )
+    def _radio(key: str, disabled: bool):
+        return st.radio(
+            "Unit for costs and emissions:",
+            ["USD/MWh", "USD/t"],
+            horizontal=True,
+            format_func=lambda x: {
+                "USD/MWh": "per MWh (LHV) final product",
+                "USD/t": "per tonne final product",
+            }.get(x, x),
+            help=read_markdown_file("md/sidebar/helptext_sidebar_blue_cost_unit.md"),
+            index=1,  # 'per/t' as default
+            key=key,
+            disabled=disabled,
+        )
+
+    if st.session_state["output_product"] in ["STL-S", "DRI-S"]:
+        unit = _radio("_blue_unit_disabled", disabled=True)
+    else:
+        unit = _radio("_blue_unit", disabled=False)
+
+    st.session_state["output_unit"] = unit
     st.session_state["emissions_output_unit"] = st.session_state["output_unit"].replace(
         "USD", "gCO₂eq"
     )
