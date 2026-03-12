@@ -22,6 +22,9 @@ from app.ptxboa_functions import (
 from ptxboa.api import PtxboaAPI
 from ptxboa.static import OutputUnitType, ScenarioType, TargetCountryNameType
 
+GREEN_COLOR = "#2fac66"
+BLUE_COLOR = "#1E83B3"
+
 
 def product_dict(**kwargs):
     """Yield the cartesian product of a dictionary of lists.
@@ -43,7 +46,7 @@ def product_dict(**kwargs):
 
 
 @st.cache_data(show_spinner=False)
-def aggregate_green_results(
+def get_green_results(
     _api: PtxboaAPI,
     scenarios: list[ScenarioType],
     import_country: TargetCountryNameType,
@@ -126,7 +129,7 @@ def aggregate_green_results(
     else:
         raise ValueError(f"Unknown {green_param_set=}")
 
-    stats = []
+    raw = []
 
     for scenario in scenarios:
         costs = []
@@ -141,7 +144,7 @@ def aggregate_green_results(
                         scenario=scenario,
                         country=import_country,
                         output_unit=output_unit,
-                        tool_version_color="blue",
+                        tool_version_color="green",
                         **param_set,
                     )
                     .costs["values"]
@@ -149,23 +152,17 @@ def aggregate_green_results(
                 )
             except Exception as exc:
                 logging.info(f"could not get data: {exc}")
-        stats.append(
-            pd.Series(costs)
-            .describe()
-            .rename("values")
-            .rename_axis(index="metric")
-            .reset_index()
-            .assign(scenario=scenario)
-        )
 
-    return pd.concat(stats).pivot(columns="metric", index="scenario", values="values")
+        raw.append(pd.DataFrame({"scenario": scenario, "values": costs}))
+
+    return pd.concat(raw)
 
 
 def get_data(
     api, scenarios: list[ScenarioType], import_country, output_product, output_unit
 ):
     with st.spinner("Calculating green results"):
-        costs_green = aggregate_green_results(
+        cost_green_raw = get_green_results(
             api,
             scenarios=scenarios,
             import_country=import_country,
@@ -173,133 +170,19 @@ def get_data(
             output_unit=output_unit,
         )
 
-    costs_blue = calculate_results_list_blue(
-        api,
-        parameter_to_change="scenario",
-        parameter_list=scenarios,
-        apply_user_data=True,
-        override_session_state=None,
-    )[0].add_prefix("blue_")
-
-    return pd.concat([costs_green, costs_blue], axis=1).reset_index()
-
-
-def make_figure(
-    data: pd.DataFrame,
-    x,
-    green_median,
-    green_lower_bound,
-    green_upper_bound,
-    blue,
-    output_product_label: str,
-    xaxis_title: str,
-    yaxis_title: str,
-) -> go.Figure:
-    GREEN_COLOR = "#2fac66"
-    BLUE_COLOR = "#1E83B3"
-    BOUNDS_LW = 0.7
-
-    def _add_invisible_trace(fig, df, x, y):
-        fig.add_trace(
-            go.Scatter(
-                x=df[x],
-                y=df[y],
-                fill=None,
-                mode="lines",
-                line_color="rgba(0,0,0,0)",
-                showlegend=False,
-                hoverinfo="skip",
-            )
-        )
-
-    def _add_line(
-        fig,
-        df,
-        x,
-        y,
-        line_color,
-        legend_label,
-        hover_label,
-        showlegend,
-        fill,
-        **kwargs,
-    ):
-        fig.add_trace(
-            go.Scatter(
-                x=df[x],
-                y=df[y],
-                fill=fill,
-                mode="lines",
-                line_color=line_color,
-                showlegend=showlegend,
-                name=legend_label,
-                hoverinfo="text",
-                hovertext=[f"{hover_label}: {v}" for v in df[y]],
-                **kwargs,
-            )
-        )
-
-    fig = go.Figure()
-
-    # fill='tonexty' always references trace which was added before
-    _add_invisible_trace(fig=fig, df=data, x=x, y=green_median)
-    _add_line(
-        fig=fig,
-        df=data,
-        legend_label=f"25th - 75th percentile green {output_product_label}",
-        hover_label=f"75th percentile green {output_product_label}",
-        x=x,
-        y=green_upper_bound,
-        line_color=GREEN_COLOR,
-        line={"width": BOUNDS_LW},
-        fill="tonexty",
-        showlegend=True,
+    costs_blue = (
+        calculate_results_list_blue(
+            api,
+            parameter_to_change="scenario",
+            parameter_list=scenarios,
+            apply_user_data=True,
+            override_session_state=None,
+        )[0]
+        .add_prefix("blue_")
+        .reset_index()
     )
 
-    _add_line(
-        fig=fig,
-        df=data,
-        legend_label=f"Median green {output_product_label}",
-        hover_label=f"Median green {output_product_label}",
-        x=x,
-        y=green_median,
-        line_color=GREEN_COLOR,
-        fill=None,
-        showlegend=True,
-    )
-
-    _add_line(
-        fig=fig,
-        df=data,
-        legend_label=f"25th - 75th percentile green {output_product_label}",
-        hover_label=f"25th percentile green {output_product_label}",
-        x=x,
-        y=green_lower_bound,
-        line_color=GREEN_COLOR,
-        line={"width": BOUNDS_LW},
-        fill="tonexty",
-        showlegend=False,
-    )
-
-    _add_line(
-        fig=fig,
-        df=data,
-        legend_label=f"Blue {output_product_label}",
-        hover_label=f"Blue {output_product_label}",
-        x=x,
-        y=blue,
-        line_color=BLUE_COLOR,
-        fill=None,
-        showlegend=True,
-    )
-
-    fig.update_layout(
-        hovermode="x unified",
-        legend_traceorder="reversed",
-        xaxis={"title": {"text": xaxis_title}},
-        yaxis={"title": {"text": yaxis_title}},
-    )
-    return fig
+    return costs_blue, cost_green_raw
 
 
 def crude_steel_warning():
@@ -323,7 +206,7 @@ def content_costs_comparison(api):
             crude_steel_warning()
             return
 
-        costs = get_data(
+        costs_blue, costs_green_raw = get_data(
             api,
             scenarios=["2030 (medium)", "2040 (medium)"],
             import_country=st.session_state["country"],
@@ -336,15 +219,37 @@ def content_costs_comparison(api):
             f"{st.session_state['country']}"
         )
         st.subheader(title_string)
-        fig = make_figure(
-            costs,
-            x="scenario",
-            green_median="50%",
-            green_lower_bound="25%",
-            green_upper_bound="75%",
-            blue="blue_Total",
-            output_product_label=st.session_state["output_product_label"],
-            xaxis_title="Scenario",
-            yaxis_title=st.session_state["output_unit"],
+
+        # --------------------------
+        fig = go.Figure()
+        fig.add_trace(
+            go.Box(
+                x=costs_green_raw["scenario"],
+                y=costs_green_raw["values"],
+                name=f"Green {st.session_state['output_product_label']} cost range",
+                marker_color=GREEN_COLOR,
+            )
+        )
+        fig.add_trace(
+            go.Scatter(
+                x=costs_blue["scenario"],
+                y=costs_blue["blue_Total"],
+                name=f"Blue {st.session_state['output_product_label']}",
+                marker_color=BLUE_COLOR,
+                mode="markers",
+                marker={
+                    "size": 15,
+                    "symbol": "hexagram-dot",
+                    "line": {
+                        "width": 2,
+                        "color": "DarkSlateGrey",
+                    },
+                },
+            )
+        )
+        fig.update_layout(
+            xaxis={"title": {"text": "Scenario"}},
+            yaxis={"title": {"text": st.session_state["output_unit"]}},
+            boxmode="group",
         )
         st.plotly_chart(fig)
