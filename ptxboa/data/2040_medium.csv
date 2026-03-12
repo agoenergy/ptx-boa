@@ -453,7 +453,6 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CONV,CH4SYN,CO2-G,,",CONV,CH4SYN,CO2-G,,,0.20196,kg CO2 (g)/kWh CH4 (g),
 "CONV,CH4SYN,H2O-L,,",CONV,CH4SYN,H2O-L,,,-0.1426332288401254,kg H2O (l)/kWh CH4 (g),Fasihi & Breyer 2018
 "CONV,CH4SYN,HEAT,,",CONV,CH4SYN,HEAT,,,-0.1849529780564263,kWh (heat)/kWh CH4 (g),Fasihi & Breyer 2018
-"CONV,CO2-T+S#B,EL,,",CONV,CO2-T+S#B,EL,,,0.0,kWh (el.)/kg CO2 (g),
 "CONV,DAC#B,EL,,",CONV,DAC#B,EL,,,0.203,kg CO2 (g)/kWh (el.),Fasihi et al. 2019
 "CONV,DAC#B,HEAT,,",CONV,DAC#B,HEAT,,,1.286,kWh (heat)/kg CO2 (g),Fasihi et al. 2019
 "CONV,DAC,EL,,",CONV,DAC,EL,,,0.4515,kWh (el.)/kg CO2 (g),average low and high
@@ -545,7 +544,6 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CONV-OT,CH4-S#B,NG-L,,",CONV-OT,CH4-S#B,NG-L,,,3.191932945061948e-06,kWh natural gas LHV/kWh natural gas LHV*km,
 "CONV-OT,CH4-SB#B,BFUEL-L,,",CONV-OT,CH4-SB#B,BFUEL-L,,,3.3002590965851548e-06,kwh bunker fuel (l)/kWh natural gas LHV*km,
 "CONV-OT,CH4-SB#B,NG-L,,",CONV-OT,CH4-SB#B,NG-L,,,1.1537538535378709e-06,kWh natural gas LHV/kWh natural gas LHV*km,
-"CONV-OT,CO2-T+S#B,NG-L,,",CONV-OT,CO2-T+S#B,NG-L,,,3.3002590965851543e-06,kWh natural gas LHV/kWh natural gas LHV*km,
 "CONV-OT,H2-S#B,H2-L,,",CONV-OT,H2-S#B,H2-L,,,9.251193689684598e-06,kWh H2 (l)/kWh H2 (l),
 "CONV-OT,H2-SB#B,BFUEL-L,,",CONV-OT,H2-SB#B,BFUEL-L,,,3.3002590965851543e-06,kwh bunker fuel (l)/kWh H2 (l),
 "CONV-OT,NH3-S#B,NH3-L,,",CONV-OT,NH3-S#B,NH3-L,,,5.343656103416341e-06,kwh NH3 LHV (gasous)/kwh NH3 LHV (gasous),
@@ -1517,6 +1515,7 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "EFF,CH3OHSYN,,,",EFF,CH3OHSYN,,,,0.803,various (output per main input),Frontier Economics 2021
 "EFF,CH4-RGAS,,,",EFF,CH4-RGAS,,,,0.98,various (output per main input),Pospíšil et al. 2019
 "EFF,CH4SYN,,,",EFF,CH4SYN,,,,0.83,various (output per main input),Öko-Institut 2020
+"EFF,CO2-T+S#B,,NOR,",EFF,CO2-T+S#B,,NOR,,0.95,kg CO2/kg CO2,
 "EFF,DESAL,,,",EFF,DESAL,,,,1.0,various (output per main input),
 "EFF,DRI#B,,,",EFF,DRI#B,,,,0.4348260913047826,kg DRI (s)/kWh H2 (g),Agora 2025 Green iron trade
 "EFF,DRI,,,",EFF,DRI,,,,0.4335693684975433,kg DRI (s)/kwhh2,"Agora Industry, Wuppertal Institute and Lund University (2024)"
@@ -1937,7 +1936,6 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "LOSS,CH4-LIQ#B,CH4-G,THA,",LOSS,CH4-LIQ#B,CH4-G,THA,,3e-05,kg CH4/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
 "LOSS,CH4-LIQ#B,CH4-G,USA,",LOSS,CH4-LIQ#B,CH4-G,USA,,7.000000000000001e-05,kg CH4/kWh natural gas LHV,UBA (2021)
 "LOSS,CH4-RGAS#B,NG-G,,",LOSS,CH4-RGAS#B,NG-G,,,4e-08,kWh natural gas LHV/kWh natural gas LHV,
-"LOSS,CO2-T+S#B,CO2-G,,",LOSS,CO2-T+S#B,CO2-G,,,0.01,kg CO2 (g)/kg CO2 (g),
 "LOSS,NG-PROD#B,CH4-G,AUS,",LOSS,NG-PROD#B,CH4-G,AUS,,0.0004,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
 "LOSS,NG-PROD#B,CH4-G,BRA,",LOSS,NG-PROD#B,CH4-G,BRA,,0.0012,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
 "LOSS,NG-PROD#B,CH4-G,CHN,",LOSS,NG-PROD#B,CH4-G,CHN,,0.0008,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
@@ -1952,7 +1950,7 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "LOSS-T,CH3OH-S,,,",LOSS-T,CH3OH-S,,,,3.0509883673175365e-06,fraction/km,calc_shipping
 "LOSS-T,CH3OH-SB#B,,,",LOSS-T,CH3OH-SB#B,,,,2.399808015358772e-07,kWh CH3OH (l)/kWh CH3OH (l),
 "LOSS-T,CH3OH-SB,,,",LOSS-T,CH3OH-SB,,,,2.399808015358772e-07,fraction/km,calc_shipping
-"LOSS-T,CH4-P-L#B,,,",LOSS-T,CH4-P-L#B,,,,3.4e-06,kWh natural gas LHV/kWh natural gas LHV*km,
+"LOSS-T,CH4-P-L#B,,,",LOSS-T,CH4-P-L#B,,,,2.0399999999999995e-06,kWh natural gas LHV/kWh natural gas LHV*km,
 "LOSS-T,CH4-P-L,,,",LOSS-T,CH4-P-L,,,,5.666666666666667e-06,fraction/km,
 "LOSS-T,CH4-P-LR#B,,,",LOSS-T,CH4-P-LR#B,,,,5.666666666666667e-06,fraction/km,
 "LOSS-T,CH4-P-LR,,,",LOSS-T,CH4-P-LR,,,,5.666666666666667e-06,fraction/km,
@@ -1963,7 +1961,6 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "LOSS-T,CH4-S#B,,,",LOSS-T,CH4-S#B,,,,1.0832615152320684e-07,kWh natural gas LHV/kWh natural gas LHV*km,
 "LOSS-T,CH4-S,,,",LOSS-T,CH4-S,,,,3.3002590965851543e-06,fraction/km,calc_shipping
 "LOSS-T,CH4-SB,,,",LOSS-T,CH4-SB,,,,1.1537538535378709e-06,fraction/km,calc_shipping
-"LOSS-T,CO2-T+S#B,,,",LOSS-T,CO2-T+S#B,,,,1.1537538535378709e-06,kWh natural gas LHV/kWh natural gas LHV*km,
 "LOSS-T,H2-P-L#B,,,",LOSS-T,H2-P-L#B,,,,1.6866666666666666e-05,fraction/km,
 "LOSS-T,H2-P-L,,,",LOSS-T,H2-P-L,,,,1.6866666666666666e-05,fraction/km,
 "LOSS-T,H2-P-LR#B,,,",LOSS-T,H2-P-LR#B,,,,1.6866666666666666e-05,fraction/km,
@@ -2340,6 +2337,7 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "OPEX-O,CH3OH-SB,,,",OPEX-O,CH3OH-SB,,,,0.0001251978850843,USD2023/kWh,UNSW Sydney 2021
 "OPEX-O,CH4-S,,,",OPEX-O,CH4-S,,,,0.0003813147912294,USD2023/kWh,UNSW Sydney 2021
 "OPEX-O,CH4-SB,,,",OPEX-O,CH4-SB,,,,0.0003813147912294,USD2023/kWh,UNSW Sydney 2021
+"OPEX-O,CO2-T+S#B,CO2-G,NOR,",OPEX-O,CO2-T+S#B,CO2-G,NOR,,0.15,USD2021/kgCO2,
 "OPEX-O,DRI,,,",OPEX-O,DRI,,,,0.2622666327363948,USD2023/kg DRI (s),"Agora Industry, Wuppertal Institute and Lund University (2024)"
 "OPEX-O,EAF#B,,,",OPEX-O,EAF#B,,,,0.1836786902020977,USD2025/kg (CS),"Agora, WI, Lund Uni (2024) Low-carbon technologies for the global steel transformation"
 "OPEX-O,H2-S,,,",OPEX-O,H2-S,,,,0.0022569810463972,USD2023/kWh,UNSW Sydney 2021
@@ -2481,6 +2479,7 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "SEASHARE,,,VNM,KOR",SEASHARE,,,VNM,KOR,0.16,,Research Susanne Krieger
 "SPECCOST,,BFUEL-L,,",SPECCOST,,BFUEL-L,,,0.0032243376759515,USD2023 / kwh bunker fuel (l),
 "SPECCOST,,CO2-G,,",SPECCOST,,CO2-G,,,0.0445186199587845,USD2023 / kg CO2 (g),
+"SPECCOST,,DIESEL-L,,",SPECCOST,,DIESEL-L,,,0.0,USDXXXX/kWh,
 "SPECCOST,,EL,,",SPECCOST,,EL,,,0.08078,USD2023 / kWh (el.),"dummy mh! Auf Null gesetzt bis bug in Rechner behoben ist. Korrekter Wert ist 0,08"
 "SPECCOST,,EL,DEU,",SPECCOST,,EL,DEU,,0.1,USD2021/kWh (el.),
 "SPECCOST,,H2O-L,,",SPECCOST,,H2O-L,,,0.0013737954502618,USD2023 / kg H2O (l),
