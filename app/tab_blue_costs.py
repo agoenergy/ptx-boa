@@ -100,42 +100,6 @@ def content_costs(api: PtxboaAPI):
 
         what_is_a_boxplot()
 
-    with st.container(border=True):
-        display_results_bar_and_table(
-            results_per_region.costs,
-            results_per_region.costs_not_modified,
-            "region",
-            titlestring=read_markdown_file(
-                "md/tab_blue_costs/figure_title_cost_per_region.md"
-            ),
-            help_string=read_markdown_file(
-                "md/tab_blue_costs/figure_description_cost_per_region.md"
-            ),
-            tool_version_color="blue",
-        )
-
-    with st.container(border=True):
-        with st.spinner("Please wait. Calculating results for different WACC values."):
-            results_per_wacc = blue_results_over_dimension(
-                api,
-                dim="WACC",
-                emissions_included=st.session_state["emissions_included"],
-            )
-
-        display_results_bar_and_table(
-            results_per_wacc.costs,
-            results_per_wacc.costs_not_modified,
-            key="scenario",
-            key_suffix="sensitivity_wacc",
-            titlestring=read_markdown_file(
-                "md/tab_blue_costs/figure_title_cost_per_WACC.md"
-            ),
-            help_string=read_markdown_file(
-                "md/tab_blue_costs/figure_description_cost_per_WACC.md"
-            ),
-            tool_version_color="blue",
-        )
-
     blue_chains = api.get_dimension("chain", "blue")
     blue_chain_labels = blue_chains["chain_name"].to_dict()
 
@@ -183,6 +147,42 @@ def content_costs(api: PtxboaAPI):
             xaxis_title="Conversion location",
             tool_version_color="blue",
             allow_sorting=False,
+        )
+
+    with st.container(border=True):
+        display_results_bar_and_table(
+            results_per_region.costs,
+            results_per_region.costs_not_modified,
+            "region",
+            titlestring=read_markdown_file(
+                "md/tab_blue_costs/figure_title_cost_per_region.md"
+            ),
+            help_string=read_markdown_file(
+                "md/tab_blue_costs/figure_description_cost_per_region.md"
+            ),
+            tool_version_color="blue",
+        )
+
+    with st.container(border=True):
+        with st.spinner("Please wait. Calculating results for different WACC values."):
+            results_per_wacc = blue_results_over_dimension(
+                api,
+                dim="WACC",
+                emissions_included=st.session_state["emissions_included"],
+            )
+
+        display_results_bar_and_table(
+            results_per_wacc.costs,
+            results_per_wacc.costs_not_modified,
+            key="scenario",
+            key_suffix="sensitivity_wacc",
+            titlestring=read_markdown_file(
+                "md/tab_blue_costs/figure_title_cost_per_WACC.md"
+            ),
+            help_string=read_markdown_file(
+                "md/tab_blue_costs/figure_description_cost_per_WACC.md"
+            ),
+            tool_version_color="blue",
         )
 
     with st.container(border=True):
