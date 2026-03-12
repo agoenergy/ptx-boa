@@ -8,6 +8,6 @@ Costs for these chains are calculated for all possible supply countries, based o
 - using a pipeline for the pair of supply and demand countries if possible
 - specific costs are used for secondary CO₂ and water
 
-In the figure, you see the median green cost, as well as the 25th and 75th percentile bands.
+In the figure, you see the distribution of the green costs as boxplots.
 
 If _Edit input data_ is activated,  any altered input data will not be used to optimise the electrolyser and storage full load hours for the green cost calculations.
