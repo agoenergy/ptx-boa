@@ -224,6 +224,7 @@ def content_costs(api: PtxboaAPI):
         with st.spinner(
             "Please wait. Calculating results for different output products."
         ):
+
             if st.session_state["reformer"] is not None:
                 equal_reformer_chains = blue_chains.loc[
                     blue_chains.index.str.endswith(
@@ -233,6 +234,9 @@ def content_costs(api: PtxboaAPI):
                         (blue_chains["ELY"] == st.session_state["reformer"])
                         | (blue_chains["ELY_I"] == st.session_state["reformer"])
                     )
+                    & blue_chains["FLOW_OUT"].isin(
+                        st.session_state["output_product_group"]
+                    )
                 ].index
             else:
                 equal_reformer_chains = blue_chains.loc[
@@ -240,6 +244,9 @@ def content_costs(api: PtxboaAPI):
                         f"prod_in_{st.session_state['conversion_location']}"
                     )
                     & ((blue_chains["ELY"] == "") & (blue_chains["ELY_I"] == ""))
+                    & blue_chains["FLOW_OUT"].isin(
+                        st.session_state["output_product_group"]
+                    )
                 ].index
 
             if len(equal_reformer_chains) == 0:

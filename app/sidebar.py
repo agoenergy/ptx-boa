@@ -200,16 +200,20 @@ def main_settings_blue(api: PtxboaAPI):
         "CH3OH-L": "Methanol",
     }
 
+    product_groups = {
+        "NH3-L": ["NH3-L", "CHX-L", "H2-G", "CH3OH-L"],
+        "CHX-L": ["NH3-L", "CHX-L", "H2-G", "CH3OH-L"],
+        "H2-G": ["NH3-L", "CHX-L", "H2-G", "CH3OH-L"],
+        "CH3OH-L": ["NH3-L", "CHX-L", "H2-G", "CH3OH-L"],
+        "STL-S": ["STL-S", "DRI-S"],
+        "DRI-S": ["STL-S", "DRI-S"],
+    }
+
+    product_options = ["NH3-L", "CHX-L", "H2-G", "CH3OH-L", "STL-S", "DRI-S"]
+
     product = st.selectbox(
         label="Final Product",
-        options=[
-            "NH3-L",
-            "CHX-L",
-            "H2-G",
-            "CH3OH-L",
-            "STL-S",
-            "DRI-S",
-        ],
+        options=product_options,
         format_func=lambda x: product_labels.get(x, x),
         help=read_markdown_file("md/sidebar/helptext_sidebar_product.md"),
         index=0,
@@ -218,6 +222,9 @@ def main_settings_blue(api: PtxboaAPI):
 
     # add product label to session state
     st.session_state["output_product_label"] = product_labels.get(product, product)
+    st.session_state["output_product_group"] = product_groups.get(
+        product, product_options
+    )
 
     # different conversion options for each product
     conversion_options = {
