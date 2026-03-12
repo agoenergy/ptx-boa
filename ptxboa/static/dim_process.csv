@@ -2,7 +2,7 @@ process_code,process_name,main_flow_code_out,main_flow_code_in,is_transformation
 AEL-EL,AEL electrolysis,H2-G,EL,True,False,False,False,ELY,True,False,H2 production,H2O-L,True,False
 ATR,Methane reconversion,H2-G,CH4-G,True,False,True,False,TRNSP-PP,False,False,Transportation (Pipeline),EL,True,False
 ATR_91%#B,ATR_91%_CCS,H2-G,NG-G,True,False,False,False,ELY,True,False,H2 production,EL,False,True
-CCGT-CC#B,Combined Cycle Gas Turbine with CCS,EL,NG-G,False,False,False,False,,False,False,,,False,True
+CCGT-CC#B,Combined Cycle Gas Turbine with CCS,EL,NG-G,False,False,False,True,PROV_EL,False,False,Electricity,,False,True
 CH3OH-S,Methanol ship (own fuel consumption),CH3OH-L,CH3OH-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,True,False
 CH3OH-S#B,Methanol ship (own fuel consumption) (blue),CH3OH-L,CH3OH-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,False,True
 CH3OH-SB,Methanol ship (bunker fuel consumption),CH3OH-L,CH3OH-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,True,False
@@ -29,7 +29,7 @@ CH4-S#B,LNG ship (own fuel consumption) (blue),NG-L,NG-L,False,False,True,False,
 CH4-SB,LNG ship (bunker fuel consumption),CH4-L,CH4-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,True,False
 CH4-SB#B,LNG ship (bunker fuel consumption) (blue),NG-L,NG-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,False,True
 CH4SYN,Methane Synthesis,CH4-G,H2-G,True,False,False,False,DERIV,False,True,Derivative production,CO2-G/H2O-L/HEAT,True,False
-CO2-T+S#B,CO2 transport and storage,CO2-G,CO2-G,False,False,True,False,STORC,False,False,CO2 transport and storage,EL,False,True
+CO2-T+S#B,CO2 transport and storage,CO2-C,CO2-C,False,False,False,True,PROV_CC,False,False,Captured Carbon,EL,False,True
 DAC,Direct Air Capture,CO2-G,,False,False,False,True,PROV_C,False,False,Carbon,EL/H2O-L/HEAT,True,False
 DAC#B,Direct Air Capture (blue),CO2-G,,False,False,False,True,PROV_C,False,False,Carbon,EL/HEAT,False,True
 DESAL,Sea Water desalination,H2O-L,,False,False,False,True,PROV_H2O,False,False,Water,EL,True,False
@@ -62,7 +62,7 @@ H2-S#B,Hydrogen ship (own fuel consumption) (blue),H2-L,H2-L,False,False,True,Fa
 H2-SB,Hydrogen ship (bunker fuel consumption),H2-L,H2-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,True,False
 H2-SB#B,Hydrogen ship (bunker fuel consumption) (blue),H2-L,H2-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,False,True
 H2-STR,Hydrogen storage,H2-G,H2-G,False,False,True,False,STORE,False,False,Electricity and H2 storage,,True,False
-HEATPUMP#B,Large scale Heatpump,HEAT,EL,False,False,False,False,,False,False,,,False,True
+HEATPUMP#B,Large scale Heatpump,HEAT,EL,False,False,False,True,PROV_HT,False,False,Heat,,False,True
 LOHC-CON,LOHC conversion,LOHC-L,H2-G,True,False,True,False,TRNSP-SP,False,False,Transportation (Ship),EL,True,False
 LOHC-REC,LOHC reconversion,H2-G,LOHC-L,True,False,True,False,TRNSP-SP,False,False,Transportation (Ship),EL/HEAT,True,False
 LOHC-S,LOHC ship (own fuel consumption),LOHC-L,LOHC-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,True,False
