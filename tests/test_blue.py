@@ -5,7 +5,7 @@ from pprint import pprint
 import pandas as pd
 import pytest
 
-from ptxboa.api import PtxCalc
+from ptxboa.api import PtxboaAPI, PtxCalc
 from ptxboa.api_data import DataHandler
 from tests.test_api import ptxdata_dir_static
 
@@ -67,7 +67,7 @@ def _rec_approx(x):
 
 
 @pytest.mark.parametrize(
-    "scenario, kwargs",
+    "scenario, kwargs, api_kwargs",
     [
         [
             "2040 (medium)",
@@ -80,10 +80,20 @@ def _rec_approx(x):
                 "ship_own_fuel": False,
                 "use_ship": True,
             },
+            {
+                "region": "Qatar",
+                "country": "Germany",
+                "chain": "Blue Iron (blue)*",
+                "res_gen": None,
+                "transport": "Ship",
+                "ship_own_fuel": False,
+                "secproc_co2": "Direct Air Capture (blue)",
+                "secproc_water": "Sea Water desalination",
+            },
         ],
     ],
 )
-def test_new_blue_chain(scenario, kwargs):
+def test_new_blue_chain(scenario, kwargs, api_kwargs):
     """Data test for blue iron chain."""
     user_data = pd.DataFrame(
         [
@@ -246,7 +256,19 @@ def test_new_blue_chain(scenario, kwargs):
         tool_version_color="blue",
     )
     calculation_data = data_handler.get_calculation_data(**kwargs, optimize_flh=False)
-    values, _cost_result_df = PtxCalc.calculate(calculation_data)  # noqa
+    values, _df_result_cost, _df_result_emissions, _df_result_emissions_mass = (
+        PtxCalc.calculate(calculation_data)
+    )  # noqa
+
+    # test api output
+    api = PtxboaAPI(data_dir=ptxdata_dir_static)
+    api_result = api.calculate(  # noqa
+        scenario=scenario,
+        **api_kwargs,
+        user_data=user_data,
+        tool_version_color="blue",
+        optimize_flh=False,
+    )
 
     # round and sort for easier comparison
     calculation_data = _sort_nested(_round_nested(calculation_data))

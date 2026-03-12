@@ -1097,9 +1097,17 @@ class DataHandler:
         }
         target_dim_name = dimension_parameter_mapping[dimension]
         df = cls.get_dimension(dimension)
-        return df.loc[
-            df[target_dim_name + "_name"] == parameter_name, target_dim_name + "_code"
-        ].iloc[0]
+
+        try:
+            return df.loc[
+                df[target_dim_name + "_name"] == parameter_name,
+                target_dim_name + "_code",
+            ].iloc[0]
+        except IndexError:
+            raise IndexError(
+                f"{target_dim_name + '_name'}={parameter_name}, "
+                f"{target_dim_name + '_code'}"
+            )
 
     @classmethod
     def _validate_process_chain(
