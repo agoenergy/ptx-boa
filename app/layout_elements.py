@@ -31,6 +31,7 @@ def display_results_bar_and_table(
     default_manual_select: str | None = None,
     help_string: str | None = None,
     x_label_mapping: dict[str, str] | None = None,
+    xaxis_title: str | None = None,
     tool_version_color: ToolVersionColorType = "green",
     data_type: Literal["costs", "emissions"] = "costs",
     allow_sorting: bool = True,
@@ -105,14 +106,16 @@ def display_results_bar_and_table(
 
         # apply filter:
         if show_which_data == "Manual selection":
-            ind_select = st.multiselect(
-                "Select elements:",
-                df_res.index.values,
-                default=default_manual_select,
-                key=f"select_data_{key}_{key_suffix}",
-                label_visibility="collapsed",
-                format_func=lambda k: x_label_mapping.get(k, k),
-            )
+            with st.expander("Manual selection", expanded=True):
+                ind_select = st.pills(
+                    "Select elements:",
+                    df_res.index.values,
+                    default=default_manual_select,
+                    key=f"select_data_{key}_{key_suffix}",
+                    label_visibility="collapsed",
+                    selection_mode="multi",
+                    format_func=lambda k: x_label_mapping.get(k, k),
+                )
             df_res = df_res.loc[ind_select]
 
         if show_which_data == min_10_label:
@@ -135,6 +138,10 @@ def display_results_bar_and_table(
                 key=f"sort_data_{key}_{key_suffix}",
             )
 
+    if len(df_res) == 0:
+        st.warning("No data selected.")
+        return
+
     if sort_ascending:
         df_res = df_res.sort_values(["Total"], ascending=True)
 
@@ -153,6 +160,9 @@ def display_results_bar_and_table(
         current_selection=current_selection,
         output_unit=output_unit,
     )
+    if xaxis_title is not None:
+        fig.update_layout(xaxis_title=xaxis_title)
+
     st.plotly_chart(fig, width="stretch")
 
     if output_unit.endswith("/MWh") and st.session_state["output_unit"].endswith("/t"):

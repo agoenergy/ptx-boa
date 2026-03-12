@@ -6,7 +6,7 @@ from tempfile import TemporaryDirectory
 import pandas as pd
 import pytest
 
-from ptxboa.api_data import DataHandler
+from ptxboa.api_data import DEFAULT_DATA_DIR, STATIC_DATA_DIR, DataHandler
 from tests.utils import assert_deep_equal
 
 
@@ -529,3 +529,47 @@ def test_validate_chains(chain, is_green, is_blue, use_ship, ship_own_fuel):
         use_ship=use_ship,
         ship_own_fuel=ship_own_fuel,
     )
+
+
+def test_parameter_data():
+    """Test parameter data coverage.
+
+    - test COV parameter compared to ecpected flows in processes
+
+    """
+    # explicitly DONT use the DataHandler, but check raw csv data
+    filepath_data = DEFAULT_DATA_DIR / "2030_medium.csv"
+    filepath_process = STATIC_DATA_DIR / "dim_process.csv"
+
+    df_data = pd.read_csv(filepath_data).fillna("")
+    df_process = pd.read_csv(filepath_process).fillna("")
+
+    # check: for each process, the secondary_flows should have a CONV parameter
+    expected_conv_proc_flow: set[tuple[str, str]] = set()
+    for _, proc in df_process.iterrows():
+        secondary_flows = proc["secondary_flows"]
+        if not isinstance(secondary_flows, str) or not secondary_flows:
+            continue
+        for flow_code in secondary_flows.split("/"):
+            expected_conv_proc_flow.add((proc["process_code"], flow_code))
+
+    # get in data
+
+    data_conv_proc_flow = {
+        tuple(x)
+        for x in df_data.loc[df_data["parameter_code"] == "CONV"][
+            ["process_code", "flow_code"]
+        ].values
+    }
+
+    # compare
+
+    missing_data = expected_conv_proc_flow - data_conv_proc_flow
+    if missing_data:
+        raise Exception("Missing CONV data for: %s", missing_data)
+
+    unused_data = data_conv_proc_flow - expected_conv_proc_flow
+    # known special cases (TODO):
+    unused_data = unused_data - {("H2-STR", "EL"), ("SYN-S", "CHX-L")}
+    if unused_data:
+        raise Exception("Unexpected CONV data for: %s", unused_data)

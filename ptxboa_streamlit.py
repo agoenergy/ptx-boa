@@ -6,12 +6,15 @@ Execution:
 >>> streamlit run  ptxboa_streamlit.py
 """
 
-__version__ = "2.1.21"
+__version__ = "2.1.22"
 
 import logging
 
 import pandas as pd
 import streamlit as st
+
+from ptxboa_blue import blue_page
+from ptxboa_green import green_page
 
 # setup logging
 # level can be changed on strartup with: --logger.level=LEVEL
@@ -50,12 +53,14 @@ st.markdown(hide_decoration_bar_style, unsafe_allow_html=True)
 page = st.navigation(
     [
         st.Page(
-            "./ptxboa_green.py",
+            green_page,
             default=True,
+            title="Green PtX Business Opportunity Analyser",
         ),
         st.Page(
-            "./ptxboa_blue.py",
+            blue_page,
             url_path="blue",
+            title="Blue PtX Business Opportunity Analyser",
         ),
     ],
     position="hidden",

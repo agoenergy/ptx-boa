@@ -125,6 +125,65 @@ def content_emissions(api: PtxboaAPI):
 
         what_is_a_boxplot()
 
+        blue_chains = api.get_dimension("chain", "blue")
+        blue_chain_labels = blue_chains["chain_name"].to_dict()
+
+    with st.container(border=True):
+        with st.spinner("Please wait. Calculating results for conversion locations."):
+            results_supply_demand = blue_results_over_dimension(
+                api,
+                dim="chain",
+                emissions_included=st.session_state["emissions_included"],
+                parameter_list=pd.Series(
+                    [
+                        st.session_state["chain"].replace(
+                            "__prod_in_demand", "__prod_in_supply"
+                        ),
+                        st.session_state["chain"].replace(
+                            "__prod_in_supply", "__prod_in_demand"
+                        ),
+                    ]
+                ),
+            )
+
+        supply = st.session_state["region"]
+        demand = st.session_state["country"]
+        xlabel_mapping = {
+            k: (f"{v}<br>conversion in {supply if 'prod_in_supply' in k else demand}")
+            for k, v in blue_chain_labels.items()
+        }
+
+        display_results_bar_and_table(
+            aggregate_emissions(
+                results_supply_demand.emissions,
+                index="chain",
+                columns="process_type",
+            ).sort_index(ascending=False),
+            (
+                aggregate_emissions(
+                    results_supply_demand.emissions_not_modified,
+                    index="chain",
+                    columns="process_type",
+                ).sort_index(ascending=False)
+                if results_supply_demand.emissions_not_modified is not None
+                else None
+            ),
+            key="chain",
+            key_suffix="demand_supply",
+            titlestring=read_markdown_file(
+                "md/tab_blue_emissions/figure_title_emission_per_conversion_location.md"
+            ),
+            help_string=read_markdown_file(
+                "md/tab_blue_emissions/figure_description_emission_per_conversion_location.md"  # noqa E501
+            ),
+            x_label_mapping=xlabel_mapping,
+            xaxis_title="Conversion location",
+            tool_version_color="blue",
+            data_type="emissions",
+            allow_sorting=False,
+        )
+
+    with st.container(border=True):
         # graph with x axis: process_type, color: gas_type
         display_results_bar_and_table(
             sort_by_position_in_chain(
@@ -168,113 +227,58 @@ def content_emissions(api: PtxboaAPI):
             allow_sorting=False,
         )
 
-        with st.container(border=True):
-            display_results_bar_and_table(
-                aggregate_emissions(results_per_region.emissions, index="region"),
-                (
-                    aggregate_emissions(
-                        results_per_region.emissions_not_modified, index="region"
-                    )
-                    if results_per_region.emissions_not_modified is not None
-                    else None
-                ),
-                key="region",
-                key_suffix="emissions_steps",
-                titlestring=read_markdown_file(
-                    "md/tab_blue_emissions/figure_title_emission_per_region_color_step.md"  # noqa E501
-                ),
-                help_string=read_markdown_file(
-                    "md/tab_blue_emissions/figure_description_emission_per_region_color_step.md"  # noqa E501
-                ),
-                tool_version_color="blue",
-                data_type="emissions",
-            )
-
-        with st.container(border=True):
-            display_results_bar_and_table(
+    with st.container(border=True):
+        display_results_bar_and_table(
+            aggregate_emissions(results_per_region.emissions, index="region"),
+            (
                 aggregate_emissions(
-                    results_per_region.emissions.assign(
+                    results_per_region.emissions_not_modified, index="region"
+                )
+                if results_per_region.emissions_not_modified is not None
+                else None
+            ),
+            key="region",
+            key_suffix="emissions_steps",
+            titlestring=read_markdown_file(
+                "md/tab_blue_emissions/figure_title_emission_per_region_color_step.md"  # noqa E501
+            ),
+            help_string=read_markdown_file(
+                "md/tab_blue_emissions/figure_description_emission_per_region_color_step.md"  # noqa E501
+            ),
+            tool_version_color="blue",
+            data_type="emissions",
+        )
+
+    with st.container(border=True):
+        display_results_bar_and_table(
+            aggregate_emissions(
+                results_per_region.emissions.assign(
+                    gas_type=lambda x: (x["gas_type"] + " (" + x["emission_type"] + ")")
+                ),
+                index="region",
+                columns="gas_type",
+            ),
+            (
+                aggregate_emissions(
+                    results_per_region.emissions_not_modified.assign(
                         gas_type=lambda x: (
                             x["gas_type"] + " (" + x["emission_type"] + ")"
                         )
                     ),
                     index="region",
                     columns="gas_type",
-                ),
-                (
-                    aggregate_emissions(
-                        results_per_region.emissions_not_modified.assign(
-                            gas_type=lambda x: (
-                                x["gas_type"] + " (" + x["emission_type"] + ")"
-                            )
-                        ),
-                        index="region",
-                        columns="gas_type",
-                    )
-                    if results_per_region.emissions_not_modified is not None
-                    else None
-                ),
-                key="region",
-                key_suffix="emissions_gases",
-                titlestring=read_markdown_file(
-                    "md/tab_blue_emissions/figure_title_emission_per_region_color_gas.md"  # noqa E501
-                ),
-                help_string=read_markdown_file(
-                    "md/tab_blue_emissions/figure_description_emission_per_region_color_gas.md"  # noqa E501
-                ),
-                tool_version_color="blue",
-                data_type="emissions",
-            )
-
-    blue_chains = api.get_dimension("chain", "blue")
-    blue_chain_labels = blue_chains["chain_name"].to_dict()
-
-    with st.container(border=True):
-        with st.spinner("Please wait. Calculating results for conversion locations."):
-            results_supply_demand = blue_results_over_dimension(
-                api,
-                dim="chain",
-                emissions_included=st.session_state["emissions_included"],
-                parameter_list=pd.Series(
-                    [
-                        st.session_state["chain"].replace(
-                            "__prod_in_demand", "__prod_in_supply"
-                        ),
-                        st.session_state["chain"].replace(
-                            "__prod_in_supply", "__prod_in_demand"
-                        ),
-                    ]
-                ),
-            )
-
-        display_results_bar_and_table(
-            aggregate_emissions(
-                results_supply_demand.emissions, index="chain", columns="process_type"
-            ),
-            (
-                aggregate_emissions(
-                    results_supply_demand.emissions_not_modified,
-                    index="chain",
-                    columns="process_type",
                 )
-                if results_supply_demand.emissions_not_modified is not None
+                if results_per_region.emissions_not_modified is not None
                 else None
             ),
-            key="chain",
-            key_suffix="demand_supply",
+            key="region",
+            key_suffix="emissions_gases",
             titlestring=read_markdown_file(
-                "md/tab_blue_emissions/figure_title_emission_per_conversion_location.md"
+                "md/tab_blue_emissions/figure_title_emission_per_region_color_gas.md"  # noqa E501
             ),
             help_string=read_markdown_file(
-                "md/tab_blue_emissions/figure_description_emission_per_conversion_location.md"  # noqa E501
+                "md/tab_blue_emissions/figure_description_emission_per_region_color_gas.md"  # noqa E501
             ),
-            x_label_mapping={
-                k: (
-                    f"{v}<br>conversion in "
-                    f"{'supply' if 'prod_in_supply' in k else 'demand'} country"
-                )
-                for k, v in blue_chain_labels.items()
-            },
             tool_version_color="blue",
             data_type="emissions",
         )
@@ -340,6 +344,9 @@ def content_emissions(api: PtxboaAPI):
                         (blue_chains["ELY"] == st.session_state["reformer"])
                         | (blue_chains["ELY_I"] == st.session_state["reformer"])
                     )
+                    & blue_chains["FLOW_OUT"].isin(
+                        st.session_state["output_product_group"]
+                    )
                 ].index
             else:
                 equal_reformer_chains = blue_chains.loc[
@@ -347,6 +354,9 @@ def content_emissions(api: PtxboaAPI):
                         f"prod_in_{st.session_state['conversion_location']}"
                     )
                     & ((blue_chains["ELY"] == "") & (blue_chains["ELY_I"] == ""))
+                    & blue_chains["FLOW_OUT"].isin(
+                        st.session_state["output_product_group"]
+                    )
                 ].index
 
             results_equal_routes = blue_results_over_dimension(
@@ -354,9 +364,6 @@ def content_emissions(api: PtxboaAPI):
                 dim="chain",
                 emissions_included=st.session_state["emissions_included"],
                 parameter_list=equal_reformer_chains,
-                override_session_state={
-                    "output_unit": "USD/MWh"
-                },  # api always wants cost unit
             )
 
         display_results_bar_and_table(

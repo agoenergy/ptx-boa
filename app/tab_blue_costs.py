@@ -1,5 +1,7 @@
 """Content of costs tab."""
 
+import logging
+
 import pandas as pd
 import streamlit as st
 from plotly.subplots import make_subplots
@@ -16,6 +18,8 @@ from app.ptxboa_functions import (
     read_markdown_file,
 )
 from ptxboa.api import PtxboaAPI
+
+logger = logging.getLogger()
 
 
 def content_costs(api: PtxboaAPI):
@@ -96,6 +100,55 @@ def content_costs(api: PtxboaAPI):
 
         what_is_a_boxplot()
 
+    blue_chains = api.get_dimension("chain", "blue")
+    blue_chain_labels = blue_chains["chain_name"].to_dict()
+
+    with st.container(border=True):
+        with st.spinner("Please wait. Calculating results for conversion locations."):
+            results_supply_demand = blue_results_over_dimension(
+                api,
+                dim="chain",
+                emissions_included=st.session_state["emissions_included"],
+                parameter_list=pd.Series(
+                    [
+                        st.session_state["chain"].replace(
+                            "__prod_in_demand", "__prod_in_supply"
+                        ),
+                        st.session_state["chain"].replace(
+                            "__prod_in_supply", "__prod_in_demand"
+                        ),
+                    ]
+                ),
+            )
+
+        supply = st.session_state["region"]
+        demand = st.session_state["country"]
+        xlabel_mapping = {
+            k: (f"{v}<br>conversion in {supply if 'prod_in_supply' in k else demand}")
+            for k, v in blue_chain_labels.items()
+        }
+
+        display_results_bar_and_table(
+            results_supply_demand.costs.sort_index(ascending=False),
+            (
+                results_supply_demand.costs_not_modified.sort_index(ascending=False)
+                if results_supply_demand.costs_not_modified is not None
+                else None
+            ),
+            key="chain",
+            key_suffix="demand_supply",
+            titlestring=read_markdown_file(
+                "md/tab_blue_costs/figure_title_cost_per_conversion_location.md"
+            ),
+            help_string=read_markdown_file(
+                "md/tab_blue_costs/figure_description_cost_per_conversion_location.md"
+            ),
+            x_label_mapping=xlabel_mapping,
+            xaxis_title="Conversion location",
+            tool_version_color="blue",
+            allow_sorting=False,
+        )
+
     with st.container(border=True):
         display_results_bar_and_table(
             results_per_region.costs,
@@ -129,48 +182,6 @@ def content_costs(api: PtxboaAPI):
             help_string=read_markdown_file(
                 "md/tab_blue_costs/figure_description_cost_per_WACC.md"
             ),
-            tool_version_color="blue",
-        )
-
-    blue_chains = api.get_dimension("chain", "blue")
-    blue_chain_labels = blue_chains["chain_name"].to_dict()
-
-    with st.container(border=True):
-        with st.spinner("Please wait. Calculating results for conversion locations."):
-            results_supply_demand = blue_results_over_dimension(
-                api,
-                dim="chain",
-                emissions_included=st.session_state["emissions_included"],
-                parameter_list=pd.Series(
-                    [
-                        st.session_state["chain"].replace(
-                            "__prod_in_demand", "__prod_in_supply"
-                        ),
-                        st.session_state["chain"].replace(
-                            "__prod_in_supply", "__prod_in_demand"
-                        ),
-                    ]
-                ),
-            )
-
-        display_results_bar_and_table(
-            results_supply_demand.costs,
-            results_supply_demand.costs_not_modified,
-            key="chain",
-            key_suffix="demand_supply",
-            titlestring=read_markdown_file(
-                "md/tab_blue_costs/figure_title_cost_per_conversion_location.md"
-            ),
-            help_string=read_markdown_file(
-                "md/tab_blue_costs/figure_description_cost_per_conversion_location.md"
-            ),
-            x_label_mapping={
-                k: (
-                    f"{v}<br>conversion in "
-                    f"{'supply' if 'prod_in_supply' in k else 'demand'} country"
-                )
-                for k, v in blue_chain_labels.items()
-            },
             tool_version_color="blue",
         )
 
@@ -213,6 +224,7 @@ def content_costs(api: PtxboaAPI):
         with st.spinner(
             "Please wait. Calculating results for different output products."
         ):
+
             if st.session_state["reformer"] is not None:
                 equal_reformer_chains = blue_chains.loc[
                     blue_chains.index.str.endswith(
@@ -222,6 +234,9 @@ def content_costs(api: PtxboaAPI):
                         (blue_chains["ELY"] == st.session_state["reformer"])
                         | (blue_chains["ELY_I"] == st.session_state["reformer"])
                     )
+                    & blue_chains["FLOW_OUT"].isin(
+                        st.session_state["output_product_group"]
+                    )
                 ].index
             else:
                 equal_reformer_chains = blue_chains.loc[
@@ -229,14 +244,22 @@ def content_costs(api: PtxboaAPI):
                         f"prod_in_{st.session_state['conversion_location']}"
                     )
                     & ((blue_chains["ELY"] == "") & (blue_chains["ELY_I"] == ""))
+                    & blue_chains["FLOW_OUT"].isin(
+                        st.session_state["output_product_group"]
+                    )
                 ].index
+
+            if len(equal_reformer_chains) == 0:
+                logger.warning(
+                    "No equal_reformer_chains for reformer "
+                    f"'{st.session_state['reformer']}'"
+                )
 
             results_equal_routes = blue_results_over_dimension(
                 api,
                 dim="chain",
                 emissions_included=st.session_state["emissions_included"],
                 parameter_list=equal_reformer_chains,
-                override_session_state={"output_unit": "USD/MWh"},
             )
 
         display_results_bar_and_table(

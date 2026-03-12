@@ -10,11 +10,12 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CALOR,,NH3-L,,",CALOR,,NH3-L,,,5.199999999999999,kWh NH3 (l)/kg,Wikipedia with conversions
 "CAPEX,AEL-EL,,,",CAPEX,AEL-EL,,,,862.3926136507007,USD2023/kW,
 "CAPEX,ATR,,,",CAPEX,ATR,,,,895.7895675646487,USD2023/kW,Oni et al. 2022
-"CAPEX,ATR_91%,,,",CAPEX,ATR_91%,,,,1127.0781609576366,USD2021/kw,based on Oni 2022
-"CAPEX,CCGT-CC,,,",CAPEX,CCGT-CC,,,,2408.190709023191,USD2021/kWel,
-"CAPEX,CH3OHSYC,,,",CAPEX,CH3OHSYC,,,,334.7788378143972,USD2021/kW,Concawe 2024
+"CAPEX,ATR_91%#B,,,",CAPEX,ATR_91%#B,,,,1127.0781609576366,USD2021/kw,based on Oni 2022
+"CAPEX,CCGT-CC#B,,,",CAPEX,CCGT-CC#B,,,,2408.190709023191,USD2021/kWel,
+"CAPEX,CH3OHSYC#B,,,",CAPEX,CH3OHSYC#B,,,,334.7788378143972,USD2021/kW,Concawe 2024
 "CAPEX,CH3OHSYN#B,,,",CAPEX,CH3OHSYN#B,,,,586.0,USD2021/kW,Concawe 2024
 "CAPEX,CH3OHSYN,,,",CAPEX,CH3OHSYN,,,,907.838693097045,USD2023/kW,
+"CAPEX,CH4-COMP#B,,,",CAPEX,CH4-COMP#B,,,,166.74196584186356,USD2023/kW,DNV GL 2020
 "CAPEX,CH4-COMP,,,",CAPEX,CH4-COMP,,,,166.74196584186356,USD2023/kW,DNV GL 2020
 "CAPEX,CH4-LIQ#B,,,",CAPEX,CH4-LIQ#B,,,,408.1070815678804,USD2021/kW,Hank et al. 2020
 "CAPEX,CH4-LIQ,,,",CAPEX,CH4-LIQ,,,,507.7527096777446,USD2023/kW,Hank et al. 2020
@@ -24,19 +25,23 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CAPEX,DESAL,,,",CAPEX,DESAL,,,,0.002731203678453,USD2023/l*a,Fraunhofer IEE
 "CAPEX,DRI#B,,,",CAPEX,DRI#B,,,,0.5635263552497753,USD2025/kg DRI (s)/a*h,Agora KNDE
 "CAPEX,DRI,,,",CAPEX,DRI,,,,4552.838966249561,USD2023/kg DRI (s)/a*h,"Agora Industry, Wuppertal Institute and Lund University (2024)"
-"CAPEX,EAF,,,",CAPEX,EAF,,,,0.4173442710166652,USD2025/kg (CS)/a,Agora KNDE
+"CAPEX,EAF#B,,,",CAPEX,EAF#B,,,,0.4173442710166652,USD2025/kg (CS)/a,Agora KNDE
 "CAPEX,EFUELSYN#B,,,",CAPEX,EFUELSYN#B,,,,1094.0,USD2025/kW,Concawe 2024
 "CAPEX,EFUELSYN,,,",CAPEX,EFUELSYN,,,,907.838693097045,USD2023/kW,
-"CAPEX,EFUELSYNC,,,",CAPEX,EFUELSYNC,,,,951.937984496124,USD2021/kW,Concawe 2024
+"CAPEX,EFUELSYNC#B,,,",CAPEX,EFUELSYNC#B,,,,951.937984496124,USD2021/kW,Concawe 2024
 "CAPEX,EL-STR,,,",CAPEX,EL-STR,,,,888.7736990592965,USD2023/kW,
+"CAPEX,H2-COMP#B,,,",CAPEX,H2-COMP#B,,,,166.74196584186356,USD2023/kW,DNV GL 2020
 "CAPEX,H2-COMP,,,",CAPEX,H2-COMP,,,,166.74196584186356,USD2023/kW,DNV GL 2020
+"CAPEX,H2-LIQ#B,,,",CAPEX,H2-LIQ#B,,,,1681.795869759483,USD2023/kW,IEA 2019
 "CAPEX,H2-LIQ,,,",CAPEX,H2-LIQ,,,,1681.795869759483,USD2023/kW,IEA 2019
+"CAPEX,H2-RGAS#B,,,",CAPEX,H2-RGAS#B,,,,367.1361813500185,USD2023/kW,DNV GL 2020
 "CAPEX,H2-RGAS,,,",CAPEX,H2-RGAS,,,,367.1361813500185,USD2023/kW,DNV GL 2020
 "CAPEX,H2-STR,,,",CAPEX,H2-STR,,,,40.24887553067399,USD2023/kW,
-"CAPEX,HEATPUMP,,,",CAPEX,HEATPUMP,,,,394.8451531644876,USD2021/kW (heat),PtX-Atlas
+"CAPEX,HEATPUMP#B,,,",CAPEX,HEATPUMP#B,,,,394.8451531644876,USD2021/kW (heat),PtX-Atlas
 "CAPEX,LOHC-CON,,,",CAPEX,LOHC-CON,,,,231.93003541118188,USD2023/kW,
 "CAPEX,LOHC-REC,,,",CAPEX,LOHC-REC,,,,529.6595272519154,USD2023/kW,
-"CAPEX,NG-DRI-C,,,",CAPEX,NG-DRI-C,,,,0.5918763552497753,USD2025/kg DRI (s)/a*h,
+"CAPEX,NG-DRI-C#B,,,",CAPEX,NG-DRI-C#B,,,,0.5918763552497753,USD2025/kg DRI (s)/a*h,
+"CAPEX,NH3-REC#B,,,",CAPEX,NH3-REC#B,,,,474.7596231401004,USD2023/kW,NGN; Equinor 2018
 "CAPEX,NH3-REC,,,",CAPEX,NH3-REC,,,,474.7596231401004,USD2023/kW,NGN; Equinor 2018
 "CAPEX,NH3SYN#B,,,",CAPEX,NH3SYN#B,,,,535.8695652173913,USD2021/kW,Concawe 2024
 "CAPEX,NH3SYN,,,",CAPEX,NH3SYN,,,,1519.4946618778151,USD2023/kW,
@@ -200,8 +205,8 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CAPEX,RES-HYBR,,ZAF-NC,",CAPEX,RES-HYBR,,ZAF-NC,,988.1674165279716,USD2023/kW,calculated. PV:  WIND-ON: 
 "CAPEX,RES-HYBR,,ZAF-NW,",CAPEX,RES-HYBR,,ZAF-NW,,988.1674165279716,USD2023/kW,calculated. PV:  WIND-ON: 
 "CAPEX,RES-HYBR,,ZAF-WC,",CAPEX,RES-HYBR,,ZAF-WC,,988.1674165279716,USD2023/kW,calculated. PV:  WIND-ON: 
-"CAPEX,SMR_52%,,,",CAPEX,SMR_52%,,,,755.9895180933167,USD2021/kw,based on Oni 2022
-"CAPEX,SMR_52%_BF,,,",CAPEX,SMR_52%_BF,,,,1.5367421923679002e-07,USD2025/kw,based on Oni 2022
+"CAPEX,SMR_52%#B,,,",CAPEX,SMR_52%#B,,,,755.9895180933167,USD2021/kw,based on Oni 2022
+"CAPEX,SMR_52%_BF#B,,,",CAPEX,SMR_52%_BF#B,,,,1.5367421923679002e-07,USD2025/kw,based on Oni 2022
 "CAPEX,SOEC-EL,,,",CAPEX,SOEC-EL,,,,2275.35700263614,USD2023/kW,
 "CAPEX,WIND-OFF,,ARE,",CAPEX,WIND-OFF,,ARE,,2561.747017479512,USD2023/kW,
 "CAPEX,WIND-OFF,,ARG,",CAPEX,WIND-OFF,,ARG,,2561.747017479512,USD2023/kW,
@@ -383,35 +388,36 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CAP-T,,,PRT,ESP",CAP-T,,,PRT,ESP,1.0,kWh/a,
 "CAP-T,,,RUS,CHN",CAP-T,,,RUS,CHN,1.0,kWh/a,
 "CAP-T,,,RUS,DEU",CAP-T,,,RUS,DEU,1.0,kWh/a,
-"CO2BOUND,CH3OHSYC,CO2-G,,",CO2BOUND,CH3OHSYC,CO2-G,,,0.0678122348290827,KgC/kwh CH3OH,
+"CO2BOUND,CH3OHSYC#B,CO2-G,,",CO2BOUND,CH3OHSYC#B,CO2-G,,,0.0678122348290827,KgC/kwh CH3OH,
 "CO2BOUND,CH3OHSYN#B,CO2-G,,",CO2BOUND,CH3OHSYN#B,CO2-G,,,0.0678122348290827,KgC/kwh CH3OH,
-"CO2BOUND,EAF,C-S,,",CO2BOUND,EAF,C-S,,,0.004,fraction,
+"CO2BOUND,EAF#B,C-S,,",CO2BOUND,EAF#B,C-S,,,0.004,fraction,
 "CO2BOUND,EFUELSYN#B,CO2-G,,",CO2BOUND,EFUELSYN#B,CO2-G,,,0.0727968098159509,KgC/kwh diesel (liquid),
-"CO2BOUND,EFUELSYNC,CO2-G,,",CO2BOUND,EFUELSYNC,CO2-G,,,0.0727968098159509,KgC/kwh diesel (liquid),
-"CO2BOUND,NG-DRI-C,CH4-G,,",CO2BOUND,NG-DRI-C,CH4-G,,,0.0,KgC/kg DRI (s),
-"CO2BOUND,NG-DRI-C,NG-G,,",CO2BOUND,NG-DRI-C,NG-G,,,0.0408116143367898,KgC/kg DRI (s),
-"CO2CPT-R,ATR_91%,NG-G,,",CO2CPT-R,ATR_91%,NG-G,,,0.91,fraction,
-"CO2CPT-R,CCGT-CC,CO2-G,,",CO2CPT-R,CCGT-CC,CO2-G,,,0.8977777777777778,fraction,
-"CO2CPT-R,CH3OHSYC,NG-G,,",CO2CPT-R,CH3OHSYC,NG-G,,,0.9,fraction,Concawe 2024 (Irena 2021)
-"CO2CPT-R,EFUELSYNC,NG-G,,",CO2CPT-R,EFUELSYNC,NG-G,,,0.89,fraction,Concawe 2024 (Irena 2021)
-"CO2CPT-R,NG-DRI-C,CH4-G,,",CO2CPT-R,NG-DRI-C,CH4-G,,,0.9,fraction,
-"CO2CPT-R,NG-DRI-C,NG-G,,",CO2CPT-R,NG-DRI-C,NG-G,,,0.9,fraction,
-"CO2CPT-R,SMR_52%,NG-G,,",CO2CPT-R,SMR_52%,NG-G,,,0.52,fraction,
-"CO2CPT-R,SMR_52%_BF,NG-G,,",CO2CPT-R,SMR_52%_BF,NG-G,,,0.52,fraction,
-"CO2CPT-S,CH3OHSYC,NG-G,,",CO2CPT-S,CH3OHSYC,NG-G,,,0.2466445436398839,fraction,
-"CO2CPT-S,EFUELSYNC,NG-G,,",CO2CPT-S,EFUELSYNC,NG-G,,,0.2581530580746352,fraction,
-"CO2CPT-S,NG-DRI-C,CH4-G,,",CO2CPT-S,NG-DRI-C,CH4-G,,,0.45,fraction,
-"CO2CPT-S,NG-DRI-C,NG-G,,",CO2CPT-S,NG-DRI-C,NG-G,,,0.45,fraction,
+"CO2BOUND,EFUELSYNC#B,CO2-G,,",CO2BOUND,EFUELSYNC#B,CO2-G,,,0.0727968098159509,KgC/kwh diesel (liquid),
+"CO2BOUND,NG-DRI-C#B,CH4-G,,",CO2BOUND,NG-DRI-C#B,CH4-G,,,0.0,KgC/kg DRI (s),
+"CO2BOUND,NG-DRI-C#B,NG-G,,",CO2BOUND,NG-DRI-C#B,NG-G,,,0.0408116143367898,KgC/kg DRI (s),
+"CO2CPT-R,ATR_91%#B,NG-G,,",CO2CPT-R,ATR_91%#B,NG-G,,,0.91,fraction,
+"CO2CPT-R,CCGT-CC#B,CO2-G,,",CO2CPT-R,CCGT-CC#B,CO2-G,,,0.8977777777777778,fraction,
+"CO2CPT-R,CH3OHSYC#B,NG-G,,",CO2CPT-R,CH3OHSYC#B,NG-G,,,0.9,fraction,Concawe 2024 (Irena 2021)
+"CO2CPT-R,EFUELSYNC#B,NG-G,,",CO2CPT-R,EFUELSYNC#B,NG-G,,,0.89,fraction,Concawe 2024 (Irena 2021)
+"CO2CPT-R,NG-DRI-C#B,CH4-G,,",CO2CPT-R,NG-DRI-C#B,CH4-G,,,0.9,fraction,
+"CO2CPT-R,NG-DRI-C#B,NG-G,,",CO2CPT-R,NG-DRI-C#B,NG-G,,,0.9,fraction,
+"CO2CPT-R,SMR_52%#B,NG-G,,",CO2CPT-R,SMR_52%#B,NG-G,,,0.52,fraction,
+"CO2CPT-R,SMR_52%_BF#B,NG-G,,",CO2CPT-R,SMR_52%_BF#B,NG-G,,,0.52,fraction,
+"CO2CPT-S,CH3OHSYC#B,NG-G,,",CO2CPT-S,CH3OHSYC#B,NG-G,,,0.2466445436398839,fraction,
+"CO2CPT-S,EFUELSYNC#B,NG-G,,",CO2CPT-S,EFUELSYNC#B,NG-G,,,0.2581530580746352,fraction,
+"CO2CPT-S,NG-DRI-C#B,CH4-G,,",CO2CPT-S,NG-DRI-C#B,CH4-G,,,0.45,fraction,
+"CO2CPT-S,NG-DRI-C#B,NG-G,,",CO2CPT-S,NG-DRI-C#B,NG-G,,,0.45,fraction,
 "CONV,AEL-EL,H2O-L,,",CONV,AEL-EL,H2O-L,,,0.3,kg H2O (l)/H2-G,
 "CONV,ATR,EL,,",CONV,ATR,EL,,,0.1077107710771077,,Oni et al. 2022
-"CONV,ATR_91%,EL,,",CONV,ATR_91%,EL,,,0.1077107710771077,kWh (el.)/kwh H2 LHV (gasous),
+"CONV,ATR_91%#B,EL,,",CONV,ATR_91%#B,EL,,,0.1077107710771077,kWh (el.)/kwh H2 LHV (gasous),
 "CONV,CH3OH-SB,BFUEL-L,,",CONV,CH3OH-SB,BFUEL-L,,,3.050988367317537e-06,kwh bunker fuel (l)/(km*CH3OH-L),calc_shipping
-"CONV,CH3OHSYC,EL,,",CONV,CH3OHSYC,EL,,,0.0315,kWh (el)/kwh CH3OH,Concawe 2024
+"CONV,CH3OHSYC#B,EL,,",CONV,CH3OHSYC#B,EL,,,0.0315,kWh (el)/kwh CH3OH,Concawe 2024
 "CONV,CH3OHSYN#B,CO2-G,,",CONV,CH3OHSYN#B,CO2-G,,,0.2528850978424485,kg CO2/kwh CH3OH,Concawe 2024
 "CONV,CH3OHSYN#B,EL,,",CONV,CH3OHSYN#B,EL,,,0.053687907676869,kWh (el)/kwh CH3OH,Concawe 2024
 "CONV,CH3OHSYN#B,HEAT,,",CONV,CH3OHSYN#B,HEAT,,,-0.0863020572002007,kWh(th)/kwh CH3OH,Concawe 2024
 "CONV,CH3OHSYN,CO2-G,,",CONV,CH3OHSYN,CO2-G,,,0.2644824120603015,kg CO2 (g)/kWh CH3OH (l),Frotier Economics 2021
 "CONV,CH3OHSYN,EL,,",CONV,CH3OHSYN,EL,,,0.0399894207881512,kWh (el.)/kWh CH3OH (l),Fasihi & Breyer 2018
+"CONV,CH4-COMP#B,EL,,",CONV,CH4-COMP#B,EL,,,0.02,kWh (el.)/CH4-G,DNV GL 2020
 "CONV,CH4-COMP,EL,,",CONV,CH4-COMP,EL,,,0.02,kWh (el.)/CH4-G,DNV GL 2020
 "CONV,CH4-LIQ#B,EL,AUS,",CONV,CH4-LIQ#B,EL,AUS,,0.0,kWh (el.)/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
 "CONV,CH4-LIQ#B,EL,BRA,",CONV,CH4-LIQ#B,EL,BRA,,0.0,kWh (el.)/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
@@ -447,7 +453,7 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CONV,CH4SYN,CO2-G,,",CONV,CH4SYN,CO2-G,,,0.20196,kg CO2 (g)/kWh CH4 (g),
 "CONV,CH4SYN,H2O-L,,",CONV,CH4SYN,H2O-L,,,-0.1426332288401254,kg H2O (l)/kWh CH4 (g),Fasihi & Breyer 2018
 "CONV,CH4SYN,HEAT,,",CONV,CH4SYN,HEAT,,,-0.1849529780564263,kWh (heat)/kWh CH4 (g),Fasihi & Breyer 2018
-"CONV,CO2-T+S,EL,,",CONV,CO2-T+S,EL,,,0.0,kWh (el.)/kg CO2 (g),
+"CONV,CO2-T+S#B,EL,,",CONV,CO2-T+S#B,EL,,,0.0,kWh (el.)/kg CO2 (g),
 "CONV,DAC#B,EL,,",CONV,DAC#B,EL,,,0.203,kg CO2 (g)/kWh (el.),Fasihi et al. 2019
 "CONV,DAC#B,HEAT,,",CONV,DAC#B,HEAT,,,1.286,kWh (heat)/kg CO2 (g),Fasihi et al. 2019
 "CONV,DAC,EL,,",CONV,DAC,EL,,,0.4515,kWh (el.)/kg CO2 (g),average low and high
@@ -457,8 +463,8 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CONV,DRI#B,EL,,",CONV,DRI#B,EL,,,0.093,kWh (el.)/kg DRI (s),Agora 2025 Green iron trade
 "CONV,DRI#B,IOP-S,,",CONV,DRI#B,IOP-S,,,1.404040404040404,kg IOP (s)/kg DRI (s),Agora 2024 steel
 "CONV,DRI,EL,,",CONV,DRI,EL,,,0.0925555555555555,kWh (el.)/kg DRI (s),"Agora Industry, Wuppertal Institute and Lund University (2024)"
-"CONV,EAF,EL,,",CONV,EAF,EL,,,0.651,kWh (el.)/kg crude steel (solid),Agora 2025 Green iron trade
-"CONV,EAF,NG-G,,",CONV,EAF,NG-G,,,0.3,kWh natural gas LHV/kg crude steel (solid),
+"CONV,EAF#B,EL,,",CONV,EAF#B,EL,,,0.651,kWh (el.)/kg crude steel (solid),Agora 2025 Green iron trade
+"CONV,EAF#B,NG-G,,",CONV,EAF#B,NG-G,,,0.3,kWh natural gas LHV/kg crude steel (solid),
 "CONV,EFUELSYN#B,CO2-G,,",CONV,EFUELSYN#B,CO2-G,,,0.3039545454545455,kg CO2/kwh diesel (liquid),Concawe 2024
 "CONV,EFUELSYN#B,EL,,",CONV,EFUELSYN#B,EL,,,0.0431818181818181,kWh (el)/kwh diesel (liquid),Concawe 2024
 "CONV,EFUELSYN#B,HEAT,,",CONV,EFUELSYN#B,HEAT,,,-0.2095454545454545,kWh (th)/kwh diesel (liquid),Concawe 2024
@@ -466,8 +472,10 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CONV,EFUELSYN,EL,,",CONV,EFUELSYN,EL,,,0.0857787810383747,kWh (el.)/kwh CHx (l),Fasihi & Breyer 2018
 "CONV,EFUELSYN,H2O-L,,",CONV,EFUELSYN,H2O-L,,,-0.2483069977426636,kg H2O (l)/kwh CHx (l),Fasihi & Breyer 2018
 "CONV,EFUELSYN,HEAT,,",CONV,EFUELSYN,HEAT,,,-0.4039735099337748,kWh (heat)/kwh CHx (l),Fasihi & Breyer 2018
-"CONV,EFUELSYNC,EL,,",CONV,EFUELSYNC,EL,,,0.0115,kWh (el)/kWh diesel (liquid),Concawe 2024
+"CONV,EFUELSYNC#B,EL,,",CONV,EFUELSYNC#B,EL,,,0.0115,kWh (el)/kWh diesel (liquid),Concawe 2024
+"CONV,H2-COMP#B,EL,,",CONV,H2-COMP#B,EL,,,0.02,kWh (el.)/H2-G,DNV GL 2020
 "CONV,H2-COMP,EL,,",CONV,H2-COMP,EL,,,0.02,kWh (el.)/H2-G,DNV GL 2020
+"CONV,H2-LIQ#B,EL,,",CONV,H2-LIQ#B,EL,,,0.3001000333444481,kWh (el.)/H2-L,DNV GL 2020
 "CONV,H2-LIQ,EL,,",CONV,H2-LIQ,EL,,,0.3001000333444481,kWh (el.)/H2-L,DNV GL 2020
 "CONV,H2-SB,BFUEL-L,,",CONV,H2-SB,BFUEL-L,,,7.956026573128753e-06,kwh bunker fuel (l)/(km*H2-L),calc_shipping
 "CONV,H2-STR,EL,,",CONV,H2-STR,EL,,,0.08,kWh (el.)/H2-G,
@@ -475,48 +483,49 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CONV,LOHC-REC,EL,,",CONV,LOHC-REC,EL,,,0.0285028502850285,kWh (el.)/H2-G,Staiß et al. 2022 nach Wasserscheid
 "CONV,LOHC-REC,HEAT,,",CONV,LOHC-REC,HEAT,,,0.4054054054054054,kWh (heat)/H2-G,DNV GL 2020
 "CONV,LOHC-SB,BFUEL-L,,",CONV,LOHC-SB,BFUEL-L,,,9.92041609041782e-06,kwh bunker fuel (l)/(km*LOHC-L),calc_shipping
-"CONV,NG-DRI-C,CH4-G,,",CONV,NG-DRI-C,CH4-G,,,0.0,kwh biomethane/kg DRI (s),
-"CONV,NG-DRI-C,EL,,",CONV,NG-DRI-C,EL,,,0.4768585858585858,kWh (el.)/kg DRI (s),Agora 2024 Steel
-"CONV,NG-DRI-C,IOP-S,,",CONV,NG-DRI-C,IOP-S,,,1.373737373737374,kg IOP (s)/kg DRI (s),Agora 2024 steel AND Zang 2023
-"CONV,NG-PROD,DIESEL-L,AUS,",CONV,NG-PROD,DIESEL-L,AUS,,0.0007847067073776,kWh diesel LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD,DIESEL-L,BRA,",CONV,NG-PROD,DIESEL-L,BRA,,0.0007503187170117,kWh diesel LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD,DIESEL-L,CHN,",CONV,NG-PROD,DIESEL-L,CHN,,0.0007671717171717,kWh diesel LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD,DIESEL-L,DZA,",CONV,NG-PROD,DIESEL-L,DZA,,0.0006023640661938,kWh diesel LHV/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
-"CONV,NG-PROD,DIESEL-L,IDN,",CONV,NG-PROD,DIESEL-L,IDN,,0.0007614236030902,kWh diesel LHV/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
-"CONV,NG-PROD,DIESEL-L,IND,",CONV,NG-PROD,DIESEL-L,IND,,0.00077387474426,kWh diesel LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD,DIESEL-L,MYS,",CONV,NG-PROD,DIESEL-L,MYS,,0.0007671717171717,kWh diesel LHV/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
-"CONV,NG-PROD,DIESEL-L,NOR,",CONV,NG-PROD,DIESEL-L,NOR,,0.0007594674787225,kWh diesel LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD,DIESEL-L,OMN,",CONV,NG-PROD,DIESEL-L,OMN,,0.00077387474426,kWh diesel LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD,DIESEL-L,QAT,",CONV,NG-PROD,DIESEL-L,QAT,,0.0005945576534397,kWh diesel LHV/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
-"CONV,NG-PROD,DIESEL-L,SAU,",CONV,NG-PROD,DIESEL-L,SAU,,0.00077387474426,kWh diesel LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD,DIESEL-L,THA,",CONV,NG-PROD,DIESEL-L,THA,,0.0007683456358456,kWh diesel LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD,DIESEL-L,USA,",CONV,NG-PROD,DIESEL-L,USA,,0.0011268131072691,kWh diesel LHV/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
-"CONV,NG-PROD,EL,AUS,",CONV,NG-PROD,EL,AUS,,0.0020615846241684,kWh (el.)/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD,EL,BRA,",CONV,NG-PROD,EL,BRA,,0.0019712403572878,kWh (el.)/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD,EL,CHN,",CONV,NG-PROD,EL,CHN,,0.0020155166272294,kWh (el.)/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD,EL,DZA,",CONV,NG-PROD,EL,DZA,,0.0003069739952718,kWh (el.)/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
-"CONV,NG-PROD,EL,IDN,",CONV,NG-PROD,EL,IDN,,0.0020004151587484,kWh (el.)/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
-"CONV,NG-PROD,EL,IND,",CONV,NG-PROD,EL,IND,,0.0020331268470106,kWh (el.)/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD,EL,MYS,",CONV,NG-PROD,EL,MYS,,0.0020155166272294,kWh (el.)/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
-"CONV,NG-PROD,EL,NOR,",CONV,NG-PROD,EL,NOR,,0.001995276020926,kWh (el.)/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD,EL,OMN,",CONV,NG-PROD,EL,OMN,,0.0020331268470106,kWh (el.)/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD,EL,QAT,",CONV,NG-PROD,EL,QAT,,0.0011527918489523,kWh (el.)/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
-"CONV,NG-PROD,EL,SAU,",CONV,NG-PROD,EL,SAU,,0.0020331268470106,kWh (el.)/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD,EL,THA,",CONV,NG-PROD,EL,THA,,0.0020186007511007,kWh (el.)/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD,EL,USA,",CONV,NG-PROD,EL,USA,,0.0011764692780979,kWh (el.)/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
-"CONV,NG-PROD,NG-G,AUS,",CONV,NG-PROD,NG-G,AUS,,0.0554848916443252,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD,NG-G,BRA,",CONV,NG-PROD,NG-G,BRA,,0.0530533922046285,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD,NG-G,CHN,",CONV,NG-PROD,NG-G,CHN,,0.0542450309136707,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD,NG-G,DZA,",CONV,NG-PROD,NG-G,DZA,,0.0838135539795114,kWh natural gas LHV/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
-"CONV,NG-PROD,NG-G,IDN,",CONV,NG-PROD,NG-G,IDN,,0.0538385943635943,kWh natural gas LHV/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
-"CONV,NG-PROD,NG-G,IND,",CONV,NG-PROD,NG-G,IND,,0.054718987269834,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD,NG-G,MYS,",CONV,NG-PROD,NG-G,MYS,,0.0570740973971452,kWh natural gas LHV/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
-"CONV,NG-PROD,NG-G,NOR,",CONV,NG-PROD,NG-G,NOR,,0.0537002810962754,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD,NG-G,OMN,",CONV,NG-PROD,NG-G,OMN,,0.054718987269834,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD,NG-G,QAT,",CONV,NG-PROD,NG-G,QAT,,0.0135754144600506,kWh natural gas LHV/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
-"CONV,NG-PROD,NG-G,SAU,",CONV,NG-PROD,NG-G,SAU,,0.054718987269834,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD,NG-G,THA,",CONV,NG-PROD,NG-G,THA,,0.0543280361305361,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD,NG-G,USA,",CONV,NG-PROD,NG-G,USA,,0.0639609677329547,kWh natural gas LHV/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
+"CONV,NG-DRI-C#B,CH4-G,,",CONV,NG-DRI-C#B,CH4-G,,,0.0,kwh biomethane/kg DRI (s),
+"CONV,NG-DRI-C#B,EL,,",CONV,NG-DRI-C#B,EL,,,0.4768585858585858,kWh (el.)/kg DRI (s),Agora 2024 Steel
+"CONV,NG-DRI-C#B,IOP-S,,",CONV,NG-DRI-C#B,IOP-S,,,1.373737373737374,kg IOP (s)/kg DRI (s),Agora 2024 steel AND Zang 2023
+"CONV,NG-PROD#B,DIESEL-L,AUS,",CONV,NG-PROD#B,DIESEL-L,AUS,,0.0007847067073776,kWh diesel LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"CONV,NG-PROD#B,DIESEL-L,BRA,",CONV,NG-PROD#B,DIESEL-L,BRA,,0.0007503187170117,kWh diesel LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"CONV,NG-PROD#B,DIESEL-L,CHN,",CONV,NG-PROD#B,DIESEL-L,CHN,,0.0007671717171717,kWh diesel LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"CONV,NG-PROD#B,DIESEL-L,DZA,",CONV,NG-PROD#B,DIESEL-L,DZA,,0.0006023640661938,kWh diesel LHV/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
+"CONV,NG-PROD#B,DIESEL-L,IDN,",CONV,NG-PROD#B,DIESEL-L,IDN,,0.0007614236030902,kWh diesel LHV/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
+"CONV,NG-PROD#B,DIESEL-L,IND,",CONV,NG-PROD#B,DIESEL-L,IND,,0.00077387474426,kWh diesel LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"CONV,NG-PROD#B,DIESEL-L,MYS,",CONV,NG-PROD#B,DIESEL-L,MYS,,0.0007671717171717,kWh diesel LHV/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
+"CONV,NG-PROD#B,DIESEL-L,NOR,",CONV,NG-PROD#B,DIESEL-L,NOR,,0.0007594674787225,kWh diesel LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"CONV,NG-PROD#B,DIESEL-L,OMN,",CONV,NG-PROD#B,DIESEL-L,OMN,,0.00077387474426,kWh diesel LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"CONV,NG-PROD#B,DIESEL-L,QAT,",CONV,NG-PROD#B,DIESEL-L,QAT,,0.0005945576534397,kWh diesel LHV/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
+"CONV,NG-PROD#B,DIESEL-L,SAU,",CONV,NG-PROD#B,DIESEL-L,SAU,,0.00077387474426,kWh diesel LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"CONV,NG-PROD#B,DIESEL-L,THA,",CONV,NG-PROD#B,DIESEL-L,THA,,0.0007683456358456,kWh diesel LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"CONV,NG-PROD#B,DIESEL-L,USA,",CONV,NG-PROD#B,DIESEL-L,USA,,0.0011268131072691,kWh diesel LHV/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
+"CONV,NG-PROD#B,EL,AUS,",CONV,NG-PROD#B,EL,AUS,,0.0020615846241684,kWh (el.)/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"CONV,NG-PROD#B,EL,BRA,",CONV,NG-PROD#B,EL,BRA,,0.0019712403572878,kWh (el.)/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"CONV,NG-PROD#B,EL,CHN,",CONV,NG-PROD#B,EL,CHN,,0.0020155166272294,kWh (el.)/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"CONV,NG-PROD#B,EL,DZA,",CONV,NG-PROD#B,EL,DZA,,0.0003069739952718,kWh (el.)/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
+"CONV,NG-PROD#B,EL,IDN,",CONV,NG-PROD#B,EL,IDN,,0.0020004151587484,kWh (el.)/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
+"CONV,NG-PROD#B,EL,IND,",CONV,NG-PROD#B,EL,IND,,0.0020331268470106,kWh (el.)/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"CONV,NG-PROD#B,EL,MYS,",CONV,NG-PROD#B,EL,MYS,,0.0020155166272294,kWh (el.)/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
+"CONV,NG-PROD#B,EL,NOR,",CONV,NG-PROD#B,EL,NOR,,0.001995276020926,kWh (el.)/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"CONV,NG-PROD#B,EL,OMN,",CONV,NG-PROD#B,EL,OMN,,0.0020331268470106,kWh (el.)/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"CONV,NG-PROD#B,EL,QAT,",CONV,NG-PROD#B,EL,QAT,,0.0011527918489523,kWh (el.)/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
+"CONV,NG-PROD#B,EL,SAU,",CONV,NG-PROD#B,EL,SAU,,0.0020331268470106,kWh (el.)/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"CONV,NG-PROD#B,EL,THA,",CONV,NG-PROD#B,EL,THA,,0.0020186007511007,kWh (el.)/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"CONV,NG-PROD#B,EL,USA,",CONV,NG-PROD#B,EL,USA,,0.0011764692780979,kWh (el.)/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
+"CONV,NG-PROD#B,NG-G,AUS,",CONV,NG-PROD#B,NG-G,AUS,,0.0554848916443252,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"CONV,NG-PROD#B,NG-G,BRA,",CONV,NG-PROD#B,NG-G,BRA,,0.0530533922046285,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"CONV,NG-PROD#B,NG-G,CHN,",CONV,NG-PROD#B,NG-G,CHN,,0.0542450309136707,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"CONV,NG-PROD#B,NG-G,DZA,",CONV,NG-PROD#B,NG-G,DZA,,0.0838135539795114,kWh natural gas LHV/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
+"CONV,NG-PROD#B,NG-G,IDN,",CONV,NG-PROD#B,NG-G,IDN,,0.0538385943635943,kWh natural gas LHV/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
+"CONV,NG-PROD#B,NG-G,IND,",CONV,NG-PROD#B,NG-G,IND,,0.054718987269834,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"CONV,NG-PROD#B,NG-G,MYS,",CONV,NG-PROD#B,NG-G,MYS,,0.0570740973971452,kWh natural gas LHV/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
+"CONV,NG-PROD#B,NG-G,NOR,",CONV,NG-PROD#B,NG-G,NOR,,0.0537002810962754,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"CONV,NG-PROD#B,NG-G,OMN,",CONV,NG-PROD#B,NG-G,OMN,,0.054718987269834,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"CONV,NG-PROD#B,NG-G,QAT,",CONV,NG-PROD#B,NG-G,QAT,,0.0135754144600506,kWh natural gas LHV/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
+"CONV,NG-PROD#B,NG-G,SAU,",CONV,NG-PROD#B,NG-G,SAU,,0.054718987269834,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"CONV,NG-PROD#B,NG-G,THA,",CONV,NG-PROD#B,NG-G,THA,,0.0543280361305361,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"CONV,NG-PROD#B,NG-G,USA,",CONV,NG-PROD#B,NG-G,USA,,0.0639609677329547,kWh natural gas LHV/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
+"CONV,NH3-REC#B,EL,,",CONV,NH3-REC#B,EL,,,0.0076699999999999,kWh (el.)/H2-G,NGN; Equinor 2018
 "CONV,NH3-REC,EL,,",CONV,NH3-REC,EL,,,0.0076699999999999,kWh (el.)/H2-G,NGN; Equinor 2018
 "CONV,NH3-SB,BFUEL-L,,",CONV,NH3-SB,BFUEL-L,,,5.343656103416341e-06,kwh bunker fuel (l)/(km*NH3-L),calc_shipping
 "CONV,NH3SYN#B,EL,,",CONV,NH3SYN#B,EL,,,0.1657,kWh (el.)/kwh NH3 LHV (gasous),Concawe 2024
@@ -525,8 +534,8 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CONV,NH3SYN,N2-G,,",CONV,NH3SYN,N2-G,,,0.1598076923076923,kg N2 (g)/kWh NH3 (l),Fasihi et al. 2021
 "CONV,PEM-EL,H2O-L,,",CONV,PEM-EL,H2O-L,,,0.3,kg H2O (l)/H2-G,
 "CONV,REGASATR,EL,,",CONV,REGASATR,EL,,,0.1077107710771077,,combined values
-"CONV,SMR_52%,EL,,",CONV,SMR_52%,EL,,,0.0396039603960396,kWh (el.)/kwh H2 LHV (gasous),
-"CONV,SMR_52%_BF,EL,,",CONV,SMR_52%_BF,EL,,,0.0396039603960396,kWh (el.)/kwh H2 LHV (gasous),
+"CONV,SMR_52%#B,EL,,",CONV,SMR_52%#B,EL,,,0.0396039603960396,kWh (el.)/kwh H2 LHV (gasous),
+"CONV,SMR_52%_BF#B,EL,,",CONV,SMR_52%_BF#B,EL,,,0.0396039603960396,kWh (el.)/kwh H2 LHV (gasous),
 "CONV,SOEC-EL,H2O-L,,",CONV,SOEC-EL,H2O-L,,,0.3,kg H2O (l)/H2-G,
 "CONV,SYN-S,CHX-L,,",CONV,SYN-S,CHX-L,,,1.264193639501289e-06,kwh CHx (l)/(km*CHX-L),calc_shipping
 "CONV,SYN-SB,BFUEL-L,,",CONV,SYN-SB,BFUEL-L,,,1.264193639501289e-06,kwh bunker fuel (l)/(km*CHX-L),calc_shipping
@@ -536,7 +545,7 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CONV-OT,CH4-S#B,NG-L,,",CONV-OT,CH4-S#B,NG-L,,,3.191932945061948e-06,kWh natural gas LHV/kWh natural gas LHV*km,
 "CONV-OT,CH4-SB#B,BFUEL-L,,",CONV-OT,CH4-SB#B,BFUEL-L,,,3.3002590965851548e-06,kwh bunker fuel (l)/kWh natural gas LHV*km,
 "CONV-OT,CH4-SB#B,NG-L,,",CONV-OT,CH4-SB#B,NG-L,,,1.1537538535378709e-06,kWh natural gas LHV/kWh natural gas LHV*km,
-"CONV-OT,CO2-T+S,NG-L,,",CONV-OT,CO2-T+S,NG-L,,,3.3002590965851543e-06,kWh natural gas LHV/kWh natural gas LHV*km,
+"CONV-OT,CO2-T+S#B,NG-L,,",CONV-OT,CO2-T+S#B,NG-L,,,3.3002590965851543e-06,kWh natural gas LHV/kWh natural gas LHV*km,
 "CONV-OT,H2-S#B,H2-L,,",CONV-OT,H2-S#B,H2-L,,,9.251193689684598e-06,kWh H2 (l)/kWh H2 (l),
 "CONV-OT,H2-SB#B,BFUEL-L,,",CONV-OT,H2-SB#B,BFUEL-L,,,3.3002590965851543e-06,kwh bunker fuel (l)/kWh H2 (l),
 "CONV-OT,NH3-S#B,NH3-L,,",CONV-OT,NH3-S#B,NH3-L,,,5.343656103416341e-06,kwh NH3 LHV (gasous)/kwh NH3 LHV (gasous),
@@ -1501,9 +1510,9 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "EF_M,,NG-L,,",EF_M,,NG-L,,,201.0,gCO2e/kWh natural gas LHV,
 "EFF,AEL-EL,,,",EFF,AEL-EL,,,,0.715,various (output per main input),
 "EFF,ATR,,,",EFF,ATR,,,,0.79992,various (output per main input),Oni et al. 2022
-"EFF,ATR_91%,,,",EFF,ATR_91%,,,,0.79992,kwh H2 LHV (gasous)/kWh natural gas LHV,
-"EFF,CCGT-CC,,,",EFF,CCGT-CC,,,,0.5049112903225806,kwh (el.)/kWh natural gas LHV,
-"EFF,CH3OHSYC,,,",EFF,CH3OHSYC,,,,0.6093845216331505,kwh CH3OH/kWh natural gas LHV,Concawe 2024 (Irena 2021)
+"EFF,ATR_91%#B,,,",EFF,ATR_91%#B,,,,0.79992,kwh H2 LHV (gasous)/kWh natural gas LHV,
+"EFF,CCGT-CC#B,,,",EFF,CCGT-CC#B,,,,0.5049112903225806,kwh (el.)/kWh natural gas LHV,
+"EFF,CH3OHSYC#B,,,",EFF,CH3OHSYC#B,,,,0.6093845216331505,kwh CH3OH/kWh natural gas LHV,Concawe 2024 (Irena 2021)
 "EFF,CH3OHSYN#B,,,",EFF,CH3OHSYN#B,,,,0.8605354058721933,kwh CH3OH/kWh H2,Concawe 2024
 "EFF,CH3OHSYN,,,",EFF,CH3OHSYN,,,,0.803,various (output per main input),Frontier Economics 2021
 "EFF,CH4-RGAS,,,",EFF,CH4-RGAS,,,,0.98,various (output per main input),Pospíšil et al. 2019
@@ -1511,37 +1520,40 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "EFF,DESAL,,,",EFF,DESAL,,,,1.0,various (output per main input),
 "EFF,DRI#B,,,",EFF,DRI#B,,,,0.4348260913047826,kg DRI (s)/kWh H2 (g),Agora 2025 Green iron trade
 "EFF,DRI,,,",EFF,DRI,,,,0.4335693684975433,kg DRI (s)/kwhh2,"Agora Industry, Wuppertal Institute and Lund University (2024)"
-"EFF,EAF,,,",EFF,EAF,,,,1.0101010101010102,kg crude steel (solid)/kg DRI (s),
+"EFF,EAF#B,,,",EFF,EAF#B,,,,1.0101010101010102,kg crude steel (solid)/kg DRI (s),
 "EFF,EFUELSYN#B,,,",EFF,EFUELSYN#B,,,,0.7437457741717401,kwh diesel (liquid)/kWh H2,Concawe 2024
 "EFF,EFUELSYN,,,",EFF,EFUELSYN,,,,0.73,various (output per main input),Frontier Economics 2021
-"EFF,EFUELSYNC,,,",EFF,EFUELSYNC,,,,0.5589714924538849,kwh diesel (liquid)/kWh natural gas LHV,Concawe 2024 (Irena 2021)
+"EFF,EFUELSYNC#B,,,",EFF,EFUELSYNC#B,,,,0.5589714924538849,kwh diesel (liquid)/kWh natural gas LHV,Concawe 2024 (Irena 2021)
 "EFF,EL-STR,,,",EFF,EL-STR,,,,0.9,various (output per main input),
+"EFF,H2-LIQ#B,,,",EFF,H2-LIQ#B,,,,1.0,various (output per main input),
 "EFF,H2-LIQ,,,",EFF,H2-LIQ,,,,1.0,various (output per main input),
+"EFF,H2-RGAS#B,,,",EFF,H2-RGAS#B,,,,0.9965465465465464,various (output per main input),DNV GL 2020
 "EFF,H2-RGAS,,,",EFF,H2-RGAS,,,,0.9965465465465464,various (output per main input),DNV GL 2020
 "EFF,H2-STR,,,",EFF,H2-STR,,,,0.99,various (output per main input),
-"EFF,HEATPUMP,,,",EFF,HEATPUMP,,,,3.03,kWh (heat)/kWh (el.),PtX-Atlas
+"EFF,HEATPUMP#B,,,",EFF,HEATPUMP#B,,,,3.03,kWh (heat)/kWh (el.),PtX-Atlas
 "EFF,LOHC-REC,,,",EFF,LOHC-REC,,,,0.9,various (output per main input),DNV GL 2020
-"EFF,NG-DRI-C,,,",EFF,NG-DRI-C,,,,0.3360036003294872,kg DRI (s)/kWh natural gas LHV,Agora 2024 Steel
+"EFF,NG-DRI-C#B,,,",EFF,NG-DRI-C#B,,,,0.3360036003294872,kg DRI (s)/kWh natural gas LHV,Agora 2024 Steel
+"EFF,NH3-REC#B,,,",EFF,NH3-REC#B,,,,0.7466101694915254,various (output per main input),NGN; Equinor 2018
 "EFF,NH3-REC,,,",EFF,NH3-REC,,,,0.7466101694915254,various (output per main input),NGN; Equinor 2018
 "EFF,NH3SYN#B,,,",EFF,NH3SYN#B,,,,0.8754681647940075,kwh NH3 LHV (gasous)/kWh H2 (g),Concawe 2024
 "EFF,NH3SYN,,,",EFF,NH3SYN,,,,0.819,various (output per main input),Frotier Economics 2021
 "EFF,PEM-EL,,,",EFF,PEM-EL,,,,0.705,various (output per main input),
 "EFF,REGASATR,,,",EFF,REGASATR,,,,0.77992,various (output per main input),combined values
-"EFF,SMR_52%,,,",EFF,SMR_52%,,,,0.5713714285714284,kwh H2 LHV (gasous)/kWh natural gas LHV,
-"EFF,SMR_52%_BF,,,",EFF,SMR_52%_BF,,,,0.5713714285714284,kwh H2 LHV (gasous)/kWh natural gas LHV,
+"EFF,SMR_52%#B,,,",EFF,SMR_52%#B,,,,0.5713714285714284,kwh H2 LHV (gasous)/kWh natural gas LHV,
+"EFF,SMR_52%_BF#B,,,",EFF,SMR_52%_BF#B,,,,0.5713714285714284,kwh H2 LHV (gasous)/kWh natural gas LHV,
 "EFF,SOEC-EL,,,",EFF,SOEC-EL,,,,0.7733333333333332,various (output per main input),
 "FLH,AEL-EL,,,",FLH,AEL-EL,,,,3861.914191419142,h,average of PTX Atlas
-"FLH,ATR_91%,,,",FLH,ATR_91%,,,,7884.0,h,based on Oni 2022
-"FLH,CH3OHSYC,,,",FLH,CH3OHSYC,,,,7884.0,h,
+"FLH,ATR_91%#B,,,",FLH,ATR_91%#B,,,,7884.0,h,based on Oni 2022
+"FLH,CH3OHSYC#B,,,",FLH,CH3OHSYC#B,,,,7884.0,h,
 "FLH,CH3OHSYN#B,,,",FLH,CH3OHSYN#B,,,,7884.0,h,
 "FLH,DAC#B,,,",FLH,DAC#B,,,,7884.0,h,
 "FLH,DRI#B,,,",FLH,DRI#B,,,,7884.0,h,Agora 2025 Green iron trade
 "FLH,DRI,,,",FLH,DRI,,,,7884.0,0,
-"FLH,EAF,,,",FLH,EAF,,,,7884.0,h,Agora 2025 Green iron trade
+"FLH,EAF#B,,,",FLH,EAF#B,,,,7884.0,h,Agora 2025 Green iron trade
 "FLH,EFUELSYN#B,,,",FLH,EFUELSYN#B,,,,7884.0,h,
-"FLH,EFUELSYNC,,,",FLH,EFUELSYNC,,,,7884.0,h,
-"FLH,HEATPUMP,,,",FLH,HEATPUMP,,,,7884.0,h,
-"FLH,NG-DRI-C,,,",FLH,NG-DRI-C,,,,7884.0,h,Agora 2025 Green iron trade
+"FLH,EFUELSYNC#B,,,",FLH,EFUELSYNC#B,,,,7884.0,h,
+"FLH,HEATPUMP#B,,,",FLH,HEATPUMP#B,,,,7884.0,h,
+"FLH,NG-DRI-C#B,,,",FLH,NG-DRI-C#B,,,,7884.0,h,Agora 2025 Green iron trade
 "FLH,NH3SYN#B,,,",FLH,NH3SYN#B,,,,7884.0,h,
 "FLH,NH3SYN,,,",FLH,NH3SYN,,,,8000.0,h,Fasihi et al. 2021
 "FLH,PEM-EL,,,",FLH,PEM-EL,,,,3861.914191419142,h,average of PTX Atlas
@@ -1703,8 +1715,8 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "FLH,RES-HYBR,,ZAF-NC,",FLH,RES-HYBR,,ZAF-NC,,5250.510294931822,h,
 "FLH,RES-HYBR,,ZAF-NW,",FLH,RES-HYBR,,ZAF-NW,,4461.2336445282735,h,
 "FLH,RES-HYBR,,ZAF-WC,",FLH,RES-HYBR,,ZAF-WC,,4751.405799739327,h,
-"FLH,SMR_52%,,,",FLH,SMR_52%,,,,7884.0,h,based on Oni 2022
-"FLH,SMR_52%_BF,,,",FLH,SMR_52%_BF,,,,7884.0,h,based on Oni 2022
+"FLH,SMR_52%#B,,,",FLH,SMR_52%#B,,,,7884.0,h,based on Oni 2022
+"FLH,SMR_52%_BF#B,,,",FLH,SMR_52%_BF#B,,,,7884.0,h,based on Oni 2022
 "FLH,SOEC-EL,,,",FLH,SOEC-EL,,,,5519.722314049587,h,average of PTX Atlas
 "FLH,WIND-OFF,,ARE,",FLH,WIND-OFF,,ARE,,2453.0,h,Bosch et al. 2018
 "FLH,WIND-OFF,,ARG,",FLH,WIND-OFF,,ARG,,5369.0,h,Bosch et al. 2018
@@ -1839,19 +1851,23 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "FLH,WIND-ON,,ZAF-WC,",FLH,WIND-ON,,ZAF-WC,,3346.6670672599976,h,
 "LIFETIME,AEL-EL,,,",LIFETIME,AEL-EL,,,,20.0,years,
 "LIFETIME,ATR,,,",LIFETIME,ATR,,,,25.0,years,Oni et al. 2022
-"LIFETIME,ATR_91%,,,",LIFETIME,ATR_91%,,,,25.0,years,Oni 2022 p.6
-"LIFETIME,CCGT-CC,,,",LIFETIME,CCGT-CC,,,,30.0,years,
+"LIFETIME,ATR_91%#B,,,",LIFETIME,ATR_91%#B,,,,25.0,years,Oni 2022 p.6
+"LIFETIME,CCGT-CC#B,,,",LIFETIME,CCGT-CC#B,,,,30.0,years,
 "LIFETIME,CH3OH-S,,,",LIFETIME,CH3OH-S,,,,30.0,years,UNSW Sydney 2021
 "LIFETIME,CH3OH-SB,,,",LIFETIME,CH3OH-SB,,,,30.0,years,UNSW Sydney 2021
-"LIFETIME,CH3OHSYC,,,",LIFETIME,CH3OHSYC,,,,25.0,years,Concawe 2024
+"LIFETIME,CH3OHSYC#B,,,",LIFETIME,CH3OHSYC#B,,,,25.0,years,Concawe 2024
 "LIFETIME,CH3OHSYN#B,,,",LIFETIME,CH3OHSYN#B,,,,30.0,years,Concawe 2024
 "LIFETIME,CH3OHSYN,,,",LIFETIME,CH3OHSYN,,,,30.0,years,Öko-Institut 2020
+"LIFETIME,CH4-COMP#B,,,",LIFETIME,CH4-COMP#B,,,,20.0,years,DNV GL 2020
 "LIFETIME,CH4-COMP,,,",LIFETIME,CH4-COMP,,,,20.0,years,DNV GL 2020
 "LIFETIME,CH4-LIQ#B,,,",LIFETIME,CH4-LIQ#B,,,,30.0,years,UNSW Sydney 2021
 "LIFETIME,CH4-LIQ,,,",LIFETIME,CH4-LIQ,,,,30.0,years,UNSW Sydney 2021
 "LIFETIME,CH4-P-L,,,",LIFETIME,CH4-P-L,,,,40.0,years,
+"LIFETIME,CH4-P-LR#B,,,",LIFETIME,CH4-P-LR#B,,,,40.0,years,
 "LIFETIME,CH4-P-LR,,,",LIFETIME,CH4-P-LR,,,,40.0,years,
+"LIFETIME,CH4-P-S#B,,,",LIFETIME,CH4-P-S#B,,,,40.0,years,
 "LIFETIME,CH4-P-S,,,",LIFETIME,CH4-P-S,,,,40.0,years,
+"LIFETIME,CH4-P-SR#B,,,",LIFETIME,CH4-P-SR#B,,,,40.0,years,
 "LIFETIME,CH4-P-SR,,,",LIFETIME,CH4-P-SR,,,,40.0,years,
 "LIFETIME,CH4-S,,,",LIFETIME,CH4-S,,,,30.0,years,UNSW Sydney 2021
 "LIFETIME,CH4-SB,,,",LIFETIME,CH4-SB,,,,30.0,years,UNSW Sydney 2021
@@ -1861,28 +1877,36 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "LIFETIME,DESAL,,,",LIFETIME,DESAL,,,,20.0,years,PTX Atlas
 "LIFETIME,DRI#B,,,",LIFETIME,DRI#B,,,,20.0,years,Agora 2025 Green iron trade
 "LIFETIME,DRI,,,",LIFETIME,DRI,,,,15.0,years,Agora Industry Transformation 2022
-"LIFETIME,EAF,,,",LIFETIME,EAF,,,,20.0,years,Agora 2025 Green iron trade
+"LIFETIME,EAF#B,,,",LIFETIME,EAF#B,,,,20.0,years,Agora 2025 Green iron trade
 "LIFETIME,EFUELSYN#B,,,",LIFETIME,EFUELSYN#B,,,,30.0,years,Concawe 2024
 "LIFETIME,EFUELSYN,,,",LIFETIME,EFUELSYN,,,,30.0,years,Öko-Institut 2020
-"LIFETIME,EFUELSYNC,,,",LIFETIME,EFUELSYNC,,,,25.0,years,Concawe 2024
+"LIFETIME,EFUELSYNC#B,,,",LIFETIME,EFUELSYNC#B,,,,25.0,years,Concawe 2024
 "LIFETIME,EL-STR,,,",LIFETIME,EL-STR,,,,20.0,years,
 "LIFETIME,EL-TRANS,,,",LIFETIME,EL-TRANS,,,,20.0,years,DUMMY
+"LIFETIME,H2-COMP#B,,,",LIFETIME,H2-COMP#B,,,,20.0,years,DNV GL 2020
 "LIFETIME,H2-COMP,,,",LIFETIME,H2-COMP,,,,20.0,years,DNV GL 2020
+"LIFETIME,H2-LIQ#B,,,",LIFETIME,H2-LIQ#B,,,,30.0,years,IEA 2015
 "LIFETIME,H2-LIQ,,,",LIFETIME,H2-LIQ,,,,30.0,years,IEA 2015
+"LIFETIME,H2-P-L#B,,,",LIFETIME,H2-P-L#B,,,,30.0,years,
 "LIFETIME,H2-P-L,,,",LIFETIME,H2-P-L,,,,30.0,years,
+"LIFETIME,H2-P-LR#B,,,",LIFETIME,H2-P-LR#B,,,,30.0,years,
 "LIFETIME,H2-P-LR,,,",LIFETIME,H2-P-LR,,,,30.0,years,
+"LIFETIME,H2-P-S#B,,,",LIFETIME,H2-P-S#B,,,,30.0,years,
 "LIFETIME,H2-P-S,,,",LIFETIME,H2-P-S,,,,30.0,years,
+"LIFETIME,H2-P-SR#B,,,",LIFETIME,H2-P-SR#B,,,,30.0,years,
 "LIFETIME,H2-P-SR,,,",LIFETIME,H2-P-SR,,,,30.0,years,
+"LIFETIME,H2-RGAS#B,,,",LIFETIME,H2-RGAS#B,,,,30.0,years,
 "LIFETIME,H2-RGAS,,,",LIFETIME,H2-RGAS,,,,30.0,years,
 "LIFETIME,H2-S,,,",LIFETIME,H2-S,,,,30.0,years,UNSW Sydney 2021
 "LIFETIME,H2-SB,,,",LIFETIME,H2-SB,,,,30.0,years,UNSW Sydney 2021
 "LIFETIME,H2-STR,,,",LIFETIME,H2-STR,,,,30.0,years,
-"LIFETIME,HEATPUMP,,,",LIFETIME,HEATPUMP,,,,20.0,years,PtX-Atlas
+"LIFETIME,HEATPUMP#B,,,",LIFETIME,HEATPUMP#B,,,,20.0,years,PtX-Atlas
 "LIFETIME,LOHC-CON,,,",LIFETIME,LOHC-CON,,,,20.0,years,DNV GL 2020
 "LIFETIME,LOHC-REC,,,",LIFETIME,LOHC-REC,,,,30.0,years,IEA 2019
 "LIFETIME,LOHC-S,,,",LIFETIME,LOHC-S,,,,30.0,years,UNSW Sydney 2021
 "LIFETIME,LOHC-SB,,,",LIFETIME,LOHC-SB,,,,30.0,years,UNSW Sydney 2021
-"LIFETIME,NG-DRI-C,,,",LIFETIME,NG-DRI-C,,,,20.0,years,Agora 2025 Green iron trade
+"LIFETIME,NG-DRI-C#B,,,",LIFETIME,NG-DRI-C#B,,,,20.0,years,Agora 2025 Green iron trade
+"LIFETIME,NH3-REC#B,,,",LIFETIME,NH3-REC#B,,,,25.0,years,NGN; Equinor 2018
 "LIFETIME,NH3-REC,,,",LIFETIME,NH3-REC,,,,25.0,years,NGN; Equinor 2018
 "LIFETIME,NH3-S,,,",LIFETIME,NH3-S,,,,30.0,years,UNSW Sydney 2021
 "LIFETIME,NH3-SB,,,",LIFETIME,NH3-SB,,,,30.0,years,UNSW Sydney 2021
@@ -1892,8 +1916,8 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "LIFETIME,PV-FIX,,,",LIFETIME,PV-FIX,,,,20.0,years,
 "LIFETIME,REGASATR,,,",LIFETIME,REGASATR,,,,25.0,years,combined values
 "LIFETIME,RES-HYBR,,,",LIFETIME,RES-HYBR,,,,20.0,years,
-"LIFETIME,SMR_52%,,,",LIFETIME,SMR_52%,,,,25.0,years,Oni 2022 p.6
-"LIFETIME,SMR_52%_BF,,,",LIFETIME,SMR_52%_BF,,,,25.0,years,Oni 2022 p.6
+"LIFETIME,SMR_52%#B,,,",LIFETIME,SMR_52%#B,,,,25.0,years,Oni 2022 p.6
+"LIFETIME,SMR_52%_BF#B,,,",LIFETIME,SMR_52%_BF#B,,,,25.0,years,Oni 2022 p.6
 "LIFETIME,SOEC-EL,,,",LIFETIME,SOEC-EL,,,,20.0,years,
 "LIFETIME,SYN-S,,,",LIFETIME,SYN-S,,,,30.0,years,UNSW Sydney 2021
 "LIFETIME,SYN-SB,,,",LIFETIME,SYN-SB,,,,30.0,years,UNSW Sydney 2021
@@ -1913,33 +1937,40 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "LOSS,CH4-LIQ#B,CH4-G,THA,",LOSS,CH4-LIQ#B,CH4-G,THA,,3e-05,kg CH4/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
 "LOSS,CH4-LIQ#B,CH4-G,USA,",LOSS,CH4-LIQ#B,CH4-G,USA,,7.000000000000001e-05,kg CH4/kWh natural gas LHV,UBA (2021)
 "LOSS,CH4-RGAS#B,NG-G,,",LOSS,CH4-RGAS#B,NG-G,,,4e-08,kWh natural gas LHV/kWh natural gas LHV,
-"LOSS,CO2-T+S,CO2-G,,",LOSS,CO2-T+S,CO2-G,,,0.01,kg CO2 (g)/kg CO2 (g),
-"LOSS,NG-PROD,CH4-G,AUS,",LOSS,NG-PROD,CH4-G,AUS,,0.0004,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
-"LOSS,NG-PROD,CH4-G,BRA,",LOSS,NG-PROD,CH4-G,BRA,,0.0012,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
-"LOSS,NG-PROD,CH4-G,CHN,",LOSS,NG-PROD,CH4-G,CHN,,0.0008,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
-"LOSS,NG-PROD,CH4-G,DZA,",LOSS,NG-PROD,CH4-G,DZA,,0.0018,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
-"LOSS,NG-PROD,CH4-G,IDN,",LOSS,NG-PROD,CH4-G,IDN,,0.0015,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
-"LOSS,NG-PROD,CH4-G,MYS,",LOSS,NG-PROD,CH4-G,MYS,,0.0014,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
-"LOSS,NG-PROD,CH4-G,NOR,",LOSS,NG-PROD,CH4-G,NOR,,1e-05,kg CH4/kWh natural gas LHV,Rystad 2023
-"LOSS,NG-PROD,CH4-G,OMN,",LOSS,NG-PROD,CH4-G,OMN,,0.0009,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
-"LOSS,NG-PROD,CH4-G,QAT,",LOSS,NG-PROD,CH4-G,QAT,,0.0009,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
-"LOSS,NG-PROD,CH4-G,SAU,",LOSS,NG-PROD,CH4-G,SAU,,0.0004,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
-"LOSS,NG-PROD,CH4-G,USA,",LOSS,NG-PROD,CH4-G,USA,,0.001,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
+"LOSS,CO2-T+S#B,CO2-G,,",LOSS,CO2-T+S#B,CO2-G,,,0.01,kg CO2 (g)/kg CO2 (g),
+"LOSS,NG-PROD#B,CH4-G,AUS,",LOSS,NG-PROD#B,CH4-G,AUS,,0.0004,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
+"LOSS,NG-PROD#B,CH4-G,BRA,",LOSS,NG-PROD#B,CH4-G,BRA,,0.0012,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
+"LOSS,NG-PROD#B,CH4-G,CHN,",LOSS,NG-PROD#B,CH4-G,CHN,,0.0008,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
+"LOSS,NG-PROD#B,CH4-G,DZA,",LOSS,NG-PROD#B,CH4-G,DZA,,0.0018,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
+"LOSS,NG-PROD#B,CH4-G,IDN,",LOSS,NG-PROD#B,CH4-G,IDN,,0.0015,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
+"LOSS,NG-PROD#B,CH4-G,MYS,",LOSS,NG-PROD#B,CH4-G,MYS,,0.0014,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
+"LOSS,NG-PROD#B,CH4-G,NOR,",LOSS,NG-PROD#B,CH4-G,NOR,,1e-05,kg CH4/kWh natural gas LHV,Rystad 2023
+"LOSS,NG-PROD#B,CH4-G,OMN,",LOSS,NG-PROD#B,CH4-G,OMN,,0.0009,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
+"LOSS,NG-PROD#B,CH4-G,QAT,",LOSS,NG-PROD#B,CH4-G,QAT,,0.0009,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
+"LOSS,NG-PROD#B,CH4-G,SAU,",LOSS,NG-PROD#B,CH4-G,SAU,,0.0004,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
+"LOSS,NG-PROD#B,CH4-G,USA,",LOSS,NG-PROD#B,CH4-G,USA,,0.001,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
 "LOSS-T,CH3OH-S,,,",LOSS-T,CH3OH-S,,,,3.0509883673175365e-06,fraction/km,calc_shipping
 "LOSS-T,CH3OH-SB#B,,,",LOSS-T,CH3OH-SB#B,,,,2.399808015358772e-07,kWh CH3OH (l)/kWh CH3OH (l),
 "LOSS-T,CH3OH-SB,,,",LOSS-T,CH3OH-SB,,,,2.399808015358772e-07,fraction/km,calc_shipping
 "LOSS-T,CH4-P-L#B,,,",LOSS-T,CH4-P-L#B,,,,3.4e-06,kWh natural gas LHV/kWh natural gas LHV*km,
 "LOSS-T,CH4-P-L,,,",LOSS-T,CH4-P-L,,,,5.666666666666667e-06,fraction/km,
+"LOSS-T,CH4-P-LR#B,,,",LOSS-T,CH4-P-LR#B,,,,5.666666666666667e-06,fraction/km,
 "LOSS-T,CH4-P-LR,,,",LOSS-T,CH4-P-LR,,,,5.666666666666667e-06,fraction/km,
+"LOSS-T,CH4-P-S#B,,,",LOSS-T,CH4-P-S#B,,,,5.666666666666667e-06,fraction/km,
 "LOSS-T,CH4-P-S,,,",LOSS-T,CH4-P-S,,,,5.666666666666667e-06,fraction/km,
+"LOSS-T,CH4-P-SR#B,,,",LOSS-T,CH4-P-SR#B,,,,5.666666666666667e-06,fraction/km,
 "LOSS-T,CH4-P-SR,,,",LOSS-T,CH4-P-SR,,,,5.666666666666667e-06,fraction/km,
 "LOSS-T,CH4-S#B,,,",LOSS-T,CH4-S#B,,,,1.0832615152320684e-07,kWh natural gas LHV/kWh natural gas LHV*km,
 "LOSS-T,CH4-S,,,",LOSS-T,CH4-S,,,,3.3002590965851543e-06,fraction/km,calc_shipping
 "LOSS-T,CH4-SB,,,",LOSS-T,CH4-SB,,,,1.1537538535378709e-06,fraction/km,calc_shipping
-"LOSS-T,CO2-T+S,,,",LOSS-T,CO2-T+S,,,,1.1537538535378709e-06,kWh natural gas LHV/kWh natural gas LHV*km,
+"LOSS-T,CO2-T+S#B,,,",LOSS-T,CO2-T+S#B,,,,1.1537538535378709e-06,kWh natural gas LHV/kWh natural gas LHV*km,
+"LOSS-T,H2-P-L#B,,,",LOSS-T,H2-P-L#B,,,,1.6866666666666666e-05,fraction/km,
 "LOSS-T,H2-P-L,,,",LOSS-T,H2-P-L,,,,1.6866666666666666e-05,fraction/km,
+"LOSS-T,H2-P-LR#B,,,",LOSS-T,H2-P-LR#B,,,,1.6866666666666666e-05,fraction/km,
 "LOSS-T,H2-P-LR,,,",LOSS-T,H2-P-LR,,,,1.6866666666666666e-05,fraction/km,
+"LOSS-T,H2-P-S#B,,,",LOSS-T,H2-P-S#B,,,,1.6866666666666666e-05,fraction/km,
 "LOSS-T,H2-P-S,,,",LOSS-T,H2-P-S,,,,1.6866666666666666e-05,fraction/km,
+"LOSS-T,H2-P-SR#B,,,",LOSS-T,H2-P-SR#B,,,,1.6866666666666666e-05,fraction/km,
 "LOSS-T,H2-P-SR,,,",LOSS-T,H2-P-SR,,,,1.6866666666666666e-05,fraction/km,
 "LOSS-T,H2-S,,,",LOSS-T,H2-S,,,,9.251193689684598e-06,fraction/km,calc_shipping
 "LOSS-T,H2-SB#B,,,",LOSS-T,H2-SB#B,,,,2.3075077070757413e-06,kWh H2 (l)/kWh H2 (l),
@@ -1950,11 +1981,12 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "LOSS-T,NH3-SB,,,",LOSS-T,NH3-SB,,,,4.615015414151483e-07,fraction/km,calc_shipping
 "OPEX-F,AEL-EL,,,",OPEX-F,AEL-EL,,,,17.247852273014015,USD2023/kW,
 "OPEX-F,ATR,,,",OPEX-F,ATR,,,,43.73972497874261,USD2023/kW,Oni et al. 2022
-"OPEX-F,ATR_91%,,,",OPEX-F,ATR_91%,,,,69.0611618233846,USD2021/kw,based on Oni 2022
-"OPEX-F,CCGT-CC,,,",OPEX-F,CCGT-CC,,,,63.75889533728664,USD2021/kWel,
-"OPEX-F,CH3OHSYC,,,",OPEX-F,CH3OHSYC,,,,10.060711188204683,USD2021/kW,Concawe 2024
+"OPEX-F,ATR_91%#B,,,",OPEX-F,ATR_91%#B,,,,69.0611618233846,USD2021/kw,based on Oni 2022
+"OPEX-F,CCGT-CC#B,,,",OPEX-F,CCGT-CC#B,,,,63.75889533728664,USD2021/kWel,
+"OPEX-F,CH3OHSYC#B,,,",OPEX-F,CH3OHSYC#B,,,,10.060711188204683,USD2021/kW,Concawe 2024
 "OPEX-F,CH3OHSYN#B,,,",OPEX-F,CH3OHSYN#B,,,,17.58,USD2021/kW,Concawe 2024
 "OPEX-F,CH3OHSYN,,,",OPEX-F,CH3OHSYN,,,,27.235160792911355,USD2023/kW,Öko-Institut 2020
+"OPEX-F,CH4-COMP#B,,,",OPEX-F,CH4-COMP#B,,,,6.6696786336745415,USD2023/kW,DNV GL 2020
 "OPEX-F,CH4-COMP,,,",OPEX-F,CH4-COMP,,,,6.6696786336745415,USD2023/kW,DNV GL 2020
 "OPEX-F,CH4-LIQ#B,,,",OPEX-F,CH4-LIQ#B,,,,8.162141631357608,USD2021/kW,Hank et al. 2020
 "OPEX-F,CH4-LIQ,,,",OPEX-F,CH4-LIQ,,,,10.155054193554893,USD2023/kW,Hank et al. 2020
@@ -1964,18 +1996,22 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "OPEX-F,DESAL,,,",OPEX-F,DESAL,,,,0.0001092481471381,USD2023/kW,
 "OPEX-F,DRI#B,,,",OPEX-F,DRI#B,,,,0.0169057906574932,USD2025/kg DRI (s)/a*h,Agora 2025 Green iron trade
 "OPEX-F,DRI,,,",OPEX-F,DRI,,,,136.58516898748684,USD2023/kg DRI (s)/a*h,Agora Industry Transformation 2022
-"OPEX-F,EAF,,,",OPEX-F,EAF,,,,0.0125203281304999,USD2025/kg (CS)/a,Agora 2025 Green iron trade
+"OPEX-F,EAF#B,,,",OPEX-F,EAF#B,,,,0.0125203281304999,USD2025/kg (CS)/a,Agora 2025 Green iron trade
 "OPEX-F,EFUELSYN#B,,,",OPEX-F,EFUELSYN#B,,,,32.82,USD2025/kW,Concawe 2024
 "OPEX-F,EFUELSYN,,,",OPEX-F,EFUELSYN,,,,27.235160792911355,USD2023/kW,Öko-Institut 2020
-"OPEX-F,EFUELSYNC,,,",OPEX-F,EFUELSYNC,,,,20.9,USD2021/kW,Concawe 2024
+"OPEX-F,EFUELSYNC#B,,,",OPEX-F,EFUELSYNC#B,,,,20.9,USD2021/kW,Concawe 2024
+"OPEX-F,H2-COMP#B,,,",OPEX-F,H2-COMP#B,,,,6.6696786336745415,USD2023/kW,DNV GL 2020
 "OPEX-F,H2-COMP,,,",OPEX-F,H2-COMP,,,,6.6696786336745415,USD2023/kW,DNV GL 2020
+"OPEX-F,H2-LIQ#B,,,",OPEX-F,H2-LIQ#B,,,,67.27183479037932,USD2023/kW,IEA 2019
 "OPEX-F,H2-LIQ,,,",OPEX-F,H2-LIQ,,,,67.27183479037932,USD2023/kW,IEA 2019
+"OPEX-F,H2-RGAS#B,,,",OPEX-F,H2-RGAS#B,,,,9.178404533750465,USD2023/kW,DNV GL 2020
 "OPEX-F,H2-RGAS,,,",OPEX-F,H2-RGAS,,,,9.178404533750465,USD2023/kW,DNV GL 2020
 "OPEX-F,H2-STR,,,",OPEX-F,H2-STR,,,,0.5209021170671373,USD2023/kW,
-"OPEX-F,HEATPUMP,,,",OPEX-F,HEATPUMP,,,,5.72525472088507,USD2021/kW (heat),PtX-Atlas
+"OPEX-F,HEATPUMP#B,,,",OPEX-F,HEATPUMP#B,,,,5.72525472088507,USD2021/kW (heat),PtX-Atlas
 "OPEX-F,LOHC-CON,,,",OPEX-F,LOHC-CON,,,,9.277201416447276,USD2023/kW,DNV GL 2020
 "OPEX-F,LOHC-REC,,,",OPEX-F,LOHC-REC,,,,17.213934635687252,USD2023/kW,DNV GL 2021
-"OPEX-F,NG-DRI-C,,,",OPEX-F,NG-DRI-C,,,,0.0177562906574932,USD2025/kg DRI (s)/a*h,Agora 2025 Green iron trade
+"OPEX-F,NG-DRI-C#B,,,",OPEX-F,NG-DRI-C#B,,,,0.0177562906574932,USD2025/kg DRI (s)/a*h,Agora 2025 Green iron trade
+"OPEX-F,NH3-REC#B,,,",OPEX-F,NH3-REC#B,,,,14.24278869420301,USD2023/kW,NGN; Equinor 2018
 "OPEX-F,NH3-REC,,,",OPEX-F,NH3-REC,,,,14.24278869420301,USD2023/kW,NGN; Equinor 2018
 "OPEX-F,NH3SYN#B,,,",OPEX-F,NH3SYN#B,,,,16.07608695652174,USD2021/kW,Concawe 2024
 "OPEX-F,NH3SYN,,,",OPEX-F,NH3SYN,,,,75.97473309389076,USD2023/kW,Fasihi et al. 2021
@@ -2138,8 +2174,8 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "OPEX-F,RES-HYBR,,ZAF-NC,",OPEX-F,RES-HYBR,,ZAF-NC,,27.19617665683652,USD2023/kW,
 "OPEX-F,RES-HYBR,,ZAF-NW,",OPEX-F,RES-HYBR,,ZAF-NW,,27.19617665683652,USD2023/kW,
 "OPEX-F,RES-HYBR,,ZAF-WC,",OPEX-F,RES-HYBR,,ZAF-WC,,27.19617665683652,USD2023/kW,
-"OPEX-F,SMR_52%,,,",OPEX-F,SMR_52%,,,,111.41867440839384,USD2021/kw,based on Oni 2022
-"OPEX-F,SMR_52%_BF,,,",OPEX-F,SMR_52%_BF,,,,2.2648697354021433e-08,USD2025/kw,based on Oni 2022
+"OPEX-F,SMR_52%#B,,,",OPEX-F,SMR_52%#B,,,,111.41867440839384,USD2021/kw,based on Oni 2022
+"OPEX-F,SMR_52%_BF#B,,,",OPEX-F,SMR_52%_BF#B,,,,2.2648697354021433e-08,USD2025/kw,based on Oni 2022
 "OPEX-F,SOEC-EL,,,",OPEX-F,SOEC-EL,,,,68.26071007908419,USD2023/kW,
 "OPEX-F,WIND-OFF,,ARE,",OPEX-F,WIND-OFF,,ARE,,87.0993985943034,USD2023/kW,
 "OPEX-F,WIND-OFF,,ARG,",OPEX-F,WIND-OFF,,ARG,,87.0993985943034,USD2023/kW,
@@ -2305,10 +2341,10 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "OPEX-O,CH4-S,,,",OPEX-O,CH4-S,,,,0.0003813147912294,USD2023/kWh,UNSW Sydney 2021
 "OPEX-O,CH4-SB,,,",OPEX-O,CH4-SB,,,,0.0003813147912294,USD2023/kWh,UNSW Sydney 2021
 "OPEX-O,DRI,,,",OPEX-O,DRI,,,,0.2622666327363948,USD2023/kg DRI (s),"Agora Industry, Wuppertal Institute and Lund University (2024)"
-"OPEX-O,EAF,,,",OPEX-O,EAF,,,,0.1836786902020977,USD2025/kg (CS),"Agora, WI, Lund Uni (2024) Low-carbon technologies for the global steel transformation"
+"OPEX-O,EAF#B,,,",OPEX-O,EAF#B,,,,0.1836786902020977,USD2025/kg (CS),"Agora, WI, Lund Uni (2024) Low-carbon technologies for the global steel transformation"
 "OPEX-O,H2-S,,,",OPEX-O,H2-S,,,,0.0022569810463972,USD2023/kWh,UNSW Sydney 2021
 "OPEX-O,H2-SB,,,",OPEX-O,H2-SB,,,,0.0022569810463972,USD2023/kWh,UNSW Sydney 2021
-"OPEX-O,HEATPUMP,,,",OPEX-O,HEATPUMP,,,,0.0006600280008387,USD2021/kWh (heat),PtX-Atlas
+"OPEX-O,HEATPUMP#B,,,",OPEX-O,HEATPUMP#B,,,,0.0006600280008387,USD2021/kWh (heat),PtX-Atlas
 "OPEX-O,LOHC-S,,,",OPEX-O,LOHC-S,,,,0.0177470397731461,USD2023/kWh,UNSW Sydney 2021
 "OPEX-O,LOHC-SB,,,",OPEX-O,LOHC-SB,,,,0.0177470397731461,USD2023/kWh,UNSW Sydney 2021
 "OPEX-O,NH3-S,,,",OPEX-O,NH3-S,,,,0.0004856855350958,USD2023/kWh,UNSW Sydney 2021
@@ -2322,17 +2358,25 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "OPEX-T,CH3OH-SB,,,",OPEX-T,CH3OH-SB,,,,1.2518787005471605e-07,USD2023/(kWh*km),calc_shipping
 "OPEX-T,CH4-P-L#B,,,",OPEX-T,CH4-P-L#B,,,,2.765143705545648e-06,USD2021/kWh natural gas LHV*km,
 "OPEX-T,CH4-P-L,,,",OPEX-T,CH4-P-L,,,,3.190975836199677e-06,USD2023/(kWh*km),
+"OPEX-T,CH4-P-LR#B,,,",OPEX-T,CH4-P-LR#B,,,,9.9525359452052e-07,USD2023/(kWh*km),
 "OPEX-T,CH4-P-LR,,,",OPEX-T,CH4-P-LR,,,,9.9525359452052e-07,USD2023/(kWh*km),
+"OPEX-T,CH4-P-S#B,,,",OPEX-T,CH4-P-S#B,,,,3.8291710034396165e-06,USD2023/(kWh*km),
 "OPEX-T,CH4-P-S,,,",OPEX-T,CH4-P-S,,,,3.8291710034396165e-06,USD2023/(kWh*km),
+"OPEX-T,CH4-P-SR#B,,,",OPEX-T,CH4-P-SR#B,,,,9.9525359452052e-07,USD2023/(kWh*km),
 "OPEX-T,CH4-P-SR,,,",OPEX-T,CH4-P-SR,,,,9.9525359452052e-07,USD2023/(kWh*km),
 "OPEX-T,CH4-S#B,,,",OPEX-T,CH4-S#B,,,,2.541556382391352e-07,USD2021/kWh natural gas LHV*km,calc_shipping
 "OPEX-T,CH4-S,,,",OPEX-T,CH4-S,,,,2.93295606527962e-07,USD2023/(kWh*km),calc_shipping
 "OPEX-T,CH4-SB#B,,,",OPEX-T,CH4-SB#B,,,,2.541556382391352e-07,USD2021/kWh natural gas LHV*km,calc_shipping
 "OPEX-T,CH4-SB,,,",OPEX-T,CH4-SB,,,,2.93295606527962e-07,USD2023/(kWh*km),calc_shipping
+"OPEX-T,DRI-SB#B,,,",OPEX-T,DRI-SB#B,,,,3.765382979887925e-07,USD2023/(kg*km),calc_shipping
 "OPEX-T,DRI-SB,,,",OPEX-T,DRI-SB,,,,3.765382979887925e-07,USD2023/(kg*km),calc_shipping
+"OPEX-T,H2-P-L#B,,,",OPEX-T,H2-P-L#B,,,,1.0240478622645222e-05,USD2023/(kWh*km),Guidehouse 2022
 "OPEX-T,H2-P-L,,,",OPEX-T,H2-P-L,,,,1.0240478622645222e-05,USD2023/(kWh*km),Guidehouse 2022
+"OPEX-T,H2-P-LR#B,,,",OPEX-T,H2-P-LR#B,,,,3.5110212420497896e-06,USD2023/(kWh*km),Guidehouse 2022
 "OPEX-T,H2-P-LR,,,",OPEX-T,H2-P-LR,,,,3.5110212420497896e-06,USD2023/(kWh*km),Guidehouse 2022
+"OPEX-T,H2-P-S#B,,,",OPEX-T,H2-P-S#B,,,,1.755510621024895e-05,USD2023/(kWh*km),Guidehouse 2022
 "OPEX-T,H2-P-S,,,",OPEX-T,H2-P-S,,,,1.755510621024895e-05,USD2023/(kWh*km),Guidehouse 2022
+"OPEX-T,H2-P-SR#B,,,",OPEX-T,H2-P-SR#B,,,,4.3887765525622375e-06,USD2023/(kWh*km),Guidehouse 2022
 "OPEX-T,H2-P-SR,,,",OPEX-T,H2-P-SR,,,,4.3887765525622375e-06,USD2023/(kWh*km),Guidehouse 2022
 "OPEX-T,H2-S#B,,,",OPEX-T,H2-S#B,,,,1.5043330904926457e-06,USD2021/kWh H2 LHV*km,calc_shipping
 "OPEX-T,H2-S,,,",OPEX-T,H2-S,,,,1.7360003864285128e-06,USD2023/(kWh*km),calc_shipping
