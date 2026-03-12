@@ -232,28 +232,28 @@ def main_settings_blue(api: PtxboaAPI):
             "SMR_52%_BF_NH3SYN",
         ],
         "CH3OH-L": [
+            "CH3OHSYC",
             "ATR_91%_CH3OHSYN",
             "SMR_52%_CH3OHSYN",
             "SMR_52%_BF_CH3OHSYN",
-            "CH3OHSYC",
         ],
         "CHX-L": [
+            "EFUELSYNC",
             "ATR_91%_EFUELSYN",
             "SMR_52%_EFUELSYN",
             "SMR_52%_BF_EFUELSYN",
-            "EFUELSYNC",
         ],
         "STL-S": [
+            "NG-DRI-C_EAF",
             "ATR_91%_DRI_EAF",
             "SMR_52%_DRI_EAF",
             "SMR_52%_BF_DRI_EAF",
-            "NG-DRI-C_EAF",
         ],
         "DRI-S": [
+            "NG-DRI-C",
             "ATR_91%_DRI",
             "SMR_52%_DRI",
             "SMR_52%_BF_DRI",
-            "NG-DRI-C",
         ],
     }
 
