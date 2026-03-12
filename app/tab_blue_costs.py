@@ -157,9 +157,20 @@ def content_costs(api: PtxboaAPI):
                 ),
             )
 
+        supply = st.session_state["region"]
+        demand = st.session_state["country"]
+        xlabel_mapping = {
+            k: (f"{v}<br>conversion in {supply if 'prod_in_supply' in k else demand}")
+            for k, v in blue_chain_labels.items()
+        }
+
         display_results_bar_and_table(
-            results_supply_demand.costs,
-            results_supply_demand.costs_not_modified,
+            results_supply_demand.costs.sort_index(ascending=False),
+            (
+                results_supply_demand.costs_not_modified.sort_index(ascending=False)
+                if results_supply_demand.costs_not_modified is not None
+                else None
+            ),
             key="chain",
             key_suffix="demand_supply",
             titlestring=read_markdown_file(
@@ -168,14 +179,10 @@ def content_costs(api: PtxboaAPI):
             help_string=read_markdown_file(
                 "md/tab_blue_costs/figure_description_cost_per_conversion_location.md"
             ),
-            x_label_mapping={
-                k: (
-                    f"{v}<br>conversion in "
-                    f"{'supply' if 'prod_in_supply' in k else 'demand'} country"
-                )
-                for k, v in blue_chain_labels.items()
-            },
+            x_label_mapping=xlabel_mapping,
+            xaxis_title="Conversion location",
             tool_version_color="blue",
+            allow_sorting=False,
         )
 
     with st.container(border=True):

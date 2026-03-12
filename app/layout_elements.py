@@ -31,6 +31,7 @@ def display_results_bar_and_table(
     default_manual_select: str | None = None,
     help_string: str | None = None,
     x_label_mapping: dict[str, str] | None = None,
+    xaxis_title: str | None = None,
     tool_version_color: ToolVersionColorType = "green",
     data_type: Literal["costs", "emissions"] = "costs",
     allow_sorting: bool = True,
@@ -153,6 +154,9 @@ def display_results_bar_and_table(
         current_selection=current_selection,
         output_unit=output_unit,
     )
+    if xaxis_title is not None:
+        fig.update_layout(xaxis_title=xaxis_title)
+
     st.plotly_chart(fig, width="stretch")
 
     if output_unit.endswith("/MWh") and st.session_state["output_unit"].endswith("/t"):
