@@ -258,7 +258,7 @@ def main_settings_blue(api: PtxboaAPI):
     }
 
     conversion = st.selectbox(
-        label="Conversion from natural gas (technology chain)",
+        label="Conversion route from natural gas",
         options=conversion_options[product],
         format_func=lambda x: {
             "ATR_91%": "H₂ (ATR)",
