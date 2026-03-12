@@ -247,16 +247,26 @@ def content_emissions(api: PtxboaAPI):
                 ),
             )
 
+        supply = st.session_state["region"]
+        demand = st.session_state["country"]
+        xlabel_mapping = {
+            k: (
+                f"{v}<br>conversion in "
+                f"{supply if 'prod_in_supply' in k else demand}"
+            )
+            for k, v in blue_chain_labels.items()
+        }
+
         display_results_bar_and_table(
             aggregate_emissions(
                 results_supply_demand.emissions, index="chain", columns="process_type"
-            ),
+            ).sort_index(ascending=False),
             (
                 aggregate_emissions(
                     results_supply_demand.emissions_not_modified,
                     index="chain",
                     columns="process_type",
-                )
+                ).sort_index(ascending=False)
                 if results_supply_demand.emissions_not_modified is not None
                 else None
             ),
@@ -268,15 +278,11 @@ def content_emissions(api: PtxboaAPI):
             help_string=read_markdown_file(
                 "md/tab_blue_emissions/figure_description_emission_per_conversion_location.md"  # noqa E501
             ),
-            x_label_mapping={
-                k: (
-                    f"{v}<br>conversion in "
-                    f"{'supply' if 'prod_in_supply' in k else 'demand'} country"
-                )
-                for k, v in blue_chain_labels.items()
-            },
+            x_label_mapping=xlabel_mapping,
+            xaxis_title="Conversion location",
             tool_version_color="blue",
             data_type="emissions",
+            allow_sorting=False,
         )
 
     with st.container(border=True):
@@ -340,6 +346,9 @@ def content_emissions(api: PtxboaAPI):
                         (blue_chains["ELY"] == st.session_state["reformer"])
                         | (blue_chains["ELY_I"] == st.session_state["reformer"])
                     )
+                    & blue_chains["FLOW_OUT"].isin(
+                        st.session_state["output_product_group"]
+                    )
                 ].index
             else:
                 equal_reformer_chains = blue_chains.loc[
@@ -347,6 +356,9 @@ def content_emissions(api: PtxboaAPI):
                         f"prod_in_{st.session_state['conversion_location']}"
                     )
                     & ((blue_chains["ELY"] == "") & (blue_chains["ELY_I"] == ""))
+                    & blue_chains["FLOW_OUT"].isin(
+                        st.session_state["output_product_group"]
+                    )
                 ].index
 
             results_equal_routes = blue_results_over_dimension(
@@ -354,9 +366,6 @@ def content_emissions(api: PtxboaAPI):
                 dim="chain",
                 emissions_included=st.session_state["emissions_included"],
                 parameter_list=equal_reformer_chains,
-                override_session_state={
-                    "output_unit": "USD/MWh"
-                },  # api always wants cost unit
             )
 
         display_results_bar_and_table(

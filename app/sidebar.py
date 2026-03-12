@@ -15,7 +15,7 @@ def make_sidebar_green(api: PtxboaAPI):
     with additional_settings_expander():
         additional_settings_green(api)
     st.sidebar.divider()
-    edit_input_data_toggle()
+    edit_input_data_toggle_green()
     input_data_reset_notice()
 
 
@@ -26,7 +26,7 @@ def make_sidebar_blue(api: PtxboaAPI):
     with additional_settings_expander():
         additional_settings_blue(api)
     st.sidebar.divider()
-    edit_input_data_toggle()
+    edit_input_data_toggle_blue()
     input_data_reset_notice()
 
 
@@ -200,16 +200,20 @@ def main_settings_blue(api: PtxboaAPI):
         "CH3OH-L": "Methanol",
     }
 
+    product_groups = {
+        "NH3-L": ["NH3-L", "CHX-L", "H2-G", "CH3OH-L"],
+        "CHX-L": ["NH3-L", "CHX-L", "H2-G", "CH3OH-L"],
+        "H2-G": ["NH3-L", "CHX-L", "H2-G", "CH3OH-L"],
+        "CH3OH-L": ["NH3-L", "CHX-L", "H2-G", "CH3OH-L"],
+        "STL-S": ["STL-S", "DRI-S"],
+        "DRI-S": ["STL-S", "DRI-S"],
+    }
+
+    product_options = ["NH3-L", "CHX-L", "H2-G", "CH3OH-L", "STL-S", "DRI-S"]
+
     product = st.selectbox(
         label="Final Product",
-        options=[
-            "NH3-L",
-            "CHX-L",
-            "STL-S",
-            "DRI-S",
-            "H2-G",
-            "CH3OH-L",
-        ],
+        options=product_options,
         format_func=lambda x: product_labels.get(x, x),
         help=read_markdown_file("md/sidebar/helptext_sidebar_product.md"),
         index=0,
@@ -218,6 +222,9 @@ def main_settings_blue(api: PtxboaAPI):
 
     # add product label to session state
     st.session_state["output_product_label"] = product_labels.get(product, product)
+    st.session_state["output_product_group"] = product_groups.get(
+        product, product_options
+    )
 
     # different conversion options for each product
     conversion_options = {
@@ -232,33 +239,33 @@ def main_settings_blue(api: PtxboaAPI):
             "SMR_52%_BF_NH3SYN",
         ],
         "CH3OH-L": [
+            "CH3OHSYC",
             "ATR_91%_CH3OHSYN",
             "SMR_52%_CH3OHSYN",
             "SMR_52%_BF_CH3OHSYN",
-            "CH3OHSYC",
         ],
         "CHX-L": [
+            "EFUELSYNC",
             "ATR_91%_EFUELSYN",
             "SMR_52%_EFUELSYN",
             "SMR_52%_BF_EFUELSYN",
-            "EFUELSYNC",
         ],
         "STL-S": [
+            "NG-DRI-C_EAF",
             "ATR_91%_DRI_EAF",
             "SMR_52%_DRI_EAF",
             "SMR_52%_BF_DRI_EAF",
-            "NG-DRI-C_EAF",
         ],
         "DRI-S": [
+            "NG-DRI-C",
             "ATR_91%_DRI",
             "SMR_52%_DRI",
             "SMR_52%_BF_DRI",
-            "NG-DRI-C",
         ],
     }
 
     conversion = st.selectbox(
-        label="Conversion from natural gas (technology chain)",
+        label="Conversion route from natural gas",
         options=conversion_options[product],
         format_func=lambda x: {
             "ATR_91%": "H₂ (ATR)",
@@ -290,11 +297,11 @@ def main_settings_blue(api: PtxboaAPI):
 
     def get_reformer(conversion: str):
         if conversion.startswith("SMR_52%_BF"):
-            return "SMR52_%BF"
+            return "SMR_52%_BF#B"
         if conversion.startswith("SMR_52%"):
-            return "SMR_52%"
+            return "SMR_52%#B"
         if conversion.startswith("ATR_91%"):
-            return "ATR_91%"
+            return "ATR_91%#B"
         return None
 
     st.session_state["reformer"] = get_reformer(conversion)
@@ -336,7 +343,7 @@ def main_settings_blue(api: PtxboaAPI):
 
 def conversion_location_radio(key: str, disabled: bool):
     return st.radio(
-        "Where does conversion from natural gas take place?",
+        "Where does conversion from natural gas to the final product take place?",
         ["supply", "demand"],
         index=0,
         horizontal=True,
@@ -353,7 +360,7 @@ def conversion_location_radio(key: str, disabled: bool):
 
 
 def additional_settings_green(api):
-    co2_source_toggle_green(api)
+    co2_source_toggle_green()
     water_source_radio(api)
     allow_pipeline_toggle()
     ship_own_fuel_toggle("For shipping option: Use the product as own fuel?")
@@ -362,7 +369,7 @@ def additional_settings_green(api):
 
 def additional_settings_blue(api: PtxboaAPI):
     final_use_emissions_toggle()
-    co2_source_toggle_blue(api)
+    co2_source_toggle_blue()
     allow_pipeline_toggle()
     ship_own_fuel_toggle("For shipping option: Use the final product as own fuel?")
     unit_toggle_blue()
@@ -390,10 +397,20 @@ def additional_settings_expander():
     return st.sidebar.expander("**Additional settings**", expanded=False)
 
 
-def edit_input_data_toggle():
+def edit_input_data_toggle_green():
     st.sidebar.toggle(
         "Edit input data",
         help=read_markdown_file("md/sidebar/helptext_sidebar_edit_input_data.md"),
+        value=False,
+        key="edit_input_data",
+        on_change=reset_user_changes,
+    )
+
+
+def edit_input_data_toggle_blue():
+    st.sidebar.toggle(
+        "Edit input data (e.g. natural gas price)",
+        help=read_markdown_file("md/sidebar/helptext_sidebar_blue_edit_input_data.md"),
         value=False,
         key="edit_input_data",
         on_change=reset_user_changes,
@@ -430,16 +447,16 @@ def final_use_emissions_toggle():
     )
 
 
-def co2_source_toggle_green(api: PtxboaAPI):
+def co2_source_toggle_green():
     st.session_state["secproc_co2"] = st.radio(
         "CO₂ source:",
-        api.get_dimension("secproc_co2").index,
+        ["Direct Air Capture", "Specific costs"],
         horizontal=True,
         help=read_markdown_file("md/sidebar/helptext_sidebar_carbon_source.md"),
     )
 
 
-def co2_source_toggle_blue(api: PtxboaAPI):
+def co2_source_toggle_blue():
     co2_source = st.radio(
         "CO₂ source:",
         ["Direct Air Capture", "industrial_capture"],
@@ -504,17 +521,27 @@ def unit_toggle_green():
 
 
 def unit_toggle_blue():
-    st.session_state["output_unit"] = st.radio(
-        "Unit for costs and emissions:",
-        ["USD/MWh", "USD/t"],
-        horizontal=True,
-        format_func=lambda x: {
-            "USD/MWh": "per MWh (LHV) final product",
-            "USD/t": "per tonne final product",
-        }.get(x, x),
-        help=read_markdown_file("md/sidebar/helptext_sidebar_blue_cost_unit.md"),
-        index=1,  # 'per/t' as default
-    )
+    def _radio(key: str, disabled: bool):
+        return st.radio(
+            "Unit for costs and emissions:",
+            ["USD/MWh", "USD/t"],
+            horizontal=True,
+            format_func=lambda x: {
+                "USD/MWh": "per MWh (LHV) final product",
+                "USD/t": "per tonne final product",
+            }.get(x, x),
+            help=read_markdown_file("md/sidebar/helptext_sidebar_blue_cost_unit.md"),
+            index=1,  # 'per/t' as default
+            key=key,
+            disabled=disabled,
+        )
+
+    if st.session_state["output_product"] in ["STL-S", "DRI-S"]:
+        unit = _radio("_blue_unit_disabled", disabled=True)
+    else:
+        unit = _radio("_blue_unit", disabled=False)
+
+    st.session_state["output_unit"] = unit
     st.session_state["emissions_output_unit"] = st.session_state["output_unit"].replace(
         "USD", "gCO₂eq"
     )
