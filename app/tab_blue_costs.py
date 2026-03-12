@@ -260,7 +260,6 @@ def content_costs(api: PtxboaAPI):
                 dim="chain",
                 emissions_included=st.session_state["emissions_included"],
                 parameter_list=equal_reformer_chains,
-                override_session_state={"output_unit": "USD/MWh"},
             )
 
         display_results_bar_and_table(

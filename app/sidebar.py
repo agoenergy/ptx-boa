@@ -521,17 +521,27 @@ def unit_toggle_green():
 
 
 def unit_toggle_blue():
-    st.session_state["output_unit"] = st.radio(
-        "Unit for costs and emissions:",
-        ["USD/MWh", "USD/t"],
-        horizontal=True,
-        format_func=lambda x: {
-            "USD/MWh": "per MWh (LHV) final product",
-            "USD/t": "per tonne final product",
-        }.get(x, x),
-        help=read_markdown_file("md/sidebar/helptext_sidebar_blue_cost_unit.md"),
-        index=1,  # 'per/t' as default
-    )
+    def _radio(key: str, disabled: bool):
+        return st.radio(
+            "Unit for costs and emissions:",
+            ["USD/MWh", "USD/t"],
+            horizontal=True,
+            format_func=lambda x: {
+                "USD/MWh": "per MWh (LHV) final product",
+                "USD/t": "per tonne final product",
+            }.get(x, x),
+            help=read_markdown_file("md/sidebar/helptext_sidebar_blue_cost_unit.md"),
+            index=1,  # 'per/t' as default
+            key=key,
+            disabled=disabled,
+        )
+
+    if st.session_state["output_product"] in ["STL-S", "DRI-S"]:
+        unit = _radio("_blue_unit_disabled", disabled=True)
+    else:
+        unit = _radio("_blue_unit", disabled=False)
+
+    st.session_state["output_unit"] = unit
     st.session_state["emissions_output_unit"] = st.session_state["output_unit"].replace(
         "USD", "gCO₂eq"
     )
