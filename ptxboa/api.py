@@ -245,12 +245,12 @@ class PtxboaAPI:
         # conversion to output unit
         if output_unit not in {"USD/MWh", "USD/t"}:
             logger.error(f"Invalid choice for output_unit: {output_unit}")
-        conversion = 1000
+        conversion = 1000  # FIXME: is emissions already scaled to ton?
         if output_unit == "USD/t":
             calor = data["parameter"]["CALOR"]
             conversion *= calor
 
-        # conversion
+        # conversion: FIXME: is emissions already scaled to ton?
         for df in [df_result_cost, df_result_emissions, df_result_emissions_mass]:
             df["values"] = df["values"] * conversion
 
