@@ -1,5 +1,7 @@
 """Content of costs tab."""
 
+import logging
+
 import pandas as pd
 import streamlit as st
 from plotly.subplots import make_subplots
@@ -16,6 +18,8 @@ from app.ptxboa_functions import (
     read_markdown_file,
 )
 from ptxboa.api import PtxboaAPI
+
+logger = logging.getLogger()
 
 
 def content_costs(api: PtxboaAPI):
@@ -230,6 +234,12 @@ def content_costs(api: PtxboaAPI):
                     )
                     & ((blue_chains["ELY"] == "") & (blue_chains["ELY_I"] == ""))
                 ].index
+
+            if len(equal_reformer_chains) == 0:
+                logger.warning(
+                    "No equal_reformer_chains for reformer "
+                    f"'{st.session_state['reformer']}'"
+                )
 
             results_equal_routes = blue_results_over_dimension(
                 api,

@@ -290,11 +290,11 @@ def main_settings_blue(api: PtxboaAPI):
 
     def get_reformer(conversion: str):
         if conversion.startswith("SMR_52%_BF"):
-            return "SMR52_%BF"
+            return "SMR_52%_BF#B"
         if conversion.startswith("SMR_52%"):
-            return "SMR_52%"
+            return "SMR_52%#B"
         if conversion.startswith("ATR_91%"):
-            return "ATR_91%"
+            return "ATR_91%#B"
         return None
 
     st.session_state["reformer"] = get_reformer(conversion)
