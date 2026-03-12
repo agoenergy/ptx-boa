@@ -453,6 +453,7 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CONV,CH4SYN,CO2-G,,",CONV,CH4SYN,CO2-G,,,0.20196,kg CO2 (g)/kWh CH4 (g),
 "CONV,CH4SYN,H2O-L,,",CONV,CH4SYN,H2O-L,,,-0.1426332288401254,kg H2O (l)/kWh CH4 (g),Fasihi & Breyer 2018
 "CONV,CH4SYN,HEAT,,",CONV,CH4SYN,HEAT,,,-0.1849529780564263,kWh (heat)/kWh CH4 (g),Fasihi & Breyer 2018
+"CONV,CO2-T+S#B,EL,,",CONV,CO2-T+S#B,EL,,,0.0,,
 "CONV,DAC#B,EL,,",CONV,DAC#B,EL,,,0.203,kg CO2 (g)/kWh (el.),Fasihi et al. 2019
 "CONV,DAC#B,HEAT,,",CONV,DAC#B,HEAT,,,1.286,kWh (heat)/kg CO2 (g),Fasihi et al. 2019
 "CONV,DAC,EL,,",CONV,DAC,EL,,,0.7,kWh (el.)/kg CO2 (g),Kreidelmeyer et al. 2020
