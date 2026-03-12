@@ -336,7 +336,7 @@ def main_settings_blue(api: PtxboaAPI):
 
 def conversion_location_radio(key: str, disabled: bool):
     return st.radio(
-        "Where does conversion from natural gas take place?",
+        "Where does conversion from natural gas to the final product take place?",
         ["supply", "demand"],
         index=0,
         horizontal=True,
