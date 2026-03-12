@@ -205,10 +205,10 @@ def main_settings_blue(api: PtxboaAPI):
         options=[
             "NH3-L",
             "CHX-L",
-            "STL-S",
-            "DRI-S",
             "H2-G",
             "CH3OH-L",
+            "STL-S",
+            "DRI-S",
         ],
         format_func=lambda x: product_labels.get(x, x),
         help=read_markdown_file("md/sidebar/helptext_sidebar_product.md"),
