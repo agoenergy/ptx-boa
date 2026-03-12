@@ -15,7 +15,7 @@ def make_sidebar_green(api: PtxboaAPI):
     with additional_settings_expander():
         additional_settings_green(api)
     st.sidebar.divider()
-    edit_input_data_toggle()
+    edit_input_data_toggle_green()
     input_data_reset_notice()
 
 
@@ -26,7 +26,7 @@ def make_sidebar_blue(api: PtxboaAPI):
     with additional_settings_expander():
         additional_settings_blue(api)
     st.sidebar.divider()
-    edit_input_data_toggle()
+    edit_input_data_toggle_blue()
     input_data_reset_notice()
 
 
@@ -390,10 +390,20 @@ def additional_settings_expander():
     return st.sidebar.expander("**Additional settings**", expanded=False)
 
 
-def edit_input_data_toggle():
+def edit_input_data_toggle_green():
     st.sidebar.toggle(
         "Edit input data",
         help=read_markdown_file("md/sidebar/helptext_sidebar_edit_input_data.md"),
+        value=False,
+        key="edit_input_data",
+        on_change=reset_user_changes,
+    )
+
+
+def edit_input_data_toggle_blue():
+    st.sidebar.toggle(
+        "Edit input data (e.g. natural gas price)",
+        help=read_markdown_file("md/sidebar/helptext_sidebar_blue_edit_input_data.md"),
         value=False,
         key="edit_input_data",
         on_change=reset_user_changes,
