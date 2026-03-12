@@ -353,7 +353,7 @@ def conversion_location_radio(key: str, disabled: bool):
 
 
 def additional_settings_green(api):
-    co2_source_toggle_green(api)
+    co2_source_toggle_green()
     water_source_radio(api)
     allow_pipeline_toggle()
     ship_own_fuel_toggle("For shipping option: Use the product as own fuel?")
@@ -362,7 +362,7 @@ def additional_settings_green(api):
 
 def additional_settings_blue(api: PtxboaAPI):
     final_use_emissions_toggle()
-    co2_source_toggle_blue(api)
+    co2_source_toggle_blue()
     allow_pipeline_toggle()
     ship_own_fuel_toggle("For shipping option: Use the final product as own fuel?")
     unit_toggle_blue()
@@ -430,16 +430,16 @@ def final_use_emissions_toggle():
     )
 
 
-def co2_source_toggle_green(api: PtxboaAPI):
+def co2_source_toggle_green():
     st.session_state["secproc_co2"] = st.radio(
         "CO₂ source:",
-        api.get_dimension("secproc_co2").index,
+        ["Direct Air Capture", "Specific costs"],
         horizontal=True,
         help=read_markdown_file("md/sidebar/helptext_sidebar_carbon_source.md"),
     )
 
 
-def co2_source_toggle_blue(api: PtxboaAPI):
+def co2_source_toggle_blue():
     co2_source = st.radio(
         "CO₂ source:",
         ["Direct Air Capture", "industrial_capture"],
