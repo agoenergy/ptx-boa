@@ -15,7 +15,7 @@ def make_sidebar_green(api: PtxboaAPI):
     with additional_settings_expander():
         additional_settings_green(api)
     st.sidebar.divider()
-    edit_input_data_toggle()
+    edit_input_data_toggle_green()
     input_data_reset_notice()
 
 
@@ -26,7 +26,7 @@ def make_sidebar_blue(api: PtxboaAPI):
     with additional_settings_expander():
         additional_settings_blue(api)
     st.sidebar.divider()
-    edit_input_data_toggle()
+    edit_input_data_toggle_blue()
     input_data_reset_notice()
 
 
@@ -205,10 +205,10 @@ def main_settings_blue(api: PtxboaAPI):
         options=[
             "NH3-L",
             "CHX-L",
-            "STL-S",
-            "DRI-S",
             "H2-G",
             "CH3OH-L",
+            "STL-S",
+            "DRI-S",
         ],
         format_func=lambda x: product_labels.get(x, x),
         help=read_markdown_file("md/sidebar/helptext_sidebar_product.md"),
@@ -232,33 +232,33 @@ def main_settings_blue(api: PtxboaAPI):
             "SMR_52%_BF_NH3SYN",
         ],
         "CH3OH-L": [
+            "CH3OHSYC",
             "ATR_91%_CH3OHSYN",
             "SMR_52%_CH3OHSYN",
             "SMR_52%_BF_CH3OHSYN",
-            "CH3OHSYC",
         ],
         "CHX-L": [
+            "EFUELSYNC",
             "ATR_91%_EFUELSYN",
             "SMR_52%_EFUELSYN",
             "SMR_52%_BF_EFUELSYN",
-            "EFUELSYNC",
         ],
         "STL-S": [
+            "NG-DRI-C_EAF",
             "ATR_91%_DRI_EAF",
             "SMR_52%_DRI_EAF",
             "SMR_52%_BF_DRI_EAF",
-            "NG-DRI-C_EAF",
         ],
         "DRI-S": [
+            "NG-DRI-C",
             "ATR_91%_DRI",
             "SMR_52%_DRI",
             "SMR_52%_BF_DRI",
-            "NG-DRI-C",
         ],
     }
 
     conversion = st.selectbox(
-        label="Conversion from natural gas (technology chain)",
+        label="Conversion route from natural gas",
         options=conversion_options[product],
         format_func=lambda x: {
             "ATR_91%": "H₂ (ATR)",
@@ -336,7 +336,7 @@ def main_settings_blue(api: PtxboaAPI):
 
 def conversion_location_radio(key: str, disabled: bool):
     return st.radio(
-        "Where does conversion from natural gas take place?",
+        "Where does conversion from natural gas to the final product take place?",
         ["supply", "demand"],
         index=0,
         horizontal=True,
@@ -353,7 +353,7 @@ def conversion_location_radio(key: str, disabled: bool):
 
 
 def additional_settings_green(api):
-    co2_source_toggle_green(api)
+    co2_source_toggle_green()
     water_source_radio(api)
     allow_pipeline_toggle()
     ship_own_fuel_toggle("For shipping option: Use the product as own fuel?")
@@ -362,7 +362,7 @@ def additional_settings_green(api):
 
 def additional_settings_blue(api: PtxboaAPI):
     final_use_emissions_toggle()
-    co2_source_toggle_blue(api)
+    co2_source_toggle_blue()
     allow_pipeline_toggle()
     ship_own_fuel_toggle("For shipping option: Use the final product as own fuel?")
     unit_toggle_blue()
@@ -390,10 +390,20 @@ def additional_settings_expander():
     return st.sidebar.expander("**Additional settings**", expanded=False)
 
 
-def edit_input_data_toggle():
+def edit_input_data_toggle_green():
     st.sidebar.toggle(
         "Edit input data",
         help=read_markdown_file("md/sidebar/helptext_sidebar_edit_input_data.md"),
+        value=False,
+        key="edit_input_data",
+        on_change=reset_user_changes,
+    )
+
+
+def edit_input_data_toggle_blue():
+    st.sidebar.toggle(
+        "Edit input data (e.g. natural gas price)",
+        help=read_markdown_file("md/sidebar/helptext_sidebar_blue_edit_input_data.md"),
         value=False,
         key="edit_input_data",
         on_change=reset_user_changes,
@@ -430,16 +440,16 @@ def final_use_emissions_toggle():
     )
 
 
-def co2_source_toggle_green(api: PtxboaAPI):
+def co2_source_toggle_green():
     st.session_state["secproc_co2"] = st.radio(
         "CO₂ source:",
-        api.get_dimension("secproc_co2").index,
+        ["Direct Air Capture", "Specific costs"],
         horizontal=True,
         help=read_markdown_file("md/sidebar/helptext_sidebar_carbon_source.md"),
     )
 
 
-def co2_source_toggle_blue(api: PtxboaAPI):
+def co2_source_toggle_blue():
     co2_source = st.radio(
         "CO₂ source:",
         ["Direct Air Capture", "industrial_capture"],
