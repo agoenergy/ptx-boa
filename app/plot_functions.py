@@ -14,10 +14,10 @@ import streamlit as st
 from app.ptxboa_functions import (
     change_index_names,
     get_data_type_from_input_data,
-    remove_subregions,
     select_subregions,
 )
 from ptxboa.api import PtxboaAPI
+from ptxboa.static import ToolVersionColorType
 
 
 @st.cache_data()
@@ -167,7 +167,7 @@ def plot_emissions_on_map(
 
 def plot_input_data_on_map(
     api: PtxboaAPI,
-    data_type: Literal["CAPEX", "full load hours", "WACC"],
+    data_type: Literal["CAPEX", "full load hours", "WACC", "Natural gas price"],
     color_col: Literal[
         "PV tilted",
         "Wind Offshore",
@@ -175,8 +175,10 @@ def plot_input_data_on_map(
         "Wind Onshore (hybrid)",
         "PV tilted (hybrid)",
         "WACC",
+        "specific costs",
     ],
     scope: Literal["world", "Argentina", "Morocco", "South Africa"] = "world",
+    tool_version_color: ToolVersionColorType = "green",
 ) -> go.Figure:
     """
     Plot input data on a map.
@@ -197,9 +199,16 @@ def plot_input_data_on_map(
     -------
     go.Figure
     """
-    input_data = get_data_type_from_input_data(api, data_type=data_type, scope=None)
+    input_data = get_data_type_from_input_data(
+        api, data_type=data_type, scope=scope, tool_version_color=tool_version_color
+    )
 
-    units = {"CAPEX": "USD/kW", "full load hours": "h/a", "WACC": "%"}
+    units = {
+        "CAPEX": "USD/kW",
+        "full load hours": "h/a",
+        "WACC": "%",
+        "Natural gas price": "USD/kWh natural gas LHV",
+    }
 
     if data_type == "WACC":
         assert color_col == "WACC"
@@ -220,6 +229,9 @@ def plot_input_data_on_map(
             "Wind Onshore",
         ]
         custom_data_func_kwargs = {"float_precision": 0}
+    if data_type == "Natural gas price":
+        assert color_col == "specific costs"
+        custom_data_func_kwargs = {"float_precision": 4}
 
     custom_data_func_kwargs["unit"] = units[data_type]
     custom_data_func_kwargs["data_type"] = data_type
@@ -273,7 +285,7 @@ def _choropleth_map_world(
     """
     if custom_data_func_kwargs is None:
         custom_data_func_kwargs = {}
-    df = remove_subregions(api=api, df=df).dropna(subset=color_col)
+    df = df.dropna(subset=color_col)
     fig = px.scatter_geo(
         locations=df.index,
         locationmode="country names",
@@ -442,11 +454,11 @@ def _set_map_layout(fig: go.Figure, colorbar_title: str) -> go.Figure:
 
 def _make_inputs_hoverdata(df, data_type, map_variable, unit, float_precision):
     custom_hover_data = []
-    if data_type == "WACC":
+    if data_type in ["WACC", "Natural gas price"]:
         for idx, row in df.iterrows():
             hover = (
                 f"<b>{idx} | {data_type} </b><br><br>"
-                f"{row['WACC']:.{float_precision}f} {unit}"
+                f"{row[map_variable]:.{float_precision}f} {unit}"
             )
             custom_hover_data.append(hover)
     else:

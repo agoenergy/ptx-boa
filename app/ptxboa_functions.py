@@ -519,9 +519,10 @@ def sort_by_position_in_chain(
 
 def subset_and_pivot_input_data(
     input_data: pd.DataFrame,
-    source_region_code: list | None = None,
-    parameter_code: list | None = None,
-    process_code: list | None = None,
+    source_region_code: list[str] | None = None,
+    parameter_code: list[str] | None = None,
+    process_code: list[str] | None = None,
+    flow_code: list[str] | None = None,
     index: str = "source_region_code",
     columns: str = "process_code",
     values: str = "value",
@@ -558,6 +559,8 @@ def subset_and_pivot_input_data(
         input_data = input_data.loc[input_data["parameter_code"].isin(parameter_code)]
     if process_code is not None:
         input_data = input_data.loc[input_data["process_code"].isin(process_code)]
+    if flow_code is not None:
+        input_data = input_data.loc[input_data["flow_code"].isin(flow_code)]
 
     reshaped = input_data.pivot_table(
         index=index, columns=columns, values=values, aggfunc="sum"
@@ -579,8 +582,10 @@ def get_data_type_from_input_data(
         "conversion_coefficients",
         "dac_and_desalination",
         "storage",
+        "Natural gas price",
     ],
     scope: Literal[None, "world", "Argentina", "Morocco", "South Africa"],
+    tool_version_color: ToolVersionColorType = "green",
 ) -> pd.DataFrame:
     """
     Get a pivoted table from input data based on data type and regional scope.
@@ -627,7 +632,11 @@ def get_data_type_from_input_data(
     input_data = api.get_input_data(
         st.session_state["scenario"],
         user_data=st.session_state["user_changes_df"],
+        tool_version_color=tool_version_color,
     )
+
+    # green data types not specied by flow code
+    flow_code = None
 
     if data_type in [
         "electricity_generation",
@@ -747,11 +756,20 @@ def get_data_type_from_input_data(
             processes["process_name"].str.contains("storage"), "process_name"
         ].to_list()
 
+    if data_type == "Natural gas price":
+        source_region_code = None
+        parameter_code = ["specific costs"]
+        process_code = [""]
+        flow_code = ["natural gas (gasous)"]
+        index = "source_region_code"
+        columns = "parameter_code"
+
     df = subset_and_pivot_input_data(
         input_data,
         source_region_code=source_region_code,
         parameter_code=parameter_code,
         process_code=process_code,
+        flow_code=flow_code,
         index=index,
         columns=columns,
         values="value",
@@ -761,10 +779,16 @@ def get_data_type_from_input_data(
     if data_type == "specific_costs":
         df = df[~(df.index == "electricity")]
 
-    if scope == "world":
-        df = remove_subregions(api=api, df=df)
-    if scope in ["Argentina", "Morocco", "South Africa"]:
-        df = select_subregions(df, scope)
+    if tool_version_color == "blue" and df.index.name == "source_region_code":
+        df = df.loc[get_blue_demand_and_supply_regions(api)]
+
+    if tool_version_color == "green":
+        if scope == "world":
+            df = remove_subregions(
+                api=api, df=df, tool_version_color=tool_version_color
+            )
+        if scope in ["Argentina", "Morocco", "South Africa"]:
+            df = select_subregions(df, scope)
 
     # transform data to match unit [%] for 'WACC' and 'efficieny'
     if data_type == "WACC":
@@ -843,6 +867,12 @@ def get_region_list_without_subregions(
         region_list_without_subregions.append(keep)
 
     return sorted(region_list_without_subregions)
+
+
+def get_blue_demand_and_supply_regions(api: PtxboaAPI):
+    regions = set(api.get_dimension("region", tool_version_color="blue").index)
+    countries = set(api.get_dimension("country", tool_version_color="blue").index)
+    return sorted(regions.union(countries))
 
 
 def select_subregions(

@@ -271,8 +271,8 @@ def _form_data_editor(
             (
                 "You can edit data directly in the table. When done, click the "
                 "**Register changes** button below. If you "
-                "switch to one of the tabs *Cost*, *Market Scanning* or "
-                "*Deep Dive Countries*, the results will be recalculated."
+                "switch to one of the tabs where results are displayed, "
+                "the results will be recalculated."
             )
         )
 
@@ -319,9 +319,11 @@ def display_and_edit_input_data(
         "conversion_coefficients",
         "dac_and_desalination",
         "storage",
+        "Natural gas price",
     ],
     scope: Literal["world", "Argentina", "Morocco", "South Africa"],
     key: str,
+    tool_version_color: ToolVersionColorType = "green",
 ) -> pd.DataFrame:
     """
     Display a subset of the input data.
@@ -363,7 +365,9 @@ def display_and_edit_input_data(
     -------
     pd.DataFrame
     """
-    df = get_data_type_from_input_data(api, data_type=data_type, scope=scope)
+    df = get_data_type_from_input_data(
+        api, data_type=data_type, scope=scope, tool_version_color=tool_version_color
+    )
     df_orig = df.copy()
 
     if data_type in [
@@ -473,6 +477,18 @@ def display_and_edit_input_data(
         column_config["OPEX (fix)"] = st.column_config.NumberColumn(
             format="%.2f USD/kW", min_value=0
         )
+
+    if data_type == "Natural gas price":
+        index = "source_region_code"
+        columns = "parameter_code"
+        missing_index_name = "flow_code"
+        missing_index_value = "natural gas (gasous)"
+        column_config = {
+            "specific costs": st.column_config.NumberColumn(
+                format="%.4f USD/kWh",
+                min_value=0,
+            )
+        }
 
     df = change_index_names(df)
 

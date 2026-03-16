@@ -23,17 +23,19 @@ def content_input_data(api: PtxboaAPI) -> None:
 
         data_selection: Literal["WACC"] = st.radio(
             "Select data type",
-            ["WACC"],
+            ["WACC", "Natural gas price"],
             horizontal=True,
         )
 
         with st.expander("**Map**", expanded=True):
-            map_parameter = "WACC"
             fig = plot_input_data_on_map(
                 api=api,
                 data_type=data_selection,
-                color_col=map_parameter,
+                color_col={"Natural gas price": "specific costs"}.get(
+                    data_selection, data_selection
+                ),
                 scope="world",
+                tool_version_color="blue",
             )
             st.plotly_chart(fig, width="stretch")
 
@@ -43,12 +45,17 @@ def content_input_data(api: PtxboaAPI) -> None:
                 data_type=data_selection,
                 scope="world",
                 key=f"input_data_{data_selection}",
+                tool_version_color="blue",
             )
         with st.expander("**Regional distribution**"):
             # create plot:
             if data_selection == "WACC":
                 ylabel = "WACC (%)"
                 hover_name = "parameter_code"
+            if data_selection == "Natural gas price":
+                ylabel = "Natural gas price (USD/kWh)"
+                hover_name = "parameter_code"
+
             fig = px.box(
                 df,
                 hover_data=[df.index],
