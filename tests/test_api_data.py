@@ -534,7 +534,7 @@ def test_validate_chains(chain, is_green, is_blue, use_ship, ship_own_fuel):
 def test_parameter_data():
     """Test parameter data coverage.
 
-    - test COV parameter compared to ecpected flows in processes
+    - test CONV parameter compared to expected flows in processes
 
     """
     # explicitly DONT use the DataHandler, but check raw csv data
