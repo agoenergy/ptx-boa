@@ -152,13 +152,13 @@ def test_new_blue_chain(scenario, kwargs, api_kwargs):
                 "process_code": "NG-DRI-C#B",
                 "flow_code": "HEAT",
                 "parameter_code": "CONV",
-                "value": 0.01,  # process_calc!E7
+                "value": 0.0,  # process_calc!E7
             },
             {
                 "process_code": "EAF#B",
                 "flow_code": "HEAT",
                 "parameter_code": "CONV",
-                "value": 0.01,  # process_calc!J7
+                "value": 0.0,  # process_calc!J7
             },
             {
                 "process_code": "EAF#B",
@@ -176,6 +176,12 @@ def test_new_blue_chain(scenario, kwargs, api_kwargs):
                 "flow_code": "EL",
                 "parameter_code": "CONV",
                 "value": 0.651000,  # process_calc!J6
+            },
+            {
+                "process_code": "EAF#B",
+                "flow_code": "NG-G",
+                "parameter_code": "CONV",
+                "value": 0.004,  # process_calc!J4
             },
             {
                 "process_code": "NG-DRI-C#B",
@@ -260,16 +266,6 @@ def test_new_blue_chain(scenario, kwargs, api_kwargs):
         PtxCalc.calculate(calculation_data)
     )  # noqa
 
-    # test api output
-    api = PtxboaAPI(data_dir=ptxdata_dir_static)
-    api_result = api.calculate(  # noqa
-        scenario=scenario,
-        **api_kwargs,
-        user_data=user_data,
-        tool_version_color="blue",
-        optimize_flh=False,
-    )
-
     # round and sort for easier comparison
     calculation_data = _sort_nested(_round_nested(calculation_data))
     print(calculation_data)
@@ -302,7 +298,7 @@ def test_new_blue_chain(scenario, kwargs, api_kwargs):
                 "CAPEX": 0,
                 "CH4SHARE": {"NG-G": 0.909},
                 "CO2BOUND": {"NG-G": 0.040812, "STL-S": 0.00396},
-                "CONV": {"EL": 0.651},
+                "CONV": {"EL": 0.651, "NG-G": 0.0042},
                 "EFF": 1.010101,
                 "EF_E": {"EL": 402.0, "NG-G": 201.0},
                 "EF_M": {"NG-G": 201.0},
@@ -324,6 +320,7 @@ def test_new_blue_chain(scenario, kwargs, api_kwargs):
                 "HEAT": 0.0577,
                 "IOP-S": 0.0,
                 "N2-G": 0.01154,
+                "NG-G": 0.0,
             },
             "WACC": 0.0,
         },
@@ -348,12 +345,16 @@ def test_new_blue_chain(scenario, kwargs, api_kwargs):
     assert _rec_approx(values) == [
         {
             "emissions": {
-                "co2_bound_output": 0.0,
-                "co2_captured": -0.048701,
-                "co2_emission_direct": 0.006012,
-                "co2_emission_from_bound": -0.071548,
-                "co2_indirect": 189.780347,  # E62
-                "co2e_emission_direct": 3.996637,
+                "ch4_direct_co2e": 3.990625,
+                "co2_bound_in_product_e": 0.0,
+                "co2_bound_in_product_m": 0.0,
+                "co2_captured_e": 0.0,
+                "co2_captured_m": 0.0,
+                "co2_direct_e": 0.0,
+                "co2_direct_m": 0.0,
+                "co2_indirect": 0.0,
+                "co2_indirect_e": 189.780347,  # E62
+                "co2_indirect_m": 0.0,
             },
             "flows": {
                 "EL": 0.47209,  # E30
@@ -366,32 +367,53 @@ def test_new_blue_chain(scenario, kwargs, api_kwargs):
         },
         {
             "emissions": {
-                "co2_bound_output": 0.0,
-                "co2_captured": 0.0,
-                "co2_emission_direct": 0.0,
-                "co2_emission_from_bound": 0.0,
+                "ch4_direct_co2e": 0.0,
+                "co2_bound_in_product_e": 0.0,
+                "co2_bound_in_product_m": 0.0,
+                "co2_captured_e": 0.0,
+                "co2_captured_m": 0.0,
+                "co2_direct_e": 0.0,
+                "co2_direct_m": 0.0,
                 "co2_indirect": 0.0,
-                "co2e_emission_direct": 0.0,
+                "co2_indirect_e": 0.0,
+                "co2_indirect_m": 0.0,
             },
             "flows": {},
-            "main_input": 0.99,  # E39
-            "main_output": 0.99,  # E39
+            "main_input": 0.99,
+            "main_output": 0.99,
             "process_code": "DRI-SB#B",
             "process_step": "SHP",
         },
         {
             "emissions": {
-                "co2_bound_output": 0.00396,
-                "co2_captured": 0.0,
-                "co2_emission_direct": 0.0,
-                "co2_emission_from_bound": 0.00396,
-                "co2_indirect": 261.702,  # J62
-                "co2e_emission_direct": 0.0,
+                "ch4_direct_co2e": 0.0,
+                "co2_bound_in_product_e": 0.0,
+                "co2_bound_in_product_m": 0.0,
+                "co2_captured_e": 0.0,
+                "co2_captured_m": 0.0,
+                "co2_direct_e": 0.0,
+                "co2_direct_m": 0.0,
+                "co2_indirect": 0.8442,
+                "co2_indirect_e": 262.5462,  # J62
+                "co2_indirect_m": 0.8442,
             },
-            "flows": {"EL": 0.651},  # J32
+            "flows": {
+                "EL": 0.651,  # J32
+                "NG-G": 0.0042,
+            },
             "main_input": 0.99,  # E39
             "main_output": 1.0,  # J39
             "process_code": "EAF#B",
             "process_step": "DERIV_I",
         },
     ]
+
+    # test api output
+    api = PtxboaAPI(data_dir=ptxdata_dir_static)
+    api_result = api.calculate(  # noqa
+        scenario=scenario,
+        **api_kwargs,
+        user_data=user_data,
+        tool_version_color="blue",
+        optimize_flh=False,
+    )
