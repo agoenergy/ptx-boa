@@ -28,66 +28,90 @@ def calculate_emissions(
     step_data: dict,
     main_flow_code_in: str,
     main_flow_code_out: str,
+    last_emissions: dict | None = None,
 ) -> dict:
     # TODO: speedup by not having to load process object every time?
 
     CH4SHARE = step_data.get("CH4SHARE", {})
     CO2BOUND = step_data.get("CO2BOUND", {})
-
     CO2CPT = step_data.get("CO2CPT-R", 0) * step_data.get("CO2CPT-S", 0)
-    EF_M = step_data.get("EF_M", {})
-
+    LOSS_MAIN = step_data.get("LOSS", 0)
+    LOSS_FLOW = step_data.get("LOSS_FLOW", {})
+    EF_EM = {"M": step_data.get("EF_M", {}), "E": step_data.get("EF_E", {})}
     METHANE_COeq = 29.8  # TODO
 
-    # see https://github.com/agoenergy/ptx-boa/issues/581
-    # Losses, interpreted as additional to net
-    main_input_gross = results_flows.main_input
-    factor_loss_main = step_data.get("LOSS", 0)
-    main_input_net = main_input_gross / (1 + factor_loss_main)
-    main_input_loss = main_input_net * factor_loss_main
+    result = {}
+    for em in ["e", "m"]:
+        # main_flow_in: # row 46/54
+        if last_emissions:
+            main_flow_in = last_emissions[f"co2_bound_in_product_{em}"]  # noqa
+        else:
+            main_flow_in = 0  # noqa
+        EF = EF_EM[em.upper()]
 
-    co2_bound_output = results_flows.main_output * CO2BOUND.get(main_flow_code_out, 0)
+        # see https://github.com/agoenergy/ptx-boa/issues/581
+        # Losses, interpreted as additional to net
+        main_input_gross = results_flows.main_input
 
-    co2_indirect = 0  # TODO: should we pass it on from step to step?
-    co2_bound_input = main_input_net * CO2BOUND.get(main_flow_code_in, 0)
-    co2_emission_direct = main_input_loss * CO2BOUND.get(main_flow_code_in, 0)
-    methane_emission_direct = main_input_loss * CH4SHARE.get(main_flow_code_in, 0)
+        main_input_net = main_input_gross / (1 + LOSS_MAIN)
+        main_input_loss = main_input_net * LOSS_MAIN
 
-    parameters_loss_flow = step_data.get("LOSS_FLOW", {})
-    for flow_code, flow_input_gross in results_flows.flows.items():
-        # ignore negative flows
-        if flow_input_gross <= 0:
-            continue
-        factor_loss_flow = parameters_loss_flow.get(flow_code, 0)
-        flow_input_net = flow_input_gross / (1 + factor_loss_flow)
-        flow_input_loss = flow_input_net * factor_loss_flow
+        co2_bound_output = results_flows.main_output * CO2BOUND.get(
+            main_flow_code_out, 0
+        )
 
-        co2_indirect += flow_input_gross * EF_M.get(flow_code, 0)
-        co2_bound_input += flow_input_net * CO2BOUND.get(flow_code, 0)
-        co2_emission_direct += flow_input_loss * CO2BOUND.get(flow_code, 0)
-        methane_emission_direct += flow_input_loss * CH4SHARE.get(main_flow_code_in, 0)
+        co2_indirect = 0  # row 47/55
+        co2_bound_input = main_input_net * CO2BOUND.get(main_flow_code_in, 0)
+        co2_emission_direct = main_input_loss * CO2BOUND.get(main_flow_code_in, 0)
+        ch4_direct = main_input_loss * CH4SHARE.get(main_flow_code_in, 0)
 
-    co2_bound_delta = co2_bound_output - co2_bound_input
-    co2_captured = co2_bound_delta * CO2CPT
-    co2_emission_from_bound = co2_bound_delta - co2_captured
+        for flow_code, flow_input_gross in results_flows.flows.items():
+            # ignore negative flows
+            if flow_input_gross <= 0:
+                continue
+            factor_loss_flow = LOSS_FLOW.get(flow_code, 0)
+            flow_input_net = flow_input_gross / (1 + factor_loss_flow)
+            flow_input_loss = flow_input_net * factor_loss_flow
 
-    co2e_emission_direct = co2_emission_direct + methane_emission_direct * METHANE_COeq
+            co2_indirect += flow_input_gross * EF.get(flow_code, 0)
+            co2_bound_input += flow_input_net * CO2BOUND.get(flow_code, 0)
+            co2_emission_direct += flow_input_loss * CO2BOUND.get(flow_code, 0)
+            ch4_direct += flow_input_loss * CH4SHARE.get(main_flow_code_in, 0)
 
-    return {
-        "co2_indirect": co2_indirect,
-        "co2_bound_output": co2_bound_output,
-        "co2_captured": co2_captured,
-        "co2_emission_from_bound": co2_emission_from_bound,
-        "co2_emission_direct": co2_emission_direct,
-        "co2e_emission_direct": co2e_emission_direct,
-    }
+        co2_bound_delta = co2_bound_output - co2_bound_input
+        co2_captured = co2_bound_delta * CO2CPT
+        co2_emission_from_bound = co2_bound_delta - co2_captured  # noqa
+
+        ch4_direct_co2e = ch4_direct * METHANE_COeq
+
+        co2_captured = 0  # row 48/56
+        co2_bound_in_product = 0  # row 49/57
+        co2_direct = 0  # row 51/59
+
+        co2e_total_direct = ch4_direct_co2e + co2_direct  # row 69/70 # noqa
+
+        # result[f"main_flow_in_{em}"] = main_flow_in # noqa
+        result[f"co2_indirect_{em}"] = co2_indirect
+        result[f"co2_captured_{em}"] = co2_captured
+        result[f"co2_bound_in_product_{em}"] = co2_bound_in_product  # line 57
+        result[f"co2_direct_{em}"] = co2_direct
+
+        # result[f"co2e_total_direct_{em}"] = ch4_direct_co2e + co2_direct # noqa
+
+    result["co2_indirect"] = co2_indirect  # line 62
+    # result["ch4_direct"] = ch4_direct # noqa
+    result["ch4_direct_co2e"] = ch4_direct_co2e  # line 66
+
+    return result
 
 
 class PtxCalc:
     """Main module for chain calculation."""
 
     @staticmethod
-    def calculate(data: CalculateDataType) -> tuple[list, pd.DataFrame]:
+    def calculate(
+        data: CalculateDataType,
+    ) -> tuple[list, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """Calculate results."""
         df_processes = DataHandler.get_dimension("process")
         df_flows = DataHandler.get_dimension("flow")
@@ -110,8 +134,12 @@ class PtxCalc:
         # accumulate needed electric input
         step_before_transport = True
         sum_el = main_output_value
-        results_cost = []
+        df_results_cost = []
+        results_emissions_e_g_co2e = []
+        results_emissions_m_g_co2e = []
+
         results_flows_chain: list[ResultsFlows] = []
+        last_emissions = None
 
         # iterate over steps in chain
         for step_data in (
@@ -168,10 +196,12 @@ class PtxCalc:
                 capex_ann = annuity(wacc, lifetime, capex)
                 opex = opex_f * capacity + opex_o * main_output_value
 
-                results_cost.append(
+                df_results_cost.append(
                     (result_process_type, process_code, "CAPEX", capex_ann)
                 )
-                results_cost.append((result_process_type, process_code, "OPEX", opex))
+                df_results_cost.append(
+                    (result_process_type, process_code, "OPEX", opex)
+                )
 
             else:
                 step_before_transport = False
@@ -179,9 +209,12 @@ class PtxCalc:
                 dist_transport = step_data["DIST"]
                 opex_ot = opex_t * dist_transport
                 opex = (opex_o + opex_ot) * main_output_value
-                results_cost.append((result_process_type, process_code, "OPEX", opex))
+                df_results_cost.append(
+                    (result_process_type, process_code, "OPEX", opex)
+                )
 
             # create flows for process step
+
             for flow_code, conv in step_data["CONV"].items():
                 flow_value = main_output_value * conv
                 results_flows.flows[flow_code] = flow_value
@@ -206,10 +239,10 @@ class PtxCalc:
                     capex_ann = annuity(wacc, lifetime, capex)
                     opex = opex_f * capacity + opex_o * flow_value
 
-                    results_cost.append(
+                    df_results_cost.append(
                         (sec_result_process_type, sec_process_code, "CAPEX", capex_ann)
                     )
-                    results_cost.append(
+                    df_results_cost.append(
                         (sec_result_process_type, sec_process_code, "OPEX", opex)
                     )
 
@@ -231,7 +264,7 @@ class PtxCalc:
                             or sec_result_process_type
                         )
 
-                        results_cost.append(
+                        df_results_cost.append(
                             (
                                 sec_result_process_type,
                                 sec_process_code,
@@ -261,31 +294,129 @@ class PtxCalc:
                         or result_process_type
                     )
 
-                    results_cost.append(
+                    df_results_cost.append(
                         (flow_result_process_type, process_code, "FLOW", flow_cost)
                     )
 
             proc = df_processes.loc[process_code]
 
-            results_flows.emissions = calculate_emissions(
+            last_emissions = calculate_emissions(
                 results_flows,
                 step_data,
                 proc.main_flow_code_in,
                 proc.main_flow_code_out,
+                last_emissions=last_emissions,
             )
+            results_flows.emissions = last_emissions
+
+            results_emissions_e_g_co2e.append(
+                (
+                    result_process_type,
+                    process_code,
+                    "indirect",
+                    "CO2",
+                    last_emissions["co2_indirect_e"],
+                )
+            )
+            results_emissions_e_g_co2e.append(
+                (
+                    result_process_type,
+                    process_code,
+                    "indirect",
+                    "CO2",
+                    last_emissions["co2_indirect_m"],
+                )
+            )
+            results_emissions_e_g_co2e.append(
+                (
+                    result_process_type,
+                    process_code,
+                    "direct",
+                    "CO2",
+                    last_emissions["co2_direct_e"],
+                )
+            )
+            results_emissions_e_g_co2e.append(
+                (
+                    result_process_type,
+                    process_code,
+                    "direct",
+                    "CO2",
+                    last_emissions["co2_direct_m"],
+                )
+            )
+            results_emissions_e_g_co2e.append(
+                (
+                    result_process_type,
+                    process_code,
+                    "direct",
+                    "CH4",
+                    last_emissions["ch4_direct_co2e"],
+                )
+            )
+            results_emissions_e_g_co2e.append(
+                (
+                    result_process_type,
+                    process_code,
+                    "direct",
+                    "CH4",
+                    last_emissions["ch4_direct_co2e"],
+                )
+            )
+
+        # add final emissions bound
+        results_emissions_e_g_co2e.append(
+            (
+                "Bound in product",
+                "Bound in product",
+                "direct",
+                "CO2",
+                last_emissions["co2_bound_in_product_m"],
+            )
+        )
 
         # convert to DataFrame
         dim_columns = ["process_type", "process_subtype", "cost_type"]
-        results_cost = pd.DataFrame(results_cost, columns=dim_columns + ["values"])
-
+        df_results_cost = pd.DataFrame(
+            df_results_cost, columns=dim_columns + ["values"]
+        )
         # sum over dim_columns
-        results_cost = results_cost.groupby(dim_columns).sum().reset_index()
+        df_results_cost = df_results_cost.groupby(dim_columns).sum().reset_index()
+
+        dim_columns_emission = [
+            "process_type",
+            "process_subtype",
+            "emission_type",
+            "gas_type",
+        ]
+        df_results_emissions_e_g_co2e = (
+            pd.DataFrame(
+                results_emissions_e_g_co2e, columns=dim_columns_emission + ["values"]
+            )
+            .groupby(dim_columns_emission)
+            .sum()
+            .reset_index()
+        )
+        df_results_emissions_m_g_co2e = (
+            pd.DataFrame(
+                results_emissions_m_g_co2e, columns=dim_columns_emission + ["values"]
+            )
+            .groupby(dim_columns_emission)
+            .sum()
+            .reset_index()
+        )
 
         # normalization:
         # scale so that we start with 1 EL input,
         # rescale so that we have 1 unit output
         norm_factor = 1 / main_output_value
-        results_cost["values"] = results_cost["values"] * norm_factor
+        df_results_cost["values"] = df_results_cost["values"] * norm_factor
+        df_results_emissions_e_g_co2e["values"] = (
+            df_results_emissions_e_g_co2e["values"] * norm_factor
+        )
+        df_results_emissions_m_g_co2e["values"] = (
+            df_results_emissions_m_g_co2e["values"] * norm_factor
+        )
 
         # rescale values
         for results_flows in results_flows_chain:
@@ -301,14 +432,14 @@ class PtxCalc:
         # sum_el is larger than 1.0
 
         # TODO: for blue hydrogen chains, there is no RES
-        idx = results_cost["process_type"] == "Electricity generation"
+        idx = df_results_cost["process_type"] == "Electricity generation"
         if not idx.any():
             # TODO: in blue tool, we have no RES process, so should not warn
             pass
         else:
             norm_factor_el = sum_el
-            results_cost.loc[idx, "values"] = (
-                results_cost.loc[idx, "values"] * norm_factor_el
+            df_results_cost.loc[idx, "values"] = (
+                df_results_cost.loc[idx, "values"] * norm_factor_el
             )
             # rescale values
             for results_flows in [
@@ -324,4 +455,10 @@ class PtxCalc:
 
         # TODO: currently for testing, we return dicts, not ResultsFlows
         results_flows_chain_ = [asdict(rf) for rf in results_flows_chain]
-        return results_flows_chain_, results_cost
+
+        return (
+            results_flows_chain_,
+            df_results_cost,
+            df_results_emissions_e_g_co2e,
+            df_results_emissions_m_g_co2e,
+        )
