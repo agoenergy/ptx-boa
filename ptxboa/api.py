@@ -218,17 +218,17 @@ class PtxboaAPI:
                     if secproc_co2
                     else None
                 ),
-            },  # type:ignore
+            },  # type: ignore
             chain_name=chain,
             process_code_res=DataHandler.get_dimensions_parameter_code(
                 "res_gen", res_gen
-            ),  # type:ignore
+            ),  # type: ignore
             source_region_code=DataHandler.get_dimensions_parameter_code(
                 "region", region
-            ),  # type:ignore
+            ),  # type: ignore
             target_country_code=DataHandler.get_dimensions_parameter_code(
                 "country", country
-            ),  # type:ignore
+            ),  # type: ignore
             use_ship=(transport == "Ship"),
             ship_own_fuel=ship_own_fuel,
             optimize_flh=optimize_flh,

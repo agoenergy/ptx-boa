@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Content and halper functions for literature tab."""
+
 from urllib.parse import urlparse
 
 import streamlit as st
