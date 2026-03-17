@@ -258,8 +258,7 @@ def _form_data_editor(
     df_orig,
     index,
     columns,
-    missing_index_name,
-    missing_index_value,
+    missing_index,
     column_config,
 ):
     if f"{key}_number" not in st.session_state:
@@ -281,8 +280,7 @@ def _form_data_editor(
             type="primary",
             on_click=register_user_changes,
             kwargs={
-                "missing_index_name": missing_index_name,
-                "missing_index_value": missing_index_value,
+                "missing_index": missing_index,
                 "index": index,
                 "columns": columns,
                 "values": "value",
@@ -380,8 +378,7 @@ def display_and_edit_input_data(
     ]:
         index = "process_code"
         columns = "parameter_code"
-        missing_index_name = "source_region_code"
-        missing_index_value = None
+        missing_index = {"source_region_code": None}
         column_config = get_column_config()
 
     if data_type == "conversion_processes":
@@ -408,8 +405,7 @@ def display_and_edit_input_data(
     if data_type == "dac_and_desalination":
         index = "process_code"
         columns = "parameter_code"
-        missing_index_name = "source_region_code"
-        missing_index_value = None
+        missing_index = {"source_region_code": None}
         column_config = {
             "CAPEX": st.column_config.NumberColumn(format="%.5f USD/kg", min_value=0),
             "OPEX (fix)": st.column_config.NumberColumn(
@@ -428,8 +424,7 @@ def display_and_edit_input_data(
     if data_type == "WACC":
         index = "source_region_code"
         columns = "parameter_code"
-        missing_index_name = "parameter_code"
-        missing_index_value = "WACC"
+        missing_index = {"parameter_code": "WACC"}
         column_config = {
             c: st.column_config.NumberColumn(
                 format="%.2f %%", min_value=0, max_value=100
@@ -440,8 +435,7 @@ def display_and_edit_input_data(
     if data_type == "CAPEX":
         index = "source_region_code"
         columns = "process_code"
-        missing_index_name = "parameter_code"
-        missing_index_value = "CAPEX"
+        missing_index = {"parameter_code": "CAPEX"}
         column_config = {
             c: st.column_config.NumberColumn(format="%.0f USD/kW", min_value=0)
             for c in df.columns
@@ -450,8 +444,7 @@ def display_and_edit_input_data(
     if data_type == "full load hours":
         index = "source_region_code"
         columns = "process_code"
-        missing_index_name = "parameter_code"
-        missing_index_value = "full load hours"
+        missing_index = {"parameter_code": "full load hours"}
         column_config = {
             c: st.column_config.NumberColumn(
                 format="%.0f h/a", min_value=0, max_value=8760
@@ -462,15 +455,13 @@ def display_and_edit_input_data(
     if data_type == "specific_costs":
         index = "flow_code"
         columns = "parameter_code"
-        missing_index_name = None
-        missing_index_value = None
+        missing_index = None
         column_config = get_column_config()
 
     if data_type == "conversion_coefficients":
         index = "process_code"
         columns = "flow_code"
-        missing_index_name = "parameter_code"
-        missing_index_value = "conversion factors"
+        missing_index = {"parameter_code": "conversion factors"}
         column_config = get_column_config()
 
     if data_type == "storage":
@@ -481,8 +472,10 @@ def display_and_edit_input_data(
     if data_type == "Natural gas price":
         index = "source_region_code"
         columns = "parameter_code"
-        missing_index_name = "flow_code"
-        missing_index_value = "natural gas (gasous)"
+        missing_index = {
+            "process_code": "NG production",
+            "flow_code": "natural gas (gasous)",
+        }
         column_config = {
             "OPEX (other variable)": st.column_config.NumberColumn(
                 label="Natural gas price",
@@ -509,8 +502,7 @@ def display_and_edit_input_data(
                 df_orig,
                 index,
                 columns,
-                missing_index_name,
-                missing_index_value,
+                missing_index,
                 column_config,
             )
 
