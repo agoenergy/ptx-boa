@@ -581,9 +581,8 @@ def test_parameter_data():
     "dimension_column",
     ("parameter", "process", "flow", "source_region", "target_country"),
 )
-@pytest.mark.parametrize("tool_version_color", ("green", "blue"))
 def test_dimension_values_exist_in_dimension_tables(
-    year, cost_assumption, dimension_column, tool_version_color
+    year, cost_assumption, dimension_column
 ):
     """
     Verify that every dimension code exists in its corresponding dimension table.
@@ -604,7 +603,7 @@ def test_dimension_values_exist_in_dimension_tables(
     }
 
     scenario = f"{year} ({cost_assumption})"
-    handler = DataHandler(scenario=scenario, tool_version_color=tool_version_color)
+    handler = DataHandler(scenario=scenario)
     input_data = handler.get_input_data(long_names=False)
 
     dim_name, dim_code = dim_map[dimension_column]
@@ -615,7 +614,9 @@ def test_dimension_values_exist_in_dimension_tables(
             "region_country_code"
         ].unique()
     else:
-        defined_values = handler.get_dimension(dim_name)[dim_code].unique()
+        defined_values = handler.get_dimension(dim_name, tool_version_color=None)[
+            dim_code
+        ].unique()
 
     # Values encountered in the input
     values_in_data = (
@@ -632,11 +633,10 @@ def test_dimension_values_exist_in_dimension_tables(
     "parameter_code",
     pd.read_csv(STATIC_DATA_DIR / "dim_parameter.csv")["parameter_code"].tolist(),
 )
-@pytest.mark.parametrize("tool_version_color", ("green", "blue"))
 @pytest.mark.parametrize("cost_assumption", ("low", "medium", "high"))
 @pytest.mark.parametrize("year", ("2030", "2040"))
 def test_parameter_restricts_usage_to_allowed_dimensions(
-    year, cost_assumption, tool_version_color, parameter_code, dimension
+    year, cost_assumption, parameter_code, dimension
 ):
     """
     Ensure that parameters only use dimensions for which they are marked as allowed.
@@ -655,11 +655,11 @@ def test_parameter_restricts_usage_to_allowed_dimensions(
     }
 
     scenario = f"{year} ({cost_assumption})"
-    handler = DataHandler(scenario=scenario, tool_version_color=tool_version_color)
+    handler = DataHandler(scenario=scenario)
     input_data = handler.get_input_data(long_names=False)
 
     # Get parameter spec
-    param_table = handler.get_dimension("parameter")
+    param_table = handler.get_dimension("parameter", tool_version_color=None)
     param_spec = param_table.loc[[parameter_code], :].to_dict("records")[0]
     allowed = param_spec[f"per_{dimension}"]
 
@@ -682,10 +682,9 @@ def test_parameter_restricts_usage_to_allowed_dimensions(
     "parameter_code",
     pd.read_csv(STATIC_DATA_DIR / "dim_parameter.csv")["parameter_code"].tolist(),
 )
-@pytest.mark.parametrize("tool_version_color", ("green", "blue"))
 @pytest.mark.parametrize("cost_assumption", ("low", "medium", "high"))
 @pytest.mark.parametrize("year", ("2030", "2040"))
-def test_parameter_has_data(year, cost_assumption, tool_version_color, parameter_code):
+def test_parameter_has_data(year, cost_assumption, parameter_code):
     """
     Check that every parameter has at least one record in the input dataset.
 
@@ -695,7 +694,7 @@ def test_parameter_has_data(year, cost_assumption, tool_version_color, parameter
     omitted.
     """
     scenario = f"{year} ({cost_assumption})"
-    data_handler = DataHandler(scenario=scenario, tool_version_color=tool_version_color)
+    data_handler = DataHandler(scenario=scenario)
     input_data = data_handler.get_input_data(long_names=False)
     parameter_data = input_data.loc[input_data["parameter_code"] == parameter_code]
     if len(parameter_data) == 0:
