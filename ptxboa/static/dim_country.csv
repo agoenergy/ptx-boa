@@ -1,10 +1,12 @@
-country_code,country_name,is_import,is_export,is_green,is_blue
-CHN,China,True,True,True,True
-DEU,Germany,True,False,True,True
-ESP,Spain,True,True,True,True
-FRA,France,True,False,True,False
-IND,India,True,True,True,True
-JPN,Japan,True,False,True,True
-KOR,South Korea,True,False,True,True
-NLD,Netherlands,True,False,True,True
-USA,USA,True,True,True,True
+country_code,country_name,is_green,is_blue
+BRA,Brazil,False,True
+CHN,China,True,True
+DEU,Germany,True,True
+ESP,Spain,True,True
+FRA,France,True,False
+IND,India,True,True
+JPN,Japan,True,True
+KOR,South Korea,True,True
+NLD,Netherlands,True,True
+THA,Thailand,False,True
+USA,USA,True,True

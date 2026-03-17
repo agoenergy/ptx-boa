@@ -7,7 +7,7 @@ from typing import Optional
 import pandas as pd
 
 from ptxboa.api_data import DataHandler
-from ptxboa.static._types import CalculateDataType
+from ptxboa.static._type_defs import CalculateDataType
 from ptxboa.utils import annuity, rescale_dict
 
 logger = logging.getLogger()

@@ -15,7 +15,7 @@ import pandas as pd
 from pypsa import Network
 
 from flh_opt import __version__ as flh_opt_version
-from flh_opt._types import (
+from flh_opt._type_defs import (
     OptInputDataType,
     OptOutputDataType,
     ProcessCodeResType,
@@ -23,7 +23,7 @@ from flh_opt._types import (
 )
 from flh_opt.api_opt import optimize
 from ptxboa import logger
-from ptxboa.static._types import CalculateDataType
+from ptxboa.static._type_defs import CalculateDataType
 from ptxboa.utils import SingletonMeta, annuity, serialize_for_hashing
 
 

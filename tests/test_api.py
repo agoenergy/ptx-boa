@@ -80,7 +80,7 @@ class TestApi(unittest.TestCase):
 
     def test_issue_317_demand_country_list_must_not_contain_supply_countries(self):
         """See https://github.com/agoenergy/ptx-boa/issues/317."""
-        countries = self.api.get_dimension("country")
+        countries = self.api.get_dimension("country", tool_version_color="green")
         self.assertFalse("Angola" in countries.index)
 
     def test_example_api_call_1_ship(self):
