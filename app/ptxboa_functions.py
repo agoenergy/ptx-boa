@@ -791,7 +791,15 @@ def get_data_type_from_input_data(
         df = df[~(df.index == "electricity")]
 
     if tool_version_color == "blue" and df.index.name == "source_region_code":
-        df = df.loc[get_blue_demand_and_supply_regions(api)]
+        regions = get_blue_demand_and_supply_regions(api)
+        df_index_set = set(df.index)
+
+        missing = [r for r in regions if r not in df_index_set]
+        if missing:
+            logger.error(f"missing entries for {data_type=}: {missing}")
+
+        available = [r for r in regions if r in df_index_set]
+        df = df.loc[available]
 
     if tool_version_color == "green":
         if scope == "world":
@@ -880,9 +888,10 @@ def get_region_list_without_subregions(
     return sorted(region_list_without_subregions)
 
 
-def get_blue_demand_and_supply_regions(api: PtxboaAPI):
-    regions = set(api.get_dimension("region", tool_version_color="blue").index)
-    countries = set(api.get_dimension("country", tool_version_color="blue").index)
+@st.cache_data(show_spinner=False)
+def get_blue_demand_and_supply_regions(_api: PtxboaAPI):
+    regions = set(_api.get_dimension("region", tool_version_color="blue").index)
+    countries = set(_api.get_dimension("country", tool_version_color="blue").index)
     return sorted(regions.union(countries))
 
 
