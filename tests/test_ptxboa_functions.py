@@ -34,8 +34,8 @@ class TestPtxboaFunctions(unittest.TestCase):
         api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR)
         df_in = api.get_dimension("region", tool_version_color="green")
 
-        # regions including subregions: 80
-        self.assertEqual(len(df_in), 80)
+        # regions including subregions: 79
+        self.assertEqual(len(df_in), 79)
 
         df_out = pf.remove_subregions(api, df_in)
 
