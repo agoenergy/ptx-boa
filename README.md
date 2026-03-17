@@ -72,17 +72,30 @@ scp -r ptxboa2:ptx-boa_offline_optimization/optimization_cache/* .
 ```bash
 # connect to server
 ssh ptxboa
+
+# set variables
+VERSION=2.1.23
+APP=app
+PORT=9000
+
+# is preview?
+IS_PREVIEW=0
+if [[ "$IS_PREVIEW" == "1" ]]; then
+  PORT=9001
+  APP=$APP-preview
+  VERSION=$VERSION-preview
+fi
+
 # pull latest image from dockerhub
-VERSION=2.1.22-main
 docker pull wingechr/ptx-boa:$VERSION
 # stop and delete the currently running container "app"
-docker stop app
-docker rm app
+docker stop $APP
+docker rm $APP
 # start the latest image as "app"
-docker run -d -p 9000:80 -v /home/ptxboa/ptx-boa_offline_optimization/optimization_cache:/mnt/cache --name app --restart unless-stopped wingechr/ptx-boa:$VERSION
+docker run -d -p $PORT$:80 -v /home/ptxboa/ptx-boa_offline_optimization/optimization_cache:/mnt/cache --name $APP --restart unless-stopped wingechr/ptx-boa:$VERSION
 
 # see logs
-docker logs --follow app
+docker logs --follow $APP
 ```
 
 ### Cleanup docker images from old versions

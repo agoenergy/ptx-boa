@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-import numpy as np
 import pandas as pd
 import pypsa
 
@@ -236,66 +235,43 @@ class PtxboaAPI:
             use_user_data_for_optimize_flh=use_user_data_for_optimize_flh,
         )
 
-        results_flows_chain, result_df = PtxCalc.calculate(data)
+        (
+            results_flows_chain,
+            df_result_cost,
+            df_result_emissions,
+            df_result_emissions_mass,
+        ) = PtxCalc.calculate(data)
 
         # conversion to output unit
         if output_unit not in {"USD/MWh", "USD/t"}:
             logger.error(f"Invalid choice for output_unit: {output_unit}")
-        conversion = 1000
+        conversion = 1000  # FIXME: is emissions already scaled to ton?
         if output_unit == "USD/t":
             calor = data["parameter"]["CALOR"]
             conversion *= calor
-        result_df["values"] = result_df["values"] * conversion
+
+        # conversion: FIXME: is emissions already scaled to ton?
+        for df in [df_result_cost, df_result_emissions, df_result_emissions_mass]:
+            df["values"] = df["values"] * conversion
 
         # add user settings
-        result_df["scenario"] = scenario
-        result_df["secproc_co2"] = secproc_co2
-        result_df["secproc_water"] = secproc_water
-        result_df["chain"] = chain
-        result_df["res_gen"] = res_gen
-        result_df["region"] = region
-        result_df["country"] = country
-        result_df["transport"] = transport
+        for df in [df_result_cost, df_result_emissions, df_result_emissions_mass]:
+            df["scenario"] = scenario
+            df["secproc_co2"] = secproc_co2
+            df["secproc_water"] = secproc_water
+            df["chain"] = chain
+            df["res_gen"] = res_gen
+            df["region"] = region
+            df["country"] = country
+            df["transport"] = transport
 
         metadata = {"flh_opt_hash": data.get("flh_opt_hash")}  # does not always exist
 
-        # emissions output unit is gCO2eq/t or gCO2eq/MWh
-        emissions = (
-            result_df.copy()
-            .assign(
-                emission_type=lambda x: np.where(
-                    x["cost_type"].eq("FLOW"), "indirect", "direct"
-                ),
-                gas_type=lambda x: np.where(x["cost_type"].eq("CAPEX"), "CO2", "CH4"),
-            )
-            .drop(columns="cost_type")
-        )
-
-        bound_in_product = (
-            emissions.copy()
-            .loc[
-                (emissions["process_type"] == "Transportation (Ship)")
-                | (emissions["process_type"] == "Transportation (Pipeline)"),
-                :,
-            ]
-            .assign(
-                process_type="Bound in product",
-                gas_type="CO2",
-                values=lambda x: x["values"] * 0.5,
-            )
-        )
-
-        emissions = pd.concat([emissions, bound_in_product], axis=0)
-
-        emissions_mass = emissions.copy().assign(
-            values=lambda x: x["values"] * 0.25,
-        )
-
         return ApiCalculateResult(
             metadata=metadata,
-            costs=result_df,
-            emissions=emissions,  # DUMMY for frontend development
-            emission_mass=emissions_mass,
+            costs=df_result_cost,
+            emissions=df_result_emissions,
+            emission_mass=df_result_emissions_mass,
             todo_results_flows=results_flows_chain,
             todo_data=data,
         )

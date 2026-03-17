@@ -34,7 +34,7 @@ from ptxboa.static import (
     TransportValues,
     YearValues,
 )
-from ptxboa.static._types import CalculateDataType
+from ptxboa.static._type_defs import CalculateDataType
 
 
 def _assign_key(
@@ -165,6 +165,36 @@ def _load_dimensions() -> dict[DimensionType, pd.DataFrame]:
         "unit_name", drop=False
     )
 
+    # we need a unified list of regions and countries to make code:name
+    # translations. Blue countries are also treated as source regions
+    # when conversion is happening in demand country.
+    dimensions["region_country"] = (
+        pd.concat(
+            [
+                dimensions["region"].rename(
+                    columns={
+                        "region_code": "region_country_code",
+                        "region_name": "region_country_name",
+                    }
+                ),
+                dimensions["country"].rename(
+                    columns={
+                        "country_code": "region_country_code",
+                        "country_name": "region_country_name",
+                    }
+                ),
+            ]
+        )
+        .loc[
+            :,
+            [
+                "region_country_code",
+                "region_country_name",
+            ],
+        ]
+        .drop_duplicates()
+    )
+
     return dimensions
 
 
@@ -235,6 +265,23 @@ class _ParameterGetter:
             # new: loss can reduce the effective conversion rate
             value = self.get_parameter_value_w_default(
                 parameter_code, flow_code=flow_code, default=0
+            )
+            if value:
+                result[flow_code] = value
+        return result
+
+    def get_flow_co2_params_w_process(
+        self, process_code: ProcessCodeType, parameter_code: ParameterCodeType
+    ) -> dict:
+        result = {}
+        flow_codes = self.get_secondary_and_main_flows(process_code)
+        for flow_code in flow_codes:
+            # new: loss can reduce the effective conversion rate
+            value = self.get_parameter_value_w_default(
+                parameter_code,
+                process_code=process_code,
+                flow_code=flow_code,
+                default=0,
             )
             if value:
                 result[flow_code] = value
@@ -324,19 +371,17 @@ class _ParameterGetter:
         # additional parameters for co2
         # TODO: country dependent?
 
-        for param in ["CO2CPT-R", "CO2CPT-S"]:
-            value = self.get_parameter_value_w_default(
-                parameter_code=param,  # type:ignore
-                process_code=process_code,
-                default=0,
-            )
-            if value:
-                result[param] = value
-
-        for param in ["CO2BOUND", "CH4SHARE", "EF_M"]:
+        for param in ["CO2BOUND", "CH4SHARE", "EF_M", "EF_E"]:
             value = self.get_flow_co2_params(
                 process_code, parameter_code=param
             )  # type:ignore
+            if value:
+                result[param] = value
+        for param in ["CO2CPT-R", "CO2CPT-S"]:
+            value = self.get_flow_co2_params_w_process(
+                process_code,
+                parameter_code=param,  # type:ignore
+            )
             if value:
                 result[param] = value
 
@@ -490,10 +535,21 @@ class DataHandler:
         out_type = mapping_direction.split("_")[-1]
 
         for dim in ["parameter", "process", "flow", "region", "country"]:
-            mapping = pd.Series(
-                cls.dimensions[dim][f"{dim}_{out_type}"].to_list(),  # type:ignore
-                index=cls.dimensions[dim][f"{dim}_{in_type}"],  # type:ignore
-            )
+            if dim in {"region", "country"}:
+                # unified mapping for country and region
+                mapping = pd.Series(
+                    cls.dimensions["region_country"][  # type:ignore
+                        f"region_country_{out_type}"
+                    ].to_list(),
+                    index=cls.dimensions["region_country"][
+                        f"region_country_{in_type}"
+                    ],  # type:ignore
+                )
+            else:
+                mapping = pd.Series(
+                    cls.dimensions[dim][f"{dim}_{out_type}"].to_list(),  # type:ignore
+                    index=cls.dimensions[dim][f"{dim}_{in_type}"],  # type:ignore
+                )
             if dim not in ["region", "country"]:
                 column_name = f"{dim}_code"
             elif dim == "region":
@@ -921,6 +977,19 @@ class DataHandler:
             use_user_data=use_user_data,
         )
 
+        # parameter getter if processes are in import (target) country:
+        pg_import = _ParameterGetter(
+            data_handler=self,
+            source_region_code=target_country_code,  # !!
+            target_country_code=target_country_code,
+            process_code_res=process_code_res,
+            process_code_ely=process_code_ely,
+            process_code_deriv=process_code_deriv,
+            df_processes=df_processes,
+            df_flows=df_flows,
+            use_user_data=use_user_data,
+        )
+
         # some flows are grouped into their own output category (but not all)
         # so we load the mapping from the data
 
@@ -997,6 +1066,7 @@ class DataHandler:
                 continue
             pp = pg.get_process_params(process_code)
             pp["process_code"] = process_code
+            # FIXME: we now also need secondary processes for import regions
             result["secondary_process"][flow_code] = pp
             used_flows_secondary = used_flows_secondary | set(pp["CONV"])
             provided_flows_secondary.add(flow_code)
@@ -1027,7 +1097,7 @@ class DataHandler:
             process_code = chain[process_step]
             if not process_code:
                 raise Exception((process_step, chain))
-            pp = pg.get_process_params(process_code)
+            pp = pg_import.get_process_params(process_code)
             pp["step"] = process_step
             pp["process_code"] = process_code
             result["main_import_process_chain"].append(pp)
@@ -1097,9 +1167,17 @@ class DataHandler:
         }
         target_dim_name = dimension_parameter_mapping[dimension]
         df = cls.get_dimension(dimension)
-        return df.loc[
-            df[target_dim_name + "_name"] == parameter_name, target_dim_name + "_code"
-        ].iloc[0]
+
+        try:
+            return df.loc[
+                df[target_dim_name + "_name"] == parameter_name,
+                target_dim_name + "_code",
+            ].iloc[0]
+        except IndexError:
+            raise IndexError(
+                f"{target_dim_name + '_name'}={parameter_name}, "
+                f"{target_dim_name + '_code'}"
+            )
 
     @classmethod
     def _validate_process_chain(

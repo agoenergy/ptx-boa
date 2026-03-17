@@ -8,7 +8,10 @@ import sqlalchemy as sa
 
 
 def update_csv(
-    query: str, filename: str, data_dir: str = None, check_uniue_cols: list = None
+    query: str,
+    filename: str,
+    data_dir: str | None = None,
+    check_uniue_cols: list | None = None,
 ) -> None:
     data_dir = data_dir or os.path.dirname(__file__)
     CS = (
@@ -20,7 +23,12 @@ def update_csv(
         engine,
     )
     if check_uniue_cols:
-        assert df.set_index(check_uniue_cols).index.is_unique
+        idx_duplicated = df.fillna("").duplicated(check_uniue_cols, keep=False)
+        if idx_duplicated.any():
+            raise Exception(
+                (filename, df.loc[idx_duplicated].sort_values(check_uniue_cols))
+            )
+
     df.to_csv(data_dir + "/" + filename, index=False, lineterminator="\n")
 
 
