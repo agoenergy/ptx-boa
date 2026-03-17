@@ -30,39 +30,52 @@ def calculate_emissions(
     main_flow_code_out: str,
     last_emissions: dict | None = None,
 ) -> dict:
-    # TODO: speedup by not having to load process object every time?
+    # TODO: speed up by not having to load process object every time?
+
+    all_flow_codes = set(results_flows.flows) | {main_flow_code_in, main_flow_code_out}
 
     CH4SHARE = step_data.get("CH4SHARE", {})
     CO2BOUND = step_data.get("CO2BOUND", {})
-    CO2CPT = step_data.get("CO2CPT-R", 0) * step_data.get("CO2CPT-S", 0)
+    CO2CPTR = step_data.get("CO2CPT-R", {})
+    CO2CPTS = step_data.get("CO2CPT-S", {})
+
+    CO2CPT = {f: CO2CPTR.get(f, 0) * CO2CPTS.get(f, 0) for f in all_flow_codes}
+
     LOSS_MAIN = step_data.get("LOSS", 0)
     LOSS_FLOW = step_data.get("LOSS_FLOW", {})
     EF_EM = {"M": step_data.get("EF_M", {}), "E": step_data.get("EF_E", {})}
     METHANE_COeq = 29.8  # TODO
+    FLOW_CO2_INDIRECT = {"HEAT", "EL"}  # TODO: from database?
 
     result = {}
     for em in ["e", "m"]:
-        # main_flow_in: # row 46/54
-        if last_emissions:
-            main_flow_in = last_emissions[f"co2_bound_in_product_{em}"]  # noqa
-        else:
-            main_flow_in = 0  # noqa
         EF = EF_EM[em.upper()]
 
-        # see https://github.com/agoenergy/ptx-boa/issues/581
-        # Losses, interpreted as additional to net
-        main_input_gross = results_flows.main_input
-
-        main_input_net = main_input_gross / (1 + LOSS_MAIN)
-        main_input_loss = main_input_net * LOSS_MAIN
-
-        co2_bound_output = results_flows.main_output * CO2BOUND.get(
-            main_flow_code_out, 0
+        main_input_net, main_input_loss = calculate_net_loss(
+            results_flows.main_input, LOSS_MAIN
         )
 
-        co2_indirect = 0  # row 47/55
-        co2_bound_input = main_input_net * CO2BOUND.get(main_flow_code_in, 0)
-        co2_emission_direct = main_input_loss * CO2BOUND.get(main_flow_code_in, 0)
+        # co2_bound_in_product_last_proc: # row 46/54
+        if last_emissions:
+            co2_bound_in_product_last_proc = last_emissions[
+                f"co2_bound_in_product_{em}"
+            ]
+        else:
+            co2_bound_in_product_last_proc = 0
+
+        co2_bound_in_product = results_flows.main_output * CO2BOUND.get(
+            main_flow_code_out, 0
+        )  # row 49/57
+
+        co2_in_flows = 0  # row 47/55:
+        co2_captured = (  # row 48/56
+            main_input_net
+            * CO2CPT.get(main_flow_code_in, 0)
+            * EF.get(main_flow_code_in, 0)
+        )
+        co2_indirect_scope2 = 0  # row 62
+
+        # line 65: ch4 leakage
         ch4_direct = main_input_loss * CH4SHARE.get(main_flow_code_in, 0)
 
         for flow_code, flow_input_gross in results_flows.flows.items():
@@ -70,37 +83,42 @@ def calculate_emissions(
             if flow_input_gross <= 0:
                 continue
             factor_loss_flow = LOSS_FLOW.get(flow_code, 0)
-            flow_input_net = flow_input_gross / (1 + factor_loss_flow)
-            flow_input_loss = flow_input_net * factor_loss_flow
 
-            co2_indirect += flow_input_gross * EF.get(flow_code, 0)
-            co2_bound_input += flow_input_net * CO2BOUND.get(flow_code, 0)
-            co2_emission_direct += flow_input_loss * CO2BOUND.get(flow_code, 0)
-            ch4_direct += flow_input_loss * CH4SHARE.get(main_flow_code_in, 0)
+            flow_input_net, flow_input_loss = calculate_net_loss(
+                flow_input_gross, factor_loss_flow
+            )
+            ch4_direct += flow_input_loss * CH4SHARE.get(flow_code, 0)
 
-        co2_bound_delta = co2_bound_output - co2_bound_input
-        co2_captured = co2_bound_delta * CO2CPT
-        co2_emission_from_bound = co2_bound_delta - co2_captured  # noqa
+            if flow_code in FLOW_CO2_INDIRECT:
+                co2_indirect_scope2 += flow_input_gross * EF.get(flow_code, 0)
+            else:
+                co2_in_flows += flow_input_net * EF.get(flow_code, 0)
 
-        ch4_direct_co2e = ch4_direct * METHANE_COeq
+            co2_captured += (
+                flow_input_net * CO2CPT.get(flow_code, 0) * EF.get(flow_code, 0)
+            )
 
-        co2_captured = 0  # row 48/56
-        co2_bound_in_product = 0  # row 49/57
-        co2_direct = 0  # row 51/59
+        co2_direct = (  # row 51/59
+            co2_bound_in_product_last_proc
+            - co2_bound_in_product
+            + co2_in_flows
+            - co2_captured
+        )
 
-        co2e_total_direct = ch4_direct_co2e + co2_direct  # row 69/70 # noqa
+        ch4_direct_co2e = ch4_direct * METHANE_COeq  # row 66
+        co2e_total_direct = ch4_direct_co2e + co2_direct  # row 69/70
 
-        # result[f"main_flow_in_{em}"] = main_flow_in # noqa
-        result[f"co2_indirect_{em}"] = co2_indirect
-        result[f"co2_captured_{em}"] = co2_captured
-        result[f"co2_bound_in_product_{em}"] = co2_bound_in_product  # line 57
-        result[f"co2_direct_{em}"] = co2_direct
-
-        # result[f"co2e_total_direct_{em}"] = ch4_direct_co2e + co2_direct # noqa
-
-    result["co2_indirect"] = co2_indirect  # line 62
-    # result["ch4_direct"] = ch4_direct # noqa
-    result["ch4_direct_co2e"] = ch4_direct_co2e  # line 66
+        result[f"co2_bound_in_product_last_proc_{em}"] = (
+            co2_bound_in_product  # row 46/54
+        )
+        result[f"co2_in_flows_{em}"] = co2_in_flows  # row 47/55:
+        result[f"co2_captured_{em}"] = co2_captured  # row 48/56:
+        result[f"co2_bound_in_product_{em}"] = co2_bound_in_product  # row 49/57
+        result[f"co2_direct_{em}"] = co2_direct  # row 51/59
+        result[f"co2_indirect_scope2_{em}"] = co2_indirect_scope2  # 62
+        result[f"ch4_direct_{em}"] = ch4_direct  # line 65
+        result[f"ch4_direct_co2e_{em}"] = ch4_direct_co2e  # line 66
+        result[f"co2e_total_direct_{em}"] = co2e_total_direct  # line 69/70
 
     return result
 
@@ -315,16 +333,7 @@ class PtxCalc:
                     process_code,
                     "indirect",
                     "CO2",
-                    last_emissions["co2_indirect_e"],
-                )
-            )
-            results_emissions_e_g_co2e.append(
-                (
-                    result_process_type,
-                    process_code,
-                    "indirect",
-                    "CO2",
-                    last_emissions["co2_indirect_m"],
+                    last_emissions["co2_indirect_scope2_e"],
                 )
             )
             results_emissions_e_g_co2e.append(
@@ -341,31 +350,50 @@ class PtxCalc:
                     result_process_type,
                     process_code,
                     "direct",
+                    "CH4",
+                    last_emissions["ch4_direct_co2e_e"],
+                )
+            )
+
+            results_emissions_m_g_co2e.append(
+                (
+                    result_process_type,
+                    process_code,
+                    "indirect",
+                    "CO2",
+                    last_emissions["co2_indirect_scope2_m"],
+                )
+            )
+            results_emissions_m_g_co2e.append(
+                (
+                    result_process_type,
+                    process_code,
+                    "direct",
                     "CO2",
                     last_emissions["co2_direct_m"],
                 )
             )
-            results_emissions_e_g_co2e.append(
+            results_emissions_m_g_co2e.append(
                 (
                     result_process_type,
                     process_code,
                     "direct",
                     "CH4",
-                    last_emissions["ch4_direct_co2e"],
-                )
-            )
-            results_emissions_e_g_co2e.append(
-                (
-                    result_process_type,
-                    process_code,
-                    "direct",
-                    "CH4",
-                    last_emissions["ch4_direct_co2e"],
+                    last_emissions["ch4_direct_co2e_m"],
                 )
             )
 
         # add final emissions bound
         results_emissions_e_g_co2e.append(
+            (
+                "Bound in product",
+                "Bound in product",
+                "direct",
+                "CO2",
+                last_emissions["co2_bound_in_product_e"],
+            )
+        )
+        results_emissions_m_g_co2e.append(
             (
                 "Bound in product",
                 "Bound in product",
@@ -462,3 +490,13 @@ class PtxCalc:
             df_results_emissions_e_g_co2e,
             df_results_emissions_m_g_co2e,
         )
+
+
+def calculate_net_loss(value_gross: float, loss_factor: float) -> tuple[float, float]:
+    """Losses, interpreted as additional to net.
+
+    see https://github.com/agoenergy/ptx-boa/issues/581
+    """
+    value_net = value_gross / (1 + loss_factor)
+    value_loss = value_net * loss_factor
+    return value_net, value_loss

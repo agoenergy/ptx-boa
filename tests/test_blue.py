@@ -186,11 +186,13 @@ def test_new_blue_chain(scenario, kwargs, api_kwargs):
             {
                 "process_code": "NG-DRI-C#B",
                 "parameter_code": "CO2CPT-S",
+                "flow_code": "NG-G",
                 "value": 0.45,  # process_calc!E11
             },
             {
                 "process_code": "NG-DRI-C#B",
                 "parameter_code": "CO2CPT-R",
+                "flow_code": "NG-G",
                 "value": 0.9,  # process_calc!E14
             },
             {
@@ -278,8 +280,6 @@ def test_new_blue_chain(scenario, kwargs, api_kwargs):
                 "CAPEX": 0,
                 "CH4SHARE": {"NG-G": 0.909},
                 "CO2BOUND": {"NG-G": 0.040812},
-                "CO2CPT-R": 0.9,
-                "CO2CPT-S": 0.45,
                 "CONV": {"EL": 0.476859, "IOP-S": 1.373737},
                 "EFF": 0.320004,
                 "EF_E": {"EL": 402.0, "NG-G": 201.0},
@@ -345,38 +345,51 @@ def test_new_blue_chain(scenario, kwargs, api_kwargs):
     assert _rec_approx(values) == [
         {
             "emissions": {
-                "ch4_direct_co2e": 3.990625,
+                "ch4_direct_co2e_e": 3.990625,
+                "ch4_direct_co2e_m": 3.990625,
+                "ch4_direct_e": 0.133914,
+                "ch4_direct_m": 0.133914,
                 "co2_bound_in_product_e": 0.0,
+                "co2_bound_in_product_last_proc_e": 0.0,
+                "co2_bound_in_product_last_proc_m": 0.0,
                 "co2_bound_in_product_m": 0.0,
                 "co2_captured_e": 0.0,
                 "co2_captured_m": 0.0,
                 "co2_direct_e": 0.0,
                 "co2_direct_m": 0.0,
-                "co2_indirect": 0.0,
-                "co2_indirect_e": 189.780347,  # E62
-                "co2_indirect_m": 0.0,
+                "co2_in_flows_e": 0.0,
+                "co2_in_flows_m": 0.0,
+                "co2_indirect_scope2_e": 189.780347,
+                "co2_indirect_scope2_m": 0.0,
+                "co2e_total_direct_e": 3.990625,
+                "co2e_total_direct_m": 3.990625,
             },
-            "flows": {
-                "EL": 0.47209,  # E30
-                "IOP-S": 1.36,  # E32
-            },
-            "main_input": 3.093713,  # E28
-            "main_output": 0.99,  # E39
+            "flows": {"EL": 0.47209, "IOP-S": 1.36},
+            "main_input": 3.093713,
+            "main_output": 0.99,
             "process_code": "NG-DRI-C#B",
             "process_step": "DERIV",
         },
         {
             "emissions": {
-                "ch4_direct_co2e": 0.0,
+                "ch4_direct_co2e_e": 0.0,
+                "ch4_direct_co2e_m": 0.0,
+                "ch4_direct_e": 0.0,
+                "ch4_direct_m": 0.0,
                 "co2_bound_in_product_e": 0.0,
+                "co2_bound_in_product_last_proc_e": 0.0,
+                "co2_bound_in_product_last_proc_m": 0.0,
                 "co2_bound_in_product_m": 0.0,
                 "co2_captured_e": 0.0,
                 "co2_captured_m": 0.0,
                 "co2_direct_e": 0.0,
                 "co2_direct_m": 0.0,
-                "co2_indirect": 0.0,
-                "co2_indirect_e": 0.0,
-                "co2_indirect_m": 0.0,
+                "co2_in_flows_e": 0.0,
+                "co2_in_flows_m": 0.0,
+                "co2_indirect_scope2_e": 0.0,
+                "co2_indirect_scope2_m": 0.0,
+                "co2e_total_direct_e": 0.0,
+                "co2e_total_direct_m": 0.0,
             },
             "flows": {},
             "main_input": 0.99,
@@ -386,23 +399,28 @@ def test_new_blue_chain(scenario, kwargs, api_kwargs):
         },
         {
             "emissions": {
-                "ch4_direct_co2e": 0.0,
-                "co2_bound_in_product_e": 0.0,
-                "co2_bound_in_product_m": 0.0,
+                "ch4_direct_co2e_e": 0.005418,
+                "ch4_direct_co2e_m": 0.005418,
+                "ch4_direct_e": 0.000182,
+                "ch4_direct_m": 0.000182,
+                "co2_bound_in_product_e": 0.00396,
+                "co2_bound_in_product_last_proc_e": 0.00396,
+                "co2_bound_in_product_last_proc_m": 0.00396,
+                "co2_bound_in_product_m": 0.00396,
                 "co2_captured_e": 0.0,
                 "co2_captured_m": 0.0,
-                "co2_direct_e": 0.0,
-                "co2_direct_m": 0.0,
-                "co2_indirect": 0.8442,
-                "co2_indirect_e": 262.5462,  # J62
-                "co2_indirect_m": 0.8442,
+                "co2_direct_e": 0.80004,
+                "co2_direct_m": 0.80004,
+                "co2_in_flows_e": 0.804,
+                "co2_in_flows_m": 0.804,
+                "co2_indirect_scope2_e": 261.702,
+                "co2_indirect_scope2_m": 0.0,
+                "co2e_total_direct_e": 0.805458,
+                "co2e_total_direct_m": 0.805458,
             },
-            "flows": {
-                "EL": 0.651,  # J32
-                "NG-G": 0.0042,
-            },
-            "main_input": 0.99,  # E39
-            "main_output": 1.0,  # J39
+            "flows": {"EL": 0.651, "NG-G": 0.0042},
+            "main_input": 0.99,
+            "main_output": 1.0,
             "process_code": "EAF#B",
             "process_step": "DERIV_I",
         },
