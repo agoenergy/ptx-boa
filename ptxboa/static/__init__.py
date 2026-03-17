@@ -67,8 +67,10 @@ SourceRegionCodeType = Literal[
     "MAR-TAN",
     "MEX",
     "MRT",
+    "MYS",
     "NAM",
     "NOR",
+    "OMN",
     "PER",
     "PRT",
     "QAT",
@@ -149,8 +151,10 @@ SourceRegionCodeValues = [
     "MAR-TAN",
     "MEX",
     "MRT",
+    "MYS",
     "NAM",
     "NOR",
+    "OMN",
     "PER",
     "PRT",
     "QAT",
@@ -177,9 +181,10 @@ SourceRegionCodeValues = [
 
 
 TargetCountryCodeType = Literal[
-    "CHN", "DEU", "ESP", "FRA", "IND", "JPN", "KOR", "NLD", "USA"
+    "BRA", "CHN", "DEU", "ESP", "FRA", "IND", "JPN", "KOR", "NLD", "THA", "USA"
 ]
 TargetCountryCodeValues = [
+    "BRA",
     "CHN",
     "DEU",
     "ESP",
@@ -188,6 +193,7 @@ TargetCountryCodeValues = [
     "JPN",
     "KOR",
     "NLD",
+    "THA",
     "USA",
 ]
 
@@ -232,6 +238,7 @@ SourceRegionNameType = Literal[
     "Jordan",
     "Kazakhstan",
     "Kenya",
+    "Malaysia",
     "Mauritania",
     "Mexico",
     "Morocco",
@@ -249,6 +256,7 @@ SourceRegionNameType = Literal[
     "Morocco (Tangier)",
     "Namibia",
     "Norway",
+    "Oman",
     "Peru",
     "Portugal",
     "Qatar",
@@ -314,6 +322,7 @@ SourceRegionNameValues = [
     "Jordan",
     "Kazakhstan",
     "Kenya",
+    "Malaysia",
     "Mauritania",
     "Mexico",
     "Morocco",
@@ -331,6 +340,7 @@ SourceRegionNameValues = [
     "Morocco (Tangier)",
     "Namibia",
     "Norway",
+    "Oman",
     "Peru",
     "Portugal",
     "Qatar",
@@ -359,6 +369,7 @@ SourceRegionNameValues = [
 
 
 TargetCountryNameType = Literal[
+    "Brazil",
     "China",
     "France",
     "Germany",
@@ -367,9 +378,11 @@ TargetCountryNameType = Literal[
     "Netherlands",
     "South Korea",
     "Spain",
+    "Thailand",
     "USA",
 ]
 TargetCountryNameValues = [
+    "Brazil",
     "China",
     "France",
     "Germany",
@@ -378,6 +391,7 @@ TargetCountryNameValues = [
     "Netherlands",
     "South Korea",
     "Spain",
+    "Thailand",
     "USA",
 ]
 

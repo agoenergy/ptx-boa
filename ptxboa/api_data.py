@@ -34,7 +34,7 @@ from ptxboa.static import (
     TransportValues,
     YearValues,
 )
-from ptxboa.static._types import CalculateDataType
+from ptxboa.static._type_defs import CalculateDataType
 
 
 def _assign_key(
