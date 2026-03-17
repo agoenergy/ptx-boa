@@ -79,7 +79,7 @@ APP=app
 PORT=9000
 
 # is preview?
-IS_PREVIEW=0
+IS_PREVIEW=1
 if [[ "$IS_PREVIEW" == "1" ]]; then
   PORT=9001
   APP=$APP-preview
@@ -92,7 +92,7 @@ docker pull wingechr/ptx-boa:$VERSION
 docker stop $APP
 docker rm $APP
 # start the latest image as "app"
-docker run -d -p $PORT$:80 -v /home/ptxboa/ptx-boa_offline_optimization/optimization_cache:/mnt/cache --name $APP --restart unless-stopped wingechr/ptx-boa:$VERSION
+docker run -d -p $PORT:80 -v /home/ptxboa/ptx-boa_offline_optimization/optimization_cache:/mnt/cache --name $APP --restart unless-stopped wingechr/ptx-boa:$VERSION
 
 # see logs
 docker logs --follow $APP
@@ -103,8 +103,10 @@ docker logs --follow $APP
 ```bash
 # check which docker images are downloaded
 docker image ls
-# if there is an old image present (let's assume from v0.6.0), you can delete it with:
-docker image rm wingechr/ptx-boa:0.6.0
+# show running containers
+docker image ps
+# delete all unused objects
+docker system prune -a
 ```
 
 ## Internal documentation
