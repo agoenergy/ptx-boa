@@ -2,7 +2,7 @@ parameter_code,parameter_name,unit,per_flow,per_transformation_process,per_trans
 CALOR,calorific values,various (kWh per mass or volume),True,False,False,False,False,False,False,False,no,no,,flow_code
 CAPEX,CAPEX,USD2023/kW,False,True,False,True,True,True,False,True,extended,extended,,process_code/source_region_code
 CAP-T,transport capacity,kWh/a,False,False,False,False,False,True,True,False,0,1,,source_region_code/target_country_code
-CH4SHARE,methane share,fraction,True,False,False,False,False,False,False,True,,,,flow_code
+CH4SHARE,methane share,fraction,True,False,False,False,False,True,False,True,,,,flow_code/source_region_code
 CO2BOUND,CO2 bound in product,kgC/Kg product,True,False,False,False,True,False,False,False,,,,flow_code/process_code
 CO2CPT-R,capture rate by flow,fraction,True,True,False,False,True,False,False,False,,,,flow_code/process_code
 CO2CPT-S,CO2 for capture share,fraction,True,True,False,False,True,False,False,False,,,,flow_code/process_code

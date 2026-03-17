@@ -388,6 +388,20 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CAP-T,,,PRT,ESP",CAP-T,,,PRT,ESP,1.0,kWh/a,
 "CAP-T,,,RUS,CHN",CAP-T,,,RUS,CHN,1.0,kWh/a,
 "CAP-T,,,RUS,DEU",CAP-T,,,RUS,DEU,1.0,kWh/a,
+"CH4SHARE,,NG-G,,",CH4SHARE,,NG-G,,,0.9208064102564104,fraction,
+"CH4SHARE,,NG-G,AUS,",CH4SHARE,,NG-G,AUS,,0.8671500000000001,fraction,
+"CH4SHARE,,NG-G,BRA,",CH4SHARE,,NG-G,BRA,,0.9678,fraction,
+"CH4SHARE,,NG-G,CHN,",CH4SHARE,,NG-G,CHN,,0.9169,fraction,
+"CH4SHARE,,NG-G,DZA,",CH4SHARE,,NG-G,DZA,,0.8995333333333333,fraction,
+"CH4SHARE,,NG-G,IDN,",CH4SHARE,,NG-G,IDN,,0.9283,fraction,
+"CH4SHARE,,NG-G,IND,",CH4SHARE,,NG-G,IND,,0.9169,fraction,
+"CH4SHARE,,NG-G,MYS,",CH4SHARE,,NG-G,MYS,,0.9169,fraction,
+"CH4SHARE,,NG-G,NOR,",CH4SHARE,,NG-G,NOR,,0.9203,fraction,
+"CH4SHARE,,NG-G,OMN,",CH4SHARE,,NG-G,OMN,,0.9069,fraction,
+"CH4SHARE,,NG-G,QAT,",CH4SHARE,,NG-G,QAT,,0.909,fraction,
+"CH4SHARE,,NG-G,SAU,",CH4SHARE,,NG-G,SAU,,0.9069,fraction,
+"CH4SHARE,,NG-G,THA,",CH4SHARE,,NG-G,THA,,0.9169,fraction,
+"CH4SHARE,,NG-G,USA,",CH4SHARE,,NG-G,USA,,0.997,fraction,
 "CO2BOUND,CH3OHSYC#B,CO2-G,,",CO2BOUND,CH3OHSYC#B,CO2-G,,,0.0678122348290827,KgC/kwh CH3OH,
 "CO2BOUND,CH3OHSYN#B,CO2-G,,",CO2BOUND,CH3OHSYN#B,CO2-G,,,0.0678122348290827,KgC/kwh CH3OH,
 "CO2BOUND,EAF#B,C-S,,",CO2BOUND,EAF#B,C-S,,,0.004,fraction,
@@ -432,19 +446,6 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CONV,CH4-LIQ#B,EL,SAU,",CONV,CH4-LIQ#B,EL,SAU,,0.0,kWh (el.)/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
 "CONV,CH4-LIQ#B,EL,THA,",CONV,CH4-LIQ#B,EL,THA,,0.0,kWh (el.)/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
 "CONV,CH4-LIQ#B,EL,USA,",CONV,CH4-LIQ#B,EL,USA,,0.0020817394693616,kWh (el.)/kWh natural gas LHV,Sphera (2021)
-"CONV,CH4-LIQ#B,NG-G,AUS,",CONV,CH4-LIQ#B,NG-G,AUS,,0.0832540214477211,kWh natural gas LHV/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
-"CONV,CH4-LIQ#B,NG-G,BRA,",CONV,CH4-LIQ#B,NG-G,BRA,,0.0796056029232643,kWh natural gas LHV/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
-"CONV,CH4-LIQ#B,NG-G,CHN,",CONV,CH4-LIQ#B,NG-G,CHN,,0.0813936340737348,kWh natural gas LHV/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
-"CONV,CH4-LIQ#B,NG-G,DZA,",CONV,CH4-LIQ#B,NG-G,DZA,,0.1424822695035461,kWh natural gas LHV/kWh natural gas LHV,Sphera (2021)
-"CONV,CH4-LIQ#B,NG-G,IDN,",CONV,CH4-LIQ#B,NG-G,IDN,,0.0958204614871281,kWh natural gas LHV/kWh natural gas LHV,Sphera (2021)
-"CONV,CH4-LIQ#B,NG-G,IND,",CONV,CH4-LIQ#B,NG-G,IND,,0.0821047965446692,kWh natural gas LHV/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
-"CONV,CH4-LIQ#B,NG-G,MYS,",CONV,CH4-LIQ#B,NG-G,MYS,,0.0965631503956441,kWh natural gas LHV/kWh natural gas LHV,Sphera (2021)
-"CONV,CH4-LIQ#B,NG-G,NOR,",CONV,CH4-LIQ#B,NG-G,NOR,,0.0805762473647224,kWh natural gas LHV/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
-"CONV,CH4-LIQ#B,NG-G,OMN,",CONV,CH4-LIQ#B,NG-G,OMN,,0.0821047965446692,kWh natural gas LHV/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
-"CONV,CH4-LIQ#B,NG-G,QAT,",CONV,CH4-LIQ#B,NG-G,QAT,,0.0997939212525903,kWh natural gas LHV/kWh natural gas LHV,Sphera (2021)
-"CONV,CH4-LIQ#B,NG-G,SAU,",CONV,CH4-LIQ#B,NG-G,SAU,,0.0821047965446692,kWh natural gas LHV/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
-"CONV,CH4-LIQ#B,NG-G,THA,",CONV,CH4-LIQ#B,NG-G,THA,,0.0815181818181818,kWh natural gas LHV/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
-"CONV,CH4-LIQ#B,NG-G,USA,",CONV,CH4-LIQ#B,NG-G,USA,,0.0957409170633926,kWh natural gas LHV/kWh natural gas LHV,Sphera (2021)
 "CONV,CH4-LIQ,EL,,",CONV,CH4-LIQ,EL,,,0.1578947368421052,kWh (el.)/CH4-L,Pospíšil et al. 2019
 "CONV,CH4-RGAS#B,DIESEL-L,,",CONV,CH4-RGAS#B,DIESEL-L,,,2e-06,kWh diesel LHV/kWh natural gas LHV,
 "CONV,CH4-RGAS#B,EL,,",CONV,CH4-RGAS#B,EL,,,0.00048,kWh (el.)/kWh natural gas LHV,
@@ -512,19 +513,6 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CONV,NG-PROD#B,EL,SAU,",CONV,NG-PROD#B,EL,SAU,,0.0020331268470106,kWh (el.)/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
 "CONV,NG-PROD#B,EL,THA,",CONV,NG-PROD#B,EL,THA,,0.0020186007511007,kWh (el.)/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
 "CONV,NG-PROD#B,EL,USA,",CONV,NG-PROD#B,EL,USA,,0.0011764692780979,kWh (el.)/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
-"CONV,NG-PROD#B,NG-G,AUS,",CONV,NG-PROD#B,NG-G,AUS,,0.0554848916443252,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD#B,NG-G,BRA,",CONV,NG-PROD#B,NG-G,BRA,,0.0530533922046285,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD#B,NG-G,CHN,",CONV,NG-PROD#B,NG-G,CHN,,0.0542450309136707,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD#B,NG-G,DZA,",CONV,NG-PROD#B,NG-G,DZA,,0.0838135539795114,kWh natural gas LHV/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
-"CONV,NG-PROD#B,NG-G,IDN,",CONV,NG-PROD#B,NG-G,IDN,,0.0538385943635943,kWh natural gas LHV/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
-"CONV,NG-PROD#B,NG-G,IND,",CONV,NG-PROD#B,NG-G,IND,,0.054718987269834,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD#B,NG-G,MYS,",CONV,NG-PROD#B,NG-G,MYS,,0.0570740973971452,kWh natural gas LHV/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
-"CONV,NG-PROD#B,NG-G,NOR,",CONV,NG-PROD#B,NG-G,NOR,,0.0537002810962754,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD#B,NG-G,OMN,",CONV,NG-PROD#B,NG-G,OMN,,0.054718987269834,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD#B,NG-G,QAT,",CONV,NG-PROD#B,NG-G,QAT,,0.0135754144600506,kWh natural gas LHV/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
-"CONV,NG-PROD#B,NG-G,SAU,",CONV,NG-PROD#B,NG-G,SAU,,0.054718987269834,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD#B,NG-G,THA,",CONV,NG-PROD#B,NG-G,THA,,0.0543280361305361,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
-"CONV,NG-PROD#B,NG-G,USA,",CONV,NG-PROD#B,NG-G,USA,,0.0639609677329547,kWh natural gas LHV/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
 "CONV,NH3-REC#B,EL,,",CONV,NH3-REC#B,EL,,,0.0139239999999999,kWh (el.)/H2-G,NGN; Equinor 2018
 "CONV,NH3-REC,EL,,",CONV,NH3-REC,EL,,,0.0139239999999999,kWh (el.)/H2-G,NGN; Equinor 2018
 "CONV,NH3-SB,BFUEL-L,,",CONV,NH3-SB,BFUEL-L,,,5.343656103416341e-06,kwh bunker fuel (l)/(km*NH3-L),calc_shipping
@@ -547,7 +535,7 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CONV-OT,CH4-SB#B,NG-L,,",CONV-OT,CH4-SB#B,NG-L,,,1.1537538535378709e-06,kWh natural gas LHV/kWh natural gas LHV*km,
 "CONV-OT,H2-S#B,H2-L,,",CONV-OT,H2-S#B,H2-L,,,9.251193689684598e-06,kWh H2 (l)/kWh H2 (l),
 "CONV-OT,H2-SB#B,BFUEL-L,,",CONV-OT,H2-SB#B,BFUEL-L,,,3.3002590965851543e-06,kwh bunker fuel (l)/kWh H2 (l),
-"CONV-OT,NH3-S#B,NH3-L,,",CONV-OT,NH3-S#B,NH3-L,,,5.343656103416341e-06,kwh NH3 LHV (gasous)/kwh NH3 LHV (gasous),
+"CONV-OT,NH3-S#B,NH3-L,,",CONV-OT,NH3-S#B,NH3-L,,,4.615015414151483e-07,kwh NH3 LHV (gasous)/kwh NH3 LHV (gasous),
 "CONV-OT,NH3-SB#B,BFUEL-L,,",CONV-OT,NH3-SB#B,BFUEL-L,,,5.343656103416341e-06,kwh bunker fuel (l)/kwh NH3 LHV (gasous),
 "CONV-OT,SYN-S#B,BFUEL-L,,",CONV-OT,SYN-S#B,BFUEL-L,,,1.264193639501289e-06,kwh bunker fuel (l)/CHX-L,
 "CONV-OT,SYN-SB#B,BFUEL-L,,",CONV-OT,SYN-SB#B,BFUEL-L,,,1.264193639501289e-06,kwh bunker fuel (l)/CHX-L,
@@ -1514,9 +1502,22 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "EFF,CH3OHSYC#B,,,",EFF,CH3OHSYC#B,,,,0.6093845216331505,kwh CH3OH/kWh natural gas LHV,Concawe 2024 (Irena 2021)
 "EFF,CH3OHSYN#B,,,",EFF,CH3OHSYN#B,,,,0.8605354058721933,kwh CH3OH/kWh H2,Concawe 2024
 "EFF,CH3OHSYN,,,",EFF,CH3OHSYN,,,,0.803,various (output per main input),Frontier Economics 2021
+"EFF,CH4-LIQ#B,,AUS,",EFF,CH4-LIQ#B,,AUS,,0.9167459785522788,kWh natural gas LHV/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
+"EFF,CH4-LIQ#B,,BRA,",EFF,CH4-LIQ#B,,BRA,,0.9203943970767356,kWh natural gas LHV/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
+"EFF,CH4-LIQ#B,,CHN,",EFF,CH4-LIQ#B,,CHN,,0.9186063659262652,kWh natural gas LHV/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
+"EFF,CH4-LIQ#B,,DZA,",EFF,CH4-LIQ#B,,DZA,,0.8575177304964539,kWh natural gas LHV/kWh natural gas LHV,Sphera (2021)
+"EFF,CH4-LIQ#B,,IDN,",EFF,CH4-LIQ#B,,IDN,,0.9041795385128718,kWh natural gas LHV/kWh natural gas LHV,Sphera (2021)
+"EFF,CH4-LIQ#B,,IND,",EFF,CH4-LIQ#B,,IND,,0.9178952034553308,kWh natural gas LHV/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
+"EFF,CH4-LIQ#B,,MYS,",EFF,CH4-LIQ#B,,MYS,,0.903436849604356,kWh natural gas LHV/kWh natural gas LHV,Sphera (2021)
+"EFF,CH4-LIQ#B,,NOR,",EFF,CH4-LIQ#B,,NOR,,0.9194237526352776,kWh natural gas LHV/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
+"EFF,CH4-LIQ#B,,OMN,",EFF,CH4-LIQ#B,,OMN,,0.9178952034553308,kWh natural gas LHV/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
+"EFF,CH4-LIQ#B,,QAT,",EFF,CH4-LIQ#B,,QAT,,0.9002060787474097,kWh natural gas LHV/kWh natural gas LHV,Sphera (2021)
+"EFF,CH4-LIQ#B,,SAU,",EFF,CH4-LIQ#B,,SAU,,0.9178952034553308,kWh natural gas LHV/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
+"EFF,CH4-LIQ#B,,THA,",EFF,CH4-LIQ#B,,THA,,0.9184818181818182,kWh natural gas LHV/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
+"EFF,CH4-LIQ#B,,USA,",EFF,CH4-LIQ#B,,USA,,0.9042590829366072,kWh natural gas LHV/kWh natural gas LHV,Sphera (2021)
 "EFF,CH4-RGAS,,,",EFF,CH4-RGAS,,,,0.98,various (output per main input),Pospíšil et al. 2019
 "EFF,CH4SYN,,,",EFF,CH4SYN,,,,0.83,various (output per main input),Öko-Institut 2020
-"EFF,CO2-T+S#B,,NOR,",EFF,CO2-T+S#B,,NOR,,0.95,kg CO2/kg CO2,
+"EFF,CO2-T+S#B,,,",EFF,CO2-T+S#B,,,,0.95,kg CO2/kg CO2,
 "EFF,DESAL,,,",EFF,DESAL,,,,1.0,various (output per main input),
 "EFF,DRI#B,,,",EFF,DRI#B,,,,0.4348260913047826,kg DRI (s)/kWh H2 (g),Agora 2025 Green iron trade
 "EFF,DRI,,,",EFF,DRI,,,,0.4335693684975433,kg DRI (s)/kwhh2,"Agora Industry, Wuppertal Institute and Lund University (2024)"
@@ -1533,6 +1534,19 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "EFF,HEATPUMP#B,,,",EFF,HEATPUMP#B,,,,3.03,kWh (heat)/kWh (el.),PtX-Atlas
 "EFF,LOHC-REC,,,",EFF,LOHC-REC,,,,0.9,various (output per main input),DNV GL 2020
 "EFF,NG-DRI-C#B,,,",EFF,NG-DRI-C#B,,,,0.3360036003294872,kg DRI (s)/kWh natural gas LHV,Agora 2024 Steel
+"EFF,NG-PROD#B,,AUS,",EFF,NG-PROD#B,,AUS,,0.9445151083556746,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"EFF,NG-PROD#B,,BRA,",EFF,NG-PROD#B,,BRA,,0.9469466077953714,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"EFF,NG-PROD#B,,CHN,",EFF,NG-PROD#B,,CHN,,0.9457549690863292,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"EFF,NG-PROD#B,,DZA,",EFF,NG-PROD#B,,DZA,,0.9161864460204886,kWh natural gas LHV/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
+"EFF,NG-PROD#B,,IDN,",EFF,NG-PROD#B,,IDN,,0.9461614056364056,kWh natural gas LHV/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
+"EFF,NG-PROD#B,,IND,",EFF,NG-PROD#B,,IND,,0.945281012730166,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"EFF,NG-PROD#B,,MYS,",EFF,NG-PROD#B,,MYS,,0.9429259026028548,kWh natural gas LHV/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
+"EFF,NG-PROD#B,,NOR,",EFF,NG-PROD#B,,NOR,,0.9462997189037246,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"EFF,NG-PROD#B,,OMN,",EFF,NG-PROD#B,,OMN,,0.945281012730166,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"EFF,NG-PROD#B,,QAT,",EFF,NG-PROD#B,,QAT,,0.9864245855399494,kWh natural gas LHV/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
+"EFF,NG-PROD#B,,SAU,",EFF,NG-PROD#B,,SAU,,0.945281012730166,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"EFF,NG-PROD#B,,THA,",EFF,NG-PROD#B,,THA,,0.9456719638694638,kWh natural gas LHV/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
+"EFF,NG-PROD#B,,USA,",EFF,NG-PROD#B,,USA,,0.9360390322670452,kWh natural gas LHV/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
 "EFF,NH3-REC#B,,,",EFF,NH3-REC#B,,,,0.7516949152542373,various (output per main input),NGN; Equinor 2018
 "EFF,NH3-REC,,,",EFF,NH3-REC,,,,0.7516949152542373,various (output per main input),NGN; Equinor 2018
 "EFF,NH3SYN#B,,,",EFF,NH3SYN#B,,,,0.8754681647940075,kwh NH3 LHV (gasous)/kWh H2 (g),Concawe 2024
@@ -1923,31 +1937,33 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "LIFETIME,SYN-SB,,,",LIFETIME,SYN-SB,,,,30.0,years,UNSW Sydney 2021
 "LIFETIME,WIND-OFF,,,",LIFETIME,WIND-OFF,,,,20.0,years,
 "LIFETIME,WIND-ON,,,",LIFETIME,WIND-ON,,,,20.0,years,
-"LOSS,CH4-LIQ#B,CH4-G,AUS,",LOSS,CH4-LIQ#B,CH4-G,AUS,,3e-05,kgCH4/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
-"LOSS,CH4-LIQ#B,CH4-G,BRA,",LOSS,CH4-LIQ#B,CH4-G,BRA,,3e-05,kg CH4/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
-"LOSS,CH4-LIQ#B,CH4-G,CHN,",LOSS,CH4-LIQ#B,CH4-G,CHN,,3e-05,kg CH4/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
-"LOSS,CH4-LIQ#B,CH4-G,DZA,",LOSS,CH4-LIQ#B,CH4-G,DZA,,3e-05,kgCH4/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
-"LOSS,CH4-LIQ#B,CH4-G,IDN,",LOSS,CH4-LIQ#B,CH4-G,IDN,,3e-05,kgCH4/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
-"LOSS,CH4-LIQ#B,CH4-G,IND,",LOSS,CH4-LIQ#B,CH4-G,IND,,3e-05,kg CH4/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
-"LOSS,CH4-LIQ#B,CH4-G,MYS,",LOSS,CH4-LIQ#B,CH4-G,MYS,,3e-05,kg CH4/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
-"LOSS,CH4-LIQ#B,CH4-G,NOR,",LOSS,CH4-LIQ#B,CH4-G,NOR,,3e-05,kgCH4/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
-"LOSS,CH4-LIQ#B,CH4-G,OMN,",LOSS,CH4-LIQ#B,CH4-G,OMN,,3e-05,kgCH4/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
-"LOSS,CH4-LIQ#B,CH4-G,QAT,",LOSS,CH4-LIQ#B,CH4-G,QAT,,3e-05,kg CH4/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
-"LOSS,CH4-LIQ#B,CH4-G,SAU,",LOSS,CH4-LIQ#B,CH4-G,SAU,,3e-05,kgCH4/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
-"LOSS,CH4-LIQ#B,CH4-G,THA,",LOSS,CH4-LIQ#B,CH4-G,THA,,3e-05,kg CH4/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
-"LOSS,CH4-LIQ#B,CH4-G,USA,",LOSS,CH4-LIQ#B,CH4-G,USA,,7.000000000000001e-05,kg CH4/kWh natural gas LHV,UBA (2021)
+"LOSS,CH4-LIQ#B,NG-G,AUS,",LOSS,CH4-LIQ#B,NG-G,AUS,,0.0005,kWh natural gas LHV/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
+"LOSS,CH4-LIQ#B,NG-G,BRA,",LOSS,CH4-LIQ#B,NG-G,BRA,,0.0005,kWh natural gas LHV/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
+"LOSS,CH4-LIQ#B,NG-G,CHN,",LOSS,CH4-LIQ#B,NG-G,CHN,,0.0005,kWh natural gas LHV/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
+"LOSS,CH4-LIQ#B,NG-G,DZA,",LOSS,CH4-LIQ#B,NG-G,DZA,,0.0005,kWh natural gas LHV/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
+"LOSS,CH4-LIQ#B,NG-G,IDN,",LOSS,CH4-LIQ#B,NG-G,IDN,,0.0005,kWh natural gas LHV/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
+"LOSS,CH4-LIQ#B,NG-G,IND,",LOSS,CH4-LIQ#B,NG-G,IND,,0.0005,kWh natural gas LHV/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
+"LOSS,CH4-LIQ#B,NG-G,MYS,",LOSS,CH4-LIQ#B,NG-G,MYS,,0.0005,kWh natural gas LHV/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
+"LOSS,CH4-LIQ#B,NG-G,NOR,",LOSS,CH4-LIQ#B,NG-G,NOR,,0.0005,kWh natural gas LHV/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
+"LOSS,CH4-LIQ#B,NG-G,OMN,",LOSS,CH4-LIQ#B,NG-G,OMN,,0.0005,kWh natural gas LHV/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
+"LOSS,CH4-LIQ#B,NG-G,QAT,",LOSS,CH4-LIQ#B,NG-G,QAT,,0.0005,kWh natural gas LHV/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
+"LOSS,CH4-LIQ#B,NG-G,SAU,",LOSS,CH4-LIQ#B,NG-G,SAU,,0.0005,kWh natural gas LHV/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
+"LOSS,CH4-LIQ#B,NG-G,THA,",LOSS,CH4-LIQ#B,NG-G,THA,,0.0005,kWh natural gas LHV/kWh natural gas LHV,IFEU (2023) based on Ecoinvent 3.9.1 (generic value)
+"LOSS,CH4-LIQ#B,NG-G,USA,",LOSS,CH4-LIQ#B,NG-G,USA,,0.0035,kWh natural gas LHV/kWh natural gas LHV,UBA (2021)
 "LOSS,CH4-RGAS#B,NG-G,,",LOSS,CH4-RGAS#B,NG-G,,,4e-08,kWh natural gas LHV/kWh natural gas LHV,
-"LOSS,NG-PROD#B,CH4-G,AUS,",LOSS,NG-PROD#B,CH4-G,AUS,,0.0004,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
-"LOSS,NG-PROD#B,CH4-G,BRA,",LOSS,NG-PROD#B,CH4-G,BRA,,0.0012,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
-"LOSS,NG-PROD#B,CH4-G,CHN,",LOSS,NG-PROD#B,CH4-G,CHN,,0.0008,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
-"LOSS,NG-PROD#B,CH4-G,DZA,",LOSS,NG-PROD#B,CH4-G,DZA,,0.0018,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
-"LOSS,NG-PROD#B,CH4-G,IDN,",LOSS,NG-PROD#B,CH4-G,IDN,,0.0015,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
-"LOSS,NG-PROD#B,CH4-G,MYS,",LOSS,NG-PROD#B,CH4-G,MYS,,0.0014,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
-"LOSS,NG-PROD#B,CH4-G,NOR,",LOSS,NG-PROD#B,CH4-G,NOR,,1e-05,kg CH4/kWh natural gas LHV,Rystad 2023
-"LOSS,NG-PROD#B,CH4-G,OMN,",LOSS,NG-PROD#B,CH4-G,OMN,,0.0009,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
-"LOSS,NG-PROD#B,CH4-G,QAT,",LOSS,NG-PROD#B,CH4-G,QAT,,0.0009,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
-"LOSS,NG-PROD#B,CH4-G,SAU,",LOSS,NG-PROD#B,CH4-G,SAU,,0.0004,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
-"LOSS,NG-PROD#B,CH4-G,USA,",LOSS,NG-PROD#B,CH4-G,USA,,0.001,kg CH4/kWh natural gas LHV,IEA Methane Tracker 2025
+"LOSS,NG-PROD#B,NG-G,AUS,",LOSS,NG-PROD#B,NG-G,AUS,,0.00168,kWh natural gas LHV/kWh natural gas LHV,IEA Methane Tracker 2025
+"LOSS,NG-PROD#B,NG-G,BRA,",LOSS,NG-PROD#B,NG-G,BRA,,0.0050399999999999,kWh natural gas LHV/kWh natural gas LHV,IEA Methane Tracker 2025
+"LOSS,NG-PROD#B,NG-G,CHN,",LOSS,NG-PROD#B,NG-G,CHN,,0.00752,kWh diesel LHV/kWh natural gas LHV,IEA Methane Tracker 2025
+"LOSS,NG-PROD#B,NG-G,DZA,",LOSS,NG-PROD#B,NG-G,DZA,,0.0139,kWh diesel LHV/kWh natural gas LHV,IFEU2023--> Eco inv.
+"LOSS,NG-PROD#B,NG-G,IDN,",LOSS,NG-PROD#B,NG-G,IDN,,0.0063,kWh (el.)/kWh natural gas LHV,IEA Methane Tracker 2025
+"LOSS,NG-PROD#B,NG-G,IND,",LOSS,NG-PROD#B,NG-G,IND,,0.00752,kWh (el.)/kWh natural gas LHV,IEA Methane Tracker 2025
+"LOSS,NG-PROD#B,NG-G,MYS,",LOSS,NG-PROD#B,NG-G,MYS,,0.0058799999999999,kWh diesel LHV/kWh natural gas LHV,IEA Methane Tracker 2025
+"LOSS,NG-PROD#B,NG-G,NOR,",LOSS,NG-PROD#B,NG-G,NOR,,0.000138725596286,kWh natural gas LHV/kWh natural gas LHV,Rystad 2023
+"LOSS,NG-PROD#B,NG-G,OMN,",LOSS,NG-PROD#B,NG-G,OMN,,0.00378,kWh (el.)/kWh natural gas LHV,IEA Methane Tracker 2025
+"LOSS,NG-PROD#B,NG-G,QAT,",LOSS,NG-PROD#B,NG-G,QAT,,0.00378,kWh natural gas LHV/kWh natural gas LHV,IEA Methane Tracker 2025
+"LOSS,NG-PROD#B,NG-G,SAU,",LOSS,NG-PROD#B,NG-G,SAU,,0.00168,kWh diesel LHV/kWh natural gas LHV,IEA Methane Tracker 2025
+"LOSS,NG-PROD#B,NG-G,THA,",LOSS,NG-PROD#B,NG-G,THA,,0.0058799999999999,kWh natural gas LHV/kWh natural gas LHV,IEA Methane Tracker 2025
+"LOSS,NG-PROD#B,NG-G,USA,",LOSS,NG-PROD#B,NG-G,USA,,0.028,kWh (el.)/kWh natural gas LHV,IEA Methane Tracker 2025
 "LOSS-T,CH3OH-S,,,",LOSS-T,CH3OH-S,,,,3.0509883673175365e-06,fraction/km,calc_shipping
 "LOSS-T,CH3OH-SB#B,,,",LOSS-T,CH3OH-SB#B,,,,2.399808015358772e-07,kWh CH3OH (l)/kWh CH3OH (l),
 "LOSS-T,CH3OH-SB,,,",LOSS-T,CH3OH-SB,,,,2.399808015358772e-07,fraction/km,calc_shipping
@@ -2346,24 +2362,24 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "OPEX-O,HEATPUMP#B,,,",OPEX-O,HEATPUMP#B,,,,0.0006600280008387,USD2021/kWh (heat),PtX-Atlas
 "OPEX-O,LOHC-S,,,",OPEX-O,LOHC-S,,,,0.0177470397731461,USD2023/kWh,UNSW Sydney 2021
 "OPEX-O,LOHC-SB,,,",OPEX-O,LOHC-SB,,,,0.0177470397731461,USD2023/kWh,UNSW Sydney 2021
-"OPEX-O,NG-PROD#B,NG-G,AUS,",OPEX-O,NG-PROD#B,NG-G,AUS,,0.0214006163505674,USD2021/kWh natural gas LHV,
-"OPEX-O,NG-PROD#B,NG-G,BRA,",OPEX-O,NG-PROD#B,NG-G,BRA,,0.0323923690692726,USD2021/kWh natural gas LHV,
-"OPEX-O,NG-PROD#B,NG-G,CHN,",OPEX-O,NG-PROD#B,NG-G,CHN,,0.0253775029996253,USD2021/kWh natural gas LHV,
-"OPEX-O,NG-PROD#B,NG-G,DEU,",OPEX-O,NG-PROD#B,NG-G,DEU,,0.0261490677427578,USD2021/kWh natural gas LHV,
-"OPEX-O,NG-PROD#B,NG-G,DZA,",OPEX-O,NG-PROD#B,NG-G,DZA,,0.0031457675536574,USD2021/kWh natural gas LHV,
-"OPEX-O,NG-PROD#B,NG-G,ESP,",OPEX-O,NG-PROD#B,NG-G,ESP,,0.0210181631974885,USD2021/kWh natural gas LHV,
-"OPEX-O,NG-PROD#B,NG-G,IDN,",OPEX-O,NG-PROD#B,NG-G,IDN,,0.0177279586411023,USD2021/kWh natural gas LHV,
-"OPEX-O,NG-PROD#B,NG-G,IND,",OPEX-O,NG-PROD#B,NG-G,IND,,0.0220852006915759,USD2021/kWh natural gas LHV,
-"OPEX-O,NG-PROD#B,NG-G,JPN,",OPEX-O,NG-PROD#B,NG-G,JPN,,0.0254609474557767,USD2021/kWh natural gas LHV,
-"OPEX-O,NG-PROD#B,NG-G,KOR,",OPEX-O,NG-PROD#B,NG-G,KOR,,0.0294129346796766,USD2021/kWh natural gas LHV,
-"OPEX-O,NG-PROD#B,NG-G,MYS,",OPEX-O,NG-PROD#B,NG-G,MYS,,0.0133448255597589,USD2021/kWh natural gas LHV,
-"OPEX-O,NG-PROD#B,NG-G,NLD,",OPEX-O,NG-PROD#B,NG-G,NLD,,0.0221102834420639,USD2021/kWh natural gas LHV,
-"OPEX-O,NG-PROD#B,NG-G,NOR,",OPEX-O,NG-PROD#B,NG-G,NOR,,0.0111272628692586,USD2021/kWh natural gas LHV,
-"OPEX-O,NG-PROD#B,NG-G,OMN,",OPEX-O,NG-PROD#B,NG-G,OMN,,0.014942395879873,USD2021/kWh natural gas LHV,
-"OPEX-O,NG-PROD#B,NG-G,QAT,",OPEX-O,NG-PROD#B,NG-G,QAT,,0.0048366176137483,USD2021/kWh natural gas LHV,
-"OPEX-O,NG-PROD#B,NG-G,SAU,",OPEX-O,NG-PROD#B,NG-G,SAU,,0.0068813665236257,USD2021/kWh natural gas LHV,
-"OPEX-O,NG-PROD#B,NG-G,THA,",OPEX-O,NG-PROD#B,NG-G,THA,,0.0244003714209818,USD2021/kWh natural gas LHV,
-"OPEX-O,NG-PROD#B,NG-G,USA,",OPEX-O,NG-PROD#B,NG-G,USA,,0.008926115433503,USD2021/kWh natural gas LHV,
+"OPEX-O,NG-PROD#B,,AUS,",OPEX-O,NG-PROD#B,,AUS,,0.0214006163505674,USD2021/kWh natural gas LHV,
+"OPEX-O,NG-PROD#B,,BRA,",OPEX-O,NG-PROD#B,,BRA,,0.0323923690692726,USD2021/kWh natural gas LHV,
+"OPEX-O,NG-PROD#B,,CHN,",OPEX-O,NG-PROD#B,,CHN,,0.0253775029996253,USD2021/kWh natural gas LHV,
+"OPEX-O,NG-PROD#B,,DEU,",OPEX-O,NG-PROD#B,,DEU,,0.0261490677427578,USD2021/kWh natural gas LHV,
+"OPEX-O,NG-PROD#B,,DZA,",OPEX-O,NG-PROD#B,,DZA,,0.0031457675536574,USD2021/kWh natural gas LHV,
+"OPEX-O,NG-PROD#B,,ESP,",OPEX-O,NG-PROD#B,,ESP,,0.0210181631974885,USD2021/kWh natural gas LHV,
+"OPEX-O,NG-PROD#B,,IDN,",OPEX-O,NG-PROD#B,,IDN,,0.0177279586411023,USD2021/kWh natural gas LHV,
+"OPEX-O,NG-PROD#B,,IND,",OPEX-O,NG-PROD#B,,IND,,0.0220852006915759,USD2021/kWh natural gas LHV,
+"OPEX-O,NG-PROD#B,,JPN,",OPEX-O,NG-PROD#B,,JPN,,0.0254609474557767,USD2021/kWh natural gas LHV,
+"OPEX-O,NG-PROD#B,,KOR,",OPEX-O,NG-PROD#B,,KOR,,0.0294129346796766,USD2021/kWh natural gas LHV,
+"OPEX-O,NG-PROD#B,,MYS,",OPEX-O,NG-PROD#B,,MYS,,0.0133448255597589,USD2021/kWh natural gas LHV,
+"OPEX-O,NG-PROD#B,,NLD,",OPEX-O,NG-PROD#B,,NLD,,0.0221102834420639,USD2021/kWh natural gas LHV,
+"OPEX-O,NG-PROD#B,,NOR,",OPEX-O,NG-PROD#B,,NOR,,0.0111272628692586,USD2021/kWh natural gas LHV,
+"OPEX-O,NG-PROD#B,,OMN,",OPEX-O,NG-PROD#B,,OMN,,0.014942395879873,USD2021/kWh natural gas LHV,
+"OPEX-O,NG-PROD#B,,QAT,",OPEX-O,NG-PROD#B,,QAT,,0.0048366176137483,USD2021/kWh natural gas LHV,
+"OPEX-O,NG-PROD#B,,SAU,",OPEX-O,NG-PROD#B,,SAU,,0.0068813665236257,USD2021/kWh natural gas LHV,
+"OPEX-O,NG-PROD#B,,THA,",OPEX-O,NG-PROD#B,,THA,,0.0244003714209818,USD2021/kWh natural gas LHV,
+"OPEX-O,NG-PROD#B,,USA,",OPEX-O,NG-PROD#B,,USA,,0.008926115433503,USD2021/kWh natural gas LHV,
 "OPEX-O,NH3-S,,,",OPEX-O,NH3-S,,,,0.0004856855350958,USD2023/kWh,UNSW Sydney 2021
 "OPEX-O,NH3-SB,,,",OPEX-O,NH3-SB,,,,0.0004856855350958,USD2023/kWh,UNSW Sydney 2021
 "OPEX-O,REGASATR,,,",OPEX-O,REGASATR,,,,0.0105549624962496,USD2023/kWh,combined values
@@ -2480,7 +2496,7 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "SEASHARE,,,VNM,KOR",SEASHARE,,,VNM,KOR,0.16,,Research Susanne Krieger
 "SPECCOST,,BFUEL-L,,",SPECCOST,,BFUEL-L,,,0.004552006130755,USD2023 / kwh bunker fuel (l),
 "SPECCOST,,CO2-G,,",SPECCOST,,CO2-G,,,0.0445186199587845,USD2023 / kg CO2 (g),
-"SPECCOST,,DIESEL-L,,",SPECCOST,,DIESEL-L,,,0.0,USDXXXX/kWh,
+"SPECCOST,,DIESEL-L,,",SPECCOST,,DIESEL-L,,,0.0428571428571428,USD2021/kWh,
 "SPECCOST,,EL,,",SPECCOST,,EL,,,0.08078,USD2023 / kWh (el.),"dummy mh! Auf Null gesetzt bis bug in Rechner behoben ist. Korrekter Wert ist 0,08"
 "SPECCOST,,EL,DEU,",SPECCOST,,EL,DEU,,0.1,USD2021/kWh (el.),
 "SPECCOST,,H2O-L,,",SPECCOST,,H2O-L,,,0.0013737954502618,USD2023 / kg H2O (l),
