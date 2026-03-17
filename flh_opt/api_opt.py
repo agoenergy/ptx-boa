@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """API interface for FLH optimizer."""
+
 import math
 import os
 from typing import List, Literal, Optional
@@ -10,7 +11,7 @@ from pypsa.descriptors import get_bounds_pu
 from pypsa.optimization.common import reindex
 from xarray import DataArray
 
-from flh_opt._types import OptInputDataType, OptOutputDataType
+from flh_opt._type_defs import OptInputDataType, OptOutputDataType
 
 solver_options = {
     "output_flag": os.environ.get(
@@ -52,7 +53,6 @@ def _add_link(
 ):
     """Add link component to network."""
     if input_data.get(name):
-
         # default efficiency = 1 (for DAC and DESAL):
         if not input_data[name].get("EFF"):
             input_data[name]["EFF"] = 1
@@ -72,10 +72,10 @@ def _add_link(
         )
         # add conversion efficiencies and buses for secondary input / output
         for i, c in enumerate(input_data[name]["CONV"].keys()):
-            n.links.at[name, f"bus{i+2}"] = c
+            n.links.at[name, f"bus{i + 2}"] = c
             # input data is per main output,
             # pypsa link parameters are defined per main input
-            n.links.at[name, f"efficiency{i+2}"] = (
+            n.links.at[name, f"efficiency{i + 2}"] = (
                 -input_data[name]["CONV"][c] * input_data[name]["EFF"]
             )
 
