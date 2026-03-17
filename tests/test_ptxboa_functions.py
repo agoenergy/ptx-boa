@@ -32,7 +32,7 @@ class TestPtxboaFunctions(unittest.TestCase):
             "output_unit": "USD/t",
         }
         api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR)
-        df_in = api.get_dimension("region")
+        df_in = api.get_dimension("region", tool_version_color="green")
 
         # regions including subregions: 80
         self.assertEqual(len(df_in), 80)
