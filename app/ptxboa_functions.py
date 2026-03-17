@@ -220,6 +220,7 @@ def calculate_results_list_blue(
         "chain",
         "scenario",
         "WACC",
+        "Natural gas price",
     ],
     parameter_list: None | list | pd.Series | pd.Index = None,
     override_session_state: dict | None = None,
@@ -268,7 +269,7 @@ def calculate_results_list_blue(
             parameter_list = api.get_dimension(
                 parameter_to_change, tool_version_color="blue"
             ).index
-        elif parameter_to_change in ["WACC"]:
+        elif parameter_to_change in ["WACC", "Natural gas price"]:
             parameter_list = [0.9, 0.95, 1.0, 1.05, 1.1]
         else:
             raise ValueError(f"invalid {parameter_to_change=}")
@@ -315,12 +316,22 @@ def calculate_results_list_blue(
                 )
 
     # sensitivity by changing specific data points by a range of factors
-    elif parameter_to_change in ["WACC"]:
+    elif parameter_to_change in ["WACC", "Natural gas price"]:
         if parameter_to_change == "WACC":
             parameter_code = "WACC"
             process_code = ""
             flow_code = ""
             source_region_code = settings["region"]
+
+        if parameter_to_change == "Natural gas price":
+            parameter_code = "OPEX (other variable)"
+            process_code = "NG production"
+            flow_code = "natural gas (gasous)"
+            source_region_code = (
+                settings["region"]
+                if st.session_state["conversion_location"] == "supply"
+                else settings["country"]
+            )
 
         # get input data
         df = api.get_input_data(
@@ -1091,12 +1102,7 @@ class BlueResultOverDimension:
 
 def blue_results_over_dimension(
     api,
-    dim: Literal[
-        "region",
-        "chain",
-        "scenario",
-        "WACC",
-    ],
+    dim: Literal["region", "chain", "scenario", "WACC", "Natural gas price"],
     emissions_included: Literal["upstream", "final_use", "upstream_and_final_use"],
     parameter_list: None | pd.Series | pd.Index = None,
     override_session_state=None,
