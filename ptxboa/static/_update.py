@@ -229,8 +229,6 @@ def main():
         SELECT
         "country_code",
         "country_name",
-        "is_import",
-        "is_export",
         "is_green",
         "is_blue"
         FROM "ptxboa_target_country"
