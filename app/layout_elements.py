@@ -484,7 +484,8 @@ def display_and_edit_input_data(
         missing_index_name = "flow_code"
         missing_index_value = "natural gas (gasous)"
         column_config = {
-            "specific costs": st.column_config.NumberColumn(
+            "OPEX (other variable)": st.column_config.NumberColumn(
+                label="Natural gas price",
                 format="%.4f USD/kWh",
                 min_value=0,
             )

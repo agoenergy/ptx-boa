@@ -230,7 +230,7 @@ def plot_input_data_on_map(
         ]
         custom_data_func_kwargs = {"float_precision": 0}
     if data_type == "Natural gas price":
-        assert color_col == "specific costs"
+        assert color_col == "OPEX (other variable)"
         custom_data_func_kwargs = {"float_precision": 4}
 
     custom_data_func_kwargs["unit"] = units[data_type]

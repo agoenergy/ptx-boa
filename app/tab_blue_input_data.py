@@ -31,7 +31,7 @@ def content_input_data(api: PtxboaAPI) -> None:
             fig = plot_input_data_on_map(
                 api=api,
                 data_type=data_selection,
-                color_col={"Natural gas price": "specific costs"}.get(
+                color_col={"Natural gas price": "OPEX (other variable)"}.get(
                     data_selection, data_selection
                 ),
                 scope="world",

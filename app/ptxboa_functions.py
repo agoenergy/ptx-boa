@@ -758,8 +758,8 @@ def get_data_type_from_input_data(
 
     if data_type == "Natural gas price":
         source_region_code = None
-        parameter_code = ["specific costs"]
-        process_code = [""]
+        parameter_code = ["OPEX (other variable)"]
+        process_code = ["NG production"]
         flow_code = ["natural gas (gasous)"]
         index = "source_region_code"
         columns = "parameter_code"
