@@ -165,6 +165,36 @@ def _load_dimensions() -> dict[DimensionType, pd.DataFrame]:
         "unit_name", drop=False
     )
 
+    # we need a unified list of regions and countries to make code:name
+    # translations. Blue countries are also treated as source regions
+    # when conversion is happening in demand country.
+    dimensions["region_country"] = (
+        pd.concat(
+            [
+                dimensions["region"].rename(
+                    columns={
+                        "region_code": "region_country_code",
+                        "region_name": "region_country_name",
+                    }
+                ),
+                dimensions["country"].rename(
+                    columns={
+                        "country_code": "region_country_code",
+                        "country_name": "region_country_name",
+                    }
+                ),
+            ]
+        )
+        .loc[
+            :,
+            [
+                "region_country_code",
+                "region_country_name",
+            ],
+        ]
+        .drop_duplicates()
+    )
+
     return dimensions
 
 
@@ -481,10 +511,21 @@ class DataHandler:
         out_type = mapping_direction.split("_")[-1]
 
         for dim in ["parameter", "process", "flow", "region", "country"]:
-            mapping = pd.Series(
-                cls.dimensions[dim][f"{dim}_{out_type}"].to_list(),  # type:ignore
-                index=cls.dimensions[dim][f"{dim}_{in_type}"],  # type:ignore
-            )
+            if dim in {"region", "country"}:
+                # unified mapping for country and region
+                mapping = pd.Series(
+                    cls.dimensions["region_country"][  # type:ignore
+                        f"region_country_{out_type}"
+                    ].to_list(),
+                    index=cls.dimensions["region_country"][
+                        f"region_country_{in_type}"
+                    ],  # type:ignore
+                )
+            else:
+                mapping = pd.Series(
+                    cls.dimensions[dim][f"{dim}_{out_type}"].to_list(),  # type:ignore
+                    index=cls.dimensions[dim][f"{dim}_{in_type}"],  # type:ignore
+                )
             if dim not in ["region", "country"]:
                 column_name = f"{dim}_code"
             elif dim == "region":

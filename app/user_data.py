@@ -6,8 +6,7 @@ import streamlit as st
 
 
 def register_user_changes(
-    missing_index_name: str,
-    missing_index_value: str,
+    missing_index: dict[str, str] | None,
     index: str,
     columns: str,
     values: str,
@@ -50,9 +49,12 @@ def register_user_changes(
         # Convert the list to a DataFrame
         res = pd.DataFrame(data_list)
 
-        # add missing key (the info that is not contained in the 2D table):
-        if missing_index_name is not None or missing_index_value is not None:
-            res[missing_index_name] = missing_index_value
+        if missing_index is None:
+            missing_index = {}
+
+        # add missing keys (the info that is not contained in the 2D table):
+        for k, v in missing_index.items():
+            res[k] = v
 
         # Replace the 'id' values with the corresponding index elements from df_tab
         res[index] = res[index].map(lambda x: df_tab.index[x])

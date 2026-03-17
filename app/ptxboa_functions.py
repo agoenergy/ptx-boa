@@ -220,6 +220,7 @@ def calculate_results_list_blue(
         "chain",
         "scenario",
         "WACC",
+        "Natural gas price",
     ],
     parameter_list: None | list | pd.Series | pd.Index = None,
     override_session_state: dict | None = None,
@@ -268,7 +269,7 @@ def calculate_results_list_blue(
             parameter_list = api.get_dimension(
                 parameter_to_change, tool_version_color="blue"
             ).index
-        elif parameter_to_change in ["WACC"]:
+        elif parameter_to_change in ["WACC", "Natural gas price"]:
             parameter_list = [0.9, 0.95, 1.0, 1.05, 1.1]
         else:
             raise ValueError(f"invalid {parameter_to_change=}")
@@ -315,12 +316,22 @@ def calculate_results_list_blue(
                 )
 
     # sensitivity by changing specific data points by a range of factors
-    elif parameter_to_change in ["WACC"]:
+    elif parameter_to_change in ["WACC", "Natural gas price"]:
         if parameter_to_change == "WACC":
             parameter_code = "WACC"
             process_code = ""
             flow_code = ""
             source_region_code = settings["region"]
+
+        if parameter_to_change == "Natural gas price":
+            parameter_code = "OPEX (other variable)"
+            process_code = "NG production"
+            flow_code = ""
+            source_region_code = (
+                settings["region"]
+                if st.session_state["conversion_location"] == "supply"
+                else settings["country"]
+            )
 
         # get input data
         df = api.get_input_data(
@@ -519,9 +530,10 @@ def sort_by_position_in_chain(
 
 def subset_and_pivot_input_data(
     input_data: pd.DataFrame,
-    source_region_code: list | None = None,
-    parameter_code: list | None = None,
-    process_code: list | None = None,
+    source_region_code: list[str] | None = None,
+    parameter_code: list[str] | None = None,
+    process_code: list[str] | None = None,
+    flow_code: list[str] | None = None,
     index: str = "source_region_code",
     columns: str = "process_code",
     values: str = "value",
@@ -558,6 +570,8 @@ def subset_and_pivot_input_data(
         input_data = input_data.loc[input_data["parameter_code"].isin(parameter_code)]
     if process_code is not None:
         input_data = input_data.loc[input_data["process_code"].isin(process_code)]
+    if flow_code is not None:
+        input_data = input_data.loc[input_data["flow_code"].isin(flow_code)]
 
     reshaped = input_data.pivot_table(
         index=index, columns=columns, values=values, aggfunc="sum"
@@ -579,8 +593,10 @@ def get_data_type_from_input_data(
         "conversion_coefficients",
         "dac_and_desalination",
         "storage",
+        "Natural gas price",
     ],
     scope: Literal[None, "world", "Argentina", "Morocco", "South Africa"],
+    tool_version_color: ToolVersionColorType = "green",
 ) -> pd.DataFrame:
     """
     Get a pivoted table from input data based on data type and regional scope.
@@ -627,7 +643,11 @@ def get_data_type_from_input_data(
     input_data = api.get_input_data(
         st.session_state["scenario"],
         user_data=st.session_state["user_changes_df"],
+        tool_version_color=tool_version_color,
     )
+
+    # green data types not specied by flow code
+    flow_code = None
 
     if data_type in [
         "electricity_generation",
@@ -747,11 +767,20 @@ def get_data_type_from_input_data(
             processes["process_name"].str.contains("storage"), "process_name"
         ].to_list()
 
+    if data_type == "Natural gas price":
+        source_region_code = None
+        parameter_code = ["OPEX (other variable)"]
+        process_code = ["NG production"]
+        flow_code = [""]
+        index = "source_region_code"
+        columns = "parameter_code"
+
     df = subset_and_pivot_input_data(
         input_data,
         source_region_code=source_region_code,
         parameter_code=parameter_code,
         process_code=process_code,
+        flow_code=flow_code,
         index=index,
         columns=columns,
         values="value",
@@ -761,10 +790,24 @@ def get_data_type_from_input_data(
     if data_type == "specific_costs":
         df = df[~(df.index == "electricity")]
 
-    if scope == "world":
-        df = remove_subregions(api=api, df=df)
-    if scope in ["Argentina", "Morocco", "South Africa"]:
-        df = select_subregions(df, scope)
+    if tool_version_color == "blue" and df.index.name == "source_region_code":
+        regions = get_blue_demand_and_supply_regions(api)
+        df_index_set = set(df.index)
+
+        missing = [r for r in regions if r not in df_index_set]
+        if missing:
+            logger.error(f"missing entries for {data_type=}: {missing}")
+
+        available = [r for r in regions if r in df_index_set]
+        df = df.loc[available]
+
+    if tool_version_color == "green":
+        if scope == "world":
+            df = remove_subregions(
+                api=api, df=df, tool_version_color=tool_version_color
+            )
+        if scope in ["Argentina", "Morocco", "South Africa"]:
+            df = select_subregions(df, scope)
 
     # transform data to match unit [%] for 'WACC' and 'efficieny'
     if data_type == "WACC":
@@ -843,6 +886,13 @@ def get_region_list_without_subregions(
         region_list_without_subregions.append(keep)
 
     return sorted(region_list_without_subregions)
+
+
+@st.cache_data(show_spinner=False)
+def get_blue_demand_and_supply_regions(_api: PtxboaAPI):
+    regions = set(_api.get_dimension("region", tool_version_color="blue").index)
+    countries = set(_api.get_dimension("country", tool_version_color="blue").index)
+    return sorted(regions.union(countries))
 
 
 def select_subregions(
@@ -1061,12 +1111,7 @@ class BlueResultOverDimension:
 
 def blue_results_over_dimension(
     api,
-    dim: Literal[
-        "region",
-        "chain",
-        "scenario",
-        "WACC",
-    ],
+    dim: Literal["region", "chain", "scenario", "WACC", "Natural gas price"],
     emissions_included: Literal["upstream", "final_use", "upstream_and_final_use"],
     parameter_list: None | pd.Series | pd.Index = None,
     override_session_state=None,
