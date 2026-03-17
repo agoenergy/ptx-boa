@@ -585,41 +585,39 @@ def test_parameter_data():
 def test_dimension_values_defined(
     year, cost_assumption, dimension_column, tool_version_color
 ):
-    """
-    Check entries in static dimension tables.
+    """Ensure each dimension value in the input data exists in its dimension table."""
+    # dim_name, dim_code
+    dim_map = {
+        "parameter": ("parameter", "parameter_code"),
+        "process": ("process", "process_code"),
+        "flow": ("flow", "flow_code"),
+        # source_region checks the union of region + country
+        "source_region": ("region_country", "region_country_code"),
+        "target_country": ("country", "country_code"),
+    }
 
-    Tests that each dimension value in the data has a corrensponding entry in the
-    respective dimension table.
-    """
     scenario = f"{year} ({cost_assumption})"
+    handler = DataHandler(scenario=scenario, tool_version_color=tool_version_color)
+    input_data = handler.get_input_data(long_names=False)
 
-    # Determine dimension name
-    dimension = (
-        dimension_column.split("_")[-1] if "_" in dimension_column else dimension_column
-    )
+    dim_name, dim_code = dim_map[dimension_column]
 
-    data_handler = DataHandler(scenario=scenario, tool_version_color=tool_version_color)
-    input_data = data_handler.get_input_data(long_names=False)
+    # Dimension table values
+    if dim_name == "region_country":
+        defined_values = handler.dimensions["region_country"][
+            "region_country_code"
+        ].unique()
+    else:
+        defined_values = handler.get_dimension(dim_name)[dim_code].unique()
 
-    # Extract unique values from input data
-    unique_values = (
+    # Values encountered in the input
+    values_in_data = (
         input_data[f"{dimension_column}_code"].replace("", pd.NA).dropna().unique()
     )
 
-    # All defined dimension values
-    if dimension == "region":
-        dim_values = data_handler.dimensions["region_country"][
-            "region_country_code"
-        ].tolist()
-    else:
-        dim_values = data_handler.get_dimension(dimension)[f"{dimension}_code"].tolist()
+    undefined = sorted(set(values_in_data) - set(defined_values))
 
-    # Find undefined values
-    undefined_values = sorted(set(unique_values) - set(dim_values))
-
-    assert (
-        not undefined_values
-    ), f"Undefined values for dimension '{dimension}': {undefined_values}"
+    assert not undefined, f"Undefined values for {dimension_column=} found: {undefined}"
 
 
 @pytest.mark.parametrize("dimension", ("process", "flow", "region", "import_country"))
@@ -633,34 +631,36 @@ def test_dimension_values_defined(
 def test_parameter_only_for_allowed_dimensions_in_data(
     year, cost_assumption, tool_version_color, parameter_code, dimension
 ):
+    """Ensure parameters not allowed per dimension have empty dimension values."""
+    dim_col_map = {
+        "process": "process_code",
+        "flow": "flow_code",
+        "region": "source_region_code",
+        "import_country": "target_country_code",
+    }
+
     scenario = f"{year} ({cost_assumption})"
-    data_handler = DataHandler(scenario=scenario, tool_version_color=tool_version_color)
+    handler = DataHandler(scenario=scenario, tool_version_color=tool_version_color)
+    input_data = handler.get_input_data(long_names=False)
 
-    parameter_spec = (
-        data_handler.get_dimension("parameter", tool_version_color=tool_version_color)
-        .loc[[parameter_code], :]
-        .to_dict("records")[0]
-    )
+    # Get parameter spec
+    param_table = handler.get_dimension("parameter")
+    param_spec = param_table.loc[[parameter_code], :].to_dict("records")[0]
+    allowed = param_spec[f"per_{dimension}"]
 
-    if not parameter_spec[f"per_{dimension}"]:
-        # Parameter not allowed per given dimension.
-        # We check that all values in that dimension are empty strings
-        input_data = data_handler.get_input_data(long_names=False)
-        parameter_data = input_data.loc[input_data["parameter_code"] == parameter_code]
-        if len(parameter_data) == 0:
+    if not allowed:
+        # Filter data for this parameter only
+        df_param = input_data.loc[input_data["parameter_code"] == parameter_code]
+        # No data for this parameter: test_parameter_data_present will check this
+        if df_param.empty:
             return
-
-        dim_values = parameter_data[
-            f"{dimension.replace('import', 'target').replace('region', 'source_region')}_code"  # noqa E501
-        ].unique()
-
-        non_empty_values = set(dim_values) - {""}
-        if non_empty_values:
-            pytest.fail(
-                f"Non-empty values for {parameter_code=} in {dimension=}: {non_empty_values}"  # noqa E501
-            )
-    else:
-        pass
+        dim_col = dim_col_map[dimension]
+        dim_values = df_param[dim_col].unique()
+        non_empty = sorted(v for v in dim_values if v != "")
+        assert not non_empty, (
+            f"Parameter {parameter_code} is not allowed per {dimension}, "
+            f"but has non-empty values: {non_empty}"
+        )
 
 
 @pytest.mark.parametrize(
