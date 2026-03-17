@@ -573,3 +573,129 @@ def test_parameter_data():
     unused_data = unused_data - {("H2-STR", "EL"), ("SYN-S", "CHX-L")}
     if unused_data:
         raise Exception("Unexpected CONV data for: %s", unused_data)
+
+
+@pytest.mark.parametrize("year", ("2030", "2040"))
+@pytest.mark.parametrize("cost_assumption", ("low", "medium", "high"))
+@pytest.mark.parametrize(
+    "dimension_column",
+    ("parameter", "process", "flow", "source_region", "target_country"),
+)
+def test_dimension_values_exist_in_dimension_tables(
+    year, cost_assumption, dimension_column
+):
+    """
+    Verify that every dimension code exists in its corresponding dimension table.
+
+    This ensures referential integrity between the main input data and the
+    dimension metadata: no row in the input may reference a dimension value
+    that is not explicitly defined. Each dimension type (process, flow, region,
+    etc.) is validated against its respective lookup table.
+    """
+    # dim_name, dim_code
+    dim_map = {
+        "parameter": ("parameter", "parameter_code"),
+        "process": ("process", "process_code"),
+        "flow": ("flow", "flow_code"),
+        # source_region checks the union of region + country
+        "source_region": ("region_country", "region_country_code"),
+        "target_country": ("country", "country_code"),
+    }
+
+    scenario = f"{year} ({cost_assumption})"
+    handler = DataHandler(scenario=scenario)
+    input_data = handler.get_input_data(long_names=False)
+
+    dim_name, dim_code = dim_map[dimension_column]
+
+    # Dimension table values
+    if dim_name == "region_country":
+        defined_values = handler.dimensions["region_country"][
+            "region_country_code"
+        ].unique()
+    else:
+        defined_values = handler.get_dimension(dim_name, tool_version_color=None)[
+            dim_code
+        ].unique()
+
+    # Values encountered in the input
+    values_in_data = (
+        input_data[f"{dimension_column}_code"].replace("", pd.NA).dropna().unique()
+    )
+
+    undefined = sorted(set(values_in_data) - set(defined_values))
+
+    assert not undefined, f"Undefined values for {dimension_column=} found: {undefined}"
+
+
+@pytest.mark.parametrize("dimension", ("process", "flow", "region", "import_country"))
+@pytest.mark.parametrize(
+    "parameter_code",
+    pd.read_csv(STATIC_DATA_DIR / "dim_parameter.csv")["parameter_code"].tolist(),
+)
+@pytest.mark.parametrize("cost_assumption", ("low", "medium", "high"))
+@pytest.mark.parametrize("year", ("2030", "2040"))
+def test_parameter_restricts_usage_to_allowed_dimensions(
+    year, cost_assumption, parameter_code, dimension
+):
+    """
+    Ensure that parameters only use dimensions for which they are marked as allowed.
+
+    According to the parameter specification, some parameters are not permitted
+    to vary by specific dimensions (e.g., process, flow, region). For such
+    parameters, the associated dimension-code fields in the input dataset must
+    remain empty. This test verifies that the dataset does not assign values
+    in forbidden dimensions for any parameter.
+    """
+    dim_col_map = {
+        "process": "process_code",
+        "flow": "flow_code",
+        "region": "source_region_code",
+        "import_country": "target_country_code",
+    }
+
+    scenario = f"{year} ({cost_assumption})"
+    handler = DataHandler(scenario=scenario)
+    input_data = handler.get_input_data(long_names=False)
+
+    # Get parameter spec
+    param_table = handler.get_dimension("parameter", tool_version_color=None)
+    param_spec = param_table.loc[[parameter_code], :].to_dict("records")[0]
+    allowed = param_spec[f"per_{dimension}"]
+
+    if not allowed:
+        # Filter data for this parameter only
+        df_param = input_data.loc[input_data["parameter_code"] == parameter_code]
+        # No data for this parameter: test_parameter_data_present will check this
+        if df_param.empty:
+            return
+        dim_col = dim_col_map[dimension]
+        dim_values = df_param[dim_col].unique()
+        non_empty = sorted(v for v in dim_values if v != "")
+        assert not non_empty, (
+            f"Parameter {parameter_code} is not allowed per {dimension}, "
+            f"but has non-empty values: {non_empty}"
+        )
+
+
+@pytest.mark.parametrize(
+    "parameter_code",
+    pd.read_csv(STATIC_DATA_DIR / "dim_parameter.csv")["parameter_code"].tolist(),
+)
+@pytest.mark.parametrize("cost_assumption", ("low", "medium", "high"))
+@pytest.mark.parametrize("year", ("2030", "2040"))
+def test_parameter_has_data(year, cost_assumption, parameter_code):
+    """
+    Check that every parameter has at least one record in the input dataset.
+
+    Every parameter defined in the parameter dimension table must appear in the
+    input data. Missing parameter entries indicate incomplete or inconsistent
+    dataset preparation. This test ensures that no parameter is silently
+    omitted.
+    """
+    scenario = f"{year} ({cost_assumption})"
+    data_handler = DataHandler(scenario=scenario)
+    input_data = data_handler.get_input_data(long_names=False)
+    parameter_data = input_data.loc[input_data["parameter_code"] == parameter_code]
+    if len(parameter_data) == 0:
+        pytest.fail(f"No data defined for {parameter_code=}")
