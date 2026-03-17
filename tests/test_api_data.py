@@ -582,10 +582,17 @@ def test_parameter_data():
     ("parameter", "process", "flow", "source_region", "target_country"),
 )
 @pytest.mark.parametrize("tool_version_color", ("green", "blue"))
-def test_dimension_values_defined(
+def test_dimension_values_exist_in_dimension_tables(
     year, cost_assumption, dimension_column, tool_version_color
 ):
-    """Ensure each dimension value in the input data exists in its dimension table."""
+    """
+    Verify that every dimension code exists in its corresponding dimension table.
+
+    This ensures referential integrity between the main input data and the
+    dimension metadata: no row in the input may reference a dimension value
+    that is not explicitly defined. Each dimension type (process, flow, region,
+    etc.) is validated against its respective lookup table.
+    """
     # dim_name, dim_code
     dim_map = {
         "parameter": ("parameter", "parameter_code"),
@@ -628,10 +635,18 @@ def test_dimension_values_defined(
 @pytest.mark.parametrize("tool_version_color", ("green", "blue"))
 @pytest.mark.parametrize("cost_assumption", ("low", "medium", "high"))
 @pytest.mark.parametrize("year", ("2030", "2040"))
-def test_parameter_only_for_allowed_dimensions_in_data(
+def test_parameter_restricts_usage_to_allowed_dimensions(
     year, cost_assumption, tool_version_color, parameter_code, dimension
 ):
-    """Ensure parameters not allowed per dimension have empty dimension values."""
+    """
+    Ensure that parameters only use dimensions for which they are marked as allowed.
+
+    According to the parameter specification, some parameters are not permitted
+    to vary by specific dimensions (e.g., process, flow, region). For such
+    parameters, the associated dimension-code fields in the input dataset must
+    remain empty. This test verifies that the dataset does not assign values
+    in forbidden dimensions for any parameter.
+    """
     dim_col_map = {
         "process": "process_code",
         "flow": "flow_code",
@@ -670,9 +685,15 @@ def test_parameter_only_for_allowed_dimensions_in_data(
 @pytest.mark.parametrize("tool_version_color", ("green", "blue"))
 @pytest.mark.parametrize("cost_assumption", ("low", "medium", "high"))
 @pytest.mark.parametrize("year", ("2030", "2040"))
-def test_parameter_data_present(
-    year, cost_assumption, tool_version_color, parameter_code
-):
+def test_parameter_has_data(year, cost_assumption, tool_version_color, parameter_code):
+    """
+    Check that every parameter has at least one record in the input dataset.
+
+    Every parameter defined in the parameter dimension table must appear in the
+    input data. Missing parameter entries indicate incomplete or inconsistent
+    dataset preparation. This test ensures that no parameter is silently
+    omitted.
+    """
     scenario = f"{year} ({cost_assumption})"
     data_handler = DataHandler(scenario=scenario, tool_version_color=tool_version_color)
     input_data = data_handler.get_input_data(long_names=False)
