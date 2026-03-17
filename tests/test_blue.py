@@ -149,18 +149,6 @@ def test_new_blue_chain(scenario, kwargs, api_kwargs):
                 "value": 1.373737,  # process_calc!E6
             },
             {
-                "process_code": "NG-DRI-C#B",
-                "flow_code": "HEAT",
-                "parameter_code": "CONV",
-                "value": 0.0,  # process_calc!E7
-            },
-            {
-                "process_code": "EAF#B",
-                "flow_code": "HEAT",
-                "parameter_code": "CONV",
-                "value": 0.0,  # process_calc!J7
-            },
-            {
                 "process_code": "EAF#B",
                 "parameter_code": "LOSS",
                 "flow_code": "NG-G",
@@ -235,20 +223,8 @@ def test_new_blue_chain(scenario, kwargs, api_kwargs):
             {
                 "parameter_code": "EF_E",
                 "flow_code": "EL",
-                # "target_country_code": "DEU", # noqa
+                "source_region_code": "DEU",
                 "value": 300,  # emission_factors!F9
-            },
-            {
-                "parameter_code": "EF_E",
-                "flow_code": "HEAT",
-                "source_region_code": "QAT",
-                "value": 250,  # emission_factors!G9
-            },
-            {
-                "parameter_code": "EF_E",
-                "flow_code": "HEAT",
-                # "target_country_code": "DEU", # noqa
-                "value": 250,  # emission_factors!H9
             },
         ]
     )
@@ -300,7 +276,7 @@ def test_new_blue_chain(scenario, kwargs, api_kwargs):
                 "CO2BOUND": {"NG-G": 0.040812, "STL-S": 0.00396},
                 "CONV": {"EL": 0.651, "NG-G": 0.0042},
                 "EFF": 1.010101,
-                "EF_E": {"EL": 402.0, "NG-G": 201.0},
+                "EF_E": {"EL": 300.0},
                 "EF_M": {"NG-G": 201.0},
                 "FLH": 7000,
                 "LIFETIME": 20,
@@ -337,7 +313,6 @@ def test_new_blue_chain(scenario, kwargs, api_kwargs):
             }
         ],
     }
-
     # round and sort for easier comparison
     values = _sort_nested(_round_nested(values))
     print(values)
@@ -409,13 +384,13 @@ def test_new_blue_chain(scenario, kwargs, api_kwargs):
                 "co2_bound_in_product_m": 0.00396,
                 "co2_captured_e": 0.0,
                 "co2_captured_m": 0.0,
-                "co2_direct_e": 0.80004,
+                "co2_direct_e": -0.00396,
                 "co2_direct_m": 0.80004,
-                "co2_in_flows_e": 0.804,
+                "co2_in_flows_e": 0.0,
                 "co2_in_flows_m": 0.804,
-                "co2_indirect_scope2_e": 261.702,
+                "co2_indirect_scope2_e": 195.3,
                 "co2_indirect_scope2_m": 0.0,
-                "co2e_total_direct_e": 0.805458,
+                "co2e_total_direct_e": 0.001458,
                 "co2e_total_direct_m": 0.805458,
             },
             "flows": {"EL": 0.651, "NG-G": 0.0042},

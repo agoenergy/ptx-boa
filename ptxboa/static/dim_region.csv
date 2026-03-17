@@ -31,15 +31,19 @@ CHL,Chile,CHL,,,True,CL,True,False
 CHN,China,CHN,,,True,CN,True,True
 COL,Colombia,COL,,,True,CO,True,False
 CRI,Costa Rica,CRI,,,True,CR,True,False
+DEU,Germany,,,,,,,
 DNK,Denmark,DNK,,,True,DK,True,False
 DZA,Algeria,DZA,,,True,DZ,True,True
 EGY,Egypt,EGY,,,True,EG,True,False
 ESP,Spain,ESP,,,True,ES,True,False
+FRA,France,,,,,,,
 IDN,Indonesia,IDN,,,True,ID,True,True
 IND,India,IND,,,True,IN,True,True
 JOR,Jordan,JOR,,,True,JO,True,False
+JPN,Japan,,,,,,,
 KAZ,Kazakhstan,KAZ,,,True,KZ,True,False
 KEN,Kenya,KEN,,,True,KE,True,False
+KOR,South Korea,,,,,,,
 MAR,Morocco,MAR,,,True,MA,True,False
 MAR-BEN,Morocco (Béni Mellal-Khénifra),MAR,BEN,Béni Mellal-Khénifra,True,MA-05,True,False
 MAR-CAS,Morocco (Casablanca),MAR,CAS,Casablanca,True,MA-06,True,False
@@ -57,6 +61,7 @@ MEX,Mexico,MEX,,,True,MX,True,False
 MRT,Mauritania,MRT,,,True,MR,True,False
 MYS,Malaysia,MYS,,,True,MY,False,True
 NAM,Namibia,NAM,,,True,NA,True,False
+NLD,Netherlands,,,,,,,
 NOR,Norway,NOR,,,True,NO,True,True
 OMN,Oman,OMN,,,True,OM,False,True
 PER,Peru,PER,,,True,PE,True,False

@@ -953,6 +953,19 @@ class DataHandler:
             use_user_data=use_user_data,
         )
 
+        # parameter getter if processes are in import (target) country:
+        pg_import = _ParameterGetter(
+            data_handler=self,
+            source_region_code=target_country_code,  # !!
+            target_country_code=target_country_code,
+            process_code_res=process_code_res,
+            process_code_ely=process_code_ely,
+            process_code_deriv=process_code_deriv,
+            df_processes=df_processes,
+            df_flows=df_flows,
+            use_user_data=use_user_data,
+        )
+
         # some flows are grouped into their own output category (but not all)
         # so we load the mapping from the data
 
@@ -1029,6 +1042,7 @@ class DataHandler:
                 continue
             pp = pg.get_process_params(process_code)
             pp["process_code"] = process_code
+            # FIXME: we now also need secondary processes for import regions
             result["secondary_process"][flow_code] = pp
             used_flows_secondary = used_flows_secondary | set(pp["CONV"])
             provided_flows_secondary.add(flow_code)
@@ -1059,7 +1073,7 @@ class DataHandler:
             process_code = chain[process_step]
             if not process_code:
                 raise Exception((process_step, chain))
-            pp = pg.get_process_params(process_code)
+            pp = pg_import.get_process_params(process_code)
             pp["step"] = process_step
             pp["process_code"] = process_code
             result["main_import_process_chain"].append(pp)
