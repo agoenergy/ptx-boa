@@ -573,3 +573,109 @@ def test_parameter_data():
     unused_data = unused_data - {("H2-STR", "EL"), ("SYN-S", "CHX-L")}
     if unused_data:
         raise Exception("Unexpected CONV data for: %s", unused_data)
+
+
+@pytest.mark.parametrize("year", ("2030", "2040"))
+@pytest.mark.parametrize("cost_assumption", ("low", "medium", "high"))
+@pytest.mark.parametrize(
+    "dimension_column",
+    ("parameter", "process", "flow", "source_region", "target_country"),
+)
+@pytest.mark.parametrize("tool_version_color", ("green", "blue"))
+def test_dimension_values_defined(
+    year, cost_assumption, dimension_column, tool_version_color
+):
+    """
+    Check entries in static dimension tables.
+
+    Tests that each dimension value in the data has a corrensponding entry in the
+    respective dimension table.
+    """
+    scenario = f"{year} ({cost_assumption})"
+
+    # Determine dimension name
+    dimension = (
+        dimension_column.split("_")[-1] if "_" in dimension_column else dimension_column
+    )
+
+    data_handler = DataHandler(scenario=scenario, tool_version_color=tool_version_color)
+    input_data = data_handler.get_input_data(long_names=False)
+
+    # Extract unique values from input data
+    unique_values = (
+        input_data[f"{dimension_column}_code"].replace("", pd.NA).dropna().unique()
+    )
+
+    # All defined dimension values
+    if dimension == "region":
+        dim_values = data_handler.dimensions["region_country"][
+            "region_country_code"
+        ].tolist()
+    else:
+        dim_values = data_handler.get_dimension(dimension)[f"{dimension}_code"].tolist()
+
+    # Find undefined values
+    undefined_values = sorted(set(unique_values) - set(dim_values))
+
+    assert (
+        not undefined_values
+    ), f"Undefined values for dimension '{dimension}': {undefined_values}"
+
+
+@pytest.mark.parametrize("dimension", ("process", "flow", "region", "import_country"))
+@pytest.mark.parametrize(
+    "parameter_code",
+    pd.read_csv(STATIC_DATA_DIR / "dim_parameter.csv")["parameter_code"].tolist(),
+)
+@pytest.mark.parametrize("tool_version_color", ("green", "blue"))
+@pytest.mark.parametrize("cost_assumption", ("low", "medium", "high"))
+@pytest.mark.parametrize("year", ("2030", "2040"))
+def test_parameter_only_for_allowed_dimensions_in_data(
+    year, cost_assumption, tool_version_color, parameter_code, dimension
+):
+    scenario = f"{year} ({cost_assumption})"
+    data_handler = DataHandler(scenario=scenario, tool_version_color=tool_version_color)
+
+    parameter_spec = (
+        data_handler.get_dimension("parameter", tool_version_color=tool_version_color)
+        .loc[[parameter_code], :]
+        .to_dict("records")[0]
+    )
+
+    if not parameter_spec[f"per_{dimension}"]:
+        # Parameter not allowed per given dimension.
+        # We check that all values in that dimension are empty strings
+        input_data = data_handler.get_input_data(long_names=False)
+        parameter_data = input_data.loc[input_data["parameter_code"] == parameter_code]
+        if len(parameter_data) == 0:
+            return
+
+        dim_values = parameter_data[
+            f"{dimension.replace('import', 'target').replace('region', 'source_region')}_code"  # noqa E501
+        ].unique()
+
+        non_empty_values = set(dim_values) - {""}
+        if non_empty_values:
+            pytest.fail(
+                f"Non-empty values for {parameter_code=} in {dimension=}: {non_empty_values}"  # noqa E501
+            )
+    else:
+        pass
+
+
+@pytest.mark.parametrize(
+    "parameter_code",
+    pd.read_csv(STATIC_DATA_DIR / "dim_parameter.csv")["parameter_code"].tolist(),
+)
+@pytest.mark.parametrize("tool_version_color", ("green", "blue"))
+@pytest.mark.parametrize("cost_assumption", ("low", "medium", "high"))
+@pytest.mark.parametrize("year", ("2030", "2040"))
+def test_parameter_data_present(
+    year, cost_assumption, tool_version_color, parameter_code
+):
+    scenario = f"{year} ({cost_assumption})"
+    data_handler = DataHandler(scenario=scenario, tool_version_color=tool_version_color)
+    input_data = data_handler.get_input_data(long_names=False)
+    parameter_data = input_data.loc[input_data["parameter_code"] == parameter_code]
+    if len(parameter_data) == 0:
+        pytest.fail(f"No data defined for {parameter_code=}")
