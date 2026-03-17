@@ -270,6 +270,23 @@ class _ParameterGetter:
                 result[flow_code] = value
         return result
 
+    def get_flow_co2_params_w_process(
+        self, process_code: ProcessCodeType, parameter_code: ParameterCodeType
+    ) -> dict:
+        result = {}
+        flow_codes = self.get_secondary_and_main_flows(process_code)
+        for flow_code in flow_codes:
+            # new: loss can reduce the effective conversion rate
+            value = self.get_parameter_value_w_default(
+                parameter_code,
+                process_code=process_code,
+                flow_code=flow_code,
+                default=0,
+            )
+            if value:
+                result[flow_code] = value
+        return result
+
     def get_flow_loss_params(self, process_code: ProcessCodeType) -> dict:
         result = {}
         for flow_code in self.get_secondary_flows(process_code):
@@ -354,10 +371,17 @@ class _ParameterGetter:
         # additional parameters for co2
         # TODO: country dependent?
 
-        for param in ["CO2BOUND", "CH4SHARE", "EF_M", "EF_E", "CO2CPT-R", "CO2CPT-S"]:
+        for param in ["CO2BOUND", "CH4SHARE", "EF_M", "EF_E"]:
             value = self.get_flow_co2_params(
                 process_code, parameter_code=param
             )  # type:ignore
+            if value:
+                result[param] = value
+        for param in ["CO2CPT-R", "CO2CPT-S"]:
+            value = self.get_flow_co2_params_w_process(
+                process_code,
+                parameter_code=param,  # type:ignore
+            )
             if value:
                 result[param] = value
 
