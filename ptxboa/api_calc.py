@@ -45,7 +45,14 @@ def calculate_emissions(
     LOSS_FLOW = step_data.get("LOSS_FLOW", {})
     EF_EM = {"M": step_data.get("EF_M", {}), "E": step_data.get("EF_E", {})}
     METHANE_COeq = 29.8  # TODO
+    TODO_g_CO2_g_C_1000 = 3664.446295
+    TODO_kg_per_mwh_lhv = 68.75469807  # FIXME: kg?
+
     FLOW_CO2_INDIRECT = {"HEAT", "EL"}  # TODO: from database?
+    FLOW_CO2_ONLY_WHEN_EFF_TODO = {"NG-G", "CH4-G"}  # TODO: any others?
+    FLOW_CO2_OTHER = {"STL-S"}
+
+    results_flows.main_input = results_flows.main_input
 
     result = {}
     for em in ["e", "m"]:
@@ -63,11 +70,28 @@ def calculate_emissions(
         else:
             co2_bound_in_product_last_proc = 0
 
-        co2_bound_in_product = results_flows.main_output * CO2BOUND.get(
-            main_flow_code_out, 0
-        )  # row 49/57
+        _factor = sum(
+            CO2BOUND.get(f, 0) for f in FLOW_CO2_ONLY_WHEN_EFF_TODO if EF.get(f, 0) > 0
+        ) + sum(CO2BOUND.get(f, 0) for f in FLOW_CO2_OTHER)
 
-        co2_in_flows = 0  # row 47/55:
+        # FIXME: this is not correct in excel (J57)
+        co2_bound_in_product_out = (  # row 49/57
+            results_flows.main_output * TODO_g_CO2_g_C_1000 * _factor
+        )
+
+        # FIXME: bound in process does not work in transport?
+        if (
+            not co2_bound_in_product_out
+            and co2_bound_in_product_last_proc
+            and main_flow_code_in == main_flow_code_out
+            and results_flows.main_input
+        ):
+            co2_bound_in_product_out = (
+                results_flows.main_output / results_flows.main_input
+            ) * co2_bound_in_product_last_proc
+
+        # row 47/55: FIXME: isnt this redundant to bound in product?
+        co2_in_flows = main_input_net * EF.get(main_flow_code_in, 0)
         co2_captured = (  # row 48/56
             main_input_net
             * CO2CPT.get(main_flow_code_in, 0)
@@ -76,7 +100,9 @@ def calculate_emissions(
         co2_indirect_scope2 = 0  # row 62
 
         # line 65: ch4 leakage
-        ch4_direct = main_input_loss * CH4SHARE.get(main_flow_code_in, 0)
+        ch4_direct = (
+            main_input_loss * CH4SHARE.get(main_flow_code_in, 0) * TODO_kg_per_mwh_lhv
+        )
 
         for flow_code, flow_input_gross in results_flows.flows.items():
             # ignore negative flows
@@ -90,7 +116,10 @@ def calculate_emissions(
             ch4_direct += flow_input_loss * CH4SHARE.get(flow_code, 0)
 
             if flow_code in FLOW_CO2_INDIRECT:
-                co2_indirect_scope2 += flow_input_gross * EF.get(flow_code, 0)
+                # FIXME: in excel example: M/E both use emission factors from E
+                # co2_indirect_scope2 += flow_input_gross * EF.get(flow_code, 0) # noqa
+                co2_indirect_scope2 += flow_input_gross * EF_EM["E"].get(flow_code, 0)
+
             else:
                 co2_in_flows += flow_input_net * EF.get(flow_code, 0)
 
@@ -100,7 +129,7 @@ def calculate_emissions(
 
         co2_direct = (  # row 51/59
             co2_bound_in_product_last_proc
-            - co2_bound_in_product
+            - co2_bound_in_product_out
             + co2_in_flows
             - co2_captured
         )
@@ -109,11 +138,11 @@ def calculate_emissions(
         co2e_total_direct = ch4_direct_co2e + co2_direct  # row 69/70
 
         result[f"co2_bound_in_product_last_proc_{em}"] = (
-            co2_bound_in_product  # row 46/54
+            co2_bound_in_product_last_proc  # row 46/54
         )
         result[f"co2_in_flows_{em}"] = co2_in_flows  # row 47/55:
         result[f"co2_captured_{em}"] = co2_captured  # row 48/56:
-        result[f"co2_bound_in_product_{em}"] = co2_bound_in_product  # row 49/57
+        result[f"co2_bound_in_product_{em}"] = co2_bound_in_product_out  # row 49/57
         result[f"co2_direct_{em}"] = co2_direct  # row 51/59
         result[f"co2_indirect_scope2_{em}"] = co2_indirect_scope2  # 62
         result[f"ch4_direct_{em}"] = ch4_direct  # line 65
@@ -157,7 +186,7 @@ class PtxCalc:
         results_emissions_m_g_co2e = []
 
         results_flows_chain: list[ResultsFlows] = []
-        last_emissions = None
+        last_emissions = {}
 
         # iterate over steps in chain
         for step_data in (

@@ -270,6 +270,23 @@ class _ParameterGetter:
                 result[flow_code] = value
         return result
 
+    def get_flow_co2_params_w_process(
+        self, process_code: ProcessCodeType, parameter_code: ParameterCodeType
+    ) -> dict:
+        result = {}
+        flow_codes = self.get_secondary_and_main_flows(process_code)
+        for flow_code in flow_codes:
+            # new: loss can reduce the effective conversion rate
+            value = self.get_parameter_value_w_default(
+                parameter_code,
+                process_code=process_code,
+                flow_code=flow_code,
+                default=0,
+            )
+            if value:
+                result[flow_code] = value
+        return result
+
     def get_flow_loss_params(self, process_code: ProcessCodeType) -> dict:
         result = {}
         for flow_code in self.get_secondary_flows(process_code):
@@ -354,10 +371,17 @@ class _ParameterGetter:
         # additional parameters for co2
         # TODO: country dependent?
 
-        for param in ["CO2BOUND", "CH4SHARE", "EF_M", "EF_E", "CO2CPT-R", "CO2CPT-S"]:
+        for param in ["CO2BOUND", "CH4SHARE", "EF_M", "EF_E"]:
             value = self.get_flow_co2_params(
                 process_code, parameter_code=param
             )  # type:ignore
+            if value:
+                result[param] = value
+        for param in ["CO2CPT-R", "CO2CPT-S"]:
+            value = self.get_flow_co2_params_w_process(
+                process_code,
+                parameter_code=param,  # type:ignore
+            )
             if value:
                 result[param] = value
 
@@ -953,6 +977,19 @@ class DataHandler:
             use_user_data=use_user_data,
         )
 
+        # parameter getter if processes are in import (target) country:
+        pg_import = _ParameterGetter(
+            data_handler=self,
+            source_region_code=target_country_code,  # !!
+            target_country_code=target_country_code,
+            process_code_res=process_code_res,
+            process_code_ely=process_code_ely,
+            process_code_deriv=process_code_deriv,
+            df_processes=df_processes,
+            df_flows=df_flows,
+            use_user_data=use_user_data,
+        )
+
         # some flows are grouped into their own output category (but not all)
         # so we load the mapping from the data
 
@@ -1029,6 +1066,7 @@ class DataHandler:
                 continue
             pp = pg.get_process_params(process_code)
             pp["process_code"] = process_code
+            # FIXME: we now also need secondary processes for import regions
             result["secondary_process"][flow_code] = pp
             used_flows_secondary = used_flows_secondary | set(pp["CONV"])
             provided_flows_secondary.add(flow_code)
@@ -1059,7 +1097,7 @@ class DataHandler:
             process_code = chain[process_step]
             if not process_code:
                 raise Exception((process_step, chain))
-            pp = pg.get_process_params(process_code)
+            pp = pg_import.get_process_params(process_code)
             pp["step"] = process_step
             pp["process_code"] = process_code
             result["main_import_process_chain"].append(pp)
