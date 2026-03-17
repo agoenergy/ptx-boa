@@ -326,7 +326,7 @@ def calculate_results_list_blue(
         if parameter_to_change == "Natural gas price":
             parameter_code = "OPEX (other variable)"
             process_code = "NG production"
-            flow_code = "natural gas (gasous)"
+            flow_code = ""
             source_region_code = (
                 settings["region"]
                 if st.session_state["conversion_location"] == "supply"
@@ -771,7 +771,7 @@ def get_data_type_from_input_data(
         source_region_code = None
         parameter_code = ["OPEX (other variable)"]
         process_code = ["NG production"]
-        flow_code = ["natural gas (gasous)"]
+        flow_code = [""]
         index = "source_region_code"
         columns = "parameter_code"
 
