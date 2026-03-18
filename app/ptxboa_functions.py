@@ -911,10 +911,10 @@ def filter_blue_supply_regions(_api: PtxboaAPI, selected_region: str) -> list[st
     If the selected region belongs to the domestic only group,
     it is added back to the output.
     """
-    ONLY_DOMESTIC_LNG_USE = {"Brazil", "China", "India", "Thailand"}
+    NO_LNG_EXPORT = {"Brazil", "China", "India", "Thailand"}
     all_regions = set(_api.get_dimension("region", tool_version_color="blue").index)
     # Exclude domestic-only regions
-    regions = all_regions - ONLY_DOMESTIC_LNG_USE
+    regions = all_regions - NO_LNG_EXPORT
     # Ensure selected region is present
     regions.add(selected_region)
     return sorted(regions)
