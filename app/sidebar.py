@@ -154,6 +154,7 @@ def main_settings_green(api: PtxboaAPI):
 
 
 def main_settings_blue(api: PtxboaAPI):
+    ONLY_DOMESTIC_LNG_USE = {"Brazil", "China", "India", "Thailand"}
     regions = (
         api.get_dimension("region", tool_version_color="blue")
         .loc[api.get_dimension("region")["subregion_code"] == ""]
@@ -162,7 +163,7 @@ def main_settings_blue(api: PtxboaAPI):
     )
 
     # select region:
-    st.selectbox(
+    region = st.selectbox(
         "Supply country (origin of natural gas)",
         regions,
         help=read_markdown_file("md/sidebar/helptext_sidebar_blue_supply_region.md"),
@@ -170,12 +171,20 @@ def main_settings_blue(api: PtxboaAPI):
         key="region",
     )
 
-    countries = api.get_dimension("country", tool_version_color="blue").index.to_list()
+    if region in ONLY_DOMESTIC_LNG_USE:
+        countries = [region]
+        st.info(f"Only domestic LNG use possible for {region}")
+    else:
+        countries = api.get_dimension(
+            "country", tool_version_color="blue"
+        ).index.to_list()
+
     st.selectbox(
         "Demand country",
         countries,
         help=read_markdown_file("md/sidebar/helptext_sidebar_blue_demand_country.md"),
-        index=countries.index("Germany"),
+        index=0 if region in ONLY_DOMESTIC_LNG_USE else countries.index("Germany"),
+        disabled=region in ONLY_DOMESTIC_LNG_USE,
         key="country",
     )
 

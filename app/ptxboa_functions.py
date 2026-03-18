@@ -902,6 +902,24 @@ def get_blue_demand_and_supply_regions(_api: PtxboaAPI):
     return sorted(regions.union(countries))
 
 
+@st.cache_data
+def filter_blue_supply_regions(_api: PtxboaAPI, selected_region: str) -> list[str]:
+    """
+    List of blue supply regions for cost/emissions comparison by region.
+
+    Excluding regions that use LNG only domestically.
+    If the selected region belongs to the domestic only group,
+    it is added back to the output.
+    """
+    ONLY_DOMESTIC_LNG_USE = {"Brazil", "China", "India", "Thailand"}
+    all_regions = set(_api.get_dimension("region", tool_version_color="blue").index)
+    # Exclude domestic-only regions
+    regions = all_regions - ONLY_DOMESTIC_LNG_USE
+    # Ensure selected region is present
+    regions.add(selected_region)
+    return sorted(regions)
+
+
 def select_subregions(
     df: pd.DataFrame, deep_dive_country: Literal["Argentina", "Morocco", "South Africa"]
 ) -> pd.DataFrame:
