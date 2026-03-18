@@ -417,28 +417,31 @@ def calculate_results_list_blue(
                     **settings,
                 )
 
-                def get_label(change_factor, original_value):
-                    value_label = f"{(original_value * change_factor):.4f}"
-                    if change_factor == 1:
-                        return value_label
-                    else:
-                        pct_change = f"{int(round((change_factor - 1) * 100)):+}%"
-                        return f"{value_label} ({pct_change})"
+                def get_value_label(change_factor, original_value, parameter_to_change):
+                    float_precision = {"Natural gas price": 4, "WACC": 2}
+                    value = original_value * change_factor
 
-                label = get_label(change_factor, value)
+                    if parameter_to_change == "WACC":
+                        value = value * 100
+
+                    value_label = f"{(value):.{float_precision[parameter_to_change]}f} "
+
+                    return value_label
+
+                value_label = get_value_label(change_factor, value, parameter_to_change)
                 costs = res_single.costs
 
                 costs_list.append(costs)
-                costs[parameter_to_change] = label
+                costs[parameter_to_change] = value_label
 
                 emissions = res_single.emissions
                 if emissions is not None:
-                    emissions[parameter_to_change] = label
+                    emissions[parameter_to_change] = value_label
                     emissions_list.append(res_single.emissions)
 
                 emissions_mass = res_single.emission_mass
                 if emissions_mass is not None:
-                    emissions_mass[parameter_to_change] = label
+                    emissions_mass[parameter_to_change] = value_label
                     emissions_mass_list.append(res_single.emission_mass)
 
             except Exception as exc:

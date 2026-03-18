@@ -180,7 +180,7 @@ def content_emissions(api: PtxboaAPI):
             xaxis_title="Conversion location",
             tool_version_color="blue",
             data_type="emissions",
-            allow_sorting=False,
+            sorting="off",
         )
 
     with st.container(border=True):
@@ -224,7 +224,7 @@ def content_emissions(api: PtxboaAPI):
             ),
             tool_version_color="blue",
             data_type="emissions",
-            allow_sorting=False,
+            sorting="off",
         )
 
     with st.container(border=True):

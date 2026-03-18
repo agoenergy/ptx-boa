@@ -146,7 +146,7 @@ def content_costs(api: PtxboaAPI):
             x_label_mapping=xlabel_mapping,
             xaxis_title="Conversion location",
             tool_version_color="blue",
-            allow_sorting=False,
+            sorting="off",
         )
 
     with st.container(border=True):
@@ -186,7 +186,9 @@ def content_costs(api: PtxboaAPI):
                 "md/tab_blue_costs/figure_description_cost_per_WACC.md"
             ),
             tool_version_color="blue",
-            allow_sorting=False,
+            sorting="ascending",
+            allow_diff_view=False,
+            xaxis_title="WACC (%)",
         )
 
     with st.container(border=True):
@@ -212,7 +214,9 @@ def content_costs(api: PtxboaAPI):
                 "md/tab_blue_costs/figure_description_cost_per_natural_gas_price.md"
             ),
             tool_version_color="blue",
-            allow_sorting=False,
+            sorting="ascending",
+            allow_diff_view=False,
+            xaxis_title="Natural gas price (USD/kWh)",
         )
 
     with st.container(border=True):
