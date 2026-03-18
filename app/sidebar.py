@@ -154,6 +154,7 @@ def main_settings_green(api: PtxboaAPI):
 
 
 def main_settings_blue(api: PtxboaAPI):
+    NO_LNG_EXPORT = {"Brazil", "China", "India", "Thailand"}
     regions = (
         api.get_dimension("region", tool_version_color="blue")
         .loc[api.get_dimension("region")["subregion_code"] == ""]
@@ -162,7 +163,7 @@ def main_settings_blue(api: PtxboaAPI):
     )
 
     # select region:
-    st.selectbox(
+    region = st.selectbox(
         "Supply country (origin of natural gas)",
         regions,
         help=read_markdown_file("md/sidebar/helptext_sidebar_blue_supply_region.md"),
@@ -170,12 +171,20 @@ def main_settings_blue(api: PtxboaAPI):
         key="region",
     )
 
-    countries = api.get_dimension("country", tool_version_color="blue").index.to_list()
+    if region in NO_LNG_EXPORT:
+        countries = [region]
+        st.info(f"{region} does not export natural gas.")
+    else:
+        countries = api.get_dimension(
+            "country", tool_version_color="blue"
+        ).index.to_list()
+
     st.selectbox(
         "Demand country",
         countries,
         help=read_markdown_file("md/sidebar/helptext_sidebar_blue_demand_country.md"),
-        index=countries.index("Germany"),
+        index=0 if region in NO_LNG_EXPORT else countries.index("Germany"),
+        disabled=region in NO_LNG_EXPORT,
         key="country",
     )
 
@@ -209,7 +218,7 @@ def main_settings_blue(api: PtxboaAPI):
         "DRI-S": ["STL-S", "DRI-S"],
     }
 
-    product_options = ["NH3-L", "CHX-L", "H2-G", "CH3OH-L", "STL-S", "DRI-S"]
+    product_options = ["H2-G", "NH3-L", "CHX-L", "CH3OH-L", "STL-S", "DRI-S"]
 
     product = st.selectbox(
         label="Final Product",
@@ -333,7 +342,7 @@ def main_settings_blue(api: PtxboaAPI):
     data_year = st.radio(
         "Data year",
         [2030, 2040],
-        index=1,
+        index=0,
         help=read_markdown_file("md/sidebar/helptext_sidebar_blue_data-year.md"),
         horizontal=True,
     )
@@ -362,7 +371,7 @@ def conversion_location_radio(key: str, disabled: bool):
 def additional_settings_green(api):
     co2_source_toggle_green()
     water_source_radio(api)
-    allow_pipeline_toggle()
+    allow_pipeline_toggle(default_value=True)
     ship_own_fuel_toggle("For shipping option: Use the product as own fuel?")
     unit_toggle_green()
 
@@ -370,7 +379,7 @@ def additional_settings_green(api):
 def additional_settings_blue(api: PtxboaAPI):
     final_use_emissions_toggle()
     co2_source_toggle_blue()
-    allow_pipeline_toggle()
+    allow_pipeline_toggle(default_value=False)
     ship_own_fuel_toggle("For shipping option: Use the final product as own fuel?")
     unit_toggle_blue()
 
@@ -547,11 +556,11 @@ def unit_toggle_blue():
     )
 
 
-def allow_pipeline_toggle():
+def allow_pipeline_toggle(default_value: bool):
     allow_pipeline = st.toggle(
         "Allow pipeline transport",
         help=read_markdown_file("md/sidebar/helptext_sidebar_transport.md"),
-        value=True,
+        value=default_value,
     )
     if allow_pipeline:
         st.session_state["transport"] = "Pipeline"

@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 from ptxboa.api import PtxboaAPI, PtxCalc
-from ptxboa.api_data import DataHandler
+from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler
 from tests.test_api import ptxdata_dir_static
 
 
@@ -94,7 +94,7 @@ def _rec_approx(x):
     ],
 )
 def test_new_blue_chain(scenario, kwargs, api_kwargs):
-    """Data test for blue iron chain."""
+    """Data test for blue iron chain using test data."""
     user_data = pd.DataFrame(
         [
             # FIXME: all flows are (in green tool) expected to have CALOR
@@ -252,15 +252,35 @@ def test_new_blue_chain(scenario, kwargs, api_kwargs):
         tool_version_color="blue",
     )
     calculation_data = data_handler.get_calculation_data(**kwargs, optimize_flh=False)
+    # round and sort for easier comparison
+    calculation_data = _sort_nested(_round_nested(calculation_data))
+
     values, _df_result_cost, _df_result_emissions, _df_result_emissions_mass = (
         PtxCalc.calculate(calculation_data)
     )  # noqa
-
     # round and sort for easier comparison
-    calculation_data = _sort_nested(_round_nested(calculation_data))
-    print(calculation_data)
+    values = _sort_nested(_round_nested(values))
 
-    assert _rec_approx(calculation_data) == {
+    # test api output
+    api = PtxboaAPI(data_dir=ptxdata_dir_static)
+    api_result = api.calculate(  # noqa
+        scenario=scenario,
+        **api_kwargs,
+        user_data=user_data,
+        tool_version_color="blue",
+        optimize_flh=False,
+    )
+    res_emission_mass = api_result.emission_mass[
+        ["process_subtype", "emission_type", "gas_type", "values"]
+    ].to_dict(orient="records")
+    res_emission_mass = _sort_nested(_round_nested(res_emission_mass))
+
+    # print so we can copy/paste new results into test
+    print("calculation_data_exp = ", calculation_data)
+    print("values_exp = ", values)
+    print("res_emission_mass_exp = ", res_emission_mass)
+
+    calculation_data_exp = {
         "context": {"source_region_code": "QAT", "target_country_code": "DEU"},
         "flh_opt_process": {},
         "main_export_process_chain": [
@@ -327,34 +347,31 @@ def test_new_blue_chain(scenario, kwargs, api_kwargs):
             }
         ],
     }
-    # round and sort for easier comparison
-    values = _sort_nested(_round_nested(values))
-    print(values)
 
-    assert _rec_approx(values) == [
+    values_exp = [
         {
             "emissions": {
-                "ch4_direct_co2e_e": 274.374207,
-                "ch4_direct_co2e_m": 274.374207,
-                "ch4_direct_e": 9.207188,
-                "ch4_direct_m": 9.207188,
+                "ch4_direct_co2e_e": 274.374044,
+                "ch4_direct_co2e_m": 274.374044,
+                "ch4_direct_e": 9.207183,
+                "ch4_direct_m": 9.207183,
                 "co2_bound_in_product_e": 148.05785,
                 "co2_bound_in_product_last_proc_e": 0.0,
                 "co2_bound_in_product_last_proc_m": 0.0,
                 "co2_bound_in_product_m": 148.05785,
-                "co2_captured_e": 239.851165,
-                "co2_captured_m": 239.851165,
-                "co2_direct_e": 204.316084,
-                "co2_direct_m": 204.316084,
-                "co2_in_flows_e": 592.225098,
-                "co2_in_flows_m": 592.225098,
+                "co2_captured_e": 239.851022,
+                "co2_captured_m": 239.851022,
+                "co2_direct_e": 204.315874,
+                "co2_direct_m": 204.315874,
+                "co2_in_flows_e": 592.224746,
+                "co2_in_flows_m": 592.224746,
                 "co2_indirect_scope2_e": 189.780347,
                 "co2_indirect_scope2_m": 189.780347,
-                "co2e_total_direct_e": 478.690291,
-                "co2e_total_direct_m": 478.690291,
+                "co2e_total_direct_e": 478.689918,
+                "co2e_total_direct_m": 478.689918,
             },
             "flows": {"EL": 0.47209, "IOP-S": 1.36},
-            "main_input": 3.093713,
+            "main_input": 3.093711,
             "main_output": 0.99,
             "process_code": "NG-DRI-C#B",
             "process_step": "DERIV",
@@ -415,12 +432,408 @@ def test_new_blue_chain(scenario, kwargs, api_kwargs):
         },
     ]
 
+    res_emission_mass_exp = [
+        {
+            "emission_type": "direct",
+            "gas_type": "CO2",
+            "process_subtype": "Bound in product",
+            "values": 164064.58952,
+        },
+        {
+            "emission_type": "direct",
+            "gas_type": "CH4",
+            "process_subtype": "EAF#B",
+            "values": 5.41764,
+        },
+        {
+            "emission_type": "direct",
+            "gas_type": "CO2",
+            "process_subtype": "EAF#B",
+            "values": -15202.73967,
+        },
+        {
+            "emission_type": "indirect",
+            "gas_type": "CO2",
+            "process_subtype": "EAF#B",
+            "values": 195300.0,
+        },
+        {
+            "emission_type": "direct",
+            "gas_type": "CH4",
+            "process_subtype": "NG-DRI-C#B",
+            "values": 274374.20694,
+        },
+        {
+            "emission_type": "direct",
+            "gas_type": "CO2",
+            "process_subtype": "NG-DRI-C#B",
+            "values": 204316.083746,
+        },
+        {
+            "emission_type": "indirect",
+            "gas_type": "CO2",
+            "process_subtype": "NG-DRI-C#B",
+            "values": 189780.346718,
+        },
+        {
+            "emission_type": "direct",
+            "gas_type": "CH4",
+            "process_subtype": "DRI-SB#B",
+            "values": 0.0,
+        },
+        {
+            "emission_type": "direct",
+            "gas_type": "CO2",
+            "process_subtype": "DRI-SB#B",
+            "values": 0.0,
+        },
+        {
+            "emission_type": "indirect",
+            "gas_type": "CO2",
+            "process_subtype": "DRI-SB#B",
+            "values": 0.0,
+        },
+    ]
+
+    assert _rec_approx(calculation_data) == calculation_data_exp
+    assert _rec_approx(values) == values_exp
+    assert _rec_approx(res_emission_mass) == res_emission_mass_exp
+
+
+@pytest.mark.parametrize(
+    "scenario, kwargs, api_kwargs",
+    [
+        [
+            "2040 (medium)",
+            {
+                "chain_name": "STL-S__NG-DRI-C_EAF__prod_in_supply",
+                "source_region_code": "QAT",
+                "target_country_code": "DEU",
+                "process_code_res": None,
+                "secondary_processes": {},
+                "ship_own_fuel": False,
+                "use_ship": True,
+            },
+            {
+                "region": "Qatar",
+                "country": "Germany",
+                "chain": "STL-S__NG-DRI-C_EAF__prod_in_supply",
+                "res_gen": None,
+                "transport": "Ship",
+                "ship_own_fuel": False,
+                "secproc_co2": "Direct Air Capture (blue)",
+                "secproc_water": "Sea Water desalination",
+            },
+        ],
+    ],
+)
+def test_new_blue_chain_real_data(scenario, kwargs, api_kwargs):
+    """Data test for blue iron chain using current data."""
+    data_handler = DataHandler(
+        data_dir=DEFAULT_DATA_DIR,
+        scenario=scenario,
+        tool_version_color="blue",
+    )
+    calculation_data = data_handler.get_calculation_data(**kwargs, optimize_flh=False)
+    # round and sort for easier comparison
+    calculation_data = _sort_nested(_round_nested(calculation_data))
+
+    values, _df_result_cost, _df_result_emissions, _df_result_emissions_mass = (
+        PtxCalc.calculate(calculation_data)
+    )  # noqa
+    # round and sort for easier comparison
+    values = _sort_nested(_round_nested(values))
+
     # test api output
-    api = PtxboaAPI(data_dir=ptxdata_dir_static)
+    api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR)
     api_result = api.calculate(  # noqa
         scenario=scenario,
         **api_kwargs,
-        user_data=user_data,
         tool_version_color="blue",
         optimize_flh=False,
     )
+
+    res_emission_mass = api_result.emission_mass[
+        ["process_subtype", "emission_type", "gas_type", "values"]
+    ].to_dict(orient="records")
+    # round and sort for easier comparison
+    res_emission_mass = _sort_nested(_round_nested(res_emission_mass))
+
+    # print so we can copy/paste new results into test
+    print("calculation_data_exp = ", calculation_data)
+    print("values_exp = ", values)
+    print("res_emission_mass_exp = ", res_emission_mass)
+
+    calculation_data_exp = {
+        "context": {"source_region_code": "QAT", "target_country_code": "DEU"},
+        "flh_opt_process": {},
+        "main_export_process_chain": [
+            {
+                "CAPEX": 0,
+                "CH4SHARE": {"NG-G": 0.909},
+                "CONV": {"DIESEL-L": 0.000595, "EL": 0.001153, "NG-G": 1.00378},
+                "EFF": 0.986425,
+                "EF_E": {"DIESEL-L": 266.76, "NG-G": 201.0},
+                "EF_M": {"DIESEL-L": 266.76, "NG-G": 201.0},
+                "FLH": 7000,
+                "LIFETIME": 20,
+                "LOSS_FLOW": {"NG-G": 0.00378},
+                "OPEX-F": 0,
+                "OPEX-O": 0.004863,
+                "process_code": "NG-PROD#B",
+                "step": "NG_PROD",
+            },
+            {
+                "CAPEX": 0.591876,
+                "CH4SHARE": {"NG-G": 0.909},
+                "CO2CPT-R": {"CH4-G": 0.9, "NG-G": 0.9},
+                "CO2CPT-S": {"CH4-G": 0.45, "NG-G": 0.45},
+                "CONV": {"EL": 0.476859, "IOP-S": 1.373737},
+                "EFF": 0.336004,
+                "EF_E": {"CH4-G": 201.0, "NG-G": 201.0},
+                "EF_M": {"CH4-G": 201.0, "NG-G": 201.0},
+                "FLH": 7000,
+                "LIFETIME": 20.0,
+                "OPEX-F": 0.017756,
+                "OPEX-O": 0,
+                "process_code": "NG-DRI-C#B",
+                "step": "DERIV",
+            },
+        ],
+        "main_import_process_chain": [
+            {
+                "CAPEX": 0.417344,
+                "CH4SHARE": {"NG-G": 0.920806},
+                "CONV": {"EL": 0.651, "NG-G": 0.3},
+                "EFF": 1.010101,
+                "EF_E": {"EL": 100.0, "NG-G": 201.0},
+                "EF_M": {"EL": 100.0, "NG-G": 201.0},
+                "FLH": 7000,
+                "LIFETIME": 20.0,
+                "OPEX-F": 0.01252,
+                "OPEX-O": 0.183679,
+                "process_code": "EAF#B",
+                "step": "DERIV_I2",
+            }
+        ],
+        "parameter": {
+            "CALOR": 1,
+            "SPECCOST": {
+                "CO2-G": 0.044519,
+                "DIESEL-L": 0.042857,
+                "EL": 0.08078,
+                "H2O-L": 0.001374,
+                "HEAT": 0.0577,
+                "IOP-S": 0.267076,
+                "N2-G": 0.01154,
+                "NG-G": 0,
+            },
+            "WACC": 0,
+        },
+        "secondary_process": {},
+        "transport_process_chain": [
+            {
+                "CONV": {},
+                "DIST": 12830.0,
+                "EFF": 1.0,
+                "OPEX-O": 0,
+                "OPEX-T": 0.0,
+                "process_code": "DRI-SB#B",
+                "step": "SHP",
+            }
+        ],
+    }
+    values_exp = [
+        {
+            "emissions": {
+                "ch4_direct_co2e_e": 0.301691,
+                "ch4_direct_co2e_m": 0.301691,
+                "ch4_direct_e": 0.010124,
+                "ch4_direct_m": 0.010124,
+                "co2_bound_in_product_e": 0.0,
+                "co2_bound_in_product_last_proc_e": 0.0,
+                "co2_bound_in_product_last_proc_m": 0.0,
+                "co2_bound_in_product_m": 0.0,
+                "co2_captured_e": 0.0,
+                "co2_captured_m": 0.0,
+                "co2_direct_e": 592.692757,
+                "co2_direct_m": 592.692757,
+                "co2_in_flows_e": 592.692757,
+                "co2_in_flows_m": 592.692757,
+                "co2_indirect_scope2_e": 0.0,
+                "co2_indirect_scope2_m": 0.0,
+                "co2e_total_direct_e": 592.994448,
+                "co2e_total_direct_m": 592.994448,
+            },
+            "flows": {"DIESEL-L": 0.001753, "EL": 0.003397, "NG-G": 2.957531},
+            "main_input": 2.986941,
+            "main_output": 2.946394,
+            "process_code": "NG-PROD#B",
+            "process_step": "NG_PROD",
+        },
+        {
+            "emissions": {
+                "ch4_direct_co2e_e": 0.0,
+                "ch4_direct_co2e_m": 0.0,
+                "ch4_direct_e": 0.0,
+                "ch4_direct_m": 0.0,
+                "co2_bound_in_product_e": 0.0,
+                "co2_bound_in_product_last_proc_e": 0.0,
+                "co2_bound_in_product_last_proc_m": 0.0,
+                "co2_bound_in_product_m": 0.0,
+                "co2_captured_e": 239.851165,
+                "co2_captured_m": 239.851165,
+                "co2_direct_e": 352.373934,
+                "co2_direct_m": 352.373934,
+                "co2_in_flows_e": 592.225098,
+                "co2_in_flows_m": 592.225098,
+                "co2_indirect_scope2_e": 0.0,
+                "co2_indirect_scope2_m": 0.0,
+                "co2e_total_direct_e": 352.373934,
+                "co2e_total_direct_m": 352.373934,
+            },
+            "flows": {"EL": 0.47209, "IOP-S": 1.36},
+            "main_input": 2.946394,
+            "main_output": 0.99,
+            "process_code": "NG-DRI-C#B",
+            "process_step": "DERIV",
+        },
+        {
+            "emissions": {
+                "ch4_direct_co2e_e": 0.0,
+                "ch4_direct_co2e_m": 0.0,
+                "ch4_direct_e": 0.0,
+                "ch4_direct_m": 0.0,
+                "co2_bound_in_product_e": 0.0,
+                "co2_bound_in_product_last_proc_e": 0.0,
+                "co2_bound_in_product_last_proc_m": 0.0,
+                "co2_bound_in_product_m": 0.0,
+                "co2_captured_e": 0.0,
+                "co2_captured_m": 0.0,
+                "co2_direct_e": 0.0,
+                "co2_direct_m": 0.0,
+                "co2_in_flows_e": 0.0,
+                "co2_in_flows_m": 0.0,
+                "co2_indirect_scope2_e": 0.0,
+                "co2_indirect_scope2_m": 0.0,
+                "co2e_total_direct_e": 0.0,
+                "co2e_total_direct_m": 0.0,
+            },
+            "flows": {},
+            "main_input": 0.99,
+            "main_output": 0.99,
+            "process_code": "DRI-SB#B",
+            "process_step": "SHP",
+        },
+        {
+            "emissions": {
+                "ch4_direct_co2e_e": 0.0,
+                "ch4_direct_co2e_m": 0.0,
+                "ch4_direct_e": 0.0,
+                "ch4_direct_m": 0.0,
+                "co2_bound_in_product_e": 0.0,
+                "co2_bound_in_product_last_proc_e": 0.0,
+                "co2_bound_in_product_last_proc_m": 0.0,
+                "co2_bound_in_product_m": 0.0,
+                "co2_captured_e": 0.0,
+                "co2_captured_m": 0.0,
+                "co2_direct_e": 60.3,
+                "co2_direct_m": 60.3,
+                "co2_in_flows_e": 60.3,
+                "co2_in_flows_m": 60.3,
+                "co2_indirect_scope2_e": 65.1,
+                "co2_indirect_scope2_m": 65.1,
+                "co2e_total_direct_e": 60.3,
+                "co2e_total_direct_m": 60.3,
+            },
+            "flows": {"EL": 0.651, "NG-G": 0.3},
+            "main_input": 0.99,
+            "main_output": 1.0,
+            "process_code": "EAF#B",
+            "process_step": "DERIV_I2",
+        },
+    ]
+    res_emission_mass_exp = [
+        {
+            "emission_type": "direct",
+            "gas_type": "CO2",
+            "process_subtype": "Bound in product",
+            "values": 0.0,
+        },
+        {
+            "emission_type": "direct",
+            "gas_type": "CH4",
+            "process_subtype": "EAF#B",
+            "values": 0.0,
+        },
+        {
+            "emission_type": "direct",
+            "gas_type": "CO2",
+            "process_subtype": "EAF#B",
+            "values": 60300.0,
+        },
+        {
+            "emission_type": "indirect",
+            "gas_type": "CO2",
+            "process_subtype": "EAF#B",
+            "values": 65100.0,
+        },
+        {
+            "emission_type": "direct",
+            "gas_type": "CH4",
+            "process_subtype": "NG-DRI-C#B",
+            "values": 0.0,
+        },
+        {
+            "emission_type": "direct",
+            "gas_type": "CO2",
+            "process_subtype": "NG-DRI-C#B",
+            "values": 352374.349215,
+        },
+        {
+            "emission_type": "indirect",
+            "gas_type": "CO2",
+            "process_subtype": "NG-DRI-C#B",
+            "values": 0.0,
+        },
+        {
+            "emission_type": "direct",
+            "gas_type": "CH4",
+            "process_subtype": "NG-PROD#B",
+            "values": 301.691595,
+        },
+        {
+            "emission_type": "direct",
+            "gas_type": "CO2",
+            "process_subtype": "NG-PROD#B",
+            "values": 592693.107938,
+        },
+        {
+            "emission_type": "indirect",
+            "gas_type": "CO2",
+            "process_subtype": "NG-PROD#B",
+            "values": 0.0,
+        },
+        {
+            "emission_type": "direct",
+            "gas_type": "CH4",
+            "process_subtype": "DRI-SB#B",
+            "values": 0.0,
+        },
+        {
+            "emission_type": "direct",
+            "gas_type": "CO2",
+            "process_subtype": "DRI-SB#B",
+            "values": 0.0,
+        },
+        {
+            "emission_type": "indirect",
+            "gas_type": "CO2",
+            "process_subtype": "DRI-SB#B",
+            "values": 0.0,
+        },
+    ]
+
+    assert _rec_approx(calculation_data) == calculation_data_exp
+    assert _rec_approx(values) == values_exp
+    assert _rec_approx(res_emission_mass) == res_emission_mass_exp

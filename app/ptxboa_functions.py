@@ -231,7 +231,9 @@ def calculate_results_list_blue(
 
     Fewer dimensions can change.
     Additionally, sensitivities can be calculated by modifying a specific parameter
-    value by a range of factors.
+    value by a range of factors for these parameters:
+        - WACC
+        - Natural gas price
     """
     setting_keys = [
         "chain",
@@ -270,7 +272,7 @@ def calculate_results_list_blue(
                 parameter_to_change, tool_version_color="blue"
             ).index
         elif parameter_to_change in ["WACC", "Natural gas price"]:
-            parameter_list = [0.9, 0.95, 1.0, 1.05, 1.1]
+            parameter_list = [0.5, 0.75, 1.0, 1.25, 1.5]
         else:
             raise ValueError(f"invalid {parameter_to_change=}")
 
@@ -321,17 +323,19 @@ def calculate_results_list_blue(
             parameter_code = "WACC"
             process_code = ""
             flow_code = ""
-            source_region_code = settings["region"]
-
-        if parameter_to_change == "Natural gas price":
-            parameter_code = "OPEX (other variable)"
-            process_code = "NG production"
-            flow_code = ""
+            # we change wacc at the conversion location
             source_region_code = (
                 settings["region"]
                 if st.session_state["conversion_location"] == "supply"
                 else settings["country"]
             )
+
+        if parameter_to_change == "Natural gas price":
+            parameter_code = "OPEX (other variable)"
+            process_code = "NG production"
+            flow_code = ""
+            # NG price in supply region
+            source_region_code = settings["region"]
 
         # get input data
         df = api.get_input_data(
@@ -413,28 +417,31 @@ def calculate_results_list_blue(
                     **settings,
                 )
 
-                def get_label(change_factor, original_value):
-                    value_label = f"{(original_value * change_factor):.4f}"
-                    if change_factor == 1:
-                        return value_label
-                    else:
-                        pct_change = f"{int(round((change_factor - 1) * 100)):+}%"
-                        return f"{value_label} ({pct_change})"
+                def get_value_label(change_factor, original_value, parameter_to_change):
+                    float_precision = {"Natural gas price": 4, "WACC": 2}
+                    value = original_value * change_factor
 
-                label = get_label(change_factor, value)
+                    if parameter_to_change == "WACC":
+                        value = value * 100
+
+                    value_label = f"{(value):.{float_precision[parameter_to_change]}f} "
+
+                    return value_label
+
+                value_label = get_value_label(change_factor, value, parameter_to_change)
                 costs = res_single.costs
 
                 costs_list.append(costs)
-                costs[parameter_to_change] = label
+                costs[parameter_to_change] = value_label
 
                 emissions = res_single.emissions
                 if emissions is not None:
-                    emissions[parameter_to_change] = label
+                    emissions[parameter_to_change] = value_label
                     emissions_list.append(res_single.emissions)
 
                 emissions_mass = res_single.emission_mass
                 if emissions_mass is not None:
-                    emissions_mass[parameter_to_change] = label
+                    emissions_mass[parameter_to_change] = value_label
                     emissions_mass_list.append(res_single.emission_mass)
 
             except Exception as exc:
@@ -893,6 +900,24 @@ def get_blue_demand_and_supply_regions(_api: PtxboaAPI):
     regions = set(_api.get_dimension("region", tool_version_color="blue").index)
     countries = set(_api.get_dimension("country", tool_version_color="blue").index)
     return sorted(regions.union(countries))
+
+
+@st.cache_data
+def filter_blue_supply_regions(_api: PtxboaAPI, selected_region: str) -> list[str]:
+    """
+    List of blue supply regions for cost/emissions comparison by region.
+
+    Excluding regions that use LNG only domestically.
+    If the selected region belongs to the domestic only group,
+    it is added back to the output.
+    """
+    NO_LNG_EXPORT = {"Brazil", "China", "India", "Thailand"}
+    all_regions = set(_api.get_dimension("region", tool_version_color="blue").index)
+    # Exclude domestic-only regions
+    regions = all_regions - NO_LNG_EXPORT
+    # Ensure selected region is present
+    regions.add(selected_region)
+    return sorted(regions)
 
 
 def select_subregions(

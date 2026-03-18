@@ -34,7 +34,8 @@ def display_results_bar_and_table(
     xaxis_title: str | None = None,
     tool_version_color: ToolVersionColorType = "green",
     data_type: Literal["costs", "emissions"] = "costs",
-    allow_sorting: bool = True,
+    sorting: Literal["toggle", "ascending", "off"] = "toggle",
+    allow_diff_view: bool = True,
 ):
     """Display costs/emissions as table and bar chart."""
     if x_label_mapping is None:
@@ -50,8 +51,10 @@ def display_results_bar_and_table(
         if output_unit is None:
             output_unit: str = st.session_state["emissions_output_unit"]
 
-    if not allow_sorting:
+    if sorting == "off":
         sort_ascending = False
+    if sorting == "ascending":
+        sort_ascending = True
 
     key_suffix = key_suffix.lower().replace(" ", "_")
     st.subheader(titlestring)
@@ -63,11 +66,22 @@ def display_results_bar_and_table(
 
     # select which dataset to display:
     if st.session_state["user_changes_df"] is not None:
+        if allow_diff_view:
+            data_view_options = [
+                "With Modifications",
+                "Without Modifications",
+                "Difference",
+            ]
+        else:
+            data_view_options = [
+                "With Modifications",
+                "Without Modifications",
+            ]
         with c2:
             st.info("Input data has been modified. Select which data to display.")
             select_data = st.radio(
                 "Data to display",
-                ["With Modifications", "Without Modifications", "Difference"],
+                data_view_options,
                 horizontal=True,
                 key=f"select_user_modificatons_data_{key}_{key_suffix}",
             )
@@ -131,7 +145,7 @@ def display_results_bar_and_table(
             df_res = df_res.loc[ind_select]
             sort_ascending = False
 
-        if show_which_data != min_10_label and allow_sorting:
+        if show_which_data != min_10_label and sorting == "toggle":
             sort_ascending = st.toggle(
                 f"Sort by total {data_type}?",
                 value=True,

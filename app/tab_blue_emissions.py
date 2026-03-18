@@ -13,7 +13,7 @@ from app.plot_functions import (
 from app.ptxboa_functions import (
     aggregate_emissions,
     blue_results_over_dimension,
-    get_region_list_without_subregions,
+    filter_blue_supply_regions,
     read_markdown_file,
     sort_by_position_in_chain,
 )
@@ -35,8 +35,8 @@ def content_emissions(api: PtxboaAPI):
                 api,
                 dim="region",
                 emissions_included=st.session_state["emissions_included"],
-                parameter_list=get_region_list_without_subregions(
-                    api, keep=st.session_state["subregion"], tool_version_color="blue"
+                parameter_list=pd.Series(
+                    filter_blue_supply_regions(api, st.session_state["region"])
                 ),
             )
 
@@ -180,7 +180,7 @@ def content_emissions(api: PtxboaAPI):
             xaxis_title="Conversion location",
             tool_version_color="blue",
             data_type="emissions",
-            allow_sorting=False,
+            sorting="off",
         )
 
     with st.container(border=True):
@@ -224,7 +224,7 @@ def content_emissions(api: PtxboaAPI):
             ),
             tool_version_color="blue",
             data_type="emissions",
-            allow_sorting=False,
+            sorting="off",
         )
 
     with st.container(border=True):
