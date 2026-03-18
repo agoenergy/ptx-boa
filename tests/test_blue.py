@@ -424,3 +424,71 @@ def test_new_blue_chain(scenario, kwargs, api_kwargs):
         tool_version_color="blue",
         optimize_flh=False,
     )
+
+    res_emission_mass = api_result.emission_mass[
+        ["process_subtype", "emission_type", "gas_type", "values"]
+    ].to_dict(orient="records")
+
+    print(res_emission_mass)
+    assert _rec_approx(res_emission_mass) == [
+        {
+            "process_subtype": "Bound in product",
+            "emission_type": "direct",
+            "gas_type": "CO2",
+            "values": 164064.58951973997,
+        },
+        {
+            "process_subtype": "EAF#B",
+            "emission_type": "direct",
+            "gas_type": "CH4",
+            "values": 5.417640000000001,
+        },
+        {
+            "process_subtype": "EAF#B",
+            "emission_type": "direct",
+            "gas_type": "CO2",
+            "values": -15202.739669536864,
+        },
+        {
+            "process_subtype": "EAF#B",
+            "emission_type": "indirect",
+            "gas_type": "CO2",
+            "values": 195299.99999999997,
+        },
+        {
+            "process_subtype": "NG-DRI-C#B",
+            "emission_type": "direct",
+            "gas_type": "CH4",
+            "values": 274374.2069402957,
+        },
+        {
+            "process_subtype": "NG-DRI-C#B",
+            "emission_type": "direct",
+            "gas_type": "CO2",
+            "values": 204316.0837457972,
+        },
+        {
+            "process_subtype": "NG-DRI-C#B",
+            "emission_type": "indirect",
+            "gas_type": "CO2",
+            "values": 189780.34671780348,
+        },
+        {
+            "process_subtype": "DRI-SB#B",
+            "emission_type": "direct",
+            "gas_type": "CH4",
+            "values": 0.0,
+        },
+        {
+            "process_subtype": "DRI-SB#B",
+            "emission_type": "direct",
+            "gas_type": "CO2",
+            "values": 0.0,
+        },
+        {
+            "process_subtype": "DRI-SB#B",
+            "emission_type": "indirect",
+            "gas_type": "CO2",
+            "values": 0.0,
+        },
+    ]
