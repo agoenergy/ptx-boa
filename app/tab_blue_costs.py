@@ -171,42 +171,48 @@ def content_costs(api: PtxboaAPI):
                 emissions_included=st.session_state["emissions_included"],
             )
 
+        conversion_region = (
+            st.session_state["region"]
+            if st.session_state["conversion_location"] == "supply"
+            else st.session_state["country"]
+        )
         display_results_bar_and_table(
             results_per_wacc.costs,
             results_per_wacc.costs_not_modified,
             key="scenario",
             key_suffix="sensitivity_wacc",
-            titlestring=read_markdown_file(
-                "md/tab_blue_costs/figure_title_cost_per_WACC.md"
-            ),
+            titlestring=f"Costs for different WACC values in {conversion_region}",
             help_string=read_markdown_file(
                 "md/tab_blue_costs/figure_description_cost_per_WACC.md"
             ),
             tool_version_color="blue",
+            allow_sorting=False,
         )
 
     with st.container(border=True):
         with st.spinner(
             "Please wait. Calculating results for different natural gas prices."
         ):
-            results_per_wacc = blue_results_over_dimension(
+            results_per_ng_price = blue_results_over_dimension(
                 api,
                 dim="Natural gas price",
                 emissions_included=st.session_state["emissions_included"],
             )
 
         display_results_bar_and_table(
-            results_per_wacc.costs,
-            results_per_wacc.costs_not_modified,
+            results_per_ng_price.costs,
+            results_per_ng_price.costs_not_modified,
             key="scenario",
             key_suffix="sensitivity_ng_price",
-            titlestring=read_markdown_file(
-                "md/tab_blue_costs/figure_title_cost_per_natural_gas_price.md"
+            titlestring=(
+                "Costs for different natural gas prices "
+                f"in {st.session_state['region']}"
             ),
             help_string=read_markdown_file(
                 "md/tab_blue_costs/figure_description_cost_per_natural_gas_price.md"
             ),
             tool_version_color="blue",
+            allow_sorting=False,
         )
 
     with st.container(border=True):
@@ -248,7 +254,6 @@ def content_costs(api: PtxboaAPI):
         with st.spinner(
             "Please wait. Calculating results for different output products."
         ):
-
             if st.session_state["reformer"] is not None:
                 equal_reformer_chains = blue_chains.loc[
                     blue_chains.index.str.endswith(

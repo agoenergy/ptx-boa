@@ -231,7 +231,9 @@ def calculate_results_list_blue(
 
     Fewer dimensions can change.
     Additionally, sensitivities can be calculated by modifying a specific parameter
-    value by a range of factors.
+    value by a range of factors for these parameters:
+        - WACC
+        - Natural gas price
     """
     setting_keys = [
         "chain",
@@ -270,7 +272,7 @@ def calculate_results_list_blue(
                 parameter_to_change, tool_version_color="blue"
             ).index
         elif parameter_to_change in ["WACC", "Natural gas price"]:
-            parameter_list = [0.9, 0.95, 1.0, 1.05, 1.1]
+            parameter_list = [0.5, 0.75, 1.0, 1.25, 1.5]
         else:
             raise ValueError(f"invalid {parameter_to_change=}")
 
@@ -321,17 +323,19 @@ def calculate_results_list_blue(
             parameter_code = "WACC"
             process_code = ""
             flow_code = ""
-            source_region_code = settings["region"]
-
-        if parameter_to_change == "Natural gas price":
-            parameter_code = "OPEX (other variable)"
-            process_code = "NG production"
-            flow_code = ""
+            # we change wacc at the conversion location
             source_region_code = (
                 settings["region"]
                 if st.session_state["conversion_location"] == "supply"
                 else settings["country"]
             )
+
+        if parameter_to_change == "Natural gas price":
+            parameter_code = "OPEX (other variable)"
+            process_code = "NG production"
+            flow_code = ""
+            # NG price in supply region
+            source_region_code = settings["region"]
 
         # get input data
         df = api.get_input_data(
