@@ -513,6 +513,7 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CONV,NG-PROD#B,EL,SAU,",CONV,NG-PROD#B,EL,SAU,,0.0020331268470106,kWh (el.)/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
 "CONV,NG-PROD#B,EL,THA,",CONV,NG-PROD#B,EL,THA,,0.0020186007511007,kWh (el.)/kWh natural gas LHV,"IFEU 2023 (Ecoinvent 3.9.1, data from IDN)"
 "CONV,NG-PROD#B,EL,USA,",CONV,NG-PROD#B,EL,USA,,0.0011764692780979,kWh (el.)/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
+"CONV,NG-PROD#B,NG-G,,",CONV,NG-PROD#B,NG-G,,,1.0,,
 "CONV,NH3-REC#B,EL,,",CONV,NH3-REC#B,EL,,,0.0076699999999999,kWh (el.)/H2-G,NGN; Equinor 2018
 "CONV,NH3-REC,EL,,",CONV,NH3-REC,EL,,,0.0076699999999999,kWh (el.)/H2-G,NGN; Equinor 2018
 "CONV,NH3-SB,BFUEL-L,,",CONV,NH3-SB,BFUEL-L,,,5.343656103416341e-06,kwh bunker fuel (l)/(km*NH3-L),calc_shipping

@@ -104,7 +104,7 @@ docker logs --follow $APP
 # check which docker images are downloaded
 docker image ls
 # show running containers
-docker image ps
+docker ps
 # delete all unused objects
 docker system prune -a
 ```
