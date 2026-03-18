@@ -8,6 +8,7 @@ from app.layout_elements import display_footer
 from app.sidebar import make_sidebar_blue
 from app.tab_blue_costs import content_costs
 from app.tab_blue_costs_comparison import content_costs_comparison
+from app.tab_blue_debugging import content_debugging
 from app.tab_blue_emissions import content_emissions
 from app.tab_blue_input_data import content_input_data
 from app.user_data import display_user_changes
@@ -47,6 +48,7 @@ def blue_page():
         "Emissions",
         "Input data",
         "Cost comparison to renewable based product",
+        "Debugging",
     )
 
     tabs_icons = {
@@ -76,9 +78,6 @@ def blue_page():
     # create sidebar:
     make_sidebar_blue(api)
 
-    # display chain code
-    st.markdown(f"CHAIN_CODE: `{st.session_state['chain']}`")
-
     # hardcoded values which are not relevant for blue version
     st.session_state["res_gen"] = None
     st.session_state["secproc_water"] = "Specific costs"
@@ -101,5 +100,8 @@ def blue_page():
 
     if st.session_state[st.session_state["tab_key"]] == "Input data":
         content_input_data(api)
+
+    if st.session_state[st.session_state["tab_key"]] == "Debugging":
+        content_debugging(api)
 
     display_footer()
