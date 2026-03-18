@@ -47,3 +47,32 @@ def content_debugging(api):
 
     st.subheader("Flow results")
     st.json(result.todo_results_flows)
+
+    COLS_TO_DROP = [
+        "chain",
+        "country",
+        "output_unit",
+        "region",
+        "scenario",
+        "secproc_co2",
+        "ship_own_fuel",
+        "transport",
+        "secproc_water",
+        "res_gen",
+    ]
+    st.subheader("Cost results")
+    st.dataframe(result.costs.drop(columns=COLS_TO_DROP, errors="ignore"))
+
+    st.subheader("Emission results")
+    st.dataframe(
+        result.emissions.drop(columns=COLS_TO_DROP, errors="ignore")
+        if result.emissions is not None
+        else None
+    )
+
+    st.subheader("Emission mass results")
+    st.dataframe(
+        result.emission_mass.drop(columns=COLS_TO_DROP, errors="ignore")
+        if result.emission_mass is not None
+        else None
+    )
