@@ -239,7 +239,7 @@ def content_costs_comparison(api):
                 mode="markers",
                 marker={
                     "size": 15,
-                    "symbol": "hexagram-dot",
+                    "symbol": "circle-dot",
                     "line": {
                         "width": 2,
                         "color": "DarkSlateGrey",
