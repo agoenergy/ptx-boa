@@ -662,8 +662,8 @@ ParameterCodeType = Literal[
     "CALOR",
     "CAPEX",
     "CAP-T",
+    "CBOUND",
     "CH4SHARE",
-    "CO2BOUND",
     "CO2CPT-R",
     "CO2CPT-S",
     "CONV",
@@ -688,8 +688,8 @@ ParameterCodeValues = [
     "CALOR",
     "CAPEX",
     "CAP-T",
+    "CBOUND",
     "CH4SHARE",
-    "CO2BOUND",
     "CO2CPT-R",
     "CO2CPT-S",
     "CONV",
@@ -713,10 +713,10 @@ ParameterCodeValues = [
 
 
 ParameterNameType = Literal[
+    "C bound in product",
     "calorific values",
     "CAPEX",
     "capture rate by flow",
-    "CO2 bound in product",
     "CO2 for capture share",
     "conversion factors",
     "conversion factors (other fuel, transport)",
@@ -739,10 +739,10 @@ ParameterNameType = Literal[
     "WACC",
 ]
 ParameterNameValues = [
+    "C bound in product",
     "calorific values",
     "CAPEX",
     "capture rate by flow",
-    "CO2 bound in product",
     "CO2 for capture share",
     "conversion factors",
     "conversion factors (other fuel, transport)",

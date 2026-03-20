@@ -44,7 +44,7 @@ def calculate_emissions(
 
     CH4SHARE = step_data.get("CH4SHARE", {})  # only NG-G
 
-    CO2BOUND = step_data.get("CO2BOUND", {})  # in kgC/output
+    CBOUND = step_data.get("CBOUND", {})  # in kgC/output
     # only in:
     # CH3OHSYC#B	CO2-G
     # CH3OHSYN#B	CO2-G
@@ -162,10 +162,10 @@ def calculate_emissions(
         logger.debug(bound_in_product_main_input)
 
         co2_bound_total = sum(
-            CO2BOUND.get(f, 0)
+            CBOUND.get(f, 0)
             for f in FLOW_CO2_ONLY_WHEN_EFF_TODO
             if EF_DIRECT.get(f, 0) > 0
-        ) + sum(CO2BOUND.get(f, 0) for f in FLOW_CO2_OTHER)
+        ) + sum(CBOUND.get(f, 0) for f in FLOW_CO2_OTHER)
 
         # FIXME: this is not correct in excel (J57)
         co2_bound_in_product_out = (  # row 49/57
