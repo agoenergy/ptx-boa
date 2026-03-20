@@ -371,13 +371,14 @@ class _ParameterGetter:
         # additional parameters for co2
         # TODO: country dependent?
 
-        for param in ["CO2BOUND", "CH4SHARE", "EF_M", "EF_E"]:
+        for param in ["CH4SHARE", "EF_M", "EF_E"]:
             value = self.get_flow_co2_params(
                 process_code, parameter_code=param
             )  # type:ignore
             if value:
                 result[param] = value
-        for param in ["CO2CPT-R", "CO2CPT-S"]:
+
+        for param in ["CO2CPT-R", "CO2CPT-S", "CO2BOUND"]:
             value = self.get_flow_co2_params_w_process(
                 process_code,
                 parameter_code=param,  # type:ignore
