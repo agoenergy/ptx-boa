@@ -248,8 +248,16 @@ def content_costs_comparison(api):
             )
         )
         fig.update_layout(
-            xaxis={"title": {"text": "Scenario"}},
-            yaxis={"title": {"text": st.session_state["output_unit"]}},
+            xaxis={
+                "title": {"text": "Scenario"},
+                "tickformat": ",",
+            },
+            yaxis={
+                "title": {"text": st.session_state["output_unit"]},
+                "range": [0, None],
+                "tickformat": ",",
+            },
             boxmode="group",
+            separators=". ",
         )
         st.plotly_chart(fig)
