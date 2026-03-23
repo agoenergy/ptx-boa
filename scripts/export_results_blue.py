@@ -165,7 +165,9 @@ def main(xlsx_filepath: str):
             "region": "Qatar",
             "country": "Germany",
             "transport": "Ship",
+            "output_unit": "USD/t",  # worls for all
         }
+
         res = api.calculate(
             **settings,
             res_gen=None,
