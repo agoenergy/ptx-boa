@@ -92,6 +92,8 @@ def calculate_emissions(
     # NG-DRI-C#B    DRI-S   CH4-G
     # NG-DRI-C#B    DRI-S   NG-G
     # NG-PROD#B     NG-G    NG-G
+    if main_flow_code_out in CBOUND_KG_C_PER_OUTPUT:
+        logger.warning("TODO: can CBOUNDbe set on main_flow_code_out?")
 
     # co2 capture fraction
     CO2CPTR_FRACTION = step_data.get("CO2CPT-R", {})  # only in NG-G or CH4-G
@@ -183,38 +185,17 @@ def calculate_emissions(
         else:
             co2_g_bound_last = 0
 
-        if not results_flows.main_input:
-            if co2_g_bound_last:
+        if main_flow_code_in not in CBOUND_KG_C_PER_OUTPUT:
+            # calculate CBOUND for in flow
+            if not results_flows.main_input and co2_g_bound_last:
                 logger.error("main flow is 0")
-            cbound_kg_c_per_main_input = 0
+                cbound_kg_c_per_output = 0
+            else:
+                cbound_kg_c_per_output = (
+                    co2_g_bound_last / results_flows.main_input / g_co2_per_kg_C
+                )
         else:
-            cbound_kg_c_per_main_input = (
-                co2_g_bound_last / results_flows.main_input / g_co2_per_kg_C
-            )
-
-        logger.debug(cbound_kg_c_per_main_input)
-
-        co2_bound_total = sum(
-            CBOUND_KG_C_PER_OUTPUT.get(f, 0)
-            for f in FLOW_CO2_ONLY_WHEN_EFF_TODO
-            if EF_DIRECT.get(f, 0) > 0
-        ) + sum(CBOUND_KG_C_PER_OUTPUT.get(f, 0) for f in FLOW_CO2_OTHER)
-
-        # FIXME: this is not correct in excel (J57)
-        co2_bound_in_product_out = (  # row 49/57
-            results_flows.main_output * g_co2_per_kg_C * co2_bound_total
-        )
-
-        # FIXME: bound in process does not work in transport?
-        if (
-            not co2_bound_in_product_out
-            and co2_g_bound_last
-            and main_flow_code_in == main_flow_code_out
-            and results_flows.main_input
-        ):
-            co2_bound_in_product_out = (
-                results_flows.main_output / results_flows.main_input
-            ) * co2_g_bound_last
+            cbound_kg_c_per_output = CBOUND_KG_C_PER_OUTPUT.get(main_flow_code_in)
 
         # row 47/55: FIXME: isnt this redundant to bound in product?
         co2_in_flows = get_in_co2(main_flow_code_in, main_input_net)
@@ -237,6 +218,19 @@ def calculate_emissions(
             co2_in_flows += get_in_co2(flow_code, flow_input_net)
             ch4_g_direct += get_ch4_g_from_ng_loss(flow_code, flow_input_loss)
             co2_captured += get_captured(flow_code, flow_input_net)  # row 48/56
+
+            cbound = CBOUND_KG_C_PER_OUTPUT.get(flow_code, 0)
+            if cbound:
+                # FLAG
+                if flow_code in FLOW_CO2_ONLY_WHEN_EFF_TODO or (
+                    flow_code in FLOW_CO2_OTHER and EF_DIRECT.get(flow_code, 0) > 0
+                ):
+                    cbound_kg_c_per_output += cbound
+
+        # FIXME: this is not correct in excel (J57)
+        co2_bound_in_product_out = (  # row 49/57
+            results_flows.main_output * g_co2_per_kg_C * cbound_kg_c_per_output
+        )
 
         # indirect emissions (use EF_E for E and M balance?, only for HEAT and EL?)
         co2_indirect_scope2 = sum(
