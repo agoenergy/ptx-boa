@@ -75,6 +75,15 @@ def calculate_emissions(
     FLOW_CO2_INDIRECT = {"HEAT", "EL"}  # TODO: from database?
     FLOW_CO2_ONLY_WHEN_EFF_TODO = {"NG-G", "CH4-G"}  # TODO: any others?
     FLOW_CO2_OTHER = {"STL-S"}
+    is_transformation_changing_cbound = step_data["step"] in {
+        "NG_PROD",
+        "ELY",
+        "DERIV",
+        "DERIV2",
+        "ELY_I",
+        "DERIV_I",
+        "DERIV_I2",
+    }
 
     all_flows = results_flows.flows.copy()
     if main_flow_code_in in all_flows:
@@ -92,8 +101,15 @@ def calculate_emissions(
     # NG-DRI-C#B    DRI-S   CH4-G
     # NG-DRI-C#B    DRI-S   NG-G
     # NG-PROD#B     NG-G    NG-G
-    if main_flow_code_out in CBOUND_KG_C_PER_OUTPUT:
-        logger.warning("TODO: can CBOUNDbe set on main_flow_code_out?")
+    if (
+        main_flow_code_out in CBOUND_KG_C_PER_OUTPUT
+        and main_flow_code_out not in results_flows.flows
+    ):
+        logger.warning(
+            "TODO: can CBOUND be set on main_flow_code_out %s %s?",
+            step_data["process_code"],
+            main_flow_code_out,
+        )
 
     # co2 capture fraction
     CO2CPTR_FRACTION = step_data.get("CO2CPT-R", {})  # only in NG-G or CH4-G
@@ -105,7 +121,6 @@ def calculate_emissions(
     # LOSS: only NG-G? - should also be CH4?
     LOSS_MAIN = step_data.get("LOSS", 0)
     LOSS_FLOW = step_data.get("LOSS_FLOW", {})
-    LOSS = LOSS_FLOW | {main_flow_code_in: LOSS_MAIN}  # noqa
 
     _EF_M = step_data.get("EF_M", {})
     _EF_E = step_data.get("EF_E", {})
@@ -184,18 +199,7 @@ def calculate_emissions(
             co2_g_bound_last = last_emissions[f"co2_bound_in_product_{em}"]
         else:
             co2_g_bound_last = 0
-
-        if main_flow_code_in not in CBOUND_KG_C_PER_OUTPUT:
-            # calculate CBOUND for in flow
-            if not results_flows.main_input and co2_g_bound_last:
-                logger.error("main flow is 0")
-                cbound_kg_c_per_output = 0
-            else:
-                cbound_kg_c_per_output = (
-                    co2_g_bound_last / results_flows.main_input / g_co2_per_kg_C
-                )
-        else:
-            cbound_kg_c_per_output = CBOUND_KG_C_PER_OUTPUT.get(main_flow_code_in)
+        cbound_kg_c_per_output = CBOUND_KG_C_PER_OUTPUT.get(main_flow_code_in, 0)
 
         # row 47/55: FIXME: isnt this redundant to bound in product?
         co2_in_flows = get_in_co2(main_flow_code_in, main_input_net)
@@ -227,10 +231,21 @@ def calculate_emissions(
                 ):
                     cbound_kg_c_per_output += cbound
 
-        # FIXME: this is not correct in excel (J57)
-        co2_bound_in_product_out = (  # row 49/57
-            results_flows.main_output * g_co2_per_kg_C * cbound_kg_c_per_output
-        )
+        if is_transformation_changing_cbound:
+            # FIXME: this is not correct in excel (J57)
+            co2_g_bound_in_product_out = (  # row 49/57
+                results_flows.main_output * g_co2_per_kg_C * cbound_kg_c_per_output
+            )
+        else:
+            if not results_flows.main_input:
+                logger.error("main_input = 0 for non transformation step")
+                co2_g_bound_in_product_out = co2_g_bound_last
+            else:
+                co2_g_bound_in_product_out = (
+                    co2_g_bound_last
+                    / results_flows.main_input
+                    * results_flows.main_output
+                )
 
         # indirect emissions (use EF_E for E and M balance?, only for HEAT and EL?)
         co2_indirect_scope2 = sum(
@@ -241,7 +256,7 @@ def calculate_emissions(
 
         # simple sums / differences
         co2_direct = (  # row 51/59
-            co2_g_bound_last - co2_bound_in_product_out + co2_in_flows - co2_captured
+            co2_g_bound_last - co2_g_bound_in_product_out + co2_in_flows - co2_captured
         )
         ch4_direct_co2e = ch4_g_direct * ch4_to_co2eq  # row 66
         co2e_total_direct = ch4_direct_co2e + co2_direct  # row 69/70
@@ -249,7 +264,7 @@ def calculate_emissions(
         result[f"co2_bound_in_product_last_proc_{em}"] = co2_g_bound_last  # row 46/54
         result[f"co2_in_flows_{em}"] = co2_in_flows  # row 47/55:
         result[f"co2_captured_{em}"] = co2_captured  # row 48/56:
-        result[f"co2_bound_in_product_{em}"] = co2_bound_in_product_out  # row 49/57
+        result[f"co2_bound_in_product_{em}"] = co2_g_bound_in_product_out  # row 49/57
         result[f"co2_direct_{em}"] = co2_direct  # row 51/59
         result[f"co2_indirect_scope2_{em}"] = co2_indirect_scope2  # 62
         result[f"ch4_direct_{em}"] = ch4_g_direct  # line 65
