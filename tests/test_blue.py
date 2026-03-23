@@ -288,7 +288,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
     calculation_data = _sort_nested(_round_nested(calculation_data))
 
     values, _df_result_cost, _df_result_emissions, _df_result_emissions_mass = (
-        PtxCalc.calculate(calculation_data)
+        PtxCalc.calculate(calculation_data)  # type:ignore
     )  # noqa
     # round and sort for easier comparison
     values = _sort_nested(_round_nested(values))
@@ -303,7 +303,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
         optimize_flh=False,
         output_unit="USD/t",  # must be per ton for steel
     )
-    res_emission_mass = api_result.emission_mass[
+    res_emission_mass = api_result.emission_mass[  # type:ignore
         ["process_subtype", "emission_type", "gas_type", "values"]
     ].to_dict(orient="records")
     res_emission_mass = _sort_nested(_round_nested(res_emission_mass))
@@ -1175,15 +1175,13 @@ def test_new_blue_chain_real_data(
     calculation_data = _sort_nested(_round_nested(api_result.todo_data))
     values = _sort_nested(_round_nested(api_result.todo_results_flows))
 
-    res_emission_mass = api_result.emission_mass[
+    res_emission_mass = api_result.emission_mass[  # type:ignore
         ["process_subtype", "emission_type", "gas_type", "values"]
     ].to_dict(orient="records")
     # round and sort for easier comparison
     res_emission_mass = _sort_nested(_round_nested(res_emission_mass))
 
     # print so we can copy/paste new results into test
-    print("NEW EXPEDTED DATA")
-    print("=============================")
     print((calculation_data, values, res_emission_mass))
 
     assert _rec_approx(calculation_data) == _sort_nested(
