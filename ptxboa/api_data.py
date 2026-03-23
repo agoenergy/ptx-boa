@@ -326,6 +326,20 @@ class _ParameterGetter:
             result[flow_code] = conv
         return result
 
+    def get_flow_conv_ot_params(self, process_code: ProcessCodeType) -> dict:
+        result = {}
+        for flow_code in self.get_secondary_flows(process_code):
+            conv_ot = self.get_parameter_value_w_default(
+                parameter_code="CONV-OT",
+                process_code=process_code,
+                flow_code=flow_code,
+                default=0,
+            )
+            if conv_ot <= 0:
+                continue
+            result[flow_code] = conv_ot
+        return result
+
     def get_process_params(self, process_code: ProcessCodeType) -> dict:
         result = {}
         result["EFF"] = self.get_parameter_value_w_default(
@@ -417,6 +431,8 @@ class _ParameterGetter:
         result["OPEX-O"] = self.get_parameter_value_w_default(
             "OPEX-O", process_code=process_code, default=0
         )
+        # CONV-OT => CONV? FIXME
+        # result["CONV-OT"] = self.get_flow_conv_ot_params(process_code) # FIXME # noqa
         result["CONV"] = self.get_flow_conv_params(process_code)
         return result
 
@@ -444,6 +460,23 @@ class _ParameterGetter:
             if value:
                 result[flow_code] = value
         return result
+
+
+def load_scenario_data(data_dir, scenario: str) -> pd.DataFrame:
+    scenario_filename = (
+        f"{scenario.replace(' ', '_').replace(')', '').replace('(', '')}"
+    )
+    return _load_data(
+        data_dir,
+        scenario_filename,
+        key_columns=(
+            "parameter_code",
+            "process_code",
+            "flow_code",
+            "source_region_code",
+            "target_country_code",
+        ),
+    )
 
 
 class DataHandler:
@@ -486,20 +519,7 @@ class DataHandler:
             ),
         )
 
-        scenario_filename = (
-            f"{scenario.replace(' ', '_').replace(')', '').replace('(', '')}"
-        )
-        self._scenario_data = _load_data(
-            self.data_dir,
-            scenario_filename,
-            key_columns=(
-                "parameter_code",
-                "process_code",
-                "flow_code",
-                "source_region_code",
-                "target_country_code",
-            ),
-        ).copy()
+        self._scenario_data = load_scenario_data(self.data_dir, scenario).copy()
 
         if user_data is not None:
             self.scenario_data = self._update_scenario_data_with_user_data(

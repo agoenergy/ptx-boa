@@ -6,7 +6,13 @@ from tempfile import TemporaryDirectory
 import pandas as pd
 import pytest
 
-from ptxboa.api_data import DEFAULT_DATA_DIR, STATIC_DATA_DIR, DataHandler
+from ptxboa.api_data import (
+    DEFAULT_DATA_DIR,
+    STATIC_DATA_DIR,
+    DataHandler,
+    ScenarioValues,
+    load_scenario_data,
+)
 from tests.utils import assert_deep_equal
 
 
@@ -557,7 +563,7 @@ def test_parameter_data():
 
     data_conv_proc_flow = {
         tuple(x)
-        for x in df_data.loc[df_data["parameter_code"] == "CONV"][
+        for x in df_data.loc[df_data["parameter_code"].isin({"CONV", "CONV-OT"})][
             ["process_code", "flow_code"]
         ].values
     }
@@ -569,7 +575,7 @@ def test_parameter_data():
         raise Exception("Missing CONV data for: %s", missing_data)
 
     unused_data = data_conv_proc_flow - expected_conv_proc_flow
-    # known special cases (TODO):
+    # known special cases (FIXME):
     unused_data = unused_data - {("H2-STR", "EL"), ("SYN-S", "CHX-L")}
     if unused_data:
         raise Exception("Unexpected CONV data for: %s", unused_data)
@@ -776,13 +782,43 @@ def test_chains():
 
     # find all used flows
     used_flows = set()
+    # combinations of process and flow
+    used_process_flows = set()
 
-    used_flows = used_flows | set(df_process["main_flow_code_in"].fillna(""))
-    used_flows = used_flows | set(df_process["main_flow_code_out"].fillna(""))
-    for secondary_flows in df_process["secondary_flows"].fillna("").values:
-        used_flows = used_flows | set(secondary_flows)
-    used_flows = used_flows - {""}
+    # ... per process
+    for process_code, proc in df_process.iterrows():
+        used_flows_proc = (
+            {proc["main_flow_code_in"], proc["main_flow_code_out"]}
+            | set(proc["secondary_flows"])
+        ) - {""}
+        used_flows = used_flows | used_flows_proc
+        used_process_flows = used_process_flows | {
+            (process_code, f) for f in used_flows_proc
+        }
 
     flows = set(df_flow["flow_code"])
 
     assert used_flows == flows, (used_flows - flows, flows - used_flows)
+
+    # check if in current data, we have combinations of process/flow that
+    # is never used
+    dfs = []
+    for scen in ScenarioValues:
+        df = load_scenario_data(data_dir=DEFAULT_DATA_DIR, scenario=scen)
+        dfs.append(df)
+    df_data = pd.concat(dfs)
+    data_proc_flow_combos = {
+        tuple(x)
+        for x in df_data.loc[
+            (df_data["process_code"] != "") & (df_data["flow_code"] != ""),
+            ["process_code", "flow_code"],
+        ]
+        .drop_duplicates()
+        .values
+    }
+    unused_data_proc_flow_combos = data_proc_flow_combos - used_process_flows
+    unused_data_proc_flow_combos = unused_data_proc_flow_combos - {
+        ("H2-STR", "EL")  # FIXME (affects green tool)
+    }
+    print(unused_data_proc_flow_combos)
+    assert not unused_data_proc_flow_combos, unused_data_proc_flow_combos
