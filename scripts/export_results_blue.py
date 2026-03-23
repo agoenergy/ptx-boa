@@ -4,6 +4,9 @@
 - combine intermediate results for flows, emissions, costs
 - save in excel: one sheet per result, one column per process
 
+
+FIXME: output detailed costs
+
 """
 
 from typing import Any, Iterable
@@ -58,10 +61,11 @@ STEPS = [
 
 rows = [
     "0:settings:chain",
-    "0:settings:country",
     "0:settings:region",
+    "0:settings:country",
     "0:settings:scenario",
     "0:settings:transport",
+    "0:settings:output_unit",
     "0:process:process_code",
     "0:process:main_flow_code_in",
     "0:process:main_flow_code_out",
@@ -162,10 +166,12 @@ def main(xlsx_filepath: str):
         settings = {
             "chain": chain["chain"],
             "scenario": "2040 (medium)",
-            "region": "Qatar",
+            "region": "Algeria",
             "country": "Germany",
             "transport": "Ship",
+            "output_unit": "USD/t",  # worls for all
         }
+
         res = api.calculate(
             **settings,
             res_gen=None,
