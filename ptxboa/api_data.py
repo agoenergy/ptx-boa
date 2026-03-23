@@ -334,9 +334,22 @@ class _ParameterGetter:
         # loss that effects main efficiency: get parameter for
         # main in flow
         main_flow_code_in = self.df_processes.loc[process_code, "main_flow_code_in"]
-        main_loss_param = self.get_parameter_value_w_default(
-            "LOSS", process_code=process_code, flow_code=main_flow_code_in, default=0
-        )
+
+        # special case NG-PROD#B: has no main_flow_code_in
+        if process_code == "NG-PROD#B":
+            main_loss_param = self.get_parameter_value_w_default(
+                "LOSS",
+                process_code=process_code,
+                flow_code=self.df_processes.loc[process_code, "main_flow_code_out"],
+                default=0,
+            )
+        else:
+            main_loss_param = self.get_parameter_value_w_default(
+                "LOSS",
+                process_code=process_code,
+                flow_code=main_flow_code_in,
+                default=0,
+            )
         flow_loss_params = self.get_flow_loss_params(process_code)
         if main_loss_param:
             # see https://github.com/agoenergy/ptx-boa/issues/581
