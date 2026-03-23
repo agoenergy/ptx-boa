@@ -426,7 +426,12 @@ def calculate_results_list_blue(
 
                     value_label = f"{(value):.{float_precision[parameter_to_change]}f} "
 
-                    return value_label
+                    if change_factor == 1:
+                        change_label = "(from input data)"
+                    else:
+                        change_label = f"({int(round((change_factor - 1) * 100)):+}%)"
+
+                    return f"{value_label}<br>{change_label}"
 
                 value_label = get_value_label(change_factor, value, parameter_to_change)
                 costs = res_single.costs
