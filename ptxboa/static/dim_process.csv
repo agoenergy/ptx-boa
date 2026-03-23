@@ -34,10 +34,10 @@ DAC,Direct Air Capture,CO2-G,,False,False,False,True,PROV_C,False,False,Carbon,E
 DAC#B,Direct Air Capture (blue),CO2-G,,False,False,False,True,PROV_C,False,False,Carbon,EL/HEAT,False,True
 DESAL,Sea Water desalination,H2O-L,,False,False,False,True,PROV_H2O,False,False,Water,EL,True,False
 DRI,Green iron reduction,DRI-S,H2-G,True,False,False,False,DERIV,False,True,Derivative production,EL,True,False
-DRI#B,Green iron reduction (blue),DRI-S,H2-G,True,False,False,False,DERIV,False,True,Derivative production,EL/IOP-S,False,True
+DRI#B,Green iron reduction (blue),B-DRI-S,H2-G,True,False,False,False,DERIV,False,True,Derivative production,EL/IOP-S,False,True
 DRI-SB,Green iron ship (bunker fuel consumption),DRI-S,DRI-S,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,True,False
-DRI-SB#B,Green iron ship (bunker fuel consumption) (blue),DRI-S,DRI-S,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,False,True
-EAF#B,EAF (blue),STL-S,DRI-S,True,False,False,False,DERIV,False,True,Derivative production,EL/NG-G,False,True
+DRI-SB#B,Green iron ship (bunker fuel consumption) (blue),B-DRI-S,B-DRI-S,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,False,True
+EAF#B,EAF (blue),STL-S,B-DRI-S,True,False,False,False,DERIV,False,True,Derivative production,EL/NG-G,False,True
 EFUELSYN,FT e-fuels Synthesis (Fischer-Tropsch),CHX-L,H2-G,True,False,False,False,DERIV,False,True,Derivative production,CO2-G/EL/H2O-L/HEAT,True,False
 EFUELSYN#B,FT e-fuels Synthesis (Fischer-Tropsch) (blue),CHX-L,H2-G,True,False,False,False,DERIV,False,True,Derivative production,CO2-G/EL/HEAT,False,True
 EFUELSYNC#B,FT Synthesis (Fischer-Tropsch) using NG with CCS,CHX-L,NG-G,True,False,False,False,DERIV,False,True,Derivative production,EL,False,True
@@ -67,7 +67,7 @@ LOHC-CON,LOHC conversion,LOHC-L,H2-G,True,False,True,False,TRNSP-SP,False,False,
 LOHC-REC,LOHC reconversion,H2-G,LOHC-L,True,False,True,False,TRNSP-SP,False,False,Transportation (Ship),EL/HEAT,True,False
 LOHC-S,LOHC ship (own fuel consumption),LOHC-L,LOHC-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,True,False
 LOHC-SB,LOHC ship (bunker fuel consumption),LOHC-L,LOHC-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,True,False
-NG-DRI-C#B,NG-based iron reduction with CCS,DRI-S,NG-G,True,False,False,False,DERIV,False,True,Derivative production,CH4-G/EL/IOP-S,False,True
+NG-DRI-C#B,NG-based iron reduction with CCS,B-DRI-S,NG-G,True,False,False,False,DERIV,False,True,Derivative production,CH4-G/EL/IOP-S,False,True
 NG-PROD#B,NG production,NG-G,,False,False,False,False,NG,False,False,Natural gas production,DIESEL-L/EL/NG-G,False,True
 NH3-REC,Ammonia reconversion,H2-G,NH3-L,True,False,True,False,TRNSP-SP,False,False,Transportation (Ship),EL,True,False
 NH3-REC#B,Ammonia reconversion (blue),H2-G,NH3-L,True,False,True,False,TRNSP-SP,False,False,Transportation (Ship),EL,False,True
