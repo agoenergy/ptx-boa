@@ -1152,7 +1152,7 @@ class DataHandler:
     def get_dimensions_parameter_code(
         cls,
         dimension: DimensionType,
-        parameter_name: str,
+        parameter_name: str | None,
     ) -> str:
         """
         Get the internal code for a paremeter within a certain dimension.

@@ -249,7 +249,7 @@ class PtxboaAPI:
         flow_code_chain_out = data_handler.get_dimension("chain").loc[chain, "FLOW_OUT"]
         flow_unit_chain_out = data_handler.get_dimension("flow").loc[
             flow_code_chain_out, "unit"
-        ]
+        ]  # type:ignore
 
         if flow_unit_chain_out.lower().startswith("kwh"):
             if output_unit == "USD/MWh":

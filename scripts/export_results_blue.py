@@ -65,7 +65,8 @@ rows = [
     "0:settings:country",
     "0:settings:scenario",
     "0:settings:transport",
-    "0:settings:output_unit",
+    "0:settings:output_unit_cost",
+    "0:settings:output_unit_data",
     "0:process:process_code",
     "0:process:main_flow_code_in",
     "0:process:main_flow_code_out",
@@ -163,13 +164,23 @@ def main(xlsx_filepath: str):
     all_row_keys = set()
 
     for idx, (_, chain) in enumerate(chains.iterrows()):
+        chain_flow_out = chain["FLOW_OUT"]
+        flow_out_unit = api.get_dimension("flow").loc[chain_flow_out, "unit"]
+        if flow_out_unit.lower().startswith("kwh"):  # type:ignore
+            output_unit_cost = "USD/MWh"
+            output_unit_data = "X/kWh"
+        elif flow_out_unit.lower().startswith("kg"):  # type:ignore
+            output_unit_cost = "USD/t"
+            output_unit_data = "X/kg"
+        else:
+            raise Exception()
+
         settings = {
             "chain": chain["chain"],
             "scenario": "2040 (medium)",
             "region": "Algeria",
             "country": "Germany",
             "transport": "Ship",
-            "output_unit": "USD/t",  # worls for all
         }
 
         res = api.calculate(
@@ -179,23 +190,33 @@ def main(xlsx_filepath: str):
             secproc_co2=None,
             secproc_water=None,
             tool_version_color="blue",
+            output_unit=output_unit_cost,
             optimize_flh=False,
         )
 
         # TODO: res.todo_data["secondary_process"]
 
-        data_general = dict(flatten_dict(settings, "0:settings")) | dict(
-            flatten_dict(res.todo_data["parameter"], "1:parameter")
+        data_general = (
+            dict(flatten_dict(settings, "0:settings"))
+            | dict(
+                flatten_dict(res.todo_data["parameter"], "1:parameter")  # type:ignore
+            )
+            | {
+                "0:settings:output_unit_cost": output_unit_cost,
+                "0:settings:output_unit_data": output_unit_data,
+            }
         )
         all_row_keys = all_row_keys | set(data_general)
         pd_series = [pd.Series(data_general, name="")]
 
         data_steps = list_to_dict_by_step(
-            res.todo_data["main_export_process_chain"]
-            + res.todo_data["transport_process_chain"]
-            + res.todo_data["main_import_process_chain"]
+            res.todo_data["main_export_process_chain"]  # type:ignore
+            + res.todo_data["transport_process_chain"]  # type:ignore
+            + res.todo_data["main_import_process_chain"]  # type:ignore
         )
-        results_flows_steps = list_to_dict_by_step(res.todo_results_flows)
+        results_flows_steps = list_to_dict_by_step(
+            res.todo_results_flows
+        )  # type:ignore
 
         for step in STEPS:
             d_data = dict(flatten_dict(data_steps.get(step, {}), "2:data"))
@@ -211,19 +232,19 @@ def main(xlsx_filepath: str):
                     "process"
                 ).loc[process_code, "main_flow_code_out"]
 
-            d_costs = dict(
-                flatten_dict(
-                    dict(
-                        res.costs.loc[res.costs["process_subtype"] == process_code]
-                        .groupby(["cost_type"])
-                        .sum(["values"])["values"]
-                        .items()
-                    ),
-                    "4:costs",
+                d_costs = dict(
+                    flatten_dict(
+                        dict(
+                            res.costs.loc[res.costs["process_subtype"] == process_code]
+                            .groupby(["cost_type"])
+                            .sum(["values"])["values"]
+                            .items()
+                        ),
+                        "4:costs",
+                    )
                 )
-            )
 
-            pd_series.append(pd.Series(d_data | d_flows, name=step))
+            pd_series.append(pd.Series(d_data | d_flows | d_costs, name=step))
 
             all_row_keys = all_row_keys | set(d_data)
             all_row_keys = all_row_keys | set(d_flows)

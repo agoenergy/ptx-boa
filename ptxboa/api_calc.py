@@ -312,7 +312,7 @@ class PtxCalc:
         # accumulate needed electric input
         step_before_transport = True
         sum_el = main_output_value
-        df_results_cost = []
+        results_cost_items: list[tuple] = []
         results_emissions_e_g_co2e = []
         results_emissions_m_g_co2e = []
 
@@ -374,10 +374,10 @@ class PtxCalc:
                 capex_ann = annuity(wacc, lifetime, capex)
                 opex = opex_f * capacity + opex_o * main_output_value
 
-                df_results_cost.append(
+                results_cost_items.append(
                     (result_process_type, process_code, "CAPEX", capex_ann)
                 )
-                df_results_cost.append(
+                results_cost_items.append(
                     (result_process_type, process_code, "OPEX", opex)
                 )
 
@@ -387,7 +387,7 @@ class PtxCalc:
                 dist_transport = step_data["DIST"]
                 opex_ot = opex_t * dist_transport
                 opex = (opex_o + opex_ot) * main_output_value
-                df_results_cost.append(
+                results_cost_items.append(
                     (result_process_type, process_code, "OPEX", opex)
                 )
 
@@ -417,10 +417,10 @@ class PtxCalc:
                     capex_ann = annuity(wacc, lifetime, capex)
                     opex = opex_f * capacity + opex_o * flow_value
 
-                    df_results_cost.append(
+                    results_cost_items.append(
                         (sec_result_process_type, sec_process_code, "CAPEX", capex_ann)
                     )
-                    df_results_cost.append(
+                    results_cost_items.append(
                         (sec_result_process_type, sec_process_code, "OPEX", opex)
                     )
 
@@ -442,7 +442,7 @@ class PtxCalc:
                             or sec_result_process_type
                         )
 
-                        df_results_cost.append(
+                        results_cost_items.append(
                             (
                                 sec_result_process_type,
                                 sec_process_code,
@@ -472,7 +472,7 @@ class PtxCalc:
                         or result_process_type
                     )
 
-                    df_results_cost.append(
+                    results_cost_items.append(
                         (flow_result_process_type, process_code, "FLOW", flow_cost)
                     )
 
@@ -566,7 +566,7 @@ class PtxCalc:
         # convert to DataFrame
         dim_columns = ["process_type", "process_subtype", "cost_type"]
         df_results_cost = pd.DataFrame(
-            df_results_cost, columns=dim_columns + ["values"]
+            results_cost_items, columns=dim_columns + ["values"]
         )
         # sum over dim_columns
         df_results_cost = df_results_cost.groupby(dim_columns).sum().reset_index()
