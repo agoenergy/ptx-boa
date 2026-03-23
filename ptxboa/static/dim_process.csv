@@ -42,7 +42,6 @@ EFUELSYN,FT e-fuels Synthesis (Fischer-Tropsch),CHX-L,H2-G,True,False,False,Fals
 EFUELSYN#B,FT e-fuels Synthesis (Fischer-Tropsch) (blue),CHX-L,H2-G,True,False,False,False,DERIV,False,True,Derivative production,CO2-G/EL/HEAT,False,True
 EFUELSYNC#B,FT Synthesis (Fischer-Tropsch) using NG with CCS,CHX-L,NG-G,True,False,False,False,DERIV,False,True,Derivative production,EL,False,True
 EL-STR,electricity storage,EL,EL,False,False,True,False,STORE,False,False,Electricity and H2 storage,,True,False
-EL-TRANS,electricity transmission,EL,EL,False,False,True,False,TRNSP-E,False,False,Electricity generation,,True,False
 H2-COMP,Hydrogen compression,H2-G,H2-G,True,False,True,False,TRNSP-PP,False,False,Transportation (Pipeline),EL,True,False
 H2-COMP#B,Hydrogen compression (blue),H2-G,H2-G,True,False,True,False,TRNSP-PP,False,False,Transportation (Pipeline),EL,False,True
 H2-LIQ,Hydrogen Liquefaction,H2-L,H2-G,True,False,True,False,TRNSP-SP,False,False,Transportation (Ship),EL,True,False

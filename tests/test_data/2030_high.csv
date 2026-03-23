@@ -1586,7 +1586,6 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "LIFETIME,DRI,,,",LIFETIME,DRI,,,,15.0,years,Agora Industry Transformation 2021
 "LIFETIME,EFUELSYN,,,",LIFETIME,EFUELSYN,,,,30.0,years,Öko-Institut 2020
 "LIFETIME,EL-STR,,,",LIFETIME,EL-STR,,,,20.0,years,
-"LIFETIME,EL-TRANS,,,",LIFETIME,EL-TRANS,,,,20.0,years,DUMMY
 "LIFETIME,H2-COMP,,,",LIFETIME,H2-COMP,,,,20.0,years,DNV GL 2020
 "LIFETIME,H2-LIQ,,,",LIFETIME,H2-LIQ,,,,30.0,years,IEA 2015
 "LIFETIME,H2-P-L,,,",LIFETIME,H2-P-L,,,,30.0,years,

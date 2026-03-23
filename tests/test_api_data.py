@@ -699,3 +699,78 @@ def test_parameter_has_data(year, cost_assumption, parameter_code):
     parameter_data = input_data.loc[input_data["parameter_code"] == parameter_code]
     if len(parameter_data) == 0:
         pytest.fail(f"No data defined for {parameter_code=}")
+
+
+def test_chains():
+    # check known columns in chain
+    df_chain = DataHandler.get_dimension("chain")
+    df_process = DataHandler.get_dimension("process")
+
+    COLS_PROC_MAIN_CHAIN = [
+        "NG_PROD",
+        "EL_STR",
+        "ELY",
+        "H2_STR",
+        "DERIV",
+        "DERIV2",
+        "PRE_SHP",
+        "PRE_PPL",
+        "POST_SHP",
+        "POST_PPL",
+        "SHP",
+        "SHP_OWN",
+        "PPLS",
+        "PPL",
+        "PPLX",
+        "PPLR",
+        "ELY_I",
+        "DERIV_I",
+        "DERIV_I2",
+    ]
+    COLS_OTHER = [
+        "chain",
+        "chain_name",
+        "FLOW_OUT",
+        "CAN_PIPELINE",
+        "is_green",
+        "is_blue",
+        "CO2_TS",
+        "CO2_TS_I",
+    ]
+
+    expected_cols = set(COLS_PROC_MAIN_CHAIN + COLS_OTHER)
+    cols = set(df_chain.columns)
+
+    assert expected_cols == cols
+
+    # for blue/green chains: find all used processes
+    procs_res = set(df_process.loc[df_process["is_re_generation"], "process_code"])
+    procs_green = (
+        set(df_process.loc[df_process["is_green"], "process_code"]) - procs_res
+    )
+    procs_blue = set(df_process.loc[df_process["is_blue"], "process_code"])
+    procs_sec = set(df_process.loc[df_process["is_secondary"], "process_code"])
+    procs_all = set(df_process["process_code"])
+
+    # assert no overlap
+    assert not procs_green & procs_blue
+
+    used_procs_green = set()
+    used_procs_blue = set()
+    for col in COLS_PROC_MAIN_CHAIN:
+        used_procs_green = used_procs_green | set(
+            df_chain.loc[(df_chain[col] != "") & df_chain["is_green"], col]
+        )
+        used_procs_blue = used_procs_blue | set(
+            df_chain.loc[(df_chain[col] != "") & df_chain["is_blue"], col]
+        )
+
+    # check for proper subsets
+    assert not used_procs_blue - procs_blue
+    assert not used_procs_green - procs_green
+
+    # check for unused processes
+    unused_procs = (
+        procs_all - used_procs_green - used_procs_blue - procs_sec - procs_res
+    )
+    assert not unused_procs, unused_procs
