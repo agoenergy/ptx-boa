@@ -531,53 +531,26 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
 
 
 @pytest.mark.parametrize(
-    "scenario, kwargs, api_kwargs",
+    "api_kwargs",
     [
-        [
-            "2040 (medium)",
-            {
-                "chain_name": "STL-S__NG-DRI-C_EAF__prod_in_supply",
-                "source_region_code": "QAT",
-                "target_country_code": "DEU",
-                "process_code_res": None,
-                "secondary_processes": {},
-                "ship_own_fuel": False,
-                "use_ship": True,
-            },
-            {
-                "region": "Qatar",
-                "country": "Germany",
-                "chain": "STL-S__NG-DRI-C_EAF__prod_in_supply",
-                "res_gen": None,
-                "transport": "Ship",
-                "ship_own_fuel": False,
-                "secproc_co2": "Direct Air Capture (blue)",
-                "secproc_water": "Sea Water desalination",
-            },
-        ],
+        {
+            "scenario": "2040 (medium)",
+            "region": "Qatar",
+            "country": "Germany",
+            "chain": "STL-S__NG-DRI-C_EAF__prod_in_supply",
+            "res_gen": None,
+            "transport": "Ship",
+            "ship_own_fuel": False,
+            "secproc_co2": "Direct Air Capture (blue)",
+            "secproc_water": "Sea Water desalination",
+        }
     ],
 )
-def test_new_blue_chain_real_data(scenario, kwargs, api_kwargs):
+def test_new_blue_chain_real_data(api_kwargs):
     """Data test for blue iron chain using current data."""
-    data_handler = DataHandler(
-        data_dir=DEFAULT_DATA_DIR,
-        scenario=scenario,
-        tool_version_color="blue",
-    )
-    calculation_data = data_handler.get_calculation_data(**kwargs, optimize_flh=False)
-    # round and sort for easier comparison
-    calculation_data = _sort_nested(_round_nested(calculation_data))
-
-    values, _df_result_cost, _df_result_emissions, _df_result_emissions_mass = (
-        PtxCalc.calculate(calculation_data)
-    )  # noqa
-    # round and sort for easier comparison
-    values = _sort_nested(_round_nested(values))
-
     # test api output
     api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR)
     api_result = api.calculate(  # noqa
-        scenario=scenario,
         **api_kwargs,
         tool_version_color="blue",
         optimize_flh=False,
