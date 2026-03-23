@@ -62,6 +62,9 @@ rows = [
     "0:settings:region",
     "0:settings:scenario",
     "0:settings:transport",
+    "0:process:process_code",
+    "0:process:main_flow_code_in",
+    "0:process:main_flow_code_out",
     "1:parameter:CALOR",
     "1:parameter:SPECCOST:CO2-G",
     "1:parameter:SPECCOST:DIESEL-L",
@@ -111,8 +114,8 @@ rows = [
     "2:data:OPEX-F",
     "2:data:OPEX-O",
     "2:data:OPEX-T",
-    "2:data:process_code",
-    "2:data:step",
+    # "2:data:process_code", # noqa
+    # "2:data:step", # noqa
     "3:flows:emissions:ch4_direct_co2e_e",
     "3:flows:emissions:ch4_direct_co2e_m",
     "3:flows:emissions:ch4_direct_e",
@@ -138,8 +141,8 @@ rows = [
     "3:flows:flows:NG-G",
     "3:flows:main_input",
     "3:flows:main_output",
-    "3:flows:process_code",
-    "3:flows:process_step",
+    # "3:flows:process_code", # noqa
+    # "3:flows:process_step", # noqa
     "4:costs:CAPEX",
     "4:costs:FLOW",
     "4:costs:OPEX",
@@ -193,6 +196,14 @@ def main(xlsx_filepath: str):
             d_flows = dict(flatten_dict(results_flows_steps.get(step, {}), "3:flows"))
 
             process_code = chain[step]
+            if process_code:
+                d_data["0:process:process_code"] = process_code
+                d_data["0:process:main_flow_code_in"] = api.get_dimension(
+                    "process"
+                ).loc[process_code, "main_flow_code_in"]
+                d_data["0:process:main_flow_code_out"] = api.get_dimension(
+                    "process"
+                ).loc[process_code, "main_flow_code_out"]
 
             d_costs = dict(
                 flatten_dict(
@@ -217,6 +228,13 @@ def main(xlsx_filepath: str):
 
         sheet_name = f"{idx}_" + chain["chain_name"][:28].replace("*", "")
         results[sheet_name] = df
+
+    all_row_keys = all_row_keys - {
+        "3:flows:process_code",
+        "3:flows:process_step",
+        "2:data:process_code",
+        "2:data:step",
+    }
 
     assert all_row_keys == set(rows), (
         (all_row_keys - set(rows)),
