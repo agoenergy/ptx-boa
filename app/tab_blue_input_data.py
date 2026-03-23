@@ -67,11 +67,14 @@ def content_input_data(api: PtxboaAPI) -> None:
 
     with st.container(border=True):
         st.subheader("Global data")
-        with st.expander("**Natural gas production**"):
-            st.warning("Data not ready.")
-
         with st.expander("**Conversion**"):
-            st.warning("Data not ready.")
+            display_and_edit_input_data(
+                api,
+                data_type="conversion_processes",
+                scope=None,
+                key="input_data_conversion_processes",
+                tool_version_color="blue",
+            )
 
         with st.expander("**Storage**"):
             st.caption(
@@ -82,6 +85,7 @@ def content_input_data(api: PtxboaAPI) -> None:
                 data_type="storage",
                 scope=None,
                 key="input_data_storage",
+                tool_version_color="blue",
             )
 
         with st.expander("**Transportation (ships and pipelines)**"):
@@ -95,6 +99,7 @@ def content_input_data(api: PtxboaAPI) -> None:
                 data_type="transportation_processes",
                 scope=None,
                 key="input_data_transportation_processes",
+                tool_version_color="blue",
             )
         with st.expander(
             "**Transportation (compression, liquefication and reconversion)**"
@@ -104,6 +109,7 @@ def content_input_data(api: PtxboaAPI) -> None:
                 data_type="reconversion_processes",
                 scope=None,
                 key="input_data_reconversion_processes",
+                tool_version_color="blue",
             )
         with st.expander("**Direct air capture**"):
             st.caption(
@@ -116,6 +122,7 @@ def content_input_data(api: PtxboaAPI) -> None:
                 data_type="dac_and_desalination",
                 scope=None,
                 key="input_data_dac_and_desalination",
+                tool_version_color="blue",
             )
         with st.expander("**Specific costs for materials and energy carriers**"):
             st.caption(
@@ -128,6 +135,7 @@ def content_input_data(api: PtxboaAPI) -> None:
                 data_type="specific_costs",
                 scope=None,
                 key="input_data_specific_costs",
+                tool_version_color="blue",
             )
         with st.expander("**Conversion coefficients**"):
             st.caption(
@@ -140,4 +148,5 @@ def content_input_data(api: PtxboaAPI) -> None:
                 data_type="conversion_coefficients",
                 scope=None,
                 key="input_data_conversion_coefficients",
+                tool_version_color="blue",
             )
