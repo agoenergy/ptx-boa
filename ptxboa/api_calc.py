@@ -86,8 +86,16 @@ def calculate_emissions(
     }
 
     all_flows = results_flows.flows.copy()
+
+    process_code = step_data["process_code"]
+
+    # special case NG-PROD#B: has no main_flow_code_in
+    if process_code == "NG-PROD#B":
+        main_flow_code_in = main_flow_code_out
+
     if main_flow_code_in in all_flows:
-        logger.error("Main flow codes should not be in secondary flows")
+        logger.error("Main flow codes (in) should not be in secondary flows")
+
     all_flows[main_flow_code_in] = results_flows.main_input
 
     CH4_KWH_PER_OUTPUT = step_data.get("CH4SHARE", {})  # only NG-G ?
@@ -104,10 +112,11 @@ def calculate_emissions(
     if (
         main_flow_code_out in CBOUND_KG_C_PER_OUTPUT
         and main_flow_code_out not in results_flows.flows
+        and process_code != "NG-PROD#B"
     ):
         logger.warning(
             "TODO: can CBOUND be set on main_flow_code_out %s %s?",
-            step_data["process_code"],
+            process_code,
             main_flow_code_out,
         )
 

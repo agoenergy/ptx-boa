@@ -245,10 +245,26 @@ class PtxboaAPI:
         # conversion to output unit
         if output_unit not in {"USD/MWh", "USD/t"}:
             logger.error(f"Invalid choice for output_unit: {output_unit}")
-        conversion = 1000  # FIXME: is emissions already scaled to ton?
-        if output_unit == "USD/t":
-            calor = data["parameter"]["CALOR"]
-            conversion *= calor
+
+        flow_code_chain_out = data_handler.get_dimension("chain").loc[chain, "FLOW_OUT"]
+        flow_unit_chain_out = data_handler.get_dimension("flow").loc[
+            flow_code_chain_out, "unit"
+        ]
+
+        if flow_unit_chain_out.lower().startswith("kwh"):
+            if output_unit == "USD/MWh":
+                conversion = 1000  # kWh -> MWh
+            else:
+                calor = data["parameter"]["CALOR"]
+                conversion = 1000 * calor  # kWh -> kg and kg -> t
+        elif flow_unit_chain_out.lower().startswith("kg"):
+            if output_unit == "USD/t":
+                conversion = 1000  # kg -> t
+            else:
+                calor = data["parameter"]["CALOR"]
+                conversion = 1000 / calor  # kg -> kWh -> Mwh
+        else:
+            raise ValueError("chain output unit must be either kWh or kg")
 
         # conversion: FIXME: is emissions already scaled to ton?
         for df in [df_result_cost, df_result_emissions, df_result_emissions_mass]:
