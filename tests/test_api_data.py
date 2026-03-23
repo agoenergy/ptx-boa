@@ -705,6 +705,7 @@ def test_chains():
     # check known columns in chain
     df_chain = DataHandler.get_dimension("chain")
     df_process = DataHandler.get_dimension("process")
+    df_flow = DataHandler.get_dimension("flow")
 
     COLS_PROC_MAIN_CHAIN = [
         "NG_PROD",
@@ -766,11 +767,22 @@ def test_chains():
         )
 
     # check for proper subsets
-    assert not used_procs_blue - procs_blue
-    assert not used_procs_green - procs_green
+    assert not used_procs_blue - procs_blue, used_procs_blue - procs_blue
+    assert not used_procs_green - procs_green, used_procs_green - procs_green
 
-    # check for unused processes
-    unused_procs = (
-        procs_all - used_procs_green - used_procs_blue - procs_sec - procs_res
-    )
-    assert not unused_procs, unused_procs
+    # check for unused/missing processes
+    used_procs = used_procs_green | used_procs_blue | procs_sec | procs_res
+    assert used_procs == procs_all, (used_procs - procs_all, procs_all - used_procs)
+
+    # find all used flows
+    used_flows = set()
+
+    used_flows = used_flows | set(df_process["main_flow_code_in"].fillna(""))
+    used_flows = used_flows | set(df_process["main_flow_code_out"].fillna(""))
+    for secondary_flows in df_process["secondary_flows"].fillna("").values:
+        used_flows = used_flows | set(secondary_flows)
+    used_flows = used_flows - {""}
+
+    flows = set(df_flow["flow_code"])
+
+    assert used_flows == flows, (used_flows - flows, flows - used_flows)

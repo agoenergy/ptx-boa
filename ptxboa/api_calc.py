@@ -56,7 +56,6 @@ def calculate_emissions(
 
     # EFF*:
     # BFUEL-L (unused?)
-    # C-S (unused?)
     # CH3OH-L (unused?)
     # CH4-G
     # CH4-L
@@ -151,7 +150,6 @@ def calculate_emissions(
     # CH4-L
     # CO2-C
     # CO2-G
-    # C-S
     # DIESEL-L
     # EL
     # HEAT
@@ -165,7 +163,6 @@ def calculate_emissions(
     # CH4-L
     # CO2-C
     # CO2-G
-    # C-S
     # DIESEL-L
     # EL
     # HEAT
