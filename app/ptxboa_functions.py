@@ -653,6 +653,7 @@ def get_data_type_from_input_data(
         tool_version_color=tool_version_color,
     )
 
+    processes = api.get_dimension("process", tool_version_color=tool_version_color)
     # green data types not specied by flow code
     flow_code = None
 
@@ -668,7 +669,6 @@ def get_data_type_from_input_data(
         source_region_code = [""]
         index = "process_code"
         columns = "parameter_code"
-        processes = api.get_dimension("process")
 
     if data_type == "specific_costs":
         scope = None
@@ -684,9 +684,11 @@ def get_data_type_from_input_data(
         index = "process_code"
         columns = "flow_code"
         parameter_code = ["conversion factors"]
-        process_code = input_data.loc[
-            input_data["parameter_code"] == "conversion factors", "process_code"
-        ].unique()
+        process_code = set(
+            input_data.loc[
+                input_data["parameter_code"] == "conversion factors", "process_code"
+            ].unique()
+        ).intersection(set(processes["process_name"]))
 
     if data_type == "electricity_generation":
         parameter_code = [
