@@ -32,49 +32,80 @@ def calculate_emissions(
 ) -> dict:
     # TODO: speed up by not having to load process object every time?
 
-    METHANE_COeq = 29.8  # TODO
-    g_CO2_per_kg_C = 3664.446295
+    # flows_in:
+    # CH3OH-L
+    # CHX-L
+    # DRI-S
+    # H2-G
+    # H2-L
+    # NG-G
+    # NG-L
+    # NH3-L
+
+    # flows_out: flows_in  and STL-S # noqa
+
+    # flows_sec:
+
+    # CH4-G
+    # CO2-G
+    # DIESEL-L
+    # EL: indirect # noqa
+    # HEAT: indirect # noqa
+    # IOP-S
+    # NG-G
+
+    # EFF*:
+    # BFUEL-L (unused?)
+    # C-S (unused?)
+    # CH3OH-L (unused?)
+    # CH4-G
+    # CH4-L
+    # CO2-C
+    # CO2-G
+    # DIESEL-L
+    # EL
+    # HEAT
+    # NG-G
+    # NG-L
+
+    ch4_to_co2eq = 29.8
+    g_co2_per_kg_C = 3664.446295
     g_ch4_per_kwh_lhv = 68.75469807
 
     FLOW_CO2_INDIRECT = {"HEAT", "EL"}  # TODO: from database?
     FLOW_CO2_ONLY_WHEN_EFF_TODO = {"NG-G", "CH4-G"}  # TODO: any others?
     FLOW_CO2_OTHER = {"STL-S"}
 
-    all_flow_codes = set(results_flows.flows) | {main_flow_code_in, main_flow_code_out}
+    all_flows = results_flows.flows.copy()
+    if main_flow_code_in in all_flows:
+        logger.error("Main flow codes should not be in secondary flows")
+    all_flows[main_flow_code_in] = results_flows.main_input
 
-    CH4SHARE = step_data.get("CH4SHARE", {})  # only NG-G
+    CH4_KWH_PER_OUTPUT = step_data.get("CH4SHARE", {})  # only NG-G ?
 
-    CBOUND = step_data.get("CBOUND", {})  # in kgC/output
-    # only in:
-    # CH3OHSYC#B	CO2-G
-    # CH3OHSYN#B	CO2-G
-    # EAF#B	        C-S
-    # EFUELSYN#B	CO2-G
-    # EFUELSYNC#B	CO2-G
-    # NG-DRI-C#B	CH4-G
-    # NG-DRI-C#B	NG-G
-    # NG-PROD#B	    CO2-G
+    CBOUND_KG_C_PER_OUTPUT = step_data.get("CBOUND", {})  # in kgC/output
+    # CH3OHSYC#B    CH3OH-L NG-G
+    # CH3OHSYN#B    CH3OH-L CO2-G
+    # EAF#B         STL-S   B-DRI-S
+    # EFUELSYN#B    CHX-L   CO2-G
+    # EFUELSYNC#B   CHX-L   NG-G
+    # NG-DRI-C#B    DRI-S   CH4-G
+    # NG-DRI-C#B    DRI-S   NG-G
+    # NG-PROD#B     NG-G    NG-G
+    if main_flow_code_out in CBOUND_KG_C_PER_OUTPUT:
+        logger.warning("TODO: can CBOUNDbe set on main_flow_code_out?")
 
-    CO2CPTR = step_data.get("CO2CPT-R", {})  # only in
-    # ATR_91%#B	    NG-G
-    # CCGT-CC#B	    CO2-G
-    # CH3OHSYC#B	NG-G
-    # EFUELSYNC#B	NG-G
-    # NG-DRI-C#B	CH4-G
-    # NG-DRI-C#B	NG-G
-    # SMR_52%#B	    NG-G
-    # SMR_52%_BF#B	NG-G  # noqa
-    CO2CPTS = step_data.get("CO2CPT-S", {})  # only in
-    # CH3OHSYC#B	NG-G
-    # EFUELSYNC#B	NG-G
-    # NG-DRI-C#B	CH4-G
-    # NG-DRI-C#B	NG-G
+    # co2 capture fraction
+    CO2CPTR_FRACTION = step_data.get("CO2CPT-R", {})  # only in NG-G or CH4-G
+    CO2CPTS_FRACTION = step_data.get("CO2CPT-S", {})  # only in
+    CO2CPT_FRACTION = {
+        f: CO2CPTR_FRACTION.get(f, 0) * CO2CPTS_FRACTION.get(f, 0) for f in all_flows
+    }
 
-    CO2CPT = {f: CO2CPTR.get(f, 0) * CO2CPTS.get(f, 0) for f in all_flow_codes}
-
-    # LOSS: only NG-G?
+    # LOSS: only NG-G? - should also be CH4?
     LOSS_MAIN = step_data.get("LOSS", 0)
     LOSS_FLOW = step_data.get("LOSS_FLOW", {})
+    LOSS = LOSS_FLOW | {main_flow_code_in: LOSS_MAIN}  # noqa
 
     _EF_M = step_data.get("EF_M", {})
     _EF_E = step_data.get("EF_E", {})
@@ -123,7 +154,7 @@ def calculate_emissions(
         # only NG-G?
         if not loss_kwh_ng:
             return 0
-        ch4share = CH4SHARE.get(flow_code, 0)
+        ch4share = CH4_KWH_PER_OUTPUT.get(flow_code, 0)
         if not ch4share:
             logger.error(f"MISSING CH4SHARE for {flow_code}")
         return loss_kwh_ng * ch4share * g_ch4_per_kwh_lhv
@@ -132,10 +163,14 @@ def calculate_emissions(
     for em in ["e", "m"]:
         _EF = EF_EM[em.upper()]
         EF_DIRECT = _EF["DIRECT"]
-        # EF_INDIRECT = _EF["INDIRECT"] # noqa
+        EF_INDIRECT = _EF["INDIRECT"]  # noqa
 
         def get_captured(flow_code: str, flow_net: float):
-            return flow_net * CO2CPT.get(flow_code, 0) * EF_DIRECT.get(flow_code, 0)
+            return (
+                flow_net
+                * CO2CPT_FRACTION.get(flow_code, 0)
+                * EF_DIRECT.get(flow_code, 0)
+            )
 
         def get_in_co2(flow_code: str, flow_net: float):
             return flow_net * EF_DIRECT.get(flow_code, 0)
@@ -146,42 +181,21 @@ def calculate_emissions(
 
         # co2_bound_in_product_last_proc: # row 46/54
         if last_emissions:
-            co2_bound_last = last_emissions[f"co2_bound_in_product_{em}"]
+            co2_g_bound_last = last_emissions[f"co2_bound_in_product_{em}"]
         else:
-            co2_bound_last = 0
+            co2_g_bound_last = 0
 
-        if not results_flows.main_input:
-            if co2_bound_last:
+        if main_flow_code_in not in CBOUND_KG_C_PER_OUTPUT:
+            # calculate CBOUND for in flow
+            if not results_flows.main_input and co2_g_bound_last:
                 logger.error("main flow is 0")
-            bound_in_product_main_input = 0
+                cbound_kg_c_per_output = 0
+            else:
+                cbound_kg_c_per_output = (
+                    co2_g_bound_last / results_flows.main_input / g_co2_per_kg_C
+                )
         else:
-            bound_in_product_main_input = (
-                co2_bound_last / results_flows.main_input / g_CO2_per_kg_C
-            )
-
-        logger.debug(bound_in_product_main_input)
-
-        co2_bound_total = sum(
-            CBOUND.get(f, 0)
-            for f in FLOW_CO2_ONLY_WHEN_EFF_TODO
-            if EF_DIRECT.get(f, 0) > 0
-        ) + sum(CBOUND.get(f, 0) for f in FLOW_CO2_OTHER)
-
-        # FIXME: this is not correct in excel (J57)
-        co2_bound_in_product_out = (  # row 49/57
-            results_flows.main_output * g_CO2_per_kg_C * co2_bound_total
-        )
-
-        # FIXME: bound in process does not work in transport?
-        if (
-            not co2_bound_in_product_out
-            and co2_bound_last
-            and main_flow_code_in == main_flow_code_out
-            and results_flows.main_input
-        ):
-            co2_bound_in_product_out = (
-                results_flows.main_output / results_flows.main_input
-            ) * co2_bound_last
+            cbound_kg_c_per_output = CBOUND_KG_C_PER_OUTPUT.get(main_flow_code_in)
 
         # row 47/55: FIXME: isnt this redundant to bound in product?
         co2_in_flows = get_in_co2(main_flow_code_in, main_input_net)
@@ -205,6 +219,19 @@ def calculate_emissions(
             ch4_g_direct += get_ch4_g_from_ng_loss(flow_code, flow_input_loss)
             co2_captured += get_captured(flow_code, flow_input_net)  # row 48/56
 
+            cbound = CBOUND_KG_C_PER_OUTPUT.get(flow_code, 0)
+            if cbound:
+                # FLAG
+                if flow_code in FLOW_CO2_ONLY_WHEN_EFF_TODO or (
+                    flow_code in FLOW_CO2_OTHER and EF_DIRECT.get(flow_code, 0) > 0
+                ):
+                    cbound_kg_c_per_output += cbound
+
+        # FIXME: this is not correct in excel (J57)
+        co2_bound_in_product_out = (  # row 49/57
+            results_flows.main_output * g_co2_per_kg_C * cbound_kg_c_per_output
+        )
+
         # indirect emissions (use EF_E for E and M balance?, only for HEAT and EL?)
         co2_indirect_scope2 = sum(
             flow_input_gross * EF_EM["E"]["INDIRECT"].get(flow_code, 0)
@@ -214,12 +241,12 @@ def calculate_emissions(
 
         # simple sums / differences
         co2_direct = (  # row 51/59
-            co2_bound_last - co2_bound_in_product_out + co2_in_flows - co2_captured
+            co2_g_bound_last - co2_bound_in_product_out + co2_in_flows - co2_captured
         )
-        ch4_direct_co2e = ch4_g_direct * METHANE_COeq  # row 66
+        ch4_direct_co2e = ch4_g_direct * ch4_to_co2eq  # row 66
         co2e_total_direct = ch4_direct_co2e + co2_direct  # row 69/70
 
-        result[f"co2_bound_in_product_last_proc_{em}"] = co2_bound_last  # row 46/54
+        result[f"co2_bound_in_product_last_proc_{em}"] = co2_g_bound_last  # row 46/54
         result[f"co2_in_flows_{em}"] = co2_in_flows  # row 47/55:
         result[f"co2_captured_{em}"] = co2_captured  # row 48/56:
         result[f"co2_bound_in_product_{em}"] = co2_bound_in_product_out  # row 49/57
