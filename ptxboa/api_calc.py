@@ -507,7 +507,11 @@ class PtxCalc:
                         main_output=flow_value,
                         flows={},
                     )
-                    results_flows_secondary.append(results_flows_sec)
+
+                    if is_import:
+                        results_flows_secondary_i.append(results_flows_sec)
+                    else:
+                        results_flows_secondary.append(results_flows_sec)
 
                     for sec_flow_code, sec_conv in sec_process_data["CONV"].items():
                         sec_flow_value = flow_value * sec_conv
