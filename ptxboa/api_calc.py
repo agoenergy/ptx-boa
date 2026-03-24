@@ -458,11 +458,33 @@ class PtxCalc:
                     (result_process_type, process_code, "OPEX", opex)
                 )
 
-            # create flows for process step
-
             for flow_code, conv in step_data["CONV"].items():
                 flow_value = main_output_value * conv
                 results_flows.flows[flow_code] = flow_value
+
+            proc = df_processes.loc[process_code]
+            last_emissions = calculate_emissions(
+                results_flows,
+                step_data,
+                proc.main_flow_code_in,
+                proc.main_flow_code_out,
+                last_emissions=last_emissions,
+            )
+            results_flows.emissions = last_emissions
+
+            # convert co2_captured_m to FLOW
+            if results_flows.emissions["co2_captured_m"]:
+                flow_code = "CO2-C"
+                results_flows.flows[flow_code] = (
+                    results_flows.flows.get(flow_code, 0)
+                    + results_flows.emissions["co2_captured_m"]
+                )
+                step_data["CONV"]["CO2-C"] = 1  # so that in loop below, its picked up
+
+            # create flows for process step
+
+            for flow_code, _conv in step_data["CONV"].items():
+                flow_value = results_flows.flows[flow_code]
 
                 sec_process_data = data["secondary_process"].get(flow_code)
 
@@ -553,7 +575,9 @@ class PtxCalc:
 
                 else:
                     # use market
-                    speccost = speccosts[flow_code]
+                    speccost = speccosts.get(flow_code, 0)
+                    if not speccost:
+                        logger.error("no SPECCOST for %s", flow_code)
 
                     # electricity before transport will be handled by RES step
                     # after transport: market
@@ -575,17 +599,6 @@ class PtxCalc:
                     results_cost_items.append(
                         (flow_result_process_type, process_code, "FLOW", flow_cost)
                     )
-
-            proc = df_processes.loc[process_code]
-
-            last_emissions = calculate_emissions(
-                results_flows,
-                step_data,
-                proc.main_flow_code_in,
-                proc.main_flow_code_out,
-                last_emissions=last_emissions,
-            )
-            results_flows.emissions = last_emissions
 
             for d_i, gas, ind in [
                 ("indirect", "CO2", "co2_indirect_scope2"),

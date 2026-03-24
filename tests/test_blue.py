@@ -19,11 +19,15 @@ def _sort_nested(xs):
         return xs
 
 
-def _round_nested(xs, ndigis: int = 6):
+def _round_nested(xs, ndigis: int = 6, drop_null_from_dict: bool = False):
     if isinstance(xs, list):
         return [_round_nested(x, ndigis) for x in xs]
     elif isinstance(xs, dict):
-        return {x: _round_nested(y, ndigis) for x, y in xs.items()}
+        result = {x: _round_nested(y, ndigis) for x, y in xs.items()}
+        if drop_null_from_dict:
+            result = {x: y for x, y in result.items() if y}
+
+        return result
     elif isinstance(xs, float):
         return round(xs, ndigis)
     else:
@@ -322,7 +326,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 "CH4SHARE": {"NG-G": 0.909},
                 "CO2CPT-R": {"CH4-G": 0.9, "NG-G": 0.9},
                 "CO2CPT-S": {"CH4-G": 0.45, "NG-G": 0.45},
-                "CONV": {"EL": 0.476859, "IOP-S": 1.373737},
+                "CONV": {"EL": 0.476859, "IOP-S": 1.373737, "CO2-C": 1},
                 "EFF": 0.320004,
                 "EF_E": {"CH4-G": 201.0, "EL": 402.0, "NG-G": 201.0},
                 "EF_M": {"CH4-G": 201.0, "NG-G": 201.0},
@@ -414,7 +418,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 "co2e_total_direct_e": 478.689918,
                 "co2e_total_direct_m": 478.689918,
             },
-            "flows": {"EL": 0.47209, "IOP-S": 1.36},
+            "flows": {"CO2-C": 239.851022, "EL": 0.47209, "IOP-S": 1.36},
             "main_input": 3.093711,
             "main_output": 0.99,
             "process_code": "NG-DRI-C#B",
@@ -590,7 +594,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "CH4SHARE": {"NG-G": 0.909},
                         "CO2CPT-R": {"CH4-G": 0.9, "NG-G": 0.9},
                         "CO2CPT-S": {"CH4-G": 0.45, "NG-G": 0.45},
-                        "CONV": {"EL": 0.476859, "IOP-S": 1.373737},
+                        "CONV": {"CO2-C": 1, "EL": 0.476859, "IOP-S": 1.373737},
                         "EFF": 0.336004,
                         "EF_E": {"CH4-G": 201.0, "NG-G": 201.0},
                         "EF_M": {"CH4-G": 201.0, "NG-G": 201.0},
@@ -752,7 +756,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "co2e_total_direct_e": 796.543697,
                         "co2e_total_direct_m": 796.543697,
                     },
-                    "flows": {"EL": 0.47209, "IOP-S": 1.36},
+                    "flows": {"CO2-C": 239.851448, "EL": 0.47209, "IOP-S": 1.36},
                     "main_input": 2.946397,
                     "main_output": 0.99,
                     "process_code": "NG-DRI-C#B",
@@ -838,6 +842,33 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "main_output": 0.475487,
                     "process_code": "CCGT-CC#B",
                     "process_step": "SECONDARY:Electricity",
+                },
+                {
+                    "emissions": {
+                        "ch4_direct_co2e_e": 0.0,
+                        "ch4_direct_co2e_m": 0.0,
+                        "ch4_direct_e": 0.0,
+                        "ch4_direct_m": 0.0,
+                        "co2_bound_in_product_e": 0.0,
+                        "co2_bound_in_product_last_proc_e": 0.0,
+                        "co2_bound_in_product_last_proc_m": 0.0,
+                        "co2_bound_in_product_m": 0.0,
+                        "co2_captured_e": 0.0,
+                        "co2_captured_m": 0.0,
+                        "co2_direct_e": 0.0,
+                        "co2_direct_m": 0.0,
+                        "co2_in_flows_e": 0.0,
+                        "co2_in_flows_m": 0.0,
+                        "co2_indirect_scope2_e": 0.0,
+                        "co2_indirect_scope2_m": 0.0,
+                        "co2e_total_direct_e": 0.0,
+                        "co2e_total_direct_m": 0.0,
+                    },
+                    "flows": {},
+                    "main_input": 239.851448,
+                    "main_output": 239.851448,
+                    "process_code": "CO2-T+S#B",
+                    "process_step": "SECONDARY:Captured Carbon",
                 },
                 {
                     "emissions": {
@@ -991,7 +1022,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "CH4SHARE": {"NG-G": 0.899533},
                         "CO2CPT-R": {"NG-G": 0.91},
                         "CO2CPT-S": {"NG-G": 1.0},
-                        "CONV": {"EL": 0.107711},
+                        "CONV": {"CO2-C": 1, "EL": 0.107711},
                         "EFF": 0.79992,
                         "EF_E": {"NG-G": 201.0},
                         "EF_M": {"NG-G": 201.0},
@@ -1140,7 +1171,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "co2e_total_direct_e": 276.866904,
                         "co2e_total_direct_m": 276.866904,
                     },
-                    "flows": {"EL": 0.108882},
+                    "flows": {"CO2-C": 231.145764, "EL": 0.108882},
                     "main_input": 1.263713,
                     "main_output": 1.010869,
                     "process_code": "ATR_91%#B",
@@ -1253,6 +1284,33 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "main_output": 0.412631,
                     "process_code": "CCGT-CC#B",
                     "process_step": "SECONDARY:Electricity",
+                },
+                {
+                    "emissions": {
+                        "ch4_direct_co2e_e": 0.0,
+                        "ch4_direct_co2e_m": 0.0,
+                        "ch4_direct_e": 0.0,
+                        "ch4_direct_m": 0.0,
+                        "co2_bound_in_product_e": 0.0,
+                        "co2_bound_in_product_last_proc_e": 0.0,
+                        "co2_bound_in_product_last_proc_m": 0.0,
+                        "co2_bound_in_product_m": 0.0,
+                        "co2_captured_e": 0.0,
+                        "co2_captured_m": 0.0,
+                        "co2_direct_e": 0.0,
+                        "co2_direct_m": 0.0,
+                        "co2_in_flows_e": 0.0,
+                        "co2_in_flows_m": 0.0,
+                        "co2_indirect_scope2_e": 0.0,
+                        "co2_indirect_scope2_m": 0.0,
+                        "co2e_total_direct_e": 0.0,
+                        "co2e_total_direct_m": 0.0,
+                    },
+                    "flows": {},
+                    "main_input": 231.145764,
+                    "main_output": 231.145764,
+                    "process_code": "CO2-T+S#B",
+                    "process_step": "SECONDARY:Captured Carbon",
                 },
             ],
             [
