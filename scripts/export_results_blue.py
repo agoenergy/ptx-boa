@@ -14,7 +14,7 @@ from typing import Any, Iterable
 import pandas as pd
 
 from ptxboa.api import PtxboaAPI
-from ptxboa.api_data import DEFAULT_DATA_DIR
+from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler
 
 
 def flatten_dict(v: Any, key_prefix: None | str = None) -> Iterable[tuple[str, Any]]:
@@ -57,6 +57,16 @@ STEPS = [
     "DERIV_I",
     "DERIV_I2",
     # "CO2_TS_I",
+    "SECONDARY:Electricity",
+    "SECONDARY:Captured Carbon",
+    "SECONDARY:Carbon",
+    "SECONDARY:Water",
+    "SECONDARY:Heat",
+    "SECONDARY-IMPORT:Electricity",
+    "SECONDARY-IMPORT:Captured Carbon",
+    "SECONDARY-IMPORT:Carbon",
+    "SECONDARY-IMPORT:Water",
+    "SECONDARY-IMPORT:Heat",
 ]
 
 rows = [
@@ -70,6 +80,11 @@ rows = [
     "0:process:process_code",
     "0:process:main_flow_code_in",
     "0:process:main_flow_code_out",
+    "0:settings:secproc_ccs",
+    "0:settings:secproc_el",
+    "0:settings:secproc_water",
+    "0:settings:secproc_co2",
+    "0:settings:secproc_heat",
     "1:parameter:CALOR",
     "1:parameter:SPECCOST:CO2-G",
     "1:parameter:SPECCOST:DIESEL-L",
@@ -92,12 +107,14 @@ rows = [
     "2:data:CONV:CO2-G",
     "2:data:CONV:DIESEL-L",
     "2:data:CONV:EL",
+    "2:data:CONV:HEAT",
     "2:data:CONV:IOP-S",
     "2:data:CONV:NG-G",
     "2:data:DIST",
     "2:data:EFF",
     "2:data:EF_E:CH3OH-L",
     "2:data:EF_E:CH4-G",
+    "2:data:EF_E:CO2-C",
     "2:data:EF_E:CO2-G",
     "2:data:EF_E:DIESEL-L",
     "2:data:EF_E:EL",
@@ -106,6 +123,7 @@ rows = [
     "2:data:EF_E:NG-L",
     "2:data:EF_M:CH3OH-L",
     "2:data:EF_M:CH4-G",
+    "2:data:EF_M:CO2-C",
     "2:data:EF_M:CO2-G",
     "2:data:EF_M:DIESEL-L",
     "2:data:EF_M:EL",
@@ -142,6 +160,7 @@ rows = [
     "3:flows:flows:CO2-G",
     "3:flows:flows:DIESEL-L",
     "3:flows:flows:EL",
+    "3:flows:flows:HEAT",
     "3:flows:flows:IOP-S",
     "3:flows:flows:NG-G",
     "3:flows:main_input",
@@ -152,6 +171,28 @@ rows = [
     "4:costs:FLOW",
     "4:costs:OPEX",
 ]
+
+
+def get_secproc_step(process_code: str, is_import: bool) -> str:
+    prefix = "SECONDARY-IMPORT:" if is_import else "SECONDARY:"
+    rpt = DataHandler.get_dimension("process").loc[process_code, "result_process_type"]
+    return prefix + rpt  # type:ignore
+
+
+df_proc = DataHandler.get_dimension("process")
+
+sec_proc = {
+    "Electricity": df_proc.loc["CCGT-CC#B"],
+    "Captured Carbon": df_proc.loc["CO2-T+S#B"],
+    "Carbon": df_proc.loc["DAC#B"],
+    "Water": df_proc.loc["DESAL"],
+    "Heat": df_proc.loc["HEATPUMP#B"],
+}
+
+
+def get_secproc_process(secproc_step: str) -> str:
+    proc_cls = secproc_step.split(":")[1]
+    return sec_proc[proc_cls]["process_code"]
 
 
 def main(xlsx_filepath: str):
@@ -181,14 +222,17 @@ def main(xlsx_filepath: str):
             "region": "Algeria",
             "country": "Germany",
             "transport": "Ship",
+            "secproc_co2": sec_proc["Carbon"]["process_name"],
+            "secproc_water": sec_proc["Water"]["process_name"],
+            "secproc_el": sec_proc["Electricity"]["process_name"],
+            "secproc_ccs": sec_proc["Captured Carbon"]["process_name"],
+            "secproc_heat": sec_proc["Heat"]["process_name"],
         }
 
         res = api.calculate(
             **settings,
             res_gen=None,
             ship_own_fuel=False,
-            secproc_co2=None,
-            secproc_water=None,
             tool_version_color="blue",
             output_unit=output_unit_cost,
             optimize_flh=False,
@@ -209,20 +253,40 @@ def main(xlsx_filepath: str):
         all_row_keys = all_row_keys | set(data_general)
         pd_series = [pd.Series(data_general, name="")]
 
+        secondary_process_steps = list(
+            res.todo_data["secondary_process"].values()  # type:ignore
+        )
+        secondary_process_i_steps = list(
+            res.todo_data.get("secondary_process_i", {}).values()  # type:ignore
+        )
+        for s in secondary_process_steps:
+            s["step"] = get_secproc_step(
+                process_code=s["process_code"], is_import=False
+            )
+        for s in secondary_process_i_steps:
+            s["step"] = get_secproc_step(process_code=s["process_code"], is_import=True)
+
         data_steps = list_to_dict_by_step(
             res.todo_data["main_export_process_chain"]  # type:ignore
             + res.todo_data["transport_process_chain"]  # type:ignore
             + res.todo_data["main_import_process_chain"]  # type:ignore
+            + secondary_process_steps
+            + secondary_process_i_steps
         )
+
         results_flows_steps = list_to_dict_by_step(
-            res.todo_results_flows
-        )  # type:ignore
+            res.todo_results_flows  # type:ignore
+        )
 
         for step in STEPS:
             d_data = dict(flatten_dict(data_steps.get(step, {}), "2:data"))
             d_flows = dict(flatten_dict(results_flows_steps.get(step, {}), "3:flows"))
 
-            process_code = chain[step]
+            if not step.startswith("SECONDARY"):
+                process_code = chain[step]
+            else:
+                process_code = get_secproc_process(step)
+
             if process_code:
                 d_data["0:process:process_code"] = process_code
                 d_data["0:process:main_flow_code_in"] = api.get_dimension(
@@ -232,10 +296,16 @@ def main(xlsx_filepath: str):
                     "process"
                 ).loc[process_code, "main_flow_code_out"]
 
+                process_code_cost = process_code
+                if "IMPORT" in step:
+                    process_code_cost += " (import)"
+
                 d_costs = dict(
                     flatten_dict(
                         dict(
-                            res.costs.loc[res.costs["process_subtype"] == process_code]
+                            res.costs.loc[
+                                res.costs["process_subtype"] == process_code_cost
+                            ]
                             .groupby(["cost_type"])
                             .sum(["values"])["values"]
                             .items()
@@ -243,6 +313,8 @@ def main(xlsx_filepath: str):
                         "4:costs",
                     )
                 )
+            else:
+                d_costs = {}
 
             pd_series.append(pd.Series(d_data | d_flows | d_costs, name=step))
 

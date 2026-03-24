@@ -484,11 +484,20 @@ class PtxCalc:
                     capex_ann = annuity(wacc, lifetime, capex)
                     opex = opex_f * capacity + opex_o * flow_value
 
+                    sec_process_code_costs = sec_process_code
+                    if is_import:
+                        sec_process_code_costs + " (import)"  # type:ignore
+
                     results_cost_items.append(
-                        (sec_result_process_type, sec_process_code, "CAPEX", capex_ann)
+                        (
+                            sec_result_process_type,
+                            sec_process_code_costs,
+                            "CAPEX",
+                            capex_ann,
+                        )
                     )
                     results_cost_items.append(
-                        (sec_result_process_type, sec_process_code, "OPEX", opex)
+                        (sec_result_process_type, sec_process_code_costs, "OPEX", opex)
                     )
 
                     results_flows_sec = ResultsFlows(
@@ -521,7 +530,7 @@ class PtxCalc:
                         results_cost_items.append(
                             (
                                 sec_result_process_type,
-                                sec_process_code,
+                                sec_process_code_costs,
                                 "FLOW",
                                 sec_flow_cost,
                             )
