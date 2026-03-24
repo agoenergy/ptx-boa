@@ -585,9 +585,9 @@ class DataHandler:
                     cls.dimensions["region_country"][  # type:ignore
                         f"region_country_{out_type}"
                     ].to_list(),
-                    index=cls.dimensions["region_country"][
+                    index=cls.dimensions["region_country"][  # type:ignore
                         f"region_country_{in_type}"
-                    ],  # type:ignore
+                    ],
                 )
             else:
                 mapping = pd.Series(
@@ -1095,6 +1095,8 @@ class DataHandler:
             result["main_export_process_chain"].append(pp)
             used_flows_main_export = used_flows_main_export | set(pp["CONV"])
 
+            has_ccs = "CO2CPT-R" in pp and "CO2CPT-S" in pp
+
             proc = self.dimensions["process"].loc[process_code]
             if proc.main_flow_code_in:
                 used_flows_main_chain.add(proc.main_flow_code_in)
@@ -1106,8 +1108,13 @@ class DataHandler:
         for flow_code, process_code in secondary_processes.items():
             if not process_code:
                 continue
-            if flow_code not in used_flows_main_export:
-                continue
+            if flow_code == "CO2-C":
+                if not has_ccs:
+                    continue
+            else:
+                if flow_code not in used_flows_main_export:
+                    continue
+
             pp = pg.get_process_params(process_code)
             pp["process_code"] = process_code
             # FIXME: we now also need secondary processes for import regions
