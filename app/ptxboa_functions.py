@@ -332,7 +332,7 @@ def calculate_results_list_blue(
 
         if parameter_to_change == "Natural gas price":
             parameter_code = "OPEX (other variable)"
-            process_code = "NG production"
+            process_code = "production of natural gas (blue)"
             flow_code = ""
             # NG price in supply region
             source_region_code = settings["region"]
@@ -426,7 +426,12 @@ def calculate_results_list_blue(
 
                     value_label = f"{(value):.{float_precision[parameter_to_change]}f} "
 
-                    return value_label
+                    if change_factor == 1:
+                        change_label = "(from input data)"
+                    else:
+                        change_label = f"({int(round((change_factor - 1) * 100)):+}%)"
+
+                    return f"{value_label}<br>{change_label}"
 
                 value_label = get_value_label(change_factor, value, parameter_to_change)
                 costs = res_single.costs
@@ -653,6 +658,7 @@ def get_data_type_from_input_data(
         tool_version_color=tool_version_color,
     )
 
+    processes = api.get_dimension("process", tool_version_color=tool_version_color)
     # green data types not specied by flow code
     flow_code = None
 
@@ -668,7 +674,6 @@ def get_data_type_from_input_data(
         source_region_code = [""]
         index = "process_code"
         columns = "parameter_code"
-        processes = api.get_dimension("process")
 
     if data_type == "specific_costs":
         scope = None
@@ -684,9 +689,11 @@ def get_data_type_from_input_data(
         index = "process_code"
         columns = "flow_code"
         parameter_code = ["conversion factors"]
-        process_code = input_data.loc[
-            input_data["parameter_code"] == "conversion factors", "process_code"
-        ].unique()
+        process_code = set(
+            input_data.loc[
+                input_data["parameter_code"] == "conversion factors", "process_code"
+            ].unique()
+        ).intersection(set(processes["process_name"]))
 
     if data_type == "electricity_generation":
         parameter_code = [
@@ -777,7 +784,7 @@ def get_data_type_from_input_data(
     if data_type == "Natural gas price":
         source_region_code = None
         parameter_code = ["OPEX (other variable)"]
-        process_code = ["NG production"]
+        process_code = ["production of natural gas (blue)"]
         flow_code = [""]
         index = "source_region_code"
         columns = "parameter_code"

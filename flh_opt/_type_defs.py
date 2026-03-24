@@ -15,7 +15,6 @@ SecondaryFlowType = Literal[
     "CH4-L",
     "CHX-L",
     "CO2-G",
-    "C-S",
     "DRI-S",
     "EL",
     "H2-G",

@@ -486,7 +486,7 @@ def display_and_edit_input_data(
     if data_type == "Natural gas price":
         index = "source_region_code"
         columns = "parameter_code"
-        missing_index = {"process_code": "NG production"}
+        missing_index = {"process_code": "production of natural gas (blue)"}
         column_config = {
             "OPEX (other variable)": st.column_config.NumberColumn(
                 label="Natural gas price",
