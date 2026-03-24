@@ -486,7 +486,12 @@ class PtxCalc:
             for flow_code, _conv in step_data["CONV"].items():
                 flow_value = results_flows.flows[flow_code]
 
-                sec_process_data = data["secondary_process"].get(flow_code)
+                if is_import:
+                    sec_process_data = data.get("secondary_process_i", {}).get(
+                        flow_code
+                    )
+                else:
+                    sec_process_data = data.get("secondary_process", {}).get(flow_code)
 
                 if sec_process_data:
                     # use secondary process
@@ -508,7 +513,7 @@ class PtxCalc:
 
                     sec_process_code_costs = sec_process_code
                     if is_import:
-                        sec_process_code_costs + " (import)"  # type:ignore
+                        sec_process_code_costs += " (import)"
 
                     results_cost_items.append(
                         (
@@ -552,6 +557,10 @@ class PtxCalc:
                             df_flows.at[sec_flow_code, "result_process_type"]
                             or sec_result_process_type
                         )
+
+                        sec_process_code_costs = sec_process_code
+                        if is_import:
+                            sec_process_code_costs += " (import)"
 
                         results_cost_items.append(
                             (
