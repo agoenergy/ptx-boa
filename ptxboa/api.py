@@ -19,8 +19,11 @@ from .static import (
     OutputUnitType,
     ResGenType,
     ScenarioType,
+    SecProcCCSType,
     SecProcCO2Type,
+    SecProcELType,
     SecProcH2OType,
+    SecProcHEATType,
     SourceRegionNameType,
     TargetCountryNameType,
     ToolVersionColorType,
@@ -140,6 +143,9 @@ class PtxboaAPI:
         optimize_flh: bool = True,
         use_user_data_for_optimize_flh: bool = False,
         tool_version_color: ToolVersionColorType = "green",
+        secproc_heat: SecProcHEATType | None = None,
+        secproc_el: SecProcELType | None = None,
+        secproc_ccs: SecProcCCSType | None = None,
     ) -> ApiCalculateResult:
         """Calculate results based on user selection.
 
@@ -151,6 +157,12 @@ class PtxboaAPI:
             name of secondary process for CO2
         secproc_water : str
             name of secondary process for H2O
+        secproc_heat : str
+            name of secondary process for HEAT
+        secproc_el : str
+            name of secondary process for EL
+        secproc_ccs : str
+            name of secondary process for CCS
         chain : str
             name of product chain
         res_gen : str
@@ -203,22 +215,23 @@ class PtxboaAPI:
             logger.error(f"Invalid choice for transport: {transport}")
 
         data = data_handler.get_calculation_data(
-            secondary_processes={
-                "H2O-L": (
+            secondary_processes={  # type:ignore
+                flow_code: (
                     DataHandler.get_dimensions_parameter_code(
-                        "secproc_water", secproc_water
+                        dimension=dimension,  # type:ignore
+                        parameter_name=parameter_name,
                     )
-                    if secproc_water
+                    if parameter_name
                     else None
-                ),
-                "CO2-G": (
-                    DataHandler.get_dimensions_parameter_code(
-                        "secproc_co2", secproc_co2
-                    )
-                    if secproc_co2
-                    else None
-                ),
-            },  # type:ignore
+                )
+                for flow_code, dimension, parameter_name in [
+                    ("H2O-L", "secproc_water", secproc_water),
+                    ("CO2-G", "secproc_co2", secproc_co2),
+                    ("HEAT", "secproc_heat", secproc_heat),
+                    ("EL", "secproc_el", secproc_el),
+                    ("CO2-C", "secproc_ccs", secproc_ccs),
+                ]
+            },
             chain_name=chain,
             process_code_res=DataHandler.get_dimensions_parameter_code(
                 "res_gen", res_gen
@@ -275,6 +288,9 @@ class PtxboaAPI:
             df["scenario"] = scenario
             df["secproc_co2"] = secproc_co2
             df["secproc_water"] = secproc_water
+            df["secproc_heat"] = secproc_heat
+            df["secproc_el"] = secproc_el
+            df["secproc_ccs"] = secproc_ccs
             df["chain"] = chain
             df["res_gen"] = res_gen
             df["region"] = region

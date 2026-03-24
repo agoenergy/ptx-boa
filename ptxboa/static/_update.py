@@ -99,6 +99,30 @@ def main():
             ),
         ),
         create_literal_from_query(
+            "SecProcHEAT",
+            "process_name",
+            (
+                "SELECT process_name from ptxboa_process where "
+                "main_flow_code_out='HEAT' and is_secondary=1"
+            ),
+        ),
+        create_literal_from_query(
+            "SecProcEL",
+            "process_name",
+            (
+                "SELECT process_name from ptxboa_process where "
+                "main_flow_code_out='EL' and is_secondary=1"
+            ),
+        ),
+        create_literal_from_query(
+            "SecProcCCS",
+            "process_name",
+            (
+                "SELECT process_name from ptxboa_process where "
+                "main_flow_code_out='CO2-C' and is_secondary=1"
+            ),
+        ),
+        create_literal_from_query(
             "ResGen",
             "process_name",
             "SELECT process_name from ptxboa_process where is_re_generation=1",
@@ -121,6 +145,9 @@ def main():
                 "process",
                 "secproc_co2",  # subset of process
                 "secproc_water",  # subset of process
+                "secproc_heat",  # subset of process
+                "secproc_el",  # subset of process
+                "secproc_ccs",  # subset of process
                 "res_gen",  # subset of process
                 "parameter",
             ],

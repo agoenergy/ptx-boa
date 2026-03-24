@@ -82,6 +82,17 @@ def _load_data(
     return df
 
 
+def _create_secproc_dimension(dimensions: dict[str, pd.DataFrame], process_class: str):
+    return pd.concat(
+        [
+            dimensions["process"]
+            .loc[dimensions["process"]["process_class"] == process_class]
+            .copy(),
+            pd.DataFrame([{"process_name": "Specific costs"}]),
+        ]
+    ).set_index("process_name", drop=False)
+
+
 def _load_dimensions() -> dict[DimensionType, pd.DataFrame]:
     dimensions = {}
 
@@ -131,24 +142,23 @@ def _load_dimensions() -> dict[DimensionType, pd.DataFrame]:
             for year, parameter_range in product(YearValues, ParameterRangeValues)
         ]
     ).set_index("scenario_name")
-    dimensions["secproc_co2"] = pd.concat(
-        [
-            dimensions["process"]
-            .loc[dimensions["process"]["process_class"] == "PROV_C"]
-            .copy(),
-            pd.DataFrame([{"process_name": "Specific costs"}]),
-        ]
-    ).set_index("process_name", drop=False)
-    dimensions["secproc_water"] = pd.concat(
-        [
-            (
-                dimensions["process"]
-                .loc[dimensions["process"]["process_class"] == "PROV_H2O"]
-                .copy()
-            ),
-            pd.DataFrame([{"process_name": "Specific costs"}]),
-        ]
-    ).set_index("process_name", drop=False)
+
+    dimensions["secproc_co2"] = _create_secproc_dimension(
+        dimensions=dimensions, process_class="PROV_C"
+    )
+    dimensions["secproc_water"] = _create_secproc_dimension(
+        dimensions=dimensions, process_class="PROV_H2O"
+    )
+    dimensions["secproc_heat"] = _create_secproc_dimension(
+        dimensions=dimensions, process_class="PROV_HT"
+    )
+    dimensions["secproc_el"] = _create_secproc_dimension(
+        dimensions=dimensions, process_class="PROV_EL"
+    )
+    dimensions["secproc_ccs"] = _create_secproc_dimension(
+        dimensions=dimensions, process_class="PROV_CC"
+    )
+
     dimensions["chain"] = _load_data(
         STATIC_DATA_DIR, name="chains", key_columns="chain"
     )
@@ -1196,6 +1206,9 @@ class DataHandler:
             "res_gen": "process",
             "secproc_co2": "process",
             "secproc_water": "process",
+            "secproc_heat": "process",
+            "secproc_el": "process",
+            "secproc_ccs": "process",
             "region": "region",
             "country": "country",
         }
