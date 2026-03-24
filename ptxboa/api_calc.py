@@ -302,7 +302,7 @@ class PtxCalc:
 
         # get general parameters
         parameters = data["parameter"]
-        wacc = parameters["WACC"]
+        parameters_import = data["parameter_i"]
 
         # start main chain calculation
         main_output_value = 1  # start with normalized value of 1
@@ -328,13 +328,24 @@ class PtxCalc:
         last_emissions = {}
 
         # iterate over steps in chain
-        for step_data in (
+
+        for i, step_data in enumerate(
             data["main_export_process_chain"]
             + data["transport_process_chain"]
             + data["main_import_process_chain"]
         ):
             process_step = step_data["step"]
             process_code = step_data["process_code"]
+            is_import = (
+                len(data["main_export_process_chain"])
+                + len(data["transport_process_chain"])
+                <= i
+            )
+            wacc = parameters_import["WACC"] if is_import else parameters["WACC"]
+            speccosts = (
+                parameters_import["SPECCOST"] if is_import else parameters["SPECCOST"]
+            )
+
             is_transport = process_step in {
                 "SHP",
                 "SHP_OWN",
@@ -343,6 +354,7 @@ class PtxCalc:
                 "PPLX",
                 "PPLR",
             }
+
             result_process_type = df_processes.at[process_code, "result_process_type"]
 
             eff = step_data["EFF"]
@@ -451,7 +463,7 @@ class PtxCalc:
                             # do not add SPECCOST below
                             continue
 
-                        sec_speccost = parameters["SPECCOST"][sec_flow_code]
+                        sec_speccost = speccosts[sec_flow_code]
                         sec_flow_cost = sec_flow_value * sec_speccost
 
                         sec_result_process_type = (
@@ -481,7 +493,7 @@ class PtxCalc:
 
                 else:
                     # use market
-                    speccost = parameters["SPECCOST"][flow_code]
+                    speccost = speccosts[flow_code]
 
                     # electricity before transport will be handled by RES step
                     # after transport: market
