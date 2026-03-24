@@ -17,7 +17,7 @@ logger = logging.getLogger()
 class ResultsFlows:
     process_code: str
     process_step: str
-    main_input: float
+    main_input: float | None
     main_output: float
     flows: dict[str, float]
     emissions: Optional[dict[str, float]] = None
@@ -26,7 +26,7 @@ class ResultsFlows:
 def calculate_emissions(
     results_flows: ResultsFlows,
     step_data: dict,
-    main_flow_code_in: str,
+    main_flow_code_in: str | None,
     main_flow_code_out: str,
     last_emissions: dict | None = None,
 ) -> dict:
@@ -280,6 +280,15 @@ def calculate_emissions(
     return result
 
 
+def _rescale_result_flows(results_flows: ResultsFlows, norm_factor: float) -> None:
+    results_flows.main_output *= norm_factor
+    if results_flows.main_input:
+        results_flows.main_input *= norm_factor
+    results_flows.flows = rescale_dict(results_flows.flows, norm_factor)
+    if results_flows.emissions:
+        results_flows.emissions = rescale_dict(results_flows.emissions, norm_factor)
+
+
 class PtxCalc:
     """Main module for chain calculation."""
 
@@ -314,6 +323,8 @@ class PtxCalc:
         results_emissions_m_g_co2e = []
 
         results_flows_chain: list[ResultsFlows] = []
+        results_flows_secondary: list[ResultsFlows] = []
+        results_flows_secondary_i: list[ResultsFlows] = []
         last_emissions = {}
 
         # iterate over steps in chain
@@ -421,6 +432,15 @@ class PtxCalc:
                         (sec_result_process_type, sec_process_code, "OPEX", opex)
                     )
 
+                    results_flows_sec = ResultsFlows(
+                        process_code=sec_process_code,
+                        process_step=sec_result_process_type,  # type:ignore
+                        main_input=flow_value,  # FIXME?? input None or main_output
+                        main_output=flow_value,
+                        flows={},
+                    )
+                    results_flows_secondary.append(results_flows_sec)
+
                     for sec_flow_code, sec_conv in sec_process_data["CONV"].items():
                         sec_flow_value = flow_value * sec_conv
 
@@ -447,6 +467,17 @@ class PtxCalc:
                                 sec_flow_cost,
                             )
                         )
+
+                        results_flows_sec.flows[sec_flow_code] = sec_flow_value
+
+                    # FIXME: not finished yet
+                    results_flows_sec.emissions = calculate_emissions(
+                        results_flows=results_flows_sec,
+                        step_data={"step": None, "process_code": None},
+                        main_flow_code_in=None,
+                        main_flow_code_out="",
+                        last_emissions=None,
+                    )
 
                 else:
                     # use market
@@ -484,61 +515,29 @@ class PtxCalc:
             )
             results_flows.emissions = last_emissions
 
-            results_emissions_e_g_co2e.append(
-                (
-                    result_process_type,
-                    process_code,
-                    "indirect",
-                    "CO2",
-                    last_emissions["co2_indirect_scope2_e"],
+            for d_i, gas, ind in [
+                ("indirect", "CO2", "co2_indirect_scope2"),
+                ("direct", "CO2", "co2_direct"),
+                ("direct", "CH4", "ch4_direct_co2e"),
+            ]:
+                results_emissions_e_g_co2e.append(
+                    (
+                        result_process_type,
+                        process_code,
+                        d_i,
+                        gas,
+                        last_emissions[ind + "_e"],
+                    )
                 )
-            )
-            results_emissions_e_g_co2e.append(
-                (
-                    result_process_type,
-                    process_code,
-                    "direct",
-                    "CO2",
-                    last_emissions["co2_direct_e"],
+                results_emissions_m_g_co2e.append(
+                    (
+                        result_process_type,
+                        process_code,
+                        d_i,
+                        gas,
+                        last_emissions[ind + "_m"],
+                    )
                 )
-            )
-            results_emissions_e_g_co2e.append(
-                (
-                    result_process_type,
-                    process_code,
-                    "direct",
-                    "CH4",
-                    last_emissions["ch4_direct_co2e_e"],
-                )
-            )
-
-            results_emissions_m_g_co2e.append(
-                (
-                    result_process_type,
-                    process_code,
-                    "indirect",
-                    "CO2",
-                    last_emissions["co2_indirect_scope2_m"],
-                )
-            )
-            results_emissions_m_g_co2e.append(
-                (
-                    result_process_type,
-                    process_code,
-                    "direct",
-                    "CO2",
-                    last_emissions["co2_direct_m"],
-                )
-            )
-            results_emissions_m_g_co2e.append(
-                (
-                    result_process_type,
-                    process_code,
-                    "direct",
-                    "CH4",
-                    last_emissions["ch4_direct_co2e_m"],
-                )
-            )
 
         # add final emissions bound
         results_emissions_e_g_co2e.append(
@@ -605,13 +604,11 @@ class PtxCalc:
 
         # rescale values
         for results_flows in results_flows_chain:
-            results_flows.main_output *= norm_factor
-            results_flows.main_input *= norm_factor
-            results_flows.flows = rescale_dict(results_flows.flows, norm_factor)
-            if results_flows.emissions:
-                results_flows.emissions = rescale_dict(
-                    results_flows.emissions, norm_factor
-                )
+            _rescale_result_flows(results_flows, norm_factor)
+        for results_flows in results_flows_secondary:
+            _rescale_result_flows(results_flows, norm_factor)
+        for results_flows in results_flows_secondary_i:
+            _rescale_result_flows(results_flows, norm_factor)
 
         # rescale again ONLY RES to account for additionally needed electricity
         # sum_el is larger than 1.0
@@ -630,13 +627,7 @@ class PtxCalc:
             for results_flows in [
                 rf for rf in results_flows_chain if rf.process_step == "RES"
             ]:
-                results_flows.main_output *= norm_factor_el
-                results_flows.main_input *= norm_factor_el
-                results_flows.flows = rescale_dict(results_flows.flows, norm_factor_el)
-                if results_flows.emissions:
-                    results_flows.emissions = rescale_dict(
-                        results_flows.emissions, norm_factor_el
-                    )
+                _rescale_result_flows(results_flows, norm_factor_el)
 
         # TODO: currently for testing, we return dicts, not ResultsFlows
         results_flows_chain_ = [asdict(rf) for rf in results_flows_chain]
