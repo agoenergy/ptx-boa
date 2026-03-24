@@ -13,6 +13,16 @@ from ptxboa.utils import annuity, rescale_dict
 logger = logging.getLogger()
 
 
+def _sum_float(x: float | None, y: float | None) -> float:
+    return (x or 0) + (y or 0)
+
+
+def _sum_dict(x: dict | None, y: dict | None) -> dict:
+    x = x or {}
+    y = y or {}
+    return {k: _sum_float(x.get(k), y.get(k)) for k in (set(x) | set(y))}
+
+
 @dataclass(slots=True)
 class ResultsFlows:
     process_code: str
@@ -21,6 +31,43 @@ class ResultsFlows:
     main_output: float
     flows: dict[str, float]
     emissions: Optional[dict[str, float]] = None
+
+    def __add__(self, other: "ResultsFlows") -> "ResultsFlows":
+        assert (
+            self.process_code == other.process_code
+            and self.process_step == other.process_step
+        )
+        return ResultsFlows(
+            process_code=self.process_code,
+            process_step=self.process_step,
+            main_input=_sum_float(self.main_input, other.main_input),
+            main_output=_sum_float(self.main_output, other.main_output),
+            flows=_sum_dict(self.flows, other.flows),
+            emissions=_sum_dict(self.emissions, other.emissions),
+        )
+
+
+def _aggregate_result_flows(
+    list_result_flows: list[ResultsFlows],
+) -> dict[tuple, ResultsFlows]:
+    groups = {}
+    for rf in list_result_flows:
+        key = (rf.process_code, rf.process_step)
+        if key not in groups:
+            groups[key] = rf
+        else:
+            groups[key] += rf
+    return groups
+
+
+@dataclass(slots=True)
+class PtxCalcResult:
+    df_results_cost: pd.DataFrame
+    df_results_emissions_e_g_co2e: Optional[pd.DataFrame]
+    df_results_emissions_m_g_co2e: Optional[pd.DataFrame]
+    results_flows_chain: Optional[list]
+    results_flows_secondary: Optional[list]
+    results_flows_secondary_import: Optional[list]
 
 
 def calculate_emissions(
@@ -295,7 +342,7 @@ class PtxCalc:
     @staticmethod
     def calculate(
         data: CalculateDataType,
-    ) -> tuple[list, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    ) -> PtxCalcResult:
         """Calculate results."""
         df_processes = DataHandler.get_dimension("process")
         df_flows = DataHandler.get_dimension("flow")
@@ -642,13 +689,29 @@ class PtxCalc:
                 _rescale_result_flows(results_flows, norm_factor_el)
 
         # TODO: currently for testing, we return dicts, not ResultsFlows
-        results_flows_chain_ = [asdict(rf) for rf in results_flows_chain]
+        results_flows_chain = [asdict(rf) for rf in results_flows_chain]  # type:ignore
 
-        return (
-            results_flows_chain_,
-            df_results_cost,
-            df_results_emissions_e_g_co2e,
-            df_results_emissions_m_g_co2e,
+        results_flows_secondary = list(
+            _aggregate_result_flows(results_flows_secondary).values()
+        )
+        results_flows_secondary = [
+            asdict(rf) for rf in results_flows_secondary
+        ]  # type:ignore
+
+        results_flows_secondary_i = list(
+            _aggregate_result_flows(results_flows_secondary_i).values()
+        )
+        results_flows_secondary_i = [
+            asdict(rf) for rf in results_flows_secondary_i
+        ]  # type:ignore
+
+        return PtxCalcResult(
+            df_results_cost=df_results_cost,
+            df_results_emissions_e_g_co2e=df_results_emissions_e_g_co2e,
+            df_results_emissions_m_g_co2e=df_results_emissions_m_g_co2e,
+            results_flows_chain=results_flows_chain,
+            results_flows_secondary=results_flows_secondary,
+            results_flows_secondary_import=results_flows_secondary_i,
         )
 
 

@@ -287,11 +287,10 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
     # round and sort for easier comparison
     calculation_data = _sort_nested(_round_nested(calculation_data))
 
-    values, _df_result_cost, _df_result_emissions, _df_result_emissions_mass = (
-        PtxCalc.calculate(calculation_data)  # type:ignore
-    )  # noqa
+    ptxcalc_results = PtxCalc.calculate(calculation_data)  # type:ignore
+
     # round and sort for easier comparison
-    values = _sort_nested(_round_nested(values))
+    values = _sort_nested(_round_nested(ptxcalc_results.results_flows_chain))
 
     # test api output
     api = PtxboaAPI(data_dir=ptxdata_dir_static)
@@ -813,6 +812,33 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "process_code": "EAF#B",
                     "process_step": "DERIV_I2",
                 },
+                {
+                    "emissions": {
+                        "ch4_direct_co2e_e": 0,
+                        "ch4_direct_co2e_m": 0,
+                        "ch4_direct_e": 0,
+                        "ch4_direct_m": 0,
+                        "co2_bound_in_product_e": 0,
+                        "co2_bound_in_product_last_proc_e": 0,
+                        "co2_bound_in_product_last_proc_m": 0,
+                        "co2_bound_in_product_m": 0,
+                        "co2_captured_e": 0,
+                        "co2_captured_m": 0,
+                        "co2_direct_e": 0,
+                        "co2_direct_m": 0,
+                        "co2_in_flows_e": 0,
+                        "co2_in_flows_m": 0,
+                        "co2_indirect_scope2_e": 0,
+                        "co2_indirect_scope2_m": 0,
+                        "co2e_total_direct_e": 0,
+                        "co2e_total_direct_m": 0,
+                    },
+                    "flows": {},
+                    "main_input": 1.126487,
+                    "main_output": 1.126487,
+                    "process_code": "CCGT-CC#B",
+                    "process_step": "SECONDARY:Electricity",
+                },
             ],
             [
                 {
@@ -1173,6 +1199,33 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "main_output": 1.0,
                     "process_code": "H2-RGAS#B",
                     "process_step": "POST_SHP",
+                },
+                {
+                    "emissions": {
+                        "ch4_direct_co2e_e": 0,
+                        "ch4_direct_co2e_m": 0,
+                        "ch4_direct_e": 0,
+                        "ch4_direct_m": 0,
+                        "co2_bound_in_product_e": 0,
+                        "co2_bound_in_product_last_proc_e": 0,
+                        "co2_bound_in_product_last_proc_m": 0,
+                        "co2_bound_in_product_m": 0,
+                        "co2_captured_e": 0,
+                        "co2_captured_m": 0,
+                        "co2_direct_e": 0,
+                        "co2_direct_m": 0,
+                        "co2_in_flows_e": 0,
+                        "co2_in_flows_m": 0,
+                        "co2_indirect_scope2_e": 0,
+                        "co2_indirect_scope2_m": 0,
+                        "co2e_total_direct_e": 0,
+                        "co2e_total_direct_m": 0,
+                    },
+                    "flows": {},
+                    "main_input": 0.412631,
+                    "main_output": 0.412631,
+                    "process_code": "CCGT-CC#B",
+                    "process_step": "SECONDARY:Electricity",
                 },
             ],
             [

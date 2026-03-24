@@ -248,12 +248,7 @@ class PtxboaAPI:
             use_user_data_for_optimize_flh=use_user_data_for_optimize_flh,
         )
 
-        (
-            results_flows_chain,
-            df_result_cost,
-            df_result_emissions,
-            df_result_emissions_mass,
-        ) = PtxCalc.calculate(data)
+        ptxcalc_result = PtxCalc.calculate(data)
 
         # conversion to output unit
         if output_unit not in {"USD/MWh", "USD/t"}:
@@ -280,11 +275,19 @@ class PtxboaAPI:
             raise ValueError("chain output unit must be either kWh or kg")
 
         # conversion: FIXME: is emissions already scaled to ton?
-        for df in [df_result_cost, df_result_emissions, df_result_emissions_mass]:
+        for df in [
+            ptxcalc_result.df_results_cost,
+            ptxcalc_result.df_results_emissions_e_g_co2e,
+            ptxcalc_result.df_results_emissions_m_g_co2e,
+        ]:
             df["values"] = df["values"] * conversion
 
         # add user settings
-        for df in [df_result_cost, df_result_emissions, df_result_emissions_mass]:
+        for df in [
+            ptxcalc_result.df_results_cost,
+            ptxcalc_result.df_results_emissions_e_g_co2e,
+            ptxcalc_result.df_results_emissions_m_g_co2e,
+        ]:
             df["scenario"] = scenario
             df["secproc_co2"] = secproc_co2
             df["secproc_water"] = secproc_water
@@ -299,12 +302,23 @@ class PtxboaAPI:
 
         metadata = {"flh_opt_hash": data.get("flh_opt_hash")}  # does not always exist
 
+        # combine main flows with secondary flows
+        todo_results_flows = ptxcalc_result.results_flows_chain or []
+        for d in ptxcalc_result.results_flows_secondary or []:
+            d = d.copy()
+            d["process_step"] = "SECONDARY:" + d["process_step"]
+            todo_results_flows += [d]
+        for d in ptxcalc_result.results_flows_secondary_import or []:
+            d = d.copy()
+            d["process_step"] = "SECONDARY-IMPORT:" + d["process_step"]
+            todo_results_flows += [d]
+
         return ApiCalculateResult(
             metadata=metadata,
-            costs=df_result_cost,
-            emissions=df_result_emissions,
-            emission_mass=df_result_emissions_mass,
-            todo_results_flows=results_flows_chain,
+            costs=ptxcalc_result.df_results_cost,
+            emissions=ptxcalc_result.df_results_emissions_e_g_co2e,
+            emission_mass=ptxcalc_result.df_results_emissions_m_g_co2e,
+            todo_results_flows=todo_results_flows,
             todo_data=data,
         )
 
