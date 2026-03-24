@@ -347,6 +347,12 @@ class PtxCalc:
         df_processes = DataHandler.get_dimension("process")
         df_flows = DataHandler.get_dimension("flow")
 
+        first_step = data["main_export_process_chain"][0]["step"]
+        first_step_is_ng_prod = first_step == "NG_PROD"
+        first_step_is_res = first_step == "RES"
+        if not (first_step_is_res or first_step_is_ng_prod):
+            logger.warning("frst step neither RES nor NG_PROD: %s", first_step)
+
         # get general parameters
         parameters = data["parameter"]
         parameters_import = data["parameter_i"]
@@ -364,7 +370,10 @@ class PtxCalc:
 
         # accumulate needed electric input
         step_before_transport = True
-        sum_el = main_output_value
+
+        sum_el_export = main_output_value if first_step_is_res else 0
+        sum_ng_export = main_output_value if first_step_is_ng_prod else 0
+
         results_cost_items: list[tuple] = []
         results_emissions_e_g_co2e = []
         results_emissions_m_g_co2e = []
@@ -473,11 +482,13 @@ class PtxCalc:
             results_flows.emissions = last_emissions
 
             # convert co2_captured_m to FLOW
+            # co2_captured_m is in gCO2
+            # our default unit SHOULD be kg?
             if results_flows.emissions["co2_captured_m"]:
                 flow_code = "CO2-C"
                 results_flows.flows[flow_code] = (
                     results_flows.flows.get(flow_code, 0)
-                    + results_flows.emissions["co2_captured_m"]
+                    + results_flows.emissions["co2_captured_m"] / 1000  # g ->kg
                 )
                 step_data["CONV"]["CO2-C"] = 1  # so that in loop below, its picked up
 
@@ -545,8 +556,20 @@ class PtxCalc:
 
                         # electricity before transport will be handled by RES step
                         # after transport: market
-                        if sec_flow_code == "EL" and step_before_transport:
-                            sum_el += sec_flow_value
+                        if (
+                            sec_flow_code == "EL"
+                            and step_before_transport
+                            and first_step_is_res
+                        ):
+                            sum_el_export += sec_flow_value
+                            # do not add SPECCOST below
+                            continue
+                        elif (
+                            sec_flow_code == "NG-G"
+                            and step_before_transport
+                            and first_step_is_ng_prod
+                        ):
+                            sum_ng_export += sec_flow_value
                             # do not add SPECCOST below
                             continue
 
@@ -584,16 +607,29 @@ class PtxCalc:
 
                 else:
                     # use market
-                    speccost = speccosts.get(flow_code, 0)
-                    if not speccost:
-                        logger.error("no SPECCOST for %s", flow_code)
 
                     # electricity before transport will be handled by RES step
                     # after transport: market
-                    if flow_code == "EL" and step_before_transport:
-                        sum_el += flow_value
+                    if (
+                        flow_code == "EL"
+                        and step_before_transport
+                        and first_step_is_res
+                    ):
+                        sum_el_export += flow_value
                         # do not add SPECCOST below
                         continue
+                    elif (
+                        flow_code == "NG-G"
+                        and step_before_transport
+                        and first_step_is_ng_prod
+                    ):
+                        sum_ng_export += flow_value
+                        # do not add SPECCOST below
+                        continue
+
+                    speccost = speccosts.get(flow_code, 0)
+                    if not speccost:
+                        logger.error("no SPECCOST for %s", flow_code)
 
                     flow_cost = flow_value * speccost
 
@@ -708,20 +744,39 @@ class PtxCalc:
         # sum_el is larger than 1.0
 
         # TODO: for blue hydrogen chains, there is no RES
-        idx = df_results_cost["process_type"] == "Electricity generation"
-        if not idx.any():
-            # TODO: in blue tool, we have no RES process, so should not warn
-            pass
-        else:
-            norm_factor_el = sum_el
-            df_results_cost.loc[idx, "values"] = (
-                df_results_cost.loc[idx, "values"] * norm_factor_el
+
+        if first_step_is_res and sum_el_export > 1:
+            norm_factor_el = sum_el_export
+            idx_el = (
+                df_results_cost["process_type"] == "Electricity generation"
+            )  # FIXME: unsave using name
+            if not idx_el.any():
+                logger.error("Not found in cost: Electricity generation")
+            df_results_cost.loc[idx_el, "values"] = (
+                df_results_cost.loc[idx_el, "values"] * norm_factor_el
             )
             # rescale values
             for results_flows in [
                 rf for rf in results_flows_chain if rf.process_step == "RES"
             ]:
                 _rescale_result_flows(results_flows, norm_factor_el)
+
+        elif first_step_is_ng_prod and sum_ng_export > 1:
+            # FIXME: why is this not called?
+            norm_factor_ng = sum_ng_export
+            idx_ng = (
+                df_results_cost["process_type"] == "Natural gas production"
+            )  # FIXME: unsave using name
+            if not idx_ng.any():
+                logger.error("Not found in cost: Natural gas production")
+            df_results_cost.loc[idx_ng, "values"] = (
+                df_results_cost.loc[idx_ng, "values"] * norm_factor_ng
+            )
+            # rescale values
+            for results_flows in [
+                rf for rf in results_flows_chain if rf.process_step == "NG_PROD"
+            ]:
+                _rescale_result_flows(results_flows, norm_factor_ng)
 
         # TODO: currently for testing, we return dicts, not ResultsFlows
         results_flows_chain = [asdict(rf) for rf in results_flows_chain]  # type:ignore
