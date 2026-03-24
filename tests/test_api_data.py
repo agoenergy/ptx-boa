@@ -324,6 +324,18 @@ def test_get_calculation_data(ptxdata_dir, scenario, kwargs, request):
                 "N2-G": 0.01154,
             },
         },
+        "parameter_i": {
+            "WACC": 0.0532,
+            "CALOR": 33.33,
+            "SPECCOST": {
+                "BFUEL-L": 0.0032243376759515,
+                "CO2-G": 0.0445186199587845,
+                "EL": 0.08078,
+                "H2O-L": 0.0013737954502618,
+                "HEAT": 0.0577,
+                "N2-G": 0.01154,
+            },
+        },
         "context": {"source_region_code": "ARE", "target_country_code": "DEU"},
     }
 
@@ -471,6 +483,18 @@ def test_get_calculation_data_w_opt(ptxdata_dir, scenario, kwargs, request):
             }
         },
         "parameter": {
+            "WACC": 0.2215019750791156,
+            "CALOR": 33.33,
+            "SPECCOST": {
+                "BFUEL-L": 0.0032243376759515,
+                "CO2-G": 0.0445186199587845,
+                "EL": 0.08078,
+                "H2O-L": 0.0013737954502618,
+                "HEAT": 0.0577,
+                "N2-G": 0.01154,
+            },
+        },
+        "parameter_i": {
             "WACC": 0.2215019750791156,
             "CALOR": 33.33,
             "SPECCOST": {
