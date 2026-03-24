@@ -37,6 +37,35 @@ from ptxboa.static import (
 from ptxboa.static._type_defs import CalculateDataType
 
 
+def _get_secproc_data(
+    secondary_processes: dict,
+    pg: "_ParameterGetter",
+    has_ccs: bool,
+    used_flows_main_export: set,
+) -> tuple[dict, set, set]:
+    result = {}
+    used_flows_secondary: set[FlowCodeType] = set()
+    provided_flows_secondary: set[FlowCodeType] = set()
+    for flow_code, process_code in secondary_processes.items():
+        if not process_code:
+            continue
+        if flow_code == "CO2-C":
+            if not has_ccs:
+                continue
+        else:
+            if flow_code not in used_flows_main_export:
+                continue
+
+        pp = pg.get_process_params(process_code)
+        pp["process_code"] = process_code
+        # FIXME: we now also need secondary processes for import regions
+        result[flow_code] = pp
+        used_flows_secondary = used_flows_secondary | set(pp["CONV"])
+        provided_flows_secondary.add(flow_code)
+
+    return result, used_flows_secondary, provided_flows_secondary
+
+
 def _assign_key(
     df: pd.DataFrame, key_columns: str | List[str] | Tuple[str]
 ) -> pd.DataFrame:
@@ -1087,6 +1116,7 @@ class DataHandler:
 
         used_flows_main_chain: set[FlowCodeType] = set()
         used_flows_main_export: set[FlowCodeType] = set()
+        has_ccs = False
         for process_step in chain_steps_main_export:
             process_code = chain[process_step]
             pp = pg.get_process_params(process_code)
@@ -1094,33 +1124,23 @@ class DataHandler:
             pp["process_code"] = process_code
             result["main_export_process_chain"].append(pp)
             used_flows_main_export = used_flows_main_export | set(pp["CONV"])
-
-            has_ccs = "CO2CPT-R" in pp and "CO2CPT-S" in pp
-
             proc = self.dimensions["process"].loc[process_code]
             if proc.main_flow_code_in:
                 used_flows_main_chain.add(proc.main_flow_code_in)
             if proc.main_flow_code_out:
                 used_flows_main_chain.add(proc.main_flow_code_out)
 
-        used_flows_secondary: set[FlowCodeType] = set()
-        provided_flows_secondary: set[FlowCodeType] = set()
-        for flow_code, process_code in secondary_processes.items():
-            if not process_code:
-                continue
-            if flow_code == "CO2-C":
-                if not has_ccs:
-                    continue
-            else:
-                if flow_code not in used_flows_main_export:
-                    continue
+            has_ccs = has_ccs or ("CO2CPT-R" in pp and "CO2CPT-S" in pp)
 
-            pp = pg.get_process_params(process_code)
-            pp["process_code"] = process_code
-            # FIXME: we now also need secondary processes for import regions
-            result["secondary_process"][flow_code] = pp
-            used_flows_secondary = used_flows_secondary | set(pp["CONV"])
-            provided_flows_secondary.add(flow_code)
+        _secondary_process, used_flows_secondary, provided_flows_secondary = (
+            _get_secproc_data(
+                secondary_processes=secondary_processes,
+                pg=pg,
+                has_ccs=has_ccs,
+                used_flows_main_export=used_flows_main_export,
+            )
+        )
+        result["secondary_process"] = _secondary_process
 
         used_flows_transport: set[FlowCodeType] = set()
         for process_step in chain_steps_transport:
@@ -1144,6 +1164,8 @@ class DataHandler:
                 used_flows_main_chain.add(proc.main_flow_code_out)
 
         used_flows_main_import: set[FlowCodeType] = set()
+
+        has_ccs = False
         for process_step in chain_steps_main_import:
             process_code = chain[process_step]
             if not process_code:
@@ -1159,6 +1181,20 @@ class DataHandler:
                 used_flows_main_chain.add(proc.main_flow_code_in)
             if proc.main_flow_code_out:
                 used_flows_main_chain.add(proc.main_flow_code_out)
+
+            has_ccs = has_ccs or ("CO2CPT-R" in pp and "CO2CPT-S" in pp)
+
+        _secondary_process_i, used_flows_secondary_i, provided_flows_secondary_i = (
+            _get_secproc_data(
+                secondary_processes=secondary_processes,
+                pg=pg_import,
+                has_ccs=has_ccs,
+                used_flows_main_export=used_flows_main_import,
+            )
+        )
+        # only add if not empty, because new in blue tool
+        if _secondary_process_i:
+            result["secondary_process_i"] = _secondary_process_i  # noqa
 
         # If RES=Hybrid: we also need PV and Wind-On
         if process_code_res == "RES-HYBR":
@@ -1178,7 +1214,8 @@ class DataHandler:
             | used_flows_always_for_opt
             | used_flows_secondary
             | used_flows_transport
-            | used_flows_main_import
+            | (used_flows_main_import - provided_flows_secondary_i)
+            | used_flows_secondary_i
         )
         # FIXME: used_flows_main_import may need to come from different country!!
         result["parameter"]["SPECCOST"] = pg.get_flow_params("SPECCOST", used_flows)

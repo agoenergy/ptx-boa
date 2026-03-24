@@ -612,7 +612,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "SPECCOST": {
                         "CO2-G": 0.044519,
                         "DIESEL-L": 0.042857,
-                        "EL": 0.08078,
                         "H2O-L": 0.001374,
                         "HEAT": 0.0577,
                         "IOP-S": 0.267076,
@@ -649,6 +648,23 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "OPEX-O": 0,
                         "process_code": "CCGT-CC#B",
                     },
+                },
+                "secondary_process_i": {
+                    "EL": {
+                        "CAPEX": 2408.190709,
+                        "CH4SHARE": {"NG-G": 0.920806},
+                        "CO2CPT-R": {"NG-G": 0.897778},
+                        "CO2CPT-S": {"NG-G": 1.0},
+                        "CONV": {},
+                        "EFF": 0.504911,
+                        "EF_E": {"EL": 100.0, "NG-G": 201.0},
+                        "EF_M": {"EL": 100.0, "NG-G": 201.0},
+                        "FLH": 7000,
+                        "LIFETIME": 30.0,
+                        "OPEX-F": 63.758895,
+                        "OPEX-O": 0,
+                        "process_code": "CCGT-CC#B",
+                    }
                 },
                 "transport_process_chain": [
                     {
