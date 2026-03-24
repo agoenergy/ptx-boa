@@ -476,13 +476,16 @@ class _ParameterGetter:
         return result
 
     def get_flow_params(
-        self, parameter_code: ParameterCodeType, flow_codes: Iterable[FlowCodeType]
+        self,
+        parameter_code: ParameterCodeType,
+        flow_codes: Iterable[FlowCodeType],
+        defaults: None | dict = None,
     ):
+        defaults = defaults or {}
         result = {}
         for flow_code in flow_codes:
             result[flow_code] = self.get_parameter_value_w_default(
-                parameter_code,
-                flow_code=flow_code,
+                parameter_code, flow_code=flow_code, default=defaults.get(flow_code)
             )
         return result
 
@@ -1078,6 +1081,7 @@ class DataHandler:
             "main_import_process_chain": [],
             "secondary_process": {},
             "parameter": {},
+            "parameter_i": {},
             "context": {
                 "source_region_code": source_region_code,
                 "target_country_code": target_country_code,
@@ -1085,8 +1089,18 @@ class DataHandler:
         }
 
         result["parameter"]["WACC"] = pg.get_parameter_value_w_default("WACC")
-        result["parameter"]["CALOR"] = pg.get_parameter_value_w_default(
+        # default from export country
+        result["parameter_i"]["WACC"] = pg_import.get_parameter_value_w_default(
+            "WACC", default=result["parameter"]["WACC"]
+        )
+
+        result["parameter"]["CALOR"] = pg_import.get_parameter_value_w_default(
             parameter_code="CALOR", flow_code=chain["FLOW_OUT"]
+        )
+        result["parameter_i"]["CALOR"] = pg_import.get_parameter_value_w_default(
+            parameter_code="CALOR",
+            flow_code=chain["FLOW_OUT"],
+            default=result["parameter"]["CALOR"],
         )
 
         # get transport distances and options
@@ -1219,6 +1233,11 @@ class DataHandler:
         )
         # FIXME: used_flows_main_import may need to come from different country!!
         result["parameter"]["SPECCOST"] = pg.get_flow_params("SPECCOST", used_flows)
+
+        # default from export country
+        result["parameter_i"]["SPECCOST"] = pg_import.get_flow_params(
+            "SPECCOST", used_flows, defaults=result["parameter"]["SPECCOST"]
+        )
 
         return result
 

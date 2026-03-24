@@ -367,6 +367,19 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
             },
             "WACC": 0.0,
         },
+        "parameter_i": {
+            "CALOR": 0.0,
+            "SPECCOST": {
+                "CO2-G": 0.044519,
+                "EL": 0.08078,
+                "H2O-L": 0.001374,
+                "HEAT": 0.0577,
+                "IOP-S": 0.0,
+                "N2-G": 0.01154,
+                "NG-G": 0.0,
+            },
+            "WACC": 0.0,
+        },
         "secondary_process": {},
         "transport_process_chain": [
             {
@@ -619,6 +632,19 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "NG-G": 0,
                     },
                     "WACC": 0.0487,
+                },
+                "parameter_i": {
+                    "CALOR": 1,
+                    "SPECCOST": {
+                        "CO2-G": 0.044519,
+                        "DIESEL-L": 0.042857,
+                        "H2O-L": 0.001374,
+                        "HEAT": 0.04,
+                        "IOP-S": 0.267076,
+                        "N2-G": 0.01154,
+                        "NG-G": 0,
+                    },
+                    "WACC": 0.0423,
                 },
                 "secondary_process": {
                     "CO2-C": {
@@ -936,6 +962,18 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "N2-G": 0.01154,
                     },
                     "WACC": 0.145548,
+                },
+                "parameter_i": {
+                    "CALOR": 33.33,
+                    "SPECCOST": {
+                        "CO2-G": 0.044519,
+                        "DIESEL-L": 0.042857,
+                        "EL": 0.1,
+                        "H2O-L": 0.001374,
+                        "HEAT": 0.04,
+                        "N2-G": 0.01154,
+                    },
+                    "WACC": 0.0423,
                 },
                 "secondary_process": {
                     "CO2-C": {
