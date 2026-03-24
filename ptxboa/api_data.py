@@ -37,6 +37,35 @@ from ptxboa.static import (
 from ptxboa.static._type_defs import CalculateDataType
 
 
+def _get_secproc_data(
+    secondary_processes: dict,
+    pg: "_ParameterGetter",
+    has_ccs: bool,
+    used_flows_main_export: set,
+) -> tuple[dict, set, set]:
+    result = {}
+    used_flows_secondary: set[FlowCodeType] = set()
+    provided_flows_secondary: set[FlowCodeType] = set()
+    for flow_code, process_code in secondary_processes.items():
+        if not process_code:
+            continue
+        if flow_code == "CO2-C":
+            if not has_ccs:
+                continue
+        else:
+            if flow_code not in used_flows_main_export:
+                continue
+
+        pp = pg.get_process_params(process_code)
+        pp["process_code"] = process_code
+        # FIXME: we now also need secondary processes for import regions
+        result[flow_code] = pp
+        used_flows_secondary = used_flows_secondary | set(pp["CONV"])
+        provided_flows_secondary.add(flow_code)
+
+    return result, used_flows_secondary, provided_flows_secondary
+
+
 def _assign_key(
     df: pd.DataFrame, key_columns: str | List[str] | Tuple[str]
 ) -> pd.DataFrame:
@@ -80,6 +109,17 @@ def _load_data(
         df = _assign_key(df, key_columns)
 
     return df
+
+
+def _create_secproc_dimension(dimensions: dict[str, pd.DataFrame], process_class: str):
+    return pd.concat(
+        [
+            dimensions["process"]
+            .loc[dimensions["process"]["process_class"] == process_class]
+            .copy(),
+            pd.DataFrame([{"process_name": "Specific costs"}]),
+        ]
+    ).set_index("process_name", drop=False)
 
 
 def _load_dimensions() -> dict[DimensionType, pd.DataFrame]:
@@ -131,24 +171,23 @@ def _load_dimensions() -> dict[DimensionType, pd.DataFrame]:
             for year, parameter_range in product(YearValues, ParameterRangeValues)
         ]
     ).set_index("scenario_name")
-    dimensions["secproc_co2"] = pd.concat(
-        [
-            dimensions["process"]
-            .loc[dimensions["process"]["process_class"] == "PROV_C"]
-            .copy(),
-            pd.DataFrame([{"process_name": "Specific costs"}]),
-        ]
-    ).set_index("process_name", drop=False)
-    dimensions["secproc_water"] = pd.concat(
-        [
-            (
-                dimensions["process"]
-                .loc[dimensions["process"]["process_class"] == "PROV_H2O"]
-                .copy()
-            ),
-            pd.DataFrame([{"process_name": "Specific costs"}]),
-        ]
-    ).set_index("process_name", drop=False)
+
+    dimensions["secproc_co2"] = _create_secproc_dimension(
+        dimensions=dimensions, process_class="PROV_C"
+    )
+    dimensions["secproc_water"] = _create_secproc_dimension(
+        dimensions=dimensions, process_class="PROV_H2O"
+    )
+    dimensions["secproc_heat"] = _create_secproc_dimension(
+        dimensions=dimensions, process_class="PROV_HT"
+    )
+    dimensions["secproc_el"] = _create_secproc_dimension(
+        dimensions=dimensions, process_class="PROV_EL"
+    )
+    dimensions["secproc_ccs"] = _create_secproc_dimension(
+        dimensions=dimensions, process_class="PROV_CC"
+    )
+
     dimensions["chain"] = _load_data(
         STATIC_DATA_DIR, name="chains", key_columns="chain"
     )
@@ -326,6 +365,20 @@ class _ParameterGetter:
             result[flow_code] = conv
         return result
 
+    def get_flow_conv_ot_params(self, process_code: ProcessCodeType) -> dict:
+        result = {}
+        for flow_code in self.get_secondary_flows(process_code):
+            conv_ot = self.get_parameter_value_w_default(
+                parameter_code="CONV-OT",
+                process_code=process_code,
+                flow_code=flow_code,
+                default=0,
+            )
+            if conv_ot <= 0:
+                continue
+            result[flow_code] = conv_ot
+        return result
+
     def get_process_params(self, process_code: ProcessCodeType) -> dict:
         result = {}
         result["EFF"] = self.get_parameter_value_w_default(
@@ -417,6 +470,8 @@ class _ParameterGetter:
         result["OPEX-O"] = self.get_parameter_value_w_default(
             "OPEX-O", process_code=process_code, default=0
         )
+        # CONV-OT => CONV? FIXME
+        # result["CONV-OT"] = self.get_flow_conv_ot_params(process_code) # FIXME # noqa
         result["CONV"] = self.get_flow_conv_params(process_code)
         return result
 
@@ -444,6 +499,23 @@ class _ParameterGetter:
             if value:
                 result[flow_code] = value
         return result
+
+
+def load_scenario_data(data_dir, scenario: str) -> pd.DataFrame:
+    scenario_filename = (
+        f"{scenario.replace(' ', '_').replace(')', '').replace('(', '')}"
+    )
+    return _load_data(
+        data_dir,
+        scenario_filename,
+        key_columns=(
+            "parameter_code",
+            "process_code",
+            "flow_code",
+            "source_region_code",
+            "target_country_code",
+        ),
+    )
 
 
 class DataHandler:
@@ -486,20 +558,7 @@ class DataHandler:
             ),
         )
 
-        scenario_filename = (
-            f"{scenario.replace(' ', '_').replace(')', '').replace('(', '')}"
-        )
-        self._scenario_data = _load_data(
-            self.data_dir,
-            scenario_filename,
-            key_columns=(
-                "parameter_code",
-                "process_code",
-                "flow_code",
-                "source_region_code",
-                "target_country_code",
-            ),
-        ).copy()
+        self._scenario_data = load_scenario_data(self.data_dir, scenario).copy()
 
         if user_data is not None:
             self.scenario_data = self._update_scenario_data_with_user_data(
@@ -555,9 +614,9 @@ class DataHandler:
                     cls.dimensions["region_country"][  # type:ignore
                         f"region_country_{out_type}"
                     ].to_list(),
-                    index=cls.dimensions["region_country"][
+                    index=cls.dimensions["region_country"][  # type:ignore
                         f"region_country_{in_type}"
-                    ],  # type:ignore
+                    ],
                 )
             else:
                 mapping = pd.Series(
@@ -1057,6 +1116,7 @@ class DataHandler:
 
         used_flows_main_chain: set[FlowCodeType] = set()
         used_flows_main_export: set[FlowCodeType] = set()
+        has_ccs = False
         for process_step in chain_steps_main_export:
             process_code = chain[process_step]
             pp = pg.get_process_params(process_code)
@@ -1064,26 +1124,23 @@ class DataHandler:
             pp["process_code"] = process_code
             result["main_export_process_chain"].append(pp)
             used_flows_main_export = used_flows_main_export | set(pp["CONV"])
-
             proc = self.dimensions["process"].loc[process_code]
             if proc.main_flow_code_in:
                 used_flows_main_chain.add(proc.main_flow_code_in)
             if proc.main_flow_code_out:
                 used_flows_main_chain.add(proc.main_flow_code_out)
 
-        used_flows_secondary: set[FlowCodeType] = set()
-        provided_flows_secondary: set[FlowCodeType] = set()
-        for flow_code, process_code in secondary_processes.items():
-            if not process_code:
-                continue
-            if flow_code not in used_flows_main_export:
-                continue
-            pp = pg.get_process_params(process_code)
-            pp["process_code"] = process_code
-            # FIXME: we now also need secondary processes for import regions
-            result["secondary_process"][flow_code] = pp
-            used_flows_secondary = used_flows_secondary | set(pp["CONV"])
-            provided_flows_secondary.add(flow_code)
+            has_ccs = has_ccs or ("CO2CPT-R" in pp and "CO2CPT-S" in pp)
+
+        _secondary_process, used_flows_secondary, provided_flows_secondary = (
+            _get_secproc_data(
+                secondary_processes=secondary_processes,
+                pg=pg,
+                has_ccs=has_ccs,
+                used_flows_main_export=used_flows_main_export,
+            )
+        )
+        result["secondary_process"] = _secondary_process
 
         used_flows_transport: set[FlowCodeType] = set()
         for process_step in chain_steps_transport:
@@ -1107,6 +1164,8 @@ class DataHandler:
                 used_flows_main_chain.add(proc.main_flow_code_out)
 
         used_flows_main_import: set[FlowCodeType] = set()
+
+        has_ccs = False
         for process_step in chain_steps_main_import:
             process_code = chain[process_step]
             if not process_code:
@@ -1122,6 +1181,20 @@ class DataHandler:
                 used_flows_main_chain.add(proc.main_flow_code_in)
             if proc.main_flow_code_out:
                 used_flows_main_chain.add(proc.main_flow_code_out)
+
+            has_ccs = has_ccs or ("CO2CPT-R" in pp and "CO2CPT-S" in pp)
+
+        _secondary_process_i, used_flows_secondary_i, provided_flows_secondary_i = (
+            _get_secproc_data(
+                secondary_processes=secondary_processes,
+                pg=pg_import,
+                has_ccs=has_ccs,
+                used_flows_main_export=used_flows_main_import,
+            )
+        )
+        # only add if not empty, because new in blue tool
+        if _secondary_process_i:
+            result["secondary_process_i"] = _secondary_process_i  # noqa
 
         # If RES=Hybrid: we also need PV and Wind-On
         if process_code_res == "RES-HYBR":
@@ -1141,7 +1214,8 @@ class DataHandler:
             | used_flows_always_for_opt
             | used_flows_secondary
             | used_flows_transport
-            | used_flows_main_import
+            | (used_flows_main_import - provided_flows_secondary_i)
+            | used_flows_secondary_i
         )
         # FIXME: used_flows_main_import may need to come from different country!!
         result["parameter"]["SPECCOST"] = pg.get_flow_params("SPECCOST", used_flows)
@@ -1152,7 +1226,7 @@ class DataHandler:
     def get_dimensions_parameter_code(
         cls,
         dimension: DimensionType,
-        parameter_name: str,
+        parameter_name: str | None,
     ) -> str:
         """
         Get the internal code for a paremeter within a certain dimension.
@@ -1176,6 +1250,9 @@ class DataHandler:
             "res_gen": "process",
             "secproc_co2": "process",
             "secproc_water": "process",
+            "secproc_heat": "process",
+            "secproc_el": "process",
+            "secproc_ccs": "process",
             "region": "region",
             "country": "country",
         }

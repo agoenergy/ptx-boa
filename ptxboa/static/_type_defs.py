@@ -7,6 +7,7 @@ CalculateDataType = Dict[
         "transport_process_chain",
         "main_import_process_chain",
         "secondary_process",
+        "secondary_process_i",
         "parameter",
         "context",
         "flh_opt_hash",

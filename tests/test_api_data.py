@@ -6,7 +6,13 @@ from tempfile import TemporaryDirectory
 import pandas as pd
 import pytest
 
-from ptxboa.api_data import DEFAULT_DATA_DIR, STATIC_DATA_DIR, DataHandler
+from ptxboa.api_data import (
+    DEFAULT_DATA_DIR,
+    STATIC_DATA_DIR,
+    DataHandler,
+    ScenarioValues,
+    load_scenario_data,
+)
 from tests.utils import assert_deep_equal
 
 
@@ -557,7 +563,7 @@ def test_parameter_data():
 
     data_conv_proc_flow = {
         tuple(x)
-        for x in df_data.loc[df_data["parameter_code"] == "CONV"][
+        for x in df_data.loc[df_data["parameter_code"].isin({"CONV", "CONV-OT"})][
             ["process_code", "flow_code"]
         ].values
     }
@@ -569,7 +575,7 @@ def test_parameter_data():
         raise Exception("Missing CONV data for: %s", missing_data)
 
     unused_data = data_conv_proc_flow - expected_conv_proc_flow
-    # known special cases (TODO):
+    # known special cases (FIXME):
     unused_data = unused_data - {("H2-STR", "EL"), ("SYN-S", "CHX-L")}
     if unused_data:
         raise Exception("Unexpected CONV data for: %s", unused_data)
@@ -699,3 +705,120 @@ def test_parameter_has_data(year, cost_assumption, parameter_code):
     parameter_data = input_data.loc[input_data["parameter_code"] == parameter_code]
     if len(parameter_data) == 0:
         pytest.fail(f"No data defined for {parameter_code=}")
+
+
+def test_chains():
+    # check known columns in chain
+    df_chain = DataHandler.get_dimension("chain")
+    df_process = DataHandler.get_dimension("process")
+    df_flow = DataHandler.get_dimension("flow")
+
+    COLS_PROC_MAIN_CHAIN = [
+        "NG_PROD",
+        "EL_STR",
+        "ELY",
+        "H2_STR",
+        "DERIV",
+        "DERIV2",
+        "PRE_SHP",
+        "PRE_PPL",
+        "POST_SHP",
+        "POST_PPL",
+        "SHP",
+        "SHP_OWN",
+        "PPLS",
+        "PPL",
+        "PPLX",
+        "PPLR",
+        "ELY_I",
+        "DERIV_I",
+        "DERIV_I2",
+    ]
+    COLS_OTHER = [
+        "chain",
+        "chain_name",
+        "FLOW_OUT",
+        "CAN_PIPELINE",
+        "is_green",
+        "is_blue",
+        "CO2_TS",
+        "CO2_TS_I",
+    ]
+
+    expected_cols = set(COLS_PROC_MAIN_CHAIN + COLS_OTHER)
+    cols = set(df_chain.columns)
+
+    assert expected_cols == cols
+
+    # for blue/green chains: find all used processes
+    procs_res = set(df_process.loc[df_process["is_re_generation"], "process_code"])
+    procs_green = (
+        set(df_process.loc[df_process["is_green"], "process_code"]) - procs_res
+    )
+    procs_blue = set(df_process.loc[df_process["is_blue"], "process_code"])
+    procs_sec = set(df_process.loc[df_process["is_secondary"], "process_code"])
+    procs_all = set(df_process["process_code"])
+
+    # assert no overlap
+    assert not procs_green & procs_blue
+
+    used_procs_green = set()
+    used_procs_blue = set()
+    for col in COLS_PROC_MAIN_CHAIN:
+        used_procs_green = used_procs_green | set(
+            df_chain.loc[(df_chain[col] != "") & df_chain["is_green"], col]
+        )
+        used_procs_blue = used_procs_blue | set(
+            df_chain.loc[(df_chain[col] != "") & df_chain["is_blue"], col]
+        )
+
+    # check for proper subsets
+    assert not used_procs_blue - procs_blue, used_procs_blue - procs_blue
+    assert not used_procs_green - procs_green, used_procs_green - procs_green
+
+    # check for unused/missing processes
+    used_procs = used_procs_green | used_procs_blue | procs_sec | procs_res
+    assert used_procs == procs_all, (used_procs - procs_all, procs_all - used_procs)
+
+    # find all used flows
+    used_flows = set()
+    # combinations of process and flow
+    used_process_flows = set()
+
+    # ... per process
+    for process_code, proc in df_process.iterrows():
+        used_flows_proc = (
+            {proc["main_flow_code_in"], proc["main_flow_code_out"]}
+            | set(proc["secondary_flows"])
+        ) - {""}
+        used_flows = used_flows | used_flows_proc
+        used_process_flows = used_process_flows | {
+            (process_code, f) for f in used_flows_proc
+        }
+
+    flows = set(df_flow["flow_code"])
+
+    assert used_flows == flows, (used_flows - flows, flows - used_flows)
+
+    # check if in current data, we have combinations of process/flow that
+    # is never used
+    dfs = []
+    for scen in ScenarioValues:
+        df = load_scenario_data(data_dir=DEFAULT_DATA_DIR, scenario=scen)
+        dfs.append(df)
+    df_data = pd.concat(dfs)
+    data_proc_flow_combos = {
+        tuple(x)
+        for x in df_data.loc[
+            (df_data["process_code"] != "") & (df_data["flow_code"] != ""),
+            ["process_code", "flow_code"],
+        ]
+        .drop_duplicates()
+        .values
+    }
+    unused_data_proc_flow_combos = data_proc_flow_combos - used_process_flows
+    unused_data_proc_flow_combos = unused_data_proc_flow_combos - {
+        ("H2-STR", "EL")  # FIXME (affects green tool)
+    }
+    print(unused_data_proc_flow_combos)
+    assert not unused_data_proc_flow_combos, unused_data_proc_flow_combos

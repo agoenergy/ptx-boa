@@ -460,7 +460,6 @@ ProcessCodeType = Literal[
     "EFUELSYN#B",
     "EFUELSYNC#B",
     "EL-STR",
-    "EL-TRANS",
     "H2-COMP",
     "H2-COMP#B",
     "H2-LIQ",
@@ -553,7 +552,6 @@ ProcessCodeValues = [
     "EFUELSYN#B",
     "EFUELSYNC#B",
     "EL-STR",
-    "EL-TRANS",
     "H2-COMP",
     "H2-COMP#B",
     "H2-LIQ",
@@ -610,11 +608,9 @@ FlowCodeType = Literal[
     "CH3OH-L",
     "CH4-G",
     "CH4-L",
-    "CH4L-G",
     "CHX-L",
     "CO2-C",
     "CO2-G",
-    "C-S",
     "DIESEL-L",
     "DRI-S",
     "EL",
@@ -636,11 +632,9 @@ FlowCodeValues = [
     "CH3OH-L",
     "CH4-G",
     "CH4-L",
-    "CH4L-G",
     "CHX-L",
     "CO2-C",
     "CO2-G",
-    "C-S",
     "DIESEL-L",
     "DRI-S",
     "EL",
@@ -980,6 +974,18 @@ SecProcH2OType = Literal["Sea Water desalination"]
 SecProcH2OValues = ["Sea Water desalination"]
 
 
+SecProcHEATType = Literal["Large scale Heatpump (blue)"]
+SecProcHEATValues = ["Large scale Heatpump (blue)"]
+
+
+SecProcELType = Literal["Combined Cycle Gas Turbine with CCS (blue)"]
+SecProcELValues = ["Combined Cycle Gas Turbine with CCS (blue)"]
+
+
+SecProcCCSType = Literal["CO2 transport and storage (blue)"]
+SecProcCCSValues = ["CO2 transport and storage (blue)"]
+
+
 ResGenType = Literal["PV tilted", "Wind-PV-Hybrid", "Wind Offshore", "Wind Onshore"]
 ResGenValues = ["PV tilted", "Wind-PV-Hybrid", "Wind Offshore", "Wind Onshore"]
 
@@ -999,6 +1005,9 @@ DimensionType = Literal[
     "process",
     "secproc_co2",
     "secproc_water",
+    "secproc_heat",
+    "secproc_el",
+    "secproc_ccs",
     "res_gen",
     "parameter",
 ]
@@ -1013,6 +1022,9 @@ DimensionValues = [
     "process",
     "secproc_co2",
     "secproc_water",
+    "secproc_heat",
+    "secproc_el",
+    "secproc_ccs",
     "res_gen",
     "parameter",
 ]

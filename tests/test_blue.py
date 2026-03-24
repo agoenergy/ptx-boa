@@ -288,7 +288,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
     calculation_data = _sort_nested(_round_nested(calculation_data))
 
     values, _df_result_cost, _df_result_emissions, _df_result_emissions_mass = (
-        PtxCalc.calculate(calculation_data)
+        PtxCalc.calculate(calculation_data)  # type:ignore
     )  # noqa
     # round and sort for easier comparison
     values = _sort_nested(_round_nested(values))
@@ -303,7 +303,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
         optimize_flh=False,
         output_unit="USD/t",  # must be per ton for steel
     )
-    res_emission_mass = api_result.emission_mass[
+    res_emission_mass = api_result.emission_mass[  # type:ignore
         ["process_subtype", "emission_type", "gas_type", "values"]
     ].to_dict(orient="records")
     res_emission_mass = _sort_nested(_round_nested(res_emission_mass))
@@ -548,6 +548,9 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 "ship_own_fuel": False,
                 "secproc_co2": "Direct Air Capture (blue)",
                 "secproc_water": "Sea Water desalination",
+                "secproc_el": "Combined Cycle Gas Turbine with CCS (blue)",
+                "secproc_ccs": "CO2 transport and storage (blue)",
+                "secproc_heat": "Large scale Heatpump (blue)",
             },
             {
                 "context": {"source_region_code": "QAT", "target_country_code": "DEU"},
@@ -609,7 +612,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "SPECCOST": {
                         "CO2-G": 0.044519,
                         "DIESEL-L": 0.042857,
-                        "EL": 0.08078,
                         "H2O-L": 0.001374,
                         "HEAT": 0.0577,
                         "IOP-S": 0.267076,
@@ -618,7 +620,52 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     },
                     "WACC": 0.0487,
                 },
-                "secondary_process": {},
+                "secondary_process": {
+                    "CO2-C": {
+                        "CAPEX": 0,
+                        "CONV": {},
+                        "EFF": 0.95,
+                        "EF_E": {"CO2-C": 1.0},
+                        "EF_M": {"CO2-C": 1.0},
+                        "FLH": 7000,
+                        "LIFETIME": 20,
+                        "OPEX-F": 0,
+                        "OPEX-O": 0,
+                        "process_code": "CO2-T+S#B",
+                    },
+                    "EL": {
+                        "CAPEX": 2408.190709,
+                        "CH4SHARE": {"NG-G": 0.909},
+                        "CO2CPT-R": {"NG-G": 0.897778},
+                        "CO2CPT-S": {"NG-G": 1.0},
+                        "CONV": {},
+                        "EFF": 0.504911,
+                        "EF_E": {"NG-G": 201.0},
+                        "EF_M": {"NG-G": 201.0},
+                        "FLH": 7000,
+                        "LIFETIME": 30.0,
+                        "OPEX-F": 63.758895,
+                        "OPEX-O": 0,
+                        "process_code": "CCGT-CC#B",
+                    },
+                },
+                "secondary_process_i": {
+                    "EL": {
+                        "CAPEX": 2408.190709,
+                        "CH4SHARE": {"NG-G": 0.920806},
+                        "CO2CPT-R": {"NG-G": 0.897778},
+                        "CO2CPT-S": {"NG-G": 1.0},
+                        "CONV": {},
+                        "EFF": 0.504911,
+                        "EF_E": {"EL": 100.0, "NG-G": 201.0},
+                        "EF_M": {"EL": 100.0, "NG-G": 201.0},
+                        "FLH": 7000,
+                        "LIFETIME": 30.0,
+                        "OPEX-F": 63.758895,
+                        "OPEX-O": 0,
+                        "process_code": "CCGT-CC#B",
+                    }
+                },
                 "transport_process_chain": [
                     {
                         "CONV": {},
@@ -836,6 +883,9 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 "ship_own_fuel": False,
                 "secproc_co2": "Direct Air Capture (blue)",
                 "secproc_water": "Sea Water desalination",
+                "secproc_el": "Combined Cycle Gas Turbine with CCS (blue)",
+                "secproc_ccs": "CO2 transport and storage (blue)",
+                "secproc_heat": "Large scale Heatpump (blue)",
             },
             {
                 "context": {"source_region_code": "DZA", "target_country_code": "DEU"},
@@ -887,7 +937,35 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     },
                     "WACC": 0.145548,
                 },
-                "secondary_process": {},
+                "secondary_process": {
+                    "CO2-C": {
+                        "CAPEX": 0,
+                        "CONV": {},
+                        "EFF": 0.95,
+                        "EF_E": {"CO2-C": 1.0},
+                        "EF_M": {"CO2-C": 1.0},
+                        "FLH": 7000,
+                        "LIFETIME": 20,
+                        "OPEX-F": 0,
+                        "OPEX-O": 0,
+                        "process_code": "CO2-T+S#B",
+                    },
+                    "EL": {
+                        "CAPEX": 2408.190709,
+                        "CH4SHARE": {"NG-G": 0.899533},
+                        "CO2CPT-R": {"NG-G": 0.897778},
+                        "CO2CPT-S": {"NG-G": 1.0},
+                        "CONV": {},
+                        "EFF": 0.504911,
+                        "EF_E": {"NG-G": 201.0},
+                        "EF_M": {"NG-G": 201.0},
+                        "FLH": 7000,
+                        "LIFETIME": 30.0,
+                        "OPEX-F": 63.758895,
+                        "OPEX-O": 0,
+                        "process_code": "CCGT-CC#B",
+                    },
+                },
                 "transport_process_chain": [
                     {
                         "CAPEX": 1681.79587,
@@ -1175,15 +1253,13 @@ def test_new_blue_chain_real_data(
     calculation_data = _sort_nested(_round_nested(api_result.todo_data))
     values = _sort_nested(_round_nested(api_result.todo_results_flows))
 
-    res_emission_mass = api_result.emission_mass[
+    res_emission_mass = api_result.emission_mass[  # type:ignore
         ["process_subtype", "emission_type", "gas_type", "values"]
     ].to_dict(orient="records")
     # round and sort for easier comparison
     res_emission_mass = _sort_nested(_round_nested(res_emission_mass))
 
     # print so we can copy/paste new results into test
-    print("NEW EXPEDTED DATA")
-    print("=============================")
     print((calculation_data, values, res_emission_mass))
 
     assert _rec_approx(calculation_data) == _sort_nested(

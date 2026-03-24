@@ -1450,7 +1450,6 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "EF_E,,CH4-L,,",EF_E,,CH4-L,,,201.0,gCO2e/kWh CH4 (l),
 "EF_E,,CO2-C,,",EF_E,,CO2-C,,,1.0,gCO2e/kg CO2 (c),
 "EF_E,,CO2-G,,",EF_E,,CO2-G,,,1.0,gCO2e/kg CO2 (g),
-"EF_E,,C-S,,",EF_E,,C-S,,,3664.446294754372,gCO2e/kg C (s),
 "EF_E,,DIESEL-L,,",EF_E,,DIESEL-L,,,266.76,gCO2e/kWh diesel LHV,
 "EF_E,,EL,BRA,",EF_E,,EL,BRA,,71.0,gCO2e/kWh (el.),
 "EF_E,,EL,CHN,",EF_E,,EL,CHN,,371.0,gCO2e/kWh (el.),
@@ -1478,7 +1477,6 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "EF_M,,CH4-L,,",EF_M,,CH4-L,,,201.0,gCO2e/kWh CH4 (l),
 "EF_M,,CO2-C,,",EF_M,,CO2-C,,,1.0,gCO2e/kg CO2 (c),
 "EF_M,,CO2-G,,",EF_M,,CO2-G,,,1.0,gCO2e/kg CO2 (g),
-"EF_M,,C-S,,",EF_M,,C-S,,,3664.446294754372,gCO2e/kg C (s),
 "EF_M,,DIESEL-L,,",EF_M,,DIESEL-L,,,266.76,gCO2e/kWh diesel LHV,
 "EF_M,,EL,BRA,",EF_M,,EL,BRA,,71.0,gCO2e/kWh (el.),
 "EF_M,,EL,CHN,",EF_M,,EL,CHN,,371.0,gCO2e/kWh (el.),
@@ -1901,7 +1899,6 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "LIFETIME,EFUELSYN,,,",LIFETIME,EFUELSYN,,,,30.0,years,Öko-Institut 2020
 "LIFETIME,EFUELSYNC#B,,,",LIFETIME,EFUELSYNC#B,,,,25.0,years,Concawe 2024
 "LIFETIME,EL-STR,,,",LIFETIME,EL-STR,,,,20.0,years,
-"LIFETIME,EL-TRANS,,,",LIFETIME,EL-TRANS,,,,20.0,years,DUMMY
 "LIFETIME,H2-COMP#B,,,",LIFETIME,H2-COMP#B,,,,20.0,years,DNV GL 2020
 "LIFETIME,H2-COMP,,,",LIFETIME,H2-COMP,,,,20.0,years,DNV GL 2020
 "LIFETIME,H2-LIQ#B,,,",LIFETIME,H2-LIQ#B,,,,30.0,years,IEA 2015
