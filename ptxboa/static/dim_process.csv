@@ -1,7 +1,7 @@
 process_code,process_name,main_flow_code_out,main_flow_code_in,is_transformation,is_re_generation,is_transport,is_secondary,process_class,is_ely,is_deriv,result_process_type,secondary_flows,is_green,is_blue
 AEL-EL,AEL electrolysis,H2-G,EL,True,False,False,False,ELY,True,False,H2 production,H2O-L,True,False
 ATR,Methane reconversion,H2-G,CH4-G,True,False,True,False,TRNSP-PP,False,False,Transportation (Pipeline),EL,True,False
-ATR_91%#B,ATR_91%_CCS (blue),H2-G,NG-G,True,False,False,False,ELY,True,False,H2 production,EL,False,True
+ATR_91%#B,autothermal reformer with 91% carbon capture (blue),H2-G,NG-G,True,False,False,False,ELY,True,False,H2 production,EL,False,True
 CCGT-CC#B,Combined Cycle Gas Turbine with CCS (blue),EL,NG-G,False,False,False,True,PROV_EL,False,False,Electricity,,False,True
 CH3OH-S,Methanol ship (own fuel consumption),CH3OH-L,CH3OH-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,True,False
 CH3OH-S#B,Methanol ship (own fuel consumption) (blue),CH3OH-L,CH3OH-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,False,True
@@ -37,7 +37,7 @@ DRI,Green iron reduction,DRI-S,H2-G,True,False,False,False,DERIV,False,True,Deri
 DRI#B,Green iron reduction (blue),B-DRI-S,H2-G,True,False,False,False,DERIV,False,True,Derivative production,EL/IOP-S,False,True
 DRI-SB,Green iron ship (bunker fuel consumption),DRI-S,DRI-S,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,True,False
 DRI-SB#B,Green iron ship (bunker fuel consumption) (blue),B-DRI-S,B-DRI-S,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,False,True
-EAF#B,EAF (blue),STL-S,B-DRI-S,True,False,False,False,DERIV,False,True,Derivative production,EL/NG-G,False,True
+EAF#B,electric arc furnance (blue),STL-S,B-DRI-S,True,False,False,False,DERIV,False,True,Derivative production,EL/NG-G,False,True
 EFUELSYN,FT e-fuels Synthesis (Fischer-Tropsch),CHX-L,H2-G,True,False,False,False,DERIV,False,True,Derivative production,CO2-G/EL/H2O-L/HEAT,True,False
 EFUELSYN#B,FT e-fuels Synthesis (Fischer-Tropsch) (blue),CHX-L,H2-G,True,False,False,False,DERIV,False,True,Derivative production,CO2-G/EL/HEAT,False,True
 EFUELSYNC#B,FT Synthesis (Fischer-Tropsch) using NG with CCS (blue),CHX-L,NG-G,True,False,False,False,DERIV,False,True,Derivative production,EL,False,True
@@ -67,7 +67,7 @@ LOHC-REC,LOHC reconversion,H2-G,LOHC-L,True,False,True,False,TRNSP-SP,False,Fals
 LOHC-S,LOHC ship (own fuel consumption),LOHC-L,LOHC-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,True,False
 LOHC-SB,LOHC ship (bunker fuel consumption),LOHC-L,LOHC-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,True,False
 NG-DRI-C#B,NG-based iron reduction with CCS (blue),B-DRI-S,NG-G,True,False,False,False,DERIV,False,True,Derivative production,CH4-G/EL/IOP-S,False,True
-NG-PROD#B,NG production (blue),NG-G,,False,False,False,False,NG,False,False,Natural gas production,DIESEL-L/EL,False,True
+NG-PROD#B,production of natural gas (blue),NG-G,,False,False,False,False,NG,False,False,Natural gas production,DIESEL-L/EL,False,True
 NH3-REC,Ammonia reconversion,H2-G,NH3-L,True,False,True,False,TRNSP-SP,False,False,Transportation (Ship),EL,True,False
 NH3-REC#B,Ammonia reconversion (blue),H2-G,NH3-L,True,False,True,False,TRNSP-SP,False,False,Transportation (Ship),EL,False,True
 NH3-S,Ammonia ship (own fuel consumption),NH3-L,NH3-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,True,False
@@ -80,8 +80,8 @@ PEM-EL,PEM electrolysis,H2-G,EL,True,False,False,False,ELY,True,False,H2 product
 PV-FIX,PV tilted,EL,,False,True,False,False,RE-GEN,False,False,Electricity generation,,True,False
 REGASATR,Methane reconversion incl. regasification,H2-G,CH4-L,True,False,True,False,TRNSP-SP,False,False,Transportation (Ship),EL,True,False
 RES-HYBR,Wind-PV-Hybrid,EL,,False,True,False,False,RE-GEN,False,False,Electricity generation,,True,False
-SMR_52%#B,SMR_52%_CCS (blue),H2-G,NG-G,True,False,False,False,ELY,True,False,H2 production,EL,False,True
-SMR_52%_BF#B,SMR_52%_BF_CCS (blue),H2-G,NG-G,True,False,False,False,ELY,True,False,H2 production,EL,False,True
+SMR_52%#B,steam methane reformer with 52% carbon capture (blue),H2-G,NG-G,True,False,False,False,ELY,True,False,H2 production,EL,False,True
+SMR_52%_BF#B,existing steam methane reformer with retrofit 52% carbon capture (blue),H2-G,NG-G,True,False,False,False,ELY,True,False,H2 production,EL,False,True
 SOEC-EL,SOEC (high-temp) electrolysis,H2-G,EL,True,False,False,False,ELY,True,False,H2 production,H2O-L,True,False
 SYN-S,FT e-fuels ship (own fuel consumption),CHX-L,CHX-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,True,False
 SYN-S#B,FT e-fuels ship (own fuel consumption) (blue),CHX-L,CHX-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,False,True
