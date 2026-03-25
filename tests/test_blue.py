@@ -795,7 +795,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 "scenario": "2040 (medium)",
                 "region": "Algeria",
                 "country": "Germany",
-                "chain": "STL-S__NG-DRI-C_EAF__prod_in_demand",
+                "chain": "STL-S__NG-DRI-C_EAF__prod_in_demand",  # sheet 41
                 "res_gen": None,
                 "transport": "Ship",
                 "ship_own_fuel": False,

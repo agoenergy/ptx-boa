@@ -57,12 +57,12 @@ STEPS = [
     "DERIV_I",
     "DERIV_I2",
     # "CO2_TS_I",
-    "SECONDARY:Electricity",
+    "SECONDARY:Electricity generation",
     "SECONDARY:CO2 transport and storage",
     "SECONDARY:Carbon",
     "SECONDARY:Water",
     "SECONDARY:Heat",
-    "SECONDARY-IMPORT:Electricity",
+    "SECONDARY-IMPORT:Electricity generation",
     "SECONDARY-IMPORT:CO2 transport and storage",
     "SECONDARY-IMPORT:Carbon",
     "SECONDARY-IMPORT:Water",
@@ -176,8 +176,12 @@ rows = [
 
 def get_secproc_step(process_code: str, is_import: bool) -> str:
     prefix = "SECONDARY-IMPORT:" if is_import else "SECONDARY:"
-    rpt = DataHandler.get_dimension("process").loc[process_code, "result_process_type"]
-    return prefix + rpt  # type:ignore
+    proc_cls = DataHandler.get_dimension("process").loc[
+        process_code, "result_process_type"
+    ]
+    if proc_cls == "Electricity":
+        proc_cls = "Electricity generation"  # ??
+    return prefix + proc_cls  # type:ignore
 
 
 df_proc = DataHandler.get_dimension("process")
@@ -282,9 +286,24 @@ def main(xlsx_filepath: str):
             res.todo_results_flows  # type:ignore
         )
 
+        df_costs: pd.DataFrame = res.todo_df_results_cost_unscaled  # type:ignore
+
         for step in STEPS:
-            d_data = dict(flatten_dict(data_steps.get(step, {}), "2:data"))
-            d_flows = dict(flatten_dict(results_flows_steps.get(step, {}), "3:flows"))
+            d_data = dict(
+                flatten_dict(
+                    data_steps.pop(step) if step in data_steps else {}, "2:data"
+                )
+            )
+            d_flows = dict(
+                flatten_dict(
+                    (
+                        results_flows_steps.pop(step)
+                        if step in results_flows_steps
+                        else {}
+                    ),
+                    "3:flows",
+                )
+            )
 
             if not step.startswith("SECONDARY"):
                 process_code = chain[step]
@@ -304,15 +323,12 @@ def main(xlsx_filepath: str):
                 if "IMPORT" in step:
                     process_code_cost += " (import)"
 
-                df_costs = res.todo_df_results_cost_unscaled
-                assert df_costs is not None
+                idx_c = df_costs["process_subtype"] == process_code_cost
 
                 d_costs = dict(
                     flatten_dict(
                         dict(
-                            df_costs.loc[
-                                df_costs["process_subtype"] == process_code_cost
-                            ]
+                            df_costs.loc[idx_c]
                             .groupby(["cost_type"])
                             .sum(["values"])["values"]
                             .items()
@@ -320,6 +336,7 @@ def main(xlsx_filepath: str):
                         "4:costs",
                     )
                 )
+                df_costs = df_costs.loc[~idx_c]
             else:
                 d_costs = {}
 
@@ -328,6 +345,11 @@ def main(xlsx_filepath: str):
             all_row_keys = all_row_keys | set(d_data)
             all_row_keys = all_row_keys | set(d_flows)
             all_row_keys = all_row_keys | set(d_costs)
+
+        # check all datahas been used
+        assert not data_steps, data_steps.keys()
+        assert not results_flows_steps, results_flows_steps.keys()
+        assert df_costs.empty, set(df_costs["process_subtype"])
 
         df = pd.concat(pd_series, axis=1)
         df = df.reindex(rows)
