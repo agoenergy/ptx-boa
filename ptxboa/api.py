@@ -222,6 +222,11 @@ class PtxboaAPI:
         if secproc_ccs_i:
             secproc_ccs_i = df_proc.loc[secproc_ccs_i, "process_name"]
 
+        # TODO:set in frontend?
+        if tool_version_color == "blue":
+            secproc_heat = "Large scale Heatpump (blue)"
+            secproc_el = "Combined Cycle Gas Turbine with CCS (blue)"
+
         data = data_handler.get_calculation_data(
             secondary_processes={  # type:ignore
                 flow_code: (
