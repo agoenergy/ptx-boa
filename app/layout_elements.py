@@ -384,6 +384,7 @@ def display_and_edit_input_data(
     )
     df_orig = df.copy()
 
+    column_config = get_column_config()
     if data_type in [
         "electricity_generation",
         "conversion_processes",
@@ -395,7 +396,6 @@ def display_and_edit_input_data(
         index = "process_code"
         columns = "parameter_code"
         missing_index = {"source_region_code": None}
-        column_config = get_column_config()
 
     if data_type == "conversion_processes":
         custom_column_config = {
@@ -485,17 +485,19 @@ def display_and_edit_input_data(
             format="%.2f USD/kW", min_value=0
         )
 
-    if data_type == "Natural gas price":
+    if data_type == "Natural gas production":
         index = "source_region_code"
         columns = "parameter_code"
         missing_index = {"process_code": "production of natural gas (blue)"}
-        column_config = {
-            "OPEX (other variable)": st.column_config.NumberColumn(
-                label="Natural gas price",
-                format="%.4f USD/kWh",
-                min_value=0,
-            )
-        }
+        column_config["OPEX (other variable)"] = st.column_config.NumberColumn(
+            format="%.4f USD/kWh",
+            min_value=0,
+        )
+
+    if data_type == "Natural gas price":
+        index = "source_region_code"
+        columns = "parameter_code"
+        missing_index = {"flow_code": "natural gas (liquid)"}
 
     df = change_index_names(df)
 

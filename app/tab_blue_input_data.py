@@ -2,10 +2,9 @@
 
 from typing import Literal
 
-import plotly.express as px
 import streamlit as st
 
-from app.layout_elements import display_and_edit_input_data, what_is_a_boxplot
+from app.layout_elements import display_and_edit_input_data
 from app.plot_functions import plot_input_data_on_map
 from app.ptxboa_functions import read_markdown_file
 from ptxboa.api import PtxboaAPI
@@ -21,49 +20,52 @@ def content_input_data(api: PtxboaAPI) -> None:
     with st.container(border=True):
         st.subheader("Region specific data")
 
-        data_selection: Literal["WACC"] = st.radio(
+        data_selection: Literal[
+            "WACC",
+            "Natural gas production",
+            "Natural gas price",
+        ] = st.radio(
             "Select data type",
-            ["WACC", "Natural gas price"],
+            [
+                "WACC",
+                "Natural gas production",
+                "Natural gas price",
+            ],
             horizontal=True,
         )
 
         with st.expander("**Map**", expanded=True):
+            if data_selection == "Natural gas production":
+                map_parameter = st.selectbox(
+                    "Select parameter to display on map:",
+                    [
+                        "CAPEX",
+                        "OPEX (other variable)",
+                        "efficiency",
+                    ],
+                    key="input_data_map_parameter",
+                )
+            else:
+                map_parameter = {"Natural gas price": "specific costs"}.get(
+                    data_selection, data_selection
+                )
             fig = plot_input_data_on_map(
                 api=api,
                 data_type=data_selection,
-                color_col={"Natural gas price": "OPEX (other variable)"}.get(
-                    data_selection, data_selection
-                ),
+                color_col=map_parameter,
                 scope="world",
                 tool_version_color="blue",
             )
             st.plotly_chart(fig, width="stretch")
 
         with st.expander("**Data**"):
-            df = display_and_edit_input_data(
+            display_and_edit_input_data(
                 api,
                 data_type=data_selection,
                 scope="world",
                 key=f"input_data_{data_selection}",
                 tool_version_color="blue",
             )
-        with st.expander("**Regional distribution**"):
-            # create plot:
-            if data_selection == "WACC":
-                ylabel = "WACC (%)"
-                hover_name = "parameter_code"
-            if data_selection == "Natural gas price":
-                ylabel = "Natural gas price (USD/kWh)"
-                hover_name = "parameter_code"
-
-            fig = px.box(
-                df,
-                hover_data=[df.index],
-                hover_name=hover_name,
-            )
-            fig.update_layout(xaxis_title=None, yaxis_title=ylabel)
-            st.plotly_chart(fig, width="stretch")
-            what_is_a_boxplot()
 
     with st.container(border=True):
         st.subheader("Global data")

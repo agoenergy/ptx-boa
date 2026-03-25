@@ -167,7 +167,13 @@ def plot_emissions_on_map(
 
 def plot_input_data_on_map(
     api: PtxboaAPI,
-    data_type: Literal["CAPEX", "full load hours", "WACC", "Natural gas price"],
+    data_type: Literal[
+        "CAPEX",
+        "full load hours",
+        "WACC",
+        "Natural gas production",
+        "Natural gas price",
+    ],
     color_col: Literal[
         "PV tilted",
         "Wind Offshore",
@@ -176,6 +182,9 @@ def plot_input_data_on_map(
         "PV tilted (hybrid)",
         "WACC",
         "specific costs",
+        "CAPEX",
+        "OPEX (other variable)",
+        "efficiency",
     ],
     scope: Literal["world", "Argentina", "Morocco", "South Africa"] = "world",
     tool_version_color: ToolVersionColorType = "green",
@@ -202,6 +211,7 @@ def plot_input_data_on_map(
     input_data = get_data_type_from_input_data(
         api, data_type=data_type, scope=scope, tool_version_color=tool_version_color
     )
+    custom_data_func_kwargs = {}
 
     units = {
         "CAPEX": "USD/kW",
@@ -209,10 +219,11 @@ def plot_input_data_on_map(
         "WACC": "%",
         "Natural gas price": "USD/kWh natural gas LHV",
     }
+    custom_data_func_kwargs["unit"] = units.get(data_type, "")
 
     if data_type == "WACC":
         assert color_col == "WACC"
-        custom_data_func_kwargs = {"float_precision": 2}
+        custom_data_func_kwargs.update({"float_precision": 2})
     if data_type == "full load hours":
         assert color_col in [
             "PV tilted",
@@ -221,19 +232,35 @@ def plot_input_data_on_map(
             "Wind Onshore (hybrid)",
             "PV tilted (hybrid)",
         ]
-        custom_data_func_kwargs = {"float_precision": 0}
+        custom_data_func_kwargs.update({"float_precision": 0})
     if data_type == "CAPEX":
         assert color_col in [
             "PV tilted",
             "Wind Offshore",
             "Wind Onshore",
         ]
-        custom_data_func_kwargs = {"float_precision": 0}
+        custom_data_func_kwargs.update({"float_precision": 0})
     if data_type == "Natural gas price":
-        assert color_col == "OPEX (other variable)"
-        custom_data_func_kwargs = {"float_precision": 4}
+        assert color_col == "specific costs"
+        custom_data_func_kwargs.update({"float_precision": 4})
+    if data_type == "Natural gas production":
+        assert color_col in [
+            "CAPEX",
+            "OPEX (other variable)",
+            "efficiency",
+        ], color_col
+        if color_col == "CAPEX":
+            custom_data_func_kwargs["unit"] = "USD/kW"
+            custom_data_func_kwargs["float_precision"] = 0
 
-    custom_data_func_kwargs["unit"] = units[data_type]
+        if color_col == "OPEX (other variable)":
+            custom_data_func_kwargs["unit"] = "USD/kW"
+            custom_data_func_kwargs["float_precision"] = 4
+
+        if color_col == "efficiency":
+            custom_data_func_kwargs["unit"] = "%"
+            custom_data_func_kwargs["float_precision"] = 2
+
     custom_data_func_kwargs["data_type"] = data_type
     custom_data_func_kwargs["map_variable"] = color_col
 
@@ -285,6 +312,10 @@ def _choropleth_map_world(
     """
     if custom_data_func_kwargs is None:
         custom_data_func_kwargs = {}
+
+    if color_col not in df.columns:
+        df[color_col] = np.nan
+
     df = df.dropna(subset=color_col)
     fig = px.scatter_geo(
         locations=df.index,
