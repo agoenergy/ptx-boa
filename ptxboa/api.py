@@ -39,6 +39,7 @@ class ApiCalculateResult:
     emission_mass: Optional[pd.DataFrame] = None
     todo_results_flows: Optional[list] = None
     todo_data: Optional[object] = None
+    todo_df_results_cost_unscaled: Optional[pd.DataFrame] = None
 
 
 class PtxboaAPI:
@@ -282,7 +283,7 @@ class PtxboaAPI:
         else:
             raise ValueError("chain output unit must be either kWh or kg")
 
-        # conversion: FIXME: is emissions already scaled to ton?
+        df_results_cost_unscaled = ptxcalc_result.df_results_cost.copy()
         for df in [
             ptxcalc_result.df_results_cost,
             ptxcalc_result.df_results_emissions_e_g_co2e,
@@ -327,6 +328,7 @@ class PtxboaAPI:
             emission_mass=ptxcalc_result.df_results_emissions_m_g_co2e,
             todo_results_flows=todo_results_flows,
             todo_data=data,
+            todo_df_results_cost_unscaled=df_results_cost_unscaled,
         )
 
     def get_flh_opt_network(
