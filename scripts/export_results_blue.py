@@ -80,7 +80,6 @@ rows = [
     "0:process:process_code",
     "0:process:main_flow_code_in",
     "0:process:main_flow_code_out",
-    "0:settings:secproc_ccs",
     "0:settings:secproc_el",
     "0:settings:secproc_water",
     "0:settings:secproc_co2",
@@ -227,7 +226,6 @@ def main(xlsx_filepath: str):
             "secproc_co2": sec_proc["Carbon"]["process_name"],
             "secproc_water": sec_proc["Water"]["process_name"],
             "secproc_el": sec_proc["Electricity"]["process_name"],
-            "secproc_ccs": sec_proc["Captured Carbon"]["process_name"],
             "secproc_heat": sec_proc["Heat"]["process_name"],
         }
 

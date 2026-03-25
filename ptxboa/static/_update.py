@@ -148,6 +148,7 @@ def main():
                 "secproc_heat",  # subset of process
                 "secproc_el",  # subset of process
                 "secproc_ccs",  # subset of process
+                "secproc_ccs_i",  # subset of process
                 "res_gen",  # subset of process
                 "parameter",
             ],

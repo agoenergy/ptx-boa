@@ -1008,6 +1008,7 @@ DimensionType = Literal[
     "secproc_heat",
     "secproc_el",
     "secproc_ccs",
+    "secproc_ccs_i",
     "res_gen",
     "parameter",
 ]
@@ -1025,6 +1026,7 @@ DimensionValues = [
     "secproc_heat",
     "secproc_el",
     "secproc_ccs",
+    "secproc_ccs_i",
     "res_gen",
     "parameter",
 ]

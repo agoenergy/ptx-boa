@@ -19,7 +19,6 @@ from .static import (
     OutputUnitType,
     ResGenType,
     ScenarioType,
-    SecProcCCSType,
     SecProcCO2Type,
     SecProcELType,
     SecProcH2OType,
@@ -145,7 +144,6 @@ class PtxboaAPI:
         tool_version_color: ToolVersionColorType = "green",
         secproc_heat: SecProcHEATType | None = None,
         secproc_el: SecProcELType | None = None,
-        secproc_ccs: SecProcCCSType | None = None,
     ) -> ApiCalculateResult:
         """Calculate results based on user selection.
 
@@ -161,8 +159,6 @@ class PtxboaAPI:
             name of secondary process for HEAT
         secproc_el : str
             name of secondary process for EL
-        secproc_ccs : str
-            name of secondary process for CCS
         chain : str
             name of product chain
         res_gen : str
@@ -214,6 +210,17 @@ class PtxboaAPI:
         if transport not in TransportValues:
             logger.error(f"Invalid choice for transport: {transport}")
 
+        # CSS defined in chain
+        chain_data = data_handler.get_dimension("chain").loc[chain]
+        df_proc = data_handler.get_dimension("process")
+        secproc_ccs = chain_data["CO2_TS"]
+        secproc_ccs_i = chain_data["CO2_TS_I"]
+        # in API, we pass names, not codes
+        if secproc_ccs:
+            secproc_ccs = df_proc.loc[secproc_ccs, "process_name"]
+        if secproc_ccs_i:
+            secproc_ccs_i = df_proc.loc[secproc_ccs_i, "process_name"]
+
         data = data_handler.get_calculation_data(
             secondary_processes={  # type:ignore
                 flow_code: (
@@ -230,6 +237,7 @@ class PtxboaAPI:
                     ("HEAT", "secproc_heat", secproc_heat),
                     ("EL", "secproc_el", secproc_el),
                     ("CO2-C", "secproc_ccs", secproc_ccs),
+                    ("CO2-C", "secproc_ccs_i", secproc_ccs_i),
                 ]
             },
             chain_name=chain,
@@ -293,7 +301,6 @@ class PtxboaAPI:
             df["secproc_water"] = secproc_water
             df["secproc_heat"] = secproc_heat
             df["secproc_el"] = secproc_el
-            df["secproc_ccs"] = secproc_ccs
             df["chain"] = chain
             df["res_gen"] = res_gen
             df["region"] = region

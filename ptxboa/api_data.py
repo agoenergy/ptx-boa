@@ -187,6 +187,9 @@ def _load_dimensions() -> dict[DimensionType, pd.DataFrame]:
     dimensions["secproc_ccs"] = _create_secproc_dimension(
         dimensions=dimensions, process_class="PROV_CC"
     )
+    dimensions["secproc_ccs_i"] = _create_secproc_dimension(
+        dimensions=dimensions, process_class="PROV_CC"
+    )
 
     dimensions["chain"] = _load_data(
         STATIC_DATA_DIR, name="chains", key_columns="chain"
@@ -1272,6 +1275,7 @@ class DataHandler:
             "secproc_heat": "process",
             "secproc_el": "process",
             "secproc_ccs": "process",
+            "secproc_ccs_i": "process",
             "region": "region",
             "country": "country",
         }

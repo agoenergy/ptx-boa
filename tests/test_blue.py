@@ -511,7 +511,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 "secproc_co2": "Direct Air Capture (blue)",
                 "secproc_water": "Sea Water desalination",
                 "secproc_el": "Combined Cycle Gas Turbine with CCS (blue)",
-                "secproc_ccs": "CO2 transport and storage (blue)",
                 "secproc_heat": "Large scale Heatpump (blue)",
             },
             {
@@ -590,14 +589,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "WACC": 0.0423,
                 },
                 "secondary_process": {
-                    "CO2-C": {
-                        "EFF": 0.95,
-                        "EF_E": {"CO2-C": 1.0},
-                        "EF_M": {"CO2-C": 1.0},
-                        "FLH": 7000,
-                        "LIFETIME": 20,
-                        "process_code": "CO2-T+S#B",
-                    },
                     "EL": {
                         "CAPEX": 2408.190709,
                         "CH4SHARE": {"NG-G": 0.909},
@@ -610,7 +601,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "LIFETIME": 30.0,
                         "OPEX-F": 63.758895,
                         "process_code": "CCGT-CC#B",
-                    },
+                    }
                 },
                 "secondary_process_i": {
                     "EL": {
@@ -719,12 +710,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "process_step": "SECONDARY:Electricity",
                 },
                 {
-                    "main_input": 0.239851,
-                    "main_output": 0.239851,
-                    "process_code": "CO2-T+S#B",
-                    "process_step": "SECONDARY:Captured Carbon",
-                },
-                {
                     "main_input": 0.651,
                     "main_output": 0.651,
                     "process_code": "CCGT-CC#B",
@@ -817,7 +802,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 "secproc_co2": "Direct Air Capture (blue)",
                 "secproc_water": "Sea Water desalination",
                 "secproc_el": "Combined Cycle Gas Turbine with CCS (blue)",
-                "secproc_ccs": "CO2 transport and storage (blue)",
                 "secproc_heat": "Large scale Heatpump (blue)",
             },
             {
