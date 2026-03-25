@@ -74,7 +74,7 @@ scp -r ptxboa2:ptx-boa_offline_optimization/optimization_cache/* .
 ssh ptxboa
 
 # set variables
-VERSION=2.1.33
+VERSION=2.1.34
 APP=app
 PORT=9000
 
