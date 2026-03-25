@@ -245,7 +245,8 @@ def main():
         "unit",
         "secondary_process",
         "secondary_flow",
-        "result_process_type"
+        "result_process_type",
+        "unit_short"
         FROM "ptxboa_flow"
         ORDER BY "flow_code"
         """,
