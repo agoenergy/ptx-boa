@@ -2,7 +2,7 @@ process_code,process_name,main_flow_code_out,main_flow_code_in,is_transformation
 AEL-EL,AEL electrolysis,H2-G,EL,True,False,False,False,ELY,True,False,H2 production,H2O-L,True,False
 ATR,Methane reconversion,H2-G,CH4-G,True,False,True,False,TRNSP-PP,False,False,Transportation (Pipeline),EL,True,False
 ATR_91%#B,autothermal reformer with 91% carbon capture (blue),H2-G,NG-G,True,False,False,False,ELY,True,False,H2 production,EL,False,True
-CCGT-CC#B,Combined Cycle Gas Turbine with CCS (blue),EL,NG-G,False,False,False,True,PROV_EL,False,False,Electricity,,False,True
+CCGT-CC#B,Combined Cycle Gas Turbine with CCS (blue),EL,NG-G,False,False,False,True,PROV_EL,False,False,Electricity generation,,False,True
 CH3OH-S,Methanol ship (own fuel consumption),CH3OH-L,CH3OH-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,True,False
 CH3OH-S#B,Methanol ship (own fuel consumption) (blue),CH3OH-L,CH3OH-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,False,True
 CH3OH-SB,Methanol ship (bunker fuel consumption),CH3OH-L,CH3OH-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,True,False

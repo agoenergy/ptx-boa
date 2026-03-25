@@ -183,7 +183,7 @@ def get_secproc_step(process_code: str, is_import: bool) -> str:
 df_proc = DataHandler.get_dimension("process")
 
 sec_proc = {
-    "Electricity": df_proc.loc["CCGT-CC#B"],
+    "Electricity generation": df_proc.loc["CCGT-CC#B"],
     "CO2 transport and storage": df_proc.loc["CO2-T+S#B"],
     "Carbon": df_proc.loc["DAC#B"],
     "Water": df_proc.loc["DESAL"],
@@ -227,7 +227,7 @@ def main(xlsx_filepath: str):
             "transport": "Ship",
             "secproc_co2": sec_proc["Carbon"]["process_name"],
             "secproc_water": sec_proc["Water"]["process_name"],
-            "secproc_el": sec_proc["Electricity"]["process_name"],
+            "secproc_el": sec_proc["Electricity generation"]["process_name"],
             "secproc_heat": sec_proc["Heat"]["process_name"],
         }
 
