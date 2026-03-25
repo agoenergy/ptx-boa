@@ -935,6 +935,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "step": "PRE_SHP",
                     },
                     {
+                        "CONV-OT": {"BFUEL-L": 3e-06, "NG-L": 1e-06},
                         "DIST": 3174.14,
                         "EFF": 1.0,
                         "process_code": "CH4-SB#B",
@@ -1005,6 +1006,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "co2_bound_in_product_last_proc_m": 592.225797,
                         "co2_bound_in_product_m": 592.225797,
                     },
+                    "flows": {"BFUEL-L": 0.030865, "NG-L": 0.01079},
                     "main_input": 2.946397,
                     "main_output": 2.946397,
                     "process_code": "CH4-SB#B",

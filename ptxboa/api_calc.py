@@ -471,6 +471,10 @@ class PtxCalc:
                 flow_value = main_output_value * conv
                 results_flows.flows[flow_code] = flow_value
 
+            for flow_code, conv_ot in step_data.get("CONV-OT", {}).items():
+                flow_value = main_output_value * dist_transport * conv_ot
+                results_flows.flows[flow_code] = flow_value
+
             proc = df_processes.loc[process_code]
             last_emissions = calculate_emissions(
                 results_flows,

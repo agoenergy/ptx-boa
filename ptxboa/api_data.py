@@ -474,7 +474,7 @@ class _ParameterGetter:
             "OPEX-O", process_code=process_code, default=0
         )
         # CONV-OT => CONV? FIXME
-        # result["CONV-OT"] = self.get_flow_conv_ot_params(process_code) # FIXME # noqa
+        result["CONV-OT"] = self.get_flow_conv_ot_params(process_code)
         result["CONV"] = self.get_flow_conv_params(process_code)
         return result
 
