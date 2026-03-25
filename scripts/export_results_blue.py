@@ -193,6 +193,8 @@ sec_proc = {
 
 def get_secproc_process(secproc_step: str) -> str:
     proc_cls = secproc_step.split(":")[1]
+    if proc_cls == "Electricity":
+        proc_cls = "Electricity generation"  # ??
     return sec_proc[proc_cls]["process_code"]
 
 
