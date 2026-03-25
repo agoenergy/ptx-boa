@@ -242,8 +242,7 @@ class PtxboaAPI:
                     ("CO2-G", "secproc_co2", secproc_co2),
                     ("HEAT", "secproc_heat", secproc_heat),
                     ("EL", "secproc_el", secproc_el),
-                    ("CO2-C", "secproc_ccs", secproc_ccs),
-                    ("CO2-C", "secproc_ccs_i", secproc_ccs_i),
+                    ("CO2-C", "secproc_ccs", secproc_ccs or secproc_ccs_i),
                 ]
             },
             chain_name=chain,
