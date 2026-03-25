@@ -201,6 +201,8 @@ def display_results_bar_and_table(
 
     with st.expander("**Data**"):
         column_config = config_number_columns(df_res, format=f"%.1f {output_unit}")
+        # remove <br> html tags from dataframe index
+        df_res.index = df_res.index.str.replace("<br>", " ")
         st.dataframe(df_res, width="stretch", column_config=column_config)
         fn = f"{data_type}_per_{key}_{key_suffix}".strip("_")
         if st.session_state["user_changes_df"] is not None:
