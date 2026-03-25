@@ -139,8 +139,12 @@ def calculate_emissions(
     if process_code == "NG-PROD#B":
         main_flow_code_in = main_flow_code_out
 
-    if main_flow_code_in in all_flows:
-        logger.error("Main flow codes (in) should not be in secondary flows")
+    if main_flow_code_in in all_flows and process_code != "NG-PROD#B":
+        logger.error(
+            "Main in flow %s:%s should not be in secondary flows",
+            process_code,
+            main_flow_code_in,
+        )
 
     all_flows[main_flow_code_in] = results_flows.main_input
 
@@ -641,7 +645,7 @@ class PtxCalc:
 
                     speccost = speccosts.get(flow_code, 0)
                     if not speccost:
-                        logger.error("no SPECCOST for %s", flow_code)
+                        logger.error("no SPECCOST for %s %s", process_code, flow_code)
 
                     flow_cost = flow_value * speccost
 
