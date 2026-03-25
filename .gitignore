@@ -170,3 +170,5 @@ ptxboa/cache
 
 # tests output:
 tests/out
+test*.xlsx
+~*

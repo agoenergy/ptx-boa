@@ -209,10 +209,12 @@ def main(xlsx_filepath: str):
         chain_flow_out = chain["FLOW_OUT"]
         flow_out_unit = api.get_dimension("flow").loc[chain_flow_out, "unit"]
         if flow_out_unit.lower().startswith("kwh"):  # type:ignore
-            output_unit_cost = "USD/MWh"
+            output_unit = "USD/MWh"
+            output_unit_cost = "USD/kWh"  # unconverted
             output_unit_data = "X/kWh"
         elif flow_out_unit.lower().startswith("kg"):  # type:ignore
-            output_unit_cost = "USD/t"
+            output_unit = "USD/t"
+            output_unit_cost = "USD/kg"  # unconverted
             output_unit_data = "X/kg"
         else:
             raise Exception()
@@ -234,7 +236,7 @@ def main(xlsx_filepath: str):
             res_gen=None,
             ship_own_fuel=False,
             tool_version_color="blue",
-            output_unit=output_unit_cost,
+            output_unit=output_unit,
             optimize_flh=False,
         )
 
@@ -300,11 +302,14 @@ def main(xlsx_filepath: str):
                 if "IMPORT" in step:
                     process_code_cost += " (import)"
 
+                df_costs = res.todo_df_results_cost_unscaled
+                assert df_costs is not None
+
                 d_costs = dict(
                     flatten_dict(
                         dict(
-                            res.costs.loc[
-                                res.costs["process_subtype"] == process_code_cost
+                            df_costs.loc[
+                                df_costs["process_subtype"] == process_code_cost
                             ]
                             .groupby(["cost_type"])
                             .sum(["values"])["values"]

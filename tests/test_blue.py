@@ -758,32 +758,32 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 {
                     "process_subtype": "CCGT-CC#B",
                     "process_type": "Electricity",
-                    "values": 103704.27343,
+                    "values": 103.704273,
                 },
                 {
                     "process_subtype": "CCGT-CC#B (import)",
                     "process_type": "Electricity",
-                    "values": 134717.907566,
+                    "values": 134.717908,
                 },
                 {
                     "process_subtype": "DRI-SB#B",
                     "process_type": "Transportation (Ship)",
-                    "values": 4.782676,
+                    "values": 0.004783,
                 },
                 {
                     "process_subtype": "EAF#B",
                     "process_type": "Derivative production",
-                    "values": 183.684956,
+                    "values": 0.183685,
                 },
                 {
                     "process_subtype": "NG-DRI-C#B",
                     "process_type": "Derivative production",
-                    "values": 363.232485,
+                    "values": 0.363232,
                 },
                 {
                     "process_subtype": "NG-PROD#B",
                     "process_type": "Natural gas production",
-                    "values": 14.402131,
+                    "values": 0.014402,
                 },
             ],
         ],
@@ -1164,42 +1164,37 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 {
                     "process_subtype": "CCGT-CC#B",
                     "process_type": "Electricity",
-                    "values": 4433.156143,
+                    "values": 4.433156,
                 },
                 {
                     "process_subtype": "CCGT-CC#B (import)",
                     "process_type": "Electricity",
-                    "values": 232412.188645,
+                    "values": 232.412189,
                 },
                 {
                     "process_subtype": "CH4-LIQ#B",
                     "process_type": "Transportation (Ship)",
-                    "values": 28.869076,
-                },
-                {
-                    "process_subtype": "CH4-RGAS#B",
-                    "process_type": "Transportation (Ship)",
-                    "values": 0.000253,
+                    "values": 0.028869,
                 },
                 {
                     "process_subtype": "CH4-SB#B",
                     "process_type": "Transportation (Ship)",
-                    "values": 2.376934,
+                    "values": 0.002377,
                 },
                 {
                     "process_subtype": "EAF#B",
                     "process_type": "Derivative production",
-                    "values": 183.684956,
+                    "values": 0.183685,
                 },
                 {
                     "process_subtype": "NG-DRI-C#B",
                     "process_type": "Derivative production",
-                    "values": 363.232128,
+                    "values": 0.363232,
                 },
                 {
                     "process_subtype": "NG-PROD#B",
                     "process_type": "Natural gas production",
-                    "values": 10.960904,
+                    "values": 0.010961,
                 },
             ],
         ],
@@ -1227,7 +1222,7 @@ def test_new_blue_chain_real_data(
     res_emission_mass = _sort_nested(_round_nested(res_emission_mass))
 
     res_costs = (
-        api_result.costs[  # type:ignore
+        api_result.todo_df_results_cost_unscaled[  # type:ignore
             ["process_subtype", "process_type", "values"]
         ]
         .groupby(["process_subtype", "process_type"])
