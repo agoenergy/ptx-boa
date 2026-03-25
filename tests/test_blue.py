@@ -1089,7 +1089,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "main_input": 0.239851,
                     "main_output": 0.239851,
                     "process_code": "CO2-T+S#B",
-                    "process_step": "SECONDARY-IMPORT:Captured Carbon",
+                    "process_step": "SECONDARY-IMPORT:CO2 transport and storage",
                 },
             ],
             [

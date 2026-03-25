@@ -935,7 +935,6 @@ ScenarioValues = [
 
 
 ResultClassType = Literal[
-    "Captured Carbon",
     "Carbon",
     "CO2 transport and storage",
     "Derivative production",
@@ -943,14 +942,13 @@ ResultClassType = Literal[
     "Electricity and H2 storage",
     "Electricity generation",
     "H2 production",
-    "HEAT",
+    "Heat",
     "Natural gas production",
     "Transportation (Pipeline)",
     "Transportation (Ship)",
     "Water",
 ]
 ResultClassValues = [
-    "Captured Carbon",
     "Carbon",
     "CO2 transport and storage",
     "Derivative production",
@@ -958,7 +956,7 @@ ResultClassValues = [
     "Electricity and H2 storage",
     "Electricity generation",
     "H2 production",
-    "HEAT",
+    "Heat",
     "Natural gas production",
     "Transportation (Pipeline)",
     "Transportation (Ship)",

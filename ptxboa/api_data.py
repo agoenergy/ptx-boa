@@ -185,10 +185,10 @@ def _load_dimensions() -> dict[DimensionType, pd.DataFrame]:
         dimensions=dimensions, process_class="PROV_EL"
     )
     dimensions["secproc_ccs"] = _create_secproc_dimension(
-        dimensions=dimensions, process_class="PROV_CC"
+        dimensions=dimensions, process_class="STORC"
     )
     dimensions["secproc_ccs_i"] = _create_secproc_dimension(
-        dimensions=dimensions, process_class="PROV_CC"
+        dimensions=dimensions, process_class="STORC"
     )
 
     dimensions["chain"] = _load_data(

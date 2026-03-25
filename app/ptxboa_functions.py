@@ -524,6 +524,7 @@ def sort_by_position_in_chain(
         "CO2",
         "CO2 (direct)",
         "CO2 (indirect)",
+        "CO2 transport and storage",
         "Total",
     ]
 

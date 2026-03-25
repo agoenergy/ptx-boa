@@ -58,12 +58,12 @@ STEPS = [
     "DERIV_I2",
     # "CO2_TS_I",
     "SECONDARY:Electricity",
-    "SECONDARY:Captured Carbon",
+    "SECONDARY:CO2 transport and storage",
     "SECONDARY:Carbon",
     "SECONDARY:Water",
     "SECONDARY:Heat",
     "SECONDARY-IMPORT:Electricity",
-    "SECONDARY-IMPORT:Captured Carbon",
+    "SECONDARY-IMPORT:CO2 transport and storage",
     "SECONDARY-IMPORT:Carbon",
     "SECONDARY-IMPORT:Water",
     "SECONDARY-IMPORT:Heat",
@@ -184,7 +184,7 @@ df_proc = DataHandler.get_dimension("process")
 
 sec_proc = {
     "Electricity": df_proc.loc["CCGT-CC#B"],
-    "Captured Carbon": df_proc.loc["CO2-T+S#B"],
+    "CO2 transport and storage": df_proc.loc["CO2-T+S#B"],
     "Carbon": df_proc.loc["DAC#B"],
     "Water": df_proc.loc["DESAL"],
     "Heat": df_proc.loc["HEATPUMP#B"],
