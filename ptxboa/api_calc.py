@@ -511,13 +511,21 @@ class PtxCalc:
                         sec_process_code, "result_process_type"
                     ]
 
-                    # no FLH
                     lifetime = sec_process_data["LIFETIME"]
                     capex = sec_process_data["CAPEX"]
                     opex_f = sec_process_data["OPEX-F"]
                     opex_o = sec_process_data["OPEX-O"]
 
-                    capacity = flow_value  # no FLH
+                    # should we also use
+                    # the whole chain is based on yearly production
+                    # for flows where the unit is kwh, the capacity
+                    # would be flow/FLH or flow/8760
+
+                    capacity = flow_value
+                    if flow_code in {"EL", "HEAT"}:  # FIXME: determine via unit
+                        flh = sec_process_data["FLH"] or 8760
+                        capacity = capacity / flh
+
                     capex = capacity * capex
                     capex_ann = annuity(wacc, lifetime, capex)
                     opex = opex_f * capacity + opex_o * flow_value

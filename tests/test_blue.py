@@ -758,12 +758,12 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 {
                     "process_subtype": "CCGT-CC#B",
                     "process_type": "Electricity generation",
-                    "values": 103.704273,
+                    "values": 0.014815,
                 },
                 {
                     "process_subtype": "CCGT-CC#B (import)",
                     "process_type": "Electricity generation",
-                    "values": 134.717908,
+                    "values": 0.019245,
                 },
                 {
                     "process_subtype": "DRI-SB#B",
@@ -1164,12 +1164,12 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 {
                     "process_subtype": "CCGT-CC#B",
                     "process_type": "Electricity generation",
-                    "values": 4.433156,
+                    "values": 0.000633,
                 },
                 {
                     "process_subtype": "CCGT-CC#B (import)",
                     "process_type": "Electricity generation",
-                    "values": 232.412189,
+                    "values": 0.033202,
                 },
                 {
                     "process_subtype": "CH4-LIQ#B",
