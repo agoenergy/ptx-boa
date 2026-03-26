@@ -13,6 +13,7 @@ from typing import Any, Iterable
 import pandas as pd
 
 from ptxboa.api import PtxboaAPI
+from ptxboa.api_calc import get_secproc_step
 from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler
 
 
@@ -175,16 +176,6 @@ rows = [
     "4:costs:FLOW",
     "4:costs:OPEX",
 ]
-
-
-def get_secproc_step(process_code: str, is_import: bool) -> str:
-    prefix = "SECONDARY-IMPORT:" if is_import else "SECONDARY:"
-    proc_cls = DataHandler.get_dimension("process").loc[
-        process_code, "result_process_type"
-    ]
-    if proc_cls == "Electricity":
-        proc_cls = "Electricity generation"  # ??
-    return prefix + proc_cls  # type:ignore
 
 
 df_proc = DataHandler.get_dimension("process")
