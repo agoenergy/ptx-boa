@@ -1,5 +1,5 @@
 FROM python:3.10-slim
-LABEL version="2.1.35"
+LABEL version="2.1.36"
 
 RUN apt-get update
 RUN apt-get install -y git

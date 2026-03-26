@@ -23,6 +23,16 @@ def _sum_dict(x: dict | None, y: dict | None) -> dict:
     return {k: _sum_float(x.get(k), y.get(k)) for k in (set(x) | set(y))}
 
 
+def get_secproc_step(process_code: str, is_import: bool) -> str:
+    prefix = "SECONDARY-IMPORT:" if is_import else "SECONDARY:"
+    proc_cls = DataHandler.get_dimension("process").loc[
+        process_code, "result_process_type"
+    ]
+    if proc_cls == "Electricity":
+        proc_cls = "Electricity generation"  # ??
+    return prefix + proc_cls  # type:ignore
+
+
 @dataclass(slots=True)
 class ResultsFlows:
     process_code: str
@@ -79,47 +89,12 @@ def calculate_emissions(
 ) -> dict:
     # TODO: speed up by not having to load process object every time?
 
-    # flows_in:
-    # CH3OH-L
-    # CHX-L
-    # DRI-S
-    # H2-G
-    # H2-L
-    # NG-G
-    # NG-L
-    # NH3-L
-
-    # flows_out: flows_in  and STL-S # noqa
-
-    # flows_sec:
-
-    # CH4-G
-    # CO2-G
-    # DIESEL-L
-    # EL: indirect # noqa
-    # HEAT: indirect # noqa
-    # IOP-S
-    # NG-G
-
-    # EFF*:
-    # BFUEL-L (unused?)
-    # CH3OH-L (unused?)
-    # CH4-G
-    # CH4-L
-    # CO2-C
-    # CO2-G
-    # DIESEL-L
-    # EL
-    # HEAT
-    # NG-G
-    # NG-L
-
     ch4_to_co2eq = 29.8
     g_co2_per_kg_C = 3664.446295
     g_ch4_per_kwh_lhv = 68.75469807
 
-    FLOW_CO2_INDIRECT = {"HEAT", "EL"}  # TODO: from database?
-    FLOW_CO2_ONLY_WHEN_EFF_TODO = {"NG-G", "CH4-G"}  # TODO: any others?
+    FLOW_CO2_INDIRECT = {"HEAT", "EL"}
+    FLOW_CO2_ONLY_WHEN_EFF_TODO = {"NG-G", "CH4-G"}
     FLOW_CO2_OTHER = {"STL-S"}
     is_transformation_changing_cbound = step_data["step"] in {
         "NG_PROD",
@@ -139,22 +114,19 @@ def calculate_emissions(
     if process_code == "NG-PROD#B":
         main_flow_code_in = main_flow_code_out
 
-    if main_flow_code_in in all_flows:
-        logger.error("Main flow codes (in) should not be in secondary flows")
+    if main_flow_code_in in all_flows and process_code != "NG-PROD#B":
+        logger.error(
+            "Main in flow %s:%s should not be in secondary flows",
+            process_code,
+            main_flow_code_in,
+        )
 
     all_flows[main_flow_code_in] = results_flows.main_input
 
     CH4_KWH_PER_OUTPUT = step_data.get("CH4SHARE", {})  # only NG-G ?
 
     CBOUND_KG_C_PER_OUTPUT = step_data.get("CBOUND", {})  # in kgC/output
-    # CH3OHSYC#B    CH3OH-L NG-G
-    # CH3OHSYN#B    CH3OH-L CO2-G
-    # EAF#B         STL-S   B-DRI-S
-    # EFUELSYN#B    CHX-L   CO2-G
-    # EFUELSYNC#B   CHX-L   NG-G
-    # NG-DRI-C#B    DRI-S   CH4-G
-    # NG-DRI-C#B    DRI-S   NG-G
-    # NG-PROD#B     NG-G    NG-G
+
     if (
         main_flow_code_out in CBOUND_KG_C_PER_OUTPUT
         and main_flow_code_out not in results_flows.flows
@@ -190,31 +162,6 @@ def calculate_emissions(
             "DIRECT": {k: v for k, v in _EF_E.items() if k not in FLOW_CO2_INDIRECT},
         },
     }
-
-    # EF_E:
-    # CH3OH-L
-    # CH4-G
-    # CH4-L
-    # CO2-C
-    # CO2-G
-    # DIESEL-L
-    # EL
-    # HEAT
-    # NG-G
-    # NG-L
-
-    # EF_M
-    # BFUEL-L
-    # CH3OH-L
-    # CH4-G
-    # CH4-L
-    # CO2-C
-    # CO2-G
-    # DIESEL-L
-    # EL
-    # HEAT
-    # NG-G
-    # NG-L
 
     results_flows.main_input = results_flows.main_input
 
@@ -285,7 +232,6 @@ def calculate_emissions(
                     cbound_kg_c_per_output += cbound
 
         if is_transformation_changing_cbound:
-            # FIXME: this is not correct in excel (J57)
             co2_g_bound_in_product_out = (  # row 49/57
                 results_flows.main_output * g_co2_per_kg_C * cbound_kg_c_per_output
             )
@@ -334,6 +280,38 @@ def _rescale_result_flows(results_flows: ResultsFlows, norm_factor: float) -> No
     results_flows.flows = rescale_dict(results_flows.flows, norm_factor)
     if results_flows.emissions:
         results_flows.emissions = rescale_dict(results_flows.emissions, norm_factor)
+
+
+def _results_emissions_append(
+    results_emissions_e_g_co2e: list,
+    results_emissions_m_g_co2e: list,
+    emissions: dict,
+    result_process_type,
+    process_code,
+):
+    for d_i, gas, ind in [
+        ("indirect", "CO2", "co2_indirect_scope2"),
+        ("direct", "CO2", "co2_direct"),
+        ("direct", "CH4", "ch4_direct_co2e"),
+    ]:
+        results_emissions_e_g_co2e.append(
+            (
+                result_process_type,
+                process_code,
+                d_i,
+                gas,
+                emissions[ind + "_e"],
+            )
+        )
+        results_emissions_m_g_co2e.append(
+            (
+                result_process_type,
+                process_code,
+                d_i,
+                gas,
+                emissions[ind + "_m"],
+            )
+        )
 
 
 class PtxCalc:
@@ -608,14 +586,24 @@ class PtxCalc:
 
                         results_flows_sec.flows[sec_flow_code] = sec_flow_value
 
-                    # FIXME: not finished yet
-                    results_flows_sec.emissions = calculate_emissions(
+                    sec_emissions = calculate_emissions(
                         results_flows=results_flows_sec,
-                        step_data={"step": None, "process_code": None},
+                        step_data=sec_process_data
+                        | {"step": get_secproc_step(sec_process_code, is_import)},
                         main_flow_code_in=None,
-                        main_flow_code_out="",
+                        main_flow_code_out=flow_code,
                         last_emissions=None,
                     )
+
+                    _results_emissions_append(
+                        results_emissions_e_g_co2e,
+                        results_emissions_m_g_co2e,
+                        sec_emissions,
+                        sec_result_process_type,
+                        sec_process_code,
+                    )
+
+                    results_flows_sec.emissions = sec_emissions
 
                 else:
                     # use market
@@ -641,7 +629,7 @@ class PtxCalc:
 
                     speccost = speccosts.get(flow_code, 0)
                     if not speccost:
-                        logger.error("no SPECCOST for %s", flow_code)
+                        logger.error("no SPECCOST for %s %s", process_code, flow_code)
 
                     flow_cost = flow_value * speccost
 
@@ -657,29 +645,13 @@ class PtxCalc:
                         (flow_result_process_type, process_code, "FLOW", flow_cost)
                     )
 
-            for d_i, gas, ind in [
-                ("indirect", "CO2", "co2_indirect_scope2"),
-                ("direct", "CO2", "co2_direct"),
-                ("direct", "CH4", "ch4_direct_co2e"),
-            ]:
-                results_emissions_e_g_co2e.append(
-                    (
-                        result_process_type,
-                        process_code,
-                        d_i,
-                        gas,
-                        last_emissions[ind + "_e"],
-                    )
-                )
-                results_emissions_m_g_co2e.append(
-                    (
-                        result_process_type,
-                        process_code,
-                        d_i,
-                        gas,
-                        last_emissions[ind + "_m"],
-                    )
-                )
+            _results_emissions_append(
+                results_emissions_e_g_co2e,
+                results_emissions_m_g_co2e,
+                last_emissions,
+                result_process_type,
+                process_code,
+            )
 
         # add final emissions bound
         results_emissions_e_g_co2e.append(
@@ -755,7 +727,7 @@ class PtxCalc:
         # rescale again ONLY RES to account for additionally needed electricity
         # sum_el is larger than 1.0
 
-        # TODO: for blue hydrogen chains, there is no RES
+        # NOTE: for blue hydrogen chains, there is no RES
 
         if first_step_is_res and sum_el_export > 1:
             norm_factor_el = sum_el_export
@@ -790,7 +762,7 @@ class PtxCalc:
             ]:
                 _rescale_result_flows(results_flows, norm_factor_ng)
 
-        # TODO: currently for testing, we return dicts, not ResultsFlows
+        # currently for testing, we return dicts, not ResultsFlows
         results_flows_chain = [asdict(rf) for rf in results_flows_chain]  # type:ignore
 
         results_flows_secondary = list(
