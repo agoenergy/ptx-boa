@@ -10,6 +10,7 @@ from app.tab_blue_costs import content_costs
 from app.tab_blue_costs_comparison import content_costs_comparison
 from app.tab_blue_debugging import content_debugging
 from app.tab_blue_emissions import content_emissions
+from app.tab_blue_info import content_info
 from app.tab_blue_input_data import content_input_data
 from app.user_data import display_user_changes
 from app.user_data_from_file import download_user_data, upload_user_data
@@ -84,7 +85,7 @@ def blue_page():
     st.session_state["subregion"] = None
 
     if st.session_state[st.session_state["tab_key"]] == "Info":
-        st.text("Blue PtX Info")
+        content_info(api)
 
     if st.session_state[st.session_state["tab_key"]] == "Costs":
         content_costs(api)
