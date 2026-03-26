@@ -1,51 +1,52 @@
 """Test classes."""
 
 import random
-from dataclasses import dataclass
 
-from ptxboa.classes._generated import PtxboaParameters, PtxboaProcesss, PtxboaRegions
-from ptxboa.classes.base import PtxboaChain, PtxboaRoute
+from ptxboa.classes._generated import (
+    PtxboaFlowTypes,
+    PtxboaParameterTypes,
+    PtxboaProcessTypes,
+    PtxboaRegions,
+)
+from ptxboa.classes.base import PtxboaProcessTreeType, PtxboaRoute
 
 
-def get_data(**kwargs):
+def get_data(**_kwargs):
     return random.random()  # noqa
 
 
-calor = PtxboaParameters.CALOR(_get_data=get_data)
-print(calor)
-
-ng_prod_b = PtxboaProcesss.NG_PROD_B(1, _get_data=get_data)
-print(ng_prod_b)
-
-
-Chain = PtxboaChain._create_subclass(
-    "MyChain",
-    code="MyChain",
-    name="MyChain",
-    process_types=[PtxboaProcesss.NG_PROD_B, PtxboaProcesss.ATR_91_B],
-    template_class_name="PtxboaChain",
+eff = PtxboaParameterTypes.EFF.create(get_data=get_data)
+route = PtxboaRoute(from_region=PtxboaRegions.ARE, to_region=PtxboaRegions.DEU)
+h2 = PtxboaFlowTypes.H2_G.create(value=1)
+ngp = PtxboaProcessTypes.NG_PROD_B.create(
+    get_data=get_data, main_flow_out=PtxboaFlowTypes.NG_G.create(1)
 )
 
+dac = PtxboaProcessTypes.DAC_B.create(
+    get_data=get_data, main_flow_out=PtxboaFlowTypes.CO2_G.create(1)
+)
 
-chain = Chain(1, _get_data=get_data)
-print(chain)
-
-print(PtxboaRoute(from_region=PtxboaRegions.ARE, to_region=PtxboaRegions.DEU))
-
-
-@dataclass(frozen=True, slots=True)
-class P:
-    code: str
-
-    def create(self) -> "P2":
-        """Create P2."""
-        return P2(dtype=self, value=1)
-
-
-@dataclass(frozen=True, slots=True)
-class P2:
-    dtype: P
-    value: float
+print(PtxboaRegions.DEU)
+print(route)
+print(PtxboaParameterTypes.EFF)
+print(eff)
+print(PtxboaFlowTypes.H2_G)
+print(h2)
+print(PtxboaProcessTypes.NG_PROD_B)
+print(ngp)
+print(dac)
 
 
-p = P(code="ss")
+tree_type = PtxboaProcessTreeType(
+    code="my_chain",
+    name="my_chain",
+    process_types=(
+        PtxboaProcessTypes.NG_PROD_B,
+        PtxboaProcessTypes.ATR_91_B,
+    ),
+)
+print(tree_type)
+
+tree = tree_type.create(get_data=get_data, main_flow_out=PtxboaFlowTypes.H2_G.create(1))
+
+print(tree)

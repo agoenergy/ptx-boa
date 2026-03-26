@@ -28,11 +28,10 @@ def code_to_identifier(x: str) -> str:
     return x
 
 
-def get_class_definitions_instances(
+def get_class_instances(
     class_name: str,
     query: str,
     modify_attributes: dict[str, Callable] | None = None,
-    is_instance: bool = False,
 ) -> str:
     modify_attributes = modify_attributes or {}
     class_name_group = f"{class_name}s"
@@ -42,91 +41,77 @@ def get_class_definitions_instances(
     ]
     for item in df.to_dict(orient="records"):
         ident = code_to_identifier(item["code"])
-        clsname = f"{class_name}_{ident}"
+        class_name_item = item.pop("class_name", class_name)
         kwargs_str = ", ".join(
             f"{k}={modify_attributes.get(k, repr)(v)}"  # type:ignore
             for k, v in item.items()
         )
-        if is_instance:
-            line = f"({kwargs_str})"
-        else:
-            line = f'._create_subclass("{clsname}", {kwargs_str})'
-        line = f"    {ident} = ptxboa.classes.base.{class_name}" + line
+        line = f"    {ident} = ptxboa.classes.base.{class_name_item}({kwargs_str})"
         lines.append(line)
 
     return "\n".join(lines)
 
 
-def get_flow(flow_code: str) -> str:
+def get_flow_type(flow_code: str) -> str:
     if not flow_code:
-        return "ptxboa.classes.base.PtxboaFlowNull"
-    return f"PtxboaFlows.{code_to_identifier(flow_code)}"
+        return "ptxboa.classes.base.PtxboaFlowNullType"
+    return f"PtxboaFlowTypes.{code_to_identifier(flow_code)}"
 
 
 def main():
-    cls_import = [  # noqa
-        "PtxboaParameter",
-        "PtxboaProcess",
-        "PtxboaFlow",
-        "PtxboaRegion",
-        "PtxboaFlowNull",
-    ]
-    # cls_import_unused = ["PtxboaChain"] # noqa
-
     literals = [
         '"""DO NOT EDIT (created by classes/_update.py)."""',
-        # "from ptxboa.classes.base import %s" % ", ".join(cls_import), # noqa
-        # "from ptxboa.classes.base import %s" % ", ".join(cls_import_unused), # noqa
-        # "__all__ = [%s]" % ", ".join(f'"{c}"' for c in cls_import_unused), # noqa
         "import ptxboa.classes.base",
     ]
 
     literals.append(
-        get_class_definitions_instances(
-            "PtxboaParameter",
+        get_class_instances(
+            "PtxboaParameterType",
             """SELECT
             parameter_code AS code,
             parameter_name AS name,
-            'PtxboaParameter' AS template_class_name
+            'PtxboaParameterType' AS class_name /* modify in DB if needed */
             FROM ptxboa_parameter ORDER BY parameter_code""",
         )
     )
 
     literals.append(
-        get_class_definitions_instances(
-            "PtxboaFlow",
+        get_class_instances(
+            "PtxboaFlowType",
             """SELECT
             flow_code AS code,
             flow_name AS name,
-            'PtxboaFlow' AS template_class_name
+            'PtxboaFlowType' AS class_name /* modify in DB if needed */
             FROM ptxboa_flow ORDER BY flow_code""",
         )
     )
 
     literals.append(
-        get_class_definitions_instances(
+        get_class_instances(
             "PtxboaRegion",
             """SELECT
             region_code AS code,
-            region_name AS name
+            region_name AS name,
+            'PtxboaRegion' AS class_name /* modify in DB if needed */
             FROM ptxboa_source_region ORDER BY region_code""",
-            is_instance=True,
         )
     )
 
     literals.append(
-        get_class_definitions_instances(
-            "PtxboaProcess",
+        get_class_instances(
+            "PtxboaProcessType",
             """SELECT
             process_code AS code,
             process_name AS name,
             main_flow_code_out as main_flow_type_out,
             main_flow_code_in as main_flow_type_in,
-            'PtxboaProcess' AS template_class_name
+            case
+              when is_secondary=1 then 'PtxboaSecondaryProcessType'
+              else 'PtxboaProcessType' end AS class_name /* modify in DB if needed */
             FROM ptxboa_process ORDER BY process_code""",
             modify_attributes={
-                "main_flow_type_out": get_flow,
-                "main_flow_type_in": get_flow,
+                "main_flow_type_out": get_flow_type,
+                "main_flow_type_in": get_flow_type,
             },
         )
     )
