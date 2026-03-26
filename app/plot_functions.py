@@ -264,6 +264,7 @@ def plot_input_data_on_map(
             color_col=color_col,
             custom_data_func=_make_inputs_hoverdata,
             custom_data_func_kwargs=custom_data_func_kwargs,
+            highlight="country" if data_type == "Natural gas price" else "region",
         )
     else:
         fig = _choropleth_map_deep_dive_country(
@@ -284,6 +285,7 @@ def _choropleth_map_world(
     color_col: str,
     custom_data_func: callable,
     custom_data_func_kwargs: dict | None = None,
+    highlight: Literal["region", "country"] | None = "region",
 ):
     """
     Plot a chorpleth map for the whole world and one color for each country.
@@ -318,7 +320,10 @@ def _choropleth_map_world(
         opacity=0.8,
     )
     fig.update_traces({"marker": {"size": 20}})
-    fig = _highlight_selected_region_world(fig)
+    if highlight == "region":
+        fig = _highlight_selected_region_world(fig)
+    if highlight == "country":
+        fig = _highlight_selected_country_world(fig)
     return fig
 
 
@@ -422,6 +427,26 @@ def _highlight_selected_region_world(fig: go.Figure) -> go.Figure:
             hoverinfo="skip",
             customdata=["selected supply region"],
             name="selected region",
+            showlegend=False,
+        )
+    )
+    return fig
+
+
+def _highlight_selected_country_world(fig: go.Figure) -> go.Figure:
+    country = st.session_state["country"]
+    fig.add_trace(
+        go.Scattergeo(
+            locations=[country],
+            locationmode="country names",
+            marker={
+                "size": 21,
+                "color": "rgba(0, 0, 0, 0)",
+                "line": {"width": 3, "color": "black"},
+            },
+            hoverinfo="skip",
+            customdata=["selected demand country"],
+            name="selected county",
             showlegend=False,
         )
     )
