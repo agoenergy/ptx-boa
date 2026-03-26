@@ -485,19 +485,32 @@ def display_and_edit_input_data(
             format="%.2f USD/kW", min_value=0
         )
 
-    if data_type == "Natural gas production":
+    if data_type == "Natural gas production costs":
         index = "source_region_code"
         columns = "parameter_code"
         missing_index = {"process_code": "production of natural gas (blue)"}
         column_config["OPEX (other variable)"] = st.column_config.NumberColumn(
+            label="production costs",
             format="%.4f USD/kWh",
+            min_value=0,
+        )
+
+    if data_type == "Natural gas production losses":
+        index = "source_region_code"
+        columns = "parameter_code"
+        missing_index = {
+            "process_code": "production of natural gas (blue)",
+            "flow_code": "natural gas (gasous)",
+        }
+        column_config["losses (own fuel)"] = st.column_config.NumberColumn(
+            format="%.4f [fraction]",
             min_value=0,
         )
 
     if data_type == "Natural gas price":
         index = "source_region_code"
         columns = "parameter_code"
-        missing_index = {"flow_code": "natural gas (liquid)"}
+        missing_index = {"flow_code": "natural gas (gasous)"}
 
     df = change_index_names(df)
 

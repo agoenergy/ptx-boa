@@ -171,7 +171,8 @@ def plot_input_data_on_map(
         "CAPEX",
         "full load hours",
         "WACC",
-        "Natural gas production",
+        "Natural gas production costs",
+        "Natural gas production losses",
         "Natural gas price",
     ],
     color_col: Literal[
@@ -182,9 +183,8 @@ def plot_input_data_on_map(
         "PV tilted (hybrid)",
         "WACC",
         "specific costs",
-        "CAPEX",
         "OPEX (other variable)",
-        "efficiency",
+        "losses (own fuel)",
     ],
     scope: Literal["world", "Argentina", "Morocco", "South Africa"] = "world",
     tool_version_color: ToolVersionColorType = "green",
@@ -243,23 +243,15 @@ def plot_input_data_on_map(
     if data_type == "Natural gas price":
         assert color_col == "specific costs"
         custom_data_func_kwargs.update({"float_precision": 4})
-    if data_type == "Natural gas production":
-        assert color_col in [
-            "CAPEX",
-            "OPEX (other variable)",
-            "efficiency",
-        ], color_col
-        if color_col == "CAPEX":
-            custom_data_func_kwargs["unit"] = "USD/kW"
-            custom_data_func_kwargs["float_precision"] = 0
+    if data_type == "Natural gas production costs":
+        assert color_col == "OPEX (other variable)", color_col
+        custom_data_func_kwargs["unit"] = "USD/kWh"
+        custom_data_func_kwargs["float_precision"] = 4
 
-        if color_col == "OPEX (other variable)":
-            custom_data_func_kwargs["unit"] = "USD/kW"
-            custom_data_func_kwargs["float_precision"] = 4
-
-        if color_col == "efficiency":
-            custom_data_func_kwargs["unit"] = "%"
-            custom_data_func_kwargs["float_precision"] = 2
+    if data_type == "Natural gas production losses":
+        assert color_col == "losses (own fuel)", color_col
+        custom_data_func_kwargs["unit"] = "fraction"
+        custom_data_func_kwargs["float_precision"] = 4
 
     custom_data_func_kwargs["data_type"] = data_type
     custom_data_func_kwargs["map_variable"] = color_col
@@ -485,7 +477,12 @@ def _set_map_layout(fig: go.Figure, colorbar_title: str) -> go.Figure:
 
 def _make_inputs_hoverdata(df, data_type, map_variable, unit, float_precision):
     custom_hover_data = []
-    if data_type in ["WACC", "Natural gas price"]:
+    if data_type in [
+        "WACC",
+        "Natural gas production costs",
+        "Natural gas production losses",
+        "Natural gas price",
+    ]:
         for idx, row in df.iterrows():
             hover = (
                 f"<b>{idx} | {data_type} </b><br><br>"

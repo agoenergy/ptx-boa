@@ -22,33 +22,25 @@ def content_input_data(api: PtxboaAPI) -> None:
 
         data_selection: Literal[
             "WACC",
-            "Natural gas production",
+            "Natural gas production costs",
+            "Natural gas production losses",
             "Natural gas price",
-        ] = st.radio(
+        ] = st.selectbox(
             "Select data type",
             [
                 "WACC",
-                "Natural gas production",
+                "Natural gas production costs",
+                "Natural gas production losses",
                 "Natural gas price",
             ],
-            horizontal=True,
         )
 
         with st.expander("**Map**", expanded=True):
-            if data_selection == "Natural gas production":
-                map_parameter = st.selectbox(
-                    "Select parameter to display on map:",
-                    [
-                        "CAPEX",
-                        "OPEX (other variable)",
-                        "efficiency",
-                    ],
-                    key="input_data_map_parameter",
-                )
-            else:
-                map_parameter = {"Natural gas price": "specific costs"}.get(
-                    data_selection, data_selection
-                )
+            map_parameter = {
+                "Natural gas price": "specific costs",
+                "Natural gas production costs": "OPEX (other variable)",
+                "Natural gas production losses": "losses (own fuel)",
+            }.get(data_selection, data_selection)
             fig = plot_input_data_on_map(
                 api=api,
                 data_type=data_selection,
