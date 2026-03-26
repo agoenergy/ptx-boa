@@ -552,3 +552,22 @@ def display_and_edit_input_data(
 def what_is_a_boxplot():
     with st.popover("What is a boxplot?"):
         st.image("img/boxplot_explanation.png")
+
+
+def report_processes_contained_in_process_result_type(
+    _api: PtxboaAPI, tool_version_color: ToolVersionColorType
+):
+    data = (
+        _api.get_dimension("process", tool_version_color=tool_version_color)
+        .loc[:, ["process_name", "result_process_type"]]
+        .groupby("result_process_type")
+        .agg(list)
+        .to_dict()["process_name"]
+    )
+    with st.expander("Aggregated process categories and associated processes"):
+        for process_result_type, processes in data.items():
+            with st.expander(process_result_type):
+                section = []
+                for p in processes:
+                    section.append(f"- {p}")
+                st.markdown("\n".join(section))
