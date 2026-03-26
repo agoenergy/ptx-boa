@@ -74,7 +74,7 @@ scp -r ptxboa2:ptx-boa_offline_optimization/optimization_cache/* .
 ssh ptxboa
 
 # set variables
-VERSION=2.1.35
+VERSION=2.1.37
 APP=app
 PORT=9000
 
@@ -278,8 +278,6 @@ pypsa network object that contains the solved model.
   }
 }
 ```
-
-- TODO: model components
 
 #### Example flowchart
 
