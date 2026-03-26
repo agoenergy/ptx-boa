@@ -486,6 +486,12 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
             "process_subtype": "NG-DRI-C#B",
             "values": 189780.346718,
         },
+        {
+            "emission_type": "direct",
+            "gas_type": "CO2",
+            "process_subtype": "CCGT-CC#B",
+            "values": 94890.173359,
+        },
     ]
 
     assert _rec_approx(calculation_data) == calculation_data_exp
@@ -699,12 +705,30 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "process_step": "DERIV_I2",
                 },
                 {
+                    "emissions": {
+                        "co2_captured_e": 85.190214,
+                        "co2_captured_m": 85.190214,
+                        "co2_direct_e": 9.699876,
+                        "co2_direct_m": 9.699876,
+                        "co2_in_flows_e": 94.89009,
+                        "co2_in_flows_m": 94.89009,
+                        "co2e_total_direct_e": 9.699876,
+                        "co2e_total_direct_m": 9.699876,
+                    },
                     "main_input": 0.47209,
                     "main_output": 0.47209,
                     "process_code": "CCGT-CC#B",
                     "process_step": "SECONDARY:Electricity generation",
                 },
                 {
+                    "emissions": {
+                        "co2_direct_e": 0.239851,
+                        "co2_direct_m": 0.239851,
+                        "co2_in_flows_e": 0.239851,
+                        "co2_in_flows_m": 0.239851,
+                        "co2e_total_direct_e": 0.239851,
+                        "co2e_total_direct_m": 0.239851,
+                    },
                     "main_input": 0.239851,
                     "main_output": 0.239851,
                     "process_code": "CO2-T+S#B",
@@ -717,6 +741,12 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "gas_type": "CO2",
                     "process_subtype": "Bound in product",
                     "values": 14657.78518,
+                },
+                {
+                    "emission_type": "direct",
+                    "gas_type": "CO2",
+                    "process_subtype": "CO2-T+S#B",
+                    "values": 239.851448,
                 },
                 {
                     "emission_type": "direct",
@@ -735,6 +765,12 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "gas_type": "CO2",
                     "process_subtype": "NG-DRI-C#B",
                     "values": 796543.696995,
+                },
+                {
+                    "emission_type": "direct",
+                    "gas_type": "CO2",
+                    "process_subtype": "CCGT-CC#B",
+                    "values": 9699.875867,
                 },
                 {
                     "emission_type": "direct",

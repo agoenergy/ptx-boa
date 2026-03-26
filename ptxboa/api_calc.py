@@ -162,8 +162,6 @@ def calculate_emissions(
         },
     }
 
-    results_flows.main_input = results_flows.main_input
-
     def get_ch4_g_from_ng_loss(flow_code: str, loss_kwh_ng: float):
         # only NG-G?
         if not loss_kwh_ng:
@@ -581,11 +579,14 @@ class PtxCalc:
 
                         results_flows_sec.flows[sec_flow_code] = sec_flow_value
 
+                    sec_proc_flow_in = DataHandler.get_dimension("process").loc[
+                        sec_process_code
+                    ]["main_flow_code_in"]
                     sec_emissions = calculate_emissions(
                         results_flows=results_flows_sec,
                         step_data=sec_process_data
                         | {"step": get_secproc_step(sec_process_code)},
-                        main_flow_code_in=None,
+                        main_flow_code_in=sec_proc_flow_in,
                         main_flow_code_out=flow_code,
                         last_emissions=None,
                     )
