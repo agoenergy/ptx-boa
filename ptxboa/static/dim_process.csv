@@ -67,7 +67,7 @@ LOHC-REC,LOHC reconversion,H2-G,LOHC-L,True,False,True,False,TRNSP-SP,False,Fals
 LOHC-S,LOHC ship (own fuel consumption),LOHC-L,LOHC-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,True,False
 LOHC-SB,LOHC ship (bunker fuel consumption),LOHC-L,LOHC-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,True,False
 NG-DRI-C#B,NG-based iron reduction with CCS (blue),B-DRI-S,NG-G,True,False,False,False,DERIV,False,True,Derivative production,CH4-G/EL/IOP-S,False,True
-NG-PROD#B,production of natural gas (blue),NG-G,,False,False,False,False,NG,False,False,Natural gas production,DIESEL-L/EL,False,True
+NG-PROD#B,production of natural gas (blue),NG-G,,False,False,False,False,NG,False,False,Natural gas production,DIESEL-L,False,True
 NH3-REC,Ammonia reconversion,H2-G,NH3-L,True,False,True,False,TRNSP-SP,False,False,Transportation (Ship),EL,True,False
 NH3-REC#B,Ammonia reconversion (blue),H2-G,NH3-L,True,False,True,False,TRNSP-SP,False,False,Transportation (Ship),EL,False,True
 NH3-S,Ammonia ship (own fuel consumption),NH3-L,NH3-L,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),,True,False
