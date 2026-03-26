@@ -23,8 +23,8 @@ def _sum_dict(x: dict | None, y: dict | None) -> dict:
     return {k: _sum_float(x.get(k), y.get(k)) for k in (set(x) | set(y))}
 
 
-def get_secproc_step(process_code: str, is_import: bool) -> str:
-    prefix = "SECONDARY-IMPORT:" if is_import else "SECONDARY:"
+def get_secproc_step(process_code: str) -> str:
+    prefix = "SECONDARY:"
     proc_cls = DataHandler.get_dimension("process").loc[
         process_code, "result_process_type"
     ]
@@ -77,7 +77,6 @@ class PtxCalcResult:
     df_results_emissions_m_g_co2e: Optional[pd.DataFrame]
     results_flows_chain: Optional[list]
     results_flows_secondary: Optional[list]
-    results_flows_secondary_import: Optional[list]
 
 
 def calculate_emissions(
@@ -358,7 +357,7 @@ class PtxCalc:
 
         results_flows_chain: list[ResultsFlows] = []
         results_flows_secondary: list[ResultsFlows] = []
-        results_flows_secondary_i: list[ResultsFlows] = []
+
         last_emissions = {}
 
         # iterate over steps in chain
@@ -480,9 +479,7 @@ class PtxCalc:
                 flow_value = results_flows.flows[flow_code]
 
                 if is_import:
-                    sec_process_data = data.get("secondary_process_i", {}).get(
-                        flow_code
-                    )
+                    sec_process_data = {}
                 else:
                     sec_process_data = data.get("secondary_process", {}).get(flow_code)
 
@@ -536,9 +533,7 @@ class PtxCalc:
                         flows={},
                     )
 
-                    if is_import:
-                        results_flows_secondary_i.append(results_flows_sec)
-                    else:
+                    if not is_import:
                         results_flows_secondary.append(results_flows_sec)
 
                     for sec_flow_code, sec_conv in sec_process_data["CONV"].items():
@@ -589,7 +584,7 @@ class PtxCalc:
                     sec_emissions = calculate_emissions(
                         results_flows=results_flows_sec,
                         step_data=sec_process_data
-                        | {"step": get_secproc_step(sec_process_code, is_import)},
+                        | {"step": get_secproc_step(sec_process_code)},
                         main_flow_code_in=None,
                         main_flow_code_out=flow_code,
                         last_emissions=None,
@@ -721,8 +716,6 @@ class PtxCalc:
             _rescale_result_flows(results_flows, norm_factor)
         for results_flows in results_flows_secondary:
             _rescale_result_flows(results_flows, norm_factor)
-        for results_flows in results_flows_secondary_i:
-            _rescale_result_flows(results_flows, norm_factor)
 
         # rescale again ONLY RES to account for additionally needed electricity
         # sum_el is larger than 1.0
@@ -772,20 +765,12 @@ class PtxCalc:
             asdict(rf) for rf in results_flows_secondary
         ]  # type:ignore
 
-        results_flows_secondary_i = list(
-            _aggregate_result_flows(results_flows_secondary_i).values()
-        )
-        results_flows_secondary_i = [
-            asdict(rf) for rf in results_flows_secondary_i
-        ]  # type:ignore
-
         return PtxCalcResult(
             df_results_cost=df_results_cost,
             df_results_emissions_e_g_co2e=df_results_emissions_e_g_co2e,
             df_results_emissions_m_g_co2e=df_results_emissions_m_g_co2e,
             results_flows_chain=results_flows_chain,
             results_flows_secondary=results_flows_secondary,
-            results_flows_secondary_import=results_flows_secondary_i,
         )
 
 

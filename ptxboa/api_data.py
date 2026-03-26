@@ -1197,18 +1197,6 @@ class DataHandler:
 
             has_ccs = has_ccs or ("CO2CPT-R" in pp and "CO2CPT-S" in pp)
 
-        _secondary_process_i, used_flows_secondary_i, provided_flows_secondary_i = (
-            _get_secproc_data(
-                secondary_processes=secondary_processes,
-                pg=pg_import,
-                has_ccs=has_ccs,
-                used_flows_main_export=used_flows_main_import,
-            )
-        )
-        # only add if not empty, because new in blue tool
-        if _secondary_process_i:
-            result["secondary_process_i"] = _secondary_process_i  # noqa
-
         # If RES=Hybrid: we also need PV and Wind-On
         if process_code_res == "RES-HYBR":
             pc: ProcessCodeType
@@ -1227,8 +1215,7 @@ class DataHandler:
             | used_flows_always_for_opt
             | used_flows_secondary
             | used_flows_transport
-            | (used_flows_main_import - provided_flows_secondary_i)
-            | used_flows_secondary_i
+            | (used_flows_main_import)
         )
         # FIXME: used_flows_main_import may need to come from different country!!
         result["parameter"]["SPECCOST"] = pg.get_flow_params("SPECCOST", used_flows)

@@ -510,8 +510,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 "ship_own_fuel": False,
                 "secproc_co2": "Direct Air Capture (blue)",
                 "secproc_water": "Sea Water desalination",
-                "secproc_el": "Combined Cycle Gas Turbine with CCS (blue)",
-                "secproc_heat": "Large scale Heatpump (blue)",
             },
             {
                 "context": {"source_region_code": "QAT", "target_country_code": "DEU"},
@@ -569,6 +567,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "SPECCOST": {
                         "CO2-G": 0.044519,
                         "DIESEL-L": 0.042857,
+                        "EL": 0.08078,
                         "H2O-L": 0.001374,
                         "HEAT": 0.0577,
                         "IOP-S": 0.267076,
@@ -581,6 +580,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "SPECCOST": {
                         "CO2-G": 0.044519,
                         "DIESEL-L": 0.042857,
+                        "EL": 0.1,
                         "H2O-L": 0.001374,
                         "HEAT": 0.04,
                         "IOP-S": 0.267076,
@@ -612,21 +612,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "OPEX-F": 63.758895,
                         "process_code": "CCGT-CC#B",
                     },
-                },
-                "secondary_process_i": {
-                    "EL": {
-                        "CAPEX": 2408.190709,
-                        "CH4SHARE": {"NG-G": 0.920806},
-                        "CO2CPT-R": {"NG-G": 0.897778},
-                        "CO2CPT-S": {"NG-G": 1.0},
-                        "EFF": 0.504911,
-                        "EF_E": {"EL": 100.0, "NG-G": 201.0},
-                        "EF_M": {"EL": 100.0, "NG-G": 201.0},
-                        "FLH": 7000,
-                        "LIFETIME": 30.0,
-                        "OPEX-F": 63.758895,
-                        "process_code": "CCGT-CC#B",
-                    }
                 },
                 "transport_process_chain": [
                     {
@@ -725,12 +710,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "process_code": "CO2-T+S#B",
                     "process_step": "SECONDARY:CO2 transport and storage",
                 },
-                {
-                    "main_input": 0.651,
-                    "main_output": 0.651,
-                    "process_code": "CCGT-CC#B",
-                    "process_step": "SECONDARY-IMPORT:Electricity generation",
-                },
             ],
             [
                 {
@@ -777,11 +756,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "values": 0.014709,
                 },
                 {
-                    "process_subtype": "CCGT-CC#B (import)",
-                    "process_type": "Electricity generation",
-                    "values": 0.019245,
-                },
-                {
                     "process_subtype": "CO2-T+S#B",
                     "process_type": "CO2 transport and storage",
                     "values": 0.007255,
@@ -794,7 +768,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 {
                     "process_subtype": "EAF#B",
                     "process_type": "Derivative production",
-                    "values": 0.192855,
+                    "values": 0.257955,
                 },
                 {
                     "process_subtype": "NG-DRI-C#B",
@@ -822,8 +796,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 "ship_own_fuel": False,
                 "secproc_co2": "Direct Air Capture (blue)",
                 "secproc_water": "Sea Water desalination",
-                "secproc_el": "Combined Cycle Gas Turbine with CCS (blue)",
-                "secproc_heat": "Large scale Heatpump (blue)",
             },
             {
                 "context": {"source_region_code": "DZA", "target_country_code": "DEU"},
@@ -902,30 +874,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "NG-G": 0.030565,
                     },
                     "WACC": 0.0423,
-                },
-                "secondary_process_i": {
-                    "CO2-C": {
-                        "EFF": 0.95,
-                        "EF_E": {"CO2-C": 1.0, "EL": 100.0},
-                        "EF_M": {"CO2-C": 1.0, "EL": 100.0},
-                        "FLH": 7000,
-                        "LIFETIME": 20,
-                        "OPEX-O": 0.14792,
-                        "process_code": "CO2-T+S#B",
-                    },
-                    "EL": {
-                        "CAPEX": 2408.190709,
-                        "CH4SHARE": {"NG-G": 0.920806},
-                        "CO2CPT-R": {"NG-G": 0.897778},
-                        "CO2CPT-S": {"NG-G": 1.0},
-                        "EFF": 0.504911,
-                        "EF_E": {"EL": 100.0, "NG-G": 201.0},
-                        "EF_M": {"EL": 100.0, "NG-G": 201.0},
-                        "FLH": 7000,
-                        "LIFETIME": 30.0,
-                        "OPEX-F": 63.758895,
-                        "process_code": "CCGT-CC#B",
-                    },
                 },
                 "transport_process_chain": [
                     {
@@ -1083,18 +1031,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "process_code": "EAF#B",
                     "process_step": "DERIV_I2",
                 },
-                {
-                    "main_input": 1.12309,
-                    "main_output": 1.12309,
-                    "process_code": "CCGT-CC#B",
-                    "process_step": "SECONDARY-IMPORT:Electricity generation",
-                },
-                {
-                    "main_input": 0.239851,
-                    "main_output": 0.239851,
-                    "process_code": "CO2-T+S#B",
-                    "process_step": "SECONDARY-IMPORT:CO2 transport and storage",
-                },
             ],
             [
                 {
@@ -1166,11 +1102,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
             ],
             [
                 {
-                    "process_subtype": "CCGT-CC#B (import)",
-                    "process_type": "Electricity generation",
-                    "values": 0.033202,
-                },
-                {
                     "process_subtype": "CH4-LIQ#B",
                     "process_type": "Transportation (Ship)",
                     "values": 0.029522,
@@ -1181,19 +1112,14 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "values": 0.000114,
                 },
                 {
-                    "process_subtype": "CO2-T+S#B (import)",
-                    "process_type": "CO2 transport and storage",
-                    "values": 0.035479,
-                },
-                {
                     "process_subtype": "EAF#B",
                     "process_type": "Derivative production",
-                    "values": 0.192855,
+                    "values": 0.257955,
                 },
                 {
                     "process_subtype": "NG-DRI-C#B",
                     "process_type": "Derivative production",
-                    "values": 0.363232,
+                    "values": 0.410441,
                 },
                 {
                     "process_subtype": "NG-PROD#B",

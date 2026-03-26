@@ -62,11 +62,6 @@ STEPS = [
     "SECONDARY:Electricity generation",
     "SECONDARY:Heat",
     "SECONDARY:Water",
-    "SECONDARY-IMPORT:Carbon",
-    "SECONDARY-IMPORT:CO2 transport and storage",
-    "SECONDARY-IMPORT:Electricity generation",
-    "SECONDARY-IMPORT:Heat",
-    "SECONDARY-IMPORT:Water",
 ]
 
 rows = [
@@ -77,8 +72,6 @@ rows = [
     "0:settings:region",
     "0:settings:scenario",
     "0:settings:secproc_co2",
-    "0:settings:secproc_el",
-    "0:settings:secproc_heat",
     "0:settings:secproc_water",
     "0:settings:transport",
     "0:process:main_flow_code_in",
@@ -227,8 +220,6 @@ def main(xlsx_filepath: str):
             "transport": "Ship",
             "secproc_co2": sec_proc["Carbon"]["process_name"],
             "secproc_water": sec_proc["Water"]["process_name"],
-            "secproc_el": sec_proc["Electricity generation"]["process_name"],
-            "secproc_heat": sec_proc["Heat"]["process_name"],
         }
 
         res = api.calculate(
@@ -256,22 +247,15 @@ def main(xlsx_filepath: str):
         secondary_process_steps = list(
             res.todo_data["secondary_process"].values()  # type:ignore
         )
-        secondary_process_i_steps = list(
-            res.todo_data.get("secondary_process_i", {}).values()  # type:ignore
-        )
+
         for s in secondary_process_steps:
-            s["step"] = get_secproc_step(
-                process_code=s["process_code"], is_import=False
-            )
-        for s in secondary_process_i_steps:
-            s["step"] = get_secproc_step(process_code=s["process_code"], is_import=True)
+            s["step"] = get_secproc_step(process_code=s["process_code"])
 
         data_steps = list_to_dict_by_step(
             res.todo_data["main_export_process_chain"]  # type:ignore
             + res.todo_data["transport_process_chain"]  # type:ignore
             + res.todo_data["main_import_process_chain"]  # type:ignore
             + secondary_process_steps
-            + secondary_process_i_steps
         )
 
         results_flows_steps = list_to_dict_by_step(
