@@ -464,7 +464,7 @@ class _ParameterGetter:
         loss_t = self.get_parameter_value_w_default(
             "LOSS-T", process_code=process_code, default=0
         )
-        result["DIST"] = dist_transport  # TODO: `DIST` not oficcial parameter
+        result["DIST"] = dist_transport  # TODO: `DIST` not official parameter
         result["EFF"] = 1 - loss_t * dist_transport
         result["OPEX-T"] = self.get_parameter_value_w_default(
             "OPEX-T", process_code=process_code, default=0

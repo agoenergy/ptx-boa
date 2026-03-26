@@ -782,11 +782,31 @@ def get_data_type_from_input_data(
             processes["process_name"].str.contains("storage"), "process_name"
         ].to_list()
 
-    if data_type == "Natural gas price":
+    if data_type == "Natural gas production costs":
         source_region_code = None
-        parameter_code = ["OPEX (other variable)"]
+        parameter_code = [
+            "OPEX (other variable)",
+        ]
         process_code = ["production of natural gas (blue)"]
         flow_code = [""]
+        index = "source_region_code"
+        columns = "parameter_code"
+
+    if data_type == "Natural gas production losses":
+        source_region_code = None
+        parameter_code = [
+            "losses (own fuel)",
+        ]
+        process_code = ["production of natural gas (blue)"]
+        flow_code = ["natural gas (gasous)"]
+        index = "source_region_code"
+        columns = "parameter_code"
+
+    if data_type == "Natural gas price":
+        source_region_code = None
+        parameter_code = ["specific costs"]
+        process_code = None
+        flow_code = ["natural gas (gasous)"]
         index = "source_region_code"
         columns = "parameter_code"
 
