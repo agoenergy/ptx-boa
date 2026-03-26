@@ -279,8 +279,6 @@ pypsa network object that contains the solved model.
 }
 ```
 
-- TODO: model components
-
 #### Example flowchart
 
 This flowchart shows an example model as being created by the `optimize`

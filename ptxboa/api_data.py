@@ -58,7 +58,7 @@ def _get_secproc_data(
 
         pp = pg.get_process_params(process_code)
         pp["process_code"] = process_code
-        # FIXME: we now also need secondary processes for import regions
+
         result[flow_code] = pp
         used_flows_secondary = used_flows_secondary | set(pp["CONV"])
         provided_flows_secondary.add(flow_code)
@@ -438,7 +438,6 @@ class _ParameterGetter:
             result["LOSS_FLOW"] = flow_loss_params
 
         # additional parameters for co2
-        # TODO: country dependent?
 
         for param in ["CH4SHARE", "EF_M", "EF_E"]:
             value = self.get_flow_co2_params(
@@ -461,7 +460,7 @@ class _ParameterGetter:
         self, process_code: ProcessCodeType, dist_transport: float
     ) -> dict:
         result = {}
-        # TODO: also save in results
+
         loss_t = self.get_parameter_value_w_default(
             "LOSS-T", process_code=process_code, default=0
         )
@@ -814,8 +813,6 @@ class DataHandler:
         ValueError
             if no value is found for a parameter combination and no default is given.
         """
-        # FIXME: replace with a cleaner, faster,class based lookup per parameter
-
         # convert missing codes tom empty strings
         # for data matching
         params = {
@@ -1107,7 +1104,6 @@ class DataHandler:
         )
 
         # get transport distances and options
-        # TODO? add these also to data
         dist_pipeline = pg.get_parameter_value_w_default("DST-S-DP", default=0)
         seashare_pipeline = pg.get_parameter_value_w_default("SEASHARE", default=0)
         existing_pipeline_cap = pg.get_parameter_value_w_default("CAP-T", default=0)

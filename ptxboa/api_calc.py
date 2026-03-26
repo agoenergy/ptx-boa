@@ -79,47 +79,12 @@ def calculate_emissions(
 ) -> dict:
     # TODO: speed up by not having to load process object every time?
 
-    # flows_in:
-    # CH3OH-L
-    # CHX-L
-    # DRI-S
-    # H2-G
-    # H2-L
-    # NG-G
-    # NG-L
-    # NH3-L
-
-    # flows_out: flows_in  and STL-S # noqa
-
-    # flows_sec:
-
-    # CH4-G
-    # CO2-G
-    # DIESEL-L
-    # EL: indirect # noqa
-    # HEAT: indirect # noqa
-    # IOP-S
-    # NG-G
-
-    # EFF*:
-    # BFUEL-L (unused?)
-    # CH3OH-L (unused?)
-    # CH4-G
-    # CH4-L
-    # CO2-C
-    # CO2-G
-    # DIESEL-L
-    # EL
-    # HEAT
-    # NG-G
-    # NG-L
-
     ch4_to_co2eq = 29.8
     g_co2_per_kg_C = 3664.446295
     g_ch4_per_kwh_lhv = 68.75469807
 
-    FLOW_CO2_INDIRECT = {"HEAT", "EL"}  # TODO: from database?
-    FLOW_CO2_ONLY_WHEN_EFF_TODO = {"NG-G", "CH4-G"}  # TODO: any others?
+    FLOW_CO2_INDIRECT = {"HEAT", "EL"}
+    FLOW_CO2_ONLY_WHEN_EFF_TODO = {"NG-G", "CH4-G"}
     FLOW_CO2_OTHER = {"STL-S"}
     is_transformation_changing_cbound = step_data["step"] in {
         "NG_PROD",
@@ -151,14 +116,7 @@ def calculate_emissions(
     CH4_KWH_PER_OUTPUT = step_data.get("CH4SHARE", {})  # only NG-G ?
 
     CBOUND_KG_C_PER_OUTPUT = step_data.get("CBOUND", {})  # in kgC/output
-    # CH3OHSYC#B    CH3OH-L NG-G
-    # CH3OHSYN#B    CH3OH-L CO2-G
-    # EAF#B         STL-S   B-DRI-S
-    # EFUELSYN#B    CHX-L   CO2-G
-    # EFUELSYNC#B   CHX-L   NG-G
-    # NG-DRI-C#B    DRI-S   CH4-G
-    # NG-DRI-C#B    DRI-S   NG-G
-    # NG-PROD#B     NG-G    NG-G
+
     if (
         main_flow_code_out in CBOUND_KG_C_PER_OUTPUT
         and main_flow_code_out not in results_flows.flows
@@ -194,31 +152,6 @@ def calculate_emissions(
             "DIRECT": {k: v for k, v in _EF_E.items() if k not in FLOW_CO2_INDIRECT},
         },
     }
-
-    # EF_E:
-    # CH3OH-L
-    # CH4-G
-    # CH4-L
-    # CO2-C
-    # CO2-G
-    # DIESEL-L
-    # EL
-    # HEAT
-    # NG-G
-    # NG-L
-
-    # EF_M
-    # BFUEL-L
-    # CH3OH-L
-    # CH4-G
-    # CH4-L
-    # CO2-C
-    # CO2-G
-    # DIESEL-L
-    # EL
-    # HEAT
-    # NG-G
-    # NG-L
 
     results_flows.main_input = results_flows.main_input
 
@@ -289,7 +222,6 @@ def calculate_emissions(
                     cbound_kg_c_per_output += cbound
 
         if is_transformation_changing_cbound:
-            # FIXME: this is not correct in excel (J57)
             co2_g_bound_in_product_out = (  # row 49/57
                 results_flows.main_output * g_co2_per_kg_C * cbound_kg_c_per_output
             )
@@ -759,7 +691,7 @@ class PtxCalc:
         # rescale again ONLY RES to account for additionally needed electricity
         # sum_el is larger than 1.0
 
-        # TODO: for blue hydrogen chains, there is no RES
+        # NOTE: for blue hydrogen chains, there is no RES
 
         if first_step_is_res and sum_el_export > 1:
             norm_factor_el = sum_el_export
@@ -794,7 +726,7 @@ class PtxCalc:
             ]:
                 _rescale_result_flows(results_flows, norm_factor_ng)
 
-        # TODO: currently for testing, we return dicts, not ResultsFlows
+        # currently for testing, we return dicts, not ResultsFlows
         results_flows_chain = [asdict(rf) for rf in results_flows_chain]  # type:ignore
 
         results_flows_secondary = list(

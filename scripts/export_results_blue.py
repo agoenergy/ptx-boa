@@ -5,7 +5,6 @@
 - save in excel: one sheet per result, one column per process
 
 
-FIXME: output detailed costs
 
 """
 
@@ -249,8 +248,6 @@ def main(xlsx_filepath: str):
             output_unit=output_unit,
             optimize_flh=False,
         )
-
-        # TODO: res.todo_data["secondary_process"]
 
         data_general = (
             dict(flatten_dict(settings, "0:settings"))
