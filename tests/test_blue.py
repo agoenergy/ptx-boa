@@ -519,7 +519,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     {
                         "CBOUND": {"NG-G": 0.054851},
                         "CH4SHARE": {"NG-G": 0.909},
-                        "CONV": {"DIESEL-L": 0.000595, "EL": 0.001153},
+                        "CONV": {"DIESEL-L": 0.000595},
                         "EFF": 0.98271,
                         "EF_E": {"DIESEL-L": 266.76, "NG-G": 201.0},
                         "EF_M": {"DIESEL-L": 266.76, "NG-G": 201.0},
@@ -585,6 +585,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "HEAT": 0.04,
                         "IOP-S": 0.267076,
                         "N2-G": 0.01154,
+                        "NG-G": 0.030565,
                     },
                     "WACC": 0.0423,
                 },
@@ -595,6 +596,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "EF_M": {"CO2-C": 1.0},
                         "FLH": 7000,
                         "LIFETIME": 20,
+                        "OPEX-O": 0.030247,
                         "process_code": "CO2-T+S#B",
                     },
                     "EL": {
@@ -651,7 +653,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "co2e_total_direct_e": 29.645847,
                         "co2e_total_direct_m": 29.645847,
                     },
-                    "flows": {"DIESEL-L": 0.001752, "EL": 0.003397},
+                    "flows": {"DIESEL-L": 0.001752},
                     "main_input": 2.998237,
                     "main_output": 2.946397,
                     "process_code": "NG-PROD#B",
@@ -712,8 +714,8 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "process_step": "DERIV_I2",
                 },
                 {
-                    "main_input": 0.475487,
-                    "main_output": 0.475487,
+                    "main_input": 0.47209,
+                    "main_output": 0.47209,
                     "process_code": "CCGT-CC#B",
                     "process_step": "SECONDARY:Electricity generation",
                 },
@@ -772,12 +774,17 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 {
                     "process_subtype": "CCGT-CC#B",
                     "process_type": "Electricity generation",
-                    "values": 0.014815,
+                    "values": 0.014709,
                 },
                 {
                     "process_subtype": "CCGT-CC#B (import)",
                     "process_type": "Electricity generation",
                     "values": 0.019245,
+                },
+                {
+                    "process_subtype": "CO2-T+S#B",
+                    "process_type": "CO2 transport and storage",
+                    "values": 0.007255,
                 },
                 {
                     "process_subtype": "DRI-SB#B",
@@ -787,7 +794,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 {
                     "process_subtype": "EAF#B",
                     "process_type": "Derivative production",
-                    "values": 0.183685,
+                    "values": 0.192855,
                 },
                 {
                     "process_subtype": "NG-DRI-C#B",
@@ -824,7 +831,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     {
                         "CBOUND": {"NG-G": 0.054851},
                         "CH4SHARE": {"NG-G": 0.899533},
-                        "CONV": {"DIESEL-L": 0.000602, "EL": 0.000307},
+                        "CONV": {"DIESEL-L": 0.000602},
                         "EFF": 0.903626,
                         "EF_E": {"DIESEL-L": 266.76, "NG-G": 201.0},
                         "EF_M": {"DIESEL-L": 266.76, "NG-G": 201.0},
@@ -892,23 +899,9 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "HEAT": 0.04,
                         "IOP-S": 0.267076,
                         "N2-G": 0.01154,
+                        "NG-G": 0.030565,
                     },
                     "WACC": 0.0423,
-                },
-                "secondary_process": {
-                    "EL": {
-                        "CAPEX": 2408.190709,
-                        "CH4SHARE": {"NG-G": 0.899533},
-                        "CO2CPT-R": {"NG-G": 0.897778},
-                        "CO2CPT-S": {"NG-G": 1.0},
-                        "EFF": 0.504911,
-                        "EF_E": {"NG-G": 201.0},
-                        "EF_M": {"NG-G": 201.0},
-                        "FLH": 7000,
-                        "LIFETIME": 30.0,
-                        "OPEX-F": 63.758895,
-                        "process_code": "CCGT-CC#B",
-                    }
                 },
                 "secondary_process_i": {
                     "CO2-C": {
@@ -917,6 +910,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "EF_M": {"CO2-C": 1.0, "EL": 100.0},
                         "FLH": 7000,
                         "LIFETIME": 20,
+                        "OPEX-O": 0.14792,
                         "process_code": "CO2-T+S#B",
                     },
                     "EL": {
@@ -984,7 +978,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "co2e_total_direct_e": 159.887306,
                         "co2e_total_direct_m": 159.887306,
                     },
-                    "flows": {"DIESEL-L": 0.002071, "EL": 0.001055},
+                    "flows": {"DIESEL-L": 0.002071},
                     "main_input": 3.804315,
                     "main_output": 3.437678,
                     "process_code": "NG-PROD#B",
@@ -1090,12 +1084,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "process_step": "DERIV_I2",
                 },
                 {
-                    "main_input": 0.010547,
-                    "main_output": 0.010547,
-                    "process_code": "CCGT-CC#B",
-                    "process_step": "SECONDARY:Electricity generation",
-                },
-                {
                     "main_input": 1.12309,
                     "main_output": 1.12309,
                     "process_code": "CCGT-CC#B",
@@ -1178,11 +1166,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
             ],
             [
                 {
-                    "process_subtype": "CCGT-CC#B",
-                    "process_type": "Electricity generation",
-                    "values": 0.000633,
-                },
-                {
                     "process_subtype": "CCGT-CC#B (import)",
                     "process_type": "Electricity generation",
                     "values": 0.033202,
@@ -1190,17 +1173,22 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 {
                     "process_subtype": "CH4-LIQ#B",
                     "process_type": "Transportation (Ship)",
-                    "values": 0.028869,
+                    "values": 0.029522,
                 },
                 {
-                    "process_subtype": "CH4-SB#B",
+                    "process_subtype": "CH4-RGAS#B",
                     "process_type": "Transportation (Ship)",
-                    "values": 0.002377,
+                    "values": 0.000114,
+                },
+                {
+                    "process_subtype": "CO2-T+S#B (import)",
+                    "process_type": "CO2 transport and storage",
+                    "values": 0.035479,
                 },
                 {
                     "process_subtype": "EAF#B",
                     "process_type": "Derivative production",
-                    "values": 0.183685,
+                    "values": 0.192855,
                 },
                 {
                     "process_subtype": "NG-DRI-C#B",
