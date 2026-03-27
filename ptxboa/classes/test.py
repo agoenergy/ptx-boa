@@ -8,7 +8,8 @@ from ptxboa.classes._generated import (
     PtxboaProcessTypes,
     PtxboaRegions,
 )
-from ptxboa.classes.base import PtxboaProcessTreeType, PtxboaRoute
+from ptxboa.classes.base import PtxboaRoute
+from ptxboa.classes.extra import PtxboaProcessTreeType
 
 
 def get_data(**_kwargs):
@@ -44,6 +45,7 @@ tree_type = PtxboaProcessTreeType(
         PtxboaProcessTypes.NG_PROD_B,
         PtxboaProcessTypes.ATR_91_B,
     ),
+    secondary_flows=(),
 )
 print(tree_type)
 

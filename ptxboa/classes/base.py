@@ -1,9 +1,10 @@
 """Base classes and class factories."""
 
 from dataclasses import dataclass, field
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 
-import ptxboa.classes._generated
+if TYPE_CHECKING:
+    from ptxboa.classes.extra import PtxboaProcessType
 
 
 @dataclass(frozen=True, slots=True)
@@ -100,117 +101,6 @@ class PtxboaProcess(PtxboaInstanceBase):
 
 
 @dataclass(frozen=True, slots=True)
-class PtxboaProcessType(PtxboaTypeBase):
-    """Process type variable."""
-
-    main_flow_type_out: "PtxboaFlowType"
-    main_flow_type_in: "PtxboaFlowType"
-
-    def create(self, get_data: Callable, main_flow_out: "PtxboaFlow") -> PtxboaProcess:
-        """Create instance."""
-        # get parameters data
-        eff = ptxboa.classes._generated.PtxboaParameterTypes.EFF.create(
-            get_data=get_data
-        )
-
-        return PtxboaProcess(dtype=self, eff=eff, main_flow_out=main_flow_out)
-
-
-@dataclass(frozen=True, slots=True)
-class PtxboaProcessTree(PtxboaProcess):
-    """Parameter instance variable."""
-
-    dtype: "PtxboaProcessType"
-    eff: PtxboaParameter = field(init=False)
-    main_flow_out: "PtxboaFlow" = field(init=False)
-    main_flow_in: "PtxboaFlow" = field(init=False)
-
-    _processes: tuple[PtxboaProcess, ...]
-
-    def __post_init__(self):
-
-        # TODO: this might not work if its an actual graph
-        first_process = self._processes[0]  # noqa
-        last_process = self._processes[-1]  # noqa
-
-        object.__setattr__(
-            self,
-            "main_flow_in",
-            first_process.main_flow_in,
-        )
-        object.__setattr__(
-            self,
-            "main_flow_out",
-            last_process.main_flow_out,
-        )
-        object.__setattr__(
-            self,
-            "eff",
-            PtxboaParameter(
-                dtype=ptxboa.classes._generated.PtxboaParameterTypes.EFF,
-                value=last_process.main_flow_out.value
-                / first_process.main_flow_in.value,
-            ),
-        )
-
-    def __str__(self) -> str:
-        return f"{self.code}({', '.join(str(x) for x in self._processes)})"
-
-
-@dataclass(frozen=True, slots=True)
-class PtxboaProcessTreeType(PtxboaProcessType):
-    """Process type variable."""
-
-    main_flow_type_out: "PtxboaFlowType" = field(init=False)
-    main_flow_type_in: "PtxboaFlowType" = field(init=False)
-
-    process_types: tuple[PtxboaProcessType, ...]
-
-    def __post_init__(self):
-        if not self.process_types:
-            raise Exception("No processes.")
-
-        # TODO: this might not work if its an actual graph
-        first_process_type = self.process_types[0]
-        last_process_type = self.process_types[-1]
-
-        object.__setattr__(
-            self, "main_flow_type_in", first_process_type.main_flow_type_in
-        )
-        object.__setattr__(
-            self, "main_flow_type_out", last_process_type.main_flow_type_out
-        )
-
-    def __str__(self):
-        return f"{self.code}({', '.join(str(x) for x in self.process_types)})"
-
-    def create(
-        self, get_data: Callable, main_flow_out: "PtxboaFlow"
-    ) -> PtxboaProcessTree:
-        """Create instance."""
-        # IMPORTANT: initialize backwards
-
-        current_main_out: PtxboaFlow = main_flow_out
-        processes = []
-        for process_type in reversed(self.process_types):
-            process = process_type.create(
-                get_data=get_data, main_flow_out=current_main_out
-            )
-            processes.append(process)
-            current_main_out = process.main_flow_in
-
-        return PtxboaProcessTree(
-            dtype=self,
-            _processes=tuple(reversed(processes)),
-        )
-
-
-@dataclass(frozen=True, slots=True)
-class PtxboaSecondaryProcessType(PtxboaProcessType):
-    """Process type variable."""
-
-
-@dataclass(frozen=True, slots=True)
 class PtxboaFlow(PtxboaValue):
     """Flow instance variable."""
 
@@ -249,3 +139,82 @@ class PtxboaRoute(PtxboaBase):
 
     def __str__(self) -> str:
         return f"Route({self.code})"
+
+
+@dataclass(frozen=True, slots=True)
+class PtxboaChainTemplate(PtxboaBase):
+    can_pipeline: bool
+    flow_type_out: PtxboaFlowType
+
+    # TODO: should be frozen (dict are sorted since 3.7)
+    steps: dict["PtxboaStep", "PtxboaProcessType"]
+
+
+@dataclass(frozen=True, slots=True)
+class PtxboaChainGreenTemplate(PtxboaChainTemplate):
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class PtxboaChainBlueTemplate(PtxboaChainTemplate):
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class PtxboaStep(PtxboaBase):
+    pass
+
+
+class PtxboaEnum:
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls._by_code: dict[str, PtxboaBase] = {}
+        cls._by_name: dict[str, PtxboaBase] = {}
+        cls._in_order: list[PtxboaBase] = []
+        for item in cls.__dict__.values():
+            if not isinstance(item, PtxboaBase):
+                continue
+
+            cls._in_order.append(item)
+            if item.code in cls._by_code:
+                raise KeyError(item.code)
+            cls._by_code[item.code] = item
+            if item.name in cls._by_name:
+                raise KeyError(item.code)
+            cls._by_name[item.name] = item
+
+    @classmethod
+    def get_all(cls) -> tuple[PtxboaBase, ...]:
+        """Get all."""
+        return tuple(cls._in_order)
+
+    @classmethod
+    def get_by_code(cls, code: str):
+        """Get by code."""
+        return cls._by_code[code]
+
+    @classmethod
+    def get_by_name(cls, name: str):
+        """Get by name."""
+        return cls._by_name[name]
+
+
+class PtxboaSteps(PtxboaEnum):
+    EL_STR = PtxboaStep(code="EL_STR", name="EL_STR")
+    ELY = PtxboaStep(code="ELY", name="ELY")
+    H2_STR = PtxboaStep(code="H2_STR", name="H2_STR")
+    DERIV = PtxboaStep(code="DERIV", name="DERIV")
+    DERIV2 = PtxboaStep(code="DERIV2", name="DERIV2")
+    PRE_SHP = PtxboaStep(code="PRE_SHP", name="PRE_SHP")
+    PRE_PPL = PtxboaStep(code="PRE_PPL", name="PRE_PPL")
+    POST_SHP = PtxboaStep(code="POST_SHP", name="POST_SHP")
+    POST_PPL = PtxboaStep(code="POST_PPL", name="POST_PPL")
+    SHP = PtxboaStep(code="SHP", name="SHP")
+    SHP_OWN = PtxboaStep(code="SHP_OWN", name="SHP_OWN")
+    PPLS = PtxboaStep(code="PPLS", name="PPLS")
+    PPL = PtxboaStep(code="PPL", name="PPL")
+    PPLX = PtxboaStep(code="PPLX", name="PPLX")
+    PPLR = PtxboaStep(code="PPLR", name="PPLR")
+    ELY_I = PtxboaStep(code="ELY_I", name="ELY_I")
+    DERIV_I = PtxboaStep(code="DERIV_I", name="DERIV_I")
+    DERIV_I2 = PtxboaStep(code="DERIV_I2", name="DERIV_I2")

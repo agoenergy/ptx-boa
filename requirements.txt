@@ -10,3 +10,5 @@ highspy==1.7.1
 # dependencies of pypsa, but newer versions create Error: 'LinearExpression' has no attribute 'fill_value'
 linopy==0.3.14 
 xarray==2024.2.0
+# immutables~=0.21
+networkx~=3.2
