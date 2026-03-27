@@ -583,6 +583,10 @@ def test_parameter_data():
         if not isinstance(secondary_flows, str) or not secondary_flows:
             continue
         for flow_code in secondary_flows.split("/"):
+            # TODO: CO2-C has no CONV, because it comes from captured CO2
+            # so we ignore for now
+            if flow_code == "CO2-C":
+                continue
             expected_conv_proc_flow.add((proc["process_code"], flow_code))
 
     # get in data
@@ -597,6 +601,7 @@ def test_parameter_data():
     # compare
 
     missing_data = expected_conv_proc_flow - data_conv_proc_flow
+
     if missing_data:
         raise Exception("Missing CONV data for: %s", missing_data)
 
