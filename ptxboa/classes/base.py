@@ -85,9 +85,10 @@ class PtxboaAbstractProcess(PtxboaInstanceBase):
 
     dtype: "PtxboaAbstractProcessType"
     main_flow_out: "PtxboaFlow"
+    main_flow_in: "PtxboaFlow" = field(init=False)
+    secondary_flows_in: dict["PtxboaFlowType", "PtxboaFlow"] = field(init=False)
 
     def __post_init__(self):
-
         # check
         if self.dtype.main_flow_type_out != self.main_flow_out.dtype:
             raise TypeError(
@@ -108,13 +109,6 @@ class PtxboaProcess(PtxboaAbstractProcess):
     main_flow_in: "PtxboaFlow" = field(init=False)
 
     def __post_init__(self):
-
-        # check
-        if self.dtype.main_flow_type_out != self.main_flow_out.dtype:
-            raise TypeError(
-                f"{self.dtype.main_flow_type_out} != {self.main_flow_out.dtype}"
-            )
-
         main_flow_in = self.dtype.main_flow_type_in.create(
             self.main_flow_out.value / self.eff.value
         )
@@ -163,24 +157,6 @@ class PtxboaRoute(PtxboaBase):
 
     def __str__(self) -> str:
         return f"Route({self.code})"
-
-
-@dataclass(frozen=True, slots=True)
-class PtxboaChainTemplate(PtxboaBase):
-    flow_type_out: PtxboaFlowType
-
-    # TODO: should be frozen (dict are sorted since 3.7)
-    steps: dict["PtxboaStep", "PtxboaProcessType"]
-
-
-@dataclass(frozen=True, slots=True)
-class PtxboaChainGreenTemplate(PtxboaChainTemplate):
-    pass
-
-
-@dataclass(frozen=True, slots=True)
-class PtxboaChainBlueTemplate(PtxboaChainTemplate):
-    pass
 
 
 @dataclass(frozen=True, slots=True)

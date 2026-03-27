@@ -1,17 +1,20 @@
 """DO NOT EDIT (created by classes/_update.py)."""
 
 from ptxboa.classes.base import (
-    PtxboaChainBlueTemplate,
-    PtxboaChainGreenTemplate,
-    PtxboaChainTemplate,
     PtxboaEnum,
     PtxboaFlowNullType,
     PtxboaFlowType,
     PtxboaParameterType,
     PtxboaRegion,
-    PtxboaSteps,
 )
-from ptxboa.classes.extra import PtxboaProcessType, PtxboaSecondaryProcessType
+from ptxboa.classes.extra import (
+    PtxboaChainBlueTemplate,
+    PtxboaChainGreenTemplate,
+    PtxboaChainTemplate,
+    PtxboaProcessType,
+    PtxboaSecondaryProcessType,
+    PtxboaTransportProcessType,
+)
 
 
 class PtxboaParameterTypes(PtxboaEnum):
@@ -196,27 +199,27 @@ class PtxboaProcessTypes(PtxboaEnum):
         main_flow_type_in=PtxboaFlowTypes.NG_G,
         secondary_flow_types={PtxboaFlowTypes.CO2_C},
     )
-    CH3OH_S = PtxboaProcessType(
+    CH3OH_S = PtxboaTransportProcessType(
         code="CH3OH-S",
         name="Methanol ship (own fuel consumption)",
         main_flow_type_out=PtxboaFlowTypes.CH3OH_L,
         main_flow_type_in=PtxboaFlowTypes.CH3OH_L,
     )
-    CH3OH_S_B = PtxboaProcessType(
+    CH3OH_S_B = PtxboaTransportProcessType(
         code="CH3OH-S#B",
         name="Methanol ship (own fuel consumption) (blue)",
         main_flow_type_out=PtxboaFlowTypes.CH3OH_L,
         main_flow_type_in=PtxboaFlowTypes.CH3OH_L,
         secondary_flow_types={PtxboaFlowTypes.BFUEL_L},
     )
-    CH3OH_SB = PtxboaProcessType(
+    CH3OH_SB = PtxboaTransportProcessType(
         code="CH3OH-SB",
         name="Methanol ship (bunker fuel consumption)",
         main_flow_type_out=PtxboaFlowTypes.CH3OH_L,
         main_flow_type_in=PtxboaFlowTypes.CH3OH_L,
         secondary_flow_types={PtxboaFlowTypes.BFUEL_L},
     )
-    CH3OH_SB_B = PtxboaProcessType(
+    CH3OH_SB_B = PtxboaTransportProcessType(
         code="CH3OH-SB#B",
         name="Methanol ship (bunker fuel consumption) (blue)",
         main_flow_type_out=PtxboaFlowTypes.CH3OH_L,
@@ -228,7 +231,7 @@ class PtxboaProcessTypes(PtxboaEnum):
         name="Methanol Synthesis classic route with CCS (blue)",
         main_flow_type_out=PtxboaFlowTypes.CH3OH_L,
         main_flow_type_in=PtxboaFlowTypes.NG_G,
-        secondary_flow_types={PtxboaFlowTypes.CO2_C, PtxboaFlowTypes.EL},
+        secondary_flow_types={PtxboaFlowTypes.EL, PtxboaFlowTypes.CO2_C},
     )
     CH3OHSYN = PtxboaProcessType(
         code="CH3OHSYN",
@@ -276,50 +279,50 @@ class PtxboaProcessTypes(PtxboaEnum):
         main_flow_type_in=PtxboaFlowTypes.NG_G,
         secondary_flow_types={PtxboaFlowTypes.EL},
     )
-    CH4_P_L = PtxboaProcessType(
+    CH4_P_L = PtxboaTransportProcessType(
         code="CH4-P-L",
         name="Methane land pipeline new",
         main_flow_type_out=PtxboaFlowTypes.CH4_G,
         main_flow_type_in=PtxboaFlowTypes.CH4_G,
     )
-    CH4_P_L_B = PtxboaProcessType(
+    CH4_P_L_B = PtxboaTransportProcessType(
         code="CH4-P-L#B",
         name="Methane land pipeline new (blue)",
         main_flow_type_out=PtxboaFlowTypes.NG_G,
         main_flow_type_in=PtxboaFlowTypes.NG_G,
         secondary_flow_types={PtxboaFlowTypes.NG_G},
     )
-    CH4_P_LR = PtxboaProcessType(
+    CH4_P_LR = PtxboaTransportProcessType(
         code="CH4-P-LR",
         name="Methane land pipeline retrofitted",
         main_flow_type_out=PtxboaFlowTypes.CH4_G,
         main_flow_type_in=PtxboaFlowTypes.CH4_G,
     )
-    CH4_P_LR_B = PtxboaProcessType(
+    CH4_P_LR_B = PtxboaTransportProcessType(
         code="CH4-P-LR#B",
         name="Methane land pipeline retrofitted (blue)",
         main_flow_type_out=PtxboaFlowTypes.NG_G,
         main_flow_type_in=PtxboaFlowTypes.NG_G,
     )
-    CH4_P_S = PtxboaProcessType(
+    CH4_P_S = PtxboaTransportProcessType(
         code="CH4-P-S",
         name="Methane sea pipeline",
         main_flow_type_out=PtxboaFlowTypes.CH4_G,
         main_flow_type_in=PtxboaFlowTypes.CH4_G,
     )
-    CH4_P_S_B = PtxboaProcessType(
+    CH4_P_S_B = PtxboaTransportProcessType(
         code="CH4-P-S#B",
         name="Methane sea pipeline (blue)",
         main_flow_type_out=PtxboaFlowTypes.NG_G,
         main_flow_type_in=PtxboaFlowTypes.NG_G,
     )
-    CH4_P_SR = PtxboaProcessType(
+    CH4_P_SR = PtxboaTransportProcessType(
         code="CH4-P-SR",
         name="Methane sea pipeline retrofitted",
         main_flow_type_out=PtxboaFlowTypes.CH4_G,
         main_flow_type_in=PtxboaFlowTypes.CH4_G,
     )
-    CH4_P_SR_B = PtxboaProcessType(
+    CH4_P_SR_B = PtxboaTransportProcessType(
         code="CH4-P-SR#B",
         name="Methane sea pipeline retrofitted (blue)",
         main_flow_type_out=PtxboaFlowTypes.NG_G,
@@ -337,37 +340,37 @@ class PtxboaProcessTypes(PtxboaEnum):
         main_flow_type_out=PtxboaFlowTypes.NG_G,
         main_flow_type_in=PtxboaFlowTypes.NG_L,
         secondary_flow_types={
-            PtxboaFlowTypes.EL,
             PtxboaFlowTypes.DIESEL_L,
+            PtxboaFlowTypes.EL,
             PtxboaFlowTypes.NG_G,
         },
     )
-    CH4_S = PtxboaProcessType(
+    CH4_S = PtxboaTransportProcessType(
         code="CH4-S",
         name="LNG ship (own fuel consumption)",
         main_flow_type_out=PtxboaFlowTypes.CH4_L,
         main_flow_type_in=PtxboaFlowTypes.CH4_L,
     )
-    CH4_S_B = PtxboaProcessType(
+    CH4_S_B = PtxboaTransportProcessType(
         code="CH4-S#B",
         name="LNG ship (own fuel consumption) (blue)",
         main_flow_type_out=PtxboaFlowTypes.NG_L,
         main_flow_type_in=PtxboaFlowTypes.NG_L,
         secondary_flow_types={PtxboaFlowTypes.NG_L},
     )
-    CH4_SB = PtxboaProcessType(
+    CH4_SB = PtxboaTransportProcessType(
         code="CH4-SB",
         name="LNG ship (bunker fuel consumption)",
         main_flow_type_out=PtxboaFlowTypes.CH4_L,
         main_flow_type_in=PtxboaFlowTypes.CH4_L,
         secondary_flow_types={PtxboaFlowTypes.BFUEL_L},
     )
-    CH4_SB_B = PtxboaProcessType(
+    CH4_SB_B = PtxboaTransportProcessType(
         code="CH4-SB#B",
         name="LNG ship (bunker fuel consumption) (blue)",
         main_flow_type_out=PtxboaFlowTypes.NG_L,
         main_flow_type_in=PtxboaFlowTypes.NG_L,
-        secondary_flow_types={PtxboaFlowTypes.NG_L, PtxboaFlowTypes.BFUEL_L},
+        secondary_flow_types={PtxboaFlowTypes.BFUEL_L, PtxboaFlowTypes.NG_L},
     )
     CH4SYN = PtxboaProcessType(
         code="CH4SYN",
@@ -375,9 +378,9 @@ class PtxboaProcessTypes(PtxboaEnum):
         main_flow_type_out=PtxboaFlowTypes.CH4_G,
         main_flow_type_in=PtxboaFlowTypes.H2_G,
         secondary_flow_types={
+            PtxboaFlowTypes.CO2_G,
             PtxboaFlowTypes.H2O_L,
             PtxboaFlowTypes.HEAT,
-            PtxboaFlowTypes.CO2_G,
         },
     )
     CO2_T_S_B = PtxboaSecondaryProcessType(
@@ -393,9 +396,9 @@ class PtxboaProcessTypes(PtxboaEnum):
         main_flow_type_out=PtxboaFlowTypes.CO2_G,
         main_flow_type_in=PtxboaFlowNullType,
         secondary_flow_types={
-            PtxboaFlowTypes.EL,
-            PtxboaFlowTypes.HEAT,
             PtxboaFlowTypes.H2O_L,
+            PtxboaFlowTypes.HEAT,
+            PtxboaFlowTypes.EL,
         },
     )
     DAC_B = PtxboaSecondaryProcessType(
@@ -426,13 +429,13 @@ class PtxboaProcessTypes(PtxboaEnum):
         main_flow_type_in=PtxboaFlowTypes.H2_G,
         secondary_flow_types={PtxboaFlowTypes.IOP_S, PtxboaFlowTypes.EL},
     )
-    DRI_SB = PtxboaProcessType(
+    DRI_SB = PtxboaTransportProcessType(
         code="DRI-SB",
         name="Green iron ship (bunker fuel consumption)",
         main_flow_type_out=PtxboaFlowTypes.DRI_S,
         main_flow_type_in=PtxboaFlowTypes.DRI_S,
     )
-    DRI_SB_B = PtxboaProcessType(
+    DRI_SB_B = PtxboaTransportProcessType(
         code="DRI-SB#B",
         name="Green iron ship (bunker fuel consumption) (blue)",
         main_flow_type_out=PtxboaFlowTypes.B_DRI_S,
@@ -443,7 +446,7 @@ class PtxboaProcessTypes(PtxboaEnum):
         name="electric arc furnance (blue)",
         main_flow_type_out=PtxboaFlowTypes.STL_S,
         main_flow_type_in=PtxboaFlowTypes.B_DRI_S,
-        secondary_flow_types={PtxboaFlowTypes.EL, PtxboaFlowTypes.NG_G},
+        secondary_flow_types={PtxboaFlowTypes.NG_G, PtxboaFlowTypes.EL},
     )
     EFUELSYN = PtxboaProcessType(
         code="EFUELSYN",
@@ -451,10 +454,10 @@ class PtxboaProcessTypes(PtxboaEnum):
         main_flow_type_out=PtxboaFlowTypes.CHX_L,
         main_flow_type_in=PtxboaFlowTypes.H2_G,
         secondary_flow_types={
-            PtxboaFlowTypes.HEAT,
+            PtxboaFlowTypes.CO2_G,
             PtxboaFlowTypes.EL,
             PtxboaFlowTypes.H2O_L,
-            PtxboaFlowTypes.CO2_G,
+            PtxboaFlowTypes.HEAT,
         },
     )
     EFUELSYN_B = PtxboaProcessType(
@@ -475,7 +478,7 @@ class PtxboaProcessTypes(PtxboaEnum):
         main_flow_type_in=PtxboaFlowTypes.NG_G,
         secondary_flow_types={PtxboaFlowTypes.EL, PtxboaFlowTypes.CO2_C},
     )
-    EL_STR = PtxboaProcessType(
+    EL_STR = PtxboaTransportProcessType(
         code="EL-STR",
         name="electricity storage",
         main_flow_type_out=PtxboaFlowTypes.EL,
@@ -509,49 +512,49 @@ class PtxboaProcessTypes(PtxboaEnum):
         main_flow_type_in=PtxboaFlowTypes.H2_G,
         secondary_flow_types={PtxboaFlowTypes.EL},
     )
-    H2_P_L = PtxboaProcessType(
+    H2_P_L = PtxboaTransportProcessType(
         code="H2-P-L",
         name="Hydrogen land pipeline new",
         main_flow_type_out=PtxboaFlowTypes.H2_G,
         main_flow_type_in=PtxboaFlowTypes.H2_G,
     )
-    H2_P_L_B = PtxboaProcessType(
+    H2_P_L_B = PtxboaTransportProcessType(
         code="H2-P-L#B",
         name="Hydrogen land pipeline new (blue)",
         main_flow_type_out=PtxboaFlowTypes.H2_G,
         main_flow_type_in=PtxboaFlowTypes.H2_G,
     )
-    H2_P_LR = PtxboaProcessType(
+    H2_P_LR = PtxboaTransportProcessType(
         code="H2-P-LR",
         name="Hydrogen land pipeline retrofitted",
         main_flow_type_out=PtxboaFlowTypes.H2_G,
         main_flow_type_in=PtxboaFlowTypes.H2_G,
     )
-    H2_P_LR_B = PtxboaProcessType(
+    H2_P_LR_B = PtxboaTransportProcessType(
         code="H2-P-LR#B",
         name="Hydrogen land pipeline retrofitted (blue)",
         main_flow_type_out=PtxboaFlowTypes.H2_G,
         main_flow_type_in=PtxboaFlowTypes.H2_G,
     )
-    H2_P_S = PtxboaProcessType(
+    H2_P_S = PtxboaTransportProcessType(
         code="H2-P-S",
         name="Hydrogen sea pipeline",
         main_flow_type_out=PtxboaFlowTypes.H2_G,
         main_flow_type_in=PtxboaFlowTypes.H2_G,
     )
-    H2_P_S_B = PtxboaProcessType(
+    H2_P_S_B = PtxboaTransportProcessType(
         code="H2-P-S#B",
         name="Hydrogen sea pipeline (blue)",
         main_flow_type_out=PtxboaFlowTypes.H2_G,
         main_flow_type_in=PtxboaFlowTypes.H2_G,
     )
-    H2_P_SR = PtxboaProcessType(
+    H2_P_SR = PtxboaTransportProcessType(
         code="H2-P-SR",
         name="Hydrogen sea pipeline retrofitted",
         main_flow_type_out=PtxboaFlowTypes.H2_G,
         main_flow_type_in=PtxboaFlowTypes.H2_G,
     )
-    H2_P_SR_B = PtxboaProcessType(
+    H2_P_SR_B = PtxboaTransportProcessType(
         code="H2-P-SR#B",
         name="Hydrogen sea pipeline retrofitted (blue)",
         main_flow_type_out=PtxboaFlowTypes.H2_G,
@@ -569,34 +572,34 @@ class PtxboaProcessTypes(PtxboaEnum):
         main_flow_type_out=PtxboaFlowTypes.H2_G,
         main_flow_type_in=PtxboaFlowTypes.H2_L,
     )
-    H2_S = PtxboaProcessType(
+    H2_S = PtxboaTransportProcessType(
         code="H2-S",
         name="Hydrogen ship (own fuel consumption)",
         main_flow_type_out=PtxboaFlowTypes.H2_L,
         main_flow_type_in=PtxboaFlowTypes.H2_L,
     )
-    H2_S_B = PtxboaProcessType(
+    H2_S_B = PtxboaTransportProcessType(
         code="H2-S#B",
         name="Hydrogen ship (own fuel consumption) (blue)",
         main_flow_type_out=PtxboaFlowTypes.H2_L,
         main_flow_type_in=PtxboaFlowTypes.H2_L,
         secondary_flow_types={PtxboaFlowTypes.H2_L},
     )
-    H2_SB = PtxboaProcessType(
+    H2_SB = PtxboaTransportProcessType(
         code="H2-SB",
         name="Hydrogen ship (bunker fuel consumption)",
         main_flow_type_out=PtxboaFlowTypes.H2_L,
         main_flow_type_in=PtxboaFlowTypes.H2_L,
         secondary_flow_types={PtxboaFlowTypes.BFUEL_L},
     )
-    H2_SB_B = PtxboaProcessType(
+    H2_SB_B = PtxboaTransportProcessType(
         code="H2-SB#B",
         name="Hydrogen ship (bunker fuel consumption) (blue)",
         main_flow_type_out=PtxboaFlowTypes.H2_L,
         main_flow_type_in=PtxboaFlowTypes.H2_L,
         secondary_flow_types={PtxboaFlowTypes.BFUEL_L},
     )
-    H2_STR = PtxboaProcessType(
+    H2_STR = PtxboaTransportProcessType(
         code="H2-STR",
         name="Hydrogen storage",
         main_flow_type_out=PtxboaFlowTypes.H2_G,
@@ -622,13 +625,13 @@ class PtxboaProcessTypes(PtxboaEnum):
         main_flow_type_in=PtxboaFlowTypes.LOHC_L,
         secondary_flow_types={PtxboaFlowTypes.HEAT, PtxboaFlowTypes.EL},
     )
-    LOHC_S = PtxboaProcessType(
+    LOHC_S = PtxboaTransportProcessType(
         code="LOHC-S",
         name="LOHC ship (own fuel consumption)",
         main_flow_type_out=PtxboaFlowTypes.LOHC_L,
         main_flow_type_in=PtxboaFlowTypes.LOHC_L,
     )
-    LOHC_SB = PtxboaProcessType(
+    LOHC_SB = PtxboaTransportProcessType(
         code="LOHC-SB",
         name="LOHC ship (bunker fuel consumption)",
         main_flow_type_out=PtxboaFlowTypes.LOHC_L,
@@ -642,9 +645,9 @@ class PtxboaProcessTypes(PtxboaEnum):
         main_flow_type_in=PtxboaFlowTypes.NG_G,
         secondary_flow_types={
             PtxboaFlowTypes.CO2_C,
+            PtxboaFlowTypes.CH4_G,
             PtxboaFlowTypes.EL,
             PtxboaFlowTypes.IOP_S,
-            PtxboaFlowTypes.CH4_G,
         },
     )
     NG_PROD_B = PtxboaProcessType(
@@ -668,27 +671,27 @@ class PtxboaProcessTypes(PtxboaEnum):
         main_flow_type_in=PtxboaFlowTypes.NH3_L,
         secondary_flow_types={PtxboaFlowTypes.EL},
     )
-    NH3_S = PtxboaProcessType(
+    NH3_S = PtxboaTransportProcessType(
         code="NH3-S",
         name="Ammonia ship (own fuel consumption)",
         main_flow_type_out=PtxboaFlowTypes.NH3_L,
         main_flow_type_in=PtxboaFlowTypes.NH3_L,
     )
-    NH3_S_B = PtxboaProcessType(
+    NH3_S_B = PtxboaTransportProcessType(
         code="NH3-S#B",
         name="Ammonia ship (own fuel consumption) (blue)",
         main_flow_type_out=PtxboaFlowTypes.NH3_L,
         main_flow_type_in=PtxboaFlowTypes.NH3_L,
         secondary_flow_types={PtxboaFlowTypes.NH3_L},
     )
-    NH3_SB = PtxboaProcessType(
+    NH3_SB = PtxboaTransportProcessType(
         code="NH3-SB",
         name="Ammonia ship (bunker fuel consumption)",
         main_flow_type_out=PtxboaFlowTypes.NH3_L,
         main_flow_type_in=PtxboaFlowTypes.NH3_L,
         secondary_flow_types={PtxboaFlowTypes.BFUEL_L},
     )
-    NH3_SB_B = PtxboaProcessType(
+    NH3_SB_B = PtxboaTransportProcessType(
         code="NH3-SB#B",
         name="Ammonia ship (bunker fuel consumption) (blue)",
         main_flow_type_out=PtxboaFlowTypes.NH3_L,
@@ -700,14 +703,14 @@ class PtxboaProcessTypes(PtxboaEnum):
         name="Ammonia Synthesis (Haber-Bosch)",
         main_flow_type_out=PtxboaFlowTypes.NH3_L,
         main_flow_type_in=PtxboaFlowTypes.H2_G,
-        secondary_flow_types={PtxboaFlowTypes.EL, PtxboaFlowTypes.N2_G},
+        secondary_flow_types={PtxboaFlowTypes.N2_G, PtxboaFlowTypes.EL},
     )
     NH3SYN_B = PtxboaProcessType(
         code="NH3SYN#B",
         name="Ammonia Synthesis (Haber-Bosch) (blue)",
         main_flow_type_out=PtxboaFlowTypes.NH3_L,
         main_flow_type_in=PtxboaFlowTypes.H2_G,
-        secondary_flow_types={PtxboaFlowTypes.EL, PtxboaFlowTypes.HEAT},
+        secondary_flow_types={PtxboaFlowTypes.HEAT, PtxboaFlowTypes.EL},
     )
     PEM_EL = PtxboaProcessType(
         code="PEM-EL",
@@ -740,14 +743,14 @@ class PtxboaProcessTypes(PtxboaEnum):
         name="steam methane reformer with 52% carbon capture (blue)",
         main_flow_type_out=PtxboaFlowTypes.H2_G,
         main_flow_type_in=PtxboaFlowTypes.NG_G,
-        secondary_flow_types={PtxboaFlowTypes.EL, PtxboaFlowTypes.CO2_C},
+        secondary_flow_types={PtxboaFlowTypes.CO2_C, PtxboaFlowTypes.EL},
     )
     SMR_52_BF_B = PtxboaProcessType(
         code="SMR_52%_BF#B",
         name="existing steam methane reformer with retrofit 52% carbon capture (blue)",
         main_flow_type_out=PtxboaFlowTypes.H2_G,
         main_flow_type_in=PtxboaFlowTypes.NG_G,
-        secondary_flow_types={PtxboaFlowTypes.EL, PtxboaFlowTypes.CO2_C},
+        secondary_flow_types={PtxboaFlowTypes.CO2_C, PtxboaFlowTypes.EL},
     )
     SOEC_EL = PtxboaProcessType(
         code="SOEC-EL",
@@ -756,27 +759,27 @@ class PtxboaProcessTypes(PtxboaEnum):
         main_flow_type_in=PtxboaFlowTypes.EL,
         secondary_flow_types={PtxboaFlowTypes.H2O_L},
     )
-    SYN_S = PtxboaProcessType(
+    SYN_S = PtxboaTransportProcessType(
         code="SYN-S",
         name="FT e-fuels ship (own fuel consumption)",
         main_flow_type_out=PtxboaFlowTypes.CHX_L,
         main_flow_type_in=PtxboaFlowTypes.CHX_L,
     )
-    SYN_S_B = PtxboaProcessType(
+    SYN_S_B = PtxboaTransportProcessType(
         code="SYN-S#B",
         name="FT e-fuels ship (own fuel consumption) (blue)",
         main_flow_type_out=PtxboaFlowTypes.CHX_L,
         main_flow_type_in=PtxboaFlowTypes.CHX_L,
         secondary_flow_types={PtxboaFlowTypes.BFUEL_L},
     )
-    SYN_SB = PtxboaProcessType(
+    SYN_SB = PtxboaTransportProcessType(
         code="SYN-SB",
         name="FT e-fuels ship (bunker fuel consumption)",
         main_flow_type_out=PtxboaFlowTypes.CHX_L,
         main_flow_type_in=PtxboaFlowTypes.CHX_L,
         secondary_flow_types={PtxboaFlowTypes.BFUEL_L},
     )
-    SYN_SB_B = PtxboaProcessType(
+    SYN_SB_B = PtxboaTransportProcessType(
         code="SYN-SB#B",
         name="FT e-fuels ship (bunker fuel consumption) (blue)",
         main_flow_type_out=PtxboaFlowTypes.CHX_L,
@@ -802,1104 +805,1104 @@ class PtxboaChainTemplates(PtxboaEnum):
         code="Blue Iron (blue)*",
         name="TEST Blue Iron (blue)*",
         flow_type_out=PtxboaFlowTypes.STL_S,
-        steps={
-            PtxboaSteps.DERIV: PtxboaProcessTypes.NG_DRI_C_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.DRI_SB_B,
-            PtxboaSteps.DERIV_I: PtxboaProcessTypes.EAF_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.NG_DRI_C_B,
+            PtxboaProcessTypes.DRI_SB_B,
+            PtxboaProcessTypes.EAF_B,
+        ),
     )
     CH3OH_L_ATR_91_CH3OHSYN_PROD_IN_DEMAND = PtxboaChainBlueTemplate(
         code="CH3OH-L__ATR_91%_CH3OHSYN__prod_in_demand",
         name="Methanol (ATR)*",
         flow_type_out=PtxboaFlowTypes.CH3OH_L,
-        steps={
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.CH4_LIQ_B,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.CH4_COMP_B,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.CH4_RGAS_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH4_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH4_S_B,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.CH4_P_S_B,
-            PtxboaSteps.PPL: PtxboaProcessTypes.CH4_P_L_B,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.CH4_P_SR_B,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.CH4_P_LR_B,
-            PtxboaSteps.ELY_I: PtxboaProcessTypes.ATR_91_B,
-            PtxboaSteps.DERIV_I: PtxboaProcessTypes.CH3OHSYN_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.CH4_LIQ_B,
+            PtxboaProcessTypes.CH4_COMP_B,
+            PtxboaProcessTypes.CH4_RGAS_B,
+            PtxboaProcessTypes.CH4_SB_B,
+            PtxboaProcessTypes.CH4_S_B,
+            PtxboaProcessTypes.CH4_P_S_B,
+            PtxboaProcessTypes.CH4_P_L_B,
+            PtxboaProcessTypes.CH4_P_SR_B,
+            PtxboaProcessTypes.CH4_P_LR_B,
+            PtxboaProcessTypes.ATR_91_B,
+            PtxboaProcessTypes.CH3OHSYN_B,
+        ),
     )
     CH3OH_L_ATR_91_CH3OHSYN_PROD_IN_SUPPLY = PtxboaChainBlueTemplate(
         code="CH3OH-L__ATR_91%_CH3OHSYN__prod_in_supply",
         name="Methanol (ATR)",
         flow_type_out=PtxboaFlowTypes.CH3OH_L,
-        steps={
-            PtxboaSteps.ELY: PtxboaProcessTypes.ATR_91_B,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.CH3OHSYN_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH3OH_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH3OH_S_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.ATR_91_B,
+            PtxboaProcessTypes.CH3OHSYN_B,
+            PtxboaProcessTypes.CH3OH_SB_B,
+            PtxboaProcessTypes.CH3OH_S_B,
+        ),
     )
     CH3OH_L_CH3OHSYC_PROD_IN_DEMAND = PtxboaChainBlueTemplate(
         code="CH3OH-L__CH3OHSYC__prod_in_demand",
         name="Methanol (NG-based)*",
         flow_type_out=PtxboaFlowTypes.CH3OH_L,
-        steps={
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.CH4_LIQ_B,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.CH4_COMP_B,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.CH4_RGAS_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH4_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH4_S_B,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.CH4_P_S_B,
-            PtxboaSteps.PPL: PtxboaProcessTypes.CH4_P_L_B,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.CH4_P_SR_B,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.CH4_P_LR_B,
-            PtxboaSteps.DERIV_I: PtxboaProcessTypes.CH3OHSYC_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.CH4_LIQ_B,
+            PtxboaProcessTypes.CH4_COMP_B,
+            PtxboaProcessTypes.CH4_RGAS_B,
+            PtxboaProcessTypes.CH4_SB_B,
+            PtxboaProcessTypes.CH4_S_B,
+            PtxboaProcessTypes.CH4_P_S_B,
+            PtxboaProcessTypes.CH4_P_L_B,
+            PtxboaProcessTypes.CH4_P_SR_B,
+            PtxboaProcessTypes.CH4_P_LR_B,
+            PtxboaProcessTypes.CH3OHSYC_B,
+        ),
     )
     CH3OH_L_CH3OHSYC_PROD_IN_SUPPLY = PtxboaChainBlueTemplate(
         code="CH3OH-L__CH3OHSYC__prod_in_supply",
         name="Methanol (NG-based)",
         flow_type_out=PtxboaFlowTypes.CH3OH_L,
-        steps={
-            PtxboaSteps.DERIV: PtxboaProcessTypes.CH3OHSYC_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH3OH_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH3OH_S_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.CH3OHSYC_B,
+            PtxboaProcessTypes.CH3OH_SB_B,
+            PtxboaProcessTypes.CH3OH_S_B,
+        ),
     )
     CH3OH_L_SMR_52_BF_CH3OHSYN_PROD_IN_DEMAND = PtxboaChainBlueTemplate(
         code="CH3OH-L__SMR_52%_BF_CH3OHSYN__prod_in_demand",
         name="Methanol (SMR-BF)*",
         flow_type_out=PtxboaFlowTypes.CH3OH_L,
-        steps={
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.CH4_LIQ_B,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.CH4_COMP_B,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.CH4_RGAS_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH4_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH4_S_B,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.CH4_P_S_B,
-            PtxboaSteps.PPL: PtxboaProcessTypes.CH4_P_L_B,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.CH4_P_SR_B,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.CH4_P_LR_B,
-            PtxboaSteps.ELY_I: PtxboaProcessTypes.SMR_52_BF_B,
-            PtxboaSteps.DERIV_I: PtxboaProcessTypes.CH3OHSYN_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.CH4_LIQ_B,
+            PtxboaProcessTypes.CH4_COMP_B,
+            PtxboaProcessTypes.CH4_RGAS_B,
+            PtxboaProcessTypes.CH4_SB_B,
+            PtxboaProcessTypes.CH4_S_B,
+            PtxboaProcessTypes.CH4_P_S_B,
+            PtxboaProcessTypes.CH4_P_L_B,
+            PtxboaProcessTypes.CH4_P_SR_B,
+            PtxboaProcessTypes.CH4_P_LR_B,
+            PtxboaProcessTypes.SMR_52_BF_B,
+            PtxboaProcessTypes.CH3OHSYN_B,
+        ),
     )
     CH3OH_L_SMR_52_BF_CH3OHSYN_PROD_IN_SUPPLY = PtxboaChainBlueTemplate(
         code="CH3OH-L__SMR_52%_BF_CH3OHSYN__prod_in_supply",
         name="Methanol (SMR-BF)",
         flow_type_out=PtxboaFlowTypes.CH3OH_L,
-        steps={
-            PtxboaSteps.ELY: PtxboaProcessTypes.SMR_52_BF_B,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.CH3OHSYN_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH3OH_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH3OH_S_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.SMR_52_BF_B,
+            PtxboaProcessTypes.CH3OHSYN_B,
+            PtxboaProcessTypes.CH3OH_SB_B,
+            PtxboaProcessTypes.CH3OH_S_B,
+        ),
     )
     CH3OH_L_SMR_52_CH3OHSYN_PROD_IN_DEMAND = PtxboaChainBlueTemplate(
         code="CH3OH-L__SMR_52%_CH3OHSYN__prod_in_demand",
         name="Methanol (SMR)*",
         flow_type_out=PtxboaFlowTypes.CH3OH_L,
-        steps={
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.CH4_LIQ_B,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.CH4_COMP_B,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.CH4_RGAS_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH4_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH4_S_B,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.CH4_P_S_B,
-            PtxboaSteps.PPL: PtxboaProcessTypes.CH4_P_L_B,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.CH4_P_SR_B,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.CH4_P_LR_B,
-            PtxboaSteps.ELY_I: PtxboaProcessTypes.SMR_52_B,
-            PtxboaSteps.DERIV_I: PtxboaProcessTypes.CH3OHSYN_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.CH4_LIQ_B,
+            PtxboaProcessTypes.CH4_COMP_B,
+            PtxboaProcessTypes.CH4_RGAS_B,
+            PtxboaProcessTypes.CH4_SB_B,
+            PtxboaProcessTypes.CH4_S_B,
+            PtxboaProcessTypes.CH4_P_S_B,
+            PtxboaProcessTypes.CH4_P_L_B,
+            PtxboaProcessTypes.CH4_P_SR_B,
+            PtxboaProcessTypes.CH4_P_LR_B,
+            PtxboaProcessTypes.SMR_52_B,
+            PtxboaProcessTypes.CH3OHSYN_B,
+        ),
     )
     CH3OH_L_SMR_52_CH3OHSYN_PROD_IN_SUPPLY = PtxboaChainBlueTemplate(
         code="CH3OH-L__SMR_52%_CH3OHSYN__prod_in_supply",
         name="Methanol (SMR)",
         flow_type_out=PtxboaFlowTypes.CH3OH_L,
-        steps={
-            PtxboaSteps.ELY: PtxboaProcessTypes.SMR_52_B,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.CH3OHSYN_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH3OH_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH3OH_S_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.SMR_52_B,
+            PtxboaProcessTypes.CH3OHSYN_B,
+            PtxboaProcessTypes.CH3OH_SB_B,
+            PtxboaProcessTypes.CH3OH_S_B,
+        ),
     )
     CHX_L_ATR_91_EFUELSYN_PROD_IN_DEMAND = PtxboaChainBlueTemplate(
         code="CHX-L__ATR_91%_EFUELSYN__prod_in_demand",
         name="FT-fuel (ATR)*",
         flow_type_out=PtxboaFlowTypes.CHX_L,
-        steps={
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.CH4_LIQ_B,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.CH4_COMP_B,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.CH4_RGAS_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH4_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH4_S_B,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.CH4_P_S_B,
-            PtxboaSteps.PPL: PtxboaProcessTypes.CH4_P_L_B,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.CH4_P_SR_B,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.CH4_P_LR_B,
-            PtxboaSteps.ELY_I: PtxboaProcessTypes.ATR_91_B,
-            PtxboaSteps.DERIV_I: PtxboaProcessTypes.EFUELSYN_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.CH4_LIQ_B,
+            PtxboaProcessTypes.CH4_COMP_B,
+            PtxboaProcessTypes.CH4_RGAS_B,
+            PtxboaProcessTypes.CH4_SB_B,
+            PtxboaProcessTypes.CH4_S_B,
+            PtxboaProcessTypes.CH4_P_S_B,
+            PtxboaProcessTypes.CH4_P_L_B,
+            PtxboaProcessTypes.CH4_P_SR_B,
+            PtxboaProcessTypes.CH4_P_LR_B,
+            PtxboaProcessTypes.ATR_91_B,
+            PtxboaProcessTypes.EFUELSYN_B,
+        ),
     )
     CHX_L_ATR_91_EFUELSYN_PROD_IN_SUPPLY = PtxboaChainBlueTemplate(
         code="CHX-L__ATR_91%_EFUELSYN__prod_in_supply",
         name="FT-fuel (ATR)",
         flow_type_out=PtxboaFlowTypes.CHX_L,
-        steps={
-            PtxboaSteps.ELY: PtxboaProcessTypes.ATR_91_B,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.EFUELSYN_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.SYN_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.SYN_S_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.ATR_91_B,
+            PtxboaProcessTypes.EFUELSYN_B,
+            PtxboaProcessTypes.SYN_SB_B,
+            PtxboaProcessTypes.SYN_S_B,
+        ),
     )
     CHX_L_EFUELSYNC_PROD_IN_DEMAND = PtxboaChainBlueTemplate(
         code="CHX-L__EFUELSYNC__prod_in_demand",
         name="FT-fuel (NG-based)*",
         flow_type_out=PtxboaFlowTypes.CHX_L,
-        steps={
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.CH4_LIQ_B,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.CH4_COMP_B,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.CH4_RGAS_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH4_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH4_S_B,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.CH4_P_S_B,
-            PtxboaSteps.PPL: PtxboaProcessTypes.CH4_P_L_B,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.CH4_P_SR_B,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.CH4_P_LR_B,
-            PtxboaSteps.DERIV_I: PtxboaProcessTypes.EFUELSYNC_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.CH4_LIQ_B,
+            PtxboaProcessTypes.CH4_COMP_B,
+            PtxboaProcessTypes.CH4_RGAS_B,
+            PtxboaProcessTypes.CH4_SB_B,
+            PtxboaProcessTypes.CH4_S_B,
+            PtxboaProcessTypes.CH4_P_S_B,
+            PtxboaProcessTypes.CH4_P_L_B,
+            PtxboaProcessTypes.CH4_P_SR_B,
+            PtxboaProcessTypes.CH4_P_LR_B,
+            PtxboaProcessTypes.EFUELSYNC_B,
+        ),
     )
     CHX_L_EFUELSYNC_PROD_IN_SUPPLY = PtxboaChainBlueTemplate(
         code="CHX-L__EFUELSYNC__prod_in_supply",
         name="FT-fuel (NG-based)",
         flow_type_out=PtxboaFlowTypes.CHX_L,
-        steps={
-            PtxboaSteps.DERIV: PtxboaProcessTypes.EFUELSYNC_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.SYN_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.SYN_S_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.EFUELSYNC_B,
+            PtxboaProcessTypes.SYN_SB_B,
+            PtxboaProcessTypes.SYN_S_B,
+        ),
     )
     CHX_L_SMR_52_BF_EFUELSYN_PROD_IN_DEMAND = PtxboaChainBlueTemplate(
         code="CHX-L__SMR_52%_BF_EFUELSYN__prod_in_demand",
         name="FT-fuel (SMR-BF)*",
         flow_type_out=PtxboaFlowTypes.CHX_L,
-        steps={
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.CH4_LIQ_B,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.CH4_COMP_B,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.CH4_RGAS_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH4_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH4_S_B,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.CH4_P_S_B,
-            PtxboaSteps.PPL: PtxboaProcessTypes.CH4_P_L_B,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.CH4_P_SR_B,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.CH4_P_LR_B,
-            PtxboaSteps.ELY_I: PtxboaProcessTypes.SMR_52_BF_B,
-            PtxboaSteps.DERIV_I: PtxboaProcessTypes.EFUELSYN_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.CH4_LIQ_B,
+            PtxboaProcessTypes.CH4_COMP_B,
+            PtxboaProcessTypes.CH4_RGAS_B,
+            PtxboaProcessTypes.CH4_SB_B,
+            PtxboaProcessTypes.CH4_S_B,
+            PtxboaProcessTypes.CH4_P_S_B,
+            PtxboaProcessTypes.CH4_P_L_B,
+            PtxboaProcessTypes.CH4_P_SR_B,
+            PtxboaProcessTypes.CH4_P_LR_B,
+            PtxboaProcessTypes.SMR_52_BF_B,
+            PtxboaProcessTypes.EFUELSYN_B,
+        ),
     )
     CHX_L_SMR_52_BF_EFUELSYN_PROD_IN_SUPPLY = PtxboaChainBlueTemplate(
         code="CHX-L__SMR_52%_BF_EFUELSYN__prod_in_supply",
         name="FT-fuel (SMR-BF)",
         flow_type_out=PtxboaFlowTypes.CHX_L,
-        steps={
-            PtxboaSteps.ELY: PtxboaProcessTypes.SMR_52_BF_B,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.EFUELSYN_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.SYN_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.SYN_S_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.SMR_52_BF_B,
+            PtxboaProcessTypes.EFUELSYN_B,
+            PtxboaProcessTypes.SYN_SB_B,
+            PtxboaProcessTypes.SYN_S_B,
+        ),
     )
     CHX_L_SMR_52_EFUELSYN_PROD_IN_DEMAND = PtxboaChainBlueTemplate(
         code="CHX-L__SMR_52%_EFUELSYN__prod_in_demand",
         name="FT-fuel (SMR)*",
         flow_type_out=PtxboaFlowTypes.CHX_L,
-        steps={
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.CH4_LIQ_B,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.CH4_COMP_B,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.CH4_RGAS_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH4_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH4_S_B,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.CH4_P_S_B,
-            PtxboaSteps.PPL: PtxboaProcessTypes.CH4_P_L_B,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.CH4_P_SR_B,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.CH4_P_LR_B,
-            PtxboaSteps.ELY_I: PtxboaProcessTypes.SMR_52_B,
-            PtxboaSteps.DERIV_I: PtxboaProcessTypes.EFUELSYN_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.CH4_LIQ_B,
+            PtxboaProcessTypes.CH4_COMP_B,
+            PtxboaProcessTypes.CH4_RGAS_B,
+            PtxboaProcessTypes.CH4_SB_B,
+            PtxboaProcessTypes.CH4_S_B,
+            PtxboaProcessTypes.CH4_P_S_B,
+            PtxboaProcessTypes.CH4_P_L_B,
+            PtxboaProcessTypes.CH4_P_SR_B,
+            PtxboaProcessTypes.CH4_P_LR_B,
+            PtxboaProcessTypes.SMR_52_B,
+            PtxboaProcessTypes.EFUELSYN_B,
+        ),
     )
     CHX_L_SMR_52_EFUELSYN_PROD_IN_SUPPLY = PtxboaChainBlueTemplate(
         code="CHX-L__SMR_52%_EFUELSYN__prod_in_supply",
         name="FT-fuel (SMR)",
         flow_type_out=PtxboaFlowTypes.CHX_L,
-        steps={
-            PtxboaSteps.ELY: PtxboaProcessTypes.SMR_52_B,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.EFUELSYN_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.SYN_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.SYN_S_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.SMR_52_B,
+            PtxboaProcessTypes.EFUELSYN_B,
+            PtxboaProcessTypes.SYN_SB_B,
+            PtxboaProcessTypes.SYN_S_B,
+        ),
     )
     DRI_S_ATR_91_DRI_PROD_IN_DEMAND = PtxboaChainBlueTemplate(
         code="DRI-S__ATR_91%_DRI__prod_in_demand",
         name="Direct Reduced Iron (ATR)*",
         flow_type_out=PtxboaFlowTypes.B_DRI_S,
-        steps={
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.CH4_LIQ_B,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.CH4_COMP_B,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.CH4_RGAS_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH4_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH4_S_B,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.CH4_P_S_B,
-            PtxboaSteps.PPL: PtxboaProcessTypes.CH4_P_L_B,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.CH4_P_SR_B,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.CH4_P_LR_B,
-            PtxboaSteps.ELY_I: PtxboaProcessTypes.ATR_91_B,
-            PtxboaSteps.DERIV_I: PtxboaProcessTypes.DRI_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.CH4_LIQ_B,
+            PtxboaProcessTypes.CH4_COMP_B,
+            PtxboaProcessTypes.CH4_RGAS_B,
+            PtxboaProcessTypes.CH4_SB_B,
+            PtxboaProcessTypes.CH4_S_B,
+            PtxboaProcessTypes.CH4_P_S_B,
+            PtxboaProcessTypes.CH4_P_L_B,
+            PtxboaProcessTypes.CH4_P_SR_B,
+            PtxboaProcessTypes.CH4_P_LR_B,
+            PtxboaProcessTypes.ATR_91_B,
+            PtxboaProcessTypes.DRI_B,
+        ),
     )
     DRI_S_ATR_91_DRI_PROD_IN_SUPPLY = PtxboaChainBlueTemplate(
         code="DRI-S__ATR_91%_DRI__prod_in_supply",
         name="Direct Reduced Iron (ATR)",
         flow_type_out=PtxboaFlowTypes.B_DRI_S,
-        steps={
-            PtxboaSteps.ELY: PtxboaProcessTypes.ATR_91_B,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.DRI_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.DRI_SB_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.ATR_91_B,
+            PtxboaProcessTypes.DRI_B,
+            PtxboaProcessTypes.DRI_SB_B,
+        ),
     )
     DRI_S_NG_DRI_C_PROD_IN_DEMAND = PtxboaChainBlueTemplate(
         code="DRI-S__NG-DRI-C__prod_in_demand",
         name="Direct Reduced Iron (NG-based)*",
         flow_type_out=PtxboaFlowTypes.B_DRI_S,
-        steps={
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.CH4_LIQ_B,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.CH4_COMP_B,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.CH4_RGAS_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH4_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH4_S_B,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.CH4_P_S_B,
-            PtxboaSteps.PPL: PtxboaProcessTypes.CH4_P_L_B,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.CH4_P_SR_B,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.CH4_P_LR_B,
-            PtxboaSteps.DERIV_I: PtxboaProcessTypes.NG_DRI_C_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.CH4_LIQ_B,
+            PtxboaProcessTypes.CH4_COMP_B,
+            PtxboaProcessTypes.CH4_RGAS_B,
+            PtxboaProcessTypes.CH4_SB_B,
+            PtxboaProcessTypes.CH4_S_B,
+            PtxboaProcessTypes.CH4_P_S_B,
+            PtxboaProcessTypes.CH4_P_L_B,
+            PtxboaProcessTypes.CH4_P_SR_B,
+            PtxboaProcessTypes.CH4_P_LR_B,
+            PtxboaProcessTypes.NG_DRI_C_B,
+        ),
     )
     DRI_S_NG_DRI_C_PROD_IN_SUPPLY = PtxboaChainBlueTemplate(
         code="DRI-S__NG-DRI-C__prod_in_supply",
         name="Direct Reduced Iron (NG-based)",
         flow_type_out=PtxboaFlowTypes.B_DRI_S,
-        steps={
-            PtxboaSteps.DERIV: PtxboaProcessTypes.NG_DRI_C_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.DRI_SB_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.NG_DRI_C_B,
+            PtxboaProcessTypes.DRI_SB_B,
+        ),
     )
     DRI_S_SMR_52_BF_DRI_PROD_IN_DEMAND = PtxboaChainBlueTemplate(
         code="DRI-S__SMR_52%_BF_DRI__prod_in_demand",
         name="Direct Reduced Iron (SMR-BF)*",
         flow_type_out=PtxboaFlowTypes.B_DRI_S,
-        steps={
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.CH4_LIQ_B,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.CH4_COMP_B,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.CH4_RGAS_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH4_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH4_S_B,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.CH4_P_S_B,
-            PtxboaSteps.PPL: PtxboaProcessTypes.CH4_P_L_B,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.CH4_P_SR_B,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.CH4_P_LR_B,
-            PtxboaSteps.ELY_I: PtxboaProcessTypes.SMR_52_BF_B,
-            PtxboaSteps.DERIV_I: PtxboaProcessTypes.DRI_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.CH4_LIQ_B,
+            PtxboaProcessTypes.CH4_COMP_B,
+            PtxboaProcessTypes.CH4_RGAS_B,
+            PtxboaProcessTypes.CH4_SB_B,
+            PtxboaProcessTypes.CH4_S_B,
+            PtxboaProcessTypes.CH4_P_S_B,
+            PtxboaProcessTypes.CH4_P_L_B,
+            PtxboaProcessTypes.CH4_P_SR_B,
+            PtxboaProcessTypes.CH4_P_LR_B,
+            PtxboaProcessTypes.SMR_52_BF_B,
+            PtxboaProcessTypes.DRI_B,
+        ),
     )
     DRI_S_SMR_52_BF_DRI_PROD_IN_SUPPLY = PtxboaChainBlueTemplate(
         code="DRI-S__SMR_52%_BF_DRI__prod_in_supply",
         name="Direct Reduced Iron (SMR-BF)",
         flow_type_out=PtxboaFlowTypes.B_DRI_S,
-        steps={
-            PtxboaSteps.ELY: PtxboaProcessTypes.SMR_52_BF_B,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.DRI_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.DRI_SB_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.SMR_52_BF_B,
+            PtxboaProcessTypes.DRI_B,
+            PtxboaProcessTypes.DRI_SB_B,
+        ),
     )
     DRI_S_SMR_52_DRI_PROD_IN_DEMAND = PtxboaChainBlueTemplate(
         code="DRI-S__SMR_52%_DRI__prod_in_demand",
         name="Direct Reduced Iron (SMR)*",
         flow_type_out=PtxboaFlowTypes.B_DRI_S,
-        steps={
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.CH4_LIQ_B,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.CH4_COMP_B,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.CH4_RGAS_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH4_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH4_S_B,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.CH4_P_S_B,
-            PtxboaSteps.PPL: PtxboaProcessTypes.CH4_P_L_B,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.CH4_P_SR_B,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.CH4_P_LR_B,
-            PtxboaSteps.ELY_I: PtxboaProcessTypes.SMR_52_B,
-            PtxboaSteps.DERIV_I: PtxboaProcessTypes.DRI_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.CH4_LIQ_B,
+            PtxboaProcessTypes.CH4_COMP_B,
+            PtxboaProcessTypes.CH4_RGAS_B,
+            PtxboaProcessTypes.CH4_SB_B,
+            PtxboaProcessTypes.CH4_S_B,
+            PtxboaProcessTypes.CH4_P_S_B,
+            PtxboaProcessTypes.CH4_P_L_B,
+            PtxboaProcessTypes.CH4_P_SR_B,
+            PtxboaProcessTypes.CH4_P_LR_B,
+            PtxboaProcessTypes.SMR_52_B,
+            PtxboaProcessTypes.DRI_B,
+        ),
     )
     DRI_S_SMR_52_DRI_PROD_IN_SUPPLY = PtxboaChainBlueTemplate(
         code="DRI-S__SMR_52%_DRI__prod_in_supply",
         name="Direct Reduced Iron (SMR)",
         flow_type_out=PtxboaFlowTypes.B_DRI_S,
-        steps={
-            PtxboaSteps.ELY: PtxboaProcessTypes.SMR_52_B,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.DRI_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.DRI_SB_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.SMR_52_B,
+            PtxboaProcessTypes.DRI_B,
+            PtxboaProcessTypes.DRI_SB_B,
+        ),
     )
     H2_G_ATR_91_PROD_IN_DEMAND = PtxboaChainBlueTemplate(
         code="H2-G__ATR_91%__prod_in_demand",
         name="Hydrogen (ATR)*",
         flow_type_out=PtxboaFlowTypes.H2_G,
-        steps={
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.CH4_LIQ_B,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.CH4_COMP_B,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.CH4_RGAS_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH4_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH4_S_B,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.CH4_P_S_B,
-            PtxboaSteps.PPL: PtxboaProcessTypes.CH4_P_L_B,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.CH4_P_SR_B,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.CH4_P_LR_B,
-            PtxboaSteps.ELY_I: PtxboaProcessTypes.ATR_91_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.CH4_LIQ_B,
+            PtxboaProcessTypes.CH4_COMP_B,
+            PtxboaProcessTypes.CH4_RGAS_B,
+            PtxboaProcessTypes.CH4_SB_B,
+            PtxboaProcessTypes.CH4_S_B,
+            PtxboaProcessTypes.CH4_P_S_B,
+            PtxboaProcessTypes.CH4_P_L_B,
+            PtxboaProcessTypes.CH4_P_SR_B,
+            PtxboaProcessTypes.CH4_P_LR_B,
+            PtxboaProcessTypes.ATR_91_B,
+        ),
     )
     H2_G_ATR_91_PROD_IN_SUPPLY = PtxboaChainBlueTemplate(
         code="H2-G__ATR_91%__prod_in_supply",
         name="Hydrogen (ATR)",
         flow_type_out=PtxboaFlowTypes.H2_G,
-        steps={
-            PtxboaSteps.ELY: PtxboaProcessTypes.ATR_91_B,
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.H2_LIQ_B,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.H2_COMP_B,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.H2_RGAS_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.H2_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.H2_S_B,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.H2_P_S_B,
-            PtxboaSteps.PPL: PtxboaProcessTypes.H2_P_L_B,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.H2_P_SR_B,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.H2_P_LR_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.ATR_91_B,
+            PtxboaProcessTypes.H2_LIQ_B,
+            PtxboaProcessTypes.H2_COMP_B,
+            PtxboaProcessTypes.H2_RGAS_B,
+            PtxboaProcessTypes.H2_SB_B,
+            PtxboaProcessTypes.H2_S_B,
+            PtxboaProcessTypes.H2_P_S_B,
+            PtxboaProcessTypes.H2_P_L_B,
+            PtxboaProcessTypes.H2_P_SR_B,
+            PtxboaProcessTypes.H2_P_LR_B,
+        ),
     )
     H2_G_ATR_91_PROD_IN_SUPPLY_TRANSPORT_NH3_L = PtxboaChainBlueTemplate(
         code="H2-G__ATR_91%__prod_in_supply__transport_NH3-L",
         name="Ammonia (ATR) + reconv. to H2",
         flow_type_out=PtxboaFlowTypes.H2_G,
-        steps={
-            PtxboaSteps.ELY: PtxboaProcessTypes.ATR_91_B,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.NH3SYN_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.NH3_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.NH3_S_B,
-            PtxboaSteps.DERIV_I: PtxboaProcessTypes.NH3_REC_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.ATR_91_B,
+            PtxboaProcessTypes.NH3SYN_B,
+            PtxboaProcessTypes.NH3_SB_B,
+            PtxboaProcessTypes.NH3_S_B,
+            PtxboaProcessTypes.NH3_REC_B,
+        ),
     )
     H2_G_SMR_52_PROD_IN_DEMAND = PtxboaChainBlueTemplate(
         code="H2-G__SMR_52%__prod_in_demand",
         name="Hydrogen (SMR)*",
         flow_type_out=PtxboaFlowTypes.H2_G,
-        steps={
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.CH4_LIQ_B,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.CH4_COMP_B,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.CH4_RGAS_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH4_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH4_S_B,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.CH4_P_S_B,
-            PtxboaSteps.PPL: PtxboaProcessTypes.CH4_P_L_B,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.CH4_P_SR_B,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.CH4_P_LR_B,
-            PtxboaSteps.ELY_I: PtxboaProcessTypes.SMR_52_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.CH4_LIQ_B,
+            PtxboaProcessTypes.CH4_COMP_B,
+            PtxboaProcessTypes.CH4_RGAS_B,
+            PtxboaProcessTypes.CH4_SB_B,
+            PtxboaProcessTypes.CH4_S_B,
+            PtxboaProcessTypes.CH4_P_S_B,
+            PtxboaProcessTypes.CH4_P_L_B,
+            PtxboaProcessTypes.CH4_P_SR_B,
+            PtxboaProcessTypes.CH4_P_LR_B,
+            PtxboaProcessTypes.SMR_52_B,
+        ),
     )
     H2_G_SMR_52_PROD_IN_SUPPLY = PtxboaChainBlueTemplate(
         code="H2-G__SMR_52%__prod_in_supply",
         name="Hydrogen (SMR)",
         flow_type_out=PtxboaFlowTypes.H2_G,
-        steps={
-            PtxboaSteps.ELY: PtxboaProcessTypes.SMR_52_B,
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.H2_LIQ_B,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.H2_COMP_B,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.H2_RGAS_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.H2_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.H2_S_B,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.H2_P_S_B,
-            PtxboaSteps.PPL: PtxboaProcessTypes.H2_P_L_B,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.H2_P_SR_B,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.H2_P_LR_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.SMR_52_B,
+            PtxboaProcessTypes.H2_LIQ_B,
+            PtxboaProcessTypes.H2_COMP_B,
+            PtxboaProcessTypes.H2_RGAS_B,
+            PtxboaProcessTypes.H2_SB_B,
+            PtxboaProcessTypes.H2_S_B,
+            PtxboaProcessTypes.H2_P_S_B,
+            PtxboaProcessTypes.H2_P_L_B,
+            PtxboaProcessTypes.H2_P_SR_B,
+            PtxboaProcessTypes.H2_P_LR_B,
+        ),
     )
     H2_G_SMR_52_PROD_IN_SUPPLY_TRANSPORT_NH3_L = PtxboaChainBlueTemplate(
         code="H2-G__SMR_52%__prod_in_supply__transport_NH3-L",
         name="Ammonia (SMR) + reconv. to H2",
         flow_type_out=PtxboaFlowTypes.H2_G,
-        steps={
-            PtxboaSteps.ELY: PtxboaProcessTypes.SMR_52_B,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.NH3SYN_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.NH3_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.NH3_S_B,
-            PtxboaSteps.DERIV_I: PtxboaProcessTypes.NH3_REC_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.SMR_52_B,
+            PtxboaProcessTypes.NH3SYN_B,
+            PtxboaProcessTypes.NH3_SB_B,
+            PtxboaProcessTypes.NH3_S_B,
+            PtxboaProcessTypes.NH3_REC_B,
+        ),
     )
     H2_G_SMR_52_BF_PROD_IN_DEMAND = PtxboaChainBlueTemplate(
         code="H2-G__SMR_52%_BF__prod_in_demand",
         name="Hydrogen (SMR-BF)*",
         flow_type_out=PtxboaFlowTypes.H2_G,
-        steps={
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.CH4_LIQ_B,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.CH4_COMP_B,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.CH4_RGAS_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH4_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH4_S_B,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.CH4_P_S_B,
-            PtxboaSteps.PPL: PtxboaProcessTypes.CH4_P_L_B,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.CH4_P_SR_B,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.CH4_P_LR_B,
-            PtxboaSteps.ELY_I: PtxboaProcessTypes.SMR_52_BF_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.CH4_LIQ_B,
+            PtxboaProcessTypes.CH4_COMP_B,
+            PtxboaProcessTypes.CH4_RGAS_B,
+            PtxboaProcessTypes.CH4_SB_B,
+            PtxboaProcessTypes.CH4_S_B,
+            PtxboaProcessTypes.CH4_P_S_B,
+            PtxboaProcessTypes.CH4_P_L_B,
+            PtxboaProcessTypes.CH4_P_SR_B,
+            PtxboaProcessTypes.CH4_P_LR_B,
+            PtxboaProcessTypes.SMR_52_BF_B,
+        ),
     )
     H2_G_SMR_52_BF_PROD_IN_SUPPLY = PtxboaChainBlueTemplate(
         code="H2-G__SMR_52%_BF__prod_in_supply",
         name="Hydrogen (SMR-BF)",
         flow_type_out=PtxboaFlowTypes.H2_G,
-        steps={
-            PtxboaSteps.ELY: PtxboaProcessTypes.SMR_52_BF_B,
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.H2_LIQ_B,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.H2_COMP_B,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.H2_RGAS_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.H2_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.H2_S_B,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.H2_P_S_B,
-            PtxboaSteps.PPL: PtxboaProcessTypes.H2_P_L_B,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.H2_P_SR_B,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.H2_P_LR_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.SMR_52_BF_B,
+            PtxboaProcessTypes.H2_LIQ_B,
+            PtxboaProcessTypes.H2_COMP_B,
+            PtxboaProcessTypes.H2_RGAS_B,
+            PtxboaProcessTypes.H2_SB_B,
+            PtxboaProcessTypes.H2_S_B,
+            PtxboaProcessTypes.H2_P_S_B,
+            PtxboaProcessTypes.H2_P_L_B,
+            PtxboaProcessTypes.H2_P_SR_B,
+            PtxboaProcessTypes.H2_P_LR_B,
+        ),
     )
     H2_G_SMR_52_BF_PROD_IN_SUPPLY_TRANSPORT_NH3_L = PtxboaChainBlueTemplate(
         code="H2-G__SMR_52%_BF__prod_in_supply__transport_NH3-L",
         name="Ammonia (SMR-BF) + reconv. to H2",
         flow_type_out=PtxboaFlowTypes.H2_G,
-        steps={
-            PtxboaSteps.ELY: PtxboaProcessTypes.SMR_52_BF_B,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.NH3SYN_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.NH3_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.NH3_S_B,
-            PtxboaSteps.DERIV_I: PtxboaProcessTypes.NH3_REC_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.SMR_52_BF_B,
+            PtxboaProcessTypes.NH3SYN_B,
+            PtxboaProcessTypes.NH3_SB_B,
+            PtxboaProcessTypes.NH3_S_B,
+            PtxboaProcessTypes.NH3_REC_B,
+        ),
     )
     NH3_L_ATR_91_NH3SYN_PROD_IN_DEMAND = PtxboaChainBlueTemplate(
         code="NH3-L__ATR_91%_NH3SYN__prod_in_demand",
         name="Ammonia (ATR)*",
         flow_type_out=PtxboaFlowTypes.NH3_L,
-        steps={
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.CH4_LIQ_B,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.CH4_COMP_B,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.CH4_RGAS_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH4_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH4_S_B,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.CH4_P_S_B,
-            PtxboaSteps.PPL: PtxboaProcessTypes.CH4_P_L_B,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.CH4_P_SR_B,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.CH4_P_LR_B,
-            PtxboaSteps.ELY_I: PtxboaProcessTypes.ATR_91_B,
-            PtxboaSteps.DERIV_I: PtxboaProcessTypes.NH3SYN_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.CH4_LIQ_B,
+            PtxboaProcessTypes.CH4_COMP_B,
+            PtxboaProcessTypes.CH4_RGAS_B,
+            PtxboaProcessTypes.CH4_SB_B,
+            PtxboaProcessTypes.CH4_S_B,
+            PtxboaProcessTypes.CH4_P_S_B,
+            PtxboaProcessTypes.CH4_P_L_B,
+            PtxboaProcessTypes.CH4_P_SR_B,
+            PtxboaProcessTypes.CH4_P_LR_B,
+            PtxboaProcessTypes.ATR_91_B,
+            PtxboaProcessTypes.NH3SYN_B,
+        ),
     )
     NH3_L_ATR_91_NH3SYN_PROD_IN_SUPPLY = PtxboaChainBlueTemplate(
         code="NH3-L__ATR_91%_NH3SYN__prod_in_supply",
         name="Ammonia (ATR)",
         flow_type_out=PtxboaFlowTypes.NH3_L,
-        steps={
-            PtxboaSteps.ELY: PtxboaProcessTypes.ATR_91_B,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.NH3SYN_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.NH3_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.NH3_S_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.ATR_91_B,
+            PtxboaProcessTypes.NH3SYN_B,
+            PtxboaProcessTypes.NH3_SB_B,
+            PtxboaProcessTypes.NH3_S_B,
+        ),
     )
     NH3_L_SMR_52_BF_NH3SYN_PROD_IN_DEMAND = PtxboaChainBlueTemplate(
         code="NH3-L__SMR_52%_BF_NH3SYN__prod_in_demand",
         name="Ammonia (SMR-BF)*",
         flow_type_out=PtxboaFlowTypes.NH3_L,
-        steps={
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.CH4_LIQ_B,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.CH4_COMP_B,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.CH4_RGAS_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH4_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH4_S_B,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.CH4_P_S_B,
-            PtxboaSteps.PPL: PtxboaProcessTypes.CH4_P_L_B,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.CH4_P_SR_B,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.CH4_P_LR_B,
-            PtxboaSteps.ELY_I: PtxboaProcessTypes.SMR_52_BF_B,
-            PtxboaSteps.DERIV_I: PtxboaProcessTypes.NH3SYN_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.CH4_LIQ_B,
+            PtxboaProcessTypes.CH4_COMP_B,
+            PtxboaProcessTypes.CH4_RGAS_B,
+            PtxboaProcessTypes.CH4_SB_B,
+            PtxboaProcessTypes.CH4_S_B,
+            PtxboaProcessTypes.CH4_P_S_B,
+            PtxboaProcessTypes.CH4_P_L_B,
+            PtxboaProcessTypes.CH4_P_SR_B,
+            PtxboaProcessTypes.CH4_P_LR_B,
+            PtxboaProcessTypes.SMR_52_BF_B,
+            PtxboaProcessTypes.NH3SYN_B,
+        ),
     )
     NH3_L_SMR_52_BF_NH3SYN_PROD_IN_SUPPLY = PtxboaChainBlueTemplate(
         code="NH3-L__SMR_52%_BF_NH3SYN__prod_in_supply",
         name="Ammonia (SMR-BF)",
         flow_type_out=PtxboaFlowTypes.NH3_L,
-        steps={
-            PtxboaSteps.ELY: PtxboaProcessTypes.SMR_52_BF_B,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.NH3SYN_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.NH3_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.NH3_S_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.SMR_52_BF_B,
+            PtxboaProcessTypes.NH3SYN_B,
+            PtxboaProcessTypes.NH3_SB_B,
+            PtxboaProcessTypes.NH3_S_B,
+        ),
     )
     NH3_L_SMR_52_NH3SYN_PROD_IN_DEMAND = PtxboaChainBlueTemplate(
         code="NH3-L__SMR_52%_NH3SYN__prod_in_demand",
         name="Ammonia (SMR)*",
         flow_type_out=PtxboaFlowTypes.NH3_L,
-        steps={
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.CH4_LIQ_B,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.CH4_COMP_B,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.CH4_RGAS_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH4_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH4_S_B,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.CH4_P_S_B,
-            PtxboaSteps.PPL: PtxboaProcessTypes.CH4_P_L_B,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.CH4_P_SR_B,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.CH4_P_LR_B,
-            PtxboaSteps.ELY_I: PtxboaProcessTypes.SMR_52_B,
-            PtxboaSteps.DERIV_I: PtxboaProcessTypes.NH3SYN_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.CH4_LIQ_B,
+            PtxboaProcessTypes.CH4_COMP_B,
+            PtxboaProcessTypes.CH4_RGAS_B,
+            PtxboaProcessTypes.CH4_SB_B,
+            PtxboaProcessTypes.CH4_S_B,
+            PtxboaProcessTypes.CH4_P_S_B,
+            PtxboaProcessTypes.CH4_P_L_B,
+            PtxboaProcessTypes.CH4_P_SR_B,
+            PtxboaProcessTypes.CH4_P_LR_B,
+            PtxboaProcessTypes.SMR_52_B,
+            PtxboaProcessTypes.NH3SYN_B,
+        ),
     )
     NH3_L_SMR_52_NH3SYN_PROD_IN_SUPPLY = PtxboaChainBlueTemplate(
         code="NH3-L__SMR_52%_NH3SYN__prod_in_supply",
         name="Ammonia (SMR)",
         flow_type_out=PtxboaFlowTypes.NH3_L,
-        steps={
-            PtxboaSteps.ELY: PtxboaProcessTypes.SMR_52_B,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.NH3SYN_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.NH3_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.NH3_S_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.SMR_52_B,
+            PtxboaProcessTypes.NH3SYN_B,
+            PtxboaProcessTypes.NH3_SB_B,
+            PtxboaProcessTypes.NH3_S_B,
+        ),
     )
     STL_S_ATR_91_DRI_EAF_PROD_IN_DEMAND = PtxboaChainBlueTemplate(
         code="STL-S__ATR_91%_DRI_EAF__prod_in_demand",
         name="Crude Steel (ATR)*",
         flow_type_out=PtxboaFlowTypes.STL_S,
-        steps={
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.CH4_LIQ_B,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.CH4_COMP_B,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.CH4_RGAS_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH4_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH4_S_B,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.CH4_P_S_B,
-            PtxboaSteps.PPL: PtxboaProcessTypes.CH4_P_L_B,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.CH4_P_SR_B,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.CH4_P_LR_B,
-            PtxboaSteps.ELY_I: PtxboaProcessTypes.ATR_91_B,
-            PtxboaSteps.DERIV_I: PtxboaProcessTypes.DRI_B,
-            PtxboaSteps.DERIV_I2: PtxboaProcessTypes.EAF_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.CH4_LIQ_B,
+            PtxboaProcessTypes.CH4_COMP_B,
+            PtxboaProcessTypes.CH4_RGAS_B,
+            PtxboaProcessTypes.CH4_SB_B,
+            PtxboaProcessTypes.CH4_S_B,
+            PtxboaProcessTypes.CH4_P_S_B,
+            PtxboaProcessTypes.CH4_P_L_B,
+            PtxboaProcessTypes.CH4_P_SR_B,
+            PtxboaProcessTypes.CH4_P_LR_B,
+            PtxboaProcessTypes.ATR_91_B,
+            PtxboaProcessTypes.DRI_B,
+            PtxboaProcessTypes.EAF_B,
+        ),
     )
     STL_S_ATR_91_DRI_EAF_PROD_IN_SUPPLY = PtxboaChainBlueTemplate(
         code="STL-S__ATR_91%_DRI_EAF__prod_in_supply",
         name="Crude Steel (ATR)",
         flow_type_out=PtxboaFlowTypes.STL_S,
-        steps={
-            PtxboaSteps.ELY: PtxboaProcessTypes.ATR_91_B,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.DRI_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.DRI_SB_B,
-            PtxboaSteps.DERIV_I2: PtxboaProcessTypes.EAF_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.ATR_91_B,
+            PtxboaProcessTypes.DRI_B,
+            PtxboaProcessTypes.DRI_SB_B,
+            PtxboaProcessTypes.EAF_B,
+        ),
     )
     STL_S_NG_DRI_C_EAF_PROD_IN_DEMAND = PtxboaChainBlueTemplate(
         code="STL-S__NG-DRI-C_EAF__prod_in_demand",
         name="Crude Steel (NG-based)*",
         flow_type_out=PtxboaFlowTypes.STL_S,
-        steps={
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.CH4_LIQ_B,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.CH4_COMP_B,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.CH4_RGAS_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH4_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH4_S_B,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.CH4_P_S_B,
-            PtxboaSteps.PPL: PtxboaProcessTypes.CH4_P_L_B,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.CH4_P_SR_B,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.CH4_P_LR_B,
-            PtxboaSteps.DERIV_I: PtxboaProcessTypes.NG_DRI_C_B,
-            PtxboaSteps.DERIV_I2: PtxboaProcessTypes.EAF_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.CH4_LIQ_B,
+            PtxboaProcessTypes.CH4_COMP_B,
+            PtxboaProcessTypes.CH4_RGAS_B,
+            PtxboaProcessTypes.CH4_SB_B,
+            PtxboaProcessTypes.CH4_S_B,
+            PtxboaProcessTypes.CH4_P_S_B,
+            PtxboaProcessTypes.CH4_P_L_B,
+            PtxboaProcessTypes.CH4_P_SR_B,
+            PtxboaProcessTypes.CH4_P_LR_B,
+            PtxboaProcessTypes.NG_DRI_C_B,
+            PtxboaProcessTypes.EAF_B,
+        ),
     )
     STL_S_NG_DRI_C_EAF_PROD_IN_SUPPLY = PtxboaChainBlueTemplate(
         code="STL-S__NG-DRI-C_EAF__prod_in_supply",
         name="Crude Steel (NG-based)",
         flow_type_out=PtxboaFlowTypes.STL_S,
-        steps={
-            PtxboaSteps.DERIV: PtxboaProcessTypes.NG_DRI_C_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.DRI_SB_B,
-            PtxboaSteps.DERIV_I2: PtxboaProcessTypes.EAF_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.NG_DRI_C_B,
+            PtxboaProcessTypes.DRI_SB_B,
+            PtxboaProcessTypes.EAF_B,
+        ),
     )
     STL_S_SMR_52_BF_DRI_EAF_PROD_IN_DEMAND = PtxboaChainBlueTemplate(
         code="STL-S__SMR_52%_BF_DRI_EAF__prod_in_demand",
         name="Crude Steel (SMR-BF)*",
         flow_type_out=PtxboaFlowTypes.STL_S,
-        steps={
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.CH4_LIQ_B,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.CH4_COMP_B,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.CH4_RGAS_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH4_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH4_S_B,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.CH4_P_S_B,
-            PtxboaSteps.PPL: PtxboaProcessTypes.CH4_P_L_B,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.CH4_P_SR_B,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.CH4_P_LR_B,
-            PtxboaSteps.ELY_I: PtxboaProcessTypes.SMR_52_BF_B,
-            PtxboaSteps.DERIV_I: PtxboaProcessTypes.DRI_B,
-            PtxboaSteps.DERIV_I2: PtxboaProcessTypes.EAF_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.CH4_LIQ_B,
+            PtxboaProcessTypes.CH4_COMP_B,
+            PtxboaProcessTypes.CH4_RGAS_B,
+            PtxboaProcessTypes.CH4_SB_B,
+            PtxboaProcessTypes.CH4_S_B,
+            PtxboaProcessTypes.CH4_P_S_B,
+            PtxboaProcessTypes.CH4_P_L_B,
+            PtxboaProcessTypes.CH4_P_SR_B,
+            PtxboaProcessTypes.CH4_P_LR_B,
+            PtxboaProcessTypes.SMR_52_BF_B,
+            PtxboaProcessTypes.DRI_B,
+            PtxboaProcessTypes.EAF_B,
+        ),
     )
     STL_S_SMR_52_BF_DRI_EAF_PROD_IN_SUPPLY = PtxboaChainBlueTemplate(
         code="STL-S__SMR_52%_BF_DRI_EAF__prod_in_supply",
         name="Crude Steel (SMR-BF)",
         flow_type_out=PtxboaFlowTypes.STL_S,
-        steps={
-            PtxboaSteps.ELY: PtxboaProcessTypes.SMR_52_BF_B,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.DRI_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.DRI_SB_B,
-            PtxboaSteps.DERIV_I2: PtxboaProcessTypes.EAF_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.SMR_52_BF_B,
+            PtxboaProcessTypes.DRI_B,
+            PtxboaProcessTypes.DRI_SB_B,
+            PtxboaProcessTypes.EAF_B,
+        ),
     )
     STL_S_SMR_52_DRI_EAF_PROD_IN_DEMAND = PtxboaChainBlueTemplate(
         code="STL-S__SMR_52%_DRI_EAF__prod_in_demand",
         name="Crude Steel (SMR)*",
         flow_type_out=PtxboaFlowTypes.STL_S,
-        steps={
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.CH4_LIQ_B,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.CH4_COMP_B,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.CH4_RGAS_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH4_SB_B,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH4_S_B,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.CH4_P_S_B,
-            PtxboaSteps.PPL: PtxboaProcessTypes.CH4_P_L_B,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.CH4_P_SR_B,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.CH4_P_LR_B,
-            PtxboaSteps.ELY_I: PtxboaProcessTypes.SMR_52_B,
-            PtxboaSteps.DERIV_I: PtxboaProcessTypes.DRI_B,
-            PtxboaSteps.DERIV_I2: PtxboaProcessTypes.EAF_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.CH4_LIQ_B,
+            PtxboaProcessTypes.CH4_COMP_B,
+            PtxboaProcessTypes.CH4_RGAS_B,
+            PtxboaProcessTypes.CH4_SB_B,
+            PtxboaProcessTypes.CH4_S_B,
+            PtxboaProcessTypes.CH4_P_S_B,
+            PtxboaProcessTypes.CH4_P_L_B,
+            PtxboaProcessTypes.CH4_P_SR_B,
+            PtxboaProcessTypes.CH4_P_LR_B,
+            PtxboaProcessTypes.SMR_52_B,
+            PtxboaProcessTypes.DRI_B,
+            PtxboaProcessTypes.EAF_B,
+        ),
     )
     STL_S_SMR_52_DRI_EAF_PROD_IN_SUPPLY = PtxboaChainBlueTemplate(
         code="STL-S__SMR_52%_DRI_EAF__prod_in_supply",
         name="Crude Steel (SMR)",
         flow_type_out=PtxboaFlowTypes.STL_S,
-        steps={
-            PtxboaSteps.ELY: PtxboaProcessTypes.SMR_52_B,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.DRI_B,
-            PtxboaSteps.SHP: PtxboaProcessTypes.DRI_SB_B,
-            PtxboaSteps.DERIV_I2: PtxboaProcessTypes.EAF_B,
-        },
+        process_types=(
+            PtxboaProcessTypes.SMR_52_B,
+            PtxboaProcessTypes.DRI_B,
+            PtxboaProcessTypes.DRI_SB_B,
+            PtxboaProcessTypes.EAF_B,
+        ),
     )
     AMMONIA_AEL_ = PtxboaChainGreenTemplate(
         code="Ammonia (AEL)",
         name="Ammonia (AEL)",
         flow_type_out=PtxboaFlowTypes.NH3_L,
-        steps={
-            PtxboaSteps.EL_STR: PtxboaProcessTypes.EL_STR,
-            PtxboaSteps.ELY: PtxboaProcessTypes.AEL_EL,
-            PtxboaSteps.H2_STR: PtxboaProcessTypes.H2_STR,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.NH3SYN,
-            PtxboaSteps.SHP: PtxboaProcessTypes.NH3_SB,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.NH3_S,
-        },
+        process_types=(
+            PtxboaProcessTypes.EL_STR,
+            PtxboaProcessTypes.AEL_EL,
+            PtxboaProcessTypes.H2_STR,
+            PtxboaProcessTypes.NH3SYN,
+            PtxboaProcessTypes.NH3_SB,
+            PtxboaProcessTypes.NH3_S,
+        ),
     )
     AMMONIA_AEL_RECONV_TO_H2 = PtxboaChainGreenTemplate(
         code="Ammonia (AEL) + reconv. to H2",
         name="Ammonia (AEL) + reconv. to H2",
         flow_type_out=PtxboaFlowTypes.H2_G,
-        steps={
-            PtxboaSteps.EL_STR: PtxboaProcessTypes.EL_STR,
-            PtxboaSteps.ELY: PtxboaProcessTypes.AEL_EL,
-            PtxboaSteps.H2_STR: PtxboaProcessTypes.H2_STR,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.NH3SYN,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.NH3_REC,
-            PtxboaSteps.POST_PPL: PtxboaProcessTypes.NH3_REC,
-            PtxboaSteps.SHP: PtxboaProcessTypes.NH3_SB,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.NH3_S,
-        },
+        process_types=(
+            PtxboaProcessTypes.EL_STR,
+            PtxboaProcessTypes.AEL_EL,
+            PtxboaProcessTypes.H2_STR,
+            PtxboaProcessTypes.NH3SYN,
+            PtxboaProcessTypes.NH3_REC,
+            PtxboaProcessTypes.NH3_REC,
+            PtxboaProcessTypes.NH3_SB,
+            PtxboaProcessTypes.NH3_S,
+        ),
     )
     AMMONIA_PEM_ = PtxboaChainGreenTemplate(
         code="Ammonia (PEM)",
         name="Ammonia (PEM)",
         flow_type_out=PtxboaFlowTypes.NH3_L,
-        steps={
-            PtxboaSteps.EL_STR: PtxboaProcessTypes.EL_STR,
-            PtxboaSteps.ELY: PtxboaProcessTypes.PEM_EL,
-            PtxboaSteps.H2_STR: PtxboaProcessTypes.H2_STR,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.NH3SYN,
-            PtxboaSteps.SHP: PtxboaProcessTypes.NH3_SB,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.NH3_S,
-        },
+        process_types=(
+            PtxboaProcessTypes.EL_STR,
+            PtxboaProcessTypes.PEM_EL,
+            PtxboaProcessTypes.H2_STR,
+            PtxboaProcessTypes.NH3SYN,
+            PtxboaProcessTypes.NH3_SB,
+            PtxboaProcessTypes.NH3_S,
+        ),
     )
     AMMONIA_PEM_RECONV_TO_H2 = PtxboaChainGreenTemplate(
         code="Ammonia (PEM) + reconv. to H2",
         name="Ammonia (PEM) + reconv. to H2",
         flow_type_out=PtxboaFlowTypes.H2_G,
-        steps={
-            PtxboaSteps.EL_STR: PtxboaProcessTypes.EL_STR,
-            PtxboaSteps.ELY: PtxboaProcessTypes.PEM_EL,
-            PtxboaSteps.H2_STR: PtxboaProcessTypes.H2_STR,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.NH3SYN,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.NH3_REC,
-            PtxboaSteps.POST_PPL: PtxboaProcessTypes.NH3_REC,
-            PtxboaSteps.SHP: PtxboaProcessTypes.NH3_SB,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.NH3_S,
-        },
+        process_types=(
+            PtxboaProcessTypes.EL_STR,
+            PtxboaProcessTypes.PEM_EL,
+            PtxboaProcessTypes.H2_STR,
+            PtxboaProcessTypes.NH3SYN,
+            PtxboaProcessTypes.NH3_REC,
+            PtxboaProcessTypes.NH3_REC,
+            PtxboaProcessTypes.NH3_SB,
+            PtxboaProcessTypes.NH3_S,
+        ),
     )
     AMMONIA_SOEC_ = PtxboaChainGreenTemplate(
         code="Ammonia (SOEC)",
         name="Ammonia (SOEC)",
         flow_type_out=PtxboaFlowTypes.NH3_L,
-        steps={
-            PtxboaSteps.EL_STR: PtxboaProcessTypes.EL_STR,
-            PtxboaSteps.ELY: PtxboaProcessTypes.SOEC_EL,
-            PtxboaSteps.H2_STR: PtxboaProcessTypes.H2_STR,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.NH3SYN,
-            PtxboaSteps.SHP: PtxboaProcessTypes.NH3_SB,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.NH3_S,
-        },
+        process_types=(
+            PtxboaProcessTypes.EL_STR,
+            PtxboaProcessTypes.SOEC_EL,
+            PtxboaProcessTypes.H2_STR,
+            PtxboaProcessTypes.NH3SYN,
+            PtxboaProcessTypes.NH3_SB,
+            PtxboaProcessTypes.NH3_S,
+        ),
     )
     AMMONIA_SOEC_RECONV_TO_H2 = PtxboaChainGreenTemplate(
         code="Ammonia (SOEC) + reconv. to H2",
         name="Ammonia (SOEC) + reconv. to H2",
         flow_type_out=PtxboaFlowTypes.H2_G,
-        steps={
-            PtxboaSteps.EL_STR: PtxboaProcessTypes.EL_STR,
-            PtxboaSteps.ELY: PtxboaProcessTypes.SOEC_EL,
-            PtxboaSteps.H2_STR: PtxboaProcessTypes.H2_STR,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.NH3SYN,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.NH3_REC,
-            PtxboaSteps.POST_PPL: PtxboaProcessTypes.NH3_REC,
-            PtxboaSteps.SHP: PtxboaProcessTypes.NH3_SB,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.NH3_S,
-        },
+        process_types=(
+            PtxboaProcessTypes.EL_STR,
+            PtxboaProcessTypes.SOEC_EL,
+            PtxboaProcessTypes.H2_STR,
+            PtxboaProcessTypes.NH3SYN,
+            PtxboaProcessTypes.NH3_REC,
+            PtxboaProcessTypes.NH3_REC,
+            PtxboaProcessTypes.NH3_SB,
+            PtxboaProcessTypes.NH3_S,
+        ),
     )
     FT_E_FUELS_AEL_ = PtxboaChainGreenTemplate(
         code="FT e-fuels (AEL)",
         name="FT e-fuels (AEL)",
         flow_type_out=PtxboaFlowTypes.CHX_L,
-        steps={
-            PtxboaSteps.EL_STR: PtxboaProcessTypes.EL_STR,
-            PtxboaSteps.ELY: PtxboaProcessTypes.AEL_EL,
-            PtxboaSteps.H2_STR: PtxboaProcessTypes.H2_STR,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.EFUELSYN,
-            PtxboaSteps.SHP: PtxboaProcessTypes.SYN_SB,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.SYN_S,
-        },
+        process_types=(
+            PtxboaProcessTypes.EL_STR,
+            PtxboaProcessTypes.AEL_EL,
+            PtxboaProcessTypes.H2_STR,
+            PtxboaProcessTypes.EFUELSYN,
+            PtxboaProcessTypes.SYN_SB,
+            PtxboaProcessTypes.SYN_S,
+        ),
     )
     FT_E_FUELS_PEM_ = PtxboaChainGreenTemplate(
         code="FT e-fuels (PEM)",
         name="FT e-fuels (PEM)",
         flow_type_out=PtxboaFlowTypes.CHX_L,
-        steps={
-            PtxboaSteps.EL_STR: PtxboaProcessTypes.EL_STR,
-            PtxboaSteps.ELY: PtxboaProcessTypes.PEM_EL,
-            PtxboaSteps.H2_STR: PtxboaProcessTypes.H2_STR,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.EFUELSYN,
-            PtxboaSteps.SHP: PtxboaProcessTypes.SYN_SB,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.SYN_S,
-        },
+        process_types=(
+            PtxboaProcessTypes.EL_STR,
+            PtxboaProcessTypes.PEM_EL,
+            PtxboaProcessTypes.H2_STR,
+            PtxboaProcessTypes.EFUELSYN,
+            PtxboaProcessTypes.SYN_SB,
+            PtxboaProcessTypes.SYN_S,
+        ),
     )
     FT_E_FUELS_SOEC_ = PtxboaChainGreenTemplate(
         code="FT e-fuels (SOEC)",
         name="FT e-fuels (SOEC)",
         flow_type_out=PtxboaFlowTypes.CHX_L,
-        steps={
-            PtxboaSteps.EL_STR: PtxboaProcessTypes.EL_STR,
-            PtxboaSteps.ELY: PtxboaProcessTypes.SOEC_EL,
-            PtxboaSteps.H2_STR: PtxboaProcessTypes.H2_STR,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.EFUELSYN,
-            PtxboaSteps.SHP: PtxboaProcessTypes.SYN_SB,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.SYN_S,
-        },
+        process_types=(
+            PtxboaProcessTypes.EL_STR,
+            PtxboaProcessTypes.SOEC_EL,
+            PtxboaProcessTypes.H2_STR,
+            PtxboaProcessTypes.EFUELSYN,
+            PtxboaProcessTypes.SYN_SB,
+            PtxboaProcessTypes.SYN_S,
+        ),
     )
     GREEN_IRON_AEL_ = PtxboaChainGreenTemplate(
         code="Green Iron (AEL)",
         name="Green Iron (AEL)",
         flow_type_out=PtxboaFlowTypes.DRI_S,
-        steps={
-            PtxboaSteps.EL_STR: PtxboaProcessTypes.EL_STR,
-            PtxboaSteps.ELY: PtxboaProcessTypes.AEL_EL,
-            PtxboaSteps.H2_STR: PtxboaProcessTypes.H2_STR,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.DRI,
-            PtxboaSteps.SHP: PtxboaProcessTypes.DRI_SB,
-        },
+        process_types=(
+            PtxboaProcessTypes.EL_STR,
+            PtxboaProcessTypes.AEL_EL,
+            PtxboaProcessTypes.H2_STR,
+            PtxboaProcessTypes.DRI,
+            PtxboaProcessTypes.DRI_SB,
+        ),
     )
     GREEN_IRON_PEM_ = PtxboaChainGreenTemplate(
         code="Green Iron (PEM)",
         name="Green Iron (PEM)",
         flow_type_out=PtxboaFlowTypes.DRI_S,
-        steps={
-            PtxboaSteps.EL_STR: PtxboaProcessTypes.EL_STR,
-            PtxboaSteps.ELY: PtxboaProcessTypes.PEM_EL,
-            PtxboaSteps.H2_STR: PtxboaProcessTypes.H2_STR,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.DRI,
-            PtxboaSteps.SHP: PtxboaProcessTypes.DRI_SB,
-        },
+        process_types=(
+            PtxboaProcessTypes.EL_STR,
+            PtxboaProcessTypes.PEM_EL,
+            PtxboaProcessTypes.H2_STR,
+            PtxboaProcessTypes.DRI,
+            PtxboaProcessTypes.DRI_SB,
+        ),
     )
     GREEN_IRON_SOEC_ = PtxboaChainGreenTemplate(
         code="Green Iron (SOEC)",
         name="Green Iron (SOEC)",
         flow_type_out=PtxboaFlowTypes.DRI_S,
-        steps={
-            PtxboaSteps.EL_STR: PtxboaProcessTypes.EL_STR,
-            PtxboaSteps.ELY: PtxboaProcessTypes.SOEC_EL,
-            PtxboaSteps.H2_STR: PtxboaProcessTypes.H2_STR,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.DRI,
-            PtxboaSteps.SHP: PtxboaProcessTypes.DRI_SB,
-        },
+        process_types=(
+            PtxboaProcessTypes.EL_STR,
+            PtxboaProcessTypes.SOEC_EL,
+            PtxboaProcessTypes.H2_STR,
+            PtxboaProcessTypes.DRI,
+            PtxboaProcessTypes.DRI_SB,
+        ),
     )
     HYDROGEN_AEL_ = PtxboaChainGreenTemplate(
         code="Hydrogen (AEL)",
         name="Hydrogen (AEL)",
         flow_type_out=PtxboaFlowTypes.H2_G,
-        steps={
-            PtxboaSteps.EL_STR: PtxboaProcessTypes.EL_STR,
-            PtxboaSteps.ELY: PtxboaProcessTypes.AEL_EL,
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.H2_LIQ,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.H2_COMP,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.H2_RGAS,
-            PtxboaSteps.SHP: PtxboaProcessTypes.H2_SB,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.H2_S,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.H2_P_S,
-            PtxboaSteps.PPL: PtxboaProcessTypes.H2_P_L,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.H2_P_SR,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.H2_P_LR,
-        },
+        process_types=(
+            PtxboaProcessTypes.EL_STR,
+            PtxboaProcessTypes.AEL_EL,
+            PtxboaProcessTypes.H2_LIQ,
+            PtxboaProcessTypes.H2_COMP,
+            PtxboaProcessTypes.H2_RGAS,
+            PtxboaProcessTypes.H2_SB,
+            PtxboaProcessTypes.H2_S,
+            PtxboaProcessTypes.H2_P_S,
+            PtxboaProcessTypes.H2_P_L,
+            PtxboaProcessTypes.H2_P_SR,
+            PtxboaProcessTypes.H2_P_LR,
+        ),
     )
     HYDROGEN_PEM_ = PtxboaChainGreenTemplate(
         code="Hydrogen (PEM)",
         name="Hydrogen (PEM)",
         flow_type_out=PtxboaFlowTypes.H2_G,
-        steps={
-            PtxboaSteps.EL_STR: PtxboaProcessTypes.EL_STR,
-            PtxboaSteps.ELY: PtxboaProcessTypes.PEM_EL,
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.H2_LIQ,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.H2_COMP,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.H2_RGAS,
-            PtxboaSteps.SHP: PtxboaProcessTypes.H2_SB,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.H2_S,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.H2_P_S,
-            PtxboaSteps.PPL: PtxboaProcessTypes.H2_P_L,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.H2_P_SR,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.H2_P_LR,
-        },
+        process_types=(
+            PtxboaProcessTypes.EL_STR,
+            PtxboaProcessTypes.PEM_EL,
+            PtxboaProcessTypes.H2_LIQ,
+            PtxboaProcessTypes.H2_COMP,
+            PtxboaProcessTypes.H2_RGAS,
+            PtxboaProcessTypes.H2_SB,
+            PtxboaProcessTypes.H2_S,
+            PtxboaProcessTypes.H2_P_S,
+            PtxboaProcessTypes.H2_P_L,
+            PtxboaProcessTypes.H2_P_SR,
+            PtxboaProcessTypes.H2_P_LR,
+        ),
     )
     HYDROGEN_SOEC_ = PtxboaChainGreenTemplate(
         code="Hydrogen (SOEC)",
         name="Hydrogen (SOEC)",
         flow_type_out=PtxboaFlowTypes.H2_G,
-        steps={
-            PtxboaSteps.EL_STR: PtxboaProcessTypes.EL_STR,
-            PtxboaSteps.ELY: PtxboaProcessTypes.SOEC_EL,
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.H2_LIQ,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.H2_COMP,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.H2_RGAS,
-            PtxboaSteps.SHP: PtxboaProcessTypes.H2_SB,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.H2_S,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.H2_P_S,
-            PtxboaSteps.PPL: PtxboaProcessTypes.H2_P_L,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.H2_P_SR,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.H2_P_LR,
-        },
+        process_types=(
+            PtxboaProcessTypes.EL_STR,
+            PtxboaProcessTypes.SOEC_EL,
+            PtxboaProcessTypes.H2_LIQ,
+            PtxboaProcessTypes.H2_COMP,
+            PtxboaProcessTypes.H2_RGAS,
+            PtxboaProcessTypes.H2_SB,
+            PtxboaProcessTypes.H2_S,
+            PtxboaProcessTypes.H2_P_S,
+            PtxboaProcessTypes.H2_P_L,
+            PtxboaProcessTypes.H2_P_SR,
+            PtxboaProcessTypes.H2_P_LR,
+        ),
     )
     LOHC_AEL_ = PtxboaChainGreenTemplate(
         code="LOHC (AEL)",
         name="LOHC (AEL)",
         flow_type_out=PtxboaFlowTypes.H2_G,
-        steps={
-            PtxboaSteps.EL_STR: PtxboaProcessTypes.EL_STR,
-            PtxboaSteps.ELY: PtxboaProcessTypes.AEL_EL,
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.LOHC_CON,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.LOHC_REC,
-            PtxboaSteps.SHP: PtxboaProcessTypes.LOHC_SB,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.LOHC_S,
-        },
+        process_types=(
+            PtxboaProcessTypes.EL_STR,
+            PtxboaProcessTypes.AEL_EL,
+            PtxboaProcessTypes.LOHC_CON,
+            PtxboaProcessTypes.LOHC_REC,
+            PtxboaProcessTypes.LOHC_SB,
+            PtxboaProcessTypes.LOHC_S,
+        ),
     )
     LOHC_PEM_ = PtxboaChainGreenTemplate(
         code="LOHC (PEM)",
         name="LOHC (PEM)",
         flow_type_out=PtxboaFlowTypes.H2_G,
-        steps={
-            PtxboaSteps.EL_STR: PtxboaProcessTypes.EL_STR,
-            PtxboaSteps.ELY: PtxboaProcessTypes.PEM_EL,
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.LOHC_CON,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.LOHC_REC,
-            PtxboaSteps.SHP: PtxboaProcessTypes.LOHC_SB,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.LOHC_S,
-        },
+        process_types=(
+            PtxboaProcessTypes.EL_STR,
+            PtxboaProcessTypes.PEM_EL,
+            PtxboaProcessTypes.LOHC_CON,
+            PtxboaProcessTypes.LOHC_REC,
+            PtxboaProcessTypes.LOHC_SB,
+            PtxboaProcessTypes.LOHC_S,
+        ),
     )
     LOHC_SOEC_ = PtxboaChainGreenTemplate(
         code="LOHC (SOEC)",
         name="LOHC (SOEC)",
         flow_type_out=PtxboaFlowTypes.H2_G,
-        steps={
-            PtxboaSteps.EL_STR: PtxboaProcessTypes.EL_STR,
-            PtxboaSteps.ELY: PtxboaProcessTypes.SOEC_EL,
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.LOHC_CON,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.LOHC_REC,
-            PtxboaSteps.SHP: PtxboaProcessTypes.LOHC_SB,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.LOHC_S,
-        },
+        process_types=(
+            PtxboaProcessTypes.EL_STR,
+            PtxboaProcessTypes.SOEC_EL,
+            PtxboaProcessTypes.LOHC_CON,
+            PtxboaProcessTypes.LOHC_REC,
+            PtxboaProcessTypes.LOHC_SB,
+            PtxboaProcessTypes.LOHC_S,
+        ),
     )
     METHANE_AEL_ = PtxboaChainGreenTemplate(
         code="Methane (AEL)",
         name="Methane (AEL)",
         flow_type_out=PtxboaFlowTypes.CH4_G,
-        steps={
-            PtxboaSteps.EL_STR: PtxboaProcessTypes.EL_STR,
-            PtxboaSteps.ELY: PtxboaProcessTypes.AEL_EL,
-            PtxboaSteps.H2_STR: PtxboaProcessTypes.H2_STR,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.CH4SYN,
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.CH4_LIQ,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.CH4_COMP,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.CH4_RGAS,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH4_SB,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH4_S,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.CH4_P_S,
-            PtxboaSteps.PPL: PtxboaProcessTypes.CH4_P_L,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.CH4_P_SR,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.CH4_P_LR,
-        },
+        process_types=(
+            PtxboaProcessTypes.EL_STR,
+            PtxboaProcessTypes.AEL_EL,
+            PtxboaProcessTypes.H2_STR,
+            PtxboaProcessTypes.CH4SYN,
+            PtxboaProcessTypes.CH4_LIQ,
+            PtxboaProcessTypes.CH4_COMP,
+            PtxboaProcessTypes.CH4_RGAS,
+            PtxboaProcessTypes.CH4_SB,
+            PtxboaProcessTypes.CH4_S,
+            PtxboaProcessTypes.CH4_P_S,
+            PtxboaProcessTypes.CH4_P_L,
+            PtxboaProcessTypes.CH4_P_SR,
+            PtxboaProcessTypes.CH4_P_LR,
+        ),
     )
     METHANE_AEL_RECONV_TO_H2 = PtxboaChainGreenTemplate(
         code="Methane (AEL) + reconv. to H2",
         name="Methane (AEL) + reconv. to H2",
         flow_type_out=PtxboaFlowTypes.H2_G,
-        steps={
-            PtxboaSteps.EL_STR: PtxboaProcessTypes.EL_STR,
-            PtxboaSteps.ELY: PtxboaProcessTypes.AEL_EL,
-            PtxboaSteps.H2_STR: PtxboaProcessTypes.H2_STR,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.CH4SYN,
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.CH4_LIQ,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.CH4_COMP,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.REGASATR,
-            PtxboaSteps.POST_PPL: PtxboaProcessTypes.ATR,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH4_SB,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH4_S,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.CH4_P_S,
-            PtxboaSteps.PPL: PtxboaProcessTypes.CH4_P_L,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.CH4_P_SR,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.CH4_P_LR,
-        },
+        process_types=(
+            PtxboaProcessTypes.EL_STR,
+            PtxboaProcessTypes.AEL_EL,
+            PtxboaProcessTypes.H2_STR,
+            PtxboaProcessTypes.CH4SYN,
+            PtxboaProcessTypes.CH4_LIQ,
+            PtxboaProcessTypes.CH4_COMP,
+            PtxboaProcessTypes.REGASATR,
+            PtxboaProcessTypes.ATR,
+            PtxboaProcessTypes.CH4_SB,
+            PtxboaProcessTypes.CH4_S,
+            PtxboaProcessTypes.CH4_P_S,
+            PtxboaProcessTypes.CH4_P_L,
+            PtxboaProcessTypes.CH4_P_SR,
+            PtxboaProcessTypes.CH4_P_LR,
+        ),
     )
     METHANE_PEM_ = PtxboaChainGreenTemplate(
         code="Methane (PEM)",
         name="Methane (PEM)",
         flow_type_out=PtxboaFlowTypes.CH4_G,
-        steps={
-            PtxboaSteps.EL_STR: PtxboaProcessTypes.EL_STR,
-            PtxboaSteps.ELY: PtxboaProcessTypes.PEM_EL,
-            PtxboaSteps.H2_STR: PtxboaProcessTypes.H2_STR,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.CH4SYN,
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.CH4_LIQ,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.CH4_COMP,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.CH4_RGAS,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH4_SB,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH4_S,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.CH4_P_S,
-            PtxboaSteps.PPL: PtxboaProcessTypes.CH4_P_L,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.CH4_P_SR,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.CH4_P_LR,
-        },
+        process_types=(
+            PtxboaProcessTypes.EL_STR,
+            PtxboaProcessTypes.PEM_EL,
+            PtxboaProcessTypes.H2_STR,
+            PtxboaProcessTypes.CH4SYN,
+            PtxboaProcessTypes.CH4_LIQ,
+            PtxboaProcessTypes.CH4_COMP,
+            PtxboaProcessTypes.CH4_RGAS,
+            PtxboaProcessTypes.CH4_SB,
+            PtxboaProcessTypes.CH4_S,
+            PtxboaProcessTypes.CH4_P_S,
+            PtxboaProcessTypes.CH4_P_L,
+            PtxboaProcessTypes.CH4_P_SR,
+            PtxboaProcessTypes.CH4_P_LR,
+        ),
     )
     METHANE_PEM_RECONV_TO_H2 = PtxboaChainGreenTemplate(
         code="Methane (PEM) + reconv. to H2",
         name="Methane (PEM) + reconv. to H2",
         flow_type_out=PtxboaFlowTypes.H2_G,
-        steps={
-            PtxboaSteps.EL_STR: PtxboaProcessTypes.EL_STR,
-            PtxboaSteps.ELY: PtxboaProcessTypes.PEM_EL,
-            PtxboaSteps.H2_STR: PtxboaProcessTypes.H2_STR,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.CH4SYN,
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.CH4_LIQ,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.CH4_COMP,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.REGASATR,
-            PtxboaSteps.POST_PPL: PtxboaProcessTypes.ATR,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH4_SB,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH4_S,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.CH4_P_S,
-            PtxboaSteps.PPL: PtxboaProcessTypes.CH4_P_L,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.CH4_P_SR,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.CH4_P_LR,
-        },
+        process_types=(
+            PtxboaProcessTypes.EL_STR,
+            PtxboaProcessTypes.PEM_EL,
+            PtxboaProcessTypes.H2_STR,
+            PtxboaProcessTypes.CH4SYN,
+            PtxboaProcessTypes.CH4_LIQ,
+            PtxboaProcessTypes.CH4_COMP,
+            PtxboaProcessTypes.REGASATR,
+            PtxboaProcessTypes.ATR,
+            PtxboaProcessTypes.CH4_SB,
+            PtxboaProcessTypes.CH4_S,
+            PtxboaProcessTypes.CH4_P_S,
+            PtxboaProcessTypes.CH4_P_L,
+            PtxboaProcessTypes.CH4_P_SR,
+            PtxboaProcessTypes.CH4_P_LR,
+        ),
     )
     METHANE_SOEC_ = PtxboaChainGreenTemplate(
         code="Methane (SOEC)",
         name="Methane (SOEC)",
         flow_type_out=PtxboaFlowTypes.CH4_G,
-        steps={
-            PtxboaSteps.EL_STR: PtxboaProcessTypes.EL_STR,
-            PtxboaSteps.ELY: PtxboaProcessTypes.SOEC_EL,
-            PtxboaSteps.H2_STR: PtxboaProcessTypes.H2_STR,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.CH4SYN,
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.CH4_LIQ,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.CH4_COMP,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.CH4_RGAS,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH4_SB,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH4_S,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.CH4_P_S,
-            PtxboaSteps.PPL: PtxboaProcessTypes.CH4_P_L,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.CH4_P_SR,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.CH4_P_LR,
-        },
+        process_types=(
+            PtxboaProcessTypes.EL_STR,
+            PtxboaProcessTypes.SOEC_EL,
+            PtxboaProcessTypes.H2_STR,
+            PtxboaProcessTypes.CH4SYN,
+            PtxboaProcessTypes.CH4_LIQ,
+            PtxboaProcessTypes.CH4_COMP,
+            PtxboaProcessTypes.CH4_RGAS,
+            PtxboaProcessTypes.CH4_SB,
+            PtxboaProcessTypes.CH4_S,
+            PtxboaProcessTypes.CH4_P_S,
+            PtxboaProcessTypes.CH4_P_L,
+            PtxboaProcessTypes.CH4_P_SR,
+            PtxboaProcessTypes.CH4_P_LR,
+        ),
     )
     METHANE_SOEC_RECONV_TO_H2 = PtxboaChainGreenTemplate(
         code="Methane (SOEC) + reconv. to H2",
         name="Methane (SOEC) + reconv. to H2",
         flow_type_out=PtxboaFlowTypes.H2_G,
-        steps={
-            PtxboaSteps.EL_STR: PtxboaProcessTypes.EL_STR,
-            PtxboaSteps.ELY: PtxboaProcessTypes.SOEC_EL,
-            PtxboaSteps.H2_STR: PtxboaProcessTypes.H2_STR,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.CH4SYN,
-            PtxboaSteps.PRE_SHP: PtxboaProcessTypes.CH4_LIQ,
-            PtxboaSteps.PRE_PPL: PtxboaProcessTypes.CH4_COMP,
-            PtxboaSteps.POST_SHP: PtxboaProcessTypes.REGASATR,
-            PtxboaSteps.POST_PPL: PtxboaProcessTypes.ATR,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH4_SB,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH4_S,
-            PtxboaSteps.PPLS: PtxboaProcessTypes.CH4_P_S,
-            PtxboaSteps.PPL: PtxboaProcessTypes.CH4_P_L,
-            PtxboaSteps.PPLX: PtxboaProcessTypes.CH4_P_SR,
-            PtxboaSteps.PPLR: PtxboaProcessTypes.CH4_P_LR,
-        },
+        process_types=(
+            PtxboaProcessTypes.EL_STR,
+            PtxboaProcessTypes.SOEC_EL,
+            PtxboaProcessTypes.H2_STR,
+            PtxboaProcessTypes.CH4SYN,
+            PtxboaProcessTypes.CH4_LIQ,
+            PtxboaProcessTypes.CH4_COMP,
+            PtxboaProcessTypes.REGASATR,
+            PtxboaProcessTypes.ATR,
+            PtxboaProcessTypes.CH4_SB,
+            PtxboaProcessTypes.CH4_S,
+            PtxboaProcessTypes.CH4_P_S,
+            PtxboaProcessTypes.CH4_P_L,
+            PtxboaProcessTypes.CH4_P_SR,
+            PtxboaProcessTypes.CH4_P_LR,
+        ),
     )
     METHANOL_AEL_ = PtxboaChainGreenTemplate(
         code="Methanol (AEL)",
         name="Methanol (AEL)",
         flow_type_out=PtxboaFlowTypes.CH3OH_L,
-        steps={
-            PtxboaSteps.EL_STR: PtxboaProcessTypes.EL_STR,
-            PtxboaSteps.ELY: PtxboaProcessTypes.AEL_EL,
-            PtxboaSteps.H2_STR: PtxboaProcessTypes.H2_STR,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.CH3OHSYN,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH3OH_SB,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH3OH_S,
-        },
+        process_types=(
+            PtxboaProcessTypes.EL_STR,
+            PtxboaProcessTypes.AEL_EL,
+            PtxboaProcessTypes.H2_STR,
+            PtxboaProcessTypes.CH3OHSYN,
+            PtxboaProcessTypes.CH3OH_SB,
+            PtxboaProcessTypes.CH3OH_S,
+        ),
     )
     METHANOL_PEM_ = PtxboaChainGreenTemplate(
         code="Methanol (PEM)",
         name="Methanol (PEM)",
         flow_type_out=PtxboaFlowTypes.CH3OH_L,
-        steps={
-            PtxboaSteps.EL_STR: PtxboaProcessTypes.EL_STR,
-            PtxboaSteps.ELY: PtxboaProcessTypes.PEM_EL,
-            PtxboaSteps.H2_STR: PtxboaProcessTypes.H2_STR,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.CH3OHSYN,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH3OH_SB,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH3OH_S,
-        },
+        process_types=(
+            PtxboaProcessTypes.EL_STR,
+            PtxboaProcessTypes.PEM_EL,
+            PtxboaProcessTypes.H2_STR,
+            PtxboaProcessTypes.CH3OHSYN,
+            PtxboaProcessTypes.CH3OH_SB,
+            PtxboaProcessTypes.CH3OH_S,
+        ),
     )
     METHANOL_SOEC_ = PtxboaChainGreenTemplate(
         code="Methanol (SOEC)",
         name="Methanol (SOEC)",
         flow_type_out=PtxboaFlowTypes.CH3OH_L,
-        steps={
-            PtxboaSteps.EL_STR: PtxboaProcessTypes.EL_STR,
-            PtxboaSteps.ELY: PtxboaProcessTypes.SOEC_EL,
-            PtxboaSteps.H2_STR: PtxboaProcessTypes.H2_STR,
-            PtxboaSteps.DERIV: PtxboaProcessTypes.CH3OHSYN,
-            PtxboaSteps.SHP: PtxboaProcessTypes.CH3OH_SB,
-            PtxboaSteps.SHP_OWN: PtxboaProcessTypes.CH3OH_S,
-        },
+        process_types=(
+            PtxboaProcessTypes.EL_STR,
+            PtxboaProcessTypes.SOEC_EL,
+            PtxboaProcessTypes.H2_STR,
+            PtxboaProcessTypes.CH3OHSYN,
+            PtxboaProcessTypes.CH3OH_SB,
+            PtxboaProcessTypes.CH3OH_S,
+        ),
     )

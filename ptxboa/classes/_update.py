@@ -44,7 +44,7 @@ class NoQuote:
 def quote(x) -> str:
     if isinstance(x, str):
         return f"'{x}'"
-    elif isinstance(x, tuple):
+    elif isinstance(x, (list, tuple)):
         return "(" + "".join(quote(y) + ", " for y in x) + ")"
     elif isinstance(x, dict):
         return "{" + ", ".join(quote(k) + ":" + quote(v) for k, v in x.items()) + "}"
@@ -111,11 +111,21 @@ def get_chain_steps(xs: dict) -> dict[NoQuote, NoQuote]:
     return result
 
 
+def get_chain_process_types(xs: dict) -> list[NoQuote]:
+    result = []
+    for s in chain_process_steps:
+        process_code = xs[s]
+        if not process_code:
+            continue
+        result.append(get_process_type(process_code))
+    return result
+
+
 def main():
     literals = [
         '"""DO NOT EDIT (created by classes/_update.py)."""',
-        "from ptxboa.classes.base import PtxboaEnum, PtxboaFlowNullType, PtxboaSteps, PtxboaParameterType, PtxboaRegion, PtxboaFlowType, PtxboaChainTemplate, PtxboaChainBlueTemplate, PtxboaChainGreenTemplate",  # noqa
-        "from ptxboa.classes.extra import PtxboaProcessType, PtxboaSecondaryProcessType",  # noqa
+        "from ptxboa.classes.base import PtxboaEnum, PtxboaFlowNullType, PtxboaParameterType, PtxboaRegion, PtxboaFlowType",  # noqa
+        "from ptxboa.classes.extra import PtxboaProcessType, PtxboaSecondaryProcessType, PtxboaTransportProcessType, PtxboaChainTemplate, PtxboaChainBlueTemplate, PtxboaChainGreenTemplate",  # noqa
     ]
 
     literals.append(
@@ -162,6 +172,10 @@ def main():
             secondary_flows as secondary_flow_types,
             case
               when is_secondary=1 then 'PtxboaSecondaryProcessType'
+              when
+                is_transport=1 and
+                is_transformation=0
+                then 'PtxboaTransportProcessType' /* TODO is_transformation=0 */
               else 'PtxboaProcessType' end AS class_name /* modify in DB if needed */
             FROM ptxboa_process ORDER BY process_code""",
             modify_attributes=lambda xs: (
@@ -221,7 +235,7 @@ def main():
                 {k: xs[k] for k in ["code", "name"]}
                 | {
                     "flow_type_out": get_flow_type(xs["flow_type_out"]),
-                    "steps": get_chain_steps(xs),
+                    "process_types": get_chain_process_types(xs),
                 }
             ),
         )
