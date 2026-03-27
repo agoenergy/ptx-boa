@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Callable
 
 if TYPE_CHECKING:
-    from ptxboa.classes.extra import PtxboaProcessType
+    from ptxboa.classes.extra import PtxboaAbstractProcessType, PtxboaProcessType
 
 
 @dataclass(frozen=True, slots=True)
@@ -16,6 +16,11 @@ class PtxboaBase:
 
     def __str__(self) -> str:
         return self.code
+
+    def _set_attrs(self, **attrs) -> None:
+        """Note: Should only be called in __post_init__."""
+        for name, value in attrs.items():
+            object.__setattr__(self, name, value)
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,6 +47,11 @@ class PtxboaInstanceBase:
     def name(self) -> str:
         """name."""
         return self.dtype.name
+
+    def _set_attrs(self, **attrs) -> None:
+        """Note: Should only be called in __post_init__."""
+        for name, value in attrs.items():
+            object.__setattr__(self, name, value)
 
 
 @dataclass(frozen=True, slots=True)
@@ -70,7 +80,26 @@ class PtxboaParameterType(PtxboaTypeBase):
 
 
 @dataclass(frozen=True, slots=True)
-class PtxboaProcess(PtxboaInstanceBase):
+class PtxboaAbstractProcess(PtxboaInstanceBase):
+    """Parameter instance variable."""
+
+    dtype: "PtxboaAbstractProcessType"
+    main_flow_out: "PtxboaFlow"
+
+    def __post_init__(self):
+
+        # check
+        if self.dtype.main_flow_type_out != self.main_flow_out.dtype:
+            raise TypeError(
+                f"{self.dtype.main_flow_type_out} != {self.main_flow_out.dtype}"
+            )
+
+    def __str__(self) -> str:
+        return f"{self.code}( ==> {self.main_flow_out})"
+
+
+@dataclass(frozen=True, slots=True)
+class PtxboaProcess(PtxboaAbstractProcess):
     """Parameter instance variable."""
 
     dtype: "PtxboaProcessType"
@@ -90,11 +119,7 @@ class PtxboaProcess(PtxboaInstanceBase):
             self.main_flow_out.value / self.eff.value
         )
 
-        object.__setattr__(
-            self,
-            "main_flow_in",
-            main_flow_in,
-        )
+        self._set_attrs(main_flow_in=main_flow_in)
 
     def __str__(self) -> str:
         return f"{self.code}({self.main_flow_in} = {self.eff} => {self.main_flow_out})"
@@ -129,13 +154,12 @@ class PtxboaRoute(PtxboaBase):
     code: str = field(init=False)
     name: str = field(init=False)
 
-    from_region: PtxboaRegion
-    to_region: PtxboaRegion
+    region_from: PtxboaRegion
+    region_to: PtxboaRegion
 
     def __post_init__(self):
-        code = f"{self.from_region} => {self.to_region}"
-        object.__setattr__(self, "code", code)
-        object.__setattr__(self, "name", code)
+        code = f"{self.region_from} => {self.region_to}"
+        self._set_attrs(code=code, name=code)
 
     def __str__(self) -> str:
         return f"Route({self.code})"
@@ -143,7 +167,6 @@ class PtxboaRoute(PtxboaBase):
 
 @dataclass(frozen=True, slots=True)
 class PtxboaChainTemplate(PtxboaBase):
-    can_pipeline: bool
     flow_type_out: PtxboaFlowType
 
     # TODO: should be frozen (dict are sorted since 3.7)
@@ -218,3 +241,21 @@ class PtxboaSteps(PtxboaEnum):
     ELY_I = PtxboaStep(code="ELY_I", name="ELY_I")
     DERIV_I = PtxboaStep(code="DERIV_I", name="DERIV_I")
     DERIV_I2 = PtxboaStep(code="DERIV_I2", name="DERIV_I2")
+
+
+@dataclass(frozen=True, slots=True)
+class PtxboaTransportType(PtxboaBase):
+    is_shipping: bool
+    is_own_fuel: bool
+
+
+class PtxboaTransportTypes(PtxboaEnum):
+    SHP = PtxboaTransportType(
+        code="SHP", name="Shipping", is_shipping=True, is_own_fuel=False
+    )
+    SHP_OWN = PtxboaTransportType(
+        code="SHP_OWN", name="Shipping (own fuel)", is_shipping=True, is_own_fuel=False
+    )
+    PPL = PtxboaTransportType(
+        code="PPL", name="Pipeline", is_shipping=False, is_own_fuel=True
+    )

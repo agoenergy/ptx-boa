@@ -48,6 +48,8 @@ def quote(x) -> str:
         return "(" + "".join(quote(y) + ", " for y in x) + ")"
     elif isinstance(x, dict):
         return "{" + ", ".join(quote(k) + ":" + quote(v) for k, v in x.items()) + "}"
+    elif isinstance(x, set):
+        return "{" + ", ".join(quote(k) for k in x) + "}"
     else:
         return str(x)
 
@@ -93,10 +95,10 @@ def get_step(step_code: str) -> NoQuote:
     return NoQuote(f"PtxboaSteps.{code_to_identifier(step_code)}")
 
 
-def get_sec_flow_types(x: str) -> tuple[NoQuote, ...]:
+def get_sec_flow_types(x: str) -> set[NoQuote]:
     if not x:
-        return ()
-    return tuple(get_flow_type(y) for y in x.split("/"))
+        return set()
+    return {get_flow_type(y) for y in x.split("/")}
 
 
 def get_chain_steps(xs: dict) -> dict[NoQuote, NoQuote]:
@@ -157,17 +159,26 @@ def main():
             process_name AS name,
             main_flow_code_out as main_flow_type_out,
             main_flow_code_in as main_flow_type_in,
-            secondary_flows,
+            secondary_flows as secondary_flow_types,
             case
               when is_secondary=1 then 'PtxboaSecondaryProcessType'
               else 'PtxboaProcessType' end AS class_name /* modify in DB if needed */
             FROM ptxboa_process ORDER BY process_code""",
             modify_attributes=lambda xs: (
-                xs
+                # if no secondary_flow_types: dont add
+                {k: v for k, v in xs.items() if k != "secondary_flow_types"}
+                | (
+                    {
+                        "secondary_flow_types": get_sec_flow_types(
+                            xs["secondary_flow_types"]
+                        ),
+                    }
+                    if xs["secondary_flow_types"]
+                    else {}
+                )
                 | {
                     "main_flow_type_out": get_flow_type(xs["main_flow_type_out"]),
                     "main_flow_type_in": get_flow_type(xs["main_flow_type_in"]),
-                    "secondary_flows": get_sec_flow_types(xs["secondary_flows"]),
                 }
             ),
         )
@@ -201,14 +212,13 @@ def main():
             "DERIV_I2",
             /* "CO2_TS_I", # sec process always in blue, if needed */
             "flow_out" as flow_type_out,
-            "can_pipeline",
             case
               when is_green=1 then 'PtxboaChainGreenTemplate'
               when is_blue=1 then 'PtxboaChainBlueTemplate'
               else 'PtxboaChainTemplate' end AS class_name /* modify in DB if needed */
             FROM ptxboa_chains ORDER BY is_green, is_blue, chain""",
             modify_attributes=lambda xs: (
-                {k: xs[k] for k in ["code", "name", "can_pipeline"]}
+                {k: xs[k] for k in ["code", "name"]}
                 | {
                     "flow_type_out": get_flow_type(xs["flow_type_out"]),
                     "steps": get_chain_steps(xs),
