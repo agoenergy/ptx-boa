@@ -97,7 +97,11 @@ def main():
             PtxboaProcessTypes.CCGT_CC_B,
         },
     )
-    chain = create_chain(settings=settings)
+    chain_type = create_chain(settings=settings)
+    print(chain_type)
+    chain = chain_type.create(
+        get_data=get_data, main_flow_out=chain_type.main_flow_type_out.create(1)
+    )
     print(chain)
 
 

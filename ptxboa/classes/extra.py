@@ -1,18 +1,19 @@
 """Classes that need _generated."""
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Callable, Iterable, cast
+from typing import TYPE_CHECKING, Callable, Iterable, Union, cast
 
 import ptxboa.classes._generated
 from ptxboa.classes.base import (
     PtxboaBase,
+    PtxboaFlow,
     PtxboaFlowNullType,
     PtxboaProcess,
     PtxboaTypeBase,
 )
 
 if TYPE_CHECKING:
-    from ptxboa.classes.base import PtxboaFlow, PtxboaFlowType
+    from ptxboa.classes.base import PtxboaFlowType
 
 
 @dataclass(frozen=True, slots=True)
@@ -21,7 +22,7 @@ class PtxboaAbstractProcessType(PtxboaTypeBase):
 
     main_flow_type_out: "PtxboaFlowType"
     main_flow_type_in: "PtxboaFlowType"
-    secondary_flow_types: set["PtxboaFlowType"] = field(init=False)
+    secondary_flow_types: frozenset["PtxboaFlowType"] = field(init=False)
 
     def __post_init__(self):
         self._set_attrs(secondary_flow_types=frozenset())
@@ -31,16 +32,13 @@ class PtxboaAbstractProcessType(PtxboaTypeBase):
 class PtxboaProcessType(PtxboaAbstractProcessType):
     """Process type variable."""
 
-    secondary_flow_types: set["PtxboaFlowType"] = field(default_factory=set)
+    secondary_flow_types: frozenset["PtxboaFlowType"] = field(default_factory=frozenset)
 
     def create(self, get_data: Callable, main_flow_out: "PtxboaFlow") -> PtxboaProcess:
         """Create instance."""
         # get parameters data
-        eff = ptxboa.classes._generated.PtxboaParameterTypes.EFF.create(
-            get_data=get_data
-        )
 
-        return PtxboaProcess(dtype=self, eff=eff, main_flow_out=main_flow_out)
+        return PtxboaProcess(dtype=self, main_flow_out=main_flow_out)
 
     def __post_init__(self):
         self._set_attrs(secondary_flow_types=frozenset(self.secondary_flow_types))
@@ -102,7 +100,7 @@ class PtxboaProcessChain(PtxboaProcess):
     main_flow_in: "PtxboaFlow" = field(init=False)
 
     main_proceses: tuple[PtxboaProcess, ...]
-    secondary_processes: set[PtxboaProcess]
+    secondary_processes: frozenset[PtxboaProcess]
 
     def __post_init__(self):
         self._set_attrs(
@@ -119,10 +117,17 @@ class PtxboaProcessChain(PtxboaProcess):
 class CallOrderNode:
     index: int | PtxboaSecondaryProcessType  # int in main chain
     dtype: PtxboaAbstractProcessType
-    targets: list["CallOrderNode"] = field(default_factory=list)
+    links_out_to_secondary: list["CallOrderNode"] = field(default_factory=list)
+    link_out_to_main: Union["CallOrderNode", None] = None
 
     def __str__(self) -> str:
-        return str(self.index)
+        s = f"{self.index}:{self.dtype}"
+        if self.link_out_to_main:
+            s += f" --> {self.link_out_to_main} {self.dtype}"
+        for x in self.links_out_to_secondary:
+            s += f" --> {x.index} {x.dtype}"
+
+        return s
 
 
 def group_by_flow_type_out(
@@ -139,7 +144,7 @@ def group_by_flow_type_out(
 
 def create_secondary_process_types(
     main_process_types: tuple[PtxboaAbstractProcessType, ...],
-    secondary_process_types: set[PtxboaSecondaryProcessType],
+    secondary_process_types: frozenset[PtxboaSecondaryProcessType],
 ) -> list[CallOrderNode]:
     flow_providers: dict[PtxboaFlowType, CallOrderNode] = {}
     # a new node can onlybe addedif all secondary flows have a provider that can
@@ -147,9 +152,13 @@ def create_secondary_process_types(
     # we go through main chain and add nodes, and recursively add dependencies first
 
     # proxy node for main Chain
-    main_process_nodes = [
-        CallOrderNode(index=i, dtype=t) for i, t in enumerate(main_process_types)
-    ]
+    main_process_nodes = {}
+    next_node = None
+    # initialize in reverse
+    for i, t in reversed(list(enumerate(main_process_types))):
+        node = CallOrderNode(index=i, dtype=t, link_out_to_main=next_node)
+        main_process_nodes[i] = node
+        next_node = node
 
     # secondary_process_types by flow: TODO: check if multiple options?
     secondary_process_types_by_flow = group_by_flow_type_out(secondary_process_types)
@@ -177,17 +186,21 @@ def create_secondary_process_types(
                 add(new_node)
                 flow_providers[ft] = new_node
             # register
-            flow_providers[ft].targets.append(node)
+            flow_providers[ft].links_out_to_secondary.append(node)
 
         # after all dependencies are met: add node
         result.append(node)
 
     # NOTE: the initial main process will also be provider (EL/NG-G)
-    first_node, nodes = main_process_nodes[0], main_process_nodes[1:]
+    first_node, nodes = (
+        main_process_nodes[0],
+        [main_process_nodes[i] for i in range(1, len(main_process_nodes))],
+    )
     add(first_node)
     flow_providers[first_node.dtype.main_flow_type_out] = first_node
     for node in nodes:
         add(node)
+        first_node = node
 
     return list(reversed(result))
 
@@ -199,7 +212,9 @@ class PtxboaProcessChainType(PtxboaAbstractProcessType):
     main_flow_type_out: "PtxboaFlowType" = field(init=False)
     main_flow_type_in: "PtxboaFlowType" = field(init=False)
     main_process_types: tuple[PtxboaAbstractProcessType, ...]
-    secondary_process_types: set[PtxboaSecondaryProcessType]  # will me modified in init
+    secondary_process_types: frozenset[
+        PtxboaSecondaryProcessType
+    ]  # will me modified in init
     _call_order: tuple[CallOrderNode, ...] = field(init=False)
 
     def __post_init__(self):
@@ -226,6 +241,7 @@ class PtxboaProcessChainType(PtxboaAbstractProcessType):
             main_flow_type_out=self.main_process_types[-1].main_flow_type_out,
             _call_order=_call_order,
             secondary_process_types=secondary_process_types,
+            secondary_flow_types=frozenset(),
         )
 
     def __str__(self):
@@ -238,30 +254,37 @@ class PtxboaProcessChainType(PtxboaAbstractProcessType):
     ) -> PtxboaProcessChain:
         """Create instance."""
         # IMPORTANT: initialize backwards
+        all_processes: dict[int | PtxboaSecondaryProcessType, PtxboaProcess] = {}
 
-        main_process: list[PtxboaProcess] = []
-        secondary_processes: dict[PtxboaSecondaryProcessType, PtxboaProcess] = {}
+        for idx, node in enumerate(self._call_order):
+            flow_type = node.dtype.main_flow_type_out
+            if idx > 0:
+                # sum outputs of previously initialized processes
+                main_flow_out = PtxboaFlow(dtype=flow_type, value=0)
+                if node.link_out_to_main:
+                    process = all_processes[node.link_out_to_main.index]
+                    main_flow_out += process.main_flow_in
+                for target in node.links_out_to_secondary:
+                    main_flow_out += all_processes[target.index].secondary_flows_in[
+                        flow_type
+                    ]
+            # initialize process
+            process = node.dtype.create(get_data=get_data, main_flow_out=main_flow_out)
+            all_processes[node.index] = process
 
-        for node in self._call_order:
-            # sum outputs of previously initialized processes
-            _main_flow_out = 0  # noqa TODO
-            for target in node.targets:
-                if isinstance(target.index, int):
-                    # is main
-                    process = main_process[target.index]  # noqa TODO
-                else:
-                    # is secondary
-                    process = secondary_processes[target.index]  # noqa TODO
+        # separate all_processes
+        main_proceses = tuple(
+            all_processes[i] for i in range(len(self.main_process_types))
+        )
+        secondary_processes = frozenset(
+            all_processes[i] for i in self.secondary_process_types
+        )
 
-            process_type: PtxboaAbstractProcessType
-            if isinstance(node.index, int):
-                # is main
-                process_type = self.main_process_types[node.index]  # noqa TODO
-            else:
-                # is secondary
-                process_type = node.index  # noqa TODO
-
-        raise NotImplementedError()
+        return PtxboaProcessChain(
+            dtype=self,
+            main_proceses=main_proceses,
+            secondary_processes=secondary_processes,
+        )
 
 
 @dataclass(frozen=True, slots=True)

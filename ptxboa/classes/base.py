@@ -104,16 +104,32 @@ class PtxboaProcess(PtxboaAbstractProcess):
     """Parameter instance variable."""
 
     dtype: "PtxboaProcessType"
-    eff: PtxboaParameter
+    eff: PtxboaParameter = field(init=False)
     main_flow_out: "PtxboaFlow"
     main_flow_in: "PtxboaFlow" = field(init=False)
 
     def __post_init__(self):
+        # load parameters # FIXME noqa
+        # eff = ptxboa.classes._generated.PtxboaParameterTypes.EFF.create( # FIXME noqa
+        #    get_data=get_data # FIXME noqa
+        # ) # FIXME noqa
+        eff = 1
+
         main_flow_in = self.dtype.main_flow_type_in.create(
-            self.main_flow_out.value / self.eff.value
+            self.main_flow_out.value / eff
         )
 
-        self._set_attrs(main_flow_in=main_flow_in)
+        # FIXME: from data
+        convs = {ft: 1 for ft in self.dtype.secondary_flow_types}  # FIXME # noqa
+
+        secondary_flows_in = {
+            ft: PtxboaFlow(dtype=ft, value=self.main_flow_out.value * conv)
+            for ft, conv in convs.items()
+        }
+
+        self._set_attrs(
+            main_flow_in=main_flow_in, secondary_flows_in=secondary_flows_in, eff=eff
+        )
 
     def __str__(self) -> str:
         return f"{self.code}({self.main_flow_in} = {self.eff} => {self.main_flow_out})"
@@ -122,6 +138,11 @@ class PtxboaProcess(PtxboaAbstractProcess):
 @dataclass(frozen=True, slots=True)
 class PtxboaFlow(PtxboaValue):
     """Flow instance variable."""
+
+    def __add__(self, other: "PtxboaFlow") -> "PtxboaFlow":
+        if self.dtype != other.dtype:
+            raise TypeError()
+        return PtxboaFlow(dtype=self.dtype, value=self.value + other.value)
 
 
 @dataclass(frozen=True, slots=True)
