@@ -3,6 +3,8 @@ import logging
 from typing import Iterable, Union, cast
 
 import coloredlogs
+import matplotlib.pyplot as plt
+import networkx as nx
 
 from ptxboa.api_data import DataHandler
 from ptxboa.static import FlowCodeType, ProcessCodeType, ProcessStepValues
@@ -108,6 +110,10 @@ class AbstractProcess:
     def secondary_flow_types(self) -> set[FlowCodeType]:
         return set()
 
+    @property
+    def is_initial(self) -> bool:
+        return False
+
     def initialize_parameters(self):
         pass
 
@@ -135,6 +141,10 @@ class Process(AbstractProcess):
     @property
     def secondary_flow_types(self) -> set[FlowCodeType]:
         return self._process_type.secondary_flow_types
+
+    @property
+    def is_initial(self) -> bool:
+        return self._process_type.is_initial
 
     def initialize_parameters(self):
         super().initialize_parameters()
@@ -166,6 +176,14 @@ class MarketProcess(AbstractProcess):
         super().__init__()
         self._main_flow_code_out: FlowCodeType = main_flow_code_out
 
+    def initialize_parameters(self, **kwargs):
+        super().initialize_parameters()
+        # TODO
+
+    def calculate(self, main_flow_out: float):
+        super().calculate(main_flow_out=main_flow_out)
+        # TODO
+
     @property
     def main_flow_code_out(self) -> FlowCodeType:
         return self._main_flow_code_out
@@ -180,16 +198,40 @@ class ProcessGraphNode:
         self,
         process: AbstractProcess,
         link_out_to_main: Union["ProcessGraphNode", None] = None,
+        is_main_start: bool = False,
+        is_main_end: bool = False,
     ):
         self.process: AbstractProcess = process
         self.links_out_to_secondary: list["ProcessGraphNode"] = []
         self.link_out_to_main: Union["ProcessGraphNode", None] = link_out_to_main
+        self.is_main_start: bool = is_main_start
+        self.is_main_end: bool = is_main_end
+
+
+def get_chain_parts(
+    main_process_codes: list[ProcessCodeType],
+) -> list[tuple[str, int, int]]:
+    # split and check into export, transport, import
+    is_transport = [ProcessTypes[p].is_transport for p in main_process_codes]
+    # first and last index
+    idx_transport_start = is_transport.index(True)
+    idx_transport_end = is_transport.index(False, idx_transport_start)
+    if not (0 < idx_transport_start < idx_transport_end):
+        raise Exception("Transport")
+    return [
+        ("export", 0, idx_transport_start),
+        ("transport", idx_transport_start, idx_transport_end),
+        ("import", idx_transport_end, len(main_process_codes)),
+    ]
 
 
 class AggregateProcess(AbstractProcess):
-    def __init__(self, process_graph_nodes: list[ProcessGraphNode]):
+    def __init__(
+        self, process_graph_nodes: list[ProcessGraphNode], name: str | None = None
+    ):
         super().__init__()
         self.process_graph_nodes: list[ProcessGraphNode] = process_graph_nodes
+        self.name: str | None = name
 
     @property
     def main_flow_code_out(self) -> FlowCodeType:
@@ -197,75 +239,93 @@ class AggregateProcess(AbstractProcess):
         return last_process.main_flow_code_out
 
     def initialize_parameters(self, **kwargs):
+        super().initialize_parameters()
         for n in self.process_graph_nodes:
             n.process.initialize_parameters(**kwargs)
 
     def calculate(self, main_flow_out: float):
-        self.main_flow_out = main_flow_out
+        super().calculate(main_flow_out=main_flow_out)
+
         # in first in reverse order, we use the given main_flow_out
         # for all following, we combine the required flows from all links.
         # if graph iscorrect,these must have been already calculated
         nodes_rev = list(reversed(self.process_graph_nodes))
-        first_node, nodes = (
-            nodes_rev[0],
-            nodes_rev[1:],
-        )
-        logging.info(f"Calculate: {first_node.process}")
-        first_node.process.calculate(main_flow_out=main_flow_out)
-        for node in nodes:
-            logging.info(f"Calculate: {node.process}")
+        for node in nodes_rev:
+            if node.is_main_end:
+                main_flow_out_current = main_flow_out
+            else:
+                flow_code = node.process.main_flow_code_out
 
-            main_flow_out = 0
-            if node.link_out_to_main:
-                logging.info(
-                    f"{node.process}: Serve main {self.main_flow_code_out} from {node.link_out_to_main.process}"
-                )
-                main_flow_out += node.link_out_to_main.process.get_main_flow_in()
+                main_flow_out_current = 0
+                if node.link_out_to_main:
+                    logging.info(
+                        f"{node.process}: Serve main {flow_code} to {node.link_out_to_main.process}"
+                    )
+                    main_flow_out_current += (
+                        node.link_out_to_main.process.get_main_flow_in()
+                    )
 
-            for n in node.links_out_to_secondary:
-                logging.info(
-                    f"{node.process}: Serve secondary {self.main_flow_code_out} from {n.process}"
-                )
-                main_flow_out += n.process.get_secondary_flow_in(
-                    flow_code=self.main_flow_code_out
-                )
+                for n in node.links_out_to_secondary:
+                    logging.info(
+                        f"{node.process}: Serve secondary {flow_code} to {n.process}"
+                    )
+                    main_flow_out_current += n.process.get_secondary_flow_in(
+                        flow_code=flow_code
+                    )
 
-            node.process.calculate(main_flow_out=main_flow_out)
+                # check
+                if not main_flow_out_current:
+                    raise ValueError(f"{node.process}: main_flow_out is 0")
+            logging.info(f"Calculate: {node.process} for {main_flow_out_current}")
+            node.process.calculate(main_flow_out=main_flow_out_current)
+
+            if node.is_main_start:
+                self._main_flow_in = node.process.get_main_flow_in()
 
     @staticmethod
     def create_from_chain(
         main_process_codes: list[ProcessCodeType],
         secondary_process_codes: set[ProcessCodeType],
     ) -> "AggregateProcess":
-        # split and check into export, transport, import
 
         # in reverse order:
         check_use_all_main_process_codes = []
         current_node = None
         process_graph_nodes_rev: list[ProcessGraphNode] = []
-        for chain_part_rev in ["import", "transport", "export"]:
-            attr = f"allow_in_{chain_part_rev}"
-            main_process_codes_part: list[ProcessCodeType] = [
-                x for x in main_process_codes if getattr(ProcessTypes[x], attr)
-            ]
-            secondary_process_codes_part: set[ProcessCodeType] = {
-                x for x in secondary_process_codes if getattr(ProcessTypes[x], attr)
+
+        for name, i, j in reversed(
+            get_chain_parts(main_process_codes=main_process_codes)
+        ):
+            attr = f"allow_in_{name}"
+            pcodes: list[ProcessCodeType] = main_process_codes[i:j]
+            # check
+            if not all(getattr(ProcessTypes[p], attr) for p in pcodes):
+                raise Exception(f"Invalid {name} {pcodes}")
+            spcodes: set[ProcessCodeType] = {
+                p for p in secondary_process_codes if getattr(ProcessTypes[p], attr)
             }
-            check_use_all_main_process_codes = (
-                main_process_codes_part + check_use_all_main_process_codes
-            )
             process = AggregateProcess.create_from_chain_part(
-                main_process_codes=main_process_codes_part,
-                secondary_process_codes=secondary_process_codes_part,
+                main_process_codes=pcodes,
+                secondary_process_codes=spcodes,
             )
+            process.name = name.upper()
             current_node = ProcessGraphNode(
                 process=process, link_out_to_main=current_node
             )
+            check_use_all_main_process_codes = pcodes + check_use_all_main_process_codes
             process_graph_nodes_rev.append(current_node)
 
-        return AggregateProcess(
-            process_graph_nodes=list(reversed(process_graph_nodes_rev))
-        )
+        # check
+        if not tuple(check_use_all_main_process_codes) == tuple(main_process_codes):
+            raise Exception(
+                f"{check_use_all_main_process_codes} != {main_process_codes}"
+            )
+
+        process_graph_nodes = list(reversed(process_graph_nodes_rev))
+        process_graph_nodes[0].is_main_start = True
+        process_graph_nodes[-1].is_main_end = True
+
+        return AggregateProcess(process_graph_nodes=process_graph_nodes)
 
     @staticmethod
     def create_from_chain_part(
@@ -304,16 +364,26 @@ class AggregateProcess(AbstractProcess):
 
         # initialize nodes for main chain
         main_process_nodes: list[ProcessGraphNode] = []
-        for process_code in main_process_codes:
+        for i, process_code in enumerate(main_process_codes):
             process_class = ProcessTypes[process_code].process_class
             process = process_class(process_code=process_code)
-            main_process_nodes.append(ProcessGraphNode(process=process))
+            main_process_nodes.append(
+                ProcessGraphNode(
+                    process=process,
+                    is_main_start=(i == 0),
+                    is_main_end=(i == (len(main_process_codes) - 1)),
+                )
+            )
         # Link main chain: link: to next
         for i in range(len(main_process_nodes) - 1):
             main_process_nodes[i].link_out_to_main = main_process_nodes[i + 1]
 
         for i, node in enumerate(main_process_nodes):
-            if i == 0:
+            if node.process.is_initial:
+                if i != 0:
+                    raise Exception(
+                        f"is_initial process not at beginning: {node.process}"
+                    )
                 # NOTE: the initial main process will also be provider (EL/NG-G)
                 flow_providers[node.process.main_flow_code_out] = node
 
@@ -323,8 +393,12 @@ class AggregateProcess(AbstractProcess):
 
     def __str__(self):
         s_val = f"={self._main_flow_out:.4f}" if self._main_flow_out else ""
-        procs = [x.process for x in self.process_graph_nodes]
-        return "[" + ", ".join(str(x) for x in procs) + f"]{s_val}"
+        if self.name:
+            name = self.name
+        else:
+            procs = [x.process for x in self.process_graph_nodes]
+            name = ", ".join(str(x) for x in procs)
+        return "[" + name + f"]{s_val}"
 
 
 def group_by_flow_type_out(
@@ -360,10 +434,62 @@ def main():
     )
     logging.info(chain_process)
 
+    ge, gt, gi = chain_process.process_graph_nodes
+    # plot(gt.process)
+
     chain_process.initialize_parameters()
     chain_process.calculate(1)
 
-    logging.info(chain_process)
+    # logging.info(chain_process)
+
+
+def plot(process: AggregateProcess):
+
+    # Create a directed graph
+    G = nx.DiGraph()
+    node_labels = {}
+    edge_labels = {}
+    edge_widths = []
+
+    for node in process.process_graph_nodes:
+        G.add_node(node)
+        node_labels[node] = str(node.process)
+
+    for node in process.process_graph_nodes:
+        if node.link_out_to_main:
+            e = (node, node.link_out_to_main)
+            G.add_edge(*e)
+            edge_labels[e] = node.process.main_flow_code_out
+            edge_widths.append(2)
+        for n in node.links_out_to_secondary:
+            e = (node, n)
+            G.add_edge(*e)
+            edge_labels[e] = node.process.main_flow_code_out
+            edge_widths.append(1)
+
+    # Position nodes using a layout
+    pos = nx.spring_layout(G)
+
+    # Draw nodes
+    nx.draw(
+        G,
+        pos,
+        with_labels=False,
+        node_color="lightblue",
+        width=edge_widths,
+    )
+
+    # Draw node labels
+    nx.draw_networkx_labels(G, pos, labels=node_labels, font_size=8, font_color="black")
+
+    # Draw edge labels
+    nx.draw_networkx_edge_labels(
+        G, pos, edge_labels=edge_labels, font_size=6, font_color="red"
+    )
+
+    # Save to PNG
+    plt.savefig("graph.png", dpi=300)
+    plt.show()
 
 
 if __name__ == "__main__":
