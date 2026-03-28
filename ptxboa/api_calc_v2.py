@@ -89,6 +89,9 @@ class Process:
     def calculate(self, main_flow_out: float):
         pass
 
+    def __str__(self):
+        return self.process_code
+
 
 class SecondaryProcess(Process):
     pass
@@ -104,9 +107,16 @@ class VirtualProcessMixin:
         return set()
 
 
-class MarketProcess(SecondaryProcess, VirtualProcessMixin):
+class MarketProcess(VirtualProcessMixin, SecondaryProcess):
     def __init__(self, main_flow_code_out: FlowCodeType):
-        self.main_flow_code_out: FlowCodeType = main_flow_code_out
+        self._main_flow_code_out: FlowCodeType = main_flow_code_out
+
+    @property
+    def main_flow_code_out(self) -> FlowCodeType:
+        return self._main_flow_code_out
+
+    def __str__(self):
+        return self._main_flow_code_out
 
 
 class ProcessGraphNode:
@@ -118,7 +128,7 @@ class ProcessGraphNode:
         self.link_out_to_main: Union["ProcessGraphNode", None] = link_out_to_main
 
 
-class AggregateProcess(Process, VirtualProcessMixin):
+class AggregateProcess(VirtualProcessMixin, Process):
     def __init__(self, process_graph_nodes_reverse_order: list[ProcessGraphNode]):
         self.process_graph_nodes_reverse_order: list[ProcessGraphNode] = (
             process_graph_nodes_reverse_order
@@ -128,6 +138,14 @@ class AggregateProcess(Process, VirtualProcessMixin):
     def main_flow_code_out(self) -> FlowCodeType:
         last_process = self.process_graph_nodes_reverse_order[0].process
         return last_process.main_flow_code_out
+
+    def initialize_parameters(self, **kwargs):
+        for n in self.process_graph_nodes_reverse_order:
+            n.process.initialize_parameters(**kwargs)
+
+    def calculate(self, main_flow_out: float):
+        for n in self.process_graph_nodes_reverse_order:
+            n.process.calculate(main_flow_out=main_flow_out)
 
     @staticmethod
     def create_from_chain(
@@ -172,25 +190,24 @@ class AggregateProcess(Process, VirtualProcessMixin):
         process_graph_nodes_reverse_order: list[ProcessGraphNode] = []
 
         flow_providers: dict[FlowCodeType, ProcessGraphNode] = {}
+        secondary_process_codes_by_flow_code: dict[FlowCodeType, ProcessCodeType] = (
+            group_by_flow_type_out(secondary_process_codes)
+        )
 
-        def create_provider_node(flow_type: FlowCodeType) -> ProcessGraphNode:
-            if flow_type in secondary_process_types_by_flow:
-                dtype = cast(
-                    PtxboaSecondaryProcessType,
-                    secondary_process_types_by_flow.pop(flow_type),
-                )
+        def create_provider_node(flow_code: FlowCodeType) -> ProcessGraphNode:
+            if flow_code in secondary_process_codes_by_flow_code:
+                process_code = secondary_process_codes_by_flow_code[flow_code]
+                process = SecondaryProcess(process_code=process_code)
             else:
                 # we need to create Speccost Market process
-                dtype = PtxboaMarketSecondaryProcessType.create_for_flow_type(
-                    flow_type=flow_type
-                )
-            return ProcessGraphNode(index=dtype, dtype=dtype)
+                process = MarketProcess(main_flow_code_out=flow_code)
+            return ProcessGraphNode(process=process)
 
         def add(node: ProcessGraphNode):
             # First (!) add dependencies recursively
             for ft in node.process.secondary_flow_types:
                 if ft not in flow_providers:
-                    new_node = create_provider_node(flow_type=ft)
+                    new_node = create_provider_node(flow_code=ft)
                     add(new_node)
                     flow_providers[ft] = new_node
                 # register
@@ -229,6 +246,18 @@ class AggregateProcess(Process, VirtualProcessMixin):
         return "[" + ", ".join(str(x) for x in procs) + "]"
 
 
+def group_by_flow_type_out(
+    process_codes: Iterable[ProcessCodeType],
+) -> dict[FlowCodeType, ProcessCodeType]:
+    result = {}
+    for process_code in process_codes:
+        flow_code = ProcessTypes[process_code].main_flow_code_out
+        if flow_code in result:
+            raise KeyError(f"Multiple items for {flow_code}")
+        result[flow_code] = process_code
+    return result
+
+
 def main():
     chain_code = "STL-S__NG-DRI-C_EAF__prod_in_demand"
     first_process_code: ProcessCodeType = "NG-PROD#B"
@@ -249,6 +278,9 @@ def main():
         secondary_process_codes=secondary_process_codes,
     )
     print(chain_process)
+
+    chain_process.initialize_parameters()
+    chain_process.calculate(1)
 
 
 main()
