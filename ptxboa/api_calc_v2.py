@@ -7,7 +7,28 @@ import matplotlib.pyplot as plt
 import networkx as nx
 
 from ptxboa.api_data import DataHandler
-from ptxboa.static import FlowCodeType, ProcessCodeType, ProcessStepValues
+from ptxboa.static import FlowCodeType, ProcessCodeType
+
+ProcessStepValuesSorted = [
+    "EL_STR",
+    "ELY",
+    "H2_STR",
+    "DERIV",
+    "DERIV2",
+    "PRE_SHP",
+    "SHP",
+    "SHP_OWN",
+    "POST_SHP",
+    "PRE_PPL",
+    "PPLS",
+    "PPL",
+    "PPLX",
+    "PPLR",
+    "POST_PPL",
+    "ELY_I",
+    "DERIV_I",
+    "DERIV_I2",
+]
 
 df_process = DataHandler.get_dimension("process")
 
@@ -38,7 +59,8 @@ class ProcessType:
 
     @property
     def is_transport(self) -> bool:
-        return self._is_transport and not self.is_transformation
+        # return self._is_transport and not self.is_transformation
+        return self._is_transport
 
     @property
     def is_initial(self) -> bool:
@@ -65,7 +87,7 @@ class ProcessType:
 
     @property
     def allow_in_import(self) -> bool:
-        # secondary: onlyallow CCS
+        # secondary: only allow CCS
         return self.allow_in_export and (
             not self.is_secondary or self.process_code == "CO2-T+S#B"  # TODO:generalize
         )
@@ -107,6 +129,10 @@ class AbstractProcess:
         raise NotImplementedError
 
     @property
+    def main_flow_code_in(self) -> FlowCodeType | None:
+        return None
+
+    @property
     def secondary_flow_types(self) -> set[FlowCodeType]:
         return set()
 
@@ -137,6 +163,10 @@ class Process(AbstractProcess):
     @property
     def main_flow_code_out(self) -> FlowCodeType:
         return self._process_type.main_flow_code_out
+
+    @property
+    def main_flow_code_in(self) -> FlowCodeType | None:
+        return self._process_type.main_flow_code_in
 
     @property
     def secondary_flow_types(self) -> set[FlowCodeType]:
@@ -232,11 +262,20 @@ class AggregateProcess(AbstractProcess):
         super().__init__()
         self.process_graph_nodes: list[ProcessGraphNode] = process_graph_nodes
         self.name: str | None = name
+        self._first_main_node = next(
+            n for n in self.process_graph_nodes if n.is_main_start
+        )
+        self._last_main_node = next(
+            n for n in self.process_graph_nodes if n.is_main_end
+        )
 
     @property
     def main_flow_code_out(self) -> FlowCodeType:
-        last_process = self.process_graph_nodes[-1].process
-        return last_process.main_flow_code_out
+        return self._last_main_node.process.main_flow_code_out
+
+    @property
+    def main_flow_code_in(self) -> FlowCodeType | None:
+        return self._first_main_node.process.main_flow_code_in
 
     def initialize_parameters(self, **kwargs):
         super().initialize_parameters()
@@ -292,6 +331,8 @@ class AggregateProcess(AbstractProcess):
         check_use_all_main_process_codes = []
         current_node = None
         process_graph_nodes_rev: list[ProcessGraphNode] = []
+
+        # FIXME: pre/post shipping processes, remove not required
 
         for name, i, j in reversed(
             get_chain_parts(main_process_codes=main_process_codes)
@@ -376,7 +417,10 @@ class AggregateProcess(AbstractProcess):
             )
         # Link main chain: link: to next
         for i in range(len(main_process_nodes) - 1):
-            main_process_nodes[i].link_out_to_main = main_process_nodes[i + 1]
+            n1, n2 = main_process_nodes[i : i + 2]
+            if n1.process.main_flow_code_out != n2.process.main_flow_code_in:
+                logging.error(f"{n1.process} ==> {n2.process}")
+            n1.link_out_to_main = n2
 
         for i, node in enumerate(main_process_nodes):
             if node.process.is_initial:
@@ -424,7 +468,9 @@ def main():
 
     chain_data = DataHandler.get_dimension("chain").loc[chain_code].to_dict()
     main_process_codes: list[ProcessCodeType] = [
-        cast(ProcessCodeType, chain_data[x]) for x in ProcessStepValues if chain_data[x]
+        cast(ProcessCodeType, chain_data[x])
+        for x in ProcessStepValuesSorted
+        if chain_data[x]
     ]
     main_process_codes.insert(0, first_process_code)
 
