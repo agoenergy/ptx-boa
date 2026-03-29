@@ -156,8 +156,8 @@ class AbstractProcess:
 
     def get_secondary_flow_in(self, flow_code: FlowCodeType) -> float:
         """Value of calculated secondary in flow for given flow type."""
-        if not self._secondary_flows_in:
-            raise Exception("Not calculated yet")
+        if self._secondary_flows_in is None:
+            raise Exception(f"Not calculated yet: {self}")
         return self._secondary_flows_in[flow_code]
 
     @property
@@ -520,6 +520,7 @@ class AggregateProcess(AbstractProcess):
             node: ProcessGraphNode,
             flows_must_be_market: set[FlowCodeType] | None = None,
         ):
+
             # First (!) add dependencies recursively
             # use sorted so outcome is deterministic
             for ft in sorted(node.process.secondary_flow_types):
@@ -537,9 +538,14 @@ class AggregateProcess(AbstractProcess):
                         | cast(set[FlowCodeType], {ft}),
                     )
 
+                logging.info(
+                    f"Adding link: {flow_providers[ft].process} -{ft}-> {node.process}"
+                )
+
                 # register
                 flow_providers[ft].links_out_to_secondary.append(node)
 
+            logging.info(f"Adding node: {node.process}")
             # after all dependencies are met: add node
             process_graph_nodes.append(node)
 
@@ -859,9 +865,10 @@ def main():
     permutations = create_permutation_names(create_permutations(scenario=scenario))
 
     for i, (name, settings) in enumerate(permutations.items()):
-        # if name != "CH3OH-L__ATR_91%_CH3OHSYN__prod_in_demand_Ship_OWN":
-        #    continue
+        if name != "CH3OH-L__ATR_91%_CH3OHSYN__prod_in_supply_Ship":
+            continue
         logging.info(f"{i + 1}/{len(permutations)}: {settings}")
+        logging.info(name)
         chain_process = create_chain_process(settings=settings, name=name)
         logging.info(
             " => ".join(str(p.process_code) for p in chain_process.full_main_chain)
