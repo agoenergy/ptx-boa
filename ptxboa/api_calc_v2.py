@@ -406,7 +406,7 @@ class AggregateProcess(AbstractProcess):
 
                 main_flow_out_current = 0
                 if node.link_out_to_main:
-                    logging.debug(
+                    logging.info(
                         f"{node.process}: Serve main {flow_code} to "
                         f"{node.link_out_to_main.process}"
                     )
@@ -415,8 +415,9 @@ class AggregateProcess(AbstractProcess):
                     )
 
                 for n in node.links_out_to_secondary:
-                    logging.debug(
-                        f"{node.process}: Serve secondary {flow_code} to {n.process}"
+                    logging.info(
+                        f"{node.process}: Serve secondary {flow_code} "
+                        f"to {n.process.process_code}"
                     )
                     main_flow_out_current += n.process.get_secondary_flow_in(
                         flow_code=flow_code
@@ -425,7 +426,7 @@ class AggregateProcess(AbstractProcess):
                 # check
                 if not main_flow_out_current:
                     raise ValueError(f"{node.process}: main_flow_out is 0")
-            logging.debug(f"Calculate: {node.process} for {main_flow_out_current}")
+            logging.info(f"Calculate: {node.process} for {main_flow_out_current}")
             node.process.calculate(main_flow_out=main_flow_out_current)
 
             if node.is_main_start:
@@ -756,7 +757,7 @@ def plot(chain_process: AggregateProcess, name: str):
     edge_labels = {}
     edge_widths = {}
 
-    xs = [0, 0, 0]
+    xs: list[float] = [0, 0, 0]
     node_end_last = None
     len_main = 0
     for ex_tr_imp in chain_process.process_graph_nodes:
@@ -764,8 +765,8 @@ def plot(chain_process: AggregateProcess, name: str):
         nodes = cast(AggregateProcess, ex_tr_imp.process).process_graph_nodes
         # add processes as nodes to DiGraph
 
-        xs[1] = xs[0]
-        xs[2] = xs[0]
+        xs[1] = max(xs[0] + 0.25, xs[0])  # stagger
+        xs[2] = max(xs[0], xs[2])
 
         for node in nodes:
             key = node.process
@@ -858,6 +859,8 @@ def main():
     permutations = create_permutation_names(create_permutations(scenario=scenario))
 
     for i, (name, settings) in enumerate(permutations.items()):
+        # if name != "CH3OH-L__ATR_91%_CH3OHSYN__prod_in_demand_Ship_OWN":
+        #    continue
         logging.info(f"{i + 1}/{len(permutations)}: {settings}")
         chain_process = create_chain_process(settings=settings, name=name)
         logging.info(
