@@ -9,7 +9,7 @@ import coloredlogs
 import matplotlib.pyplot as plt
 import networkx as nx
 
-from ptxboa.api_data import DataHandler
+from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler
 from ptxboa.static import (
     FlowCodeType,
     ProcessCodeType,
@@ -42,6 +42,7 @@ ProcessStepValuesSorted = [
 
 df_process = DataHandler.get_dimension("process")
 df_chain = DataHandler.get_dimension("chain")
+df_parameter = DataHandler.get_dimension("parameter")
 
 
 class ProcessType:
@@ -180,7 +181,17 @@ class AbstractProcess:
         """
         return False
 
-    def initialize_parameters(self):
+    @property
+    def is_transport(self) -> bool:
+        """Is this a transport process."""
+        return False
+
+    @property
+    def is_secondary(self) -> bool:
+        """Is this a secondary process."""
+        return False
+
+    def initialize_parameters(self, data_handler: DataHandler):
         """Initialize parameetr data for this process."""
         pass
 
@@ -227,9 +238,14 @@ class Process(AbstractProcess):
         """
         return self._process_type.is_initial
 
-    def initialize_parameters(self):
+    @property
+    def is_transport(self) -> bool:
+        """Is this a transport process."""
+        return self._process_type.is_transport
+
+    def initialize_parameters(self, data_handler: DataHandler):
         """Initialize parameetr data for this process."""
-        super().initialize_parameters()
+        super().initialize_parameters(data_handler=data_handler, **kwargs)
 
     def calculate(self, main_flow_out: float):
         """Calculate all process values based on desired output flow."""
@@ -247,7 +263,10 @@ class TransportProcess(Process):
 
 
 class SecondaryProcess(Process):
-    pass
+    @property
+    def is_secondary(self) -> bool:
+        """Is this a secondary process."""
+        return True
 
 
 class InitialProcess(SecondaryProcess):
@@ -259,9 +278,9 @@ class MarketProcess(AbstractProcess):
         super().__init__()
         self._main_flow_code_out: FlowCodeType = main_flow_code_out
 
-    def initialize_parameters(self, **kwargs):
+    def initialize_parameters(self, data_handler: DataHandler, **kwargs):
         """Initialize parameetr data for this process."""
-        super().initialize_parameters()
+        super().initialize_parameters(data_handler=data_handler, **kwargs)
         # TODO
 
     def calculate(self, main_flow_out: float):
@@ -355,11 +374,11 @@ class AggregateProcess(AbstractProcess):
 
         return result
 
-    def initialize_parameters(self, **kwargs):
+    def initialize_parameters(self, data_handler: DataHandler, **kwargs):
         """Initialize parameetr data for this process."""
-        super().initialize_parameters()
+        super().initialize_parameters(data_handler=data_handler, **kwargs)
         for n in self.process_graph_nodes:
-            n.process.initialize_parameters(**kwargs)
+            n.process.initialize_parameters(data_handler=data_handler, **kwargs)
 
     def calculate(self, main_flow_out: float):
         """Calculate all process values based on desired output flow."""
@@ -377,7 +396,7 @@ class AggregateProcess(AbstractProcess):
 
                 main_flow_out_current = 0
                 if node.link_out_to_main:
-                    logging.info(
+                    logging.debug(
                         f"{node.process}: Serve main {flow_code} to "
                         f"{node.link_out_to_main.process}"
                     )
@@ -386,7 +405,7 @@ class AggregateProcess(AbstractProcess):
                     )
 
                 for n in node.links_out_to_secondary:
-                    logging.info(
+                    logging.debug(
                         f"{node.process}: Serve secondary {flow_code} to {n.process}"
                     )
                     main_flow_out_current += n.process.get_secondary_flow_in(
@@ -396,7 +415,7 @@ class AggregateProcess(AbstractProcess):
                 # check
                 if not main_flow_out_current:
                     raise ValueError(f"{node.process}: main_flow_out is 0")
-            logging.info(f"Calculate: {node.process} for {main_flow_out_current}")
+            logging.debug(f"Calculate: {node.process} for {main_flow_out_current}")
             node.process.calculate(main_flow_out=main_flow_out_current)
 
             if node.is_main_start:
@@ -511,6 +530,7 @@ class AggregateProcess(AbstractProcess):
             n1, n2 = main_process_nodes[i : i + 2]
             if n1.process.main_flow_code_out != n2.process.main_flow_code_in:
                 logging.error(f"{n1.process} ==> {n2.process}")
+                # raise Exception(f"{n1.process} ==> {n2.process}") # noqa
             n1.link_out_to_main = n2
 
         for i, node in enumerate(main_process_nodes):
@@ -560,8 +580,8 @@ class Settings:
     secondary_process_codes: set[ProcessCodeType]
 
 
-def create_permutations() -> Iterable[Settings]:
-    scenario: ScenarioType = "2040 (medium)"
+def create_permutations(scenario: ScenarioType) -> Iterable[Settings]:
+
     # secproc_co2: SecProcCO2Type | None # noqa
     # secproc_water: SecProcH2OType | None # noqa
     # chain: ChainNameType # noqa
@@ -623,20 +643,6 @@ def create_chain_process(settings: Settings) -> AggregateProcess:
     return chain_process
 
 
-def main():
-    logging.info(ProcessTypes["NH3-SB"].allow_in_transport)
-    for settings in create_permutations():
-        logging.info(settings)
-        chain_process = create_chain_process(settings=settings)
-        logging.info(
-            " => ".join(str(p.process_code) for p in chain_process.full_main_chain)
-        )
-        chain_process.initialize_parameters()
-        chain_process.calculate(1)
-        # ge, gt, gi = chain_process.process_graph_nodes # noqa
-        # plot(gt.process) # noqa
-
-
 def plot(process: AggregateProcess):
 
     # Create a directed graph
@@ -684,6 +690,52 @@ def plot(process: AggregateProcess):
     # Save to PNG
     plt.savefig("graph.png", dpi=300)
     plt.show()
+
+
+def main():
+    print(
+        df_parameter[
+            [
+                "parameter_code",
+                # "parameter_name",
+                # "unit",
+                # "per_transformation_process",
+                # "per_transport_process",
+                # "per_re_generation_process",
+                "per_process",
+                "per_flow",
+                "per_region",
+                "per_import_country",
+                "has_global_default",
+                # "global_default_changeable",
+                # "own_country_changeable",
+                # "comment",
+                # "dimensions",
+            ]
+        ].sort_values(
+            [
+                "per_import_country",
+                "per_process",
+                "per_flow",
+                "per_region",
+                "has_global_default",
+                "parameter_code",
+            ]
+        )
+    )
+
+    scenario: ScenarioType = "2040 (medium)"
+    data_handler = DataHandler(scenario=scenario, data_dir=DEFAULT_DATA_DIR)
+    for settings in create_permutations(scenario=scenario):
+        logging.info(settings)
+        chain_process = create_chain_process(settings=settings)
+        logging.info(
+            " => ".join(str(p.process_code) for p in chain_process.full_main_chain)
+        )
+        chain_process.initialize_parameters(data_handler=data_handler)
+        chain_process.calculate(1)
+        # ge, gt, gi = chain_process.process_graph_nodes # noqa
+        # plot(gt.process) # noqa
 
 
 if __name__ == "__main__":
