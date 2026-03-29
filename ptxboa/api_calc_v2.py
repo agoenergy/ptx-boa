@@ -858,8 +858,6 @@ def main():
     permutations = create_permutation_names(create_permutations(scenario=scenario))
 
     for i, (name, settings) in enumerate(permutations.items()):
-        if i != 11:
-            continue
         logging.info(f"{i + 1}/{len(permutations)}: {settings}")
         chain_process = create_chain_process(settings=settings, name=name)
         logging.info(
