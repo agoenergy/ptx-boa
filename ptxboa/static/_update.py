@@ -222,11 +222,15 @@ def main():
         ,"is_re_generation"
         ,"is_transport"
         ,"is_secondary"
-        ,"process_class"
-        /*,"is_secondary_all"*/
+        ,"is_storage"
+        ,"is_pipeline"
+        ,"is_pipeline_retrofitted"
+        ,"is_pipeline_sea"
+        ,"is_shipping"
+        ,"is_shipping_own_fuel"
+        ,"process_class"        
         ,"is_ely"
-        ,"is_deriv"
-        /*,"class_name"*/
+        ,"is_deriv"        
         ,"result_process_type"
         ,"secondary_flows"
         ,"is_green"
@@ -296,16 +300,16 @@ def main():
         ,"DERIV"
         ,"DERIV2"
         ,"CO2_TS"
-        "PRE_SHP",
-        "SHP",
-        "SHP_OWN",
-        "POST_SHP",
-        "PRE_PPL",
-        "PPLS",
-        "PPL",
-        "PPLX",
-        "PPLR",
-        "POST_PPL",
+        ,"PRE_SHP"
+        ,"SHP"
+        ,"SHP_OWN"
+        ,"POST_SHP"
+        ,"PRE_PPL"
+        ,"PPLS"
+        ,"PPL"
+        ,"PPLX"
+        ,"PPLR"
+        ,"POST_PPL"
         ,"ELY_I"
         ,"DERIV_I"
         ,"DERIV_I2"
