@@ -125,7 +125,8 @@ class ProcessType:
         # secondary: only allow CCS
         return self.allow_in_export and (
             # CSS is onlyallowed secondary(?) # TODO:generalize?
-            not self.is_secondary or self.process_code == "CO2-T+S#B"
+            not self.is_secondary
+            or self.process_code == "CO2-T+S#B"
         )
 
 
@@ -550,7 +551,7 @@ class AggregateProcess(AbstractProcess):
             main_process_nodes.append(
                 ProcessGraphNode(
                     process=process,
-                    is_main=False,
+                    is_main=True,
                     is_main_start=(i == 0),
                     is_main_end=(i == (len(main_process_codes) - 1)),
                 )
@@ -751,48 +752,104 @@ def plot(chain_process: AggregateProcess, name: str):
     # Create a directed graph
     G = nx.DiGraph()
     node_labels = {}
+    node_pos = {}
     edge_labels = {}
-    edge_widths = []
+    edge_widths = {}
 
-    for node in chain_process.process_graph_nodes:
-        G.add_node(node)
-        node_labels[node] = str(node.process)
+    xs = [0, 0, 0]
+    node_end_last = None
+    len_main = 0
+    for ex_tr_imp in chain_process.process_graph_nodes:
+        # export / tranport / import  subgraph
+        nodes = cast(AggregateProcess, ex_tr_imp.process).process_graph_nodes
+        # add processes as nodes to DiGraph
 
-    for node in chain_process.process_graph_nodes:
-        if node.link_out_to_main:
-            e = (node, node.link_out_to_main)
+        xs[1] = xs[0]
+        xs[2] = xs[0]
+
+        for node in nodes:
+            key = node.process
+            G.add_node(key)
+            node_labels[key] = (
+                str(key)
+                .replace("=", "\n")
+                .replace("(", "\n")
+                .replace(")", "\n")
+                .replace(" ", "\n")
+                .strip()
+            )
+
+            if node.is_main:
+                len_main += 1
+                xs[0] = xs[0] + 1
+                x = xs[0]
+                y = 0
+                if not node_end_last and node.process.is_initial:
+                    y = -0.1
+            elif not isinstance(node.process, MarketProcess):
+                xs[1] = xs[1] + 1
+                x = xs[1]
+                y = 0.1
+            else:
+                xs[2] = xs[2] + 1
+                x = xs[2]
+                y = 0.2
+
+            node_pos[key] = (x, y)
+
+            if node.link_out_to_main:
+                e = (node.process, node.link_out_to_main.process)
+                G.add_edge(*e)
+                edge_labels[e] = node.process.main_flow_code_out
+                edge_labels[
+                    e
+                ] += f"\n{node.link_out_to_main.process.get_main_flow_in():.4f}"
+                edge_widths[e] = 2
+
+            for n in node.links_out_to_secondary:
+                flow = node.process.main_flow_code_out
+                e = (node.process, n.process)
+                G.add_edge(*e)
+                edge_labels[e] = flow
+                edge_labels[e] += f"\n{n.process.get_secondary_flow_in(flow):.4f}"
+                edge_widths[e] = 1
+
+        if node_end_last:
+            node_start = next(n for n in nodes if n.is_main_start)
+            e = (node_end_last.process, node_start.process)
             G.add_edge(*e)
-            edge_labels[e] = node.process.main_flow_code_out
-            edge_widths.append(2)
-        for n in node.links_out_to_secondary:
-            e = (node, n)
-            G.add_edge(*e)
-            edge_labels[e] = node.process.main_flow_code_out
-            edge_widths.append(1)
+            edge_labels[e] = node_end_last.process.main_flow_code_out
+            edge_labels[e] += f"\n{node_start.process.get_main_flow_in():.4f}"
+            edge_widths[e] = 2
 
-    # Position nodes using a layout
-    pos = nx.spring_layout(G)
+        node_end_last = next(n for n in nodes if n.is_main_end)
+
+    scale = 3
+    plt.clf()
+    plt.figure(figsize=(len_main * scale, 2 * scale))
 
     # Draw nodes
     nx.draw(
         G,
-        pos,
+        node_pos,
         with_labels=False,
         node_color="lightblue",
-        width=edge_widths,
+        width=[edge_widths[k] for k in G.edges()],
+        node_size=2000 * scale,
     )
 
     # Draw node labels
-    nx.draw_networkx_labels(G, pos, labels=node_labels, font_size=8, font_color="black")
+    nx.draw_networkx_labels(
+        G, node_pos, labels=node_labels, font_size=8, font_color="black"
+    )
 
     # Draw edge labels
     nx.draw_networkx_edge_labels(
-        G, pos, edge_labels=edge_labels, font_size=6, font_color="red"
+        G, node_pos, edge_labels=edge_labels, font_size=6, font_color="black"
     )
 
     # Save to PNG
     plt.savefig(f"{name}.png", dpi=300)
-    # plt.show()
 
 
 def main():
@@ -801,6 +858,8 @@ def main():
     permutations = create_permutation_names(create_permutations(scenario=scenario))
 
     for i, (name, settings) in enumerate(permutations.items()):
+        if i != 11:
+            continue
         logging.info(f"{i + 1}/{len(permutations)}: {settings}")
         chain_process = create_chain_process(settings=settings, name=name)
         logging.info(
@@ -809,7 +868,6 @@ def main():
         chain_process.initialize_parameters(data_handler=data_handler)
         chain_process.calculate(1)
         plot(chain_process, name=name)
-        break
 
 
 if __name__ == "__main__":
