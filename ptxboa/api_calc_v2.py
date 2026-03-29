@@ -70,15 +70,25 @@ class ProcessType:
 
     @property
     def is_transport(self) -> bool:
+        """Is this a transport process."""
         # return self._is_transport and not self.is_transformation # noqa
         return self._is_transport
 
     @property
     def is_initial(self) -> bool:
+        """Is this an initial process.
+
+        In green tool, this is a RES generation,
+        in blue tool a NG production step.
+        """
         return self.is_re_generation or self.process_code == "NG-PROD#B"
 
     @property
     def process_class(self) -> type["Process"]:
+        """Process class.
+
+        So we can dynamically use subclasses.
+        """
         if self.is_initial:
             return InitialProcess
         elif self.is_secondary:
@@ -90,10 +100,12 @@ class ProcessType:
 
     @property
     def allow_in_export(self) -> bool:
+        """Is process allowed in export."""
         return not self.allow_in_transport and not self.is_secondary
 
     @property
     def allow_in_transport(self) -> bool:
+        """Is process allowed in transport."""
         return (
             self.is_transport
             and not self.is_secondary
@@ -102,6 +114,7 @@ class ProcessType:
 
     @property
     def allow_in_import(self) -> bool:
+        """Is process allowed in import."""
         # secondary: only allow CCS
         return self.allow_in_export and (
             not self.is_secondary or self.process_code == "CO2-T+S#B"  # TODO:generalize
@@ -121,44 +134,58 @@ class AbstractProcess:
         self._secondary_flows_in: dict[FlowCodeType, float] | None = None
 
     def get_main_flow_out(self) -> float:
+        """Value of main out flow."""
         if not self._main_flow_out:  # 0 or None
             raise Exception("Not calculated yet")
         return self._main_flow_out
 
     def get_main_flow_in(self) -> float:
+        """Value of calculated main in flow."""
         if not self._main_flow_in:  # 0 or None
             raise Exception("Not calculated yet, or main_flow_in does not exist")
         return self._main_flow_in
 
     def get_secondary_flow_in(self, flow_code: FlowCodeType) -> float:
+        """Value of calculated secondary in flow for given flow type."""
         if not self._secondary_flows_in:
             raise Exception("Not calculated yet")
         return self._secondary_flows_in[flow_code]
 
     @property
     def process_code(self) -> ProcessCodeType | None:
+        """Process code."""
         return None
 
     @property
     def main_flow_code_out(self) -> FlowCodeType:
+        """Main flow code out."""
         raise NotImplementedError
 
     @property
     def main_flow_code_in(self) -> FlowCodeType | None:
+        """Main flow code in."""
         return None
 
     @property
     def secondary_flow_types(self) -> set[FlowCodeType]:
+        """Secondary flow types."""
         return set()
 
     @property
     def is_initial(self) -> bool:
+        """Is this an initial process.
+
+        In green tool, this is a RES generation,
+        in blue tool a NG production step.
+        """
         return False
 
     def initialize_parameters(self):
+        """Initialize parameetr data for this process."""
         pass
 
     def calculate(self, main_flow_out: float):
+        """Calculate all process values based on desired output flow."""
         self._main_flow_out = main_flow_out
 
     def __str__(self):
@@ -173,28 +200,39 @@ class Process(AbstractProcess):
 
     @property
     def process_code(self) -> ProcessCodeType | None:
+        """Process code."""
         return self._process_type.process_code
 
     @property
     def main_flow_code_out(self) -> FlowCodeType:
+        """Main flow code out."""
         return self._process_type.main_flow_code_out
 
     @property
     def main_flow_code_in(self) -> FlowCodeType | None:
+        """Main flow code in."""
         return self._process_type.main_flow_code_in
 
     @property
     def secondary_flow_types(self) -> set[FlowCodeType]:
+        """Secondary flow types."""
         return self._process_type.secondary_flow_types
 
     @property
     def is_initial(self) -> bool:
+        """Is this an initial process.
+
+        In green tool, this is a RES generation,
+        in blue tool a NG production step.
+        """
         return self._process_type.is_initial
 
     def initialize_parameters(self):
+        """Initialize parameetr data for this process."""
         super().initialize_parameters()
 
     def calculate(self, main_flow_out: float):
+        """Calculate all process values based on desired output flow."""
         super().calculate(main_flow_out=main_flow_out)
         eff = 0.9
         self._main_flow_in = main_flow_out / eff
@@ -222,19 +260,23 @@ class MarketProcess(AbstractProcess):
         self._main_flow_code_out: FlowCodeType = main_flow_code_out
 
     def initialize_parameters(self, **kwargs):
+        """Initialize parameetr data for this process."""
         super().initialize_parameters()
         # TODO
 
     def calculate(self, main_flow_out: float):
+        """Calculate all process values based on desired output flow."""
         super().calculate(main_flow_out=main_flow_out)
         # TODO
 
     @property
     def main_flow_code_out(self) -> FlowCodeType:
+        """Main flow code out."""
         return self._main_flow_code_out
 
     @property
     def process_code(self) -> ProcessCodeType | None:
+        """Process code."""
         return self.main_flow_code_out  # type:ignore
 
 
@@ -290,14 +332,17 @@ class AggregateProcess(AbstractProcess):
 
     @property
     def main_flow_code_out(self) -> FlowCodeType:
+        """Main flow code out."""
         return self._last_main_node.process.main_flow_code_out
 
     @property
     def main_flow_code_in(self) -> FlowCodeType | None:
+        """Main flow code in."""
         return self._first_main_node.process.main_flow_code_in
 
     @property
     def full_main_chain(self) -> list[Process]:
+        """List of the entire main chain (including nested aggregated processes)."""
         result: list[Process] = []
         node = self._first_main_node
         while node:
@@ -311,11 +356,13 @@ class AggregateProcess(AbstractProcess):
         return result
 
     def initialize_parameters(self, **kwargs):
+        """Initialize parameetr data for this process."""
         super().initialize_parameters()
         for n in self.process_graph_nodes:
             n.process.initialize_parameters(**kwargs)
 
     def calculate(self, main_flow_out: float):
+        """Calculate all process values based on desired output flow."""
         super().calculate(main_flow_out=main_flow_out)
 
         # in first in reverse order, we use the given main_flow_out
@@ -360,7 +407,7 @@ class AggregateProcess(AbstractProcess):
         main_process_codes: list[ProcessCodeType],
         secondary_process_codes: set[ProcessCodeType],
     ) -> "AggregateProcess":
-
+        """Create aggregated process for entire chain."""
         # in reverse order:
         check_use_all_main_process_codes = []
         current_node = None
@@ -413,6 +460,10 @@ class AggregateProcess(AbstractProcess):
         main_process_codes: list[ProcessCodeType],
         secondary_process_codes: set[ProcessCodeType],
     ) -> "AggregateProcess":
+        """Create an aggregated process with subprocesses.
+
+        Usually for export / transport / import
+        """
         process_graph_nodes: list[ProcessGraphNode] = []
 
         flow_providers: dict[FlowCodeType, ProcessGraphNode] = {}
