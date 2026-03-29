@@ -125,8 +125,7 @@ class ProcessType:
         # secondary: only allow CCS
         return self.allow_in_export and (
             # CSS is onlyallowed secondary(?) # TODO:generalize?
-            not self.is_secondary
-            or self.process_code == "CO2-T+S#B"
+            not self.is_secondary or self.process_code == "CO2-T+S#B"
         )
 
 
@@ -526,7 +525,7 @@ class AggregateProcess(AbstractProcess):
             for ft in sorted(node.process.secondary_flow_types):
                 if ft not in flow_providers:
                     new_node = create_provider_node(flow_code=ft)
-                    flow_providers[ft] = new_node
+
                     # Recursion: make sure to check termination conditions
                     # it would be possible for SecProc A to require flow b
                     # which could be provided by SecProc B, wich in turn uses flow a.
@@ -537,6 +536,8 @@ class AggregateProcess(AbstractProcess):
                         flows_must_be_market=(flows_must_be_market or set())
                         | cast(set[FlowCodeType], {ft}),
                     )
+
+                    flow_providers[ft] = new_node
 
                 logging.info(
                     f"Adding link: {flow_providers[ft].process} -{ft}-> {node.process}"
@@ -808,9 +809,9 @@ def plot(chain_process: AggregateProcess, name: str):
                 e = (node.process, node.link_out_to_main.process)
                 G.add_edge(*e)
                 edge_labels[e] = node.process.main_flow_code_out
-                edge_labels[
-                    e
-                ] += f"\n{node.link_out_to_main.process.get_main_flow_in():.4f}"
+                edge_labels[e] += (
+                    f"\n{node.link_out_to_main.process.get_main_flow_in():.4f}"
+                )
                 edge_widths[e] = 2
 
             for n in node.links_out_to_secondary:
