@@ -125,8 +125,7 @@ class ProcessType:
         # secondary: only allow CCS
         return self.allow_in_export and (
             # CSS is onlyallowed secondary(?) # TODO:generalize?
-            not self.is_secondary
-            or self.process_code == "CO2-T+S#B"
+            not self.is_secondary or self.process_code == "CO2-T+S#B"
         )
 
 
@@ -312,12 +311,14 @@ class ProcessGraphNode:
         self,
         process: AbstractProcess,
         link_out_to_main: Union["ProcessGraphNode", None] = None,
+        is_main: bool = False,
         is_main_start: bool = False,
         is_main_end: bool = False,
     ):
         self.process: AbstractProcess = process
         self.links_out_to_secondary: list["ProcessGraphNode"] = []
         self.link_out_to_main: Union["ProcessGraphNode", None] = link_out_to_main
+        self.is_main: bool = is_main
         self.is_main_start: bool = is_main_start
         self.is_main_end: bool = is_main_end
 
@@ -468,7 +469,7 @@ class AggregateProcess(AbstractProcess):
             process.name = name.upper()
 
             current_node = ProcessGraphNode(
-                process=process, link_out_to_main=current_node
+                process=process, link_out_to_main=current_node, is_main=True
             )
             check_use_all_main_process_codes = pcodes + check_use_all_main_process_codes
             process_graph_nodes_rev.append(current_node)
@@ -549,6 +550,7 @@ class AggregateProcess(AbstractProcess):
             main_process_nodes.append(
                 ProcessGraphNode(
                     process=process,
+                    is_main=False,
                     is_main_start=(i == 0),
                     is_main_end=(i == (len(main_process_codes) - 1)),
                 )
@@ -744,7 +746,7 @@ def create_chain_process(
     return chain_process
 
 
-def plot(process: AggregateProcess):
+def plot(chain_process: AggregateProcess, name: str):
 
     # Create a directed graph
     G = nx.DiGraph()
@@ -752,11 +754,11 @@ def plot(process: AggregateProcess):
     edge_labels = {}
     edge_widths = []
 
-    for node in process.process_graph_nodes:
+    for node in chain_process.process_graph_nodes:
         G.add_node(node)
         node_labels[node] = str(node.process)
 
-    for node in process.process_graph_nodes:
+    for node in chain_process.process_graph_nodes:
         if node.link_out_to_main:
             e = (node, node.link_out_to_main)
             G.add_edge(*e)
@@ -789,8 +791,8 @@ def plot(process: AggregateProcess):
     )
 
     # Save to PNG
-    plt.savefig("graph.png", dpi=300)
-    plt.show()
+    plt.savefig(f"{name}.png", dpi=300)
+    # plt.show()
 
 
 def main():
@@ -806,6 +808,8 @@ def main():
         )
         chain_process.initialize_parameters(data_handler=data_handler)
         chain_process.calculate(1)
+        plot(chain_process, name=name)
+        break
 
 
 if __name__ == "__main__":
