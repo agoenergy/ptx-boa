@@ -1,3 +1,5 @@
+"""Class based calculation."""
+
 import argparse
 import logging
 from dataclasses import dataclass
@@ -68,7 +70,7 @@ class ProcessType:
 
     @property
     def is_transport(self) -> bool:
-        # return self._is_transport and not self.is_transformation
+        # return self._is_transport and not self.is_transformation # noqa
         return self._is_transport
 
     @property
@@ -329,7 +331,8 @@ class AggregateProcess(AbstractProcess):
                 main_flow_out_current = 0
                 if node.link_out_to_main:
                     logging.info(
-                        f"{node.process}: Serve main {flow_code} to {node.link_out_to_main.process}"
+                        f"{node.process}: Serve main {flow_code} to "
+                        f"{node.link_out_to_main.process}"
                     )
                     main_flow_out_current += (
                         node.link_out_to_main.process.get_main_flow_in()
@@ -508,14 +511,14 @@ class Settings:
 
 def create_permutations() -> Iterable[Settings]:
     scenario: ScenarioType = "2040 (medium)"
-    # secproc_co2: SecProcCO2Type | None
-    # secproc_water: SecProcH2OType | None
-    # chain: ChainNameType
-    # res_gen: ResGenType | None
+    # secproc_co2: SecProcCO2Type | None # noqa
+    # secproc_water: SecProcH2OType | None # noqa
+    # chain: ChainNameType # noqa
+    # res_gen: ResGenType | None # noqa
     region: SourceRegionCodeType = "DZA"
     country: TargetCountryCodeType = "DEU"
-    # transport: TransportType
-    # ship_own_fuel: bool
+    # transport: TransportType # noqa
+    # ship_own_fuel: bool # noqa
     transports: list[tuple[TransportType, bool]] = [
         ("Pipeline", False),
         ("Ship", False),
@@ -579,8 +582,8 @@ def main():
         )
         chain_process.initialize_parameters()
         chain_process.calculate(1)
-        # ge, gt, gi = chain_process.process_graph_nodes
-        # plot(gt.process)
+        # ge, gt, gi = chain_process.process_graph_nodes # noqa
+        # plot(gt.process) # noqa
 
 
 def plot(process: AggregateProcess):
