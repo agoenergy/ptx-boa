@@ -53,27 +53,33 @@ class ProcessType:
         is_secondary: bool,
         is_re_generation: bool,
         is_transformation: bool,
+        is_storage: bool,
+        is_pipeline: bool,
+        is_pipeline_retrofitted: bool,
+        is_pipeline_sea: bool,
+        is_shipping: bool,
+        is_shipping_own_fuel: bool,
         main_flow_code_out: FlowCodeType,
         main_flow_code_in: FlowCodeType | None,
         secondary_flows: Iterable[FlowCodeType] | None,
         **_kwargs,
     ):
         self.process_code: ProcessCodeType = process_code
-        self._is_transport: bool = is_transport
+        self.is_transport: bool = is_transport  # includes pre/post transformation
         self.is_secondary: bool = is_secondary
         self.is_transformation: bool = is_transformation
+        self.is_storage: bool = is_storage
         self.is_re_generation: bool = is_re_generation
+        self.is_pipeline: bool = is_pipeline
+        self.is_pipeline_retrofitted: bool = is_pipeline_retrofitted
+        self.is_pipeline_sea: bool = is_pipeline_sea
+        self.is_shipping: bool = is_shipping
+        self.is_shipping_own_fuel: bool = is_shipping_own_fuel
         self.main_flow_code_out: FlowCodeType = main_flow_code_out
         self.main_flow_code_in: FlowCodeType | None = main_flow_code_in
         self.secondary_flow_types: set[FlowCodeType] = (
             set(secondary_flows) if secondary_flows else set()
         )
-
-    @property
-    def is_transport(self) -> bool:
-        """Is this a transport process."""
-        # return self._is_transport and not self.is_transformation # noqa
-        return self._is_transport
 
     @property
     def is_initial(self) -> bool:
@@ -102,15 +108,15 @@ class ProcessType:
     @property
     def allow_in_export(self) -> bool:
         """Is process allowed in export."""
-        return not self.allow_in_transport and not self.is_secondary
+        return not self.allow_in_transport or self.is_secondary
 
     @property
     def allow_in_transport(self) -> bool:
         """Is process allowed in transport."""
         return (
-            self.is_transport
+            self.is_transport  # includes pre/post transformation
             and not self.is_secondary
-            and self.process_code not in {"H2-STR", "EL-STR"}  # TODO
+            and not self.is_storage
         )
 
     @property
@@ -118,7 +124,9 @@ class ProcessType:
         """Is process allowed in import."""
         # secondary: only allow CCS
         return self.allow_in_export and (
-            not self.is_secondary or self.process_code == "CO2-T+S#B"  # TODO:generalize
+            # CSS is onlyallowed secondary(?) # TODO:generalize?
+            not self.is_secondary
+            or self.process_code == "CO2-T+S#B"
         )
 
 
@@ -425,6 +433,7 @@ class AggregateProcess(AbstractProcess):
     def create_from_chain(
         main_process_codes: list[ProcessCodeType],
         secondary_process_codes: set[ProcessCodeType],
+        name: str | None = None,
     ) -> "AggregateProcess":
         """Create aggregated process for entire chain."""
         # in reverse order:
@@ -451,11 +460,13 @@ class AggregateProcess(AbstractProcess):
             spcodes: set[ProcessCodeType] = {
                 p for p in secondary_process_codes if getattr(ProcessTypes[p], attr)
             }
+
             process = AggregateProcess.create_from_chain_part(
                 main_process_codes=pcodes,
                 secondary_process_codes=spcodes,
             )
             process.name = name.upper()
+
             current_node = ProcessGraphNode(
                 process=process, link_out_to_main=current_node
             )
@@ -472,7 +483,7 @@ class AggregateProcess(AbstractProcess):
         process_graph_nodes[0].is_main_start = True
         process_graph_nodes[-1].is_main_end = True
 
-        return AggregateProcess(process_graph_nodes=process_graph_nodes)
+        return AggregateProcess(process_graph_nodes=process_graph_nodes, name=name)
 
     @staticmethod
     def create_from_chain_part(
@@ -490,8 +501,10 @@ class AggregateProcess(AbstractProcess):
             group_by_flow_type_out(secondary_process_codes)
         )
 
-        def create_provider_node(flow_code: FlowCodeType) -> ProcessGraphNode:
-            if flow_code in secondary_process_codes_by_flow_code:
+        def create_provider_node(
+            flow_code: FlowCodeType, must_be_market: bool = False
+        ) -> ProcessGraphNode:
+            if flow_code in secondary_process_codes_by_flow_code and not must_be_market:
                 process_code = secondary_process_codes_by_flow_code[flow_code]
                 process_class = ProcessTypes[process_code].process_class
                 process = process_class(process_code=process_code)
@@ -500,13 +513,27 @@ class AggregateProcess(AbstractProcess):
                 process = MarketProcess(main_flow_code_out=flow_code)
             return ProcessGraphNode(process=process)
 
-        def add(node: ProcessGraphNode):
+        def add(
+            node: ProcessGraphNode,
+            flows_must_be_market: set[FlowCodeType] | None = None,
+        ):
             # First (!) add dependencies recursively
-            for ft in node.process.secondary_flow_types:
+            # use sorted so outcome is deterministic
+            for ft in sorted(node.process.secondary_flow_types):
                 if ft not in flow_providers:
                     new_node = create_provider_node(flow_code=ft)
-                    add(new_node)
                     flow_providers[ft] = new_node
+                    # Recursion: make sure to check termination conditions
+                    # it would be possible for SecProc A to require flow b
+                    # which could be provided by SecProc B, wich in turn uses flow a.
+                    # We cant have loops.
+                    # So one must use market process.
+                    add(
+                        new_node,
+                        flows_must_be_market=(flows_must_be_market or set())
+                        | cast(set[FlowCodeType], {ft}),
+                    )
+
                 # register
                 flow_providers[ft].links_out_to_secondary.append(node)
 
@@ -515,6 +542,7 @@ class AggregateProcess(AbstractProcess):
 
         # initialize nodes for main chain
         main_process_nodes: list[ProcessGraphNode] = []
+
         for i, process_code in enumerate(main_process_codes):
             process_class = ProcessTypes[process_code].process_class
             process = process_class(process_code=process_code)
@@ -525,12 +553,21 @@ class AggregateProcess(AbstractProcess):
                     is_main_end=(i == (len(main_process_codes) - 1)),
                 )
             )
+
         # Link main chain: link: to next
         for i in range(len(main_process_nodes) - 1):
             n1, n2 = main_process_nodes[i : i + 2]
             if n1.process.main_flow_code_out != n2.process.main_flow_code_in:
                 logging.error(f"{n1.process} ==> {n2.process}")
-                # raise Exception(f"{n1.process} ==> {n2.process}") # noqa
+                logging.error(
+                    " => ".join(
+                        str(
+                            f"{pc}({ProcessTypes[pc].main_flow_code_in} -> {ProcessTypes[pc].main_flow_code_out})"
+                        )
+                        for pc in main_process_codes
+                    )
+                )
+                raise Exception(f"{n1.process} ==> {n2.process}")  # noqa
             n1.link_out_to_main = n2
 
         for i, node in enumerate(main_process_nodes):
@@ -544,7 +581,8 @@ class AggregateProcess(AbstractProcess):
 
             add(node)
 
-        return AggregateProcess(process_graph_nodes=process_graph_nodes)
+        result = AggregateProcess(process_graph_nodes=process_graph_nodes)
+        return result
 
     def __str__(self):
         s_val = f"={self._main_flow_out:.4f}" if self._main_flow_out else ""
@@ -610,6 +648,8 @@ def create_permutations(scenario: ScenarioType) -> Iterable[Settings]:
         for transport, ship_own_fuel in transports:
             if transport == "Pipeline" and not chain_spec["can_pipeline"]:
                 continue
+            if transport == "Ship" and ship_own_fuel and not chain_spec["SHP_OWN"]:
+                continue
             yield Settings(
                 scenario=scenario,
                 country=country,
@@ -622,17 +662,78 @@ def create_permutations(scenario: ScenarioType) -> Iterable[Settings]:
             )
 
 
-def create_chain_process(settings: Settings) -> AggregateProcess:
+def create_permutation_names(permutations: Iterable[Settings]) -> dict[str, Settings]:
+    def create_name(settings: Settings) -> str:
+        name = (
+            f"{settings.chain_code}_{settings.transport}"
+            f"{'_OWN' if settings.ship_own_fuel else ''}"
+        )
+        return name
+
+    result: dict[str, Settings] = {}
+    for settings in permutations:
+        name = create_name(settings)
+        if name in result:
+            raise KeyError(name)
+        result[name] = settings
+    return result
+
+
+def filter_transport_process_codes(
+    main_process_codes: list[ProcessCodeType],
+    transport: TransportType,
+    ship_own_fuel: bool,
+) -> list[ProcessCodeType]:
+    """Filter"""
+
+    if transport == "Pipeline":
+
+        def filter(p: ProcessType):
+            return p.is_pipeline or not p.is_transport
+
+    elif transport == "Ship":
+        if ship_own_fuel:
+
+            def filter(p: ProcessType):
+                return p.is_shipping_own_fuel or not p.is_transport
+
+        else:
+
+            def filter(p: ProcessType):
+                return (
+                    p.is_shipping and not p.is_shipping_own_fuel
+                ) or not p.is_transport
+
+    else:
+        raise NotImplementedError(transport)
+
+    return [p for p in main_process_codes if filter(ProcessTypes[p])]
+
+
+def create_chain_process(
+    settings: Settings, name: str | None = None
+) -> AggregateProcess:
+
     chain_data = DataHandler.get_dimension("chain").loc[settings.chain_code].to_dict()
+
     main_process_codes: list[ProcessCodeType] = [
         cast(ProcessCodeType, chain_data[x])
         for x in ProcessStepValuesSorted
         if chain_data[x]
     ]
+
+    main_process_codes = filter_transport_process_codes(
+        main_process_codes,
+        transport=settings.transport,
+        ship_own_fuel=settings.ship_own_fuel,
+    )
+
     main_process_codes.insert(0, settings.first_process_code)
+
     chain_process = AggregateProcess.create_from_chain(
         main_process_codes=main_process_codes,
         secondary_process_codes=settings.secondary_process_codes,
+        name=name,
     )
 
     # check (TODO: can be removed later)
@@ -693,49 +794,18 @@ def plot(process: AggregateProcess):
 
 
 def main():
-    print(
-        df_parameter[
-            [
-                "parameter_code",
-                # "parameter_name",
-                # "unit",
-                # "per_transformation_process",
-                # "per_transport_process",
-                # "per_re_generation_process",
-                "per_process",
-                "per_flow",
-                "per_region",
-                "per_import_country",
-                "has_global_default",
-                # "global_default_changeable",
-                # "own_country_changeable",
-                # "comment",
-                # "dimensions",
-            ]
-        ].sort_values(
-            [
-                "per_import_country",
-                "per_process",
-                "per_flow",
-                "per_region",
-                "has_global_default",
-                "parameter_code",
-            ]
-        )
-    )
-
     scenario: ScenarioType = "2040 (medium)"
     data_handler = DataHandler(scenario=scenario, data_dir=DEFAULT_DATA_DIR)
-    for settings in create_permutations(scenario=scenario):
-        logging.info(settings)
-        chain_process = create_chain_process(settings=settings)
+    permutations = create_permutation_names(create_permutations(scenario=scenario))
+
+    for i, (name, settings) in enumerate(permutations.items()):
+        logging.info(f"{i + 1}/{len(permutations)}: {settings}")
+        chain_process = create_chain_process(settings=settings, name=name)
         logging.info(
             " => ".join(str(p.process_code) for p in chain_process.full_main_chain)
         )
         chain_process.initialize_parameters(data_handler=data_handler)
         chain_process.calculate(1)
-        # ge, gt, gi = chain_process.process_graph_nodes # noqa
-        # plot(gt.process) # noqa
 
 
 if __name__ == "__main__":
