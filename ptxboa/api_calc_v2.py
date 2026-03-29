@@ -1,5 +1,6 @@
 import argparse
 import logging
+from dataclasses import dataclass
 from typing import Iterable, Union, cast
 
 import coloredlogs
@@ -7,7 +8,14 @@ import matplotlib.pyplot as plt
 import networkx as nx
 
 from ptxboa.api_data import DataHandler
-from ptxboa.static import FlowCodeType, ProcessCodeType
+from ptxboa.static import (
+    FlowCodeType,
+    ProcessCodeType,
+    ScenarioType,
+    SourceRegionCodeType,
+    TargetCountryCodeType,
+    TransportType,
+)
 
 ProcessStepValuesSorted = [
     "EL_STR",
@@ -31,6 +39,7 @@ ProcessStepValuesSorted = [
 ]
 
 df_process = DataHandler.get_dimension("process")
+df_chain = DataHandler.get_dimension("chain")
 
 
 class ProcessType:
@@ -79,11 +88,15 @@ class ProcessType:
 
     @property
     def allow_in_export(self) -> bool:
-        return not self.is_transport
+        return not self.allow_in_transport and not self.is_secondary
 
     @property
     def allow_in_transport(self) -> bool:
-        return self.is_transport and not self.is_secondary
+        return (
+            self.is_transport
+            and not self.is_secondary
+            and self.process_code not in {"H2-STR", "EL-STR"}  # TODO
+        )
 
     @property
     def allow_in_import(self) -> bool:
@@ -242,10 +255,14 @@ def get_chain_parts(
     main_process_codes: list[ProcessCodeType],
 ) -> list[tuple[str, int, int]]:
     # split and check into export, transport, import
-    is_transport = [ProcessTypes[p].is_transport for p in main_process_codes]
+    is_transport = [ProcessTypes[p].allow_in_transport for p in main_process_codes]
     # first and last index
     idx_transport_start = is_transport.index(True)
-    idx_transport_end = is_transport.index(False, idx_transport_start)
+    try:
+        idx_transport_end = is_transport.index(False, idx_transport_start)
+    except ValueError:  # no import steps
+        idx_transport_end = len(is_transport)
+
     if not (0 < idx_transport_start < idx_transport_end):
         raise Exception("Transport")
     return [
@@ -276,6 +293,20 @@ class AggregateProcess(AbstractProcess):
     @property
     def main_flow_code_in(self) -> FlowCodeType | None:
         return self._first_main_node.process.main_flow_code_in
+
+    @property
+    def full_main_chain(self) -> list[Process]:
+        result: list[Process] = []
+        node = self._first_main_node
+        while node:
+            if isinstance(node.process, AggregateProcess):
+                # recursion
+                result += node.process.full_main_chain
+            else:
+                result.append(cast(Process, node.process))
+            node = node.link_out_to_main
+
+        return result
 
     def initialize_parameters(self, **kwargs):
         super().initialize_parameters()
@@ -339,9 +370,15 @@ class AggregateProcess(AbstractProcess):
         ):
             attr = f"allow_in_{name}"
             pcodes: list[ProcessCodeType] = main_process_codes[i:j]
+            if not pcodes:
+                # no steps ==> skip this
+                continue
             # check
-            if not all(getattr(ProcessTypes[p], attr) for p in pcodes):
-                raise Exception(f"Invalid {name} {pcodes}")
+            invalid_processes = [
+                p for p in pcodes if not getattr(ProcessTypes[p], attr)
+            ]
+            if invalid_processes:
+                raise Exception(f"Invalid {name} {pcodes}: {invalid_processes}")
             spcodes: set[ProcessCodeType] = {
                 p for p in secondary_process_codes if getattr(ProcessTypes[p], attr)
             }
@@ -457,36 +494,93 @@ def group_by_flow_type_out(
     return result
 
 
-def main():
-    chain_code = "STL-S__NG-DRI-C_EAF__prod_in_demand"
-    first_process_code: ProcessCodeType = "NG-PROD#B"
-    secondary_process_codes: set[ProcessCodeType] = {
-        "HEATPUMP#B",
-        "CCGT-CC#B",
-        "CO2-T+S#B",
-    }
+@dataclass
+class Settings:
+    scenario: ScenarioType
+    region: SourceRegionCodeType
+    country: TargetCountryCodeType
+    transport: TransportType
+    ship_own_fuel: bool
+    first_process_code: ProcessCodeType
+    chain_code: str
+    secondary_process_codes: set[ProcessCodeType]
 
-    chain_data = DataHandler.get_dimension("chain").loc[chain_code].to_dict()
+
+def create_permutations() -> Iterable[Settings]:
+    scenario: ScenarioType = "2040 (medium)"
+    # secproc_co2: SecProcCO2Type | None
+    # secproc_water: SecProcH2OType | None
+    # chain: ChainNameType
+    # res_gen: ResGenType | None
+    region: SourceRegionCodeType = "DZA"
+    country: TargetCountryCodeType = "DEU"
+    # transport: TransportType
+    # ship_own_fuel: bool
+    transports: list[tuple[TransportType, bool]] = [
+        ("Pipeline", False),
+        ("Ship", False),
+        ("Ship", True),
+    ]
+    for chain_spec in df_chain.to_dict(orient="records"):
+        chain_code = chain_spec["chain"]
+        first_process_code: ProcessCodeType
+        secondary_process_codes: set[ProcessCodeType]
+        if chain_spec["is_blue"]:
+            first_process_code = "NG-PROD#B"
+            secondary_process_codes = {"HEATPUMP#B", "CCGT-CC#B", "CO2-T+S#B", "DAC#B"}
+        elif chain_spec["is_green"]:
+            first_process_code = "RES-HYBR"
+            secondary_process_codes = {"DAC", "DESAL"}
+        else:
+            continue
+        for transport, ship_own_fuel in transports:
+            if transport == "Pipeline" and not chain_spec["can_pipeline"]:
+                continue
+            yield Settings(
+                scenario=scenario,
+                country=country,
+                region=region,
+                first_process_code=first_process_code,
+                secondary_process_codes=secondary_process_codes,
+                chain_code=chain_code,
+                ship_own_fuel=ship_own_fuel,
+                transport=transport,
+            )
+
+
+def create_chain_process(settings: Settings) -> AggregateProcess:
+    chain_data = DataHandler.get_dimension("chain").loc[settings.chain_code].to_dict()
     main_process_codes: list[ProcessCodeType] = [
         cast(ProcessCodeType, chain_data[x])
         for x in ProcessStepValuesSorted
         if chain_data[x]
     ]
-    main_process_codes.insert(0, first_process_code)
-
+    main_process_codes.insert(0, settings.first_process_code)
     chain_process = AggregateProcess.create_from_chain(
         main_process_codes=main_process_codes,
-        secondary_process_codes=secondary_process_codes,
+        secondary_process_codes=settings.secondary_process_codes,
     )
-    logging.info(chain_process)
 
-    ge, gt, gi = chain_process.process_graph_nodes
-    # plot(gt.process)
+    # check (TODO: can be removed later)
+    main_process_codes_ = tuple(p.process_code for p in chain_process.full_main_chain)
+    if tuple(main_process_codes) != main_process_codes_:
+        raise Exception(main_process_codes_)
 
-    chain_process.initialize_parameters()
-    chain_process.calculate(1)
+    return chain_process
 
-    # logging.info(chain_process)
+
+def main():
+    logging.info(ProcessTypes["NH3-SB"].allow_in_transport)
+    for settings in create_permutations():
+        logging.info(settings)
+        chain_process = create_chain_process(settings=settings)
+        logging.info(
+            " => ".join(str(p.process_code) for p in chain_process.full_main_chain)
+        )
+        chain_process.initialize_parameters()
+        chain_process.calculate(1)
+        # ge, gt, gi = chain_process.process_graph_nodes
+        # plot(gt.process)
 
 
 def plot(process: AggregateProcess):
