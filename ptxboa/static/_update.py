@@ -162,15 +162,15 @@ def main():
                 "DERIV",
                 "DERIV2",
                 "PRE_SHP",
-                "PRE_PPL",
-                "POST_SHP",
-                "POST_PPL",
                 "SHP",
                 "SHP_OWN",
+                "POST_SHP",
+                "PRE_PPL",
                 "PPLS",
                 "PPL",
                 "PPLX",
                 "PPLR",
+                "POST_PPL",
                 "ELY_I",
                 "DERIV_I",
                 "DERIV_I2",
@@ -296,22 +296,22 @@ def main():
         ,"DERIV"
         ,"DERIV2"
         ,"CO2_TS"
-        ,"PRE_SHP"
-        ,"PRE_PPL"
-        ,"POST_SHP"
-        ,"POST_PPL"
-        ,"SHP"
-        ,"SHP_OWN"
-        ,"PPLS"
-        ,"PPL"
-        ,"PPLX"
-        ,"PPLR"
+        "PRE_SHP",
+        "SHP",
+        "SHP_OWN",
+        "POST_SHP",
+        "PRE_PPL",
+        "PPLS",
+        "PPL",
+        "PPLX",
+        "PPLR",
+        "POST_PPL",
         ,"ELY_I"
         ,"DERIV_I"
         ,"DERIV_I2"
         ,"CO2_TS_I"
-        ,"FLOW_OUT"
-        ,"CAN_PIPELINE"
+        ,"flow_out"
+        ,"can_pipeline"
         ,"is_green"
         ,"is_blue"
         FROM "ptxboa_chains"

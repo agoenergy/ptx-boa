@@ -1095,11 +1095,11 @@ class DataHandler:
         )
 
         result["parameter"]["CALOR"] = pg_import.get_parameter_value_w_default(
-            parameter_code="CALOR", flow_code=chain["FLOW_OUT"]
+            parameter_code="CALOR", flow_code=chain["flow_out"]
         )
         result["parameter_i"]["CALOR"] = pg_import.get_parameter_value_w_default(
             parameter_code="CALOR",
-            flow_code=chain["FLOW_OUT"],
+            flow_code=chain["flow_out"],
             default=result["parameter"]["CALOR"],
         )
 
@@ -1109,7 +1109,7 @@ class DataHandler:
         existing_pipeline_cap = pg.get_parameter_value_w_default("CAP-T", default=0)
         dist_ship = pg.get_parameter_value_w_default("DST-S-D", default=0)
 
-        if not use_ship and not chain["CAN_PIPELINE"]:
+        if not use_ship and not chain["can_pipeline"]:
             use_ship = True
 
         transport_distances = self._get_transport_distances(
@@ -1360,7 +1360,7 @@ class DataHandler:
                 chain[p]
                 for p in result_main_export + result_transport + result_main_import
             ],
-            chain["FLOW_OUT"],
+            chain["flow_out"],
         )
 
         return result_main_export, result_transport, result_main_import

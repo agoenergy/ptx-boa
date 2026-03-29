@@ -261,7 +261,7 @@ class PtxboaAPI:
         if output_unit not in {"USD/MWh", "USD/t"}:
             logger.error(f"Invalid choice for output_unit: {output_unit}")
 
-        flow_code_chain_out = data_handler.get_dimension("chain").loc[chain, "FLOW_OUT"]
+        flow_code_chain_out = data_handler.get_dimension("chain").loc[chain, "flow_out"]
         flow_unit_chain_out = data_handler.get_dimension("flow").loc[
             flow_code_chain_out, "unit"
         ]  # type:ignore

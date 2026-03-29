@@ -1,4 +1,4 @@
-chain,chain_name,NG_PROD,EL_STR,ELY,H2_STR,DERIV,DERIV2,CO2_TS,PRE_SHP,PRE_PPL,POST_SHP,POST_PPL,SHP,SHP_OWN,PPLS,PPL,PPLX,PPLR,ELY_I,DERIV_I,DERIV_I2,CO2_TS_I,FLOW_OUT,CAN_PIPELINE,is_green,is_blue
+chain,chain_name,NG_PROD,EL_STR,ELY,H2_STR,DERIV,DERIV2,CO2_TS,PRE_SHP,PRE_PPL,POST_SHP,POST_PPL,SHP,SHP_OWN,PPLS,PPL,PPLX,PPLR,ELY_I,DERIV_I,DERIV_I2,CO2_TS_I,flow_out,can_pipeline,is_green,is_blue
 Ammonia (AEL),Ammonia (AEL),,EL-STR,AEL-EL,H2-STR,NH3SYN,,,,,,,NH3-SB,NH3-S,,,,,,,,,NH3-L,False,True,False
 Ammonia (AEL) + reconv. to H2,Ammonia (AEL) + reconv. to H2,,EL-STR,AEL-EL,H2-STR,NH3SYN,,,,,NH3-REC,NH3-REC,NH3-SB,NH3-S,,,,,,,,,H2-G,False,True,False
 Ammonia (PEM),Ammonia (PEM),,EL-STR,PEM-EL,H2-STR,NH3SYN,,,,,,,NH3-SB,NH3-S,,,,,,,,,NH3-L,False,True,False

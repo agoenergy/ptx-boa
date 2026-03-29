@@ -93,7 +93,7 @@ def get_green_results(
             "chain": (
                 _api.get_dimension("chain", tool_version_color="green")
                 .loc[
-                    _api.get_dimension("chain", tool_version_color="green")["FLOW_OUT"]
+                    _api.get_dimension("chain", tool_version_color="green")["flow_out"]
                     == output_product
                 ]
                 .index.tolist()
@@ -120,7 +120,7 @@ def get_green_results(
             "chain": (
                 _api.get_dimension("chain", tool_version_color="green")
                 .loc[
-                    _api.get_dimension("chain", tool_version_color="green")["FLOW_OUT"]
+                    _api.get_dimension("chain", tool_version_color="green")["flow_out"]
                     == output_product
                 ]
                 .index.tolist()

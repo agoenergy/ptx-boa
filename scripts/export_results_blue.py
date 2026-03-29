@@ -44,14 +44,14 @@ STEPS = [
     "DERIV2",
     # "CO2_TS",
     "PRE_SHP",
-    "PRE_PPL",
     "SHP",
     "SHP_OWN",
+    "POST_SHP",
+    "PRE_PPL",
     "PPLS",
     "PPL",
     "PPLX",
     "PPLR",
-    "POST_SHP",
     "POST_PPL",
     "ELY_I",
     "DERIV_I",
@@ -199,7 +199,7 @@ def main(xlsx_filepath: str):
     all_row_keys = set()
 
     for idx, (_, chain) in enumerate(chains.iterrows()):
-        chain_flow_out = chain["FLOW_OUT"]
+        chain_flow_out = chain["flow_out"]
         flow_out_unit = api.get_dimension("flow").loc[chain_flow_out, "unit"]
         if flow_out_unit.lower().startswith("kwh"):  # type:ignore
             output_unit = "USD/MWh"
