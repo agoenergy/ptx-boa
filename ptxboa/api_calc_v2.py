@@ -562,7 +562,8 @@ class AggregateProcess(AbstractProcess):
                 logging.error(
                     " => ".join(
                         str(
-                            f"{pc}({ProcessTypes[pc].main_flow_code_in} -> {ProcessTypes[pc].main_flow_code_out})"
+                            f"{pc}({ProcessTypes[pc].main_flow_code_in} "
+                            f"-> {ProcessTypes[pc].main_flow_code_out})"
                         )
                         for pc in main_process_codes
                     )
@@ -684,22 +685,21 @@ def filter_transport_process_codes(
     transport: TransportType,
     ship_own_fuel: bool,
 ) -> list[ProcessCodeType]:
-    """Filter"""
-
+    """Filter transportation mode."""
     if transport == "Pipeline":
 
-        def filter(p: ProcessType):
+        def filter_proc(p: ProcessType):
             return p.is_pipeline or not p.is_transport
 
     elif transport == "Ship":
         if ship_own_fuel:
 
-            def filter(p: ProcessType):
+            def filter_proc(p: ProcessType):
                 return p.is_shipping_own_fuel or not p.is_transport
 
         else:
 
-            def filter(p: ProcessType):
+            def filter_proc(p: ProcessType):
                 return (
                     p.is_shipping and not p.is_shipping_own_fuel
                 ) or not p.is_transport
@@ -707,7 +707,7 @@ def filter_transport_process_codes(
     else:
         raise NotImplementedError(transport)
 
-    return [p for p in main_process_codes if filter(ProcessTypes[p])]
+    return [p for p in main_process_codes if filter_proc(ProcessTypes[p])]
 
 
 def create_chain_process(
