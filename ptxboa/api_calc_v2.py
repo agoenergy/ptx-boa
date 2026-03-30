@@ -162,10 +162,16 @@ ProcessTypes: dict[ProcessCodeType, ProcessType] = {
 
 
 class AbstractProcess:
-    def __init__(self):
+    def __init__(self, process_step: ProcessStepType | str | None = None):
         self._main_flow_out: float | None = None  # will be set in calculate()
         self._main_flow_in: float | None = None  # will be set in calculate()
         self._secondary_flows_in: dict[FlowCodeType, float] | None = None
+        self._process_step: ProcessStepType | str | None = process_step
+
+    @property
+    def process_step(self) -> ProcessStepType | str | None:
+        """Process step."""
+        return self._process_step
 
     def get_main_flow_out(self) -> float:
         """Value of main out flow."""
@@ -188,11 +194,6 @@ class AbstractProcess:
     @property
     def process_code(self) -> ProcessCodeType | None:
         """Process code."""
-        return None
-
-    @property
-    def process_step(self) -> ProcessStepType | None:
-        """Process step."""
         return None
 
     @property
@@ -247,14 +248,8 @@ class Process(AbstractProcess):
     def __init__(
         self, process_code: ProcessCodeType, process_step: ProcessStepType | None = None
     ):
-        super().__init__()
+        super().__init__(process_step=process_step)
         self._process_type: ProcessType = ProcessTypes[process_code]
-        self._process_step: ProcessStepType | None = process_step
-
-    @property
-    def process_step(self) -> ProcessStepType | None:
-        """Process step."""
-        return self._process_step
 
     @property
     def process_code(self) -> ProcessCodeType | None:
@@ -368,10 +363,9 @@ def get_chain_parts(
 
 
 class AggregateProcess(AbstractProcess):
-    def __init__(self, process_graph: "ProcessGraph", name: str | None = None):
-        super().__init__()
+    def __init__(self, process_graph: "ProcessGraph", process_step: str | None = None):
+        super().__init__(process_step=process_step)
         self.process_graph: "ProcessGraph" = process_graph
-        self.name: str | None = name
 
     @property
     def main_flow_code_out(self) -> FlowCodeType:
@@ -442,7 +436,7 @@ class AggregateProcess(AbstractProcess):
     def create_from_chain(
         main_process_codes: list[ProcessCodeType],
         secondary_process_codes: set[ProcessCodeType],
-        name: str | None = None,
+        process_step: str | None = None,
         main_process_steps: list[ProcessStepType | None] | None = None,
     ) -> "AggregateProcess":
         """Create aggregated process for entire chain."""
@@ -472,7 +466,7 @@ class AggregateProcess(AbstractProcess):
             process = AggregateProcess.create_from_chain_part(
                 main_process_codes=pcodes,
                 secondary_process_codes=spcodes,
-                name=part_name.upper(),
+                process_step=part_name.upper(),  # e.g. "IMPORT","EXPORT", "TRANSPORT"
                 main_process_steps=scodes,
             )
             main_processes.append(process)
@@ -489,13 +483,13 @@ class AggregateProcess(AbstractProcess):
             main_processes=main_processes, secondary_processes=[]
         )
 
-        return AggregateProcess(process_graph=process_graph, name=name)
+        return AggregateProcess(process_graph=process_graph, process_step=process_step)
 
     @staticmethod
     def create_from_chain_part(
         main_process_codes: list[ProcessCodeType],
         secondary_process_codes: set[ProcessCodeType],
-        name: str | None = None,
+        process_step: str | None = None,
         main_process_steps: list[ProcessStepType | None] | None = None,
     ) -> "AggregateProcess":
         """Create an aggregated process with subprocesses.
@@ -524,16 +518,10 @@ class AggregateProcess(AbstractProcess):
         process_graph: ProcessGraph = ProcessGraph(
             main_processes=main_processes, secondary_processes=secondary_processes
         )
-        result = AggregateProcess(process_graph=process_graph, name=name)
+        result = AggregateProcess(
+            process_graph=process_graph, process_step=process_step
+        )
         return result
-
-    def __str__(self):
-        s_val = f"={self._main_flow_out:.4f}" if self._main_flow_out else ""
-        if self.name:
-            name = self.name
-        else:
-            name = ", ".join(str(x) for x in self.process_graph.main_processes)
-        return "[" + name + f"]{s_val}"
 
 
 def group_by_flow_type_out(
@@ -789,9 +777,7 @@ def filter_transport_process_codes(
     return [p for p in main_process_codes if filter_proc(ProcessTypes[p])]
 
 
-def create_chain_process(
-    settings: Settings, name: str | None = None
-) -> AggregateProcess:
+def create_chain_process(settings: Settings) -> AggregateProcess:
 
     chain_data = DataHandler.get_dimension("chain").loc[settings.chain_code].to_dict()
 
@@ -812,10 +798,17 @@ def create_chain_process(
 
     main_process_codes.insert(0, settings.first_process_code)
 
+    # for FLH lookup we need these process codes
+    param_flh_kwargs: dict[str, ProcessCodeType | None] = {
+        "process_code_res": chain_data["RES"],
+        "process_code_ely": chain_data["ELY"],
+        "process_code_deriv": chain_data["DERIV"],
+    }
+
     chain_process = AggregateProcess.create_from_chain(
         main_process_codes=main_process_codes,
         secondary_process_codes=settings.secondary_process_codes,
-        name=name,
+        process_step="CHAIN",
         main_process_steps=main_process_steps,
     )
 
@@ -999,7 +992,7 @@ def main():
 
         logging.info(f"{i + 1}/{len(permutations)}: {settings}")
         logging.info(name)
-        chain_process = create_chain_process(settings=settings, name=name)
+        chain_process = create_chain_process(settings=settings)
         logging.info(
             " => ".join(str(p.process_code) for p in chain_process.full_main_chain)
         )
