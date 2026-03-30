@@ -94,11 +94,13 @@ class ProcessType:
             )
         if self.is_secondary and self.main_flow_code_in:
             logging.warning(
-                f"{self.process_code}: should not have main flow in: {self.main_flow_code_in}"
+                f"{self.process_code}: should not have "
+                f"main flow in: {self.main_flow_code_in}"
             )
         if self.is_initial and self.main_flow_code_in:
             logging.error(
-                f"{self.process_code}: should not have main flow in: {self.main_flow_code_in}"
+                f"{self.process_code}: should not have "
+                f"main flow in: {self.main_flow_code_in}"
             )
 
     @property
@@ -145,7 +147,8 @@ class ProcessType:
         # secondary: only allow CCS
         return self.allow_in_export and (
             # CSS is onlyallowed secondary(?) # TODO:generalize?
-            not self.is_secondary or self.process_code == "CO2-T+S#B"
+            not self.is_secondary
+            or self.process_code == "CO2-T+S#B"
         )
 
 
@@ -425,7 +428,6 @@ class AggregateProcess(AbstractProcess):
         name: str | None = None,
     ) -> "AggregateProcess":
         """Create aggregated process for entire chain."""
-
         check_use_all_main_process_codes = []
 
         # FIXME: pre/post shipping processes, remove not required
@@ -483,7 +485,6 @@ class AggregateProcess(AbstractProcess):
         without creating loops, while at the same time following some
         specific rules / requirements.
         """
-
         main_processes: list[AbstractProcess] = [
             ProcessTypes[pt].process_class(process_code=pt) for pt in main_process_codes
         ]
@@ -631,9 +632,9 @@ class ProcessGraph:
             flow_provider_sec_or_initial[sec_proc.main_flow_code_out] = sec_proc
 
         # collect required flows
-        required_flows_procs: dict[
-            FlowCodeType, list[tuple[AbstractProcess, bool]]
-        ] = {}
+        required_flows_procs: dict[FlowCodeType, list[tuple[AbstractProcess, bool]]] = (
+            {}
+        )
 
         def add_required_flows_proc(
             proc: AbstractProcess, flow: FlowCodeType, in_main: bool
@@ -683,9 +684,10 @@ class ProcessGraph:
                             f"Could not add link {prov_sec} ={flow}=> {proc_target} "
                             "because it would create a loop. fall back on market"
                         )
-                        prov_sec = get_or_create_market_process(flow)
-
-                    add_link_out(prov_sec, proc_target, in_main=in_main)
+                        prov_sec = None  # use market
+                if not prov_sec:
+                    prov_sec = get_or_create_market_process(flow)
+                add_link_out(prov_sec, proc_target, in_main=in_main)
 
         # optional: subgraph to drop unused secondary
 
@@ -810,6 +812,7 @@ def plot_get_pos(
         # add processes as nodes to DiGraph
 
         xs[1] = max(xs[0] + 0.25, xs[0])  # stagger
+        xs1_start = xs[1]
         xs[2] = max(xs[0], xs[2])
 
         for process in reversed(list(process_graph.calculate_order)):
@@ -826,7 +829,11 @@ def plot_get_pos(
                 #  is secondary
                 xs[1] = xs[1] + 1
                 x = xs[1]
-                y = 0.1
+                # non linear disntance for non overlapping arrows
+
+                ampl = (x - xs1_start) * 0.01
+                sgn = (x - xs1_start) % 2 - 1
+                y = 0.1 + ampl * sgn
             else:
                 # market
                 xs[2] = xs[2] + 1
@@ -903,7 +910,7 @@ def plot(chain_process: AggregateProcess, name: str):
             edge_labels[e] = proc_end_last.main_flow_code_out
             try:
                 edge_labels[e] += f"\n{proc_start.get_main_flow_in():.4f}"
-            except Exception:  # not calculated yet
+            except Exception:  # not calculated yet, # noqa: S110
                 pass
             edge_widths[e] = 2
 
@@ -946,7 +953,7 @@ def plot(chain_process: AggregateProcess, name: str):
     )
 
     # Save to PNG
-    plt.savefig(f"{name}.png", dpi=300)
+    plt.savefig(f"chain_flowcharts/{name}.png", dpi=300)
 
 
 def main():
@@ -955,7 +962,7 @@ def main():
     permutations = create_permutation_names(create_permutations(scenario=scenario))
 
     for i, (name, settings) in enumerate(permutations.items()):
-        # if name != "Ammonia_(AEL)_Ship":
+        # if name != "Methane_(SOEC)_Pipeline":
         #    continue
 
         logging.info(f"{i + 1}/{len(permutations)}: {settings}")

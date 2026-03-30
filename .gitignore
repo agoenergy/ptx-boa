@@ -172,3 +172,4 @@ ptxboa/cache
 tests/out
 test*.xlsx
 ~*
+chain_flowcharts/
