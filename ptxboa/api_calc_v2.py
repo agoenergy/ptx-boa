@@ -3,7 +3,7 @@
 import argparse
 import logging
 from dataclasses import dataclass
-from typing import Iterable, cast
+from typing import Callable, Iterable, Literal, cast
 
 import coloredlogs
 import matplotlib.pyplot as plt
@@ -12,6 +12,7 @@ import networkx as nx
 from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler
 from ptxboa.static import (
     FlowCodeType,
+    ParameterCodeType,
     ProcessCodeType,
     ProcessStepType,
     ProcessStepValues,
@@ -20,6 +21,19 @@ from ptxboa.static import (
     TargetCountryCodeType,
     TransportType,
 )
+
+DataQueryParameterType = Literal[
+    "parameter_code",
+    "process_code",
+    "flow_code",
+    "source_region_code",
+    "target_country_code",
+    "process_code_res",
+    "process_code_ely",
+    "process_code_deriv",
+    "default",
+    "use_user_data",
+]
 
 ProcessStepValuesSorted = ProcessStepValues
 assert tuple(ProcessStepValuesSorted) == (
@@ -244,7 +258,9 @@ class AbstractProcess:
 
 class Process(AbstractProcess):
     def __init__(
-        self, process_code: ProcessCodeType, process_step: ProcessStepType | None = None
+        self,
+        process_code: ProcessCodeType,
+        process_step: ProcessStepType | str | None = None,
     ):
         super().__init__(process_step=process_step)
         self._process_type: ProcessType = ProcessTypes[process_code]
@@ -435,12 +451,18 @@ class AggregateProcess(AbstractProcess):
         main_process_codes: list[ProcessCodeType],
         secondary_process_codes: set[ProcessCodeType],
         process_step: str | None = None,
-        main_process_steps: list[ProcessStepType | None] | None = None,
+        main_process_steps: list[ProcessStepType | str | None] | None = None,
     ) -> "AggregateProcess":
         """Create aggregated process for entire chain."""
         check_use_all_main_process_codes = []
 
         # FIXME: pre/post shipping processes, remove not required
+
+        if not main_process_steps:
+            main_process_steps = [None for _ in range(len(main_process_codes))]
+        else:
+            if len(main_process_steps) != len(main_process_codes):
+                raise Exception("list length mismatch for main_process_steps")
 
         main_processes: list[AbstractProcess] = []
 
@@ -460,12 +482,12 @@ class AggregateProcess(AbstractProcess):
                 p for p in secondary_process_codes if getattr(ProcessTypes[p], attr)
             }
 
-            scodes = main_process_steps[i:j] if main_process_steps else None
+            scodes = main_process_steps[i:j]
             process = AggregateProcess.create_from_chain_part(
                 main_process_codes=pcodes,
                 secondary_process_codes=spcodes,
-                process_step=part_name.upper(),  # e.g. "IMPORT","EXPORT", "TRANSPORT"
                 main_process_steps=scodes,
+                process_step=part_name.upper(),  # e.g. "IMPORT","EXPORT", "TRANSPORT"
             )
             main_processes.append(process)
 
@@ -487,8 +509,8 @@ class AggregateProcess(AbstractProcess):
     def create_from_chain_part(
         main_process_codes: list[ProcessCodeType],
         secondary_process_codes: set[ProcessCodeType],
+        main_process_steps: list[ProcessStepType | str | None],
         process_step: str | None = None,
-        main_process_steps: list[ProcessStepType | None] | None = None,
     ) -> "AggregateProcess":
         """Create an aggregated process with subprocesses.
 
@@ -747,9 +769,10 @@ def create_permutation_names(permutations: Iterable[Settings]) -> dict[str, Sett
 
 def filter_transport_process_codes(
     main_process_codes: list[ProcessCodeType],
+    main_process_steps: list[ProcessStepType],
     transport: TransportType,
     ship_own_fuel: bool,
-) -> list[ProcessCodeType]:
+) -> tuple[list[ProcessCodeType], list[ProcessStepType]]:
     """Filter transportation mode."""
     if transport == "Pipeline":
 
@@ -772,33 +795,53 @@ def filter_transport_process_codes(
     else:
         raise NotImplementedError(transport)
 
-    return [p for p in main_process_codes if filter_proc(ProcessTypes[p])]
+    main_process_codes_: list[ProcessCodeType] = []
+    main_process_steps_: list[ProcessStepType] = []
+    assert len(main_process_codes) == len(main_process_steps)
+    for p, s in zip(main_process_codes, main_process_steps):
+        if filter_proc(ProcessTypes[p]):
+            main_process_codes_.append(p)
+            main_process_steps_.append(s)
+
+    return main_process_codes_, main_process_steps_
 
 
 def create_chain_process(settings: Settings) -> AggregateProcess:
 
     chain_data = DataHandler.get_dimension("chain").loc[settings.chain_code].to_dict()
 
+    # FIXME: instead of two lists for codes and steps, use list of tuples or something similar
+
     main_process_codes: list[ProcessCodeType] = [
         cast(ProcessCodeType, chain_data[x])
         for x in ProcessStepValuesSorted
         if chain_data[x]
     ]
-    main_process_steps: list[ProcessStepType | None] = [
+    main_process_steps: list[ProcessStepType | str | None] = [
         cast(ProcessStepType, x) for x in ProcessStepValuesSorted if chain_data[x]
     ]
+    assert len(main_process_codes) == len(main_process_steps)
 
-    main_process_codes = filter_transport_process_codes(
+    main_process_codes, main_process_steps = filter_transport_process_codes(
         main_process_codes,
+        main_process_steps,
         transport=settings.transport,
         ship_own_fuel=settings.ship_own_fuel,
     )
 
     main_process_codes.insert(0, settings.first_process_code)
 
+    pt = ProcessTypes[settings.first_process_code]
+    initial_step = (
+        "RES" if pt.is_re_generation else "NG_PROD"  # TODO
+    )  # TODO:maybe from green/blue?
+    main_process_steps.insert(0, initial_step)
+
+    assert len(main_process_codes) == len(main_process_steps)
+
     # for FLH lookup we need these process codes
     param_flh_kwargs: dict[str, ProcessCodeType | None] = {
-        "process_code_res": chain_data["RES"],
+        "process_code_res": main_process_codes[0] if initial_step == "RES" else None,
         "process_code_ely": chain_data["ELY"],
         "process_code_deriv": chain_data["DERIV"],
     }
@@ -979,10 +1022,48 @@ def plot(chain_process: AggregateProcess, name: str):
     plt.savefig(f"chain_flowcharts/{name}.png", dpi=300)
 
 
+def create_parameter_getter(
+    data_handler: DataHandler, use_user_data: bool
+) -> dict[ParameterCodeType, Callable[..., float]]:
+
+    def _get_df(parameter_code: ParameterCodeType, process_code: ProcessCodeType):
+        if (
+            parameter_code == "FLH"
+            and process_code
+            and not ProcessTypes[process_code].is_re_generation
+        ):
+            # FLH not changed by user_data
+            df = data_handler.flh
+            # keys = [
+            #    "source_region_code",
+            #    "process_code_res",
+            #    "process_code_ely",
+            #    "process_code_deriv",
+            #    "process_code",
+            # ]
+            # required_keys = set(keys)
+        else:
+            if use_user_data:
+                df = data_handler.scenario_data
+            else:
+                df = data_handler._scenario_data
+        return df
+
+    parameter_getattr: dict[ParameterCodeType, Callable[..., float]] = {}
+    for param in df_parameter.to_dict(orient="records"):
+        logging.error((param["parameter_code"], param["dimensions"]))
+
+    return parameter_getattr
+
+
 def main():
     scenario: ScenarioType = "2040 (medium)"
     data_handler = DataHandler(scenario=scenario, data_dir=DEFAULT_DATA_DIR)
     permutations = create_permutation_names(create_permutations(scenario=scenario))
+
+    parameter_getter = create_parameter_getter(
+        data_handler=data_handler, use_user_data=False
+    )
 
     for i, (name, settings) in enumerate(permutations.items()):
         if name != "Methane_(SOEC)_Pipeline":
