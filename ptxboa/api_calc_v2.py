@@ -13,13 +13,16 @@ from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler
 from ptxboa.static import (
     FlowCodeType,
     ProcessCodeType,
+    ProcessStepType,
+    ProcessStepValues,
     ScenarioType,
     SourceRegionCodeType,
     TargetCountryCodeType,
     TransportType,
 )
 
-ProcessStepValuesSorted = [
+ProcessStepValuesSorted = ProcessStepValues
+assert tuple(ProcessStepValuesSorted) == (
     "EL_STR",
     "ELY",
     "H2_STR",
@@ -38,7 +41,7 @@ ProcessStepValuesSorted = [
     "ELY_I",
     "DERIV_I",
     "DERIV_I2",
-]
+)
 
 df_process = DataHandler.get_dimension("process")
 df_chain = DataHandler.get_dimension("chain")
@@ -188,6 +191,11 @@ class AbstractProcess:
         return None
 
     @property
+    def process_step(self) -> ProcessStepType | None:
+        """Process step."""
+        return None
+
+    @property
     def main_flow_code_out(self) -> FlowCodeType:
         """Main flow code out."""
         raise NotImplementedError
@@ -231,13 +239,22 @@ class AbstractProcess:
 
     def __str__(self):
         s_val = f"={self._main_flow_out:.4f}" if self._main_flow_out else ""
-        return f"{self.__class__.__name__}({self.process_code}{s_val})"
+        step = f"{self.process_step}=" if self.process_step else ""
+        return f"{self.__class__.__name__}({step}{self.process_code}{s_val})"
 
 
 class Process(AbstractProcess):
-    def __init__(self, process_code: ProcessCodeType):
+    def __init__(
+        self, process_code: ProcessCodeType, process_step: ProcessStepType | None = None
+    ):
         super().__init__()
         self._process_type: ProcessType = ProcessTypes[process_code]
+        self._process_step: ProcessStepType | None = process_step
+
+    @property
+    def process_step(self) -> ProcessStepType | None:
+        """Process step."""
+        return self._process_step
 
     @property
     def process_code(self) -> ProcessCodeType | None:
@@ -426,6 +443,7 @@ class AggregateProcess(AbstractProcess):
         main_process_codes: list[ProcessCodeType],
         secondary_process_codes: set[ProcessCodeType],
         name: str | None = None,
+        main_process_steps: list[ProcessStepType | None] | None = None,
     ) -> "AggregateProcess":
         """Create aggregated process for entire chain."""
         check_use_all_main_process_codes = []
@@ -450,10 +468,12 @@ class AggregateProcess(AbstractProcess):
                 p for p in secondary_process_codes if getattr(ProcessTypes[p], attr)
             }
 
+            scodes = main_process_steps[i:j] if main_process_steps else None
             process = AggregateProcess.create_from_chain_part(
                 main_process_codes=pcodes,
                 secondary_process_codes=spcodes,
                 name=part_name.upper(),
+                main_process_steps=scodes,
             )
             main_processes.append(process)
 
@@ -476,6 +496,7 @@ class AggregateProcess(AbstractProcess):
         main_process_codes: list[ProcessCodeType],
         secondary_process_codes: set[ProcessCodeType],
         name: str | None = None,
+        main_process_steps: list[ProcessStepType | None] | None = None,
     ) -> "AggregateProcess":
         """Create an aggregated process with subprocesses.
 
@@ -485,8 +506,15 @@ class AggregateProcess(AbstractProcess):
         without creating loops, while at the same time following some
         specific rules / requirements.
         """
+        if not main_process_steps:
+            main_process_steps = [None for _ in range(len(main_process_codes))]
+        else:
+            if len(main_process_steps) != len(main_process_codes):
+                raise Exception("list length mismatch for main_process_steps")
+
         main_processes: list[AbstractProcess] = [
-            ProcessTypes[pt].process_class(process_code=pt) for pt in main_process_codes
+            ProcessTypes[pt].process_class(process_code=pt, process_step=ps)
+            for pt, ps in zip(main_process_codes, main_process_steps)
         ]
         secondary_processes: list[Process] = [
             ProcessTypes[pt].process_class(process_code=pt)
@@ -772,6 +800,9 @@ def create_chain_process(
         for x in ProcessStepValuesSorted
         if chain_data[x]
     ]
+    main_process_steps: list[ProcessStepType | None] = [
+        cast(ProcessStepType, x) for x in ProcessStepValuesSorted if chain_data[x]
+    ]
 
     main_process_codes = filter_transport_process_codes(
         main_process_codes,
@@ -785,6 +816,7 @@ def create_chain_process(
         main_process_codes=main_process_codes,
         secondary_process_codes=settings.secondary_process_codes,
         name=name,
+        main_process_steps=main_process_steps,
     )
 
     # check (TODO: can be removed later)
@@ -962,8 +994,8 @@ def main():
     permutations = create_permutation_names(create_permutations(scenario=scenario))
 
     for i, (name, settings) in enumerate(permutations.items()):
-        # if name != "Methane_(SOEC)_Pipeline":
-        #    continue
+        if name != "Methane_(SOEC)_Pipeline":
+            continue
 
         logging.info(f"{i + 1}/{len(permutations)}: {settings}")
         logging.info(name)
