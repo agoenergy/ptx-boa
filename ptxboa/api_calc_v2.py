@@ -162,16 +162,14 @@ ProcessTypes: dict[ProcessCodeType, ProcessType] = {
 
 
 class AbstractProcess:
-    def __init__(self, process_step: ProcessStepType | str | None = None):
+    def __init__(
+        self,
+        process_step: ProcessStepType | str | None = None,
+    ):
         self._main_flow_out: float | None = None  # will be set in calculate()
         self._main_flow_in: float | None = None  # will be set in calculate()
         self._secondary_flows_in: dict[FlowCodeType, float] | None = None
-        self._process_step: ProcessStepType | str | None = process_step
-
-    @property
-    def process_step(self) -> ProcessStepType | str | None:
-        """Process step."""
-        return self._process_step
+        self.process_step: ProcessStepType | str | None = process_step
 
     def get_main_flow_out(self) -> float:
         """Value of main out flow."""
