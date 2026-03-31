@@ -207,13 +207,13 @@ class AbstractProcess:
 
     def get_main_flow_out(self) -> float:
         """Value of main out flow."""
-        if not self._main_flow_out:  # 0 or None
+        if self._main_flow_out is None:
             raise Exception("Not calculated yet")
         return self._main_flow_out
 
     def get_main_flow_in(self) -> float:
         """Value of calculated main in flow."""
-        if not self._main_flow_in:  # 0 or None
+        if self._main_flow_in is None:
             raise Exception("Not calculated yet, or main_flow_in does not exist")
         return self._main_flow_in
 
@@ -373,12 +373,20 @@ class Process(AbstractProcess):
     def calculate(self, main_flow_out: float):
         """Calculate all process values based on desired output flow."""
         super().calculate(main_flow_out=main_flow_out)
-        eff = 0.9
+        eff: float = self._parameters.get("EFF")
+        if not eff:
+            logging.warning("EFF = 0")
+            eff = 1
+
         self._main_flow_in = main_flow_out / eff
-        conv = 0.7
-        self._secondary_flows_in = {
-            fc: main_flow_out * conv for fc in self.secondary_flow_types
-        }
+        self._secondary_flows_in = {}
+        convs = self._parameters.get("CONV", {})
+        for fc in self.secondary_flow_types:
+            conv: float = convs.get(fc, 0)
+            value = main_flow_out * conv
+            if value < 0:  # ignore (e.g. exothermal heat)
+                value = 0
+            self._secondary_flows_in[fc] = value
 
 
 class TransportProcess(Process):
@@ -1077,9 +1085,6 @@ def plot(chain_process: AggregateProcess, name: str):
 
         for process in reversed(list(process_graph.calculate_order)):
             label = str(process)
-            # show all parameters (nonzero)
-            parameters = nested_round_drop_empty(process._parameters)
-            label += f"\n{parameters}"
 
             G.add_node(process)
             node_labels[process] = (
