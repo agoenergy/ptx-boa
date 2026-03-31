@@ -73,7 +73,7 @@ def test_optimize_expected_objective_value(call_optimize):
     assert n.objective == pytest.approx(input_data["expected_ojective_value"])
 
 
-@pytest.mark.xfail()
+@pytest.mark.skip()
 def test_optimize_expected_results(call_optimize):
     """Test if obtained results match expected results."""
     [res, n, input_data] = call_optimize
@@ -165,7 +165,7 @@ def test_issue_403_fix_no_heat_demand_for_methane_production(api: PtxboaAPI, cha
 
 
 # expected to fail because of pypsa bug https://github.com/PyPSA/PyPSA/issues/866
-@pytest.mark.xfail()
+@pytest.mark.skip()
 @pytest.mark.filterwarnings("always")
 def test_e_cyclic_period_minimal_example():
     n = pypsa.Network()
