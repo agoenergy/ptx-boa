@@ -595,7 +595,7 @@ class ChainProcess(AggregateProcess):
             if chain_data[step]
         ]
 
-        main_process_codes_steps = filter_transport_process_codes(
+        main_process_codes_steps_filtered = filter_transport_process_codes(
             main_process_codes_steps,
             transport=transport,
             ship_own_fuel=ship_own_fuel,
@@ -607,7 +607,7 @@ class ChainProcess(AggregateProcess):
             # TODO: maybe from green/blue?
             ("RES" if chain_start_with_res else "NG_PROD"),
         )
-        main_process_codes_steps.insert(0, (first_process_code, initial_step))
+        main_process_codes_steps_filtered.insert(0, (first_process_code, initial_step))
 
         # for FLH lookup we need these process codes
         self._data_lookup_defaults_static: dict[str, ProcessCodeType | None] = {
@@ -624,10 +624,10 @@ class ChainProcess(AggregateProcess):
         main_processes: list[AbstractProcess] = []
 
         for ChainSectionProcessClass, i, j in get_chain_sections(
-            main_process_codes_steps=main_process_codes_steps
+            main_process_codes_steps=main_process_codes_steps_filtered
         ):
             main_process_codes_steps_part: list["ProcessStep"] = (
-                main_process_codes_steps[i:j]
+                main_process_codes_steps_filtered[i:j]
             )
             if not main_process_codes_steps_part:
                 # no steps ==> skip this
@@ -671,14 +671,17 @@ class ChainProcess(AggregateProcess):
 
         # check (TODO: can be removed later)
         if not tuple(check_use_all_main_process_codes) == tuple(
-            main_process_codes_steps
+            main_process_codes_steps_filtered
         ):
             raise Exception(
-                f"{check_use_all_main_process_codes} != {main_process_codes_steps}"
+                f"{check_use_all_main_process_codes} != {main_process_codes_steps_filtered}"
             )
         # check (TODO: can be removed later)
         main_process_codes_ = tuple(p.process_code for p in self.full_main_chain)
-        if tuple(p for p, s_ in main_process_codes_steps) != main_process_codes_:
+        if (
+            tuple(p for p, s_ in main_process_codes_steps_filtered)
+            != main_process_codes_
+        ):
             raise Exception(main_process_codes_)
 
     def initialize_parameters(
@@ -872,6 +875,15 @@ class ProcessGraph:
             proc_recipient: AbstractProcess,
             in_main: bool,
         ):
+            # check
+            flow_codes_in = (
+                {proc_recipient.main_flow_code_in}
+                if in_main
+                else proc_recipient.secondary_flow_types
+            )
+            if proc_provider.main_flow_code_out not in flow_codes_in:
+                raise Exception(f"Cannot link {proc_provider} => {proc_recipient}")
+
             if proc_provider not in self.links_out:
                 self.links_out[proc_provider] = []
             self.links_out[proc_provider].append((proc_recipient, in_main))
@@ -1009,29 +1021,32 @@ def filter_transport_process_codes(
     transport: TransportType,
     ship_own_fuel: bool,
 ) -> list["ProcessStep"]:
-    """Filter transportation mode."""
+    """If shipping: remove pipeline (and pre/post), and vice versa."""
+
+    drop_steps: set[ProcessStepType | str]
+
     if transport == "Pipeline":
-
-        def filter_proc(p: ProcessType):
-            return p.is_pipeline or not p.is_transport
-
+        drop_steps = {
+            "PRE_SHP",
+            "POST_SHP",
+        }
     elif transport == "Ship":
+        drop_steps = {
+            "PRE_PPL",
+            "PPLS",
+            "PPL",
+            "PPLX",
+            "PPLR",
+            "POST_PPL",
+        }
         if ship_own_fuel:
-
-            def filter_proc(p: ProcessType):
-                return p.is_shipping_own_fuel or not p.is_transport
-
+            drop_steps = drop_steps | {"SHP"}
         else:
-
-            def filter_proc(p: ProcessType):
-                return (
-                    p.is_shipping and not p.is_shipping_own_fuel
-                ) or not p.is_transport
-
+            drop_steps = drop_steps | {"SHP_OWN"}
     else:
         raise NotImplementedError(transport)
 
-    return [(p, s) for p, s in main_process_codes_steps if filter_proc(ProcessTypes[p])]
+    return [(p, s) for p, s in main_process_codes_steps if s not in drop_steps]
 
 
 ProcessStep = tuple[ProcessCodeType, ProcessStepType | None]
