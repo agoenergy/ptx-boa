@@ -563,6 +563,15 @@ class AggregateProcess(AbstractProcess):
             if process == self.process_graph.main_processes[0]:
                 self._main_flow_in = process.get_main_flow_in()
 
+    def get_subprocesses_by_class(
+        self, class_or_classes: type | tuple[type]
+    ) -> list[AbstractProcess]:
+        return [
+            p
+            for p in self.process_graph.calculate_order
+            if isinstance(p, class_or_classes)
+        ]
+
 
 class ChainProcess(AggregateProcess):
     _parameter_codes_process = ["CALOR"]  # conversion kg / kwh
@@ -601,11 +610,12 @@ class ChainProcess(AggregateProcess):
         main_process_codes_steps.insert(0, (first_process_code, initial_step))
 
         # for FLH lookup we need these process codes
-        self._data_lookup_defaults: dict[str, ProcessCodeType | None] = {
+        self._data_lookup_defaults_static: dict[str, ProcessCodeType | None] = {
             "process_res": (first_process_code if chain_start_with_res else None),
             "process_ely": chain_data["ELY"],
             "process_deriv": chain_data["DERIV"],
         }
+        self._data_lookup_defaults: dict | None = None  # will be set in init params
 
         check_use_all_main_process_codes = []
 
@@ -677,13 +687,14 @@ class ChainProcess(AggregateProcess):
         source_region_code: SourceRegionCodeType,
         target_country_code: TargetCountryCodeType,
     ):
+        self._data_lookup_defaults = {
+            "source_region_code": source_region_code,
+            "target_country_code": target_country_code,
+        }
         super().initialize_parameters(
             parameter_getters=parameter_getters,
-            data_lookup_defaults=self._data_lookup_defaults
-            | {
-                "source_region_code": source_region_code,
-                "target_country_code": target_country_code,
-            },
+            data_lookup_defaults=self._data_lookup_defaults_static
+            | self._data_lookup_defaults,
         )
 
 
@@ -1309,7 +1320,9 @@ def create_parameter_getters(
             parameter_code, "has_global_default"
         ]
 
-        default_value: float = 1 if parameter_code == "EFF" else 0  # TODO: from  DB?
+        default_value: float = (
+            1 if parameter_code in {"EFF", "CALOR"} else 0
+        )  # TODO: from  DB?
 
         _get_value_ = make_getter(
             parameter_code=parameter_code, use_global_default=False
@@ -1421,8 +1434,8 @@ def main():
 
     for i, (name, settings) in enumerate(permutations.items()):
         # if name != "Methane_(SOEC)_Pipeline":
-        # if name != "DRI-S__SMR_52%_BF_DRI__prod_in_demand_Ship":
-        #    continue
+        if name != "STL-S__NG-DRI-C_EAF__prod_in_demand_Ship":
+            continue
 
         logger.info(f"{i + 1}/{len(permutations)}: {settings}")
 
@@ -1460,3 +1473,89 @@ if __name__ == "__main__":
     )
 
     main(**kwargs)
+
+
+def _temp_data_adapter(chain_process: ChainProcess) -> dict:
+
+    proc_export: AggregateProcess = chain_process.get_subprocesses_by_class(
+        ChainExportProcess
+    )[
+        0
+    ]  # type: ignore
+    proc_transport: AggregateProcess = chain_process.get_subprocesses_by_class(
+        ChainTransportProcess
+    )[0]
+    try:
+        proc_import: AggregateProcess = chain_process.get_subprocesses_by_class(
+            ChainImportProcess
+        )[0]
+    except Exception:
+        proc_import = None
+
+    context = chain_process._data_lookup_defaults
+
+    parameter = proc_export.get_parameters_incl_parents()
+    parameter["SPECCOST"] = {}
+    # also aggregate all specccost
+    for p in proc_export.get_subprocesses_by_class(MarketProcess):
+        print(p)
+        parameter["SPECCOST"] = (
+            {
+                "CO2-G": 0.044519,
+                # "DIESEL-L": 0.042857,
+                "EL": 0.08078,
+                "H2O-L": 0.001374,
+                "HEAT": 0.0577,
+                "IOP-S": 0.267076,
+                "N2-G": 0.01154,
+            }
+            | parameter["SPECCOST"]
+            | p._parameters.get("SPECCOST", {})
+        )
+
+    if proc_import:
+        parameter_i = proc_import.get_parameters_incl_parents()
+        parameter_i["SPECCOST"] = {}
+        # also aggregate all specccost
+        for p in proc_import.get_subprocesses_by_class(MarketProcess):
+            print(p)
+            parameter_i["SPECCOST"] = (
+                {
+                    "CO2-G": 0.044519,
+                    "DIESEL-L": 0.042857,
+                    # "EL": 0.1,
+                    "H2O-L": 0.001374,
+                    "HEAT": 0.04,
+                    # "IOP-S": 0.267076,
+                    "N2-G": 0.01154,
+                    # "NG-G": 0.030565,
+                }
+                | parameter_i["SPECCOST"]
+                | p._parameters.get("SPECCOST", {})
+            )
+    else:
+        parameter_i = {}
+
+    main_import_process_chain = []
+    transport_process_chain = []
+    main_export_process_chain = []
+
+    # NOTE: in old version, pre/post is part of transport
+
+    for x in proc_export.full_main_chain:
+        logger.warning(type(x))
+
+    for x in proc_transport.full_main_chain:
+        logger.error(type(x))
+
+    for x in proc_import.full_main_chain:
+        logger.warning(type(x))
+
+    return {
+        "context": context,
+        "parameter": parameter,
+        "parameter_i": parameter_i,
+        "main_import_process_chain": main_import_process_chain,
+        "transport_process_chain": transport_process_chain,
+        "main_export_process_chain": main_export_process_chain,
+    }

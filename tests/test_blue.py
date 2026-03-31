@@ -6,7 +6,10 @@ import pandas as pd
 import pytest
 
 from ptxboa.api import PtxboaAPI, PtxCalc
-from ptxboa.api_calc_v2 import create_chain_process_api_wrapper
+from ptxboa.api_calc_v2 import (
+    _temp_data_adapter,
+    create_chain_process_api_wrapper,
+)
 from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler
 from tests.test_api import ptxdata_dir_static
 
@@ -1212,7 +1215,7 @@ def test_new_blue_chain_real_data(
     res_costs = _sort_nested(_round_nested(res_costs))
 
     # print so we can copy/paste new results into test
-    print((calculation_data, values, res_emission_mass, res_costs))
+    # print((calculation_data, values, res_emission_mass, res_costs))
 
     assert _rec_approx(calculation_data) == _sort_nested(
         _round_nested(calculation_data_exp)
@@ -1229,14 +1232,10 @@ def test_new_blue_chain_real_data(
         tool_version_color="blue",
     )
 
-    # "scenario": "2040 (medium)",
-    # "chain": "STL-S__NG-DRI-C_EAF__prod_in_supply",
-    # "transport": "Ship",
-    # "ship_own_fuel": False,
+    calculation_data_ = _temp_data_adapter(chain_process)
+    calculation_data: dict = _sort_nested(_round_nested(calculation_data_))  # type: ignore
 
-    # "region": "Qatar",
-    # "country": "Germany",
-    # "res_gen": None,
+    for k in set(calculation_data_exp) & set(calculation_data):
+        assert _rec_approx(calculation_data_exp[k]) == calculation_data[k]
 
-    # "secproc_co2": "Direct Air Capture (blue)",
-    # "secproc_water": "Sea Water desalination",
+    raise Exception(set(calculation_data_exp) - set(calculation_data))
