@@ -139,7 +139,7 @@ class ProcessType:
             return InitialProcess
         elif self.is_secondary:
             return SecondaryProcess
-        elif self.is_transport:
+        elif self.is_transport and not self.is_transformation:
             return TransportProcess
         else:
             return Process
@@ -154,6 +154,7 @@ class ProcessType:
         """Is process allowed in transport."""
         return (
             self.is_transport  # includes pre/post transformation
+            and not self.is_transformation  # we want pre/post shipping in export/import
             and not self.is_secondary
             and not self.is_storage
         )
@@ -164,8 +165,7 @@ class ProcessType:
         # secondary: only allow CCS
         return self.allow_in_export and (
             # CSS is onlyallowed secondary(?) # TODO:generalize?
-            not self.is_secondary
-            or self.process_code == "CO2-T+S#B"
+            not self.is_secondary or self.process_code == "CO2-T+S#B"
         )
 
 
@@ -257,6 +257,8 @@ class AbstractProcess:
 
 
 class Process(AbstractProcess):
+    color = "lightblue"
+
     def __init__(
         self,
         process_code: ProcessCodeType,
@@ -315,10 +317,12 @@ class Process(AbstractProcess):
 
 
 class TransportProcess(Process):
-    pass
+    color = "teal"
 
 
 class SecondaryProcess(Process):
+    color = "lightgreen"
+
     @property
     def is_secondary(self) -> bool:
         """Is this a secondary process."""
@@ -326,10 +330,12 @@ class SecondaryProcess(Process):
 
 
 class InitialProcess(SecondaryProcess):
-    pass
+    color = "skyblue"
 
 
 class MarketProcess(AbstractProcess):
+    color = "lightgray"
+
     def __init__(self, main_flow_code_out: FlowCodeType):
         super().__init__()
         self._main_flow_code_out: FlowCodeType = main_flow_code_out
@@ -667,9 +673,9 @@ class ProcessGraph:
             flow_provider_sec_or_initial[sec_proc.main_flow_code_out] = sec_proc
 
         # collect required flows
-        required_flows_procs: dict[FlowCodeType, list[tuple[AbstractProcess, bool]]] = (
-            {}
-        )
+        required_flows_procs: dict[
+            FlowCodeType, list[tuple[AbstractProcess, bool]]
+        ] = {}
 
         def add_required_flows_proc(
             proc: AbstractProcess, flow: FlowCodeType, in_main: bool
@@ -904,7 +910,6 @@ def plot(chain_process: AggregateProcess, name: str):
     # Create a directed graph
     G = nx.DiGraph()
     node_labels = {}
-    node_colors = {}
     edge_labels = {}
     edge_widths = {}
 
@@ -929,14 +934,6 @@ def plot(chain_process: AggregateProcess, name: str):
                 .replace(" ", "\n")
                 .strip()
             )
-
-            # if is_main:
-            if process in process_graph.main_processes:
-                node_colors[process] = "lightblue"
-            elif not isinstance(process, MarketProcess):
-                node_colors[process] = "lightgreen"
-            else:
-                node_colors[process] = "lightgray"
 
             for proc_target, in_main in process_graph.links_out.get(process, []):
                 flow = process.main_flow_code_out
@@ -984,7 +981,7 @@ def plot(chain_process: AggregateProcess, name: str):
         G,
         node_pos,
         with_labels=False,
-        node_color=[node_colors[k] for k in G.nodes()],
+        node_color=[cast(Process, k).color for k in G.nodes()],
         width=[edge_widths[k] for k in G.edges()],
         node_size=2000 * scale,
     )
