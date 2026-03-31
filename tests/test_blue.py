@@ -1221,3 +1221,17 @@ def test_new_blue_chain_real_data(
         _round_nested(res_emission_mass_exp)
     )
     assert _rec_approx(res_costs) == _sort_nested(_round_nested(res_costs_exp))
+
+    ###### NEW
+
+    # "scenario": "2040 (medium)",
+    # "chain": "STL-S__NG-DRI-C_EAF__prod_in_supply",
+    # "transport": "Ship",
+    # "ship_own_fuel": False,
+
+    # "region": "Qatar",
+    # "country": "Germany",
+    # "res_gen": None,
+
+    # "secproc_co2": "Direct Air Capture (blue)",
+    # "secproc_water": "Sea Water desalination",

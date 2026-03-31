@@ -14,7 +14,7 @@ from .api_calc import PtxCalc
 from .api_data import DataHandler
 from .api_optimize import PtxOpt
 from .static import (
-    ChainNameType,
+    ChainType,
     DimensionType,
     OutputUnitType,
     ResGenType,
@@ -130,7 +130,7 @@ class PtxboaAPI:
         scenario: ScenarioType,
         secproc_co2: SecProcCO2Type | None,
         secproc_water: SecProcH2OType | None,
-        chain: ChainNameType,
+        chain: ChainType,
         res_gen: ResGenType | None,
         region: SourceRegionNameType,
         country: TargetCountryNameType,
@@ -328,7 +328,7 @@ class PtxboaAPI:
         scenario: ScenarioType,
         secproc_co2: SecProcCO2Type,
         secproc_water: SecProcH2OType,
-        chain: ChainNameType,
+        chain: ChainType,
         res_gen: ResGenType,
         region: SourceRegionNameType,
         country: TargetCountryNameType,

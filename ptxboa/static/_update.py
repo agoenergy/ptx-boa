@@ -68,7 +68,7 @@ def main():
         create_literal_from_db("FlowCode", "flow_code", "ptxboa_flow"),
         create_literal_from_db("ParameterCode", "parameter_code", "ptxboa_parameter"),
         create_literal_from_db("ParameterName", "parameter_name", "ptxboa_parameter"),
-        create_literal_from_db("ChainName", "chain", "ptxboa_chains"),
+        create_literal_from_db("Chain", "chain", "ptxboa_chains"),
         create_literal_from_query(
             "Scenario",
             "scenario",

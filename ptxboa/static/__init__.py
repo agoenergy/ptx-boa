@@ -760,7 +760,7 @@ ParameterNameValues = [
 ]
 
 
-ChainNameType = Literal[
+ChainType = Literal[
     "Ammonia (AEL)",
     "Ammonia (AEL) + reconv. to H2",
     "Ammonia (PEM)",
@@ -837,7 +837,7 @@ ChainNameType = Literal[
     "STL-S__SMR_52%_DRI_EAF__prod_in_demand",
     "STL-S__SMR_52%_DRI_EAF__prod_in_supply",
 ]
-ChainNameValues = [
+ChainValues = [
     "Ammonia (AEL)",
     "Ammonia (AEL) + reconv. to H2",
     "Ammonia (PEM)",

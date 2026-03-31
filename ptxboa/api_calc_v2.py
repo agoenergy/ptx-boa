@@ -2,24 +2,34 @@
 
 import argparse
 import logging
+import re
 from dataclasses import dataclass
-from typing import Callable, Iterable, Literal, Protocol, Union, cast
+from typing import Iterable, Literal, Protocol, Union, cast
 
 import coloredlogs
 import matplotlib.pyplot as plt
 import networkx as nx
+import pandas as pd
 
 from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler
 from ptxboa.static import (
+    ChainType,
     FlowCodeType,
+    OutputUnitType,
     ParameterCodeType,
     ParameterCodeValues,
     ProcessCodeType,
     ProcessStepType,
     ProcessStepValues,
+    ResGenType,
     ScenarioType,
+    SecProcCO2Type,
+    SecProcH2OType,
     SourceRegionCodeType,
+    SourceRegionNameType,
     TargetCountryCodeType,
+    TargetCountryNameType,
+    ToolVersionColorType,
     TransportType,
 )
 
@@ -63,9 +73,14 @@ assert tuple(ProcessStepValuesSorted) == (
 )
 
 
-df_process = DataHandler.get_dimension("process")
+df_process_by_code = DataHandler.get_dimension("process")
+df_process_by_name = df_process_by_code.set_index("process_name", drop=False)
 df_chain = DataHandler.get_dimension("chain")
-df_parameter = DataHandler.get_dimension("parameter")
+df_parameter_by_code = DataHandler.get_dimension("parameter")
+df_region_by_name = DataHandler.get_dimension("region")
+df_region_by_code = df_region_by_name.set_index("region_code", drop=False)
+
+# get_dimensions_parameter_code
 
 
 class ProcessType:
@@ -178,7 +193,7 @@ class ProcessType:
 
 ProcessTypes: dict[ProcessCodeType, ProcessType] = {
     p["process_code"]: ProcessType(**cast(dict, p))
-    for p in df_process.to_dict(orient="records")
+    for p in df_process_by_code.to_dict(orient="records")
 }
 
 
@@ -268,7 +283,7 @@ class AbstractProcess:
         return False
 
     def initialize_parameters(
-        self, parameter_getters: "ParameterGetters", **data_lookup_defaults
+        self, parameter_getters: "ParameterGetters", data_lookup_defaults: dict
     ):
         """Initialize parameetr data for this process."""
         self._parameters = {}
@@ -373,16 +388,16 @@ class Process(AbstractProcess):
     def calculate(self, main_flow_out: float):
         """Calculate all process values based on desired output flow."""
         super().calculate(main_flow_out=main_flow_out)
-        eff: float = self._parameters.get("EFF")
+        eff: float = self._parameters.get("EFF")  # type: ignore
         if not eff:
             logging.warning("EFF = 0")
             eff = 1
 
         self._main_flow_in = main_flow_out / eff
         self._secondary_flows_in = {}
-        convs = self._parameters.get("CONV", {})
+        convs = self._parameters.get("CONV", {})  # type: ignore
         for fc in self.secondary_flow_types:
-            conv: float = convs.get(fc, 0)
+            conv: float = convs.get(fc, 0)  # type: ignore
             value = main_flow_out * conv
             if value < 0:  # ignore (e.g. exothermal heat)
                 value = 0
@@ -437,7 +452,7 @@ class MarketProcess(AbstractProcess):
     @property
     def process_code(self) -> ProcessCodeType | None:
         """Process code."""
-        return self.main_flow_code_out  # type:ignore
+        return self.main_flow_code_out  # type: ignore
 
 
 def get_chain_sections(
@@ -467,13 +482,11 @@ class AggregateProcess(AbstractProcess):
     def __init__(
         self,
         process_graph: "ProcessGraph",
-        change_data_lookup_defaults: Callable,
         process_step: str | None = None,
         parent_process: Union["AbstractProcess", None] = None,
     ):
         super().__init__(process_step=process_step, parent_process=parent_process)
         self.process_graph: "ProcessGraph" = process_graph
-        self._change_data_lookup_defaults = change_data_lookup_defaults
 
     @property
     def main_flow_code_out(self) -> FlowCodeType:
@@ -498,19 +511,19 @@ class AggregateProcess(AbstractProcess):
         return result
 
     def initialize_parameters(
-        self, parameter_getters: "ParameterGetters", **data_lookup_defaults
+        self, parameter_getters: "ParameterGetters", data_lookup_defaults: dict
     ):
         """Initialize parameetr data for this process."""
-        # TODO: move this into subclasses?
-        data_lookup_defaults = self._change_data_lookup_defaults(data_lookup_defaults)
 
         super().initialize_parameters(
-            parameter_getters=parameter_getters, **data_lookup_defaults
+            parameter_getters=parameter_getters,
+            data_lookup_defaults=data_lookup_defaults,
         )
 
         for process in self.process_graph.calculate_order:
             process.initialize_parameters(
-                parameter_getters=parameter_getters, **data_lookup_defaults
+                parameter_getters=parameter_getters,
+                data_lookup_defaults=data_lookup_defaults,
             )
 
     def calculate(self, main_flow_out: float):
@@ -556,19 +569,51 @@ class ChainProcess(AggregateProcess):
 
     def __init__(
         self,
-        main_process_codes_steps: list["ProcessStep"],
+        transport: TransportType,
+        ship_own_fuel: bool,
+        chain: str,
+        first_process_code: ProcessCodeType,
         secondary_process_codes: set[ProcessCodeType],
-        data_lookup_defaults,
-        process_step: str | None = None,
+        **_kwargs,
     ):
         """Create aggregated process for entire chain."""
+
+        chain_data = DataHandler.get_dimension("chain").loc[chain].to_dict()
+
+        main_process_codes_steps: list["ProcessStep"] = [
+            (cast(ProcessCodeType, chain_data[step]), cast(ProcessStepType, step))
+            for step in ProcessStepValuesSorted
+            if chain_data[step]
+        ]
+
+        main_process_codes_steps = filter_transport_process_codes(
+            main_process_codes_steps,
+            transport=transport,
+            ship_own_fuel=ship_own_fuel,
+        )
+        # add initial step
+        chain_start_with_res = ProcessTypes[first_process_code].is_re_generation
+        initial_step = cast(
+            ProcessStepType,
+            # TODO: maybe from green/blue?
+            ("RES" if chain_start_with_res else "NG_PROD"),
+        )
+        main_process_codes_steps.insert(0, (first_process_code, initial_step))
+
+        # for FLH lookup we need these process codes
+        self._data_lookup_defaults: dict[str, ProcessCodeType | None] = {
+            "process_res": (first_process_code if chain_start_with_res else None),
+            "process_ely": chain_data["ELY"],
+            "process_deriv": chain_data["DERIV"],
+        }
+
         check_use_all_main_process_codes = []
 
         # FIXME: pre/post shipping processes, remove not required
 
         main_processes: list[AbstractProcess] = []
 
-        for part_class, i, j in get_chain_sections(
+        for ChainSectionProcessClass, i, j in get_chain_sections(
             main_process_codes_steps=main_process_codes_steps
         ):
             main_process_codes_steps_part: list["ProcessStep"] = (
@@ -581,32 +626,22 @@ class ChainProcess(AggregateProcess):
             invalid_processes = [
                 p
                 for p, _s in main_process_codes_steps_part
-                if not part_class.process_allowed(p)
+                if not ChainSectionProcessClass.process_allowed(p)
             ]
             if invalid_processes:
                 raise Exception(
-                    f"Invalid {part_class} "
+                    f"Invalid {ChainSectionProcessClass} "
                     f"{main_process_codes_steps_part}: {invalid_processes}"
                 )
             secondary_process_codes_part: set[ProcessCodeType] = {
-                p for p in secondary_process_codes if part_class.process_allowed(p)
+                p
+                for p in secondary_process_codes
+                if ChainSectionProcessClass.process_allowed(p)
             }
 
-            def make_change_data_lookup_defaults():
-                is_import = part_class is ChainImportProcess  # TODO:  move into sublass
-
-                def make_change_data_lookup_defaults(x: dict):
-                    if is_import:
-                        return x | {"source_region_code": x["target_country_code"]}
-                    else:
-                        return x
-
-                return make_change_data_lookup_defaults
-
-            process = ChainSectionProcess(
+            process = ChainSectionProcessClass(
                 main_process_codes_steps=main_process_codes_steps_part,
                 secondary_process_codes=secondary_process_codes_part,
-                change_data_lookup_defaults=make_change_data_lookup_defaults(),
                 parent_process=self,
             )
             main_processes.append(process)
@@ -615,22 +650,40 @@ class ChainProcess(AggregateProcess):
                 check_use_all_main_process_codes + main_process_codes_steps_part
             )
 
-        # check
-        if not tuple(check_use_all_main_process_codes) == tuple(
-            main_process_codes_steps
-        ):
-            raise Exception(
-                f"{check_use_all_main_process_codes} != {main_process_codes_steps}"
-            )
-
         process_graph: ProcessGraph = ProcessGraph(
             main_processes=main_processes, secondary_processes=[], parent_process=self
         )
 
         super().__init__(
             process_graph=process_graph,
-            change_data_lookup_defaults=lambda x: data_lookup_defaults | x,
-            process_step=process_step,
+            process_step="CHAIN",
+        )
+
+        # check (TODO: can be removed later)
+        if not tuple(check_use_all_main_process_codes) == tuple(
+            main_process_codes_steps
+        ):
+            raise Exception(
+                f"{check_use_all_main_process_codes} != {main_process_codes_steps}"
+            )
+        # check (TODO: can be removed later)
+        main_process_codes_ = tuple(p.process_code for p in self.full_main_chain)
+        if tuple(p for p, s_ in main_process_codes_steps) != main_process_codes_:
+            raise Exception(main_process_codes_)
+
+    def initialize_parameters(
+        self,
+        parameter_getters: "ParameterGetters",
+        source_region_code: SourceRegionCodeType,
+        target_country_code: TargetCountryCodeType,
+    ):
+        super().initialize_parameters(
+            parameter_getters=parameter_getters,
+            data_lookup_defaults=self._data_lookup_defaults
+            | {
+                "source_region_code": source_region_code,
+                "target_country_code": target_country_code,
+            },
         )
 
 
@@ -641,7 +694,6 @@ class ChainSectionProcess(AggregateProcess):
         self,
         main_process_codes_steps: list["ProcessStep"],
         secondary_process_codes: set[ProcessCodeType],
-        change_data_lookup_defaults: Callable,
         parent_process: Union["AbstractProcess", None] = None,
     ):
 
@@ -663,7 +715,6 @@ class ChainSectionProcess(AggregateProcess):
         )
         super().__init__(
             process_graph=process_graph,
-            change_data_lookup_defaults=change_data_lookup_defaults,
             parent_process=parent_process,
         )
 
@@ -682,6 +733,20 @@ class ChainImportProcess(ChainSectionProcess):
     @classmethod
     def process_allowed(cls, process_code: ProcessCodeType) -> bool:
         return ProcessTypes[process_code].allow_in_import
+
+    def initialize_parameters(
+        self, parameter_getters: "ParameterGetters", data_lookup_defaults: dict
+    ):
+        """Initialize parameetr data for this process."""
+        # when getting data: switch region
+
+        data_lookup_defaults = data_lookup_defaults | {
+            "source_region_code": data_lookup_defaults["target_country_code"]
+        }
+        super().initialize_parameters(
+            parameter_getters=parameter_getters,
+            data_lookup_defaults=data_lookup_defaults,
+        )
 
 
 class ChainTransportProcess(ChainSectionProcess):
@@ -712,13 +777,16 @@ def group_by_flow_type_out(
 @dataclass
 class Settings:
     scenario: ScenarioType
-    region: SourceRegionCodeType
-    country: TargetCountryCodeType
+    secproc_co2: SecProcCO2Type | None
+    secproc_water: SecProcH2OType | None
+    chain: ChainType
+    res_gen: ResGenType | None
+    region: SourceRegionNameType
+    country: TargetCountryNameType
     transport: TransportType
     ship_own_fuel: bool
-    first_process_code: ProcessCodeType
-    chain_code: str
-    secondary_process_codes: set[ProcessCodeType]
+    user_data: pd.DataFrame | None
+    tool_version_color: ToolVersionColorType
 
 
 def create_permutations(scenario: ScenarioType) -> Iterable[Settings]:
@@ -726,9 +794,9 @@ def create_permutations(scenario: ScenarioType) -> Iterable[Settings]:
     # secproc_co2: SecProcCO2Type | None # noqa
     # secproc_water: SecProcH2OType | None # noqa
     # chain: ChainNameType # noqa
-    # res_gen: ResGenType | None # noqa
-    region: SourceRegionCodeType = "DZA"
-    country: TargetCountryCodeType = "DEU"
+    res_gen: ResGenType | None = df_process_by_code.loc["RES-HYBR", "process_name"]  # type: ignore
+    region: SourceRegionNameType = df_region_by_code.loc["DZA", "region_name"]  # type: ignore
+    country: TargetCountryNameType = df_region_by_code.loc["DEU", "region_name"]  # type: ignore
     # transport: TransportType # noqa
     # ship_own_fuel: bool # noqa
     transports: list[tuple[TransportType, bool]] = [
@@ -736,18 +804,19 @@ def create_permutations(scenario: ScenarioType) -> Iterable[Settings]:
         ("Ship", False),
         ("Ship", True),
     ]
+
     for chain_spec in df_chain.to_dict(orient="records"):
-        chain_code = chain_spec["chain"]
-        first_process_code: ProcessCodeType
-        secondary_process_codes: set[ProcessCodeType]
-        if chain_spec["is_blue"]:
-            first_process_code = "NG-PROD#B"
-            secondary_process_codes = {"HEATPUMP#B", "CCGT-CC#B", "CO2-T+S#B", "DAC#B"}
-        elif chain_spec["is_green"]:
-            first_process_code = "RES-HYBR"
-            secondary_process_codes = {"DAC", "DESAL"}
-        else:
-            continue
+        chain = chain_spec["chain"]
+        tool_version_color: ToolVersionColorType = (
+            "green" if chain_spec["is_green"] else "blue"
+        )
+        secproc_co2: SecProcCO2Type | None = (
+            "Direct Air Capture (blue)"
+            if tool_version_color == "blue"
+            else "Direct Air Capture"
+        )
+        secproc_water: SecProcH2OType | None = "Sea Water desalination"
+
         for transport, ship_own_fuel in transports:
             if transport == "Pipeline" and not chain_spec["can_pipeline"]:
                 continue
@@ -757,11 +826,14 @@ def create_permutations(scenario: ScenarioType) -> Iterable[Settings]:
                 scenario=scenario,
                 country=country,
                 region=region,
-                first_process_code=first_process_code,
-                secondary_process_codes=secondary_process_codes,
-                chain_code=chain_code,
+                chain=chain,
                 ship_own_fuel=ship_own_fuel,
                 transport=transport,
+                res_gen=res_gen,
+                user_data=None,
+                tool_version_color=tool_version_color,
+                secproc_co2=secproc_co2,
+                secproc_water=secproc_water,
             )
 
 
@@ -906,10 +978,10 @@ class ProcessGraph:
 def create_permutation_names(permutations: Iterable[Settings]) -> dict[str, Settings]:
     def create_name(settings: Settings) -> str:
         name = (
-            f"{settings.chain_code}_{settings.transport}"
+            f"{settings.chain}_{settings.transport}"
             f"{'_OWN' if settings.ship_own_fuel else ''}"
         )
-        name = name.replace(" ", "_")
+        name = re.sub("[^A-Za-z0-9-%()]", "_", name)
         return name
 
     result: dict[str, Settings] = {}
@@ -952,52 +1024,6 @@ def filter_transport_process_codes(
 
 
 ProcessStep = tuple[ProcessCodeType, ProcessStepType | None]
-
-
-def create_chain_process(settings: Settings) -> AggregateProcess:
-
-    chain_data = DataHandler.get_dimension("chain").loc[settings.chain_code].to_dict()
-
-    main_process_codes_steps: list["ProcessStep"] = [
-        (cast(ProcessCodeType, chain_data[step]), cast(ProcessStepType, step))
-        for step in ProcessStepValuesSorted
-        if chain_data[step]
-    ]
-
-    main_process_codes_steps = filter_transport_process_codes(
-        main_process_codes_steps,
-        transport=settings.transport,
-        ship_own_fuel=settings.ship_own_fuel,
-    )
-    # add initial step
-    chain_start_with_res = ProcessTypes[settings.first_process_code].is_re_generation
-    initial_step = cast(
-        ProcessStepType,
-        # TODO: maybe from green/blue?
-        ("RES" if chain_start_with_res else "NG_PROD"),
-    )
-    main_process_codes_steps.insert(0, (settings.first_process_code, initial_step))
-
-    # for FLH lookup we need these process codes
-    data_lookup_defaults: dict[str, ProcessCodeType | None] = {
-        "process_res": (settings.first_process_code if chain_start_with_res else None),
-        "process_ely": chain_data["ELY"],
-        "process_deriv": chain_data["DERIV"],
-    }
-
-    chain_process = ChainProcess(
-        main_process_codes_steps=main_process_codes_steps,
-        secondary_process_codes=settings.secondary_process_codes,
-        data_lookup_defaults=data_lookup_defaults,
-        process_step="CHAIN",
-    )
-
-    # check (TODO: can be removed later)
-    main_process_codes_ = tuple(p.process_code for p in chain_process.full_main_chain)
-    if tuple(p for p, s_ in main_process_codes_steps) != main_process_codes_:
-        raise Exception(main_process_codes_)
-
-    return chain_process
 
 
 def plot_get_pos(
@@ -1220,9 +1246,9 @@ def create_parameter_getters(
                     "process_deriv",
                     "process_code",  # => process_flh
                 ]
-            ]  # type:ignore
+            ]  # type: ignore
         else:
-            dims = set(df_parameter.loc[parameter_code, "dimensions"])  # type:ignore
+            dims = set(df_parameter_by_code.at[parameter_code, "dimensions"])  # type: ignore
             return [
                 ("parameter_code", True),
                 ("process_code", "process_code" in dims),
@@ -1255,21 +1281,33 @@ def create_parameter_getters(
                 "flow_code": flow_code,
             }
             # join only required key_vals in correct order
+
             key = ",".join([(key_vals.get(k) or "") if use else "" for k, use in keys])
-            logger.debug("data lookup: %s", key)
+
+            # FIXME: remove later
+            key_debug = ",".join(
+                [k + "=" + ((key_vals.get(k) or "") if use else "") for k, use in keys]
+            )
+            if parameter_code == "FLH":
+                key_debug = "parameter_code=FLH," + key_debug
+
             try:
                 value = cast(float, df.at[key, "value"])
             except Exception:
                 value = None
 
-            return key, value
+            logger.debug("data lookup: %s => %s", key_debug, value)
+
+            return key_debug, value
 
         return _get_value
 
     def make_getter_2(
         parameter_code: ParameterCodeType,
     ) -> ParameterGetter:
-        has_global_default = df_parameter.loc[parameter_code, "has_global_default"]
+        has_global_default = df_parameter_by_code.at[
+            parameter_code, "has_global_default"
+        ]
 
         default_value: float = 1 if parameter_code == "EFF" else 0  # TODO: from  DB?
 
@@ -1296,8 +1334,6 @@ def create_parameter_getters(
                 # TODO: get complete key
                 logger.warning("No data for %s", key)
                 value = default_value
-            else:
-                logger.debug("data %s=%s", key, value)
 
             return value
 
@@ -1309,37 +1345,89 @@ def create_parameter_getters(
     }
 
 
-def main():
-    scenario: ScenarioType = "2040 (medium)"
-    data_handler = DataHandler(scenario=scenario, data_dir=DEFAULT_DATA_DIR)
-    permutations = create_permutation_names(create_permutations(scenario=scenario))
+def create_chain_prcess_api_wrapper(
+    scenario: ScenarioType,
+    secproc_co2: SecProcCO2Type | None,
+    secproc_water: SecProcH2OType | None,
+    chain: ChainType,
+    res_gen: ResGenType | None,
+    region: SourceRegionNameType,
+    country: TargetCountryNameType,
+    transport: TransportType,
+    ship_own_fuel: bool,
+    user_data: pd.DataFrame | None = None,
+    tool_version_color: ToolVersionColorType = "green",
+    _output_unit: OutputUnitType = "USD/MWh",
+    _optimize_flh: bool = True,
+    _use_user_data_for_optimize_flh: bool = False,
+) -> ChainProcess:
+
+    chain_color: ToolVersionColorType = (
+        "green" if df_chain.at[chain, "is_green"] else "blue"
+    )
+    assert chain_color == tool_version_color
+
+    secondary_process_codes: set[ProcessCodeType] = set()
+    if secproc_co2:
+        secondary_process_codes.add(
+            df_process_by_name.at[secproc_co2, "process_code"]  # type: ignore
+        )
+    if secproc_water:
+        secondary_process_codes.add(
+            df_process_by_name.at[secproc_water, "process_code"]  # type: ignore
+        )
+    first_process_code: ProcessCodeType
+    if chain_color == "blue":
+        first_process_code = "NG-PROD#B"
+        secondary_process_codes = secondary_process_codes | {
+            "HEATPUMP#B",
+            "CCGT-CC#B",
+            "CO2-T+S#B",
+        }  # type: ignore
+    else:
+        assert res_gen
+        first_process_code = df_process_by_name.at[res_gen, "process_code"]  # type: ignore
+
+    chain_process = ChainProcess(
+        transport=transport,
+        ship_own_fuel=ship_own_fuel,
+        chain=chain,
+        first_process_code=first_process_code,
+        secondary_process_codes=secondary_process_codes,
+    )
+
+    data_handler = DataHandler(
+        scenario=scenario, data_dir=DEFAULT_DATA_DIR, user_data=user_data
+    )
 
     parameter_getters = create_parameter_getters(
-        data_handler=data_handler, use_user_data=False
+        data_handler=data_handler, use_user_data=bool(user_data)
     )
+
+    chain_process.initialize_parameters(
+        parameter_getters,
+        source_region_code=df_region_by_name.at[region, "region_code"],  # type: ignore
+        target_country_code=df_region_by_name.at[country, "region_code"],  # type: ignore
+    )
+
+    chain_process.calculate(1)
+
+    return chain_process
+
+
+def main():
+    scenario: ScenarioType = "2040 (medium)"
+    permutations = create_permutation_names(create_permutations(scenario=scenario))
 
     for i, (name, settings) in enumerate(permutations.items()):
         # if name != "Methane_(SOEC)_Pipeline":
-        if name != "H2-G__SMR_52%_BF__prod_in_supply__transport_NH3-L_Ship_OWN":
-            continue
+        # if name != "DRI-S__SMR_52%_BF_DRI__prod_in_demand_Ship":
+        #    continue
 
         logger.info(f"{i + 1}/{len(permutations)}: {settings}")
-        logger.info(name)
-        chain_process = create_chain_process(settings=settings)
-        logger.info(
-            " => ".join(str(p.process_code) for p in chain_process.full_main_chain)
-        )
 
-        data_lookup_defaults: dict[DataQueryParameterType, str] = {
-            "source_region_code": settings.region,
-            "target_country_code": settings.country,
-        }
+        chain_process = create_chain_prcess_api_wrapper(**settings.__dict__)
 
-        chain_process.initialize_parameters(
-            parameter_getters=parameter_getters,
-            **data_lookup_defaults,
-        )
-        chain_process.calculate(1)
         plot(chain_process, name=name)
 
 

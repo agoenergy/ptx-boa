@@ -17,7 +17,7 @@ from ptxboa import (
 )
 from ptxboa.api_optimize import PtxOpt
 from ptxboa.static import (
-    ChainNameType,
+    ChainType,
     DimensionType,
     FlowCodeType,
     OutputUnitValues,
@@ -950,7 +950,7 @@ class DataHandler:
     def get_calculation_data(
         self,
         secondary_processes: Dict[FlowCodeType, ProcessCodeType],
-        chain_name: ChainNameType,
+        chain_name: ChainType,
         process_code_res: ProcessCodeResType,
         source_region_code: SourceRegionCodeType,
         target_country_code: TargetCountryCodeType,
@@ -1023,7 +1023,7 @@ class DataHandler:
     def _get_calculation_data(
         self,
         secondary_processes: Dict[FlowCodeType, ProcessCodeType],
-        chain_name: ChainNameType,
+        chain_name: ChainType,
         process_code_res: ProcessCodeResType,
         source_region_code: SourceRegionCodeType,
         target_country_code: TargetCountryCodeType,
