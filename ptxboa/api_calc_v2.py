@@ -3,7 +3,7 @@
 import argparse
 import logging
 from dataclasses import dataclass
-from typing import Callable, Iterable, Literal, cast
+from typing import Callable, Iterable, Literal, Protocol, cast
 
 import coloredlogs
 import matplotlib.pyplot as plt
@@ -13,6 +13,7 @@ from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler
 from ptxboa.static import (
     FlowCodeType,
     ParameterCodeType,
+    ParameterCodeValues,
     ProcessCodeType,
     ProcessStepType,
     ProcessStepValues,
@@ -22,17 +23,21 @@ from ptxboa.static import (
     TransportType,
 )
 
+logger = logging.getLogger("main")
+
 DataQueryParameterType = Literal[
     "parameter_code",
     "process_code",
     "flow_code",
     "source_region_code",
     "target_country_code",
-    "process_code_res",
-    "process_code_ely",
-    "process_code_deriv",
     "default",
     "use_user_data",
+    "region",
+    "process_res",
+    "process_ely",
+    "process_deriv",
+    "process_flh",
 ]
 
 ProcessStepValuesSorted = ProcessStepValues
@@ -56,6 +61,8 @@ assert tuple(ProcessStepValuesSorted) == (
     "DERIV_I",
     "DERIV_I2",
 )
+
+PartNames = ["export", "transport", "import"]
 
 df_process = DataHandler.get_dimension("process")
 df_chain = DataHandler.get_dimension("chain")
@@ -100,22 +107,22 @@ class ProcessType:
 
         # checks
         if self.main_flow_code_in in self.secondary_flow_types:
-            logging.error(
+            logger.error(
                 f"{self.process_code}: main_flow_code_in {self.main_flow_code_in} "
                 "in secondary_flow_types"
             )
         if self.main_flow_code_out in self.secondary_flow_types:
-            logging.error(
+            logger.error(
                 f"{self.process_code}: main_flow_code_out {self.main_flow_code_out} "
                 "in secondary_flow_types"
             )
         if self.is_secondary and self.main_flow_code_in:
-            logging.warning(
+            logger.warning(
                 f"{self.process_code}: should not have "
                 f"main flow in: {self.main_flow_code_in}"
             )
         if self.is_initial and self.main_flow_code_in:
-            logging.error(
+            logger.error(
                 f"{self.process_code}: should not have "
                 f"main flow in: {self.main_flow_code_in}"
             )
@@ -165,7 +172,8 @@ class ProcessType:
         # secondary: only allow CCS
         return self.allow_in_export and (
             # CSS is onlyallowed secondary(?) # TODO:generalize?
-            not self.is_secondary or self.process_code == "CO2-T+S#B"
+            not self.is_secondary
+            or self.process_code == "CO2-T+S#B"
         )
 
 
@@ -242,7 +250,9 @@ class AbstractProcess:
         """Is this a secondary process."""
         return False
 
-    def initialize_parameters(self, data_handler: DataHandler):
+    def initialize_parameters(
+        self, parameter_getters: "ParameterGetters", **data_lookup_defaults
+    ):
         """Initialize parameetr data for this process."""
         pass
 
@@ -301,9 +311,22 @@ class Process(AbstractProcess):
         """Is this a transport process."""
         return self._process_type.is_transport
 
-    def initialize_parameters(self, data_handler: DataHandler):
+    @property
+    def is_re_generation(self) -> bool:
+        """Is this re generation process."""
+        return self._process_type.is_re_generation
+
+    def initialize_parameters(
+        self, parameter_getters: "ParameterGetters", **data_lookup_defaults
+    ):
         """Initialize parameetr data for this process."""
-        super().initialize_parameters(data_handler=data_handler, **kwargs)
+        # Dont call super() here
+        self.paramerters = {
+            x: parameter_getters[x](
+                process_code=self.process_code, **data_lookup_defaults
+            )
+            for x in {"EFF", "WACC", "CAPEX", "OPEX-F", "OPEX-O", "FLH"}
+        }
 
     def calculate(self, main_flow_out: float):
         """Calculate all process values based on desired output flow."""
@@ -319,6 +342,15 @@ class Process(AbstractProcess):
 class TransportProcess(Process):
     color = "teal"
 
+    def initialize_parameters(
+        self, parameter_getters: "ParameterGetters", **data_lookup_defaults
+    ):
+        """Initialize parameetr data for this process."""
+        """Initialize parameetr data for this process."""
+        super().initialize_parameters(
+            parameter_getters=parameter_getters, **data_lookup_defaults
+        )
+
 
 class SecondaryProcess(Process):
     color = "lightgreen"
@@ -332,6 +364,14 @@ class SecondaryProcess(Process):
 class InitialProcess(SecondaryProcess):
     color = "skyblue"
 
+    def initialize_parameters(
+        self, parameter_getters: "ParameterGetters", **data_lookup_defaults
+    ):
+        """Initialize parameetr data for this process."""
+        super().initialize_parameters(
+            parameter_getters=parameter_getters, **data_lookup_defaults
+        )
+
 
 class MarketProcess(AbstractProcess):
     color = "lightgray"
@@ -340,10 +380,12 @@ class MarketProcess(AbstractProcess):
         super().__init__()
         self._main_flow_code_out: FlowCodeType = main_flow_code_out
 
-    def initialize_parameters(self, data_handler: DataHandler, **kwargs):
+    def initialize_parameters(
+        self, parameter_getters: "ParameterGetters", **data_lookup_defaults
+    ):
         """Initialize parameetr data for this process."""
-        super().initialize_parameters(data_handler=data_handler, **kwargs)
-        # TODO
+        # Dont call super() here
+        speccost = parameter_getters["SPECCOST"](flow_code=self.main_flow_code_out)
 
     def calculate(self, main_flow_out: float):
         """Calculate all process values based on desired output flow."""
@@ -377,17 +419,23 @@ def get_chain_parts(
 
     if not (0 < idx_transport_start < idx_transport_end):
         raise Exception("Transport")
-    return [
-        ("export", 0, idx_transport_start),
-        ("transport", idx_transport_start, idx_transport_end),
-        ("import", idx_transport_end, len(main_process_codes_steps)),
+    return [  # export,transport,import
+        (PartNames[0], 0, idx_transport_start),
+        (PartNames[1], idx_transport_start, idx_transport_end),
+        (PartNames[2], idx_transport_end, len(main_process_codes_steps)),
     ]
 
 
 class AggregateProcess(AbstractProcess):
-    def __init__(self, process_graph: "ProcessGraph", process_step: str | None = None):
+    def __init__(
+        self,
+        process_graph: "ProcessGraph",
+        change_data_lookup_defaults: Callable,
+        process_step: str | None = None,
+    ):
         super().__init__(process_step=process_step)
         self.process_graph: "ProcessGraph" = process_graph
+        self._change_data_lookup_defaults = change_data_lookup_defaults
 
     @property
     def main_flow_code_out(self) -> FlowCodeType:
@@ -411,11 +459,17 @@ class AggregateProcess(AbstractProcess):
 
         return result
 
-    def initialize_parameters(self, data_handler: DataHandler, **kwargs):
+    def initialize_parameters(
+        self, parameter_getters: "ParameterGetters", **data_lookup_defaults
+    ):
         """Initialize parameetr data for this process."""
-        super().initialize_parameters(data_handler=data_handler, **kwargs)
+        # Dont call super() here
+        data_lookup_defaults = self._change_data_lookup_defaults(data_lookup_defaults)
+
         for process in self.process_graph.calculate_order:
-            process.initialize_parameters(data_handler=data_handler, **kwargs)
+            process.initialize_parameters(
+                parameter_getters=parameter_getters, **data_lookup_defaults
+            )
 
     def calculate(self, main_flow_out: float):
         """Calculate all process values based on desired output flow."""
@@ -435,7 +489,7 @@ class AggregateProcess(AbstractProcess):
                 for proc_target, in_main in self.process_graph.links_out.get(
                     process, []
                 ):
-                    logging.info(f"{process}: Serve {flow_code} to {proc_target}")
+                    logger.info(f"{process}: Serve {flow_code} to {proc_target}")
                     main_flow_out_current += (
                         proc_target.get_main_flow_in()
                         if in_main
@@ -447,8 +501,8 @@ class AggregateProcess(AbstractProcess):
                     if main_flow_out_current is None:
                         raise ValueError(f"{process}: main_flow_out is None")
                     else:
-                        logging.warning(f"{process}: main_flow_out is 0")
-            logging.info(f"Calculate: {process} for {main_flow_out_current}")
+                        logger.warning(f"{process}: main_flow_out is 0")
+            logger.info(f"Calculate: {process} for {main_flow_out_current}")
             process.calculate(main_flow_out=main_flow_out_current)
 
             if process == self.process_graph.main_processes[0]:
@@ -458,6 +512,7 @@ class AggregateProcess(AbstractProcess):
     def create_from_chain(
         main_process_codes_steps: list["ProcessStep"],
         secondary_process_codes: set[ProcessCodeType],
+        data_lookup_defaults,
         process_step: str | None = None,
     ) -> "AggregateProcess":
         """Create aggregated process for entire chain."""
@@ -491,9 +546,21 @@ class AggregateProcess(AbstractProcess):
                 p for p in secondary_process_codes if getattr(ProcessTypes[p], attr)
             }
 
+            def make_change_data_lookup_defaults():
+                is_import = part_name == PartNames[2]  # TODO:  or something better
+
+                def make_change_data_lookup_defaults(x: dict):
+                    if is_import:
+                        return x | {"source_region_code": x["target_country_code"]}
+                    else:
+                        return x
+
+                return make_change_data_lookup_defaults
+
             process = AggregateProcess.create_from_chain_part(
                 main_process_codes_steps=main_process_codes_steps_part,
                 secondary_process_codes=secondary_process_codes_part,
+                change_data_lookup_defaults=make_change_data_lookup_defaults(),
                 process_step=part_name.upper(),  # e.g. "IMPORT","EXPORT", "TRANSPORT"
             )
             main_processes.append(process)
@@ -514,12 +581,17 @@ class AggregateProcess(AbstractProcess):
             main_processes=main_processes, secondary_processes=[]
         )
 
-        return AggregateProcess(process_graph=process_graph, process_step=process_step)
+        return AggregateProcess(
+            process_graph=process_graph,
+            change_data_lookup_defaults=lambda x: data_lookup_defaults | x,
+            process_step=process_step,
+        )
 
     @staticmethod
     def create_from_chain_part(
         main_process_codes_steps: list["ProcessStep"],
         secondary_process_codes: set[ProcessCodeType],
+        change_data_lookup_defaults: Callable,
         process_step: str | None = None,
     ) -> "AggregateProcess":
         """Create an aggregated process with subprocesses.
@@ -544,7 +616,9 @@ class AggregateProcess(AbstractProcess):
             main_processes=main_processes, secondary_processes=secondary_processes
         )
         result = AggregateProcess(
-            process_graph=process_graph, process_step=process_step
+            process_graph=process_graph,
+            change_data_lookup_defaults=change_data_lookup_defaults,
+            process_step=process_step,
         )
         return result
 
@@ -644,7 +718,7 @@ class ProcessGraph:
                 self.links_out[proc_provider] = []
             self.links_out[proc_provider].append((proc_recipient, in_main))
             G.add_edge(proc_provider, proc_recipient)
-            logging.info(
+            logger.info(
                 f"Create link {proc_provider}({proc_provider.main_flow_code_out}) "
                 f"{'==>' if in_main else '-->'} {proc_recipient}"
             )
@@ -668,14 +742,14 @@ class ProcessGraph:
             flow_from_initial_proc = first_proc.main_flow_code_out
         for sec_proc in secondary_processes:
             if sec_proc.main_flow_code_out in flow_provider_sec_or_initial:
-                logging.warning(f"flow already proveided, skipping {sec_proc}")
+                logger.warning(f"flow already proveided, skipping {sec_proc}")
                 continue
             flow_provider_sec_or_initial[sec_proc.main_flow_code_out] = sec_proc
 
         # collect required flows
-        required_flows_procs: dict[
-            FlowCodeType, list[tuple[AbstractProcess, bool]]
-        ] = {}
+        required_flows_procs: dict[FlowCodeType, list[tuple[AbstractProcess, bool]]] = (
+            {}
+        )
 
         def add_required_flows_proc(
             proc: AbstractProcess, flow: FlowCodeType, in_main: bool
@@ -721,7 +795,7 @@ class ProcessGraph:
                 if prov_sec:
                     # try to add without loop
                     if nx.has_path(G, proc_target, prov_sec):
-                        logging.warning(
+                        logger.warning(
                             f"Could not add link {prov_sec} ={flow}=> {proc_target} "
                             "because it would create a loop. fall back on market"
                         )
@@ -739,7 +813,7 @@ class ProcessGraph:
 
         procs_dropped = procs_old - procs_new
         if procs_dropped:
-            logging.warning("Dropping unused: %s", [str(x) for x in procs_dropped])
+            logger.warning("Dropping unused: %s", [str(x) for x in procs_dropped])
             # drop from links_out
             # TODO: maybe use Digraph? - this is very ugly
             for k, vs in self.links_out.items():
@@ -820,7 +894,6 @@ def create_chain_process(settings: Settings) -> AggregateProcess:
         transport=settings.transport,
         ship_own_fuel=settings.ship_own_fuel,
     )
-
     # add initial step
     chain_start_with_res = ProcessTypes[settings.first_process_code].is_re_generation
     initial_step = cast(
@@ -831,17 +904,16 @@ def create_chain_process(settings: Settings) -> AggregateProcess:
     main_process_codes_steps.insert(0, (settings.first_process_code, initial_step))
 
     # for FLH lookup we need these process codes
-    param_flh_kwargs: dict[str, ProcessCodeType | None] = {
-        "process_code_res": (
-            settings.first_process_code if chain_start_with_res else None
-        ),
-        "process_code_ely": chain_data["ELY"],
-        "process_code_deriv": chain_data["DERIV"],
+    data_lookup_defaults: dict[str, ProcessCodeType | None] = {
+        "process_res": (settings.first_process_code if chain_start_with_res else None),
+        "process_ely": chain_data["ELY"],
+        "process_deriv": chain_data["DERIV"],
     }
 
     chain_process = AggregateProcess.create_from_chain(
         main_process_codes_steps=main_process_codes_steps,
         secondary_process_codes=settings.secondary_process_codes,
+        data_lookup_defaults=data_lookup_defaults,
         process_step="CHAIN",
     )
 
@@ -1005,11 +1077,34 @@ def plot(chain_process: AggregateProcess, name: str):
     plt.savefig(f"chain_flowcharts/{name}.png", dpi=300)
 
 
-def create_parameter_getter(
-    data_handler: DataHandler, use_user_data: bool
-) -> dict[ParameterCodeType, Callable[..., float]]:
+class ParameterGetter(Protocol):
+    def __call__(
+        self,
+        process_code: ProcessCodeType | None = None,
+        flow_code: FlowCodeType | None = None,
+        **kwargs,
+    ) -> float: ...
 
-    def _get_df(parameter_code: ParameterCodeType, process_code: ProcessCodeType):
+
+class ParameterGetter_(Protocol):
+    def __call__(
+        self,
+        process_code: ProcessCodeType | None = None,
+        flow_code: FlowCodeType | None = None,
+        **kwargs,
+    ) -> tuple[str, float | None]: ...
+
+
+ParameterGetters = dict[ParameterCodeType, ParameterGetter]
+
+
+def create_parameter_getters(
+    data_handler: DataHandler, use_user_data: bool
+) -> ParameterGetters:
+
+    def _get_df(
+        parameter_code: ParameterCodeType, process_code: ProcessCodeType | None
+    ):
         if (
             parameter_code == "FLH"
             and process_code
@@ -1017,14 +1112,6 @@ def create_parameter_getter(
         ):
             # FLH not changed by user_data
             df = data_handler.flh
-            # keys = [
-            #    "source_region_code",
-            #    "process_code_res",
-            #    "process_code_ely",
-            #    "process_code_deriv",
-            #    "process_code",
-            # ]
-            # required_keys = set(keys)
         else:
             if use_user_data:
                 df = data_handler.scenario_data
@@ -1032,11 +1119,106 @@ def create_parameter_getter(
                 df = data_handler._scenario_data
         return df
 
-    parameter_getattr: dict[ParameterCodeType, Callable[..., float]] = {}
-    for param in df_parameter.to_dict(orient="records"):
-        pass
+    def _get_parameter_keys(
+        parameter_code: ParameterCodeType, use_global_default: bool = False
+    ) -> list[tuple[DataQueryParameterType, bool]]:
+        if parameter_code == "FLH":
+            return [
+                (x, True)
+                for x in [
+                    "source_region_code",  # => region
+                    "process_res",
+                    "process_ely",
+                    "process_deriv",
+                    "process_code",  # => process_flh
+                ]
+            ]  # type:ignore
+        else:
+            dims = set(df_parameter.loc[parameter_code, "dimensions"])  # type:ignore
+            return [
+                ("parameter_code", True),
+                ("process_code", "process_code" in dims),
+                ("flow_code", "flow_code" in dims),
+                (
+                    "source_region_code",
+                    "source_region_code" in dims and not use_global_default,
+                ),
+                ("target_country_code", "target_country_code" in dims),
+            ]
 
-    return parameter_getattr
+    def make_getter(
+        parameter_code: ParameterCodeType, use_global_default: bool
+    ) -> ParameterGetter_:
+        keys = _get_parameter_keys(
+            parameter_code, use_global_default=use_global_default
+        )
+
+        def _get_value(
+            process_code: ProcessCodeType | None = None,
+            flow_code: FlowCodeType | None = None,
+            **data_lookup_defaults,
+        ) -> tuple[str, float | None]:
+            df = _get_df(parameter_code=parameter_code, process_code=process_code)
+            # all available key values
+            key_vals = data_lookup_defaults | {
+                "parameter_code": parameter_code,
+                "process_code": process_code,
+                "process_flh": process_code,  # for FLH
+                "flow_code": flow_code,
+            }
+            # join only required key_vals in correct order
+            key = ",".join([(key_vals.get(k) or "") if use else "" for k, use in keys])
+            logger.debug("data lookup: %s", key)
+            try:
+                value = cast(float, df.loc[key, "values"])
+            except Exception:
+                value = None
+
+            return key, value
+
+        return _get_value
+
+    def make_getter_2(
+        parameter_code: ParameterCodeType,
+    ) -> ParameterGetter:
+        has_global_default = df_parameter.loc[parameter_code, "has_global_default"]
+
+        default_value: float = 1 if parameter_code == "EFF" else 0  # TODO: from  DB?
+
+        _get_value_ = make_getter(
+            parameter_code=parameter_code, use_global_default=False
+        )
+        _get_value_global_default = make_getter(
+            parameter_code=parameter_code, use_global_default=True
+        )
+
+        def get_value(
+            process_code: ProcessCodeType | None = None,
+            flow_code: FlowCodeType | None = None,
+            **kwargs,
+        ) -> float:
+            key, value = _get_value_(
+                process_code=process_code, flow_code=flow_code, **kwargs
+            )
+            if value is None and has_global_default:
+                key, value = _get_value_global_default(
+                    process_code=process_code, flow_code=flow_code, **kwargs
+                )
+            if value is None:
+                # TODO: get complete key
+                logger.warning("No data for %s", key)
+                value = default_value
+            else:
+                logger.debug("data %s=%s", key, value)
+
+            return value
+
+        return get_value
+
+    return {
+        parameter_code: make_getter_2(parameter_code)  # type: ignore
+        for parameter_code in ParameterCodeValues  # type: ignore
+    }
 
 
 def main():
@@ -1044,21 +1226,31 @@ def main():
     data_handler = DataHandler(scenario=scenario, data_dir=DEFAULT_DATA_DIR)
     permutations = create_permutation_names(create_permutations(scenario=scenario))
 
-    parameter_getter = create_parameter_getter(
+    parameter_getters = create_parameter_getters(
         data_handler=data_handler, use_user_data=False
     )
 
     for i, (name, settings) in enumerate(permutations.items()):
-        if name != "Methane_(SOEC)_Pipeline":
+        # if name != "Methane_(SOEC)_Pipeline":
+        if name != "H2-G__SMR_52%_BF__prod_in_supply__transport_NH3-L_Ship_OWN":
             continue
 
-        logging.info(f"{i + 1}/{len(permutations)}: {settings}")
-        logging.info(name)
+        logger.info(f"{i + 1}/{len(permutations)}: {settings}")
+        logger.info(name)
         chain_process = create_chain_process(settings=settings)
-        logging.info(
+        logger.info(
             " => ".join(str(p.process_code) for p in chain_process.full_main_chain)
         )
-        chain_process.initialize_parameters(data_handler=data_handler)
+
+        data_lookup_defaults: dict[DataQueryParameterType, str] = {
+            "source_region_code": settings.region,
+            "target_country_code": settings.country,
+        }
+
+        chain_process.initialize_parameters(
+            parameter_getters=parameter_getters,
+            **data_lookup_defaults,
+        )
         chain_process.calculate(1)
         plot(chain_process, name=name)
 
@@ -1075,6 +1267,7 @@ if __name__ == "__main__":
     kwargs = vars(ap.parse_args())
     # logging
     coloredlogs.install(
+        logger=logger,
         level=getattr(logging, kwargs.pop("loglevel").upper()),
         fmt="[%(asctime)s %(levelname)7s] %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
