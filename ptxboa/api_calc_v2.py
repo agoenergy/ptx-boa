@@ -356,10 +356,12 @@ class MarketProcess(AbstractProcess):
 
 
 def get_chain_parts(
-    main_process_codes: list[ProcessCodeType],
+    main_process_codes_steps: list["ProcessStep"],
 ) -> list[tuple[str, int, int]]:
     # split and check into export, transport, import
-    is_transport = [ProcessTypes[p].allow_in_transport for p in main_process_codes]
+    is_transport = [
+        ProcessTypes[p].allow_in_transport for p, _s in main_process_codes_steps
+    ]
     # first and last index
     idx_transport_start = is_transport.index(True)
     try:
@@ -372,7 +374,7 @@ def get_chain_parts(
     return [
         ("export", 0, idx_transport_start),
         ("transport", idx_transport_start, idx_transport_end),
-        ("import", idx_transport_end, len(main_process_codes)),
+        ("import", idx_transport_end, len(main_process_codes_steps)),
     ]
 
 
@@ -448,55 +450,58 @@ class AggregateProcess(AbstractProcess):
 
     @staticmethod
     def create_from_chain(
-        main_process_codes: list[ProcessCodeType],
+        main_process_codes_steps: list["ProcessStep"],
         secondary_process_codes: set[ProcessCodeType],
         process_step: str | None = None,
-        main_process_steps: list[ProcessStepType | str | None] | None = None,
     ) -> "AggregateProcess":
         """Create aggregated process for entire chain."""
         check_use_all_main_process_codes = []
 
         # FIXME: pre/post shipping processes, remove not required
 
-        if not main_process_steps:
-            main_process_steps = [None for _ in range(len(main_process_codes))]
-        else:
-            if len(main_process_steps) != len(main_process_codes):
-                raise Exception("list length mismatch for main_process_steps")
-
         main_processes: list[AbstractProcess] = []
 
-        for part_name, i, j in get_chain_parts(main_process_codes=main_process_codes):
+        for part_name, i, j in get_chain_parts(
+            main_process_codes_steps=main_process_codes_steps
+        ):
             attr = f"allow_in_{part_name}"
-            pcodes: list[ProcessCodeType] = main_process_codes[i:j]
-            if not pcodes:
+            main_process_codes_steps_part: list["ProcessStep"] = (
+                main_process_codes_steps[i:j]
+            )
+            if not main_process_codes_steps_part:
                 # no steps ==> skip this
                 continue
             # check
             invalid_processes = [
-                p for p in pcodes if not getattr(ProcessTypes[p], attr)
+                p
+                for p, _s in main_process_codes_steps_part
+                if not getattr(ProcessTypes[p], attr)
             ]
             if invalid_processes:
-                raise Exception(f"Invalid {part_name} {pcodes}: {invalid_processes}")
-            spcodes: set[ProcessCodeType] = {
+                raise Exception(
+                    f"Invalid {part_name} {main_process_codes_steps_part}: {invalid_processes}"
+                )
+            secondary_process_codes_part: set[ProcessCodeType] = {
                 p for p in secondary_process_codes if getattr(ProcessTypes[p], attr)
             }
 
-            scodes = main_process_steps[i:j]
             process = AggregateProcess.create_from_chain_part(
-                main_process_codes=pcodes,
-                secondary_process_codes=spcodes,
-                main_process_steps=scodes,
+                main_process_codes_steps=main_process_codes_steps_part,
+                secondary_process_codes=secondary_process_codes_part,
                 process_step=part_name.upper(),  # e.g. "IMPORT","EXPORT", "TRANSPORT"
             )
             main_processes.append(process)
 
-            check_use_all_main_process_codes = check_use_all_main_process_codes + pcodes
+            check_use_all_main_process_codes = (
+                check_use_all_main_process_codes + main_process_codes_steps_part
+            )
 
         # check
-        if not tuple(check_use_all_main_process_codes) == tuple(main_process_codes):
+        if not tuple(check_use_all_main_process_codes) == tuple(
+            main_process_codes_steps
+        ):
             raise Exception(
-                f"{check_use_all_main_process_codes} != {main_process_codes}"
+                f"{check_use_all_main_process_codes} != {main_process_codes_steps}"
             )
 
         process_graph: ProcessGraph = ProcessGraph(
@@ -507,9 +512,8 @@ class AggregateProcess(AbstractProcess):
 
     @staticmethod
     def create_from_chain_part(
-        main_process_codes: list[ProcessCodeType],
+        main_process_codes_steps: list["ProcessStep"],
         secondary_process_codes: set[ProcessCodeType],
-        main_process_steps: list[ProcessStepType | str | None],
         process_step: str | None = None,
     ) -> "AggregateProcess":
         """Create an aggregated process with subprocesses.
@@ -520,15 +524,10 @@ class AggregateProcess(AbstractProcess):
         without creating loops, while at the same time following some
         specific rules / requirements.
         """
-        if not main_process_steps:
-            main_process_steps = [None for _ in range(len(main_process_codes))]
-        else:
-            if len(main_process_steps) != len(main_process_codes):
-                raise Exception("list length mismatch for main_process_steps")
 
         main_processes: list[AbstractProcess] = [
             ProcessTypes[pt].process_class(process_code=pt, process_step=ps)
-            for pt, ps in zip(main_process_codes, main_process_steps)
+            for pt, ps in main_process_codes_steps
         ]
         secondary_processes: list[Process] = [
             ProcessTypes[pt].process_class(process_code=pt)
@@ -768,11 +767,10 @@ def create_permutation_names(permutations: Iterable[Settings]) -> dict[str, Sett
 
 
 def filter_transport_process_codes(
-    main_process_codes: list[ProcessCodeType],
-    main_process_steps: list[ProcessStepType],
+    main_process_codes_steps: list["ProcessStep"],
     transport: TransportType,
     ship_own_fuel: bool,
-) -> tuple[list[ProcessCodeType], list[ProcessStepType]]:
+) -> list["ProcessStep"]:
     """Filter transportation mode."""
     if transport == "Pipeline":
 
@@ -795,67 +793,55 @@ def filter_transport_process_codes(
     else:
         raise NotImplementedError(transport)
 
-    main_process_codes_: list[ProcessCodeType] = []
-    main_process_steps_: list[ProcessStepType] = []
-    assert len(main_process_codes) == len(main_process_steps)
-    for p, s in zip(main_process_codes, main_process_steps):
-        if filter_proc(ProcessTypes[p]):
-            main_process_codes_.append(p)
-            main_process_steps_.append(s)
+    return [(p, s) for p, s in main_process_codes_steps if filter_proc(ProcessTypes[p])]
 
-    return main_process_codes_, main_process_steps_
+
+ProcessStep = tuple[ProcessCodeType, ProcessStepType | None]
 
 
 def create_chain_process(settings: Settings) -> AggregateProcess:
 
     chain_data = DataHandler.get_dimension("chain").loc[settings.chain_code].to_dict()
 
-    # FIXME: instead of two lists for codes and steps, use list of tuples or something similar
-
-    main_process_codes: list[ProcessCodeType] = [
-        cast(ProcessCodeType, chain_data[x])
-        for x in ProcessStepValuesSorted
-        if chain_data[x]
+    main_process_codes_steps: list["ProcessStep"] = [
+        (cast(ProcessCodeType, chain_data[step]), cast(ProcessStepType, step))
+        for step in ProcessStepValuesSorted
+        if chain_data[step]
     ]
-    main_process_steps: list[ProcessStepType | str | None] = [
-        cast(ProcessStepType, x) for x in ProcessStepValuesSorted if chain_data[x]
-    ]
-    assert len(main_process_codes) == len(main_process_steps)
 
-    main_process_codes, main_process_steps = filter_transport_process_codes(
-        main_process_codes,
-        main_process_steps,
+    main_process_codes_steps = filter_transport_process_codes(
+        main_process_codes_steps,
         transport=settings.transport,
         ship_own_fuel=settings.ship_own_fuel,
     )
 
-    main_process_codes.insert(0, settings.first_process_code)
-
-    pt = ProcessTypes[settings.first_process_code]
-    initial_step = (
-        "RES" if pt.is_re_generation else "NG_PROD"  # TODO
-    )  # TODO:maybe from green/blue?
-    main_process_steps.insert(0, initial_step)
-
-    assert len(main_process_codes) == len(main_process_steps)
+    # add initial step
+    chain_start_with_res = ProcessTypes[settings.first_process_code].is_re_generation
+    initial_step = cast(
+        ProcessStepType,
+        # TODO: maybe from green/blue?
+        ("RES" if chain_start_with_res else "NG_PROD"),
+    )
+    main_process_codes_steps.insert(0, (settings.first_process_code, initial_step))
 
     # for FLH lookup we need these process codes
     param_flh_kwargs: dict[str, ProcessCodeType | None] = {
-        "process_code_res": main_process_codes[0] if initial_step == "RES" else None,
+        "process_code_res": (
+            settings.first_process_code if chain_start_with_res else None
+        ),
         "process_code_ely": chain_data["ELY"],
         "process_code_deriv": chain_data["DERIV"],
     }
 
     chain_process = AggregateProcess.create_from_chain(
-        main_process_codes=main_process_codes,
+        main_process_codes_steps=main_process_codes_steps,
         secondary_process_codes=settings.secondary_process_codes,
         process_step="CHAIN",
-        main_process_steps=main_process_steps,
     )
 
     # check (TODO: can be removed later)
     main_process_codes_ = tuple(p.process_code for p in chain_process.full_main_chain)
-    if tuple(main_process_codes) != main_process_codes_:
+    if tuple(p for p, s_ in main_process_codes_steps) != main_process_codes_:
         raise Exception(main_process_codes_)
 
     return chain_process
@@ -1051,7 +1037,7 @@ def create_parameter_getter(
 
     parameter_getattr: dict[ParameterCodeType, Callable[..., float]] = {}
     for param in df_parameter.to_dict(orient="records"):
-        logging.error((param["parameter_code"], param["dimensions"]))
+        pass
 
     return parameter_getattr
 
