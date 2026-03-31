@@ -172,8 +172,7 @@ class ProcessType:
         # secondary: only allow CCS
         return self.allow_in_export and (
             # CSS is onlyallowed secondary(?) # TODO:generalize?
-            not self.is_secondary
-            or self.process_code == "CO2-T+S#B"
+            not self.is_secondary or self.process_code == "CO2-T+S#B"
         )
 
 
@@ -508,13 +507,15 @@ class AggregateProcess(AbstractProcess):
             if process == self.process_graph.main_processes[0]:
                 self._main_flow_in = process.get_main_flow_in()
 
-    @staticmethod
-    def create_from_chain(
+
+class ChainProcess(AggregateProcess):
+    def __init__(
+        self,
         main_process_codes_steps: list["ProcessStep"],
         secondary_process_codes: set[ProcessCodeType],
         data_lookup_defaults,
         process_step: str | None = None,
-    ) -> "AggregateProcess":
+    ):
         """Create aggregated process for entire chain."""
         check_use_all_main_process_codes = []
 
@@ -557,7 +558,7 @@ class AggregateProcess(AbstractProcess):
 
                 return make_change_data_lookup_defaults
 
-            process = AggregateProcess.create_from_chain_part(
+            process = ChainSectionProcess(
                 main_process_codes_steps=main_process_codes_steps_part,
                 secondary_process_codes=secondary_process_codes_part,
                 change_data_lookup_defaults=make_change_data_lookup_defaults(),
@@ -581,27 +582,21 @@ class AggregateProcess(AbstractProcess):
             main_processes=main_processes, secondary_processes=[]
         )
 
-        return AggregateProcess(
+        super().__init__(
             process_graph=process_graph,
             change_data_lookup_defaults=lambda x: data_lookup_defaults | x,
             process_step=process_step,
         )
 
-    @staticmethod
-    def create_from_chain_part(
+
+class ChainSectionProcess(AggregateProcess):
+    def __init__(
+        self,
         main_process_codes_steps: list["ProcessStep"],
         secondary_process_codes: set[ProcessCodeType],
         change_data_lookup_defaults: Callable,
         process_step: str | None = None,
-    ) -> "AggregateProcess":
-        """Create an aggregated process with subprocesses.
-
-        Usually for export / transport / import
-
-        THe main problem ishow to connect secondary processes
-        without creating loops, while at the same time following some
-        specific rules / requirements.
-        """
+    ):
 
         main_processes: list[AbstractProcess] = [
             ProcessTypes[pt].process_class(process_code=pt, process_step=ps)
@@ -615,12 +610,11 @@ class AggregateProcess(AbstractProcess):
         process_graph: ProcessGraph = ProcessGraph(
             main_processes=main_processes, secondary_processes=secondary_processes
         )
-        result = AggregateProcess(
+        super().__init__(
             process_graph=process_graph,
             change_data_lookup_defaults=change_data_lookup_defaults,
             process_step=process_step,
         )
-        return result
 
 
 def group_by_flow_type_out(
@@ -747,9 +741,9 @@ class ProcessGraph:
             flow_provider_sec_or_initial[sec_proc.main_flow_code_out] = sec_proc
 
         # collect required flows
-        required_flows_procs: dict[FlowCodeType, list[tuple[AbstractProcess, bool]]] = (
-            {}
-        )
+        required_flows_procs: dict[
+            FlowCodeType, list[tuple[AbstractProcess, bool]]
+        ] = {}
 
         def add_required_flows_proc(
             proc: AbstractProcess, flow: FlowCodeType, in_main: bool
@@ -910,7 +904,7 @@ def create_chain_process(settings: Settings) -> AggregateProcess:
         "process_deriv": chain_data["DERIV"],
     }
 
-    chain_process = AggregateProcess.create_from_chain(
+    chain_process = ChainProcess(
         main_process_codes_steps=main_process_codes_steps,
         secondary_process_codes=settings.secondary_process_codes,
         data_lookup_defaults=data_lookup_defaults,
