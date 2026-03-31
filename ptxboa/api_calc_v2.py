@@ -3,7 +3,7 @@
 import argparse
 import logging
 from dataclasses import dataclass
-from typing import Callable, Iterable, Literal, Protocol, cast
+from typing import Callable, Iterable, Literal, Protocol, Union, cast
 
 import coloredlogs
 import matplotlib.pyplot as plt
@@ -62,7 +62,6 @@ assert tuple(ProcessStepValuesSorted) == (
     "DERIV_I2",
 )
 
-PartNames = ["export", "transport", "import"]
 
 df_process = DataHandler.get_dimension("process")
 df_chain = DataHandler.get_dimension("chain")
@@ -172,7 +171,8 @@ class ProcessType:
         # secondary: only allow CCS
         return self.allow_in_export and (
             # CSS is onlyallowed secondary(?) # TODO:generalize?
-            not self.is_secondary or self.process_code == "CO2-T+S#B"
+            not self.is_secondary
+            or self.process_code == "CO2-T+S#B"
         )
 
 
@@ -183,13 +183,26 @@ ProcessTypes: dict[ProcessCodeType, ProcessType] = {
 
 
 class AbstractProcess:
+    _parameter_codes_process: list[ParameterCodeType] = []
+    _parameter_codes_process_flow: list[ParameterCodeType] = []
+
     def __init__(
         self,
         process_step: ProcessStepType | str | None = None,
+        parent_process: Union["AbstractProcess", None] = None,
     ):
         self._main_flow_out: float | None = None  # will be set in calculate()
         self._main_flow_in: float | None = None  # will be set in calculate()
         self._secondary_flows_in: dict[FlowCodeType, float] | None = None
+        self.parent_process = parent_process
+
+        self._parameters: (
+            dict[
+                ParameterCodeType | str,
+                float | None | dict[FlowCodeType | str, float | None],
+            ]
+            | None
+        ) = None  # will be set in initialize_parameters()
         self.process_step: ProcessStepType | str | None = process_step
 
     def get_main_flow_out(self) -> float:
@@ -231,6 +244,11 @@ class AbstractProcess:
         return set()
 
     @property
+    def _parameter_flow_types(self) -> set[FlowCodeType]:
+        """Secondary flow types."""
+        return self.secondary_flow_types
+
+    @property
     def is_initial(self) -> bool:
         """Is this an initial process.
 
@@ -253,7 +271,25 @@ class AbstractProcess:
         self, parameter_getters: "ParameterGetters", **data_lookup_defaults
     ):
         """Initialize parameetr data for this process."""
-        pass
+        self._parameters = {}
+        for p in self._parameter_codes_process:
+            self._parameters[p] = parameter_getters[p](
+                process_code=self.process_code, **data_lookup_defaults
+            )
+        {
+            p: parameter_getters[p](
+                process_code=self.process_code, **data_lookup_defaults
+            )
+            for p in self._parameter_codes_process
+        }
+
+        for p in self._parameter_codes_process_flow:
+            self._parameters[p] = {
+                f: parameter_getters[p](
+                    process_code=self.process_code, flow_code=f, **data_lookup_defaults
+                )
+                for f in self._parameter_flow_types
+            }
 
     def calculate(self, main_flow_out: float):
         """Calculate all process values based on desired output flow."""
@@ -264,16 +300,35 @@ class AbstractProcess:
         step = f"{self.process_step}=" if self.process_step else ""
         return f"{self.__class__.__name__}({step}{self.process_code}{s_val})"
 
+    def get_parameters_incl_parents(self) -> dict:
+        params = self._parameters or {}
+        if self.parent_process:
+            params = self.parent_process.get_parameters_incl_parents() | params
+        return params
+
 
 class Process(AbstractProcess):
     color = "lightblue"
+    _parameter_codes_process = ["LIFETIME", "EFF", "FLH", "CAPEX", "OPEX-F", "OPEX-O"]
+    _parameter_codes_process_flow = [
+        "CH4SHARE",
+        "EF_E",
+        "EF_M",
+        "CBOUND",
+        "CONV-OT",
+        "CO2CPT-R",
+        "CO2CPT-S",
+        "CONV",
+        "LOSS",
+    ]
 
     def __init__(
         self,
         process_code: ProcessCodeType,
         process_step: ProcessStepType | str | None = None,
+        parent_process: Union["AbstractProcess", None] = None,
     ):
-        super().__init__(process_step=process_step)
+        super().__init__(process_step=process_step, parent_process=parent_process)
         self._process_type: ProcessType = ProcessTypes[process_code]
 
     @property
@@ -315,18 +370,6 @@ class Process(AbstractProcess):
         """Is this re generation process."""
         return self._process_type.is_re_generation
 
-    def initialize_parameters(
-        self, parameter_getters: "ParameterGetters", **data_lookup_defaults
-    ):
-        """Initialize parameetr data for this process."""
-        # Dont call super() here
-        self.paramerters = {
-            x: parameter_getters[x](
-                process_code=self.process_code, **data_lookup_defaults
-            )
-            for x in {"EFF", "WACC", "CAPEX", "OPEX-F", "OPEX-O", "FLH"}
-        }
-
     def calculate(self, main_flow_out: float):
         """Calculate all process values based on desired output flow."""
         super().calculate(main_flow_out=main_flow_out)
@@ -339,16 +382,8 @@ class Process(AbstractProcess):
 
 
 class TransportProcess(Process):
+    _parameter_codes_process = ["OPEX-T", "LOSS-T"]
     color = "teal"
-
-    def initialize_parameters(
-        self, parameter_getters: "ParameterGetters", **data_lookup_defaults
-    ):
-        """Initialize parameetr data for this process."""
-        """Initialize parameetr data for this process."""
-        super().initialize_parameters(
-            parameter_getters=parameter_getters, **data_lookup_defaults
-        )
 
 
 class SecondaryProcess(Process):
@@ -363,28 +398,23 @@ class SecondaryProcess(Process):
 class InitialProcess(SecondaryProcess):
     color = "skyblue"
 
-    def initialize_parameters(
-        self, parameter_getters: "ParameterGetters", **data_lookup_defaults
-    ):
-        """Initialize parameetr data for this process."""
-        super().initialize_parameters(
-            parameter_getters=parameter_getters, **data_lookup_defaults
-        )
-
 
 class MarketProcess(AbstractProcess):
     color = "lightgray"
+    _parameter_codes_process_flow: list[ParameterCodeType] = ["SPECCOST"]
 
-    def __init__(self, main_flow_code_out: FlowCodeType):
-        super().__init__()
+    def __init__(
+        self,
+        main_flow_code_out: FlowCodeType,
+        parent_process: Union["AbstractProcess", None] = None,
+    ):
+        super().__init__(parent_process=parent_process)
         self._main_flow_code_out: FlowCodeType = main_flow_code_out
 
-    def initialize_parameters(
-        self, parameter_getters: "ParameterGetters", **data_lookup_defaults
-    ):
-        """Initialize parameetr data for this process."""
-        # Dont call super() here
-        speccost = parameter_getters["SPECCOST"](flow_code=self.main_flow_code_out)
+    @property
+    def _parameter_flow_types(self) -> set[FlowCodeType]:
+        """Secondary flow types."""
+        return {self.main_flow_code_out}
 
     def calculate(self, main_flow_out: float):
         """Calculate all process values based on desired output flow."""
@@ -402,9 +432,9 @@ class MarketProcess(AbstractProcess):
         return self.main_flow_code_out  # type:ignore
 
 
-def get_chain_parts(
+def get_chain_sections(
     main_process_codes_steps: list["ProcessStep"],
-) -> list[tuple[str, int, int]]:
+) -> list[tuple[type["ChainSectionProcess"], int, int]]:
     # split and check into export, transport, import
     is_transport = [
         ProcessTypes[p].allow_in_transport for p, _s in main_process_codes_steps
@@ -419,9 +449,9 @@ def get_chain_parts(
     if not (0 < idx_transport_start < idx_transport_end):
         raise Exception("Transport")
     return [  # export,transport,import
-        (PartNames[0], 0, idx_transport_start),
-        (PartNames[1], idx_transport_start, idx_transport_end),
-        (PartNames[2], idx_transport_end, len(main_process_codes_steps)),
+        (ChainExportProcess, 0, idx_transport_start),
+        (ChainTransportProcess, idx_transport_start, idx_transport_end),
+        (ChainImportProcess, idx_transport_end, len(main_process_codes_steps)),
     ]
 
 
@@ -431,8 +461,9 @@ class AggregateProcess(AbstractProcess):
         process_graph: "ProcessGraph",
         change_data_lookup_defaults: Callable,
         process_step: str | None = None,
+        parent_process: Union["AbstractProcess", None] = None,
     ):
-        super().__init__(process_step=process_step)
+        super().__init__(process_step=process_step, parent_process=parent_process)
         self.process_graph: "ProcessGraph" = process_graph
         self._change_data_lookup_defaults = change_data_lookup_defaults
 
@@ -462,8 +493,12 @@ class AggregateProcess(AbstractProcess):
         self, parameter_getters: "ParameterGetters", **data_lookup_defaults
     ):
         """Initialize parameetr data for this process."""
-        # Dont call super() here
+        # TODO: move this into subclasses?
         data_lookup_defaults = self._change_data_lookup_defaults(data_lookup_defaults)
+
+        super().initialize_parameters(
+            parameter_getters=parameter_getters, **data_lookup_defaults
+        )
 
         for process in self.process_graph.calculate_order:
             process.initialize_parameters(
@@ -509,6 +544,8 @@ class AggregateProcess(AbstractProcess):
 
 
 class ChainProcess(AggregateProcess):
+    _parameter_codes_process = ["CALOR"]  # conversion kg / kwh
+
     def __init__(
         self,
         main_process_codes_steps: list["ProcessStep"],
@@ -523,10 +560,9 @@ class ChainProcess(AggregateProcess):
 
         main_processes: list[AbstractProcess] = []
 
-        for part_name, i, j in get_chain_parts(
+        for part_class, i, j in get_chain_sections(
             main_process_codes_steps=main_process_codes_steps
         ):
-            attr = f"allow_in_{part_name}"
             main_process_codes_steps_part: list["ProcessStep"] = (
                 main_process_codes_steps[i:j]
             )
@@ -537,18 +573,19 @@ class ChainProcess(AggregateProcess):
             invalid_processes = [
                 p
                 for p, _s in main_process_codes_steps_part
-                if not getattr(ProcessTypes[p], attr)
+                if not part_class.process_allowed(p)
             ]
             if invalid_processes:
                 raise Exception(
-                    f"Invalid {part_name} {main_process_codes_steps_part}: {invalid_processes}"
+                    f"Invalid {part_class} "
+                    f"{main_process_codes_steps_part}: {invalid_processes}"
                 )
             secondary_process_codes_part: set[ProcessCodeType] = {
-                p for p in secondary_process_codes if getattr(ProcessTypes[p], attr)
+                p for p in secondary_process_codes if part_class.process_allowed(p)
             }
 
             def make_change_data_lookup_defaults():
-                is_import = part_name == PartNames[2]  # TODO:  or something better
+                is_import = part_class is ChainImportProcess  # TODO:  move into sublass
 
                 def make_change_data_lookup_defaults(x: dict):
                     if is_import:
@@ -562,7 +599,7 @@ class ChainProcess(AggregateProcess):
                 main_process_codes_steps=main_process_codes_steps_part,
                 secondary_process_codes=secondary_process_codes_part,
                 change_data_lookup_defaults=make_change_data_lookup_defaults(),
-                process_step=part_name.upper(),  # e.g. "IMPORT","EXPORT", "TRANSPORT"
+                parent_process=self,
             )
             main_processes.append(process)
 
@@ -579,7 +616,7 @@ class ChainProcess(AggregateProcess):
             )
 
         process_graph: ProcessGraph = ProcessGraph(
-            main_processes=main_processes, secondary_processes=[]
+            main_processes=main_processes, secondary_processes=[], parent_process=self
         )
 
         super().__init__(
@@ -590,31 +627,66 @@ class ChainProcess(AggregateProcess):
 
 
 class ChainSectionProcess(AggregateProcess):
+    _parameter_codes_process = ["WACC"]  # different in export / import
+
     def __init__(
         self,
         main_process_codes_steps: list["ProcessStep"],
         secondary_process_codes: set[ProcessCodeType],
         change_data_lookup_defaults: Callable,
-        process_step: str | None = None,
+        parent_process: Union["AbstractProcess", None] = None,
     ):
 
         main_processes: list[AbstractProcess] = [
-            ProcessTypes[pt].process_class(process_code=pt, process_step=ps)
+            ProcessTypes[pt].process_class(
+                process_code=pt, process_step=ps, parent_process=self
+            )
             for pt, ps in main_process_codes_steps
         ]
         secondary_processes: list[Process] = [
-            ProcessTypes[pt].process_class(process_code=pt)
+            ProcessTypes[pt].process_class(process_code=pt, parent_process=self)
             for pt in secondary_process_codes
         ]
 
         process_graph: ProcessGraph = ProcessGraph(
-            main_processes=main_processes, secondary_processes=secondary_processes
+            main_processes=main_processes,
+            secondary_processes=secondary_processes,
+            parent_process=self,
         )
         super().__init__(
             process_graph=process_graph,
             change_data_lookup_defaults=change_data_lookup_defaults,
-            process_step=process_step,
+            parent_process=parent_process,
         )
+
+    @classmethod
+    def process_allowed(cls, process_code: ProcessCodeType) -> bool:
+        return True
+
+
+class ChainExportProcess(ChainSectionProcess):
+    @classmethod
+    def process_allowed(cls, process_code: ProcessCodeType) -> bool:
+        return ProcessTypes[process_code].allow_in_export
+
+
+class ChainImportProcess(ChainSectionProcess):
+    @classmethod
+    def process_allowed(cls, process_code: ProcessCodeType) -> bool:
+        return ProcessTypes[process_code].allow_in_import
+
+
+class ChainTransportProcess(ChainSectionProcess):
+    _parameter_codes_process = [
+        "CAP-T",
+        "DST-S-D",
+        "DST-S-DP",
+        "SEASHARE",
+    ]
+
+    @classmethod
+    def process_allowed(cls, process_code: ProcessCodeType) -> bool:
+        return ProcessTypes[process_code].allow_in_transport
 
 
 def group_by_flow_type_out(
@@ -692,6 +764,7 @@ class ProcessGraph:
         self,
         main_processes: list[AbstractProcess],
         secondary_processes: list[Process],
+        parent_process: AbstractProcess | None = None,
     ):
         self.main_processes: list[AbstractProcess] = main_processes
 
@@ -722,7 +795,7 @@ class ProcessGraph:
         def get_or_create_market_process(flow_type: FlowCodeType) -> MarketProcess:
             if flow_type not in market_processes:
                 market_processes[flow_type] = MarketProcess(
-                    main_flow_code_out=flow_type
+                    main_flow_code_out=flow_type, parent_process=parent_process
                 )
                 G.add_node(market_processes[flow_type])
             return market_processes[flow_type]
@@ -741,9 +814,9 @@ class ProcessGraph:
             flow_provider_sec_or_initial[sec_proc.main_flow_code_out] = sec_proc
 
         # collect required flows
-        required_flows_procs: dict[
-            FlowCodeType, list[tuple[AbstractProcess, bool]]
-        ] = {}
+        required_flows_procs: dict[FlowCodeType, list[tuple[AbstractProcess, bool]]] = (
+            {}
+        )
 
         def add_required_flows_proc(
             proc: AbstractProcess, flow: FlowCodeType, in_main: bool
@@ -971,6 +1044,19 @@ def plot_get_pos(
     return node_pos
 
 
+def nested_round_drop_empty(x):
+    if isinstance(x, list):
+        return [nested_round_drop_empty(v) for v in x]
+    elif isinstance(x, dict):
+        result = {k: nested_round_drop_empty(v) for k, v in x.items()}
+        result = {k: v for k, v in result.items() if v}
+        return result
+    elif isinstance(x, float):
+        return round(x, 4)
+    else:
+        return x
+
+
 def plot(chain_process: AggregateProcess, name: str):
 
     # Create a directed graph
@@ -990,11 +1076,14 @@ def plot(chain_process: AggregateProcess, name: str):
         # add processes as nodes to DiGraph
 
         for process in reversed(list(process_graph.calculate_order)):
-            key = process
-            G.add_node(key)
-            node_labels[key] = (
-                str(key)
-                .replace("=", "\n")
+            label = str(process)
+            # show all parameters (nonzero)
+            parameters = nested_round_drop_empty(process._parameters)
+            label += f"\n{parameters}"
+
+            G.add_node(process)
+            node_labels[process] = (
+                label.replace("=", "\n")
                 .replace("(", "\n")
                 .replace(")", "\n")
                 .replace(" ", "\n")
@@ -1054,7 +1143,7 @@ def plot(chain_process: AggregateProcess, name: str):
 
     # Draw node labels
     nx.draw_networkx_labels(
-        G, node_pos, labels=node_labels, font_size=8, font_color="black"
+        G, node_pos, labels=node_labels, font_size=6, font_color="black"
     )
 
     # Draw edge labels
@@ -1089,7 +1178,7 @@ class ParameterGetter_(Protocol):
     ) -> tuple[str, float | None]: ...
 
 
-ParameterGetters = dict[ParameterCodeType, ParameterGetter]
+ParameterGetters = dict[ParameterCodeType | str, ParameterGetter]
 
 
 def create_parameter_getters(
@@ -1164,7 +1253,7 @@ def create_parameter_getters(
             key = ",".join([(key_vals.get(k) or "") if use else "" for k, use in keys])
             logger.debug("data lookup: %s", key)
             try:
-                value = cast(float, df.loc[key, "values"])
+                value = cast(float, df.at[key, "value"])
             except Exception:
                 value = None
 
