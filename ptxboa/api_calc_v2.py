@@ -1557,20 +1557,27 @@ def _temp_data_adapter(chain_process: ChainProcess) -> dict:
 
     # NOTE: in old version, pre/post is part of transport
 
-    for x in proc_export.full_main_chain:
-        logger.warning(type(x))
+    export_wo_pre_transp = [
+        x for x in proc_export.full_main_chain if not x.is_transport
+    ]
+    transport_w_pre_post = (
+        [x for x in proc_export.full_main_chain if x.is_transport]
+        + proc_transport.full_main_chain
+        + [x for x in proc_import.full_main_chain if x.is_transport]
+    )
+    import_wo_post_transp = [
+        x for x in proc_import.full_main_chain if not x.is_transport
+    ]
 
-    for x in proc_transport.full_main_chain:
-        logger.error(type(x))
-
-    for x in proc_import.full_main_chain:
-        logger.warning(type(x))
+    def get_proc_data(p: Process) -> dict:
+        data = p._parameters | {"process_code": p.process_code, "step": p.process_step}
+        return data
 
     return {
         "context": context,
         "parameter": parameter,
         "parameter_i": parameter_i,
-        "main_import_process_chain": main_import_process_chain,
-        "transport_process_chain": transport_process_chain,
-        "main_export_process_chain": main_export_process_chain,
+        "main_export_process_chain": [get_proc_data(p) for p in export_wo_pre_transp],
+        # "transport_process_chain": [get_proc_data(p) for p in transport_w_pre_post],
+        # "main_import_process_chain": [get_proc_data(p) for p in import_wo_post_transp],
     }
