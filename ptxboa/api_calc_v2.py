@@ -1345,7 +1345,7 @@ def create_parameter_getters(
     }
 
 
-def create_chain_prcess_api_wrapper(
+def create_chain_process_api_wrapper(
     scenario: ScenarioType,
     secproc_co2: SecProcCO2Type | None,
     secproc_water: SecProcH2OType | None,
@@ -1426,7 +1426,7 @@ def main():
 
         logger.info(f"{i + 1}/{len(permutations)}: {settings}")
 
-        chain_process = create_chain_prcess_api_wrapper(**settings.__dict__)
+        chain_process = create_chain_process_api_wrapper(**settings.__dict__)
 
         plot(chain_process, name=name)
 

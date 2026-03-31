@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 
 from ptxboa.api import PtxboaAPI, PtxCalc
+from ptxboa.api_calc_v2 import create_chain_process_api_wrapper
 from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler
 from tests.test_api import ptxdata_dir_static
 
@@ -1223,6 +1224,10 @@ def test_new_blue_chain_real_data(
     assert _rec_approx(res_costs) == _sort_nested(_round_nested(res_costs_exp))
 
     ###### NEW
+    chain_process = create_chain_process_api_wrapper(
+        **api_kwargs,
+        tool_version_color="blue",
+    )
 
     # "scenario": "2040 (medium)",
     # "chain": "STL-S__NG-DRI-C_EAF__prod_in_supply",
