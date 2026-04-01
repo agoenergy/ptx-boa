@@ -36,6 +36,13 @@ from ptxboa.static import (
 )
 from ptxboa.static._type_defs import CalculateDataType
 
+PARAMETER_DEFAULTS: dict[ParameterCodeType, float] = {
+    "EFF": 1,
+    "FLH": 7000,
+    "LIFETIME": 20,
+    "CALOR": 1,  # TODO: should be None
+}
+
 
 def _get_secproc_data(
     secondary_processes: dict,
@@ -385,7 +392,7 @@ class _ParameterGetter:
     def get_process_params(self, process_code: ProcessCodeType) -> dict:
         result = {}
         result["EFF"] = self.get_parameter_value_w_default(
-            "EFF", process_code=process_code, default=1
+            "EFF", process_code=process_code, default=PARAMETER_DEFAULTS.get("EFF", 0)
         )
         # loss that effects main efficiency: get parameter for
         # main in flow
@@ -413,14 +420,12 @@ class _ParameterGetter:
             result["LOSS"] = main_loss_param
 
         result["FLH"] = self.get_parameter_value_w_default(
-            "FLH",
-            process_code=process_code,
-            default=7000,  # TODO: default?
+            "FLH", process_code=process_code, default=PARAMETER_DEFAULTS.get("FLH", 0)
         )
         result["LIFETIME"] = self.get_parameter_value_w_default(
             "LIFETIME",
             process_code=process_code,
-            default=20,  # TODO: default?
+            default=PARAMETER_DEFAULTS.get("LIFETIME", 20),
         )
         result["CAPEX"] = self.get_parameter_value_w_default(
             "CAPEX", process_code=process_code, default=0

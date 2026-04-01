@@ -12,7 +12,7 @@ import networkx as nx
 import pandas as pd
 
 from ptxboa import logger
-from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler
+from ptxboa.api_data import DEFAULT_DATA_DIR, PARAMETER_DEFAULTS, DataHandler
 from ptxboa.static import (
     ChainType,
     FlowCodeType,
@@ -259,14 +259,23 @@ class AbstractProcess:
         return None
 
     @property
+    def main_flow_code_in_or_out(self) -> FlowCodeType:
+        """Main flow code in."""
+        return self.main_flow_code_in or self.main_flow_code_out
+
+    @property
     def secondary_flow_types(self) -> set[FlowCodeType]:
         """Secondary flow types."""
         return set()
 
     @property
     def _parameter_flow_types(self) -> set[FlowCodeType]:
-        """Secondary flow types."""
-        return self.secondary_flow_types
+        """flow types for which parameter data should be loaded."""
+        result = self.secondary_flow_types
+        # also add main flow in
+        result.add(self.main_flow_code_in_or_out)
+
+        return result
 
     @property
     def is_initial(self) -> bool:
@@ -292,6 +301,7 @@ class AbstractProcess:
     ):
         """Initialize parameetr data for this process."""
         self._parameters = {}
+        # load parameters that are process dependent
         for p in self._parameter_codes_process:
             self._parameters[p] = parameter_getters[p](
                 process_code=self.process_code, **data_lookup_defaults
@@ -303,6 +313,7 @@ class AbstractProcess:
             for p in self._parameter_codes_process
         }
 
+        # load parameters that are process and flow dependent
         for p in self._parameter_codes_process_flow:
             self._parameters[p] = {
                 f: parameter_getters[p](
@@ -390,6 +401,44 @@ class Process(AbstractProcess):
         """Is this re generation process."""
         return self._process_type.is_re_generation
 
+    def initialize_parameters(
+        self, parameter_getters: "ParameterGetters", data_lookup_defaults: dict
+    ):
+        """Initialize parameetr data for this process."""
+        super().initialize_parameters(
+            parameter_getters=parameter_getters,
+            data_lookup_defaults=data_lookup_defaults,
+        )
+        logging.debug(self._parameters)
+        # LOSS: split into loss for main and for secondary
+
+        if "LOSS" in self._parameters and "EFF" in self._parameters:
+            self._parameters["LOSS_FLOW"] = self._parameters.pop("LOSS")
+            if self.main_flow_code_in_or_out in self._parameters["LOSS_FLOW"]:
+                self._parameters["LOSS"] = self._parameters["LOSS_FLOW"].pop(
+                    self.main_flow_code_in_or_out
+                )
+            # update EFF and CONV for losses
+            # TODO: keep original values for information purposes
+            # NOTE: calculation: see https://github.com/agoenergy/ptx-boa/issues/581
+            if "LOSS" in self._parameters:
+                eff_original = self._parameters["EFF"]
+                self._parameters["EFF"] = eff_original / (1 + self._parameters["LOSS"])
+
+        if "LOSS_FLOW" in self._parameters and "CONV" in self._parameters:
+            # LOSS for CONV (if value exists in both)
+            loss_flows = self._parameters.get("LOSS_FLOW", {})
+            convs = self._parameters.get("CONV", {})
+            for fc in set(loss_flows) & set(convs):
+                conv_orig = convs[fc]
+                self._parameters["CONV"][fc] = conv_orig * (1 + loss_flows[fc])
+
+        # FIXME: only for temporary test comparison?
+        if any(self._parameters.get("CO2CPT-R", {}).values()) or any(
+            self._parameters.get("CO2CPT-S", {}).values()
+        ):
+            self._parameters["CONV"]["CO2-C"] = 1
+
     def calculate(self, main_flow_out: float):
         """Calculate all process values based on desired output flow."""
         super().calculate(main_flow_out=main_flow_out)
@@ -430,6 +479,11 @@ class SecondaryProcess(Process):
 class InitialProcess(SecondaryProcess):
     color = "skyblue"
 
+    # @property
+    # def _parameter_flow_types(self) -> set[FlowCodeType | str]:
+    #    """Secondary flow types."""
+    #    return super()._parameter_flow_types | {self.main_flow_code_out}
+
 
 class MarketProcess(AbstractProcess):
     color = "lightgray"
@@ -443,10 +497,10 @@ class MarketProcess(AbstractProcess):
         super().__init__(parent_process=parent_process)
         self._main_flow_code_out: FlowCodeType = main_flow_code_out
 
-    @property
-    def _parameter_flow_types(self) -> set[FlowCodeType]:
-        """Secondary flow types."""
-        return {self.main_flow_code_out}
+    # @property
+    # def _parameter_flow_types(self) -> set[FlowCodeType]:
+    #    """Secondary flow types."""
+    #    return {self.main_flow_code_out}
 
     def calculate(self, main_flow_out: float):
         """Calculate all process values based on desired output flow."""
@@ -1351,9 +1405,7 @@ def create_parameter_getters(
             parameter_code, "has_global_default"
         ]
 
-        default_value: float = (
-            1 if parameter_code in {"EFF", "CALOR"} else 0
-        )  # TODO: from  DB?
+        default_value: float = PARAMETER_DEFAULTS.get(parameter_code, 0)
 
         _get_value_ = make_getter(
             parameter_code=parameter_code, use_global_default=False
@@ -1465,14 +1517,13 @@ def main():
 
     for i, (name, settings) in enumerate(permutations.items()):
         # if name != "Methane_(SOEC)_Pipeline":
-        # if name != "CH3OH-L__ATR_91%_CH3OHSYN__prod_in_demand_Pipeline":
-        #    continue
-
+        if name != "STL-S__NG-DRI-C_EAF__prod_in_demand_Ship":
+            continue
         logger.info(f"{i + 1}/{len(permutations)}: {settings} => {name}")
 
         chain_process = create_chain_process_api_wrapper(**settings.__dict__)
 
-        plot(chain_process, name=name)
+        # plot(chain_process, name=name)
 
 
 if __name__ == "__main__":
@@ -1573,6 +1624,6 @@ def _temp_data_adapter(chain_process: ChainProcess) -> dict:
         "parameter": parameter,
         "parameter_i": parameter_i,
         "main_export_process_chain": [get_proc_data(p) for p in export_wo_pre_transp],
-        # "transport_process_chain": [get_proc_data(p) for p in transport_w_pre_post],
-        # "main_import_process_chain": [get_proc_data(p) for p in import_wo_post_transp],
+        "transport_process_chain": [get_proc_data(p) for p in transport_w_pre_post],
+        "main_import_process_chain": [get_proc_data(p) for p in import_wo_post_transp],
     }
