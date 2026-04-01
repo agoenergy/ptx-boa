@@ -64,7 +64,7 @@ def _translate_user_data(user_data: pd.DataFrame) -> None:
             if value and colname.endswith("_code"):
                 dimname = colname.replace("_code", "")
                 basename = dimname.replace("target_", "").replace("source_", "")
-                dim = DataHandler.dimensions[dimname]  # type:ignore
+                dim = DataHandler.dimensions[dimname]  # type: ignore
                 try:
                     value = dim.loc[value, basename + "_name"]
                 except Exception:
@@ -72,7 +72,7 @@ def _translate_user_data(user_data: pd.DataFrame) -> None:
                         f"{colname}={value} not in {dimname}: "
                         f"{sorted(dim.index)}, {sorted(dim.columns)}"
                     )
-                user_data.loc[idx, colname] = value  # type:ignore
+                user_data.loc[idx, colname] = value  # type: ignore
 
 
 # recursively use pytest.approx
@@ -305,7 +305,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
         tool_version_color="blue",
     )
     calculation_data_ = data_handler.get_calculation_data(**kwargs, optimize_flh=False)
-    ptxcalc_results = PtxCalc.calculate(calculation_data_)  # type:ignore
+    ptxcalc_results = PtxCalc.calculate(calculation_data_)  # type: ignore
 
     # test api output
     api = PtxboaAPI(data_dir=ptxdata_dir_static)
@@ -317,7 +317,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
         optimize_flh=False,
         output_unit="USD/t",  # must be per ton for steel
     )
-    res_emission_mass = api_result.emission_mass[  # type:ignore
+    res_emission_mass = api_result.emission_mass[  # type: ignore
         ["process_subtype", "emission_type", "gas_type", "values"]
     ].to_dict(orient="records")
 
@@ -1198,14 +1198,14 @@ def test_new_blue_chain_real_data(
     calculation_data = _sort_nested(_round_nested(api_result.todo_data))
     values = _sort_nested(_round_nested(api_result.todo_results_flows))
 
-    res_emission_mass = api_result.emission_mass[  # type:ignore
+    res_emission_mass = api_result.emission_mass[  # type: ignore
         ["process_subtype", "emission_type", "gas_type", "values"]
     ].to_dict(orient="records")
     # round and sort for easier comparison
     res_emission_mass = _sort_nested(_round_nested(res_emission_mass))
 
     res_costs = (
-        api_result.todo_df_results_cost_unscaled[  # type:ignore
+        api_result.todo_df_results_cost_unscaled[  # type: ignore
             ["process_subtype", "process_type", "values"]
         ]
         .groupby(["process_subtype", "process_type"])

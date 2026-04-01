@@ -222,10 +222,10 @@ class PtxboaAPI:
             secproc_el = None
 
         data = data_handler.get_calculation_data(
-            secondary_processes={  # type:ignore
+            secondary_processes={  # type: ignore
                 flow_code: (
                     DataHandler.get_dimensions_parameter_code(
-                        dimension=dimension,  # type:ignore
+                        dimension=dimension,  # type: ignore
                         parameter_name=parameter_name,
                     )
                     if parameter_name
@@ -242,13 +242,13 @@ class PtxboaAPI:
             chain_name=chain,
             process_code_res=DataHandler.get_dimensions_parameter_code(
                 "res_gen", res_gen
-            ),  # type:ignore
+            ),  # type: ignore
             source_region_code=DataHandler.get_dimensions_parameter_code(
                 "region", region
-            ),  # type:ignore
+            ),  # type: ignore
             target_country_code=DataHandler.get_dimensions_parameter_code(
                 "country", country
-            ),  # type:ignore
+            ),  # type: ignore
             use_ship=(transport == "Ship"),
             ship_own_fuel=ship_own_fuel,
             optimize_flh=optimize_flh,
@@ -264,7 +264,7 @@ class PtxboaAPI:
         flow_code_chain_out = data_handler.get_dimension("chain").loc[chain, "flow_out"]
         flow_unit_chain_out = data_handler.get_dimension("flow").loc[
             flow_code_chain_out, "unit"
-        ]  # type:ignore
+        ]  # type: ignore
 
         if flow_unit_chain_out.lower().startswith("kwh"):
             if output_unit == "USD/MWh":

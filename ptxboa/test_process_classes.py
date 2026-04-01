@@ -422,17 +422,20 @@ if __name__ == "__main__":
 def _temp_data_adapter(chain_process: ChainProcess) -> dict:
 
     proc_export: AggregateProcess = chain_process.get_subprocesses_by_class(
+        # type: ignore
         ChainExportProcess
-    )[0]  # type: ignore
+    )[0]
     proc_transport: AggregateProcess = chain_process.get_subprocesses_by_class(
+        # type: ignore
         ChainTransportProcess
-    )[0]  # type:ignore
+    )[0]
     try:
         proc_import: AggregateProcess = chain_process.get_subprocesses_by_class(
+            # type: ignore
             ChainImportProcess
-        )[0]  # type:ignore
+        )[0]
     except Exception:
-        proc_import = None  # type:ignore
+        proc_import = None  # type: ignore
 
     context = chain_process._data_lookup_defaults
 
@@ -440,10 +443,12 @@ def _temp_data_adapter(chain_process: ChainProcess) -> dict:
     parameter["SPECCOST"] = {}
     # also aggregate all specccost
     for p in proc_export.get_subprocesses_by_class(MarketProcess):
-        print(p)
-        parameter["SPECCOST"] = parameter["SPECCOST"] | p._parameters.get(  # type:ignore
-            "SPECCOST", {}
-        )  # type:ignore
+        assert p._parameters
+        parameter["SPECCOST"] = parameter["SPECCOST"] | p._parameters.get(
+            # type: ignore
+            "SPECCOST",
+            {},
+        )
 
     if proc_import:
         parameter_i = proc_import.get_parameters_incl_parents()
@@ -451,9 +456,9 @@ def _temp_data_adapter(chain_process: ChainProcess) -> dict:
         # also aggregate all specccost
         for p in proc_import.get_subprocesses_by_class(MarketProcess):
             print(p)
-            parameter_i["SPECCOST"] = parameter_i["SPECCOST"] | p._parameters.get(  # type:ignore
+            parameter_i["SPECCOST"] = parameter_i["SPECCOST"] | p._parameters.get(  # type: ignore # noqa
                 "SPECCOST", {}
-            )  # type:ignore
+            )  # type: ignore
     else:
         parameter_i = {}
 
@@ -479,17 +484,23 @@ def _temp_data_adapter(chain_process: ChainProcess) -> dict:
         data = p._parameters | {  # type: ignore
             "process_code": p.process_code,
             "step": p.process_step,
-        }  # type:ignore
+        }  # type: ignore
         return data
 
-    main_export_process_chain = [get_proc_data(p) for p in export_wo_pre_transp]  # type:ignore
-    transport_process_chain = [get_proc_data(p) for p in transport_w_pre_post]  # type:ignore
-    main_import_process_chain = [get_proc_data(p) for p in import_wo_post_transp]  # type:ignore
+    main_export_process_chain = [
+        get_proc_data(p) for p in export_wo_pre_transp  # type: ignore
+    ]
+    transport_process_chain = [
+        get_proc_data(p) for p in transport_w_pre_post  # type: ignore
+    ]
+    main_import_process_chain = [
+        get_proc_data(p) for p in import_wo_post_transp  # type: ignore
+    ]
 
     export_secondary = list(proc_export.secondary_processes)
     secondary_process = {
-        p.main_flow_code_out: get_proc_data(p)  # type:ignore
-        for p in export_secondary  # type:ignore
+        p.main_flow_code_out: get_proc_data(p)  # type: ignore
+        for p in export_secondary  # type: ignore
     }
 
     # compatibility fixes to compare data
@@ -530,5 +541,5 @@ def _temp_values_adapter(chain_process: ChainProcess) -> list:
 
     result = []
     for p in chain_process.full_main_chain + chain_process.secondary_processes:
-        result.append(get_values(p))  # type:ignore
+        result.append(get_values(p))  # type: ignore
     return result

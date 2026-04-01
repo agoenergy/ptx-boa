@@ -158,7 +158,8 @@ class ProcessType:
         # secondary: only allow CCS
         return self.allow_in_export and (
             # CSS is onlyallowed secondary(?) # TODO:generalize?
-            not self.is_secondary or self.process_code == "CO2-T+S#B"
+            not self.is_secondary
+            or self.process_code == "CO2-T+S#B"
         )
 
 
@@ -392,34 +393,38 @@ class Process(AbstractProcess):
         logging.debug(self._parameters)
         # LOSS: split into loss for main and for secondary
 
-        if "LOSS" in self._parameters and "EFF" in self._parameters:  # type:ignore
-            self._parameters["LOSS_FLOW"] = self._parameters.pop("LOSS")  # type:ignore
-            if self.main_flow_code_in_or_out in self._parameters["LOSS_FLOW"]:  # type:ignore
-                self._parameters["LOSS"] = self._parameters["LOSS_FLOW"].pop(  # type:ignore
+        if "LOSS" in self._parameters and "EFF" in self._parameters:  # type: ignore
+            self._parameters["LOSS_FLOW"] = self._parameters.pop("LOSS")  # type: ignore # noqa
+            if (
+                self.main_flow_code_in_or_out in self._parameters["LOSS_FLOW"]  # type: ignore # noqa
+            ):
+                self._parameters["LOSS"] = self._parameters[  # type: ignore
+                    "LOSS_FLOW"
+                ].pop(  # type: ignore
                     self.main_flow_code_in_or_out
                 )
             # update EFF and CONV for losses
             # TODO: keep original values for information purposes
             # NOTE: calculation: see https://github.com/agoenergy/ptx-boa/issues/581
-            if "LOSS" in self._parameters:  # type:ignore
-                eff_original = self._parameters["EFF"]  # type:ignore
-                self._parameters["EFF"] = eff_original / (1 + self._parameters["LOSS"])  # type:ignore
+            if "LOSS" in self._parameters:  # type: ignore
+                eff_original = self._parameters["EFF"]  # type: ignore
+                self._parameters["EFF"] = eff_original / (1 + self._parameters["LOSS"])  # type: ignore # noqa
 
-        if "LOSS_FLOW" in self._parameters and "CONV" in self._parameters:  # type:ignore
+        if "LOSS_FLOW" in self._parameters and "CONV" in self._parameters:  # type: ignore # noqa
             # LOSS for CONV (if value exists in both)
-            loss_flows = self._parameters.get("LOSS_FLOW", {})  # type:ignore
-            convs = self._parameters.get("CONV", {})  # type:ignore
-            for fc in set(loss_flows) & set(convs):  # type:ignore
-                conv_orig = convs[fc]  # type:ignore
-                self._parameters["CONV"][fc] = conv_orig * (1 + loss_flows[fc])  # type:ignore
+            loss_flows = self._parameters.get("LOSS_FLOW", {})  # type: ignore
+            convs = self._parameters.get("CONV", {})  # type: ignore
+            for fc in set(loss_flows) & set(convs):  # type: ignore
+                conv_orig = convs[fc]  # type: ignore
+                self._parameters["CONV"][fc] = conv_orig * (1 + loss_flows[fc])  # type: ignore # noqa
 
         # FIXME: only for temporary test comparison?
         if (
-            any(self._parameters.get("CO2CPT-R", {}).values())  # type:ignore
-            or any(self._parameters.get("CO2CPT-S", {}).values())  # type:ignore
+            any(self._parameters.get("CO2CPT-R", {}).values())  # type: ignore
+            or any(self._parameters.get("CO2CPT-S", {}).values())  # type: ignore
         ) and self.process_code != "CCGT-CC#B":
             logger.warning("TODO: remove dummy CONV for CO2-C")
-            self._parameters["CONV"]["CO2-C"] = 1  # type:ignore
+            self._parameters["CONV"]["CO2-C"] = 1  # type: ignore
 
     def calculate(self, main_flow_out: float):
         """Calculate all process values based on desired output flow."""
@@ -526,7 +531,9 @@ class AggregateProcess(AbstractProcess):
     def get_first_main_process_by_step(self, step: ProcessStepType) -> Process:
         """May raise Exception."""
         # TODO: faster if we create lookup dict first
-        return next(p for p in self.full_main_chain if p.process_step == step)  # type:ignore
+        return next(
+            p for p in self.full_main_chain if p.process_step == step  # type: ignore
+        )
 
     @property
     def main_flow_code_out(self) -> FlowCodeType:
@@ -868,10 +875,10 @@ class ChainTransportProcess(ChainSectionProcess):
                 target_country_code=data_lookup_defaults["target_country_code"],
                 use_ship=self.transport_type == "Ship",
                 ship_own_fuel=self.ship_own_fuel,
-                dist_ship=self._parameters["DST-S-D"],  # type:ignore
-                dist_pipeline=self._parameters["DST-S-DP"],  # type:ignore
-                seashare_pipeline=self._parameters["SEASHARE"],  # type:ignore
-                existing_pipeline_cap=self._parameters["CAP-T"],  # type:ignore
+                dist_ship=self._parameters["DST-S-D"],  # type: ignore
+                dist_pipeline=self._parameters["DST-S-DP"],  # type: ignore
+                seashare_pipeline=self._parameters["SEASHARE"],  # type: ignore
+                existing_pipeline_cap=self._parameters["CAP-T"],  # type: ignore
             )
         )
         # FIXME: this is really ugly: we need to call super first to get
@@ -881,12 +888,12 @@ class ChainTransportProcess(ChainSectionProcess):
 
         for step, dist in transport_distances.items():
             proc = self.get_first_main_process_by_step(step)
-            proc._parameters["DIST"] = dist  # type:ignore
+            proc._parameters["DIST"] = dist  # type: ignore
 
         # FIXME !!! EFF
         for proc in self.process_graph.calculate_order:
             logger.warning("TODO: calculate EFF for transport")
-            proc._parameters["EFF"] = 1  # type:ignore
+            proc._parameters["EFF"] = 1  # type: ignore
 
 
 def group_by_flow_type_out(
@@ -967,9 +974,9 @@ class ProcessGraph:
             flow_provider_sec_or_initial[sec_proc.main_flow_code_out] = sec_proc
 
         # collect required flows
-        required_flows_procs: dict[
-            FlowCodeType, list[tuple[AbstractProcess, bool]]
-        ] = {}
+        required_flows_procs: dict[FlowCodeType, list[tuple[AbstractProcess, bool]]] = (
+            {}
+        )
 
         def add_required_flows_proc(
             proc: AbstractProcess, flow: FlowCodeType, in_main: bool
