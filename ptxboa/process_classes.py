@@ -694,8 +694,8 @@ class AggregateProcess(AbstractProcess):
             if isinstance(p, class_or_classes)
         ]
 
-    def plot(self, name: str):
-
+    def plot(self, file_basename: str):
+        """Create plot and save as png."""
         # Create a directed graph
         G = nx.DiGraph()
         node_labels = {}
@@ -791,7 +791,7 @@ class AggregateProcess(AbstractProcess):
         )
 
         # Save to PNG
-        plt.savefig(f"chain_flowcharts/{name}.png", dpi=150)
+        plt.savefig(f"chain_flowcharts/{file_basename}.png", dpi=150)
 
 
 class ChainProcess(AggregateProcess):
@@ -818,6 +818,7 @@ class ChainProcess(AggregateProcess):
         optimize_flh: bool = True,
         use_user_data_for_optimize_flh: bool = False,
     ) -> "ChainProcess":
+        """Create Chain (if not exist)."""
         chain_color: ToolVersionColorType = (
             "green" if _df_chain.at[chain, "is_green"] else "blue"
         )

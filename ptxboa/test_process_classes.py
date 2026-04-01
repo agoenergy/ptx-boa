@@ -136,9 +136,9 @@ def main():
 
         logger.info(data)
 
-        # chain_process.calculate(1)
+        # chain_process.calculate(1) # noqa
 
-        chain_process.plot(name=name)
+        chain_process.plot(file_basename=name)
 
 
 if __name__ == "__main__":
