@@ -4,7 +4,7 @@ import argparse
 import logging
 import re
 from dataclasses import dataclass
-from typing import Iterable, Literal, cast
+from typing import Iterable, cast
 
 import coloredlogs
 import matplotlib.pyplot as plt
@@ -22,7 +22,6 @@ from ptxboa.process_classes import (
 )
 from ptxboa.static import (
     ChainType,
-    ProcessStepValues,
     ResGenType,
     ScenarioType,
     SecProcCO2Type,
@@ -32,44 +31,6 @@ from ptxboa.static import (
     ToolVersionColorType,
     TransportType,
 )
-
-DataQueryParameterType = Literal[
-    "parameter_code",
-    "process_code",
-    "flow_code",
-    "source_region_code",
-    "target_country_code",
-    "default",
-    "use_user_data",
-    "region",
-    "process_res",
-    "process_ely",
-    "process_deriv",
-    "process_flh",
-]
-
-ProcessStepValuesSorted = ProcessStepValues
-assert tuple(ProcessStepValuesSorted) == (
-    "EL_STR",
-    "ELY",
-    "H2_STR",
-    "DERIV",
-    "DERIV2",
-    "PRE_SHP",
-    "SHP",
-    "SHP_OWN",
-    "POST_SHP",
-    "PRE_PPL",
-    "PPLS",
-    "PPL",
-    "PPLX",
-    "PPLR",
-    "POST_PPL",
-    "ELY_I",
-    "DERIV_I",
-    "DERIV_I2",
-)
-
 
 _df_process_by_code = DataHandler.get_dimension("process")
 _df_chain = DataHandler.get_dimension("chain")
@@ -112,14 +73,9 @@ def create_permutation_names(permutations: Iterable[Settings]) -> dict[str, Sett
 
 def create_permutations(scenario: ScenarioType) -> Iterable[Settings]:
 
-    # secproc_co2: SecProcCO2Type | None # noqa
-    # secproc_water: SecProcH2OType | None # noqa
-    # chain: ChainNameType # noqa
-    res_gen: ResGenType | None = _df_process_by_code.loc["RES-HYBR", "process_name"]  # type: ignore
-    region: SourceRegionNameType = _df_region_by_code.loc["DZA", "region_name"]  # type: ignore
-    country: TargetCountryNameType = _df_region_by_code.loc["DEU", "region_name"]  # type: ignore
-    # transport: TransportType # noqa
-    # ship_own_fuel: bool # noqa
+    res_gen: ResGenType | None = _df_process_by_code.loc["RES-HYBR", "process_name"]  # type: ignore # noqa
+    region: SourceRegionNameType = _df_region_by_code.loc["DZA", "region_name"]  # type: ignore # noqa
+    country: TargetCountryNameType = _df_region_by_code.loc["DEU", "region_name"]  # type: ignore # noqagp
     transports: list[tuple[TransportType, bool]] = [
         ("Pipeline", False),
         ("Ship", False),
@@ -315,7 +271,7 @@ def plot(chain_process: AggregateProcess, name: str):
         edge_labels=edge_labels,
         font_size=6,
         font_color="black",
-        # label_pos=0.5,
+        # label_pos=0.5, # noqa
     )
 
     # Save to PNG

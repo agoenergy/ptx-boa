@@ -140,7 +140,7 @@ def extract_main_process_chain_data(results):
     df = pd.concat(
         [
             df.drop(columns="context"),
-            pd.json_normalize(df["context"]),  # type:ignore
+            pd.json_normalize(df["context"]),  # type: ignore
         ],
         axis=1,
     )

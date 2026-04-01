@@ -30,7 +30,7 @@ def get_secproc_step(process_code: str) -> str:
     ]
     if proc_cls == "Electricity":
         proc_cls = "Electricity generation"  # ??
-    return prefix + proc_cls  # type:ignore
+    return prefix + proc_cls  # type: ignore
 
 
 @dataclass(slots=True)
@@ -120,7 +120,7 @@ def calculate_emissions(
             main_flow_code_in,
         )
 
-    all_flows[main_flow_code_in] = results_flows.main_input
+    all_flows[main_flow_code_in] = results_flows.main_input  # type: ignore
 
     CH4_KWH_PER_OUTPUT = step_data.get("CH4SHARE", {})  # only NG-G ?
 
@@ -162,7 +162,7 @@ def calculate_emissions(
         },
     }
 
-    def get_ch4_g_from_ng_loss(flow_code: str, loss_kwh_ng: float):
+    def get_ch4_g_from_ng_loss(flow_code: str | None, loss_kwh_ng: float):
         # only NG-G?
         if not loss_kwh_ng:
             return 0
@@ -177,18 +177,18 @@ def calculate_emissions(
         EF_DIRECT = _EF["DIRECT"]
         EF_INDIRECT = _EF["INDIRECT"]  # noqa
 
-        def get_captured(flow_code: str, flow_net: float):
+        def get_captured(flow_code: str | None, flow_net: float):
             return (
                 flow_net
-                * CO2CPT_FRACTION.get(flow_code, 0)
+                * CO2CPT_FRACTION.get(flow_code or "", 0)
                 * EF_DIRECT.get(flow_code, 0)
             )
 
-        def get_in_co2(flow_code: str, flow_net: float):
+        def get_in_co2(flow_code: str | None, flow_net: float):
             return flow_net * EF_DIRECT.get(flow_code, 0)
 
         main_input_net, main_input_loss = calculate_net_loss(
-            results_flows.main_input, LOSS_MAIN
+            results_flows.main_input or 0, LOSS_MAIN
         )
 
         # co2_bound_in_product_last_proc: # row 46/54
@@ -525,7 +525,7 @@ class PtxCalc:
 
                     results_flows_sec = ResultsFlows(
                         process_code=sec_process_code,
-                        process_step=sec_result_process_type,  # type:ignore
+                        process_step=sec_result_process_type,  # type: ignore
                         main_input=flow_value,  # FIXME?? input None or main_output
                         main_output=flow_value,
                         flows={},
@@ -757,14 +757,12 @@ class PtxCalc:
                 _rescale_result_flows(results_flows, norm_factor_ng)
 
         # currently for testing, we return dicts, not ResultsFlows
-        results_flows_chain = [asdict(rf) for rf in results_flows_chain]  # type:ignore
+        results_flows_chain = [asdict(rf) for rf in results_flows_chain]  # type: ignore
 
         results_flows_secondary = list(
             _aggregate_result_flows(results_flows_secondary).values()
         )
-        results_flows_secondary = [
-            asdict(rf) for rf in results_flows_secondary
-        ]  # type:ignore
+        results_flows_secondary = [asdict(rf) for rf in results_flows_secondary]  # type: ignore # noqa
 
         return PtxCalcResult(
             df_results_cost=df_results_cost,

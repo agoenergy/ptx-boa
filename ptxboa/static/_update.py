@@ -183,6 +183,23 @@ def main():
         create_literal("Transport", ["Ship", "Pipeline"]),
         create_literal("OutputUnit", ["USD/MWh", "USD/t"]),
         create_literal("ToolVersionColor", ["blue", "green"]),
+        create_literal(
+            "DataQueryParameter",
+            [
+                "parameter_code",
+                "process_code",
+                "flow_code",
+                "source_region_code",
+                "target_country_code",
+                "default",
+                "use_user_data",
+                "region",
+                "process_res",
+                "process_ely",
+                "process_deriv",
+                "process_flh",
+            ],
+        ),
     ]
 
     with open(PYTHON_FILE, "w", encoding="utf-8") as file:

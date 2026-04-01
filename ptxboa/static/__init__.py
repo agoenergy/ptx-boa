@@ -1097,3 +1097,33 @@ OutputUnitValues: list[OutputUnitType] = ["USD/MWh", "USD/t"]
 
 ToolVersionColorType = Literal["blue", "green"]
 ToolVersionColorValues: list[ToolVersionColorType] = ["blue", "green"]
+
+
+DataQueryParameterType = Literal[
+    "parameter_code",
+    "process_code",
+    "flow_code",
+    "source_region_code",
+    "target_country_code",
+    "default",
+    "use_user_data",
+    "region",
+    "process_res",
+    "process_ely",
+    "process_deriv",
+    "process_flh",
+]
+DataQueryParameterValues: list[DataQueryParameterType] = [
+    "parameter_code",
+    "process_code",
+    "flow_code",
+    "source_region_code",
+    "target_country_code",
+    "default",
+    "use_user_data",
+    "region",
+    "process_res",
+    "process_ely",
+    "process_deriv",
+    "process_flh",
+]

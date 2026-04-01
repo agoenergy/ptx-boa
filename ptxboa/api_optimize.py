@@ -152,10 +152,10 @@ class ProfilesFLH(metaclass=SingletonMeta):
             we = pd.read_csv(weights_file, index_col=["period_id", "TimeStep"])
             # multiply columns in profiles with weightings
             pr_weighted = (
-                pr.mul(we.squeeze(), axis=0)  # type:ignore
+                pr.mul(we.squeeze(), axis=0)  # type: ignore
                 .reset_index(drop=True)
                 .stack()
-                .rename("specific_generation")  # type:ignore
+                .rename("specific_generation")  # type: ignore
             )
             pr_weighted.index = pr_weighted.index.set_names("re_source", level=-1)
             pr_weighted = pr_weighted.reset_index()
@@ -262,13 +262,13 @@ class PtxOpt:
             "H2_STR": None,
             "CO2": None,
             "H2O": None,
-        }  # type:ignore # TODO: update OptInputDataType
+        }  # type: ignore # TODO: update OptInputDataType
 
         for step in input_data["main_export_process_chain"]:
             if step["step"] == "RES":
                 if step["process_code"] == "RES-HYBR":
                     pc: ProcessCodeResType
-                    for pc in ["PV-FIX", "WIND-ON"]:  # type:ignore
+                    for pc in ["PV-FIX", "WIND-ON"]:  # type: ignore
                         proc_data = input_data["flh_opt_process"][pc]
                         result["RES"].append(
                             {
@@ -484,7 +484,7 @@ class PtxOpt:
         else:
             # load existing results
             opt_output_data: OptOutputDataType = self._load(
-                hash_filepath  # type:ignore
+                hash_filepath  # type: ignore
             )
 
         self._merge_data(data, opt_output_data)

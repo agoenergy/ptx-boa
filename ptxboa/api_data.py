@@ -443,18 +443,18 @@ class _ParameterGetter:
             result["LOSS_FLOW"] = flow_loss_params
 
         # additional parameters for co2
-
         for param in ["CH4SHARE", "EF_M", "EF_E"]:
             value = self.get_flow_co2_params(
-                process_code, parameter_code=param
-            )  # type:ignore
+                process_code,
+                parameter_code=param,  # type: ignore
+            )
             if value:
                 result[param] = value
 
         for param in ["CO2CPT-R", "CO2CPT-S", "CBOUND"]:
             value = self.get_flow_co2_params_w_process(
                 process_code,
-                parameter_code=param,  # type:ignore
+                parameter_code=param,  # type: ignore
             )
             if value:
                 result[param] = value
@@ -621,17 +621,17 @@ class DataHandler:
             if dim in {"region", "country"}:
                 # unified mapping for country and region
                 mapping = pd.Series(
-                    cls.dimensions["region_country"][  # type:ignore
+                    cls.dimensions["region_country"][  # type: ignore
                         f"region_country_{out_type}"
                     ].to_list(),
-                    index=cls.dimensions["region_country"][  # type:ignore
+                    index=cls.dimensions["region_country"][  # type: ignore
                         f"region_country_{in_type}"
                     ],
                 )
             else:
                 mapping = pd.Series(
-                    cls.dimensions[dim][f"{dim}_{out_type}"].to_list(),  # type:ignore
-                    index=cls.dimensions[dim][f"{dim}_{in_type}"],  # type:ignore
+                    cls.dimensions[dim][f"{dim}_{out_type}"].to_list(),  # type: ignore
+                    index=cls.dimensions[dim][f"{dim}_{in_type}"],  # type: ignore
                 )
             if dim not in ["region", "country"]:
                 column_name = f"{dim}_code"
@@ -685,7 +685,7 @@ class DataHandler:
 
         # we only can user DataFrame.update with matching index values
         for key, value in user_data["value"].items():
-            scenario_data.at[key, "value"] = value  # type:ignore
+            scenario_data.at[key, "value"] = value  # type: ignore
 
         return scenario_data
 
@@ -861,9 +861,7 @@ class DataHandler:
                 "target_country_code",
             ]
             required_keys = set(
-                self.dimensions["parameter"].at[
-                    parameter_code, "dimensions"
-                ]  # type:ignore
+                self.dimensions["parameter"].at[parameter_code, "dimensions"]  # type: ignore # noqa
             ) | {"parameter_code"}
 
         def _get_value(
@@ -873,7 +871,7 @@ class DataHandler:
                 [params[k] if k in required_keys else "" for k in keys]
             )
             try:
-                return df.at[key, "value"]  # type:ignore
+                return df.at[key, "value"]  # type: ignore
             except KeyError:
                 return None
 
@@ -1205,7 +1203,7 @@ class DataHandler:
         # If RES=Hybrid: we also need PV and Wind-On
         if process_code_res == "RES-HYBR":
             pc: ProcessCodeType
-            for pc in ["PV-FIX", "WIND-ON"]:  # type:ignore
+            for pc in ["PV-FIX", "WIND-ON"]:  # type: ignore
                 result["flh_opt_process"][pc] = pg.get_process_params(pc)
 
         used_flows_always_for_opt: set[FlowCodeType] = {
@@ -1295,7 +1293,7 @@ class DataHandler:
                     f"flow_code != flow_code_in in {process_code}: "
                     f"{flow_code} != {flow_code_in}"
                 )
-            flow_code = process["main_flow_code_out"]  # type:ignore
+            flow_code = process["main_flow_code_out"]  # type: ignore
         if flow_code != final_flow_code:
             raise AssertionError(
                 f"flow_code != final_flow_code in {process_code}: "

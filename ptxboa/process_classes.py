@@ -1,7 +1,7 @@
 """Class based calculation."""
 
 import logging
-from typing import Iterable, Literal, Protocol, Union, cast
+from typing import Iterable, Protocol, Union, cast
 
 import networkx as nx
 import pandas as pd
@@ -10,6 +10,7 @@ from ptxboa import logger
 from ptxboa.api_data import DEFAULT_DATA_DIR, PARAMETER_DEFAULTS, DataHandler
 from ptxboa.static import (
     ChainType,
+    DataQueryParameterType,
     FlowCodeType,
     OutputUnitType,
     ParameterCodeType,
@@ -28,21 +29,6 @@ from ptxboa.static import (
     ToolVersionColorType,
     TransportType,
 )
-
-DataQueryParameterType = Literal[
-    "parameter_code",
-    "process_code",
-    "flow_code",
-    "source_region_code",
-    "target_country_code",
-    "default",
-    "use_user_data",
-    "region",
-    "process_res",
-    "process_ely",
-    "process_deriv",
-    "process_flh",
-]
 
 ProcessStepValuesSorted = ProcessStepValues
 assert tuple(ProcessStepValuesSorted) == (
@@ -146,6 +132,7 @@ class ProcessType:
 
     @property
     def is_transport_pre_post(self) -> bool:
+        """Porcess is transport pre/post."""
         return self.is_transport and self.is_transformation and not self.is_storage
 
     @property
@@ -265,7 +252,7 @@ class AbstractProcess:
 
     @property
     def _parameter_flow_types(self) -> set[FlowCodeType]:
-        """flow types for which parameter data should be loaded."""
+        """Flow types for which parameter data should be loaded."""
         result = self.secondary_flow_types
         # also add main flow in (for market/initial proces,
         # those dont exist and we need out)
@@ -299,7 +286,6 @@ class AbstractProcess:
         self, parameter_getters: "ParameterGetters", data_lookup_defaults: dict
     ):
         """Initialize parameetr data for this process."""
-
         # FIXME: !!! remove - only for temporary testing compatibility
         if self.process_step in {"POST_SHP", "POST_PPL"}:
             logger.warning("TODO: get post transport data from export country")
@@ -341,6 +327,7 @@ class AbstractProcess:
         return f"{self.__class__.__name__}({step}{self.process_code}{s_val})"
 
     def get_parameters_incl_parents(self) -> dict:
+        """Get all parameters including from parents."""
         params = self._parameters or {}
         if self.parent_process:
             params = self.parent_process.get_parameters_incl_parents() | params
@@ -420,6 +407,7 @@ class Process(AbstractProcess):
         )
         logging.debug(self._parameters)
         # LOSS: split into loss for main and for secondary
+        assert self._parameters
 
         if "LOSS" in self._parameters and "EFF" in self._parameters:
             self._parameters["LOSS_FLOW"] = self._parameters.pop("LOSS")
@@ -455,7 +443,7 @@ class Process(AbstractProcess):
         super().calculate(main_flow_out=main_flow_out)
         eff: float = self._parameters.get("EFF")  # type: ignore
         if not eff:
-            # logger.warning("EFF = 0")
+            # logger.warning("EFF = 0") # noqa
             eff = 1
 
         self._main_flow_in = main_flow_out / eff
@@ -490,11 +478,6 @@ class SecondaryProcess(Process):
 class InitialProcess(SecondaryProcess):
     color = "skyblue"
 
-    # @property
-    # def _parameter_flow_types(self) -> set[FlowCodeType | str]:
-    #    """Secondary flow types."""
-    #    return super()._parameter_flow_types | {self.main_flow_code_out}
-
 
 class MarketProcess(AbstractProcess):
     color = "lightgray"
@@ -507,11 +490,6 @@ class MarketProcess(AbstractProcess):
     ):
         super().__init__(parent_process=parent_process)
         self._main_flow_code_out: FlowCodeType = main_flow_code_out
-
-    # @property
-    # def _parameter_flow_types(self) -> set[FlowCodeType]:
-    #    """Secondary flow types."""
-    #    return {self.main_flow_code_out}
 
     def calculate(self, main_flow_out: float):
         """Calculate all process values based on desired output flow."""
@@ -563,7 +541,7 @@ class AggregateProcess(AbstractProcess):
         self.process_graph: "ProcessGraph" = process_graph
 
     def get_first_main_process_by_step(self, step: ProcessStepType) -> Process:
-        """May raise Exception"""
+        """May raise Exception."""
         # TODO: faster if we create lookup dict first
         return next(p for p in self.full_main_chain if p.process_step == step)
 
@@ -609,7 +587,6 @@ class AggregateProcess(AbstractProcess):
         self, parameter_getters: "ParameterGetters", data_lookup_defaults: dict
     ):
         """Initialize parameetr data for this process."""
-
         super().initialize_parameters(
             parameter_getters=parameter_getters,
             data_lookup_defaults=data_lookup_defaults,
@@ -648,10 +625,9 @@ class AggregateProcess(AbstractProcess):
 
                 # check
                 if not main_flow_out_current:
+                    # logger.warning(f"{process}: main_flow_out is 0") # noqa
                     if main_flow_out_current is None:
                         raise ValueError(f"{process}: main_flow_out is None")
-                    # else:
-                    #    logger.warning(f"{process}: main_flow_out is 0")
             logger.debug(f"Calculate: {process} for {main_flow_out_current}")
             process.calculate(main_flow_out=main_flow_out_current)
 
@@ -661,6 +637,7 @@ class AggregateProcess(AbstractProcess):
     def get_subprocesses_by_class(
         self, class_or_classes: type | tuple[type]
     ) -> list[AbstractProcess]:
+        """Get subprocesses byclass."""
         return [
             p
             for p in self.process_graph.calculate_order
@@ -681,7 +658,6 @@ class ChainProcess(AggregateProcess):
         **_kwargs,
     ):
         """Create aggregated process for entire chain."""
-
         chain_data = DataHandler.get_dimension("chain").loc[chain].to_dict()
 
         main_process_codes_steps: list["ProcessStep"] = [
@@ -768,7 +744,8 @@ class ChainProcess(AggregateProcess):
             main_process_codes_steps_filtered
         ):
             raise Exception(
-                f"{check_use_all_main_process_codes} != {main_process_codes_steps_filtered}"
+                f"{check_use_all_main_process_codes} != "
+                f"{main_process_codes_steps_filtered}"
             )
         # check (TODO: can be removed later)
         main_process_codes_ = tuple(p.process_code for p in self.full_main_chain)
@@ -784,6 +761,7 @@ class ChainProcess(AggregateProcess):
         source_region_code: SourceRegionCodeType,
         target_country_code: TargetCountryCodeType,
     ):
+        """Initialize parameetr data for this process."""
         self._data_lookup_defaults = {
             "source_region_code": source_region_code,
             "target_country_code": target_country_code,
@@ -828,18 +806,21 @@ class ChainSectionProcess(AggregateProcess):
 
     @classmethod
     def process_allowed(cls, process_code: ProcessCodeType) -> bool:
+        """Process is allowed as subprocess."""
         return True
 
 
 class ChainExportProcess(ChainSectionProcess):
     @classmethod
     def process_allowed(cls, process_code: ProcessCodeType) -> bool:
+        """Process is allowed as subprocess."""
         return ProcessTypes[process_code].allow_in_export
 
 
 class ChainImportProcess(ChainSectionProcess):
     @classmethod
     def process_allowed(cls, process_code: ProcessCodeType) -> bool:
+        """Process is allowed as subprocess."""
         return ProcessTypes[process_code].allow_in_import
 
     def initialize_parameters(
@@ -884,6 +865,7 @@ class ChainTransportProcess(ChainSectionProcess):
 
     @classmethod
     def process_allowed(cls, process_code: ProcessCodeType) -> bool:
+        """Process is allowed as subprocess."""
         return ProcessTypes[process_code].allow_in_transport
 
     def initialize_parameters(
@@ -1088,7 +1070,6 @@ def filter_transport_process_codes(
     ship_own_fuel: bool,
 ) -> list["ProcessStep"]:
     """If shipping: remove pipeline (and pre/post), and vice versa."""
-
     drop_steps: set[ProcessStepType | str]
 
     if transport == "Pipeline":
@@ -1130,16 +1111,9 @@ class ParameterGetter(Protocol):
         process_code: ProcessCodeType | None = None,
         flow_code: FlowCodeType | None = None,
         **kwargs,
-    ) -> float: ...
-
-
-class ParameterGetter_(Protocol):
-    def __call__(
-        self,
-        process_code: ProcessCodeType | None = None,
-        flow_code: FlowCodeType | None = None,
-        **kwargs,
-    ) -> tuple[str, float | None]: ...
+    ) -> float | str:
+        """Get parameter value."""
+        ...
 
 
 ParameterGetters = dict[ParameterCodeType | str, ParameterGetter]
@@ -1181,7 +1155,7 @@ def create_parameter_getters(
                 ]
             ]  # type: ignore
         else:
-            dims = set(_df_parameter_by_code.at[parameter_code, "dimensions"])  # type: ignore
+            dims = set(_df_parameter_by_code.at[parameter_code, "dimensions"])  # type: ignore # noqa
             return [
                 ("parameter_code", True),
                 ("process_code", "process_code" in dims),
@@ -1195,7 +1169,7 @@ def create_parameter_getters(
 
     def make_getter(
         parameter_code: ParameterCodeType, use_global_default: bool
-    ) -> ParameterGetter_:
+    ) -> ParameterGetter:
         keys = _get_parameter_keys(
             parameter_code, use_global_default=use_global_default
         )
@@ -1204,7 +1178,7 @@ def create_parameter_getters(
             process_code: ProcessCodeType | None = None,
             flow_code: FlowCodeType | None = None,
             **data_lookup_defaults,
-        ) -> tuple[str, float | None]:
+        ) -> float | None:
             df = _get_df(parameter_code=parameter_code, process_code=process_code)
             # all available key values
             key_vals = data_lookup_defaults | {
@@ -1217,21 +1191,20 @@ def create_parameter_getters(
 
             key = ",".join([(key_vals.get(k) or "") if use else "" for k, use in keys])
 
+            try:
+                value = cast(float, df.at[key, "value"])
+            except Exception:
+                value = None
+
             # FIXME: remove later
             key_debug = ",".join(
                 [k + "=" + ((key_vals.get(k) or "") if use else "") for k, use in keys]
             )
             if parameter_code == "FLH":
                 key_debug = "parameter_code=FLH," + key_debug
-
-            try:
-                value = cast(float, df.at[key, "value"])
-            except Exception:
-                value = None
-
             logger.debug("data lookup: %s => %s", key_debug, value)
 
-            return key_debug, value
+            return value
 
         return _get_value
 
@@ -1256,16 +1229,16 @@ def create_parameter_getters(
             flow_code: FlowCodeType | None = None,
             **kwargs,
         ) -> float:
-            key, value = _get_value_(
+            value = _get_value_(
                 process_code=process_code, flow_code=flow_code, **kwargs
             )
             if value is None and has_global_default:
-                key, value = _get_value_global_default(
+                value = _get_value_global_default(
                     process_code=process_code, flow_code=flow_code, **kwargs
                 )
             if value is None:
                 # TODO: get complete key
-                # logger.warning("No data for %s", key)
+                # logger.warning("No data for %s", key) # noqa
                 value = default_value
 
             return value
@@ -1325,7 +1298,7 @@ def create_chain_process_api_wrapper(
         }  # type: ignore
     else:
         assert res_gen
-        first_process_code = _df_process_by_name.at[res_gen, "process_code"]  # type: ignore
+        first_process_code = _df_process_by_name.at[res_gen, "process_code"]  # type: ignore # noqa
 
     chain_process = ChainProcess(
         transport=transport,
@@ -1345,8 +1318,8 @@ def create_chain_process_api_wrapper(
 
     chain_process.initialize_parameters(
         parameter_getters,
-        source_region_code=_df_region_by_name.at[region, "region_code"],  # type: ignore
-        target_country_code=_df_region_by_name.at[country, "region_code"],  # type: ignore
+        source_region_code=_df_region_by_name.at[region, "region_code"],  # type: ignore # noqa
+        target_country_code=_df_region_by_name.at[country, "region_code"],  # type: ignore # noqa
     )
 
     chain_process.calculate(1)
@@ -1420,7 +1393,7 @@ def _temp_data_adapter(chain_process: ChainProcess) -> dict:
     transport_process_chain = [get_proc_data(p) for p in transport_w_pre_post]
     main_import_process_chain = [get_proc_data(p) for p in import_wo_post_transp]
 
-    export_secondary = [x for x in proc_export.secondary_processes]
+    export_secondary = list(proc_export.secondary_processes)
     secondary_process = {
         p.main_flow_code_out: get_proc_data(p) for p in export_secondary
     }
@@ -1463,5 +1436,5 @@ def _temp_values_adapter(chain_process: ChainProcess) -> list:
 
     result = []
     for p in chain_process.full_main_chain + chain_process.secondary_processes:
-        result.append(get_values(p))
+        result.append(get_values(p))  # type: ignore
     return result
