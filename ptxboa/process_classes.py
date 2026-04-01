@@ -224,8 +224,7 @@ class ProcessType:
         # secondary: only allow CCS
         return self.allow_in_export and (
             # CSS is onlyallowed secondary(?) # TODO:generalize?
-            not self.is_secondary
-            or self.process_code == "CO2-T+S#B"
+            not self.is_secondary or self.process_code == "CO2-T+S#B"
         )
 
 
@@ -328,19 +327,10 @@ class AbstractProcess:
     def _get_calculation_data(
         self,
         parameter_getters: "ParameterGetters",
-        data_lookup_defaults: dict,
-        # parent_parameters: dict,
+        data_lookup_defaults: dict[DataQueryParameterType, str],
+        parent_parameters: ProcessDataType | None = None,
     ) -> ProcessDataType:
         """Initialize parameetr data for this process."""
-        # FIXME: !!! remove - only for temporary testing compatibility
-        if self.process_step in {"POST_SHP", "POST_PPL"}:
-            logger.warning("TODO: get post transport data from export country")
-            data_lookup_defaults = data_lookup_defaults | {
-                "source_region_code": data_lookup_defaults["target_country_code"],
-                # FIXME: remove later: we dont need to flip
-                "target_country_code": data_lookup_defaults["source_region_code"],
-            }
-
         self._parameters = {}
         # load parameters that are process dependent
         for p in self._parameter_codes_process:
@@ -1338,9 +1328,9 @@ class ProcessGraph:
             flow_provider_sec_or_initial[sec_proc.main_flow_code_out] = sec_proc
 
         # collect required flows
-        required_flows_procs: dict[FlowCodeType, list[tuple[AbstractProcess, bool]]] = (
-            {}
-        )
+        required_flows_procs: dict[
+            FlowCodeType, list[tuple[AbstractProcess, bool]]
+        ] = {}
 
         def add_required_flows_proc(
             proc: AbstractProcess, flow: FlowCodeType, in_main: bool
