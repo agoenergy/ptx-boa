@@ -94,7 +94,7 @@ def create_chain_process_api_wrapper(
         }  # type: ignore
     else:
         assert res_gen
-        first_process_code = _df_process_by_name.at[res_gen, "process_code"]  # type: ignore
+        first_process_code = _df_process_by_name.at[res_gen, "process_code"]  # type: ignore # noqa
 
     chain_process = ChainProcess(
         transport=transport,
@@ -113,8 +113,8 @@ def create_chain_process_api_wrapper(
 
     chain_process.initialize_parameters(
         parameter_getters,
-        source_region_code=_df_region_by_name.at[region, "region_code"],  # type: ignore
-        target_country_code=_df_region_by_name.at[country, "region_code"],  # type: ignore
+        source_region_code=_df_region_by_name.at[region, "region_code"],  # type: ignore # noqa
+        target_country_code=_df_region_by_name.at[country, "region_code"],  # type: ignore # noqa
     )
 
     chain_process.calculate(1)
@@ -142,9 +142,9 @@ def create_permutations(scenario: ScenarioType) -> Iterable[Settings]:
     # secproc_co2: SecProcCO2Type | None # noqa
     # secproc_water: SecProcH2OType | None # noqa
     # chain: ChainNameType # noqa
-    res_gen: ResGenType | None = _df_process_by_code.loc["RES-HYBR", "process_name"]  # type: ignore
-    region: SourceRegionNameType = _df_region_by_code.loc["DZA", "region_name"]  # type: ignore
-    country: TargetCountryNameType = _df_region_by_code.loc["DEU", "region_name"]  # type: ignore
+    res_gen: ResGenType | None = _df_process_by_code.loc["RES-HYBR", "process_name"]  # type: ignore # noqa
+    region: SourceRegionNameType = _df_region_by_code.loc["DZA", "region_name"]  # type: ignore # noqa
+    country: TargetCountryNameType = _df_region_by_code.loc["DEU", "region_name"]  # type: ignore # noqa
     # transport: TransportType # noqa
     # ship_own_fuel: bool # noqa
     transports: list[tuple[TransportType, bool]] = [

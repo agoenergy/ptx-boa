@@ -116,6 +116,7 @@ class ProcessType:
 
     @property
     def is_transport_pre_post(self) -> bool:
+        """Process is transport pre/post processing."""
         return self.is_transport and self.is_transformation and not self.is_storage
 
     @property
@@ -235,7 +236,7 @@ class AbstractProcess:
 
     @property
     def _parameter_flow_types(self) -> set[FlowCodeType]:
-        """flow types for which parameter data should be loaded."""
+        """Flow types for which parameter data should be loaded."""
         result = self.secondary_flow_types
         # also add main flow in (for market/initial proces,
         # those dont exist and we need out)
@@ -269,7 +270,6 @@ class AbstractProcess:
         self, parameter_getters: "_ParameterGetters", data_lookup_defaults: dict
     ):
         """Initialize parameetr data for this process."""
-
         # FIXME: !!! remove - only for temporary testing compatibility
         if self.process_step in {"POST_SHP", "POST_PPL"}:
             logger.warning("TODO: get post transport data from export country")
@@ -311,6 +311,7 @@ class AbstractProcess:
         return f"{self.__class__.__name__}({step}{self.process_code}{s_val})"
 
     def get_parameters_incl_parents(self) -> dict:
+        """Get all parameters (including from parents)."""
         params = self._parameters or {}
         if self.parent_process:
             params = self.parent_process.get_parameters_incl_parents() | params
@@ -435,7 +436,7 @@ class Process(AbstractProcess):
         super().calculate(main_flow_out=main_flow_out)
         eff: float = self._parameters.get("EFF")  # type: ignore
         if not eff:
-            # logger.warning("EFF = 0")
+            # logger.warning("EFF = 0") # noqa
             eff = 1
 
         self._main_flow_in = main_flow_out / eff
@@ -470,11 +471,6 @@ class SecondaryProcess(Process):
 class InitialProcess(SecondaryProcess):
     color = "skyblue"
 
-    # @property
-    # def _parameter_flow_types(self) -> set[FlowCodeType | str]:
-    #    """Secondary flow types."""
-    #    return super()._parameter_flow_types | {self.main_flow_code_out}
-
 
 class MarketProcess(AbstractProcess):
     color = "lightgray"
@@ -487,11 +483,6 @@ class MarketProcess(AbstractProcess):
     ):
         super().__init__(parent_process=parent_process)
         self._main_flow_code_out: FlowCodeType = main_flow_code_out
-
-    # @property
-    # def _parameter_flow_types(self) -> set[FlowCodeType]:
-    #    """Secondary flow types."""
-    #    return {self.main_flow_code_out}
 
     def calculate(self, main_flow_out: float):
         """Calculate all process values based on desired output flow."""
@@ -543,7 +534,7 @@ class AggregateProcess(AbstractProcess):
         self.process_graph: "ProcessGraph" = process_graph
 
     def get_first_main_process_by_step(self, step: ProcessStepType) -> Process:
-        """May raise Exception"""
+        """May raise Exception."""
         # TODO: faster if we create lookup dict first
         return next(
             p for p in self.full_main_chain if p.process_step == step
@@ -591,7 +582,6 @@ class AggregateProcess(AbstractProcess):
         self, parameter_getters: "_ParameterGetters", data_lookup_defaults: dict
     ):
         """Initialize parameetr data for this process."""
-
         super().initialize_parameters(
             parameter_getters=parameter_getters,
             data_lookup_defaults=data_lookup_defaults,
@@ -630,10 +620,10 @@ class AggregateProcess(AbstractProcess):
 
                 # check
                 if not main_flow_out_current:
+                    # logger.warning(f"{process}: main_flow_out is 0") # noqa
                     if main_flow_out_current is None:
                         raise ValueError(f"{process}: main_flow_out is None")
-                    # else:
-                    #    logger.warning(f"{process}: main_flow_out is 0")
+
             logger.debug(f"Calculate: {process} for {main_flow_out_current}")
             process.calculate(main_flow_out=main_flow_out_current)
 
@@ -643,6 +633,7 @@ class AggregateProcess(AbstractProcess):
     def get_subprocesses_by_class(
         self, class_or_classes: type | tuple[type]
     ) -> list[AbstractProcess]:
+        """Find (first) subpreocess by class."""
         return [
             p
             for p in self.process_graph.calculate_order
@@ -663,7 +654,6 @@ class ChainProcess(AggregateProcess):
         **_kwargs,
     ):
         """Create aggregated process for entire chain."""
-
         chain_data = DataHandler.get_dimension("chain").loc[chain].to_dict()
 
         main_process_codes_steps: list["ProcessStep"] = [
@@ -812,18 +802,21 @@ class ChainSectionProcess(AggregateProcess):
 
     @classmethod
     def process_allowed(cls, process_code: ProcessCodeType) -> bool:
+        """Check if process is allowed as subprocess."""
         return True
 
 
 class ChainExportProcess(ChainSectionProcess):
     @classmethod
     def process_allowed(cls, process_code: ProcessCodeType) -> bool:
+        """Check if process is allowed as subprocess."""
         return ProcessTypes[process_code].allow_in_export
 
 
 class ChainImportProcess(ChainSectionProcess):
     @classmethod
     def process_allowed(cls, process_code: ProcessCodeType) -> bool:
+        """Check if process is allowed as subprocess."""
         return ProcessTypes[process_code].allow_in_import
 
     def initialize_parameters(
@@ -868,6 +861,7 @@ class ChainTransportProcess(ChainSectionProcess):
 
     @classmethod
     def process_allowed(cls, process_code: ProcessCodeType) -> bool:
+        """Check if process is allowed as subprocess."""
         return ProcessTypes[process_code].allow_in_transport
 
     def initialize_parameters(
@@ -1072,7 +1066,6 @@ def filter_transport_process_codes(
     ship_own_fuel: bool,
 ) -> list["ProcessStep"]:
     """If shipping: remove pipeline (and pre/post), and vice versa."""
-
     drop_steps: set[ProcessStepType | str]
 
     if transport == "Pipeline":

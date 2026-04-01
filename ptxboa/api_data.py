@@ -1449,7 +1449,7 @@ class DataHandler:
                     ]
                 ]  # type: ignore
             else:
-                dims = set(_df_parameter_by_code.at[parameter_code, "dimensions"])  # type: ignore
+                dims = set(_df_parameter_by_code.at[parameter_code, "dimensions"])  # type: ignore # noqa
                 return [
                     ("parameter_code", True),
                     ("process_code", "process_code" in dims),
@@ -1537,7 +1537,7 @@ class DataHandler:
                     )
                 if value is None:
                     # TODO: get complete key
-                    # logger.warning("No data for %s", key)
+                    # logger.warning("No data for %s", key) # noqa
                     value = default_value
 
                 return value
