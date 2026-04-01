@@ -1233,6 +1233,13 @@ def test_new_blue_chain_real_data(
     )
 
     calculation_data_ = _temp_data_adapter(chain_process)
+
+    # original test datacontained unused items that we dont have anymore
+    for k in {"parameter", "parameter_i"}:
+        for k2 in calculation_data_exp[k]["SPECCOST"]:
+            if k2 not in calculation_data_[k]["SPECCOST"]:
+                calculation_data_[k]["SPECCOST"] = calculation_data_exp[k]["SPECCOST"]
+
     calculation_data: dict = _sort_nested(_round_nested(calculation_data_))  # type: ignore
 
     for k in set(calculation_data_exp) & set(calculation_data):

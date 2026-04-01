@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import pandas as pd
 
+from ptxboa import logger
 from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler
 from ptxboa.static import (
     ChainType,
@@ -32,8 +33,6 @@ from ptxboa.static import (
     ToolVersionColorType,
     TransportType,
 )
-
-logger = logging.getLogger("main")
 
 DataQueryParameterType = Literal[
     "parameter_code",
@@ -151,6 +150,15 @@ class ProcessType:
         return self.is_re_generation or self.process_code == "NG-PROD#B"
 
     @property
+    def is_transport_pre_post(self) -> bool:
+        return self.is_transport and self.is_transformation and not self.is_storage
+
+    @property
+    def is_shipping_or_pipeline(self) -> bool:
+        """Without pre/post transformation."""
+        return self.is_transport and not self.is_transformation and not self.is_storage
+
+    @property
     def process_class(self) -> type["Process"]:
         """Process class.
 
@@ -160,6 +168,8 @@ class ProcessType:
             return InitialProcess
         elif self.is_secondary:
             return SecondaryProcess
+        elif self.is_storage:
+            return StorageProcess
         elif self.is_transport and not self.is_transformation:
             return TransportProcess
         else:
@@ -173,12 +183,7 @@ class ProcessType:
     @property
     def allow_in_transport(self) -> bool:
         """Is process allowed in transport."""
-        return (
-            self.is_transport  # includes pre/post transformation
-            and not self.is_transformation  # we want pre/post shipping in export/import
-            and not self.is_secondary
-            and not self.is_storage
-        )
+        return self.is_shipping_or_pipeline
 
     @property
     def allow_in_import(self) -> bool:
@@ -390,7 +395,7 @@ class Process(AbstractProcess):
         super().calculate(main_flow_out=main_flow_out)
         eff: float = self._parameters.get("EFF")  # type: ignore
         if not eff:
-            logging.warning("EFF = 0")
+            # logger.warning("EFF = 0")
             eff = 1
 
         self._main_flow_in = main_flow_out / eff
@@ -407,6 +412,10 @@ class Process(AbstractProcess):
 class TransportProcess(Process):
     _parameter_codes_process = ["OPEX-T", "LOSS-T"]
     color = "teal"
+
+
+class StorageProcess(Process):
+    color = "lightsteelblue"
 
 
 class SecondaryProcess(Process):
@@ -544,7 +553,7 @@ class AggregateProcess(AbstractProcess):
                 for proc_target, in_main in self.process_graph.links_out.get(
                     process, []
                 ):
-                    logger.info(f"{process}: Serve {flow_code} to {proc_target}")
+                    logger.debug(f"{process}: Serve {flow_code} to {proc_target}")
                     main_flow_out_current += (
                         proc_target.get_main_flow_in()
                         if in_main
@@ -555,9 +564,9 @@ class AggregateProcess(AbstractProcess):
                 if not main_flow_out_current:
                     if main_flow_out_current is None:
                         raise ValueError(f"{process}: main_flow_out is None")
-                    else:
-                        logger.warning(f"{process}: main_flow_out is 0")
-            logger.info(f"Calculate: {process} for {main_flow_out_current}")
+                    # else:
+                    #    logger.warning(f"{process}: main_flow_out is 0")
+            logger.debug(f"Calculate: {process} for {main_flow_out_current}")
             process.calculate(main_flow_out=main_flow_out_current)
 
             if process == self.process_graph.main_processes[0]:
@@ -633,6 +642,7 @@ class ChainProcess(AggregateProcess):
                 # no steps ==> skip this
                 continue
             # check
+
             invalid_processes = [
                 p
                 for p, _s in main_process_codes_steps_part
@@ -640,7 +650,7 @@ class ChainProcess(AggregateProcess):
             ]
             if invalid_processes:
                 raise Exception(
-                    f"Invalid {ChainSectionProcessClass} "
+                    f"Processes not allowed in {ChainSectionProcessClass.__name__} "
                     f"{main_process_codes_steps_part}: {invalid_processes}"
                 )
             secondary_process_codes_part: set[ProcessCodeType] = {
@@ -888,7 +898,7 @@ class ProcessGraph:
                 self.links_out[proc_provider] = []
             self.links_out[proc_provider].append((proc_recipient, in_main))
             G.add_edge(proc_provider, proc_recipient)
-            logger.info(
+            logger.debug(
                 f"Create link {proc_provider}({proc_provider.main_flow_code_out}) "
                 f"{'==>' if in_main else '-->'} {proc_recipient}"
             )
@@ -983,7 +993,7 @@ class ProcessGraph:
 
         procs_dropped = procs_old - procs_new
         if procs_dropped:
-            logger.warning("Dropping unused: %s", [str(x) for x in procs_dropped])
+            logger.info("Dropping unused: %s", [str(x) for x in procs_dropped])
             # drop from links_out
             # TODO: maybe use Digraph? - this is very ugly
             for k, vs in self.links_out.items():
@@ -1029,6 +1039,8 @@ def filter_transport_process_codes(
         drop_steps = {
             "PRE_SHP",
             "POST_SHP",
+            "SHP",
+            "SHP_OWN",
         }
     elif transport == "Ship":
         drop_steps = {
@@ -1046,6 +1058,10 @@ def filter_transport_process_codes(
     else:
         raise NotImplementedError(transport)
 
+    logging.debug(
+        "Dropping unused processes: %s",
+        [f"{s}={p}" for p, s in main_process_codes_steps if s in drop_steps],
+    )
     return [(p, s) for p, s in main_process_codes_steps if s not in drop_steps]
 
 
@@ -1360,7 +1376,7 @@ def create_parameter_getters(
                 )
             if value is None:
                 # TODO: get complete key
-                logger.warning("No data for %s", key)
+                # logger.warning("No data for %s", key)
                 value = default_value
 
             return value
@@ -1449,10 +1465,10 @@ def main():
 
     for i, (name, settings) in enumerate(permutations.items()):
         # if name != "Methane_(SOEC)_Pipeline":
-        if name != "STL-S__NG-DRI-C_EAF__prod_in_demand_Ship":
-            continue
+        # if name != "CH3OH-L__ATR_91%_CH3OHSYN__prod_in_demand_Pipeline":
+        #    continue
 
-        logger.info(f"{i + 1}/{len(permutations)}: {settings}")
+        logger.info(f"{i + 1}/{len(permutations)}: {settings} => {name}")
 
         chain_process = create_chain_process_api_wrapper(**settings.__dict__)
 
@@ -1514,18 +1530,8 @@ def _temp_data_adapter(chain_process: ChainProcess) -> dict:
     # also aggregate all specccost
     for p in proc_export.get_subprocesses_by_class(MarketProcess):
         print(p)
-        parameter["SPECCOST"] = (
-            {
-                "CO2-G": 0.044519,
-                # "DIESEL-L": 0.042857,
-                "EL": 0.08078,
-                "H2O-L": 0.001374,
-                "HEAT": 0.0577,
-                "IOP-S": 0.267076,
-                "N2-G": 0.01154,
-            }
-            | parameter["SPECCOST"]
-            | p._parameters.get("SPECCOST", {})
+        parameter["SPECCOST"] = parameter["SPECCOST"] | p._parameters.get(
+            "SPECCOST", {}
         )
 
     if proc_import:
@@ -1534,19 +1540,8 @@ def _temp_data_adapter(chain_process: ChainProcess) -> dict:
         # also aggregate all specccost
         for p in proc_import.get_subprocesses_by_class(MarketProcess):
             print(p)
-            parameter_i["SPECCOST"] = (
-                {
-                    "CO2-G": 0.044519,
-                    "DIESEL-L": 0.042857,
-                    # "EL": 0.1,
-                    "H2O-L": 0.001374,
-                    "HEAT": 0.04,
-                    # "IOP-S": 0.267076,
-                    "N2-G": 0.01154,
-                    # "NG-G": 0.030565,
-                }
-                | parameter_i["SPECCOST"]
-                | p._parameters.get("SPECCOST", {})
+            parameter_i["SPECCOST"] = parameter_i["SPECCOST"] | p._parameters.get(
+                "SPECCOST", {}
             )
     else:
         parameter_i = {}
