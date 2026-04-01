@@ -8,7 +8,7 @@ import networkx as nx
 import pandas as pd
 
 from ptxboa import logger
-from ptxboa.api_data import PARAMETER_DEFAULTS, CalculateDataType, DataHandler
+from ptxboa.api_data import PARAMETER_DEFAULTS, DataHandler
 from ptxboa.static import (
     ChainType,
     DataQueryParameterType,
@@ -30,7 +30,7 @@ from ptxboa.static import (
     ToolVersionColorType,
     TransportType,
 )
-from ptxboa.static._type_defs import ProcessDataType
+from ptxboa.static._type_defs import CalculateDataType, ProcessDataType
 
 AggregateProcessDataType = tuple[ProcessDataType, dict["Process", ProcessDataType]]
 
@@ -224,8 +224,7 @@ class ProcessType:
         # secondary: only allow CCS
         return self.allow_in_export and (
             # CSS is onlyallowed secondary(?) # TODO:generalize?
-            not self.is_secondary
-            or self.process_code == "CO2-T+S#B"
+            not self.is_secondary or self.process_code == "CO2-T+S#B"
         )
 
 
@@ -1102,9 +1101,7 @@ class ChainProcess(AggregateProcess):
             for p in proc_import.get_subprocesses_by_class(MarketProcess):
                 parameter_i["SPECCOST"] = parameter_i[
                     "SPECCOST"
-                ] | parameters_import_procs[
-                    p
-                ].get(  # type: ignore # noqa
+                ] | parameters_import_procs[p].get(  # type: ignore # noqa
                     "SPECCOST",
                     {},
                 )
@@ -1364,9 +1361,9 @@ class ProcessGraph:
             flow_provider_sec_or_initial[sec_proc.main_flow_code_out] = sec_proc
 
         # collect required flows
-        required_flows_procs: dict[FlowCodeType, list[tuple[AbstractProcess, bool]]] = (
-            {}
-        )
+        required_flows_procs: dict[
+            FlowCodeType, list[tuple[AbstractProcess, bool]]
+        ] = {}
 
         def add_required_flows_proc(
             proc: AbstractProcess, flow: FlowCodeType, in_main: bool
