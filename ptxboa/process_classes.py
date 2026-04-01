@@ -1016,22 +1016,28 @@ class ChainProcess(AggregateProcess):
 
         logger.warning(parameters_chain)
 
-        parameters_procs = {}
-
         proc_export: AggregateProcess = self.get_subprocesses_by_class(
             # type: ignore
             ChainExportProcess
         )[0]
-        parameters_export, _p_procs = proc_export._get_aggregated_calculation_data(
-            parameter_getters=parameter_getters,
-            data_lookup_defaults=data_lookup_defaults,  # type: ignore
+        _parameters_export, parameters_export_procs = (
+            proc_export._get_aggregated_calculation_data(
+                parameter_getters=parameter_getters,
+                data_lookup_defaults=data_lookup_defaults,  # type: ignore
+            )
         )
-        parameters_procs.update(_p_procs)
 
         proc_transport: AggregateProcess = self.get_subprocesses_by_class(
             # type: ignore
             ChainTransportProcess
         )[0]
+        _parameters_transport, parameters_transport_procs = (
+            proc_transport._get_aggregated_calculation_data(
+                parameter_getters=parameter_getters,
+                data_lookup_defaults=data_lookup_defaults,  # type: ignore
+            )
+        )
+
         try:
             proc_import: AggregateProcess = self.get_subprocesses_by_class(
                 # type: ignore
@@ -1040,79 +1046,77 @@ class ChainProcess(AggregateProcess):
         except Exception:
             proc_import = None  # type: ignore
 
-        parameters_sections = []
+        if proc_import:
+            _parameters_import, parameters_import_procs = (
+                proc_import._get_aggregated_calculation_data(
+                    parameter_getters=parameter_getters,
+                    data_lookup_defaults=data_lookup_defaults,  # type: ignore
+                )
+            )
+        else:
+            _parameters_import = {}
+            parameters_import_procs = {}
 
-        for section in [proc_export, proc_transport, proc_import]:
-            if not section:
-                parameters_sections.append(({}, {}))
-            else:
-                parameters_sections.append(())
+        def get_proc_data(
+            process: Process, parameter: ProcessDataType
+        ) -> ProcessDataType:
+            return parameter | {  # type: ignore
+                "process_code": process.process_code,
+                "step": process.process_step,
+            }
 
-        context = data_lookup_defaults
-
-        parameter = proc_export.get_parameters_incl_parents()
+        parameter = _parameters_export
         parameter["SPECCOST"] = {}
         # also aggregate all specccost
         for p in proc_export.get_subprocesses_by_class(MarketProcess):
-            parameter["SPECCOST"] = parameter["SPECCOST"] | p._parameters.get(  # type: ignore # noqa
+            parameter["SPECCOST"] = parameter["SPECCOST"] | parameters_export_procs[
+                p
+            ].get(  # type: ignore # noqa
                 "SPECCOST",
                 {},
             )
 
         if proc_import:
-            parameter_i = proc_import.get_parameters_incl_parents()
+            parameter_i = _parameters_import
             parameter_i["SPECCOST"] = {}
             # also aggregate all specccost
             for p in proc_import.get_subprocesses_by_class(MarketProcess):
-                parameter_i["SPECCOST"] = parameter_i["SPECCOST"] | p._parameters.get(  # type: ignore # noqa
+                parameter_i["SPECCOST"] = parameter_i[
+                    "SPECCOST"
+                ] | parameters_import_procs[
+                    p
+                ].get(  # type: ignore # noqa
                     "SPECCOST",
                     {},
                 )
         else:
             parameter_i = {}
 
-        main_import_process_chain = []
-        transport_process_chain = []
-        main_export_process_chain = []
-
-        # NOTE: in old version, pre/post is part of transport
-
-        export_wo_pre_transp = [
-            x for x in proc_export.full_main_chain if not x.is_transport
-        ]
-        transport_w_pre_post = (
-            [x for x in proc_export.full_main_chain if x.is_transport]
-            + proc_transport.full_main_chain
-            + [x for x in proc_import.full_main_chain if x.is_transport]
-        )
-        import_wo_post_transp = [
-            x for x in proc_import.full_main_chain if not x.is_transport
-        ]
-
-        def get_proc_data(p: Process) -> dict:
-            assert p._parameters
-            data = p._parameters | {
-                "process_code": p.process_code,
-                "step": p.process_step,
-            }
-            return data
-
-        main_export_process_chain = [get_proc_data(p) for p in export_wo_pre_transp]
-        transport_process_chain = [get_proc_data(p) for p in transport_w_pre_post]
-        main_import_process_chain = [get_proc_data(p) for p in import_wo_post_transp]
-
-        export_secondary = list(proc_export.secondary_processes)
         secondary_process = {
-            p.main_flow_code_out: get_proc_data(p) for p in export_secondary
+            p.main_flow_code_out: get_proc_data(p, parameters_export_procs[p])
+            for p in proc_export.secondary_processes
         }
 
         return {
-            "context": context,
+            "context": data_lookup_defaults,
             "parameter": parameter,
             "parameter_i": parameter_i,
-            "main_export_process_chain": main_export_process_chain,
-            "transport_process_chain": transport_process_chain,
-            "main_import_process_chain": main_import_process_chain,
+            "main_export_process_chain": [
+                get_proc_data(p, parameters_export_procs[p])
+                for p in proc_export.full_main_chain
+            ],
+            "transport_process_chain": [
+                get_proc_data(p, parameters_transport_procs[p])
+                for p in proc_transport.full_main_chain
+            ],
+            "main_import_process_chain": (
+                [
+                    get_proc_data(p, parameters_import_procs[p])
+                    for p in proc_import.full_main_chain
+                ]
+                if proc_import
+                else []
+            ),
             "secondary_process": secondary_process,
         }
 
@@ -1269,7 +1273,7 @@ class ChainTransportProcess(ChainSectionProcess):
             parameters_procs[process] = process._get_calculation_data(
                 parameter_getters=parameter_getters,
                 data_lookup_defaults=data_lookup_defaults,
-                parent_parameters=parent_parameters | {"DIST": dist},  # type: ignore
+                parent_parameters=merge_process_data(parent_parameters, {"DIST": dist}),  # type: ignore # noqa
             )
 
         return parameters_self, parameters_procs
@@ -1645,6 +1649,6 @@ def _temp_values_adapter(chain_process: ChainProcess) -> list:
 
 
 def merge_process_data(
-    parameters: ProcessDataType, parent_parameters: ProcessDataType | None = None
+    parameters: ProcessDataType | None, parent_parameters: ProcessDataType | None = None
 ) -> ProcessDataType:
-    return parameters | (parent_parameters or {})
+    return (parameters or {}) | (parent_parameters or {})
