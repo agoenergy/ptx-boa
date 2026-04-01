@@ -447,9 +447,11 @@ class Process(AbstractProcess):
                 self._parameters["CONV"][fc] = conv_orig * (1 + loss_flows[fc])
 
         # FIXME: only for temporary test comparison?
-        if any(self._parameters.get("CO2CPT-R", {}).values()) or any(
-            self._parameters.get("CO2CPT-S", {}).values()
-        ):
+        if (
+            any(self._parameters.get("CO2CPT-R", {}).values())
+            or any(self._parameters.get("CO2CPT-S", {}).values())
+        ) and self.process_code != "CCGT-CC#B":
+            logger.warning("TODO: remove dummy CONV for CO2-C")
             self._parameters["CONV"]["CO2-C"] = 1
 
     def calculate(self, main_flow_out: float):
@@ -591,6 +593,17 @@ class AggregateProcess(AbstractProcess):
 
         return result
 
+    @property
+    def secondary_processes(self) -> list[AbstractProcess]:
+        """List of the entire main chain (including nested aggregated processes)."""
+        return [
+            p
+            for p in self.process_graph.calculate_order
+            if p.is_secondary
+            # NOTE initial is modelled as secondary (because it has no inflow)
+            and not p.is_initial
+        ]
+
     def initialize_parameters(
         self, parameter_getters: "ParameterGetters", data_lookup_defaults: dict
     ):
@@ -711,9 +724,7 @@ class ChainProcess(AggregateProcess):
                 main_process_codes_steps_filtered[i:j]
             )
             if not main_process_codes_steps_part:
-                # no steps ==> skip this
                 continue
-            # check
 
             invalid_processes = [
                 p
@@ -1210,28 +1221,27 @@ def plot_get_pos(
         # add processes as nodes to DiGraph
 
         xs[1] = max(xs[0] + 0.25, xs[0])  # stagger
-        xs1_start = xs[1]
         xs[2] = max(xs[0], xs[2])
+
+        sgn = 1  # secondary process: offset sign should alternate between -1 and 1
 
         for process in reversed(list(process_graph.calculate_order)):
             key = process
 
             # if is_main:
             if process in process_graph.main_processes:
-                xs[0] = xs[0] + 1
+                xs[0] = xs[0] + 2
                 x = xs[0]
                 y = 0
                 if not proc_end_last and process == process_graph.main_processes[0]:
                     y = 0.05  # initial a little closer to secondary
             elif not isinstance(process, MarketProcess):
                 #  is secondary
-                xs[1] = xs[1] + 1
+                xs[1] = xs[1] + 1.5
                 x = xs[1]
                 # non linear disntance for non overlapping arrows
-
-                ampl = (x - xs1_start) * 0.01
-                sgn = (x - xs1_start) % 2 - 1
-                y = 0.1 + ampl * sgn
+                y = 0.1 + 0.008 * sgn
+                sgn = -sgn  # alterante
             else:
                 # market
                 xs[2] = xs[2] + 1
@@ -1351,7 +1361,7 @@ def plot(chain_process: AggregateProcess, name: str):
         edge_labels=edge_labels,
         font_size=6,
         font_color="black",
-        label_pos=0.7,  # closer to beginning (1 ist start?)
+        # label_pos=0.5,
     )
 
     # Save to PNG
@@ -1593,14 +1603,20 @@ def main():
     permutations = create_permutation_names(create_permutations(scenario=scenario))
 
     for i, (name, settings) in enumerate(permutations.items()):
-        # if name != "Methane_(SOEC)_Pipeline":
-        if name != "STL-S__NG-DRI-C_EAF__prod_in_demand_Ship":
-            continue
+        if name == "STL-S__NG-DRI-C_EAF__prod_in_supply_Ship":
+            # test 1
+            settings.region = "Qatar"
+        elif name == "STL-S__NG-DRI-C_EAF__prod_in_demand_Ship":
+            pass
+        else:
+            # continue
+            pass
+
         logger.info(f"{i + 1}/{len(permutations)}: {settings} => {name}")
 
         chain_process = create_chain_process_api_wrapper(**settings.__dict__)
 
-        # plot(chain_process, name=name)
+        plot(chain_process, name=name)
 
 
 if __name__ == "__main__":
@@ -1698,6 +1714,11 @@ def _temp_data_adapter(chain_process: ChainProcess) -> dict:
     transport_process_chain = [get_proc_data(p) for p in transport_w_pre_post]
     main_import_process_chain = [get_proc_data(p) for p in import_wo_post_transp]
 
+    export_secondary = [x for x in proc_export.secondary_processes]
+    secondary_process = {
+        p.main_flow_code_out: get_proc_data(p) for p in export_secondary
+    }
+
     # compatibility fixes to compare data
     # previously: no EF_E/EF_M in shipping
     for x in transport_process_chain:
@@ -1713,4 +1734,5 @@ def _temp_data_adapter(chain_process: ChainProcess) -> dict:
         "main_export_process_chain": main_export_process_chain,
         "transport_process_chain": transport_process_chain,
         "main_import_process_chain": main_import_process_chain,
+        "secondary_process": secondary_process,
     }

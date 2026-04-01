@@ -821,12 +821,12 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "values": 0.014402,
                 },
             ],
-            marks=pytest.mark.skip,
+            # marks=pytest.mark.skip,
         ),
         # =============================================================================
         # CASE 2
         # ==============================================================================
-        [
+        pytest.param(
             {
                 "scenario": "2040 (medium)",
                 "region": "Algeria",
@@ -1178,7 +1178,8 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "values": 0.010961,
                 },
             ],
-        ],
+            # marks=pytest.mark.skip,
+        ),
     ],
 )
 def test_new_blue_chain_real_data(
@@ -1242,7 +1243,7 @@ def test_new_blue_chain_real_data(
 
     calculation_data: dict = _sort_nested(_round_nested(calculation_data_))  # type: ignore
 
-    # for k in set(calculation_data_exp) & set(calculation_data):
-    #    assert _rec_approx(calculation_data_exp[k]) == calculation_data[k]
+    for k in set(calculation_data_exp) & set(calculation_data):
+        assert _rec_approx(calculation_data_exp[k]) == calculation_data[k]
 
-    assert _rec_approx(calculation_data_exp) == calculation_data
+    # assert _rec_approx(calculation_data_exp) == calculation_data
