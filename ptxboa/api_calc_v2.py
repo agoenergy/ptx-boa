@@ -191,7 +191,8 @@ class ProcessType:
         # secondary: only allow CCS
         return self.allow_in_export and (
             # CSS is onlyallowed secondary(?) # TODO:generalize?
-            not self.is_secondary or self.process_code == "CO2-T+S#B"
+            not self.is_secondary
+            or self.process_code == "CO2-T+S#B"
         )
 
 
@@ -595,14 +596,19 @@ class AggregateProcess(AbstractProcess):
 
     @property
     def secondary_processes(self) -> list[AbstractProcess]:
-        """List of the entire main chain (including nested aggregated processes)."""
-        return [
-            p
-            for p in self.process_graph.calculate_order
-            if p.is_secondary
-            # NOTE initial is modelled as secondary (because it has no inflow)
-            and not p.is_initial
-        ]
+        """List of all secondary processes (including nested aggregated processes)."""
+        result: list[AbstractProcess] = []
+        for proc in self.process_graph.calculate_order:
+            if isinstance(proc, AggregateProcess):
+                result += proc.secondary_processes  # recursion
+            elif (
+                proc.is_secondary
+                # NOTE initial is modelled as secondary (because it has no inflow)
+                and not proc.is_initial
+            ):
+                result.append(proc)
+
+        return result
 
     def initialize_parameters(
         self, parameter_getters: "ParameterGetters", data_lookup_defaults: dict
@@ -1063,9 +1069,9 @@ class ProcessGraph:
             flow_provider_sec_or_initial[sec_proc.main_flow_code_out] = sec_proc
 
         # collect required flows
-        required_flows_procs: dict[
-            FlowCodeType, list[tuple[AbstractProcess, bool]]
-        ] = {}
+        required_flows_procs: dict[FlowCodeType, list[tuple[AbstractProcess, bool]]] = (
+            {}
+        )
 
         def add_required_flows_proc(
             proc: AbstractProcess, flow: FlowCodeType, in_main: bool
@@ -1609,7 +1615,7 @@ def main():
         elif name == "STL-S__NG-DRI-C_EAF__prod_in_demand_Ship":
             pass
         else:
-            # continue
+            continue
             pass
 
         logger.info(f"{i + 1}/{len(permutations)}: {settings} => {name}")
@@ -1654,7 +1660,9 @@ def _temp_data_adapter(chain_process: ChainProcess) -> dict:
 
     proc_export: AggregateProcess = chain_process.get_subprocesses_by_class(
         ChainExportProcess
-    )[0]  # type: ignore
+    )[
+        0
+    ]  # type: ignore
     proc_transport: AggregateProcess = chain_process.get_subprocesses_by_class(
         ChainTransportProcess
     )[0]
@@ -1736,3 +1744,26 @@ def _temp_data_adapter(chain_process: ChainProcess) -> dict:
         "main_import_process_chain": main_import_process_chain,
         "secondary_process": secondary_process,
     }
+
+
+def _temp_values_adapter(chain_process: ChainProcess) -> list:
+    def get_values(p: Process):
+        process_step = p.process_step
+        if not process_step:
+            if p.process_code == "CO2-T+S#B":
+                process_step = "SECONDARY:CO2 transport and storage"
+            elif p.process_code == "CCGT-CC#B":
+                process_step = "SECONDARY:Electricity generation"
+
+        return {
+            "process_step": process_step,
+            "process_code": p.process_code,
+            "main_input": p._main_flow_in,
+            "main_output": p._main_flow_out,
+            "flows": p._secondary_flows_in,
+        }
+
+    result = []
+    for p in chain_process.full_main_chain + chain_process.secondary_processes:
+        result.append(get_values(p))
+    return result
