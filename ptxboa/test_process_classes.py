@@ -128,7 +128,7 @@ def main():
 
         chain_process = ChainProcess.get_or_create(**settings.__dict__)
 
-        data = chain_process._get_calculation_data(
+        data = chain_process.get_calculation_data(
             data_handler=data_handler,
             source_region_code=_df_region_by_name.at[settings.region, "region_code"],  # type: ignore # noqa
             target_country_code=_df_region_by_name.at[settings.country, "region_code"],  # type: ignore # noqa

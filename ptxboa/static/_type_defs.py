@@ -1,5 +1,7 @@
 from typing import Any, Dict, Literal
 
+from ptxboa.static import FlowCodeType, ParameterCodeType
+
 CalculateDataType = Dict[
     Literal[
         "flh_opt_process",
@@ -13,4 +15,8 @@ CalculateDataType = Dict[
         "flh_opt_hash",
     ],
     Any,
+]
+
+ProcessDataType = dict[
+    ParameterCodeType | str, None | float | dict[FlowCodeType | str, None | float]
 ]

@@ -1,7 +1,6 @@
 """Unittests for blue hydrogen version."""
 
 from pprint import pprint
-from typing import cast
 
 import pandas as pd
 import pytest
@@ -1225,7 +1224,282 @@ def test_new_blue_chain_real_data(
     )
     assert _rec_approx(res_costs) == _sort_nested(_round_nested(res_costs_exp))
 
-    # New classes:
+
+@pytest.mark.parametrize(
+    "api_kwargs,calculation_data_exp",
+    [
+        # =============================================================================
+        # CASE 1
+        # ==============================================================================
+        pytest.param(
+            {
+                "scenario": "2040 (medium)",
+                "region": "Qatar",
+                "country": "Germany",
+                "chain": "STL-S__NG-DRI-C_EAF__prod_in_supply",
+                "res_gen": None,
+                "transport": "Ship",
+                "ship_own_fuel": False,
+                "secproc_co2": "Direct Air Capture (blue)",
+                "secproc_water": "Sea Water desalination",
+            },
+            {
+                "context": {"source_region_code": "QAT", "target_country_code": "DEU"},
+                "main_export_process_chain": [
+                    {
+                        "CBOUND": {"NG-G": 0.054851},
+                        "CH4SHARE": {"NG-G": 0.909},
+                        "CONV": {"DIESEL-L": 0.000595},
+                        "EFF": 0.98271,
+                        "EF_E": {"DIESEL-L": 266.76, "NG-G": 201.0},
+                        "EF_M": {"DIESEL-L": 266.76, "NG-G": 201.0},
+                        "FLH": 7000,
+                        "LIFETIME": 20,
+                        "LOSS": 0.00378,
+                        "OPEX-O": 0.004863,
+                        "process_code": "NG-PROD#B",
+                        "step": "NG_PROD",
+                    },
+                    {
+                        "CAPEX": 0.591876,
+                        "CBOUND": {"NG-G": 0.040812},
+                        "CH4SHARE": {"NG-G": 0.909},
+                        "CO2CPT-R": {"CH4-G": 0.9, "NG-G": 0.9},
+                        "CO2CPT-S": {"CH4-G": 0.45, "NG-G": 0.45},
+                        "CONV": {"CO2-C": 1, "EL": 0.476859, "IOP-S": 1.373737},
+                        "EFF": 0.336004,
+                        "EF_E": {"CH4-G": 201.0, "CO2-C": 1.0, "NG-G": 201.0},
+                        "EF_M": {"CH4-G": 201.0, "CO2-C": 1.0, "NG-G": 201.0},
+                        "FLH": 7000,
+                        "LIFETIME": 20.0,
+                        "OPEX-F": 0.017756,
+                        "process_code": "NG-DRI-C#B",
+                        "step": "DERIV",
+                    },
+                ],
+                "main_import_process_chain": [
+                    {
+                        "CAPEX": 0.417344,
+                        "CBOUND": {"B-DRI-S": 0.004},
+                        "CH4SHARE": {"NG-G": 0.920806},
+                        "CONV": {"EL": 0.651, "NG-G": 0.3},
+                        "EFF": 1.010101,
+                        "EF_E": {"EL": 100.0, "NG-G": 201.0},
+                        "EF_M": {"EL": 100.0, "NG-G": 201.0},
+                        "FLH": 7000,
+                        "LIFETIME": 20.0,
+                        "OPEX-F": 0.01252,
+                        "OPEX-O": 0.183679,
+                        "process_code": "EAF#B",
+                        "step": "DERIV_I2",
+                    }
+                ],
+                "parameter": {
+                    "CALOR": 1,
+                    "SPECCOST": {
+                        "CO2-G": 0.044519,
+                        "DIESEL-L": 0.042857,
+                        "EL": 0.08078,
+                        "H2O-L": 0.001374,
+                        "HEAT": 0.0577,
+                        "IOP-S": 0.267076,
+                        "N2-G": 0.01154,
+                    },
+                    "WACC": 0.0487,
+                },
+                "parameter_i": {
+                    "CALOR": 1,
+                    "SPECCOST": {
+                        "CO2-G": 0.044519,
+                        "DIESEL-L": 0.042857,
+                        "EL": 0.1,
+                        "H2O-L": 0.001374,
+                        "HEAT": 0.04,
+                        "IOP-S": 0.267076,
+                        "N2-G": 0.01154,
+                        "NG-G": 0.030565,
+                    },
+                    "WACC": 0.0423,
+                },
+                "secondary_process": {
+                    "CO2-C": {
+                        "EFF": 0.95,
+                        "EF_E": {"CO2-C": 1.0},
+                        "EF_M": {"CO2-C": 1.0},
+                        "FLH": 7000,
+                        "LIFETIME": 20,
+                        "OPEX-O": 0.030247,
+                        "process_code": "CO2-T+S#B",
+                    },
+                    "EL": {
+                        "CAPEX": 2408.190709,
+                        "CH4SHARE": {"NG-G": 0.909},
+                        "CO2CPT-R": {"NG-G": 0.897778},
+                        "CO2CPT-S": {"NG-G": 1.0},
+                        "EFF": 0.504911,
+                        "EF_E": {"CO2-C": 1.0, "NG-G": 201.0},
+                        "EF_M": {"CO2-C": 1.0, "NG-G": 201.0},
+                        "FLH": 7000,
+                        "LIFETIME": 30.0,
+                        "OPEX-F": 63.758895,
+                        "process_code": "CCGT-CC#B",
+                    },
+                },
+                "transport_process_chain": [
+                    {
+                        "DIST": 12830.0,
+                        "EFF": 1.0,
+                        "process_code": "DRI-SB#B",
+                        "step": "SHP",
+                    }
+                ],
+            },
+            # marks=pytest.mark.xfail, # noqa
+        ),
+        # =============================================================================
+        # CASE 2
+        # ==============================================================================
+        pytest.param(
+            {
+                "scenario": "2040 (medium)",
+                "region": "Algeria",
+                "country": "Germany",
+                "chain": "STL-S__NG-DRI-C_EAF__prod_in_demand",  # sheet 41
+                "res_gen": None,
+                "transport": "Ship",
+                "ship_own_fuel": False,
+                "secproc_co2": "Direct Air Capture (blue)",
+                "secproc_water": "Sea Water desalination",
+            },
+            {
+                "context": {"source_region_code": "DZA", "target_country_code": "DEU"},
+                "main_export_process_chain": [
+                    {
+                        "CBOUND": {"NG-G": 0.054851},
+                        "CH4SHARE": {"NG-G": 0.899533},
+                        "CONV": {"DIESEL-L": 0.000602},
+                        "EFF": 0.903626,
+                        "EF_E": {"DIESEL-L": 266.76, "NG-G": 201.0},
+                        "EF_M": {"DIESEL-L": 266.76, "NG-G": 201.0},
+                        "FLH": 7000,
+                        "LIFETIME": 20,
+                        "LOSS": 0.0139,
+                        "OPEX-O": 0.003163,
+                        "process_code": "NG-PROD#B",
+                        "step": "NG_PROD",
+                    }
+                ],
+                "main_import_process_chain": [
+                    {
+                        "CAPEX": 0.591876,
+                        "CBOUND": {"NG-G": 0.040812},
+                        "CH4SHARE": {"NG-G": 0.920806},
+                        "CO2CPT-R": {"CH4-G": 0.9, "NG-G": 0.9},
+                        "CO2CPT-S": {"CH4-G": 0.45, "NG-G": 0.45},
+                        "CONV": {"CO2-C": 1, "EL": 0.476859, "IOP-S": 1.373737},
+                        "EFF": 0.336004,
+                        "EF_E": {
+                            "CH4-G": 201.0,
+                            "CO2-C": 1.0,
+                            "EL": 100.0,
+                            "NG-G": 201.0,
+                        },
+                        "EF_M": {
+                            "CH4-G": 201.0,
+                            "CO2-C": 1.0,
+                            "EL": 100.0,
+                            "NG-G": 201.0,
+                        },
+                        "FLH": 7000,
+                        "LIFETIME": 20.0,
+                        "OPEX-F": 0.017756,
+                        "process_code": "NG-DRI-C#B",
+                        "step": "DERIV_I",
+                    },
+                    {
+                        "CAPEX": 0.417344,
+                        "CBOUND": {"B-DRI-S": 0.004},
+                        "CH4SHARE": {"NG-G": 0.920806},
+                        "CONV": {"EL": 0.651, "NG-G": 0.3},
+                        "EFF": 1.010101,
+                        "EF_E": {"EL": 100.0, "NG-G": 201.0},
+                        "EF_M": {"EL": 100.0, "NG-G": 201.0},
+                        "FLH": 7000,
+                        "LIFETIME": 20.0,
+                        "OPEX-F": 0.01252,
+                        "OPEX-O": 0.183679,
+                        "process_code": "EAF#B",
+                        "step": "DERIV_I2",
+                    },
+                ],
+                "parameter": {
+                    "CALOR": 1,
+                    "SPECCOST": {
+                        "CO2-G": 0.044519,
+                        "DIESEL-L": 0.042857,
+                        "EL": 0.08078,
+                        "H2O-L": 0.001374,
+                        "HEAT": 0.0577,
+                        "IOP-S": 0.267076,
+                        "N2-G": 0.01154,
+                    },
+                    "WACC": 0.145548,
+                },
+                "parameter_i": {
+                    "CALOR": 1,
+                    "SPECCOST": {
+                        "CO2-G": 0.044519,
+                        "DIESEL-L": 0.042857,
+                        "EL": 0.1,
+                        "H2O-L": 0.001374,
+                        "HEAT": 0.04,
+                        "IOP-S": 0.267076,
+                        "N2-G": 0.01154,
+                        "NG-G": 0.030565,
+                    },
+                    "WACC": 0.0423,
+                },
+                "transport_process_chain": [
+                    {
+                        "CAPEX": 408.107082,
+                        "CH4SHARE": {"NG-G": 0.899533},
+                        "CONV": {"EL": 0.002742},
+                        "EFF": 0.857089,
+                        "EF_E": {"NG-G": 201.0, "NG-L": 201.0},
+                        "EF_M": {"NG-G": 201.0, "NG-L": 201.0},
+                        "FLH": 7000,
+                        "LIFETIME": 30.0,
+                        "LOSS": 0.0005,
+                        "OPEX-F": 8.162142,
+                        "process_code": "CH4-LIQ#B",
+                        "step": "PRE_SHP",
+                    },
+                    {
+                        "CONV-OT": {"BFUEL-L": 3e-06, "NG-L": 1e-06},
+                        "DIST": 3174.14,
+                        "EFF": 1.0,
+                        "process_code": "CH4-SB#B",
+                        "step": "SHP",
+                    },
+                    {
+                        "CH4SHARE": {"NG-G": 0.899533},
+                        "CONV": {"DIESEL-L": 2e-06, "EL": 0.00048, "NG-G": 0.00085},
+                        "EFF": 1,
+                        "EF_E": {"DIESEL-L": 266.76, "NG-G": 201.0, "NG-L": 201.0},
+                        "EF_M": {"DIESEL-L": 266.76, "NG-G": 201.0, "NG-L": 201.0},
+                        "FLH": 7000,
+                        "LIFETIME": 20,
+                        "process_code": "CH4-RGAS#B",
+                        "step": "POST_SHP",
+                    },
+                ],
+            },
+            # marks=pytest.mark.skip, # noqa
+        ),
+    ],
+)
+def test_new_blue_chain_real_data_2(api_kwargs, calculation_data_exp):
+    """Data test for blue iron chain using current data."""
 
     data_handler = DataHandler(
         scenario=api_kwargs["scenario"],
@@ -1235,24 +1509,16 @@ def test_new_blue_chain_real_data(
     chain_process = ChainProcess.get_or_create(**api_kwargs, tool_version_color="blue")
 
     _df_region_by_name = DataHandler.get_dimension("region")
-    calculation_data_ = chain_process._get_calculation_data(
+    calculation_data_ = chain_process.get_calculation_data(
         data_handler=data_handler,
         source_region_code=_df_region_by_name.at[api_kwargs["region"], "region_code"],  # type: ignore # noqa
         target_country_code=_df_region_by_name.at[api_kwargs["country"], "region_code"],  # type: ignore # noqa
     )
+    calculation_data = _sort_nested(_round_nested(calculation_data_))
 
-    # original test data contained unused items that we dont have anymore
-    for k in {"parameter", "parameter_i"}:
-        for k2 in calculation_data_exp[k]["SPECCOST"]:
-            if k2 not in calculation_data_[k]["SPECCOST"]:  # type: ignore
-                calculation_data_[k]["SPECCOST"] = calculation_data_exp[k]["SPECCOST"]  # type: ignore # noqa
+    # print so we can copy/paste new results into test
+    print(calculation_data)
 
-    # for some reason, old system hadno secondary_processes in export
-    if api_kwargs["chain"] == "STL-S__NG-DRI-C_EAF__prod_in_demand":
-        del calculation_data_["secondary_process"]
-
-    calculation_data = cast(dict, _sort_nested(_round_nested(calculation_data_)))
-
-    for k in set(calculation_data_exp) & set(calculation_data):
-        assert _rec_approx(calculation_data_exp[k]) == calculation_data[k]
-    assert _rec_approx(calculation_data_exp) == calculation_data
+    assert _rec_approx(calculation_data) == _sort_nested(
+        _round_nested(calculation_data_exp)
+    )

@@ -30,6 +30,9 @@ from ptxboa.static import (
     ToolVersionColorType,
     TransportType,
 )
+from ptxboa.static._type_defs import ProcessDataType
+
+AggregateProcessDataType = dict["Process", ProcessDataType]
 
 ProcessStepValuesSorted = ProcessStepValues
 assert tuple(ProcessStepValuesSorted) == (
@@ -245,14 +248,6 @@ class AbstractProcess:
         self._main_flow_in: float | None = None  # will be set in calculate()
         self._secondary_flows_in: dict[FlowCodeType, float] | None = None
         self.parent_process = parent_process
-
-        self._parameters: (
-            dict[
-                ParameterCodeType | str,
-                float | None | dict[FlowCodeType | str, float | None],
-            ]
-            | None
-        ) = None  # will be set in initialize_parameters()
         self.process_step: ProcessStepType | str | None = process_step
 
     def get_main_flow_out(self) -> float:
@@ -330,9 +325,12 @@ class AbstractProcess:
         """Is this a secondary process."""
         return False
 
-    def initialize_parameters(
-        self, parameter_getters: "ParameterGetters", data_lookup_defaults: dict
-    ):
+    def _get_calculation_data(
+        self,
+        parameter_getters: "ParameterGetters",
+        data_lookup_defaults: dict,
+        # parent_parameters: dict,
+    ) -> ProcessDataType:
         """Initialize parameetr data for this process."""
         # FIXME: !!! remove - only for temporary testing compatibility
         if self.process_step in {"POST_SHP", "POST_PPL"}:
@@ -445,11 +443,11 @@ class Process(AbstractProcess):
         """Is this re generation process."""
         return self._process_type.is_re_generation
 
-    def initialize_parameters(
+    def _get_calculation_data(
         self, parameter_getters: "ParameterGetters", data_lookup_defaults: dict
     ):
         """Initialize parameetr data for this process."""
-        super().initialize_parameters(
+        super()._get_calculation_data(
             parameter_getters=parameter_getters,
             data_lookup_defaults=data_lookup_defaults,
         )
@@ -633,17 +631,17 @@ class AggregateProcess(AbstractProcess):
 
         return result
 
-    def initialize_parameters(
+    def _get_calculation_data(
         self, parameter_getters: "ParameterGetters", data_lookup_defaults: dict
     ):
         """Initialize parameetr data for this process."""
-        super().initialize_parameters(
+        super()._get_calculation_data(
             parameter_getters=parameter_getters,
             data_lookup_defaults=data_lookup_defaults,
         )
 
         for process in self.process_graph.calculate_order:
-            process.initialize_parameters(
+            process._get_calculation_data(
                 parameter_getters=parameter_getters,
                 data_lookup_defaults=data_lookup_defaults,
             )
@@ -1001,7 +999,7 @@ class ChainProcess(AggregateProcess):
         ):
             raise Exception(main_process_codes_)
 
-    def initialize_parameters(
+    def _get_calculation_data(
         self,
         parameter_getters: "ParameterGetters",
         source_region_code: SourceRegionCodeType,
@@ -1012,13 +1010,13 @@ class ChainProcess(AggregateProcess):
             "source_region_code": source_region_code,
             "target_country_code": target_country_code,
         }
-        super().initialize_parameters(
+        super()._get_calculation_data(
             parameter_getters=parameter_getters,
             data_lookup_defaults=self._data_lookup_defaults_static
             | self._data_lookup_defaults,
         )
 
-    def _get_calculation_data(
+    def get_calculation_data(
         self,
         data_handler: DataHandler,
         source_region_code: SourceRegionCodeType,
@@ -1031,7 +1029,7 @@ class ChainProcess(AggregateProcess):
         )
 
         # FIXME
-        self.initialize_parameters(
+        self._get_calculation_data(
             parameter_getters=parameter_getters,
             source_region_code=source_region_code,
             target_country_code=target_country_code,
@@ -1180,7 +1178,7 @@ class ChainImportProcess(ChainSectionProcess):
         """Process is allowed as subprocess."""
         return ProcessTypes[process_code].allow_in_import
 
-    def initialize_parameters(
+    def _get_calculation_data(
         self, parameter_getters: "ParameterGetters", data_lookup_defaults: dict
     ):
         """Initialize parameetr data for this process."""
@@ -1191,7 +1189,7 @@ class ChainImportProcess(ChainSectionProcess):
             # FIXME: remove later: we dont need to flip
             "target_country_code": data_lookup_defaults["source_region_code"],
         }
-        super().initialize_parameters(
+        super()._get_calculation_data(
             parameter_getters=parameter_getters,
             data_lookup_defaults=data_lookup_defaults,
         )
@@ -1225,11 +1223,11 @@ class ChainTransportProcess(ChainSectionProcess):
         """Process is allowed as subprocess."""
         return ProcessTypes[process_code].allow_in_transport
 
-    def initialize_parameters(
+    def _get_calculation_data(
         self, parameter_getters: "ParameterGetters", data_lookup_defaults: dict
     ):
         """Initialize parameetr data for this process."""
-        super().initialize_parameters(
+        super()._get_calculation_data(
             parameter_getters=parameter_getters,
             data_lookup_defaults=data_lookup_defaults,
         )
