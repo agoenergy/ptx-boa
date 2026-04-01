@@ -1195,8 +1195,8 @@ def test_new_blue_chain_real_data(
         optimize_flh=False,
     )
 
-    calculation_data = _sort_nested(_round_nested(api_result.todo_data))
-    values = _sort_nested(_round_nested(api_result.todo_results_flows))
+    calculation_data = _sort_nested(_round_nested(api_result.todo_data))  # type: ignore # noqa
+    values = _sort_nested(_round_nested(api_result.todo_results_flows))  # type: ignore # noqa
 
     res_emission_mass = api_result.emission_mass[  # type: ignore
         ["process_subtype", "emission_type", "gas_type", "values"]
