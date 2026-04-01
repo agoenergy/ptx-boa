@@ -8,10 +8,7 @@ import pytest
 
 from ptxboa.api import PtxboaAPI, PtxCalc
 from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler
-from ptxboa.process_classes import (
-    _temp_data_adapter,
-    create_chain_process_api_wrapper,
-)
+from ptxboa.process_classes import ChainProcess
 from tests.test_api import ptxdata_dir_static
 
 
@@ -1228,18 +1225,27 @@ def test_new_blue_chain_real_data(
     )
     assert _rec_approx(res_costs) == _sort_nested(_round_nested(res_costs_exp))
 
-    chain_process = create_chain_process_api_wrapper(
-        **api_kwargs,
-        tool_version_color="blue",
-    )
+    # New classes:
 
-    calculation_data_ = _temp_data_adapter(chain_process)
+    data_handler = DataHandler(
+        scenario=api_kwargs["scenario"],
+        data_dir=DEFAULT_DATA_DIR,
+        user_data=None,
+    )
+    chain_process = ChainProcess.get_or_create(**api_kwargs, tool_version_color="blue")
+
+    _df_region_by_name = DataHandler.get_dimension("region")
+    calculation_data_ = chain_process._get_calculation_data(
+        data_handler=data_handler,
+        source_region_code=_df_region_by_name.at[api_kwargs["region"], "region_code"],  # type: ignore # noqa
+        target_country_code=_df_region_by_name.at[api_kwargs["country"], "region_code"],  # type: ignore # noqa
+    )
 
     # original test data contained unused items that we dont have anymore
     for k in {"parameter", "parameter_i"}:
         for k2 in calculation_data_exp[k]["SPECCOST"]:
-            if k2 not in calculation_data_[k]["SPECCOST"]:
-                calculation_data_[k]["SPECCOST"] = calculation_data_exp[k]["SPECCOST"]
+            if k2 not in calculation_data_[k]["SPECCOST"]:  # type: ignore
+                calculation_data_[k]["SPECCOST"] = calculation_data_exp[k]["SPECCOST"]  # type: ignore # noqa
 
     # for some reason, old system hadno secondary_processes in export
     if api_kwargs["chain"] == "STL-S__NG-DRI-C_EAF__prod_in_demand":

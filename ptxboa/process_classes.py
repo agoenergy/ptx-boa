@@ -3,11 +3,12 @@
 import logging
 from typing import Iterable, Protocol, Union, cast
 
+import matplotlib.pyplot as plt
 import networkx as nx
 import pandas as pd
 
 from ptxboa import logger
-from ptxboa.api_data import DEFAULT_DATA_DIR, PARAMETER_DEFAULTS, DataHandler
+from ptxboa.api_data import PARAMETER_DEFAULTS, CalculateDataType, DataHandler
 from ptxboa.static import (
     ChainType,
     DataQueryParameterType,
@@ -57,10 +58,57 @@ _df_process_by_code = DataHandler.get_dimension("process")
 _df_process_by_name = _df_process_by_code.set_index("process_name", drop=False)
 _df_chain = DataHandler.get_dimension("chain")
 _df_parameter_by_code = DataHandler.get_dimension("parameter")
-_df_region_by_name = DataHandler.get_dimension("region")
 
 
-# get_dimensions_parameter_code
+def _plot_get_pos(
+    chain_process: "AggregateProcess",
+) -> dict["AbstractProcess", tuple[float, float]]:
+
+    node_pos = {}
+    xs: list[float] = [0, 0, 0]
+    proc_end_last = None
+
+    for ex_tr_imp in chain_process.process_graph.main_processes:
+        ex_tr_imp = cast(AggregateProcess, ex_tr_imp)
+        # export / tranport / import  subgraph
+
+        process_graph = ex_tr_imp.process_graph
+
+        # add processes as nodes to DiGraph
+
+        xs[1] = max(xs[0] + 0.25, xs[0])  # stagger
+        xs[2] = max(xs[0], xs[2])
+
+        sgn = 1  # secondary process: offset sign should alternate between -1 and 1
+
+        for process in reversed(list(process_graph.calculate_order)):
+            key = process
+
+            # if is_main:
+            if process in process_graph.main_processes:
+                xs[0] = xs[0] + 2
+                x = xs[0]
+                y = 0
+                if not proc_end_last and process == process_graph.main_processes[0]:
+                    y = 0.05  # initial a little closer to secondary
+            elif not isinstance(process, MarketProcess):
+                #  is secondary
+                xs[1] = xs[1] + 1.5
+                x = xs[1]
+                # non linear disntance for non overlapping arrows
+                y = 0.1 + 0.008 * sgn
+                sgn = -sgn  # alterante
+            else:
+                # market
+                xs[2] = xs[2] + 1
+                x = xs[2]
+                y = 0.2
+
+            node_pos[key] = (x, y)
+
+        proc_end_last = process_graph.main_processes[-1]
+
+    return node_pos
 
 
 class ProcessType:
@@ -646,18 +694,213 @@ class AggregateProcess(AbstractProcess):
             if isinstance(p, class_or_classes)
         ]
 
+    def plot(self, name: str):
+
+        # Create a directed graph
+        G = nx.DiGraph()
+        node_labels = {}
+        edge_labels = {}
+        edge_widths = {}
+
+        proc_end_last = None
+        len_main_total = 0
+        for ex_tr_imp in self.process_graph.main_processes:
+            ex_tr_imp = cast(AggregateProcess, ex_tr_imp)
+            # export / tranport / import  subgraph
+
+            process_graph = ex_tr_imp.process_graph
+
+            # add processes as nodes to DiGraph
+
+            for process in reversed(list(process_graph.calculate_order)):
+                label = str(process)
+
+                G.add_node(process)
+                node_labels[process] = (
+                    label.replace("=", "\n")
+                    .replace("(", "\n")
+                    .replace(")", "\n")
+                    .replace(" ", "\n")
+                    .strip()
+                )
+
+                for proc_target, in_main in process_graph.links_out.get(process, []):
+                    flow = process.main_flow_code_out
+                    e = (process, proc_target)
+                    G.add_edge(*e)
+                    try:
+                        value = (
+                            proc_target.get_main_flow_in()
+                            if in_main
+                            else proc_target.get_secondary_flow_in(flow)
+                        )
+                        value_str = f"\n{value:.4f}"
+                    except Exception:
+                        value_str = ""
+                    edge_labels[e] = f"{flow}{value_str}"
+                    edge_widths[e] = 2 if in_main else 1
+
+            if proc_end_last:
+                # link from previous subpgraph
+                proc_start = process_graph.main_processes[0]
+                e = (proc_end_last, proc_start)
+                G.add_edge(*e)
+                edge_labels[e] = proc_end_last.main_flow_code_out
+                try:
+                    edge_labels[e] += f"\n{proc_start.get_main_flow_in():.4f}"
+                except Exception:  # not calculated yet, # noqa: S110
+                    pass
+                edge_widths[e] = 2
+
+            proc_end_last = process_graph.main_processes[-1]
+
+            len_main_total += len(process_graph.main_processes)
+
+        scale = 3
+
+        # node_pos = nx.circular_layout(G) # noqa
+        node_pos = _plot_get_pos(chain_process=self)
+
+        plt.close()
+        plt.clf()
+        plt.figure(figsize=(len_main_total * scale, 2 * scale))
+
+        # Draw nodes
+        nx.draw(
+            G,
+            node_pos,
+            with_labels=False,
+            node_color=[cast(Process, k).color for k in G.nodes()],
+            width=[edge_widths[k] for k in G.edges()],
+            node_size=2000 * scale,
+        )
+
+        # Draw node labels
+        nx.draw_networkx_labels(
+            G, node_pos, labels=node_labels, font_size=6, font_color="black"
+        )
+
+        # Draw edge labels
+        nx.draw_networkx_edge_labels(
+            G,
+            node_pos,
+            edge_labels=edge_labels,
+            font_size=6,
+            font_color="black",
+            # label_pos=0.5, # noqa
+        )
+
+        # Save to PNG
+        plt.savefig(f"chain_flowcharts/{name}.png", dpi=150)
+
 
 class ChainProcess(AggregateProcess):
     _parameter_codes_process = ["CALOR"]  # conversion kg / kwh
 
-    def __init__(
-        self,
+    _instances: dict[object, "ChainProcess"] = {}
+
+    @classmethod
+    def get_or_create(
+        cls,
+        secproc_co2: SecProcCO2Type | None,
+        secproc_water: SecProcH2OType | None,
+        chain: ChainType,
+        res_gen: ResGenType | None,
         transport: TransportType,
         ship_own_fuel: bool,
+        # unused
+        scenario: ScenarioType,
+        region: SourceRegionNameType,
+        country: TargetCountryNameType,
+        tool_version_color: ToolVersionColorType = "green",  # used only for checking
+        user_data: pd.DataFrame | None = None,
+        output_unit: OutputUnitType = "USD/MWh",
+        optimize_flh: bool = True,
+        use_user_data_for_optimize_flh: bool = False,
+    ) -> "ChainProcess":
+        chain_color: ToolVersionColorType = (
+            "green" if _df_chain.at[chain, "is_green"] else "blue"
+        )
+        assert chain_color == tool_version_color
+
+        key = frozenset(
+            {
+                ("secproc_co2", secproc_co2),
+                ("secproc_water", secproc_water),
+                ("chain", chain),
+                ("res_gen", res_gen),
+                ("transport", transport),
+                ("ship_own_fuel", ship_own_fuel),
+            }
+        )
+        if key not in cls._instances:
+            cls._instances[key] = cls._create(
+                secproc_co2=secproc_co2,
+                secproc_water=secproc_water,
+                chain=chain,
+                res_gen=res_gen,
+                transport=transport,
+                ship_own_fuel=ship_own_fuel,
+            )
+
+        return cls._instances[key]
+
+    @classmethod
+    def _create(
+        cls,
+        secproc_co2: SecProcCO2Type | None,
+        secproc_water: SecProcH2OType | None,
+        chain: ChainType,
+        res_gen: ResGenType | None,
+        transport: TransportType,
+        ship_own_fuel: bool,
+    ) -> "ChainProcess":
+        chain_color: ToolVersionColorType = (
+            "green" if _df_chain.at[chain, "is_green"] else "blue"
+        )
+
+        if transport == "Pipeline" and not _df_chain.at[chain, "can_pipeline"]:
+            logger.error(
+                "'Selected transportation mode pipeline not possible. Switching to Ship"
+            )
+            transport = "Ship"
+
+        secondary_process_codes: set[ProcessCodeType] = set()
+        if secproc_co2:
+            secondary_process_codes.add(
+                _df_process_by_name.at[secproc_co2, "process_code"]  # type: ignore
+            )
+        if secproc_water:
+            secondary_process_codes.add(
+                _df_process_by_name.at[secproc_water, "process_code"]  # type: ignore
+            )
+        first_process_code: ProcessCodeType
+        if chain_color == "blue":
+            first_process_code = "NG-PROD#B"
+            secondary_process_codes = secondary_process_codes | {
+                "HEATPUMP#B",
+                "CCGT-CC#B",
+                "CO2-T+S#B",
+            }  # type: ignore
+        else:
+            assert res_gen
+            first_process_code = _df_process_by_name.at[res_gen, "process_code"]  # type: ignore # noqa
+
+        return ChainProcess(
+            transport=transport,
+            ship_own_fuel=ship_own_fuel,
+            chain=chain,
+            first_process_code=first_process_code,
+            secondary_process_codes=secondary_process_codes,
+        )
+
+    def __init__(
+        self,
         chain: str,
         first_process_code: ProcessCodeType,
         secondary_process_codes: set[ProcessCodeType],
-        **_kwargs,
+        transport: TransportType,
+        ship_own_fuel: bool,
     ):
         """Create aggregated process for entire chain."""
         chain_data = DataHandler.get_dimension("chain").loc[chain].to_dict()
@@ -773,6 +1016,117 @@ class ChainProcess(AggregateProcess):
             data_lookup_defaults=self._data_lookup_defaults_static
             | self._data_lookup_defaults,
         )
+
+    def _get_calculation_data(
+        self,
+        data_handler: DataHandler,
+        source_region_code: SourceRegionCodeType,
+        target_country_code: TargetCountryCodeType,
+    ) -> CalculateDataType:
+
+        parameter_getters = create_parameter_getters(
+            data_handler=data_handler,
+            use_user_data=True,  # TODO: always True?
+        )
+
+        # FIXME
+        self.initialize_parameters(
+            parameter_getters=parameter_getters,
+            source_region_code=source_region_code,
+            target_country_code=target_country_code,
+        )
+
+        proc_export: AggregateProcess = self.get_subprocesses_by_class(
+            # type: ignore
+            ChainExportProcess
+        )[0]
+        proc_transport: AggregateProcess = self.get_subprocesses_by_class(
+            # type: ignore
+            ChainTransportProcess
+        )[0]
+        try:
+            proc_import: AggregateProcess = self.get_subprocesses_by_class(
+                # type: ignore
+                ChainImportProcess
+            )[0]
+        except Exception:
+            proc_import = None  # type: ignore
+
+        context = self._data_lookup_defaults
+
+        parameter = proc_export.get_parameters_incl_parents()
+        parameter["SPECCOST"] = {}
+        # also aggregate all specccost
+        for p in proc_export.get_subprocesses_by_class(MarketProcess):
+            parameter["SPECCOST"] = parameter["SPECCOST"] | p._parameters.get(  # type: ignore # noqa
+                "SPECCOST",
+                {},
+            )
+
+        if proc_import:
+            parameter_i = proc_import.get_parameters_incl_parents()
+            parameter_i["SPECCOST"] = {}
+            # also aggregate all specccost
+            for p in proc_import.get_subprocesses_by_class(MarketProcess):
+                parameter_i["SPECCOST"] = parameter_i["SPECCOST"] | p._parameters.get(  # type: ignore # noqa
+                    "SPECCOST",
+                    {},
+                )
+        else:
+            parameter_i = {}
+
+        main_import_process_chain = []
+        transport_process_chain = []
+        main_export_process_chain = []
+
+        # NOTE: in old version, pre/post is part of transport
+
+        export_wo_pre_transp = [
+            x for x in proc_export.full_main_chain if not x.is_transport
+        ]
+        transport_w_pre_post = (
+            [x for x in proc_export.full_main_chain if x.is_transport]
+            + proc_transport.full_main_chain
+            + [x for x in proc_import.full_main_chain if x.is_transport]
+        )
+        import_wo_post_transp = [
+            x for x in proc_import.full_main_chain if not x.is_transport
+        ]
+
+        def get_proc_data(p: Process) -> dict:
+            assert p._parameters
+            data = p._parameters | {
+                "process_code": p.process_code,
+                "step": p.process_step,
+            }
+            return data
+
+        main_export_process_chain = [get_proc_data(p) for p in export_wo_pre_transp]
+        transport_process_chain = [get_proc_data(p) for p in transport_w_pre_post]
+        main_import_process_chain = [get_proc_data(p) for p in import_wo_post_transp]
+
+        export_secondary = list(proc_export.secondary_processes)
+        secondary_process = {
+            p.main_flow_code_out: get_proc_data(p) for p in export_secondary
+        }
+
+        # compatibility fixes to compare data
+        # previously: no EF_E/EF_M in shipping
+        for x in transport_process_chain:
+            if x["step"] == "SHP":
+                for k in ["EF_E", "EF_M"]:
+                    if k in x:
+                        del x[k]
+
+        return {
+            "context": context,
+            "parameter": parameter,
+            "parameter_i": parameter_i,
+            "main_export_process_chain": main_export_process_chain,
+            "transport_process_chain": transport_process_chain,
+            "main_import_process_chain": main_import_process_chain,
+            "secondary_process": secondary_process,
+        }
 
 
 class ChainSectionProcess(AggregateProcess):
@@ -1250,174 +1604,6 @@ def create_parameter_getters(
     return {
         parameter_code: make_getter_2(parameter_code)  # type: ignore
         for parameter_code in ParameterCodeValues  # type: ignore
-    }
-
-
-def create_chain_process_api_wrapper(
-    scenario: ScenarioType,
-    secproc_co2: SecProcCO2Type | None,
-    secproc_water: SecProcH2OType | None,
-    chain: ChainType,
-    res_gen: ResGenType | None,
-    region: SourceRegionNameType,
-    country: TargetCountryNameType,
-    transport: TransportType,
-    ship_own_fuel: bool,
-    user_data: pd.DataFrame | None = None,
-    tool_version_color: ToolVersionColorType = "green",
-    _output_unit: OutputUnitType = "USD/MWh",
-    _optimize_flh: bool = True,
-    _use_user_data_for_optimize_flh: bool = False,
-) -> ChainProcess:
-
-    chain_color: ToolVersionColorType = (
-        "green" if _df_chain.at[chain, "is_green"] else "blue"
-    )
-    assert chain_color == tool_version_color
-
-    if transport == "Pipeline" and not _df_chain.at[chain, "can_pipeline"]:
-        logger.error(
-            "'Selected transportation mode pipeline not possible. Switching to Ship"
-        )
-        transport = "Ship"
-
-    secondary_process_codes: set[ProcessCodeType] = set()
-    if secproc_co2:
-        secondary_process_codes.add(
-            _df_process_by_name.at[secproc_co2, "process_code"]  # type: ignore
-        )
-    if secproc_water:
-        secondary_process_codes.add(
-            _df_process_by_name.at[secproc_water, "process_code"]  # type: ignore
-        )
-    first_process_code: ProcessCodeType
-    if chain_color == "blue":
-        first_process_code = "NG-PROD#B"
-        secondary_process_codes = secondary_process_codes | {
-            "HEATPUMP#B",
-            "CCGT-CC#B",
-            "CO2-T+S#B",
-        }  # type: ignore
-    else:
-        assert res_gen
-        first_process_code = _df_process_by_name.at[res_gen, "process_code"]  # type: ignore # noqa
-
-    chain_process = ChainProcess(
-        transport=transport,
-        ship_own_fuel=ship_own_fuel,
-        chain=chain,
-        first_process_code=first_process_code,
-        secondary_process_codes=secondary_process_codes,
-    )
-
-    data_handler = DataHandler(
-        scenario=scenario, data_dir=DEFAULT_DATA_DIR, user_data=user_data
-    )
-
-    parameter_getters = create_parameter_getters(
-        data_handler=data_handler, use_user_data=bool(user_data)
-    )
-
-    chain_process.initialize_parameters(
-        parameter_getters,
-        source_region_code=_df_region_by_name.at[region, "region_code"],  # type: ignore # noqa
-        target_country_code=_df_region_by_name.at[country, "region_code"],  # type: ignore # noqa
-    )
-
-    chain_process.calculate(1)
-
-    return chain_process
-
-
-def _temp_data_adapter(chain_process: ChainProcess) -> dict:
-
-    proc_export: AggregateProcess = chain_process.get_subprocesses_by_class(
-        # type: ignore
-        ChainExportProcess
-    )[0]
-    proc_transport: AggregateProcess = chain_process.get_subprocesses_by_class(
-        # type: ignore
-        ChainTransportProcess
-    )[0]
-    try:
-        proc_import: AggregateProcess = chain_process.get_subprocesses_by_class(
-            # type: ignore
-            ChainImportProcess
-        )[0]
-    except Exception:
-        proc_import = None  # type: ignore
-
-    context = chain_process._data_lookup_defaults
-
-    parameter = proc_export.get_parameters_incl_parents()
-    parameter["SPECCOST"] = {}
-    # also aggregate all specccost
-    for p in proc_export.get_subprocesses_by_class(MarketProcess):
-        parameter["SPECCOST"] = parameter["SPECCOST"] | p._parameters.get(  # type: ignore # noqa
-            "SPECCOST",
-            {},
-        )
-
-    if proc_import:
-        parameter_i = proc_import.get_parameters_incl_parents()
-        parameter_i["SPECCOST"] = {}
-        # also aggregate all specccost
-        for p in proc_import.get_subprocesses_by_class(MarketProcess):
-            parameter_i["SPECCOST"] = parameter_i["SPECCOST"] | p._parameters.get(  # type: ignore # noqa
-                "SPECCOST",
-                {},
-            )
-    else:
-        parameter_i = {}
-
-    main_import_process_chain = []
-    transport_process_chain = []
-    main_export_process_chain = []
-
-    # NOTE: in old version, pre/post is part of transport
-
-    export_wo_pre_transp = [
-        x for x in proc_export.full_main_chain if not x.is_transport
-    ]
-    transport_w_pre_post = (
-        [x for x in proc_export.full_main_chain if x.is_transport]
-        + proc_transport.full_main_chain
-        + [x for x in proc_import.full_main_chain if x.is_transport]
-    )
-    import_wo_post_transp = [
-        x for x in proc_import.full_main_chain if not x.is_transport
-    ]
-
-    def get_proc_data(p: Process) -> dict:
-        assert p._parameters
-        data = p._parameters | {"process_code": p.process_code, "step": p.process_step}
-        return data
-
-    main_export_process_chain = [get_proc_data(p) for p in export_wo_pre_transp]
-    transport_process_chain = [get_proc_data(p) for p in transport_w_pre_post]
-    main_import_process_chain = [get_proc_data(p) for p in import_wo_post_transp]
-
-    export_secondary = list(proc_export.secondary_processes)
-    secondary_process = {
-        p.main_flow_code_out: get_proc_data(p) for p in export_secondary
-    }
-
-    # compatibility fixes to compare data
-    # previously: no EF_E/EF_M in shipping
-    for x in transport_process_chain:
-        if x["step"] == "SHP":
-            for k in ["EF_E", "EF_M"]:
-                if k in x:
-                    del x[k]
-
-    return {
-        "context": context,
-        "parameter": parameter,
-        "parameter_i": parameter_i,
-        "main_export_process_chain": main_export_process_chain,
-        "transport_process_chain": transport_process_chain,
-        "main_import_process_chain": main_import_process_chain,
-        "secondary_process": secondary_process,
     }
 
 

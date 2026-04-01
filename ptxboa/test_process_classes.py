@@ -4,22 +4,14 @@ import argparse
 import logging
 import re
 from dataclasses import dataclass
-from typing import Iterable, cast
+from typing import Iterable
 
 import coloredlogs
-import matplotlib.pyplot as plt
-import networkx as nx
 import pandas as pd
 
 from ptxboa import logger
-from ptxboa.api_data import DataHandler
-from ptxboa.process_classes import (
-    AbstractProcess,
-    AggregateProcess,
-    MarketProcess,
-    Process,
-    create_chain_process_api_wrapper,
-)
+from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler
+from ptxboa.process_classes import ChainProcess
 from ptxboa.static import (
     ChainType,
     ResGenType,
@@ -114,170 +106,6 @@ def create_permutations(scenario: ScenarioType) -> Iterable[Settings]:
             )
 
 
-def plot_get_pos(
-    chain_process: AggregateProcess,
-) -> dict[AbstractProcess, tuple[float, float]]:
-
-    node_pos = {}
-    xs: list[float] = [0, 0, 0]
-    proc_end_last = None
-
-    for ex_tr_imp in chain_process.process_graph.main_processes:
-        ex_tr_imp = cast(AggregateProcess, ex_tr_imp)
-        # export / tranport / import  subgraph
-
-        process_graph = ex_tr_imp.process_graph
-
-        # add processes as nodes to DiGraph
-
-        xs[1] = max(xs[0] + 0.25, xs[0])  # stagger
-        xs[2] = max(xs[0], xs[2])
-
-        sgn = 1  # secondary process: offset sign should alternate between -1 and 1
-
-        for process in reversed(list(process_graph.calculate_order)):
-            key = process
-
-            # if is_main:
-            if process in process_graph.main_processes:
-                xs[0] = xs[0] + 2
-                x = xs[0]
-                y = 0
-                if not proc_end_last and process == process_graph.main_processes[0]:
-                    y = 0.05  # initial a little closer to secondary
-            elif not isinstance(process, MarketProcess):
-                #  is secondary
-                xs[1] = xs[1] + 1.5
-                x = xs[1]
-                # non linear disntance for non overlapping arrows
-                y = 0.1 + 0.008 * sgn
-                sgn = -sgn  # alterante
-            else:
-                # market
-                xs[2] = xs[2] + 1
-                x = xs[2]
-                y = 0.2
-
-            node_pos[key] = (x, y)
-
-        proc_end_last = process_graph.main_processes[-1]
-
-    return node_pos
-
-
-def nested_round_drop_empty(x):
-    if isinstance(x, list):
-        return [nested_round_drop_empty(v) for v in x]
-    elif isinstance(x, dict):
-        result = {k: nested_round_drop_empty(v) for k, v in x.items()}
-        result = {k: v for k, v in result.items() if v}
-        return result
-    elif isinstance(x, float):
-        return round(x, 4)
-    else:
-        return x
-
-
-def plot(chain_process: AggregateProcess, name: str):
-
-    # Create a directed graph
-    G = nx.DiGraph()
-    node_labels = {}
-    edge_labels = {}
-    edge_widths = {}
-
-    proc_end_last = None
-    len_main_total = 0
-    for ex_tr_imp in chain_process.process_graph.main_processes:
-        ex_tr_imp = cast(AggregateProcess, ex_tr_imp)
-        # export / tranport / import  subgraph
-
-        process_graph = ex_tr_imp.process_graph
-
-        # add processes as nodes to DiGraph
-
-        for process in reversed(list(process_graph.calculate_order)):
-            label = str(process)
-
-            G.add_node(process)
-            node_labels[process] = (
-                label.replace("=", "\n")
-                .replace("(", "\n")
-                .replace(")", "\n")
-                .replace(" ", "\n")
-                .strip()
-            )
-
-            for proc_target, in_main in process_graph.links_out.get(process, []):
-                flow = process.main_flow_code_out
-                e = (process, proc_target)
-                G.add_edge(*e)
-                try:
-                    value = (
-                        proc_target.get_main_flow_in()
-                        if in_main
-                        else proc_target.get_secondary_flow_in(flow)
-                    )
-                    value_str = f"\n{value:.4f}"
-                except Exception:
-                    value_str = ""
-                edge_labels[e] = f"{flow}{value_str}"
-                edge_widths[e] = 2 if in_main else 1
-
-        if proc_end_last:
-            # link from previous subpgraph
-            proc_start = process_graph.main_processes[0]
-            e = (proc_end_last, proc_start)
-            G.add_edge(*e)
-            edge_labels[e] = proc_end_last.main_flow_code_out
-            try:
-                edge_labels[e] += f"\n{proc_start.get_main_flow_in():.4f}"
-            except Exception:  # not calculated yet, # noqa: S110
-                pass
-            edge_widths[e] = 2
-
-        proc_end_last = process_graph.main_processes[-1]
-
-        len_main_total += len(process_graph.main_processes)
-
-    scale = 3
-
-    # node_pos = nx.circular_layout(G) # noqa
-    node_pos = plot_get_pos(chain_process=chain_process)
-
-    plt.close()
-    plt.clf()
-    plt.figure(figsize=(len_main_total * scale, 2 * scale))
-
-    # Draw nodes
-    nx.draw(
-        G,
-        node_pos,
-        with_labels=False,
-        node_color=[cast(Process, k).color for k in G.nodes()],
-        width=[edge_widths[k] for k in G.edges()],
-        node_size=2000 * scale,
-    )
-
-    # Draw node labels
-    nx.draw_networkx_labels(
-        G, node_pos, labels=node_labels, font_size=6, font_color="black"
-    )
-
-    # Draw edge labels
-    nx.draw_networkx_edge_labels(
-        G,
-        node_pos,
-        edge_labels=edge_labels,
-        font_size=6,
-        font_color="black",
-        # label_pos=0.5, # noqa
-    )
-
-    # Save to PNG
-    plt.savefig(f"chain_flowcharts/{name}.png", dpi=300)
-
-
 def main():
     scenario: ScenarioType = "2040 (medium)"
     permutations = create_permutation_names(create_permutations(scenario=scenario))
@@ -294,9 +122,23 @@ def main():
 
         logger.info(f"{i + 1}/{len(permutations)}: {settings} => {name}")
 
-        chain_process = create_chain_process_api_wrapper(**settings.__dict__)
+        data_handler = DataHandler(
+            scenario=scenario, data_dir=DEFAULT_DATA_DIR, user_data=settings.user_data
+        )
 
-        plot(chain_process, name=name)
+        chain_process = ChainProcess.get_or_create(**settings.__dict__)
+
+        data = chain_process._get_calculation_data(
+            data_handler=data_handler,
+            source_region_code=_df_region_by_name.at[settings.region, "region_code"],  # type: ignore # noqa
+            target_country_code=_df_region_by_name.at[settings.country, "region_code"],  # type: ignore # noqa
+        )
+
+        logger.info(data)
+
+        # chain_process.calculate(1)
+
+        chain_process.plot(name=name)
 
 
 if __name__ == "__main__":
