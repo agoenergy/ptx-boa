@@ -551,6 +551,11 @@ class AggregateProcess(AbstractProcess):
         super().__init__(process_step=process_step, parent_process=parent_process)
         self.process_graph: "ProcessGraph" = process_graph
 
+    def get_first_main_process_by_step(self, step: ProcessStepType) -> Process:
+        """May raise Exception"""
+        # TODO: faster if we create lookup dict first
+        return next(p for p in self.full_main_chain if p.process_step == step)
+
     @property
     def main_flow_code_out(self) -> FlowCodeType:
         """Main flow code out."""
@@ -835,9 +840,54 @@ class ChainTransportProcess(ChainSectionProcess):
         "SEASHARE",
     ]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # TODO: ugly
+        self.transport_type: TransportType = (
+            "Ship"
+            if any(
+                cast(Process, p)._process_type.is_shipping for p in self.full_main_chain
+            )
+            else "Pipeline"
+        )
+        self.ship_own_fuel: bool = any(
+            cast(Process, p)._process_type.is_shipping_own_fuel
+            for p in self.full_main_chain
+        )
+
     @classmethod
     def process_allowed(cls, process_code: ProcessCodeType) -> bool:
         return ProcessTypes[process_code].allow_in_transport
+
+    def initialize_parameters(
+        self, parameter_getters: "ParameterGetters", data_lookup_defaults: dict
+    ):
+        """Initialize parameetr data for this process."""
+        super().initialize_parameters(
+            parameter_getters=parameter_getters,
+            data_lookup_defaults=data_lookup_defaults,
+        )
+
+        # get transport distances and options
+        transport_distances: dict[ProcessStepType, float] = (
+            DataHandler._get_transport_distances(
+                source_region_code=data_lookup_defaults["source_region_code"],
+                target_country_code=data_lookup_defaults["target_country_code"],
+                use_ship=self.transport_type == "Ship",
+                ship_own_fuel=self.ship_own_fuel,
+                dist_ship=self._parameters["DST-S-D"],
+                dist_pipeline=self._parameters["DST-S-DP"],
+                seashare_pipeline=self._parameters["SEASHARE"],
+                existing_pipeline_cap=self._parameters["CAP-T"],
+            )
+        )
+        # FIXME: this is really ugly: we need to call super first to get
+        # out own parameters.
+        # but this also initialized the subprocesses.
+        # so now we have to fix them after the fact.
+        for step, dist in transport_distances.items():
+            proc = self.get_first_main_process_by_step(step)
+            proc._parameters["DIST"] = dist
 
 
 def group_by_flow_type_out(
@@ -1462,6 +1512,12 @@ def create_chain_process_api_wrapper(
         "green" if df_chain.at[chain, "is_green"] else "blue"
     )
     assert chain_color == tool_version_color
+
+    if transport == "Pipeline" and not df_chain.at[chain, "can_pipeline"]:
+        logger.error(
+            "'Selected transportation mode pipeline not possible. Switching to Ship"
+        )
+        transport = "Ship"
 
     secondary_process_codes: set[ProcessCodeType] = set()
     if secproc_co2:
