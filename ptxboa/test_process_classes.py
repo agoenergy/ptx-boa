@@ -423,20 +423,14 @@ def _temp_data_adapter(chain_process: ChainProcess) -> dict:
 
     proc_export: AggregateProcess = chain_process.get_subprocesses_by_class(
         ChainExportProcess
-    )[
-        0
-    ]  # type: ignore
+    )[0]  # type: ignore
     proc_transport: AggregateProcess = chain_process.get_subprocesses_by_class(
         ChainTransportProcess
-    )[
-        0
-    ]  # type:ignore
+    )[0]  # type:ignore
     try:
         proc_import: AggregateProcess = chain_process.get_subprocesses_by_class(
             ChainImportProcess
-        )[
-            0
-        ]  # type:ignore
+        )[0]  # type:ignore
     except Exception:
         proc_import = None  # type:ignore
 
@@ -447,9 +441,7 @@ def _temp_data_adapter(chain_process: ChainProcess) -> dict:
     # also aggregate all specccost
     for p in proc_export.get_subprocesses_by_class(MarketProcess):
         print(p)
-        parameter["SPECCOST"] = parameter[
-            "SPECCOST"
-        ] | p._parameters.get(  # type:ignore
+        parameter["SPECCOST"] = parameter["SPECCOST"] | p._parameters.get(  # type:ignore
             "SPECCOST", {}
         )  # type:ignore
 
@@ -459,9 +451,7 @@ def _temp_data_adapter(chain_process: ChainProcess) -> dict:
         # also aggregate all specccost
         for p in proc_import.get_subprocesses_by_class(MarketProcess):
             print(p)
-            parameter_i["SPECCOST"] = parameter_i[
-                "SPECCOST"
-            ] | p._parameters.get(  # type:ignore
+            parameter_i["SPECCOST"] = parameter_i["SPECCOST"] | p._parameters.get(  # type:ignore
                 "SPECCOST", {}
             )  # type:ignore
     else:
@@ -486,21 +476,15 @@ def _temp_data_adapter(chain_process: ChainProcess) -> dict:
     ]
 
     def get_proc_data(p: Process) -> dict:
-        data = p._parameters | {
+        data = p._parameters | {  # type: ignore
             "process_code": p.process_code,
             "step": p.process_step,
         }  # type:ignore
         return data
 
-    main_export_process_chain = [
-        get_proc_data(p) for p in export_wo_pre_transp
-    ]  # type:ignore
-    transport_process_chain = [
-        get_proc_data(p) for p in transport_w_pre_post
-    ]  # type:ignore
-    main_import_process_chain = [
-        get_proc_data(p) for p in import_wo_post_transp
-    ]  # type:ignore
+    main_export_process_chain = [get_proc_data(p) for p in export_wo_pre_transp]  # type:ignore
+    transport_process_chain = [get_proc_data(p) for p in transport_w_pre_post]  # type:ignore
+    main_import_process_chain = [get_proc_data(p) for p in import_wo_post_transp]  # type:ignore
 
     export_secondary = list(proc_export.secondary_processes)
     secondary_process = {

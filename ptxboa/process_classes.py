@@ -21,6 +21,7 @@ from ptxboa.static import (
     TransportType,
 )
 
+# FIXME: remove
 ProcessStepValuesSorted = ProcessStepValues
 assert tuple(ProcessStepValuesSorted) == (
     "EL_STR",
@@ -43,7 +44,7 @@ assert tuple(ProcessStepValuesSorted) == (
     "DERIV_I2",
 )
 
-
+# FIXME: get fromdata handler
 _df_process_by_code = DataHandler.get_dimension("process")
 
 
@@ -157,8 +158,7 @@ class ProcessType:
         # secondary: only allow CCS
         return self.allow_in_export and (
             # CSS is onlyallowed secondary(?) # TODO:generalize?
-            not self.is_secondary
-            or self.process_code == "CO2-T+S#B"
+            not self.is_secondary or self.process_code == "CO2-T+S#B"
         )
 
 
@@ -394,12 +394,8 @@ class Process(AbstractProcess):
 
         if "LOSS" in self._parameters and "EFF" in self._parameters:  # type:ignore
             self._parameters["LOSS_FLOW"] = self._parameters.pop("LOSS")  # type:ignore
-            if (
-                self.main_flow_code_in_or_out in self._parameters["LOSS_FLOW"]
-            ):  # type:ignore
-                self._parameters["LOSS"] = self._parameters[
-                    "LOSS_FLOW"
-                ].pop(  # type:ignore
+            if self.main_flow_code_in_or_out in self._parameters["LOSS_FLOW"]:  # type:ignore
+                self._parameters["LOSS"] = self._parameters["LOSS_FLOW"].pop(  # type:ignore
                     self.main_flow_code_in_or_out
                 )
             # update EFF and CONV for losses
@@ -407,21 +403,15 @@ class Process(AbstractProcess):
             # NOTE: calculation: see https://github.com/agoenergy/ptx-boa/issues/581
             if "LOSS" in self._parameters:  # type:ignore
                 eff_original = self._parameters["EFF"]  # type:ignore
-                self._parameters["EFF"] = eff_original / (
-                    1 + self._parameters["LOSS"]
-                )  # type:ignore
+                self._parameters["EFF"] = eff_original / (1 + self._parameters["LOSS"])  # type:ignore
 
-        if (
-            "LOSS_FLOW" in self._parameters and "CONV" in self._parameters
-        ):  # type:ignore
+        if "LOSS_FLOW" in self._parameters and "CONV" in self._parameters:  # type:ignore
             # LOSS for CONV (if value exists in both)
             loss_flows = self._parameters.get("LOSS_FLOW", {})  # type:ignore
             convs = self._parameters.get("CONV", {})  # type:ignore
             for fc in set(loss_flows) & set(convs):  # type:ignore
                 conv_orig = convs[fc]  # type:ignore
-                self._parameters["CONV"][fc] = conv_orig * (
-                    1 + loss_flows[fc]
-                )  # type:ignore
+                self._parameters["CONV"][fc] = conv_orig * (1 + loss_flows[fc])  # type:ignore
 
         # FIXME: only for temporary test comparison?
         if (
@@ -536,9 +526,7 @@ class AggregateProcess(AbstractProcess):
     def get_first_main_process_by_step(self, step: ProcessStepType) -> Process:
         """May raise Exception."""
         # TODO: faster if we create lookup dict first
-        return next(
-            p for p in self.full_main_chain if p.process_step == step
-        )  # type:ignore
+        return next(p for p in self.full_main_chain if p.process_step == step)  # type:ignore
 
     @property
     def main_flow_code_out(self) -> FlowCodeType:
@@ -979,9 +967,9 @@ class ProcessGraph:
             flow_provider_sec_or_initial[sec_proc.main_flow_code_out] = sec_proc
 
         # collect required flows
-        required_flows_procs: dict[FlowCodeType, list[tuple[AbstractProcess, bool]]] = (
-            {}
-        )
+        required_flows_procs: dict[
+            FlowCodeType, list[tuple[AbstractProcess, bool]]
+        ] = {}
 
         def add_required_flows_proc(
             proc: AbstractProcess, flow: FlowCodeType, in_main: bool

@@ -273,7 +273,7 @@ class _ParameterGetterOld:
 
     def get_parameter_value_w_default(
         self,
-        parameter_code: ParameterCodeType,
+        parameter_code: ParameterCodeType | str,
         process_code: ProcessCodeType | Literal[""] = "",
         flow_code: FlowCodeType | Literal[""] = "",
         default: float | None = None,
@@ -307,7 +307,7 @@ class _ParameterGetterOld:
         return list(flows)
 
     def get_flow_co2_params(
-        self, process_code: ProcessCodeType, parameter_code: ParameterCodeType
+        self, process_code: ProcessCodeType, parameter_code: ParameterCodeType | str
     ) -> dict:
         result = {}
         flow_codes = self.get_secondary_and_main_flows(process_code)
@@ -446,9 +446,7 @@ class _ParameterGetterOld:
         # additional parameters for co2
 
         for param in ["CH4SHARE", "EF_M", "EF_E"]:
-            value = self.get_flow_co2_params(
-                process_code, parameter_code=param
-            )  # type:ignore
+            value = self.get_flow_co2_params(process_code, parameter_code=param)  # type:ignore
             if value:
                 result[param] = value
 
@@ -869,9 +867,7 @@ class DataHandler:
                 "target_country_code",
             ]
             required_keys = set(
-                self.dimensions["parameter"].at[
-                    parameter_code, "dimensions"
-                ]  # type:ignore
+                self.dimensions["parameter"].at[parameter_code, "dimensions"]  # type:ignore
             ) | {"parameter_code"}
 
         def _get_value(
