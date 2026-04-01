@@ -1297,28 +1297,15 @@ def test_new_blue_chain_real_data(
                 "parameter": {
                     "CALOR": 1,
                     "SPECCOST": {
-                        "CO2-G": 0.044519,
                         "DIESEL-L": 0.042857,
                         "EL": 0.08078,
-                        "H2O-L": 0.001374,
-                        "HEAT": 0.0577,
                         "IOP-S": 0.267076,
-                        "N2-G": 0.01154,
                     },
                     "WACC": 0.0487,
                 },
                 "parameter_i": {
                     "CALOR": 1,
-                    "SPECCOST": {
-                        "CO2-G": 0.044519,
-                        "DIESEL-L": 0.042857,
-                        "EL": 0.1,
-                        "H2O-L": 0.001374,
-                        "HEAT": 0.04,
-                        "IOP-S": 0.267076,
-                        "N2-G": 0.01154,
-                        "NG-G": 0.030565,
-                    },
+                    "SPECCOST": {"EL": 0.1, "NG-G": 0.030565},
                     "WACC": 0.0423,
                 },
                 "secondary_process": {
@@ -1348,7 +1335,7 @@ def test_new_blue_chain_real_data(
                 "transport_process_chain": [
                     {
                         "DIST": 12830.0,
-                        "EFF": 1.0,
+                        "EFF": 1,
                         "process_code": "DRI-SB#B",
                         "step": "SHP",
                     }
@@ -1434,30 +1421,42 @@ def test_new_blue_chain_real_data(
                 ],
                 "parameter": {
                     "CALOR": 1,
-                    "SPECCOST": {
-                        "CO2-G": 0.044519,
-                        "DIESEL-L": 0.042857,
-                        "EL": 0.08078,
-                        "H2O-L": 0.001374,
-                        "HEAT": 0.0577,
-                        "IOP-S": 0.267076,
-                        "N2-G": 0.01154,
-                    },
+                    "SPECCOST": {"DIESEL-L": 0.042857, "EL": 0.08078},
                     "WACC": 0.145548,
                 },
                 "parameter_i": {
                     "CALOR": 1,
                     "SPECCOST": {
-                        "CO2-G": 0.044519,
                         "DIESEL-L": 0.042857,
                         "EL": 0.1,
-                        "H2O-L": 0.001374,
-                        "HEAT": 0.04,
                         "IOP-S": 0.267076,
-                        "N2-G": 0.01154,
                         "NG-G": 0.030565,
                     },
                     "WACC": 0.0423,
+                },
+                "secondary_process": {
+                    "CO2-C": {
+                        "EFF": 0.95,
+                        "EF_E": {"CO2-C": 1.0},
+                        "EF_M": {"CO2-C": 1.0},
+                        "FLH": 7000,
+                        "LIFETIME": 20,
+                        "OPEX-O": 0.116566,
+                        "process_code": "CO2-T+S#B",
+                    },
+                    "EL": {
+                        "CAPEX": 2408.190709,
+                        "CH4SHARE": {"NG-G": 0.899533},
+                        "CO2CPT-R": {"NG-G": 0.897778},
+                        "CO2CPT-S": {"NG-G": 1.0},
+                        "EFF": 0.504911,
+                        "EF_E": {"CO2-C": 1.0, "NG-G": 201.0},
+                        "EF_M": {"CO2-C": 1.0, "NG-G": 201.0},
+                        "FLH": 7000,
+                        "LIFETIME": 30.0,
+                        "OPEX-F": 63.758895,
+                        "process_code": "CCGT-CC#B",
+                    },
                 },
                 "transport_process_chain": [
                     {
@@ -1477,14 +1476,14 @@ def test_new_blue_chain_real_data(
                     {
                         "CONV-OT": {"BFUEL-L": 3e-06, "NG-L": 1e-06},
                         "DIST": 3174.14,
-                        "EFF": 1.0,
+                        "EFF": 1,
                         "process_code": "CH4-SB#B",
                         "step": "SHP",
                     },
                     {
                         "CH4SHARE": {"NG-G": 0.899533},
                         "CONV": {"DIESEL-L": 2e-06, "EL": 0.00048, "NG-G": 0.00085},
-                        "EFF": 1,
+                        "EFF": 1.0,
                         "EF_E": {"DIESEL-L": 266.76, "NG-G": 201.0, "NG-L": 201.0},
                         "EF_M": {"DIESEL-L": 266.76, "NG-G": 201.0, "NG-L": 201.0},
                         "FLH": 7000,
@@ -1494,7 +1493,7 @@ def test_new_blue_chain_real_data(
                     },
                 ],
             },
-            # marks=pytest.mark.skip, # noqa
+            # marks=pytest.mark.skip,  # noqa
         ),
     ],
 )

@@ -1022,7 +1022,7 @@ class ChainProcess(AggregateProcess):
         source_region_code: SourceRegionCodeType,
         target_country_code: TargetCountryCodeType,
     ) -> CalculateDataType:
-
+        """Get calculation data."""
         parameter_getters = create_parameter_getters(
             data_handler=data_handler,
             use_user_data=True,  # TODO: always True?
