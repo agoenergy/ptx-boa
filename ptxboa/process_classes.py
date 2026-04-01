@@ -1,53 +1,25 @@
 """Class based calculation."""
 
-import argparse
 import logging
-import re
-from dataclasses import dataclass
-from typing import Iterable, Literal, Protocol, Union, cast
+from typing import Iterable, Union, cast
 
-import coloredlogs
-import matplotlib.pyplot as plt
 import networkx as nx
-import pandas as pd
 
 from ptxboa import logger
-from ptxboa.api_data import DEFAULT_DATA_DIR, PARAMETER_DEFAULTS, DataHandler
+from ptxboa.api_data import (
+    DataHandler,
+    _ParameterGetters,
+)
 from ptxboa.static import (
-    ChainType,
     FlowCodeType,
-    OutputUnitType,
     ParameterCodeType,
-    ParameterCodeValues,
     ProcessCodeType,
     ProcessStepType,
     ProcessStepValues,
-    ResGenType,
-    ScenarioType,
-    SecProcCO2Type,
-    SecProcH2OType,
     SourceRegionCodeType,
-    SourceRegionNameType,
     TargetCountryCodeType,
-    TargetCountryNameType,
-    ToolVersionColorType,
     TransportType,
 )
-
-DataQueryParameterType = Literal[
-    "parameter_code",
-    "process_code",
-    "flow_code",
-    "source_region_code",
-    "target_country_code",
-    "default",
-    "use_user_data",
-    "region",
-    "process_res",
-    "process_ely",
-    "process_deriv",
-    "process_flh",
-]
 
 ProcessStepValuesSorted = ProcessStepValues
 assert tuple(ProcessStepValuesSorted) == (
@@ -72,14 +44,7 @@ assert tuple(ProcessStepValuesSorted) == (
 )
 
 
-df_process_by_code = DataHandler.get_dimension("process")
-df_process_by_name = df_process_by_code.set_index("process_name", drop=False)
-df_chain = DataHandler.get_dimension("chain")
-df_parameter_by_code = DataHandler.get_dimension("parameter")
-df_region_by_name = DataHandler.get_dimension("region")
-df_region_by_code = df_region_by_name.set_index("region_code", drop=False)
-
-# get_dimensions_parameter_code
+_df_process_by_code = DataHandler.get_dimension("process")
 
 
 class ProcessType:
@@ -198,7 +163,7 @@ class ProcessType:
 
 ProcessTypes: dict[ProcessCodeType, ProcessType] = {
     p["process_code"]: ProcessType(**cast(dict, p))
-    for p in df_process_by_code.to_dict(orient="records")
+    for p in _df_process_by_code.to_dict(orient="records")
 }
 
 
@@ -301,7 +266,7 @@ class AbstractProcess:
         return False
 
     def initialize_parameters(
-        self, parameter_getters: "ParameterGetters", data_lookup_defaults: dict
+        self, parameter_getters: "_ParameterGetters", data_lookup_defaults: dict
     ):
         """Initialize parameetr data for this process."""
 
@@ -416,7 +381,7 @@ class Process(AbstractProcess):
         return self._process_type.is_re_generation
 
     def initialize_parameters(
-        self, parameter_getters: "ParameterGetters", data_lookup_defaults: dict
+        self, parameter_getters: "_ParameterGetters", data_lookup_defaults: dict
     ):
         """Initialize parameetr data for this process."""
         super().initialize_parameters(
@@ -426,34 +391,44 @@ class Process(AbstractProcess):
         logging.debug(self._parameters)
         # LOSS: split into loss for main and for secondary
 
-        if "LOSS" in self._parameters and "EFF" in self._parameters:
-            self._parameters["LOSS_FLOW"] = self._parameters.pop("LOSS")
-            if self.main_flow_code_in_or_out in self._parameters["LOSS_FLOW"]:
-                self._parameters["LOSS"] = self._parameters["LOSS_FLOW"].pop(
+        if "LOSS" in self._parameters and "EFF" in self._parameters:  # type:ignore
+            self._parameters["LOSS_FLOW"] = self._parameters.pop("LOSS")  # type:ignore
+            if (
+                self.main_flow_code_in_or_out in self._parameters["LOSS_FLOW"]
+            ):  # type:ignore
+                self._parameters["LOSS"] = self._parameters[
+                    "LOSS_FLOW"
+                ].pop(  # type:ignore
                     self.main_flow_code_in_or_out
                 )
             # update EFF and CONV for losses
             # TODO: keep original values for information purposes
             # NOTE: calculation: see https://github.com/agoenergy/ptx-boa/issues/581
-            if "LOSS" in self._parameters:
-                eff_original = self._parameters["EFF"]
-                self._parameters["EFF"] = eff_original / (1 + self._parameters["LOSS"])
+            if "LOSS" in self._parameters:  # type:ignore
+                eff_original = self._parameters["EFF"]  # type:ignore
+                self._parameters["EFF"] = eff_original / (
+                    1 + self._parameters["LOSS"]
+                )  # type:ignore
 
-        if "LOSS_FLOW" in self._parameters and "CONV" in self._parameters:
+        if (
+            "LOSS_FLOW" in self._parameters and "CONV" in self._parameters
+        ):  # type:ignore
             # LOSS for CONV (if value exists in both)
-            loss_flows = self._parameters.get("LOSS_FLOW", {})
-            convs = self._parameters.get("CONV", {})
-            for fc in set(loss_flows) & set(convs):
-                conv_orig = convs[fc]
-                self._parameters["CONV"][fc] = conv_orig * (1 + loss_flows[fc])
+            loss_flows = self._parameters.get("LOSS_FLOW", {})  # type:ignore
+            convs = self._parameters.get("CONV", {})  # type:ignore
+            for fc in set(loss_flows) & set(convs):  # type:ignore
+                conv_orig = convs[fc]  # type:ignore
+                self._parameters["CONV"][fc] = conv_orig * (
+                    1 + loss_flows[fc]
+                )  # type:ignore
 
         # FIXME: only for temporary test comparison?
         if (
-            any(self._parameters.get("CO2CPT-R", {}).values())
-            or any(self._parameters.get("CO2CPT-S", {}).values())
+            any(self._parameters.get("CO2CPT-R", {}).values())  # type:ignore
+            or any(self._parameters.get("CO2CPT-S", {}).values())  # type:ignore
         ) and self.process_code != "CCGT-CC#B":
             logger.warning("TODO: remove dummy CONV for CO2-C")
-            self._parameters["CONV"]["CO2-C"] = 1
+            self._parameters["CONV"]["CO2-C"] = 1  # type:ignore
 
     def calculate(self, main_flow_out: float):
         """Calculate all process values based on desired output flow."""
@@ -570,7 +545,9 @@ class AggregateProcess(AbstractProcess):
     def get_first_main_process_by_step(self, step: ProcessStepType) -> Process:
         """May raise Exception"""
         # TODO: faster if we create lookup dict first
-        return next(p for p in self.full_main_chain if p.process_step == step)
+        return next(
+            p for p in self.full_main_chain if p.process_step == step
+        )  # type:ignore
 
     @property
     def main_flow_code_out(self) -> FlowCodeType:
@@ -611,7 +588,7 @@ class AggregateProcess(AbstractProcess):
         return result
 
     def initialize_parameters(
-        self, parameter_getters: "ParameterGetters", data_lookup_defaults: dict
+        self, parameter_getters: "_ParameterGetters", data_lookup_defaults: dict
     ):
         """Initialize parameetr data for this process."""
 
@@ -773,7 +750,8 @@ class ChainProcess(AggregateProcess):
             main_process_codes_steps_filtered
         ):
             raise Exception(
-                f"{check_use_all_main_process_codes} != {main_process_codes_steps_filtered}"
+                f"{check_use_all_main_process_codes} != "
+                f"{main_process_codes_steps_filtered}"
             )
         # check (TODO: can be removed later)
         main_process_codes_ = tuple(p.process_code for p in self.full_main_chain)
@@ -785,10 +763,11 @@ class ChainProcess(AggregateProcess):
 
     def initialize_parameters(
         self,
-        parameter_getters: "ParameterGetters",
+        parameter_getters: "_ParameterGetters",
         source_region_code: SourceRegionCodeType,
         target_country_code: TargetCountryCodeType,
     ):
+        """Initialize parameters."""
         self._data_lookup_defaults = {
             "source_region_code": source_region_code,
             "target_country_code": target_country_code,
@@ -848,7 +827,7 @@ class ChainImportProcess(ChainSectionProcess):
         return ProcessTypes[process_code].allow_in_import
 
     def initialize_parameters(
-        self, parameter_getters: "ParameterGetters", data_lookup_defaults: dict
+        self, parameter_getters: "_ParameterGetters", data_lookup_defaults: dict
     ):
         """Initialize parameetr data for this process."""
         # when getting data: switch region
@@ -892,7 +871,7 @@ class ChainTransportProcess(ChainSectionProcess):
         return ProcessTypes[process_code].allow_in_transport
 
     def initialize_parameters(
-        self, parameter_getters: "ParameterGetters", data_lookup_defaults: dict
+        self, parameter_getters: "_ParameterGetters", data_lookup_defaults: dict
     ):
         """Initialize parameetr data for this process."""
         super().initialize_parameters(
@@ -907,10 +886,10 @@ class ChainTransportProcess(ChainSectionProcess):
                 target_country_code=data_lookup_defaults["target_country_code"],
                 use_ship=self.transport_type == "Ship",
                 ship_own_fuel=self.ship_own_fuel,
-                dist_ship=self._parameters["DST-S-D"],
-                dist_pipeline=self._parameters["DST-S-DP"],
-                seashare_pipeline=self._parameters["SEASHARE"],
-                existing_pipeline_cap=self._parameters["CAP-T"],
+                dist_ship=self._parameters["DST-S-D"],  # type:ignore
+                dist_pipeline=self._parameters["DST-S-DP"],  # type:ignore
+                seashare_pipeline=self._parameters["SEASHARE"],  # type:ignore
+                existing_pipeline_cap=self._parameters["CAP-T"],  # type:ignore
             )
         )
         # FIXME: this is really ugly: we need to call super first to get
@@ -920,12 +899,12 @@ class ChainTransportProcess(ChainSectionProcess):
 
         for step, dist in transport_distances.items():
             proc = self.get_first_main_process_by_step(step)
-            proc._parameters["DIST"] = dist
+            proc._parameters["DIST"] = dist  # type:ignore
 
         # FIXME !!! EFF
         for proc in self.process_graph.calculate_order:
             logger.warning("TODO: calculate EFF for transport")
-            proc._parameters["EFF"] = 1
+            proc._parameters["EFF"] = 1  # type:ignore
 
 
 def group_by_flow_type_out(
@@ -938,69 +917,6 @@ def group_by_flow_type_out(
             raise KeyError(f"Multiple items for {flow_code}")
         result[flow_code] = process_code
     return result
-
-
-@dataclass
-class Settings:
-    scenario: ScenarioType
-    secproc_co2: SecProcCO2Type | None
-    secproc_water: SecProcH2OType | None
-    chain: ChainType
-    res_gen: ResGenType | None
-    region: SourceRegionNameType
-    country: TargetCountryNameType
-    transport: TransportType
-    ship_own_fuel: bool
-    user_data: pd.DataFrame | None
-    tool_version_color: ToolVersionColorType
-
-
-def create_permutations(scenario: ScenarioType) -> Iterable[Settings]:
-
-    # secproc_co2: SecProcCO2Type | None # noqa
-    # secproc_water: SecProcH2OType | None # noqa
-    # chain: ChainNameType # noqa
-    res_gen: ResGenType | None = df_process_by_code.loc["RES-HYBR", "process_name"]  # type: ignore
-    region: SourceRegionNameType = df_region_by_code.loc["DZA", "region_name"]  # type: ignore
-    country: TargetCountryNameType = df_region_by_code.loc["DEU", "region_name"]  # type: ignore
-    # transport: TransportType # noqa
-    # ship_own_fuel: bool # noqa
-    transports: list[tuple[TransportType, bool]] = [
-        ("Pipeline", False),
-        ("Ship", False),
-        ("Ship", True),
-    ]
-
-    for chain_spec in df_chain.to_dict(orient="records"):
-        chain = chain_spec["chain"]
-        tool_version_color: ToolVersionColorType = (
-            "green" if chain_spec["is_green"] else "blue"
-        )
-        secproc_co2: SecProcCO2Type | None = (
-            "Direct Air Capture (blue)"
-            if tool_version_color == "blue"
-            else "Direct Air Capture"
-        )
-        secproc_water: SecProcH2OType | None = "Sea Water desalination"
-
-        for transport, ship_own_fuel in transports:
-            if transport == "Pipeline" and not chain_spec["can_pipeline"]:
-                continue
-            if transport == "Ship" and ship_own_fuel and not chain_spec["SHP_OWN"]:
-                continue
-            yield Settings(
-                scenario=scenario,
-                country=country,
-                region=region,
-                chain=chain,
-                ship_own_fuel=ship_own_fuel,
-                transport=transport,
-                res_gen=res_gen,
-                user_data=None,
-                tool_version_color=tool_version_color,
-                secproc_co2=secproc_co2,
-                secproc_water=secproc_water,
-            )
 
 
 class ProcessGraph:
@@ -1150,24 +1066,6 @@ class ProcessGraph:
             raise Exception(f"missing_main: {missing_main}")
 
 
-def create_permutation_names(permutations: Iterable[Settings]) -> dict[str, Settings]:
-    def create_name(settings: Settings) -> str:
-        name = (
-            f"{settings.chain}_{settings.transport}"
-            f"{'_OWN' if settings.ship_own_fuel else ''}"
-        )
-        name = re.sub("[^A-Za-z0-9-%()]", "_", name)
-        return name
-
-    result: dict[str, Settings] = {}
-    for settings in permutations:
-        name = create_name(settings)
-        if name in result:
-            raise KeyError(name)
-        result[name] = settings
-    return result
-
-
 def filter_transport_process_codes(
     main_process_codes_steps: list["ProcessStep"],
     transport: TransportType,
@@ -1208,562 +1106,3 @@ def filter_transport_process_codes(
 
 
 ProcessStep = tuple[ProcessCodeType, ProcessStepType | None]
-
-
-def plot_get_pos(
-    chain_process: AggregateProcess,
-) -> dict[AbstractProcess, tuple[float, float]]:
-
-    node_pos = {}
-    xs: list[float] = [0, 0, 0]
-    proc_end_last = None
-
-    for ex_tr_imp in chain_process.process_graph.main_processes:
-        ex_tr_imp = cast(AggregateProcess, ex_tr_imp)
-        # export / tranport / import  subgraph
-
-        process_graph = ex_tr_imp.process_graph
-
-        # add processes as nodes to DiGraph
-
-        xs[1] = max(xs[0] + 0.25, xs[0])  # stagger
-        xs[2] = max(xs[0], xs[2])
-
-        sgn = 1  # secondary process: offset sign should alternate between -1 and 1
-
-        for process in reversed(list(process_graph.calculate_order)):
-            key = process
-
-            # if is_main:
-            if process in process_graph.main_processes:
-                xs[0] = xs[0] + 2
-                x = xs[0]
-                y = 0
-                if not proc_end_last and process == process_graph.main_processes[0]:
-                    y = 0.05  # initial a little closer to secondary
-            elif not isinstance(process, MarketProcess):
-                #  is secondary
-                xs[1] = xs[1] + 1.5
-                x = xs[1]
-                # non linear disntance for non overlapping arrows
-                y = 0.1 + 0.008 * sgn
-                sgn = -sgn  # alterante
-            else:
-                # market
-                xs[2] = xs[2] + 1
-                x = xs[2]
-                y = 0.2
-
-            node_pos[key] = (x, y)
-
-        proc_end_last = process_graph.main_processes[-1]
-
-    return node_pos
-
-
-def nested_round_drop_empty(x):
-    if isinstance(x, list):
-        return [nested_round_drop_empty(v) for v in x]
-    elif isinstance(x, dict):
-        result = {k: nested_round_drop_empty(v) for k, v in x.items()}
-        result = {k: v for k, v in result.items() if v}
-        return result
-    elif isinstance(x, float):
-        return round(x, 4)
-    else:
-        return x
-
-
-def plot(chain_process: AggregateProcess, name: str):
-
-    # Create a directed graph
-    G = nx.DiGraph()
-    node_labels = {}
-    edge_labels = {}
-    edge_widths = {}
-
-    proc_end_last = None
-    len_main_total = 0
-    for ex_tr_imp in chain_process.process_graph.main_processes:
-        ex_tr_imp = cast(AggregateProcess, ex_tr_imp)
-        # export / tranport / import  subgraph
-
-        process_graph = ex_tr_imp.process_graph
-
-        # add processes as nodes to DiGraph
-
-        for process in reversed(list(process_graph.calculate_order)):
-            label = str(process)
-
-            G.add_node(process)
-            node_labels[process] = (
-                label.replace("=", "\n")
-                .replace("(", "\n")
-                .replace(")", "\n")
-                .replace(" ", "\n")
-                .strip()
-            )
-
-            for proc_target, in_main in process_graph.links_out.get(process, []):
-                flow = process.main_flow_code_out
-                e = (process, proc_target)
-                G.add_edge(*e)
-                try:
-                    value = (
-                        proc_target.get_main_flow_in()
-                        if in_main
-                        else proc_target.get_secondary_flow_in(flow)
-                    )
-                    value_str = f"\n{value:.4f}"
-                except Exception:
-                    value_str = ""
-                edge_labels[e] = f"{flow}{value_str}"
-                edge_widths[e] = 2 if in_main else 1
-
-        if proc_end_last:
-            # link from previous subpgraph
-            proc_start = process_graph.main_processes[0]
-            e = (proc_end_last, proc_start)
-            G.add_edge(*e)
-            edge_labels[e] = proc_end_last.main_flow_code_out
-            try:
-                edge_labels[e] += f"\n{proc_start.get_main_flow_in():.4f}"
-            except Exception:  # not calculated yet, # noqa: S110
-                pass
-            edge_widths[e] = 2
-
-        proc_end_last = process_graph.main_processes[-1]
-
-        len_main_total += len(process_graph.main_processes)
-
-    scale = 3
-
-    # node_pos = nx.circular_layout(G) # noqa
-    node_pos = plot_get_pos(chain_process=chain_process)
-
-    plt.close()
-    plt.clf()
-    plt.figure(figsize=(len_main_total * scale, 2 * scale))
-
-    # Draw nodes
-    nx.draw(
-        G,
-        node_pos,
-        with_labels=False,
-        node_color=[cast(Process, k).color for k in G.nodes()],
-        width=[edge_widths[k] for k in G.edges()],
-        node_size=2000 * scale,
-    )
-
-    # Draw node labels
-    nx.draw_networkx_labels(
-        G, node_pos, labels=node_labels, font_size=6, font_color="black"
-    )
-
-    # Draw edge labels
-    nx.draw_networkx_edge_labels(
-        G,
-        node_pos,
-        edge_labels=edge_labels,
-        font_size=6,
-        font_color="black",
-        # label_pos=0.5,
-    )
-
-    # Save to PNG
-    plt.savefig(f"chain_flowcharts/{name}.png", dpi=300)
-
-
-class ParameterGetter(Protocol):
-    def __call__(
-        self,
-        process_code: ProcessCodeType | None = None,
-        flow_code: FlowCodeType | None = None,
-        **kwargs,
-    ) -> float: ...
-
-
-class ParameterGetter_(Protocol):
-    def __call__(
-        self,
-        process_code: ProcessCodeType | None = None,
-        flow_code: FlowCodeType | None = None,
-        **kwargs,
-    ) -> tuple[str, float | None]: ...
-
-
-ParameterGetters = dict[ParameterCodeType | str, ParameterGetter]
-
-
-def create_parameter_getters(
-    data_handler: DataHandler, use_user_data: bool
-) -> ParameterGetters:
-
-    def _get_df(
-        parameter_code: ParameterCodeType, process_code: ProcessCodeType | None
-    ):
-        if (
-            parameter_code == "FLH"
-            and process_code
-            and not ProcessTypes[process_code].is_re_generation
-        ):
-            # FLH not changed by user_data
-            df = data_handler.flh
-        else:
-            if use_user_data:
-                df = data_handler.scenario_data
-            else:
-                df = data_handler._scenario_data
-        return df
-
-    def _get_parameter_keys(
-        parameter_code: ParameterCodeType, use_global_default: bool = False
-    ) -> list[tuple[DataQueryParameterType, bool]]:
-        if parameter_code == "FLH":
-            return [
-                (x, True)
-                for x in [
-                    "source_region_code",  # => region
-                    "process_res",
-                    "process_ely",
-                    "process_deriv",
-                    "process_code",  # => process_flh
-                ]
-            ]  # type: ignore
-        else:
-            dims = set(df_parameter_by_code.at[parameter_code, "dimensions"])  # type: ignore
-            return [
-                ("parameter_code", True),
-                ("process_code", "process_code" in dims),
-                ("flow_code", "flow_code" in dims),
-                (
-                    "source_region_code",
-                    "source_region_code" in dims and not use_global_default,
-                ),
-                ("target_country_code", "target_country_code" in dims),
-            ]
-
-    def make_getter(
-        parameter_code: ParameterCodeType, use_global_default: bool
-    ) -> ParameterGetter_:
-        keys = _get_parameter_keys(
-            parameter_code, use_global_default=use_global_default
-        )
-
-        def _get_value(
-            process_code: ProcessCodeType | None = None,
-            flow_code: FlowCodeType | None = None,
-            **data_lookup_defaults,
-        ) -> tuple[str, float | None]:
-            df = _get_df(parameter_code=parameter_code, process_code=process_code)
-            # all available key values
-            key_vals = data_lookup_defaults | {
-                "parameter_code": parameter_code,
-                "process_code": process_code,
-                "process_flh": process_code,  # for FLH
-                "flow_code": flow_code,
-            }
-            # join only required key_vals in correct order
-
-            key = ",".join([(key_vals.get(k) or "") if use else "" for k, use in keys])
-
-            # FIXME: remove later
-            key_debug = ",".join(
-                [k + "=" + ((key_vals.get(k) or "") if use else "") for k, use in keys]
-            )
-            if parameter_code == "FLH":
-                key_debug = "parameter_code=FLH," + key_debug
-
-            try:
-                value = cast(float, df.at[key, "value"])
-            except Exception:
-                value = None
-
-            logger.debug("data lookup: %s => %s", key_debug, value)
-
-            return key_debug, value
-
-        return _get_value
-
-    def make_getter_2(
-        parameter_code: ParameterCodeType,
-    ) -> ParameterGetter:
-        has_global_default = df_parameter_by_code.at[
-            parameter_code, "has_global_default"
-        ]
-
-        default_value: float = PARAMETER_DEFAULTS.get(parameter_code, 0)
-
-        _get_value_ = make_getter(
-            parameter_code=parameter_code, use_global_default=False
-        )
-        _get_value_global_default = make_getter(
-            parameter_code=parameter_code, use_global_default=True
-        )
-
-        def get_value(
-            process_code: ProcessCodeType | None = None,
-            flow_code: FlowCodeType | None = None,
-            **kwargs,
-        ) -> float:
-            key, value = _get_value_(
-                process_code=process_code, flow_code=flow_code, **kwargs
-            )
-            if value is None and has_global_default:
-                key, value = _get_value_global_default(
-                    process_code=process_code, flow_code=flow_code, **kwargs
-                )
-            if value is None:
-                # TODO: get complete key
-                # logger.warning("No data for %s", key)
-                value = default_value
-
-            return value
-
-        return get_value
-
-    return {
-        parameter_code: make_getter_2(parameter_code)  # type: ignore
-        for parameter_code in ParameterCodeValues  # type: ignore
-    }
-
-
-def create_chain_process_api_wrapper(
-    scenario: ScenarioType,
-    secproc_co2: SecProcCO2Type | None,
-    secproc_water: SecProcH2OType | None,
-    chain: ChainType,
-    res_gen: ResGenType | None,
-    region: SourceRegionNameType,
-    country: TargetCountryNameType,
-    transport: TransportType,
-    ship_own_fuel: bool,
-    user_data: pd.DataFrame | None = None,
-    tool_version_color: ToolVersionColorType = "green",
-    _output_unit: OutputUnitType = "USD/MWh",
-    _optimize_flh: bool = True,
-    _use_user_data_for_optimize_flh: bool = False,
-) -> ChainProcess:
-
-    chain_color: ToolVersionColorType = (
-        "green" if df_chain.at[chain, "is_green"] else "blue"
-    )
-    assert chain_color == tool_version_color
-
-    if transport == "Pipeline" and not df_chain.at[chain, "can_pipeline"]:
-        logger.error(
-            "'Selected transportation mode pipeline not possible. Switching to Ship"
-        )
-        transport = "Ship"
-
-    secondary_process_codes: set[ProcessCodeType] = set()
-    if secproc_co2:
-        secondary_process_codes.add(
-            df_process_by_name.at[secproc_co2, "process_code"]  # type: ignore
-        )
-    if secproc_water:
-        secondary_process_codes.add(
-            df_process_by_name.at[secproc_water, "process_code"]  # type: ignore
-        )
-    first_process_code: ProcessCodeType
-    if chain_color == "blue":
-        first_process_code = "NG-PROD#B"
-        secondary_process_codes = secondary_process_codes | {
-            "HEATPUMP#B",
-            "CCGT-CC#B",
-            "CO2-T+S#B",
-        }  # type: ignore
-    else:
-        assert res_gen
-        first_process_code = df_process_by_name.at[res_gen, "process_code"]  # type: ignore
-
-    chain_process = ChainProcess(
-        transport=transport,
-        ship_own_fuel=ship_own_fuel,
-        chain=chain,
-        first_process_code=first_process_code,
-        secondary_process_codes=secondary_process_codes,
-    )
-
-    data_handler = DataHandler(
-        scenario=scenario, data_dir=DEFAULT_DATA_DIR, user_data=user_data
-    )
-
-    parameter_getters = create_parameter_getters(
-        data_handler=data_handler, use_user_data=bool(user_data)
-    )
-
-    chain_process.initialize_parameters(
-        parameter_getters,
-        source_region_code=df_region_by_name.at[region, "region_code"],  # type: ignore
-        target_country_code=df_region_by_name.at[country, "region_code"],  # type: ignore
-    )
-
-    chain_process.calculate(1)
-
-    return chain_process
-
-
-def main():
-    scenario: ScenarioType = "2040 (medium)"
-    permutations = create_permutation_names(create_permutations(scenario=scenario))
-
-    for i, (name, settings) in enumerate(permutations.items()):
-        if name == "STL-S__NG-DRI-C_EAF__prod_in_supply_Ship":
-            # test 1
-            settings.region = "Qatar"
-        elif name == "STL-S__NG-DRI-C_EAF__prod_in_demand_Ship":
-            pass
-        else:
-            continue
-            pass
-
-        logger.info(f"{i + 1}/{len(permutations)}: {settings} => {name}")
-
-        chain_process = create_chain_process_api_wrapper(**settings.__dict__)
-
-        plot(chain_process, name=name)
-
-
-if __name__ == "__main__":
-    ap = argparse.ArgumentParser()
-    ap.add_argument(
-        "--loglevel",
-        "-l",
-        choices=["debug", "info", "warning", "error"],
-        default="warning",
-    )
-    # parse args
-    kwargs = vars(ap.parse_args())
-    # logging
-    coloredlogs.install(
-        logger=logger,
-        level=getattr(logging, kwargs.pop("loglevel").upper()),
-        fmt="[%(asctime)s %(levelname)7s] %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-        field_styles={
-            "asctime": {"color": "white"},
-            "levelname": {"color": "white"},
-        },
-        level_styles={
-            "debug": {"color": "blue"},
-            "info": {"color": "green"},
-            "warning": {"color": "yellow"},
-            "error": {"color": "red"},
-        },
-    )
-
-    main(**kwargs)
-
-
-def _temp_data_adapter(chain_process: ChainProcess) -> dict:
-
-    proc_export: AggregateProcess = chain_process.get_subprocesses_by_class(
-        ChainExportProcess
-    )[
-        0
-    ]  # type: ignore
-    proc_transport: AggregateProcess = chain_process.get_subprocesses_by_class(
-        ChainTransportProcess
-    )[0]
-    try:
-        proc_import: AggregateProcess = chain_process.get_subprocesses_by_class(
-            ChainImportProcess
-        )[0]
-    except Exception:
-        proc_import = None
-
-    context = chain_process._data_lookup_defaults
-
-    parameter = proc_export.get_parameters_incl_parents()
-    parameter["SPECCOST"] = {}
-    # also aggregate all specccost
-    for p in proc_export.get_subprocesses_by_class(MarketProcess):
-        print(p)
-        parameter["SPECCOST"] = parameter["SPECCOST"] | p._parameters.get(
-            "SPECCOST", {}
-        )
-
-    if proc_import:
-        parameter_i = proc_import.get_parameters_incl_parents()
-        parameter_i["SPECCOST"] = {}
-        # also aggregate all specccost
-        for p in proc_import.get_subprocesses_by_class(MarketProcess):
-            print(p)
-            parameter_i["SPECCOST"] = parameter_i["SPECCOST"] | p._parameters.get(
-                "SPECCOST", {}
-            )
-    else:
-        parameter_i = {}
-
-    main_import_process_chain = []
-    transport_process_chain = []
-    main_export_process_chain = []
-
-    # NOTE: in old version, pre/post is part of transport
-
-    export_wo_pre_transp = [
-        x for x in proc_export.full_main_chain if not x.is_transport
-    ]
-    transport_w_pre_post = (
-        [x for x in proc_export.full_main_chain if x.is_transport]
-        + proc_transport.full_main_chain
-        + [x for x in proc_import.full_main_chain if x.is_transport]
-    )
-    import_wo_post_transp = [
-        x for x in proc_import.full_main_chain if not x.is_transport
-    ]
-
-    def get_proc_data(p: Process) -> dict:
-        data = p._parameters | {"process_code": p.process_code, "step": p.process_step}
-        return data
-
-    main_export_process_chain = [get_proc_data(p) for p in export_wo_pre_transp]
-    transport_process_chain = [get_proc_data(p) for p in transport_w_pre_post]
-    main_import_process_chain = [get_proc_data(p) for p in import_wo_post_transp]
-
-    export_secondary = [x for x in proc_export.secondary_processes]
-    secondary_process = {
-        p.main_flow_code_out: get_proc_data(p) for p in export_secondary
-    }
-
-    # compatibility fixes to compare data
-    # previously: no EF_E/EF_M in shipping
-    for x in transport_process_chain:
-        if x["step"] == "SHP":
-            for k in ["EF_E", "EF_M"]:
-                if k in x:
-                    del x[k]
-
-    return {
-        "context": context,
-        "parameter": parameter,
-        "parameter_i": parameter_i,
-        "main_export_process_chain": main_export_process_chain,
-        "transport_process_chain": transport_process_chain,
-        "main_import_process_chain": main_import_process_chain,
-        "secondary_process": secondary_process,
-    }
-
-
-def _temp_values_adapter(chain_process: ChainProcess) -> list:
-    def get_values(p: Process):
-        process_step = p.process_step
-        if not process_step:
-            if p.process_code == "CO2-T+S#B":
-                process_step = "SECONDARY:CO2 transport and storage"
-            elif p.process_code == "CCGT-CC#B":
-                process_step = "SECONDARY:Electricity generation"
-
-        return {
-            "process_step": process_step,
-            "process_code": p.process_code,
-            "main_input": p._main_flow_in,
-            "main_output": p._main_flow_out,
-            "flows": p._secondary_flows_in,
-        }
-
-    result = []
-    for p in chain_process.full_main_chain + chain_process.secondary_processes:
-        result.append(get_values(p))
-    return result

@@ -6,12 +6,12 @@ import pandas as pd
 import pytest
 
 from ptxboa.api import PtxboaAPI, PtxCalc
-from ptxboa.api_calc_v2 import (
+from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler
+from ptxboa.test_process_classes import (
     _temp_data_adapter,
     _temp_values_adapter,
     create_chain_process_api_wrapper,
 )
-from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler
 from tests.test_api import ptxdata_dir_static
 
 

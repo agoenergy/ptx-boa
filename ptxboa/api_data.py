@@ -3,7 +3,7 @@
 from functools import cache
 from itertools import product
 from pathlib import Path
-from typing import Dict, Iterable, List, Literal, Tuple
+from typing import Dict, Iterable, List, Literal, Protocol, Tuple, cast
 
 import numpy as np
 import pandas as pd
@@ -22,6 +22,7 @@ from ptxboa.static import (
     FlowCodeType,
     OutputUnitValues,
     ParameterCodeType,
+    ParameterCodeValues,
     ParameterRangeValues,
     ProcessCodeResType,
     ProcessCodeType,
@@ -46,7 +47,7 @@ PARAMETER_DEFAULTS: dict[ParameterCodeType, float] = {
 
 def _get_secproc_data(
     secondary_processes: dict,
-    pg: "_ParameterGetter",
+    pg: "_ParameterGetterOld",
     has_ccs: bool,
     used_flows_main_export: set,
 ) -> tuple[dict, set, set]:
@@ -247,7 +248,7 @@ def _load_dimensions() -> dict[DimensionType, pd.DataFrame]:
     return dimensions
 
 
-class _ParameterGetter:
+class _ParameterGetterOld:
     def __init__(
         self,
         data_handler,
@@ -511,7 +512,7 @@ class _ParameterGetter:
         return result
 
 
-def load_scenario_data(data_dir, scenario: str) -> pd.DataFrame:
+def _load_scenario_data(data_dir, scenario: str) -> pd.DataFrame:
     scenario_filename = (
         f"{scenario.replace(' ', '_').replace(')', '').replace('(', '')}"
     )
@@ -568,7 +569,7 @@ class DataHandler:
             ),
         )
 
-        self._scenario_data = load_scenario_data(self.data_dir, scenario).copy()
+        self._scenario_data = _load_scenario_data(self.data_dir, scenario).copy()
 
         if user_data is not None:
             self.scenario_data = self._update_scenario_data_with_user_data(
@@ -576,6 +577,13 @@ class DataHandler:
             )
         else:
             self.scenario_data = self._scenario_data
+
+        self.parameter_getters_w_user_data = self._create_parameter_getters(
+            use_user_data=True
+        )
+        self.parameter_getters_wo_user_data = self._create_parameter_getters(
+            use_user_data=False
+        )
 
         self.optimizer = PtxOpt(
             profiles_path=self.profiles_path, cache_dir=self.cache_dir
@@ -1046,7 +1054,7 @@ class DataHandler:
         process_code_deriv = chain["DERIV"]
         chain["RES"] = process_code_res
 
-        pg = _ParameterGetter(
+        pg = _ParameterGetterOld(
             data_handler=self,
             source_region_code=source_region_code,
             target_country_code=target_country_code,
@@ -1059,7 +1067,7 @@ class DataHandler:
         )
 
         # parameter getter if processes are in import (target) country:
-        pg_import = _ParameterGetter(
+        pg_import = _ParameterGetterOld(
             data_handler=self,
             source_region_code=target_country_code,  # !!
             target_country_code=target_country_code,
@@ -1402,3 +1410,169 @@ class DataHandler:
                 dist_transp["SHP"] = dist_ship
 
         return dist_transp
+
+    def _create_parameter_getters(self, use_user_data: bool) -> "_ParameterGetters":
+
+        # TODO: use DataHandler functions
+        _df_parameter_by_code = DataHandler.get_dimension("parameter")
+        _df_process_by_code = DataHandler.get_dimension("process")
+
+        def _get_df(
+            parameter_code: ParameterCodeType, process_code: ProcessCodeType | None
+        ):
+            if (
+                parameter_code == "FLH"
+                and process_code
+                and not _df_process_by_code.loc["process_code", "is_re_generation"]
+            ):
+                # FLH not changed by user_data
+                df = self.flh
+            else:
+                if use_user_data:
+                    df = self.scenario_data
+                else:
+                    df = self._scenario_data
+            return df
+
+        def _get_parameter_keys(
+            parameter_code: ParameterCodeType, use_global_default: bool = False
+        ) -> list[tuple[DataQueryParameterType, bool]]:
+            if parameter_code == "FLH":
+                return [
+                    (x, True)
+                    for x in [
+                        "source_region_code",  # => region
+                        "process_res",
+                        "process_ely",
+                        "process_deriv",
+                        "process_code",  # => process_flh
+                    ]
+                ]  # type: ignore
+            else:
+                dims = set(_df_parameter_by_code.at[parameter_code, "dimensions"])  # type: ignore
+                return [
+                    ("parameter_code", True),
+                    ("process_code", "process_code" in dims),
+                    ("flow_code", "flow_code" in dims),
+                    (
+                        "source_region_code",
+                        "source_region_code" in dims and not use_global_default,
+                    ),
+                    ("target_country_code", "target_country_code" in dims),
+                ]
+
+        def make_getter(
+            parameter_code: ParameterCodeType, use_global_default: bool
+        ) -> _ParameterGetter:
+            keys = _get_parameter_keys(
+                parameter_code, use_global_default=use_global_default
+            )
+
+            def _get_value(
+                process_code: ProcessCodeType | None = None,
+                flow_code: FlowCodeType | None = None,
+                **data_lookup_defaults,
+            ) -> float | None:
+                df = _get_df(parameter_code=parameter_code, process_code=process_code)
+                # all available key values
+                key_vals = data_lookup_defaults | {
+                    "parameter_code": parameter_code,
+                    "process_code": process_code,
+                    "process_flh": process_code,  # for FLH
+                    "flow_code": flow_code,
+                }
+                # join only required key_vals in correct order
+
+                key = ",".join(
+                    [(key_vals.get(k) or "") if use else "" for k, use in keys]
+                )
+
+                try:
+                    value = cast(float, df.at[key, "value"])
+                except Exception:
+                    value = None
+
+                # FIXME: remove later
+                key_debug = ",".join(
+                    [
+                        k + "=" + ((key_vals.get(k) or "") if use else "")
+                        for k, use in keys
+                    ]
+                )
+                if parameter_code == "FLH":
+                    key_debug = "parameter_code=FLH," + key_debug
+                logger.debug("data lookup: %s => %s", key_debug, value)
+
+                return value
+
+            return _get_value
+
+        def make_getter_2(
+            parameter_code: ParameterCodeType,
+        ) -> _ParameterGetter:
+            has_global_default = _df_parameter_by_code.at[
+                parameter_code, "has_global_default"
+            ]
+
+            default_value: float = PARAMETER_DEFAULTS.get(parameter_code, 0)
+
+            _get_value_ = make_getter(
+                parameter_code=parameter_code, use_global_default=False
+            )
+            _get_value_global_default = make_getter(
+                parameter_code=parameter_code, use_global_default=True
+            )
+
+            def get_value(
+                process_code: ProcessCodeType | None = None,
+                flow_code: FlowCodeType | None = None,
+                **kwargs,
+            ) -> float:
+                value = _get_value_(
+                    process_code=process_code, flow_code=flow_code, **kwargs
+                )
+                if value is None and has_global_default:
+                    value = _get_value_global_default(
+                        process_code=process_code, flow_code=flow_code, **kwargs
+                    )
+                if value is None:
+                    # TODO: get complete key
+                    # logger.warning("No data for %s", key)
+                    value = default_value
+
+                return value
+
+            return get_value
+
+        return {
+            parameter_code: make_getter_2(parameter_code)  # type: ignore
+            for parameter_code in ParameterCodeValues  # type: ignore
+        }
+
+
+class _ParameterGetter(Protocol):
+    def __call__(
+        self,
+        process_code: ProcessCodeType | None = None,
+        flow_code: FlowCodeType | None = None,
+        **kwargs,
+    ) -> float | None: ...
+
+
+_ParameterGetters = dict[ParameterCodeType | str, _ParameterGetter]
+
+
+DataQueryParameterType = Literal[
+    "parameter_code",
+    "process_code",
+    "flow_code",
+    "source_region_code",
+    "target_country_code",
+    "default",
+    "use_user_data",
+    "region",
+    "process_res",
+    "process_ely",
+    "process_deriv",
+    "process_flh",
+]
