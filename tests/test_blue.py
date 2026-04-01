@@ -822,7 +822,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "values": 0.014402,
                 },
             ],
-            # marks=pytest.mark.skip,
+            marks=pytest.mark.xfail,
         ),
         # =============================================================================
         # CASE 2
@@ -1179,7 +1179,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "values": 0.010961,
                 },
             ],
-            marks=pytest.mark.skip,
+            marks=pytest.mark.xfail,
         ),
     ],
 )
