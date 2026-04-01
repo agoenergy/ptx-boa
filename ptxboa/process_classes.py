@@ -331,7 +331,7 @@ class AbstractProcess:
         data_lookup_defaults: dict[DataQueryParameterType, str],
         parent_parameters: ProcessDataType | None = None,
     ) -> ProcessDataType:
-        """Initialize parameetr data for this process."""
+        """Initialize parameter data for this process."""
         parameters: ProcessDataType = {}
         # load parameters that are process dependent
         for p in self._parameter_codes_process:
@@ -347,6 +347,9 @@ class AbstractProcess:
                 )
                 for f in self._parameter_flow_types
             }
+
+        # FIXME: for debugging:
+        # parameters["region"] = data_lookup_defaults["source_region_code"]  # noqa
 
         return merge_process_data(parameters, parent_parameters)
 
@@ -429,7 +432,7 @@ class Process(AbstractProcess):
         data_lookup_defaults: dict[DataQueryParameterType, str],
         parent_parameters: ProcessDataType | None = None,
     ) -> ProcessDataType:
-        """Initialize parameetr data for this process."""
+        """Initialize parameter data for this process."""
         parameters = super()._get_calculation_data(
             parameter_getters=parameter_getters,
             data_lookup_defaults=data_lookup_defaults,
@@ -491,6 +494,22 @@ class Process(AbstractProcess):
 class TransportProcess(Process):
     _parameter_codes_process = ["OPEX-T", "LOSS-T"]
     color = "teal"
+
+    def _get_calculation_data(
+        self,
+        parameter_getters: "ParameterGetters",
+        data_lookup_defaults: dict[DataQueryParameterType, str],
+        parent_parameters: ProcessDataType | None = None,
+    ) -> ProcessDataType:
+        """Initialize parameter data for this process."""
+        parameters = super()._get_calculation_data(
+            parameter_getters=parameter_getters,
+            data_lookup_defaults=data_lookup_defaults,
+            parent_parameters=parent_parameters,
+        )
+        logger.warning("Calculate transport EFF")
+        parameters["EFF"] = 1  # FIXME
+        return parameters
 
 
 class StorageProcess(Process):
@@ -622,7 +641,7 @@ class AggregateProcess(AbstractProcess):
         data_lookup_defaults: dict[DataQueryParameterType, str],
         parent_parameters: ProcessDataType | None = None,
     ) -> AggregateProcessDataType:
-        """Initialize parameetr data for this process."""
+        """Initialize parameter data for this process."""
         parameters_self = self._get_calculation_data(
             parameter_getters=parameter_getters,
             data_lookup_defaults=data_lookup_defaults,
@@ -1097,6 +1116,10 @@ class ChainProcess(AggregateProcess):
             for p in proc_export.secondary_processes
         }
 
+        # FXIME: currently, CALOR is read from "parameters", but it is not
+        # really part of the export chain part
+        parameter["CALOR"] = parameters_chain["CALOR"]
+
         return {
             "context": data_lookup_defaults,
             "parameter": parameter,
@@ -1177,23 +1200,7 @@ class ChainImportProcess(ChainSectionProcess):
     ) -> dict[DataQueryParameterType, str]:
         return data_lookup_defaults | {  # type: ignore
             "source_region_code": data_lookup_defaults["target_country_code"],
-            # FIXME: remove later: we dont need to flip
-            "target_country_code": data_lookup_defaults["source_region_code"],
         }
-
-    def _get_calculation_data(
-        self,
-        parameter_getters: "ParameterGetters",
-        data_lookup_defaults: dict[DataQueryParameterType, str],
-        parent_parameters: ProcessDataType | None = None,
-    ) -> ProcessDataType:
-        """Initialize parameetr data for this process."""
-        # when getting data: switch region
-        return super()._get_calculation_data(
-            parameter_getters=parameter_getters,
-            data_lookup_defaults=self._switch_region(data_lookup_defaults),
-            parent_parameters=parent_parameters,
-        )
 
     def _get_aggregated_calculation_data(
         self,
@@ -1201,7 +1208,7 @@ class ChainImportProcess(ChainSectionProcess):
         data_lookup_defaults: dict[DataQueryParameterType, str],
         parent_parameters: ProcessDataType | None = None,
     ) -> AggregateProcessDataType:
-        """Initialize parameetr data for this process."""
+        """Initialize parameter data for this process."""
         # when getting data: switch region
         return super()._get_aggregated_calculation_data(
             parameter_getters=parameter_getters,
@@ -1244,7 +1251,7 @@ class ChainTransportProcess(ChainSectionProcess):
         data_lookup_defaults: dict[DataQueryParameterType, str],
         parent_parameters: ProcessDataType | None = None,
     ) -> AggregateProcessDataType:
-        """Initialize parameetr data for this process."""
+        """Initialize parameter data for this process."""
         # NOTE: dont call super here
         parameters_self = self._get_calculation_data(
             parameter_getters=parameter_getters,
@@ -1623,29 +1630,6 @@ def create_parameter_getters(
         parameter_code: make_getter_2(parameter_code)  # type: ignore
         for parameter_code in ParameterCodeValues  # type: ignore
     }
-
-
-def _temp_values_adapter(chain_process: ChainProcess) -> list:
-    def get_values(p: Process):
-        process_step = p.process_step
-        if not process_step:
-            if p.process_code == "CO2-T+S#B":
-                process_step = "SECONDARY:CO2 transport and storage"
-            elif p.process_code == "CCGT-CC#B":
-                process_step = "SECONDARY:Electricity generation"
-
-        return {
-            "process_step": process_step,
-            "process_code": p.process_code,
-            "main_input": p._main_flow_in,
-            "main_output": p._main_flow_out,
-            "flows": p._secondary_flows_in,
-        }
-
-    result = []
-    for p in chain_process.full_main_chain + chain_process.secondary_processes:
-        result.append(get_values(p))  # type: ignore
-    return result
 
 
 def merge_process_data(
