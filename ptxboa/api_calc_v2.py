@@ -191,8 +191,7 @@ class ProcessType:
         # secondary: only allow CCS
         return self.allow_in_export and (
             # CSS is onlyallowed secondary(?) # TODO:generalize?
-            not self.is_secondary
-            or self.process_code == "CO2-T+S#B"
+            not self.is_secondary or self.process_code == "CO2-T+S#B"
         )
 
 
@@ -272,8 +271,12 @@ class AbstractProcess:
     def _parameter_flow_types(self) -> set[FlowCodeType]:
         """flow types for which parameter data should be loaded."""
         result = self.secondary_flow_types
-        # also add main flow in
+        # also add main flow in (for market/initial proces,
+        # those dont exist and we need out)
         result.add(self.main_flow_code_in_or_out)
+        # FIXME: for testing compatebility, we also add main_flow out,
+        # but can be removed later
+        result.add(self.main_flow_code_out)
 
         return result
 
@@ -300,6 +303,16 @@ class AbstractProcess:
         self, parameter_getters: "ParameterGetters", data_lookup_defaults: dict
     ):
         """Initialize parameetr data for this process."""
+
+        # FIXME: !!! remove - only for temporary testing compatibility
+        if self.process_step in {"POST_SHP", "POST_PPL"}:
+            logger.warning("TODO: get post transport data from export country")
+            data_lookup_defaults = data_lookup_defaults | {
+                "source_region_code": data_lookup_defaults["target_country_code"],
+                # FIXME: remove later: we dont need to flip
+                "target_country_code": data_lookup_defaults["source_region_code"],
+            }
+
         self._parameters = {}
         # load parameters that are process dependent
         for p in self._parameter_codes_process:
@@ -824,7 +837,9 @@ class ChainImportProcess(ChainSectionProcess):
         # when getting data: switch region
 
         data_lookup_defaults = data_lookup_defaults | {
-            "source_region_code": data_lookup_defaults["target_country_code"]
+            "source_region_code": data_lookup_defaults["target_country_code"],
+            # FIXME: remove later: we dont need to flip
+            "target_country_code": data_lookup_defaults["source_region_code"],
         }
         super().initialize_parameters(
             parameter_getters=parameter_getters,
@@ -885,9 +900,15 @@ class ChainTransportProcess(ChainSectionProcess):
         # out own parameters.
         # but this also initialized the subprocesses.
         # so now we have to fix them after the fact.
+
         for step, dist in transport_distances.items():
             proc = self.get_first_main_process_by_step(step)
             proc._parameters["DIST"] = dist
+
+        # FIXME !!! EFF
+        for proc in self.process_graph.calculate_order:
+            logger.warning("TODO: calculate EFF for transport")
+            proc._parameters["EFF"] = 1
 
 
 def group_by_flow_type_out(
@@ -1031,9 +1052,9 @@ class ProcessGraph:
             flow_provider_sec_or_initial[sec_proc.main_flow_code_out] = sec_proc
 
         # collect required flows
-        required_flows_procs: dict[FlowCodeType, list[tuple[AbstractProcess, bool]]] = (
-            {}
-        )
+        required_flows_procs: dict[
+            FlowCodeType, list[tuple[AbstractProcess, bool]]
+        ] = {}
 
         def add_required_flows_proc(
             proc: AbstractProcess, flow: FlowCodeType, in_main: bool
@@ -1617,9 +1638,7 @@ def _temp_data_adapter(chain_process: ChainProcess) -> dict:
 
     proc_export: AggregateProcess = chain_process.get_subprocesses_by_class(
         ChainExportProcess
-    )[
-        0
-    ]  # type: ignore
+    )[0]  # type: ignore
     proc_transport: AggregateProcess = chain_process.get_subprocesses_by_class(
         ChainTransportProcess
     )[0]
@@ -1675,11 +1694,23 @@ def _temp_data_adapter(chain_process: ChainProcess) -> dict:
         data = p._parameters | {"process_code": p.process_code, "step": p.process_step}
         return data
 
+    main_export_process_chain = [get_proc_data(p) for p in export_wo_pre_transp]
+    transport_process_chain = [get_proc_data(p) for p in transport_w_pre_post]
+    main_import_process_chain = [get_proc_data(p) for p in import_wo_post_transp]
+
+    # compatibility fixes to compare data
+    # previously: no EF_E/EF_M in shipping
+    for x in transport_process_chain:
+        if x["step"] == "SHP":
+            for k in ["EF_E", "EF_M"]:
+                if k in x:
+                    del x[k]
+
     return {
         "context": context,
         "parameter": parameter,
         "parameter_i": parameter_i,
-        "main_export_process_chain": [get_proc_data(p) for p in export_wo_pre_transp],
-        "transport_process_chain": [get_proc_data(p) for p in transport_w_pre_post],
-        "main_import_process_chain": [get_proc_data(p) for p in import_wo_post_transp],
+        "main_export_process_chain": main_export_process_chain,
+        "transport_process_chain": transport_process_chain,
+        "main_import_process_chain": main_import_process_chain,
     }

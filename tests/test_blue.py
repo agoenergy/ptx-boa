@@ -1242,7 +1242,7 @@ def test_new_blue_chain_real_data(
 
     calculation_data: dict = _sort_nested(_round_nested(calculation_data_))  # type: ignore
 
-    for k in set(calculation_data_exp) & set(calculation_data):
-        assert _rec_approx(calculation_data_exp[k]) == calculation_data[k]
+    # for k in set(calculation_data_exp) & set(calculation_data):
+    #    assert _rec_approx(calculation_data_exp[k]) == calculation_data[k]
 
-    raise Exception(set(calculation_data_exp) - set(calculation_data))
+    assert _rec_approx(calculation_data_exp) == calculation_data
