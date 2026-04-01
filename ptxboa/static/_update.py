@@ -18,14 +18,17 @@ def sql_to_df(query: str) -> pd.DataFrame:
     )
 
 
-def update_csv(query: str, filename: str, data_dir: str = None) -> None:
+def update_csv(query: str, filename: str, data_dir: str | None = None) -> None:
     data_dir = data_dir or os.path.dirname(__file__)
     sql_to_df(query).to_csv(data_dir + "/" + filename, index=False, lineterminator="\n")
 
 
 def create_literal(name: str, items: list) -> str:
-    items = ", ".join(f'"{x}"' for x in items)
-    return f"{name}Type = Literal[{items}]\n{name}Values = [{items}]\n"
+    items_str = ", ".join(f'"{x}"' for x in items)
+    return (
+        f"{name}Type = Literal[{items_str}]\n"
+        f"{name}Values:list[{name}Type] = [{items_str}]\n"
+    )
 
 
 def create_literal_from_query(name: str, column: str, query: str) -> str:
