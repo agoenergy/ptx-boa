@@ -411,8 +411,8 @@ class Process(AbstractProcess):
 
         if "LOSS" in self._parameters and "EFF" in self._parameters:
             self._parameters["LOSS_FLOW"] = self._parameters.pop("LOSS")
-            if self.main_flow_code_in_or_out in self._parameters["LOSS_FLOW"]:
-                self._parameters["LOSS"] = self._parameters["LOSS_FLOW"].pop(
+            if self.main_flow_code_in_or_out in self._parameters["LOSS_FLOW"]:  # type: ignore # noqa
+                self._parameters["LOSS"] = self._parameters["LOSS_FLOW"].pop(  # type: ignore # noqa
                     self.main_flow_code_in_or_out
                 )
             # update EFF and CONV for losses
@@ -420,23 +420,23 @@ class Process(AbstractProcess):
             # NOTE: calculation: see https://github.com/agoenergy/ptx-boa/issues/581
             if "LOSS" in self._parameters:
                 eff_original = self._parameters["EFF"]
-                self._parameters["EFF"] = eff_original / (1 + self._parameters["LOSS"])
+                self._parameters["EFF"] = eff_original / (1 + self._parameters["LOSS"])  # type: ignore # noqa
 
         if "LOSS_FLOW" in self._parameters and "CONV" in self._parameters:
             # LOSS for CONV (if value exists in both)
             loss_flows = self._parameters.get("LOSS_FLOW", {})
             convs = self._parameters.get("CONV", {})
-            for fc in set(loss_flows) & set(convs):
-                conv_orig = convs[fc]
-                self._parameters["CONV"][fc] = conv_orig * (1 + loss_flows[fc])
+            for fc in set(loss_flows) & set(convs):  # type: ignore
+                conv_orig = convs[fc]  # type: ignore
+                self._parameters["CONV"][fc] = conv_orig * (1 + loss_flows[fc])  # type: ignore # noqa
 
         # FIXME: only for temporary test comparison?
         if (
-            any(self._parameters.get("CO2CPT-R", {}).values())
-            or any(self._parameters.get("CO2CPT-S", {}).values())
+            any(self._parameters.get("CO2CPT-R", {}).values())  # type: ignore
+            or any(self._parameters.get("CO2CPT-S", {}).values())  # type: ignore
         ) and self.process_code != "CCGT-CC#B":
             logger.warning("TODO: remove dummy CONV for CO2-C")
-            self._parameters["CONV"]["CO2-C"] = 1
+            self._parameters["CONV"]["CO2-C"] = 1  # type: ignore
 
     def calculate(self, main_flow_out: float):
         """Calculate all process values based on desired output flow."""
@@ -543,7 +543,9 @@ class AggregateProcess(AbstractProcess):
     def get_first_main_process_by_step(self, step: ProcessStepType) -> Process:
         """May raise Exception."""
         # TODO: faster if we create lookup dict first
-        return next(p for p in self.full_main_chain if p.process_step == step)
+        return next(
+            cast(Process, p) for p in self.full_main_chain if p.process_step == step
+        )
 
     @property
     def main_flow_code_out(self) -> FlowCodeType:
@@ -556,21 +558,21 @@ class AggregateProcess(AbstractProcess):
         return self.process_graph.main_processes[0].main_flow_code_in
 
     @property
-    def full_main_chain(self) -> list[AbstractProcess]:
+    def full_main_chain(self) -> list[Process]:
         """List of the entire main chain (including nested aggregated processes)."""
-        result: list[AbstractProcess] = []
+        result: list[Process] = []
         for proc in self.process_graph.main_processes:
             if isinstance(proc, AggregateProcess):
                 result += proc.full_main_chain
             else:
-                result.append(proc)
+                result.append(proc)  # type: ignore - should be Process
 
         return result
 
     @property
-    def secondary_processes(self) -> list[AbstractProcess]:
+    def secondary_processes(self) -> list[SecondaryProcess]:
         """List of all secondary processes (including nested aggregated processes)."""
-        result: list[AbstractProcess] = []
+        result: list[SecondaryProcess] = []
         for proc in self.process_graph.calculate_order:
             if isinstance(proc, AggregateProcess):
                 result += proc.secondary_processes  # recursion
@@ -579,7 +581,7 @@ class AggregateProcess(AbstractProcess):
                 # NOTE initial is modelled as secondary (because it has no inflow)
                 and not proc.is_initial
             ):
-                result.append(proc)
+                result.append(proc)  # type: ignore should be SecondaryProcess
 
         return result
 
@@ -884,10 +886,10 @@ class ChainTransportProcess(ChainSectionProcess):
                 target_country_code=data_lookup_defaults["target_country_code"],
                 use_ship=self.transport_type == "Ship",
                 ship_own_fuel=self.ship_own_fuel,
-                dist_ship=self._parameters["DST-S-D"],
-                dist_pipeline=self._parameters["DST-S-DP"],
-                seashare_pipeline=self._parameters["SEASHARE"],
-                existing_pipeline_cap=self._parameters["CAP-T"],
+                dist_ship=self._parameters["DST-S-D"],  # type: ignore
+                dist_pipeline=self._parameters["DST-S-DP"],  # type: ignore
+                seashare_pipeline=self._parameters["SEASHARE"],  # type: ignore
+                existing_pipeline_cap=self._parameters["CAP-T"],  # type: ignore
             )
         )
         # FIXME: this is really ugly: we need to call super first to get
@@ -897,12 +899,12 @@ class ChainTransportProcess(ChainSectionProcess):
 
         for step, dist in transport_distances.items():
             proc = self.get_first_main_process_by_step(step)
-            proc._parameters["DIST"] = dist
+            proc._parameters["DIST"] = dist  # type: ignore
 
         # FIXME !!! EFF
         for proc in self.process_graph.calculate_order:
             logger.warning("TODO: calculate EFF for transport")
-            proc._parameters["EFF"] = 1
+            proc._parameters["EFF"] = 1  # type: ignore
 
 
 def group_by_flow_type_out(
@@ -1111,7 +1113,7 @@ class ParameterGetter(Protocol):
         process_code: ProcessCodeType | None = None,
         flow_code: FlowCodeType | None = None,
         **kwargs,
-    ) -> float | str:
+    ) -> float | None:
         """Get parameter value."""
         ...
 
@@ -1330,19 +1332,20 @@ def create_chain_process_api_wrapper(
 def _temp_data_adapter(chain_process: ChainProcess) -> dict:
 
     proc_export: AggregateProcess = chain_process.get_subprocesses_by_class(
+        # type: ignore
         ChainExportProcess
-    )[
-        0
-    ]  # type: ignore
+    )[0]
     proc_transport: AggregateProcess = chain_process.get_subprocesses_by_class(
+        # type: ignore
         ChainTransportProcess
     )[0]
     try:
         proc_import: AggregateProcess = chain_process.get_subprocesses_by_class(
+            # type: ignore
             ChainImportProcess
         )[0]
     except Exception:
-        proc_import = None
+        proc_import = None  # type: ignore
 
     context = chain_process._data_lookup_defaults
 
@@ -1350,9 +1353,9 @@ def _temp_data_adapter(chain_process: ChainProcess) -> dict:
     parameter["SPECCOST"] = {}
     # also aggregate all specccost
     for p in proc_export.get_subprocesses_by_class(MarketProcess):
-        print(p)
-        parameter["SPECCOST"] = parameter["SPECCOST"] | p._parameters.get(
-            "SPECCOST", {}
+        parameter["SPECCOST"] = parameter["SPECCOST"] | p._parameters.get(  # type: ignore # noqa
+            "SPECCOST",
+            {},
         )
 
     if proc_import:
@@ -1360,9 +1363,9 @@ def _temp_data_adapter(chain_process: ChainProcess) -> dict:
         parameter_i["SPECCOST"] = {}
         # also aggregate all specccost
         for p in proc_import.get_subprocesses_by_class(MarketProcess):
-            print(p)
-            parameter_i["SPECCOST"] = parameter_i["SPECCOST"] | p._parameters.get(
-                "SPECCOST", {}
+            parameter_i["SPECCOST"] = parameter_i["SPECCOST"] | p._parameters.get(  # type: ignore # noqa
+                "SPECCOST",
+                {},
             )
     else:
         parameter_i = {}
@@ -1386,6 +1389,7 @@ def _temp_data_adapter(chain_process: ChainProcess) -> dict:
     ]
 
     def get_proc_data(p: Process) -> dict:
+        assert p._parameters
         data = p._parameters | {"process_code": p.process_code, "step": p.process_step}
         return data
 
