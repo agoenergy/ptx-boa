@@ -17,13 +17,11 @@ from ptxboa import (
 )
 from ptxboa.api_optimize import PtxOpt
 from ptxboa.static import (
-    ChainType,
     DimensionType,
     FlowCodeType,
     OutputUnitValues,
     ParameterCodeType,
     ParameterRangeValues,
-    ProcessCodeResType,
     ProcessCodeType,
     ProcessStepType,
     ScenarioType,
@@ -34,7 +32,7 @@ from ptxboa.static import (
     TransportValues,
     YearValues,
 )
-from ptxboa.static._type_defs import CalculateDataType
+from ptxboa.static._type_defs import CalculateDataType, ChainDef
 
 PARAMETER_DEFAULTS: dict[ParameterCodeType, float] = {
     "EFF": 1,
@@ -952,13 +950,7 @@ class DataHandler:
 
     def get_calculation_data(
         self,
-        secondary_processes: Dict[FlowCodeType, ProcessCodeType],
-        chain_name: ChainType,
-        process_code_res: ProcessCodeResType,
-        source_region_code: SourceRegionCodeType,
-        target_country_code: TargetCountryCodeType,
-        use_ship: bool,
-        ship_own_fuel: bool,
+        chain_def: ChainDef,
         optimize_flh: bool,
         use_user_data_for_optimize_flh: bool = False,
     ) -> CalculateDataType:
@@ -966,20 +958,7 @@ class DataHandler:
 
         Parameters
         ----------
-        secondary_processes : Dict[FlowCodeType, ProcessCodeType]
-            _description_
-        chain_name : ChainNameType
-            _description_
-        process_code_res : ProcessCodeResType
-            _description_
-        source_region_code : SourceRegionCodeType
-            _description_
-        target_country_code : TargetCountryCodeType
-            _description_
-        use_ship : bool
-            _description_
-        ship_own_fuel : bool
-            _description_
+        chain_def: ChainDef
         optimize_flh : bool
             _description_
         use_user_data_for_optimize_flh : bool, optional
@@ -991,13 +970,7 @@ class DataHandler:
             _description_
         """
         data = self._get_calculation_data(
-            secondary_processes=secondary_processes,
-            chain_name=chain_name,
-            process_code_res=process_code_res,
-            source_region_code=source_region_code,
-            target_country_code=target_country_code,
-            use_ship=use_ship,
-            ship_own_fuel=ship_own_fuel,
+            chain_def=chain_def,
             use_user_data=True,
         )
 
@@ -1007,13 +980,7 @@ class DataHandler:
             # get a different dataset for optimization
             if self.user_data is not None and not use_user_data_for_optimize_flh:
                 data_opt = self._get_calculation_data(
-                    secondary_processes=secondary_processes,
-                    chain_name=chain_name,
-                    process_code_res=process_code_res,
-                    source_region_code=source_region_code,
-                    target_country_code=target_country_code,
-                    use_ship=use_ship,
-                    ship_own_fuel=ship_own_fuel,
+                    chain_def=chain_def,
                     use_user_data=False,  # THIS IS THE IMPORTANT BIT
                 )
             else:
@@ -1025,16 +992,18 @@ class DataHandler:
 
     def _get_calculation_data(
         self,
-        secondary_processes: Dict[FlowCodeType, ProcessCodeType],
-        chain_name: ChainType,
-        process_code_res: ProcessCodeResType,
-        source_region_code: SourceRegionCodeType,
-        target_country_code: TargetCountryCodeType,
-        use_ship: bool,
-        ship_own_fuel: bool,
+        chain_def: ChainDef,
         use_user_data: bool = True,
     ) -> CalculateDataType:
         """Calculate results."""
+        secondary_processes = chain_def.secondary_processes
+        chain_name = chain_def.chain_name
+        process_code_res = chain_def.process_code_res
+        source_region_code = chain_def.source_region_code
+        target_country_code = chain_def.target_country_code
+        use_ship = chain_def.use_ship
+        ship_own_fuel = chain_def.ship_own_fuel
+
         # get process codes for selected chain
         df_processes = self.get_dimension("process")
         df_flows = self.get_dimension("flow")

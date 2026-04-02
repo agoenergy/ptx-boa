@@ -7,7 +7,7 @@ from typing import Optional
 import pandas as pd
 
 from ptxboa.api_data import DataHandler
-from ptxboa.static._type_defs import CalculateDataType
+from ptxboa.static._type_defs import CalculateDataType, PtxCalcResult
 from ptxboa.utils import annuity, rescale_dict
 
 logger = logging.getLogger()
@@ -68,15 +68,6 @@ def _aggregate_result_flows(
         else:
             groups[key] += rf
     return groups
-
-
-@dataclass(slots=True)
-class PtxCalcResult:
-    df_results_cost: pd.DataFrame
-    df_results_emissions_e_g_co2e: Optional[pd.DataFrame]
-    df_results_emissions_m_g_co2e: Optional[pd.DataFrame]
-    results_flows_chain: Optional[list]
-    results_flows_secondary: Optional[list]
 
 
 def _calculate_emissions(

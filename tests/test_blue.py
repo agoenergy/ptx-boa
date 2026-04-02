@@ -8,6 +8,7 @@ import pytest
 from ptxboa.api import PtxboaAPI, PtxCalc
 from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler
 from ptxboa.process_classes import ChainProcess
+from ptxboa.static._type_defs import ChainDef
 from tests.test_api import ptxdata_dir_static
 
 
@@ -300,7 +301,9 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
         user_data=user_data,
         tool_version_color="blue",
     )
-    calculation_data_ = data_handler.get_calculation_data(**kwargs, optimize_flh=False)
+    calculation_data_ = data_handler.get_calculation_data(
+        ChainDef(**kwargs), optimize_flh=False
+    )
     ptxcalc_results = PtxCalc.calculate(calculation_data_)  # type: ignore
 
     # test api output

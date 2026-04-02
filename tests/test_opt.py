@@ -16,6 +16,7 @@ from app.tab_green_optimization import calc_aggregate_statistics
 from flh_opt.api_opt import get_profiles_and_weights, optimize
 from ptxboa import DEFAULT_CACHE_DIR
 from ptxboa.api import DataHandler, PtxboaAPI
+from ptxboa.static._type_defs import ChainDef
 from ptxboa.utils import annuity
 
 logging.basicConfig(level=logging.INFO)
@@ -431,13 +432,15 @@ def test_prepare_data_for_optimize_incl_sec_proc():
 
         # prepare data in the same way as in PtxboaAPI.calculate():
         data = data_handler._get_calculation_data(
-            secondary_processes=secondary_processes,
-            chain_name=chain_name,
-            process_code_res=process_code_res,
-            source_region_code=source_region_code,
-            target_country_code=target_country_code,
-            use_ship=use_ship,
-            ship_own_fuel=ship_own_fuel,
+            ChainDef(
+                secondary_processes=secondary_processes,
+                chain_name=chain_name,
+                process_code_res=process_code_res,
+                source_region_code=source_region_code,
+                target_country_code=target_country_code,
+                use_ship=use_ship,
+                ship_own_fuel=ship_own_fuel,
+            ),
             use_user_data=False,
         )
 
@@ -470,13 +473,15 @@ def test_prepare_data_for_optimize_incl_sec_proc():
         # do the same using the proper api call
 
         data = data_handler.get_calculation_data(
-            secondary_processes=secondary_processes,
-            chain_name=chain_name,
-            process_code_res=process_code_res,
-            source_region_code=source_region_code,
-            target_country_code=target_country_code,
-            use_ship=use_ship,
-            ship_own_fuel=ship_own_fuel,
+            ChainDef(
+                secondary_processes=secondary_processes,
+                chain_name=chain_name,
+                process_code_res=process_code_res,
+                source_region_code=source_region_code,
+                target_country_code=target_country_code,
+                use_ship=use_ship,
+                ship_own_fuel=ship_own_fuel,
+            ),
             optimize_flh=True,
             use_user_data_for_optimize_flh=False,
         )

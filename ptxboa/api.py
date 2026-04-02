@@ -8,6 +8,7 @@ import pandas as pd
 import pypsa
 
 from ptxboa import logger
+from ptxboa.static._type_defs import ChainDef
 
 from . import PROFILES_DIR
 from .api_calc import PtxCalc
@@ -223,11 +224,12 @@ class PtxboaAPI:
             secproc_heat = None
             secproc_el = None
 
-        data = data_handler.get_calculation_data(
-            secondary_processes={  # type: ignore
+        chain_def = ChainDef(
+            chain_name=chain,
+            secondary_processes={
                 flow_code: (
                     DataHandler.get_dimensions_parameter_code(
-                        dimension=dimension,  # type: ignore
+                        dimension=dimension,
                         parameter_name=parameter_name,
                     )
                     if parameter_name
@@ -240,8 +242,7 @@ class PtxboaAPI:
                     ("EL", "secproc_el", secproc_el),
                     ("CO2-C", "secproc_ccs", secproc_ccs or secproc_ccs_i),
                 ]
-            },
-            chain_name=chain,
+            },  # type:ignore
             process_code_res=DataHandler.get_dimensions_parameter_code(
                 "res_gen", res_gen
             ),  # type: ignore
@@ -253,6 +254,9 @@ class PtxboaAPI:
             ),  # type: ignore
             use_ship=(transport == "Ship"),
             ship_own_fuel=ship_own_fuel,
+        )
+        data = data_handler.get_calculation_data(
+            chain_def=chain_def,
             optimize_flh=optimize_flh,
             use_user_data_for_optimize_flh=use_user_data_for_optimize_flh,
         )

@@ -13,6 +13,7 @@ from ptxboa.api_data import (
     ScenarioValues,
     _load_scenario_data,
 )
+from ptxboa.static._type_defs import ChainDef
 from tests.utils import assert_deep_equal
 
 
@@ -205,7 +206,7 @@ def test_get_dimensions_parameter_code(dimension, parameter_name, expected_code)
 def test_get_calculation_data(ptxdata_dir, scenario, kwargs, request):
     ptxdata_dir = request.getfixturevalue(ptxdata_dir)
     data_handler = DataHandler(data_dir=ptxdata_dir, scenario=scenario)
-    data = data_handler.get_calculation_data(**kwargs, optimize_flh=False)
+    data = data_handler.get_calculation_data(ChainDef(**kwargs), optimize_flh=False)
     # recursively use pytest.approx
 
     def rec_approx(x):
@@ -367,7 +368,9 @@ def test_get_calculation_data_w_opt(ptxdata_dir, scenario, kwargs, request):
         data_handler = DataHandler(
             data_dir=ptxdata_dir, scenario=scenario, cache_dir=Path(cache_dir)
         )
-        result = data_handler.get_calculation_data(**kwargs, optimize_flh=True)
+        result = data_handler.get_calculation_data(
+            ChainDef(**kwargs), optimize_flh=True
+        )
     exp_result = {
         "flh_opt_process": {
             "PV-FIX": {
@@ -553,13 +556,15 @@ def test_validate_chains(chain, is_green, is_blue, use_ship, ship_own_fuel):
     # _validate_process_chain called inside here
 
     dh._get_calculation_data(
-        secondary_processes={},
-        chain_name=chain,
-        process_code_res=process_code_res,
-        source_region_code="ESP",
-        target_country_code="DEU",
-        use_ship=use_ship,
-        ship_own_fuel=ship_own_fuel,
+        ChainDef(
+            secondary_processes={},
+            chain_name=chain,
+            process_code_res=process_code_res,
+            source_region_code="ESP",
+            target_country_code="DEU",
+            use_ship=use_ship,
+            ship_own_fuel=ship_own_fuel,
+        ),
     )
 
 
