@@ -5,32 +5,29 @@ from typing import Iterable, Protocol, Union, cast
 
 import matplotlib.pyplot as plt
 import networkx as nx
-import pandas as pd
 
 from ptxboa import logger
+from ptxboa.api import get_chain_color
 from ptxboa.api_data import PARAMETER_DEFAULTS, DataHandler
 from ptxboa.static import (
     ChainType,
     DataQueryParameterType,
     FlowCodeType,
-    OutputUnitType,
     ParameterCodeType,
     ParameterCodeValues,
     ProcessCodeType,
     ProcessStepType,
     ProcessStepValues,
-    ResGenType,
-    ScenarioType,
-    SecProcCO2Type,
-    SecProcH2OType,
     SourceRegionCodeType,
-    SourceRegionNameType,
     TargetCountryCodeType,
-    TargetCountryNameType,
-    ToolVersionColorType,
     TransportType,
 )
-from ptxboa.static._type_defs import CalculateDataType, ProcessDataType
+from ptxboa.static._type_defs import (
+    CalculateDataType,
+    ChainDefStatic,
+    ProcessDataType,
+    PtxCalcResult,
+)
 
 AggregateProcessDataType = tuple[ProcessDataType, dict["Process", ProcessDataType]]
 
@@ -810,75 +807,24 @@ class ChainProcess(AggregateProcess):
     _instances: dict[object, "ChainProcess"] = {}
 
     @classmethod
-    def get_or_create(
-        cls,
-        secproc_co2: SecProcCO2Type | None,
-        secproc_water: SecProcH2OType | None,
-        chain: ChainType,
-        res_gen: ResGenType | None,
-        transport: TransportType,
-        ship_own_fuel: bool,
-        # unused
-        scenario: ScenarioType,
-        region: SourceRegionNameType,
-        country: TargetCountryNameType,
-        tool_version_color: ToolVersionColorType = "green",  # used only for checking
-        user_data: pd.DataFrame | None = None,
-        output_unit: OutputUnitType = "USD/MWh",
-        optimize_flh: bool = True,
-        use_user_data_for_optimize_flh: bool = False,
-    ) -> "ChainProcess":
-        """Create Chain (if not exist)."""
-        chain_color: ToolVersionColorType = (
-            "green" if _df_chain.at[chain, "is_green"] else "blue"
-        )
-        assert chain_color == tool_version_color
-
-        key = frozenset(
-            {
-                ("secproc_co2", secproc_co2),
-                ("secproc_water", secproc_water),
-                ("chain", chain),
-                ("res_gen", res_gen),
-                ("transport", transport),
-                ("ship_own_fuel", ship_own_fuel),
-            }
-        )
+    def get_or_create(cls, chain_def: ChainDefStatic) -> "ChainProcess":
+        """Get or create static instance."""
+        key = chain_def.unique_key
         if key not in cls._instances:
-            cls._instances[key] = cls._create(
-                secproc_co2=secproc_co2,
-                secproc_water=secproc_water,
-                chain=chain,
-                res_gen=res_gen,
-                transport=transport,
-                ship_own_fuel=ship_own_fuel,
-            )
-
+            cls._instances[key] = cls._create(chain_def)
         return cls._instances[key]
 
-    @classmethod
-    def _create(
-        cls,
-        secproc_co2: SecProcCO2Type | None,
-        secproc_water: SecProcH2OType | None,
-        chain: ChainType,
-        res_gen: ResGenType | None,
-        transport: TransportType,
-        ship_own_fuel: bool,
-    ) -> "ChainProcess":
-        chain_color: ToolVersionColorType = (
-            "green" if _df_chain.at[chain, "is_green"] else "blue"
-        )
+    def calculate(self, data: CalculateDataType) -> PtxCalcResult:
+        """Calcualte results."""
+        result = PtxCalcResult()  # TODO
+        return result
 
-        secondary_process_codes: set[ProcessCodeType] = set()
-        if secproc_co2:
-            secondary_process_codes.add(
-                _df_process_by_name.at[secproc_co2, "process_code"]  # type: ignore
-            )
-        if secproc_water:
-            secondary_process_codes.add(
-                _df_process_by_name.at[secproc_water, "process_code"]  # type: ignore
-            )
+    @classmethod
+    def _create(cls, chain_def: ChainDefStatic) -> "ChainProcess":
+        chain_color = get_chain_color(chain_def.chain_name)
+
+        secondary_process_codes = set(chain_def.secondary_processes.values())
+
         first_process_code: ProcessCodeType
         if chain_color == "blue":
             first_process_code = "NG-PROD#B"
@@ -888,20 +834,19 @@ class ChainProcess(AggregateProcess):
                 "CO2-T+S#B",
             }  # type: ignore
         else:
-            assert res_gen
-            first_process_code = _df_process_by_name.at[res_gen, "process_code"]  # type: ignore # noqa
+            first_process_code = chain_def.process_code_res
 
         return ChainProcess(
-            transport=transport,
-            ship_own_fuel=ship_own_fuel,
-            chain=chain,
+            transport=chain_def.transport,
+            ship_own_fuel=chain_def.ship_own_fuel,
+            chain=chain_def.chain_name,
             first_process_code=first_process_code,
             secondary_process_codes=secondary_process_codes,
         )
 
     def __init__(
         self,
-        chain: str,
+        chain: ChainType,
         first_process_code: ProcessCodeType,
         secondary_process_codes: set[ProcessCodeType],
         transport: TransportType,
@@ -1010,11 +955,11 @@ class ChainProcess(AggregateProcess):
         data_handler: DataHandler,
         source_region_code: SourceRegionCodeType,
         target_country_code: TargetCountryCodeType,
+        use_user_data: bool = True,
     ) -> CalculateDataType:
         """Get calculation data."""
         parameter_getters = create_parameter_getters(
-            data_handler=data_handler,
-            use_user_data=True,  # TODO: always True?
+            data_handler=data_handler, use_user_data=use_user_data
         )
 
         data_lookup_defaults = {

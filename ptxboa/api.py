@@ -225,9 +225,11 @@ class PtxboaAPI:
 
         # convert to output unit
         df_results_cost_unscaled = ptxcalc_result.df_results_cost.copy()
-        calor = data["parameter"]["CALOR"]
         convert_to_output_unit_inplace(
-            ptxcalc_result, output_unit=output_unit, chain=chain, calor=calor
+            ptxcalc_result,
+            output_unit=output_unit,
+            chain=chain,
+            calor=data["parameter"]["CALOR"],
         )
 
         # add user settings
@@ -430,11 +432,12 @@ def _translate_and_validate_user_settings(
     ship_own_fuel: bool,
     optimize_flh: bool = True,
     tool_version_color: ToolVersionColorType = "green",
+    **_,  # allow others - unused
 ) -> tuple[ChainDef, ToolVersionColorType, bool]:
     chain_data = DataHandler.get_dimension("chain").loc[chain]
 
     # check tool_version_color
-    tool_version_color_chain = "blue" if chain_data["is_blue"] else "green"
+    tool_version_color_chain = get_chain_color(chain)
     if tool_version_color_chain != tool_version_color:
         logger.error(
             "Chain is %s => changing tool_version_color from %s",
@@ -442,6 +445,9 @@ def _translate_and_validate_user_settings(
             tool_version_color,
         )
         tool_version_color = tool_version_color_chain
+
+    if tool_version_color == "green" and not res_gen:
+        raise Exception("No RES defined.")
 
     # check optimize_flh: make sure optimize_flh=False in blue tool
     if optimize_flh and tool_version_color == "blue":
@@ -553,3 +559,7 @@ def correct_transport(
         ship_own_fuel = False
 
     return transport, ship_own_fuel
+
+
+def get_chain_color(chain: ChainType) -> ToolVersionColorType:
+    return "blue" if DataHandler.dimensions["chain"].loc[chain, "is_blue"] else "green"

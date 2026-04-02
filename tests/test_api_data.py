@@ -6,7 +6,7 @@ from tempfile import TemporaryDirectory
 import pandas as pd
 import pytest
 
-from ptxboa.api import correct_transport
+from ptxboa.api import correct_transport, get_chain_color
 from ptxboa.api_data import (
     DEFAULT_DATA_DIR,
     STATIC_DATA_DIR,
@@ -14,7 +14,7 @@ from ptxboa.api_data import (
     ScenarioValues,
     _load_scenario_data,
 )
-from ptxboa.static import ChainType, TransportType
+from ptxboa.static import ChainType, ChainValues, TransportType
 from ptxboa.static._type_defs import ChainDef
 from tests.utils import assert_deep_equal
 
@@ -525,13 +525,8 @@ def test_get_calculation_data_w_opt(ptxdata_dir, scenario, kwargs, request):
 
 
 @pytest.mark.parametrize(
-    "chain, is_green, is_blue",
-    [
-        (x.chain, x.is_green, x.is_blue)
-        for x in DataHandler.get_dimension(
-            "chain", tool_version_color=None
-        ).itertuples()
-    ],
+    "chain",
+    ChainValues,
 )
 @pytest.mark.parametrize(
     "transport, ship_own_fuel",
@@ -543,16 +538,15 @@ def test_get_calculation_data_w_opt(ptxdata_dir, scenario, kwargs, request):
 )
 def test_validate_chains(
     chain: ChainType,
-    is_green: bool,
-    is_blue: bool,
     transport: TransportType,
     ship_own_fuel: bool,
 ):
-    if is_green and is_blue:
-        raise ValueError("chain is both green and blue")
+    # skip test chain
+    if chain == "Blue Iron (blue)*":
+        return
 
-    tool_version_color = "green" if is_green else "blue"
-    process_code_res = "RES-HYBR" if is_green else None
+    tool_version_color = get_chain_color(chain)
+    process_code_res = "RES-HYBR" if (tool_version_color == "green") else None
 
     dh = DataHandler(
         scenario="2030 (medium)",

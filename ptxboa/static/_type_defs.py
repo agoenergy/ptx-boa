@@ -43,12 +43,29 @@ class PtxCalcResult:
     results_flows_secondary: Optional[list]
 
 
-@dataclass(slots=True)
-class ChainDef:
-    secondary_processes: dict[FlowCodeType, ProcessCodeType]
+@dataclass(slots=True, frozen=True)
+class ChainDefStatic:
+    """Without region/country."""
+
     chain_name: ChainType
     process_code_res: ProcessCodeResType
-    source_region_code: SourceRegionCodeType
-    target_country_code: TargetCountryCodeType
+    secondary_processes: dict[FlowCodeType, ProcessCodeType]
     transport: TransportType
     ship_own_fuel: bool
+
+    @property
+    def unique_key(self):
+        """Hashable id."""
+        return (
+            self.chain_name,
+            self.process_code_res,
+            frozenset(self.secondary_processes.values()),  # set of ProcessCodeType
+            self.transport,
+            self.ship_own_fuel,
+        )
+
+
+@dataclass(slots=True, frozen=True)
+class ChainDef(ChainDefStatic):
+    source_region_code: SourceRegionCodeType
+    target_country_code: TargetCountryCodeType

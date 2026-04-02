@@ -5,7 +5,7 @@ from pprint import pprint
 import pandas as pd
 import pytest
 
-from ptxboa.api import PtxboaAPI, PtxCalc
+from ptxboa.api import PtxboaAPI, PtxCalc, _translate_and_validate_user_settings
 from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler
 from ptxboa.process_classes import ChainProcess
 from ptxboa.static._type_defs import ChainDef
@@ -1533,13 +1533,17 @@ def test_new_blue_chain_real_data_2(api_kwargs, calculation_data_exp):
         data_dir=DEFAULT_DATA_DIR,
         user_data=None,
     )
-    chain_process = ChainProcess.get_or_create(**api_kwargs, tool_version_color="blue")
+    chain_def, tool_version_color, _optimize_flh = (
+        _translate_and_validate_user_settings(**api_kwargs)
+    )
+    assert tool_version_color == "blue"
 
-    _df_region_by_name = DataHandler.get_dimension("region")
+    chain_process = ChainProcess.get_or_create(chain_def)
+
     calculation_data_ = chain_process.get_calculation_data(
         data_handler=data_handler,
-        source_region_code=_df_region_by_name.at[api_kwargs["region"], "region_code"],  # type: ignore # noqa
-        target_country_code=_df_region_by_name.at[api_kwargs["country"], "region_code"],  # type: ignore # noqa
+        source_region_code=chain_def.source_region_code,
+        target_country_code=chain_def.target_country_code,
     )
     calculation_data = _sort_nested(_round_nested(calculation_data_))
 

@@ -10,6 +10,7 @@ import coloredlogs
 import pandas as pd
 
 from ptxboa import logger
+from ptxboa.api import get_chain_color
 from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler
 from ptxboa.process_classes import ChainProcess
 from ptxboa.static import (
@@ -76,9 +77,7 @@ def create_permutations(scenario: ScenarioType) -> Iterable[Settings]:
 
     for chain_spec in _df_chain.to_dict(orient="records"):
         chain = chain_spec["chain"]
-        tool_version_color: ToolVersionColorType = (
-            "green" if chain_spec["is_green"] else "blue"
-        )
+        tool_version_color = get_chain_color(chain)
         secproc_co2: SecProcCO2Type | None = (
             "Direct Air Capture (blue)"
             if tool_version_color == "blue"
