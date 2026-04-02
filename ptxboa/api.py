@@ -187,6 +187,8 @@ class PtxboaAPI:
             * `cost_type`: one of {RESULT_COST_TYPES}
 
         """
+        # CHECKS
+
         # make sure optimize_flh=False in blue tool
         if optimize_flh and tool_version_color == "blue":
             logger.warning("optimize_flh should be False in blue tool.")

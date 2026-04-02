@@ -11,7 +11,7 @@ from ptxboa.api_data import (
     STATIC_DATA_DIR,
     DataHandler,
     ScenarioValues,
-    load_scenario_data,
+    _load_scenario_data,
 )
 from tests.utils import assert_deep_equal
 
@@ -835,7 +835,7 @@ def test_chains():
     # is never used
     dfs = []
     for scen in ScenarioValues:
-        df = load_scenario_data(data_dir=DEFAULT_DATA_DIR, scenario=scen)
+        df = _load_scenario_data(data_dir=DEFAULT_DATA_DIR, scenario=scen)
         dfs.append(df)
     df_data = pd.concat(dfs)
     data_proc_flow_combos = {

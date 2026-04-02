@@ -52,7 +52,7 @@ def get_data_hash_md5(key: Union[None, int, float, str, bool, dict, list]) -> st
     return hash_md5
 
 
-class TempFile:
+class _TempFile:
     """Custom temporary file handler."""
 
     def __init__(self, filepath):
@@ -82,7 +82,7 @@ class TempFile:
             logger.info(f"saved file {self.filepath}")
 
 
-class ProfilesHashes(metaclass=SingletonMeta):
+class _ProfilesHashes(metaclass=SingletonMeta):
     """Only instanciated once for path."""
 
     PATTERN = re.compile(
@@ -116,7 +116,7 @@ class ProfilesHashes(metaclass=SingletonMeta):
         return result
 
 
-class ProfilesFLH(metaclass=SingletonMeta):
+class _ProfilesFLH(metaclass=SingletonMeta):
     """Only instanciated once for profiles_path."""
 
     PATTERN = re.compile(r"^(?P<region>[^_]+)_(?P<res>.+)_aggregated.csv$")
@@ -194,25 +194,25 @@ class PtxOpt:
 
     def __init__(self, profiles_path: Path, cache_dir: Path | None = None):
         self.cache_dir = Path(cache_dir) if cache_dir else None
-        self.profiles_hashes = ProfilesHashes(profiles_path)
-        self.profiles_flh = ProfilesFLH(profiles_path)
+        self.profiles_hashes = _ProfilesHashes(profiles_path)
+        self.profiles_flh = _ProfilesFLH(profiles_path)
 
     def _save(
         self, filepath: Path | str, data: object, network: Network, metadata: dict
     ) -> None:
         filepath = str(filepath)
 
-        with TempFile(filepath) as filepath_tmp:
+        with _TempFile(filepath) as filepath_tmp:
             with open(filepath_tmp, "wb") as file:
                 pickle.dump(data, file)
 
         # also save network
         filepath_nw = filepath + ".network.nc"
-        with TempFile(filepath_nw) as filepath_tmp:
+        with _TempFile(filepath_nw) as filepath_tmp:
             network.export_to_netcdf(filepath_tmp)
 
         # also save metadata
-        with TempFile(filepath + ".metadata.json") as filepath_tmp:
+        with _TempFile(filepath + ".metadata.json") as filepath_tmp:
             with open(filepath_tmp, "w", encoding="utf-8") as file:
                 json.dump(metadata, file, indent=2, ensure_ascii=False)
 
@@ -433,7 +433,7 @@ class PtxOpt:
         hashsum = get_data_hash_md5(hash_data)
         return hash_data, hashsum
 
-    def get_data(
+    def get_calculation_data(
         self, data_opt: CalculateDataType, data: CalculateDataType
     ) -> CalculateDataType:
         """Get calculation data including optimized FLH.

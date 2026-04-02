@@ -511,7 +511,7 @@ class _ParameterGetter:
         return result
 
 
-def load_scenario_data(data_dir, scenario: str) -> pd.DataFrame:
+def _load_scenario_data(data_dir, scenario: str) -> pd.DataFrame:
     scenario_filename = (
         f"{scenario.replace(' ', '_').replace(')', '').replace('(', '')}"
     )
@@ -568,7 +568,7 @@ class DataHandler:
             ),
         )
 
-        self._scenario_data = load_scenario_data(self.data_dir, scenario).copy()
+        self._scenario_data = _load_scenario_data(self.data_dir, scenario).copy()
 
         if user_data is not None:
             self.scenario_data = self._update_scenario_data_with_user_data(
@@ -1019,7 +1019,7 @@ class DataHandler:
             else:
                 data_opt = data
 
-            data = self.optimizer.get_data(data_opt, data)
+            data = self.optimizer.get_calculation_data(data_opt, data)
 
         return data
 

@@ -23,7 +23,7 @@ def _sum_dict(x: dict | None, y: dict | None) -> dict:
     return {k: _sum_float(x.get(k), y.get(k)) for k in (set(x) | set(y))}
 
 
-def get_secproc_step(process_code: str) -> str:
+def _get_secproc_step(process_code: str) -> str:
     prefix = "SECONDARY:"
     proc_cls = DataHandler.get_dimension("process").loc[
         process_code, "result_process_type"
@@ -34,7 +34,7 @@ def get_secproc_step(process_code: str) -> str:
 
 
 @dataclass(slots=True)
-class ResultsFlows:
+class _ResultsFlows:
     process_code: str
     process_step: str
     main_input: float | None
@@ -42,12 +42,12 @@ class ResultsFlows:
     flows: dict[str, float]
     emissions: Optional[dict[str, float]] = None
 
-    def __add__(self, other: "ResultsFlows") -> "ResultsFlows":
+    def __add__(self, other: "_ResultsFlows") -> "_ResultsFlows":
         assert (
             self.process_code == other.process_code
             and self.process_step == other.process_step
         )
-        return ResultsFlows(
+        return _ResultsFlows(
             process_code=self.process_code,
             process_step=self.process_step,
             main_input=_sum_float(self.main_input, other.main_input),
@@ -58,8 +58,8 @@ class ResultsFlows:
 
 
 def _aggregate_result_flows(
-    list_result_flows: list[ResultsFlows],
-) -> dict[tuple, ResultsFlows]:
+    list_result_flows: list[_ResultsFlows],
+) -> dict[tuple, _ResultsFlows]:
     groups = {}
     for rf in list_result_flows:
         key = (rf.process_code, rf.process_step)
@@ -79,8 +79,8 @@ class PtxCalcResult:
     results_flows_secondary: Optional[list]
 
 
-def calculate_emissions(
-    results_flows: ResultsFlows,
+def _calculate_emissions(
+    results_flows: _ResultsFlows,
     step_data: dict,
     main_flow_code_in: str | None,
     main_flow_code_out: str,
@@ -187,7 +187,7 @@ def calculate_emissions(
         def get_in_co2(flow_code: str | None, flow_net: float):
             return flow_net * EF_DIRECT.get(flow_code, 0)
 
-        main_input_net, main_input_loss = calculate_net_loss(
+        main_input_net, main_input_loss = _calculate_net_loss(
             results_flows.main_input or 0, LOSS_MAIN
         )
 
@@ -212,7 +212,7 @@ def calculate_emissions(
                 continue
             factor_loss_flow = LOSS_FLOW.get(flow_code, 0)
 
-            flow_input_net, flow_input_loss = calculate_net_loss(
+            flow_input_net, flow_input_loss = _calculate_net_loss(
                 flow_input_gross, factor_loss_flow
             )
 
@@ -270,7 +270,7 @@ def calculate_emissions(
     return result
 
 
-def _rescale_result_flows(results_flows: ResultsFlows, norm_factor: float) -> None:
+def _rescale_result_flows(results_flows: _ResultsFlows, norm_factor: float) -> None:
     results_flows.main_output *= norm_factor
     if results_flows.main_input:
         results_flows.main_input *= norm_factor
@@ -353,8 +353,8 @@ class PtxCalc:
         results_emissions_e_g_co2e = []
         results_emissions_m_g_co2e = []
 
-        results_flows_chain: list[ResultsFlows] = []
-        results_flows_secondary: list[ResultsFlows] = []
+        results_flows_chain: list[_ResultsFlows] = []
+        results_flows_secondary: list[_ResultsFlows] = []
 
         last_emissions = {}
 
@@ -395,7 +395,7 @@ class PtxCalc:
             if process_code not in ["EL-STR", "H2-STR"]:
                 main_output_value = main_input_value * eff
 
-            results_flows = ResultsFlows(
+            results_flows = _ResultsFlows(
                 process_code=process_code,
                 process_step=process_step,
                 main_input=main_input_value,
@@ -451,7 +451,7 @@ class PtxCalc:
                 results_flows.flows[flow_code] = flow_value
 
             proc = df_processes.loc[process_code]
-            last_emissions = calculate_emissions(
+            last_emissions = _calculate_emissions(
                 results_flows,
                 step_data,
                 proc.main_flow_code_in,
@@ -523,7 +523,7 @@ class PtxCalc:
                         (sec_result_process_type, sec_process_code_costs, "OPEX", opex)
                     )
 
-                    results_flows_sec = ResultsFlows(
+                    results_flows_sec = _ResultsFlows(
                         process_code=sec_process_code,
                         process_step=sec_result_process_type,  # type: ignore
                         main_input=flow_value,  # FIXME?? input None or main_output
@@ -582,10 +582,10 @@ class PtxCalc:
                     sec_proc_flow_in = DataHandler.get_dimension("process").loc[
                         sec_process_code
                     ]["main_flow_code_in"]
-                    sec_emissions = calculate_emissions(
+                    sec_emissions = _calculate_emissions(
                         results_flows=results_flows_sec,
                         step_data=sec_process_data
-                        | {"step": get_secproc_step(sec_process_code)},
+                        | {"step": _get_secproc_step(sec_process_code)},
                         main_flow_code_in=sec_proc_flow_in,
                         main_flow_code_out=flow_code,
                         last_emissions=None,
@@ -773,7 +773,7 @@ class PtxCalc:
         )
 
 
-def calculate_net_loss(value_gross: float, loss_factor: float) -> tuple[float, float]:
+def _calculate_net_loss(value_gross: float, loss_factor: float) -> tuple[float, float]:
     """Losses, interpreted as additional to net.
 
     see https://github.com/agoenergy/ptx-boa/issues/581

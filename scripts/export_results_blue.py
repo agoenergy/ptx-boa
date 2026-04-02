@@ -13,7 +13,7 @@ from typing import Any, Iterable
 import pandas as pd
 
 from ptxboa.api import PtxboaAPI
-from ptxboa.api_calc import get_secproc_step
+from ptxboa.api_calc import _get_secproc_step
 from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler
 
 
@@ -249,7 +249,7 @@ def main(xlsx_filepath: str):
         )
 
         for s in secondary_process_steps:
-            s["step"] = get_secproc_step(process_code=s["process_code"])
+            s["step"] = _get_secproc_step(process_code=s["process_code"])
 
         data_steps = list_to_dict_by_step(
             res.todo_data["main_export_process_chain"]  # type: ignore
