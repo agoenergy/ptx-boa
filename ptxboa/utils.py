@@ -3,7 +3,7 @@
 import json
 import os
 from types import NoneType
-from typing import Any, Union
+from typing import Any, Iterable, Union
 
 
 def annuity(rate: float, periods: int, value: float) -> float:
@@ -101,3 +101,12 @@ def serialize_for_hashing(
 
 def rescale_dict(d: dict[Any, float], factor: float) -> dict[Any, float]:
     return {k: v * factor for k, v in d.items()}
+
+
+def compare_sets(first: Iterable, second: Iterable, msg: str = ""):
+    first = set(first)
+    second = set(second)
+    missing = {str(x) for x in first - second}
+    added = {str(x) for x in second - first}
+    if missing or added:
+        raise KeyError((f"Set mismatch. Missing: {missing}. Added: {added}.", msg))

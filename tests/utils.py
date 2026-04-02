@@ -1,9 +1,12 @@
 """Test utilities."""
 
+import pytest
 from numpy import isclose
 
 
-def assert_deep_equal(expected_result, actual_result, context=None):
+def assert_deep_equal(
+    expected_result, actual_result, context=None, allow_new_dict_items: bool = False
+):
     """Recursively compare nested data structure.
 
     - does not work for classes
@@ -13,8 +16,7 @@ def assert_deep_equal(expected_result, actual_result, context=None):
     def _assert(comp, context=None):
         if not comp(expected_result, actual_result):
             raise ValueError(
-                f"expected values {expected_result} != "
-                f"{actual_result} {context or ''}"
+                f"expected values {expected_result} != {actual_result} {context or ''}"
             )
 
     if isinstance(expected_result, (str, int, bool, type(None), set)):
@@ -33,7 +35,7 @@ def assert_deep_equal(expected_result, actual_result, context=None):
             )
         # recursion
         for e, a in zip(expected_result, actual_result):
-            assert_deep_equal(e, a, context)
+            assert_deep_equal(e, a, context, allow_new_dict_items=allow_new_dict_items)
     elif isinstance(expected_result, dict):
         if not isinstance(actual_result, dict):
             raise ValueError(f"Not a dict: {expected_result}")
@@ -46,10 +48,59 @@ def assert_deep_equal(expected_result, actual_result, context=None):
                 msg += f" Missing: {missing_keys}"
             if new_keys:
                 msg += f" New: {new_keys}"
-            raise ValueError(msg)
+
+            if missing_keys or (new_keys and not allow_new_dict_items):
+                raise ValueError(msg)
+
         # recursion
         for k, e in expected_result.items():
             a = actual_result[k]
-            assert_deep_equal(e, a, context)
+            assert_deep_equal(e, a, context, allow_new_dict_items=allow_new_dict_items)
     else:
         raise NotImplementedError(type(expected_result))
+
+
+def sort_nested(xs):
+    if isinstance(xs, list):
+        return [sort_nested(x) for x in xs]
+    elif isinstance(xs, dict):
+        return {x: sort_nested(xs[x]) for x in sorted(xs.keys())}
+    else:
+        return xs
+
+
+def round_nested(xs, ndigis: int = 6, drop_null_from_dict: bool = True):
+    if isinstance(xs, list):
+        result = [
+            round_nested(x, ndigis, drop_null_from_dict=drop_null_from_dict) for x in xs
+        ]
+        if drop_null_from_dict:
+            result = [x for x in result if x]
+        return result
+    elif isinstance(xs, dict):
+        result = {
+            x: round_nested(y, ndigis, drop_null_from_dict=drop_null_from_dict)
+            for x, y in xs.items()
+        }
+        if drop_null_from_dict:
+            # drop enire dict containing "values": 0
+            if "values" in result and not result["values"]:
+                result = {}
+            else:
+                result = {x: y for x, y in result.items() if y}
+        return result
+    elif isinstance(xs, float):
+        return round(xs, ndigis)
+    else:
+        return xs
+
+
+def rec_approx(x):
+    if isinstance(x, dict):
+        return {k: rec_approx(v) for k, v in x.items()}
+    elif isinstance(x, list):
+        return [rec_approx(v) for v in x]
+    elif isinstance(x, (int, float)):
+        return pytest.approx(x)
+    else:
+        return x

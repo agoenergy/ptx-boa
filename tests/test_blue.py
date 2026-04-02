@@ -9,42 +9,7 @@ from ptxboa.api import PtxboaAPI, PtxCalc, _translate_and_validate_user_settings
 from ptxboa.api_data import DEFAULT_DATA_DIR, ChainProcess, DataHandler
 from ptxboa.static._type_defs import ChainDef
 from tests.test_api import ptxdata_dir_static
-
-
-def _sort_nested(xs):
-    if isinstance(xs, list):
-        return [_sort_nested(x) for x in xs]
-    elif isinstance(xs, dict):
-        return {x: _sort_nested(xs[x]) for x in sorted(xs.keys())}
-    else:
-        return xs
-
-
-def _round_nested(xs, ndigis: int = 6, drop_null_from_dict: bool = True):
-    if isinstance(xs, list):
-        result = [
-            _round_nested(x, ndigis, drop_null_from_dict=drop_null_from_dict)
-            for x in xs
-        ]
-        if drop_null_from_dict:
-            result = [x for x in result if x]
-        return result
-    elif isinstance(xs, dict):
-        result = {
-            x: _round_nested(y, ndigis, drop_null_from_dict=drop_null_from_dict)
-            for x, y in xs.items()
-        }
-        if drop_null_from_dict:
-            # drop enire dict containing "values": 0
-            if "values" in result and not result["values"]:
-                result = {}
-            else:
-                result = {x: y for x, y in result.items() if y}
-        return result
-    elif isinstance(xs, float):
-        return round(xs, ndigis)
-    else:
-        return xs
+from tests.utils import rec_approx, round_nested, sort_nested
 
 
 def _translate_user_data(user_data: pd.DataFrame) -> None:
@@ -72,17 +37,6 @@ def _translate_user_data(user_data: pd.DataFrame) -> None:
 
 
 # recursively use pytest.approx
-def _rec_approx(x):
-    if isinstance(x, dict):
-        return {k: _rec_approx(v) for k, v in x.items()}
-    elif isinstance(x, list):
-        return [_rec_approx(v) for v in x]
-    elif isinstance(x, (int, float)):
-        return pytest.approx(x)
-    else:
-        return x
-
-
 @pytest.mark.parametrize(
     "scenario, kwargs, api_kwargs",
     [
@@ -324,10 +278,10 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
     ].to_dict(orient="records")
 
     # round and sort for easier comparison
-    values = _sort_nested(_round_nested(ptxcalc_results.results_flows_chain))
+    values = sort_nested(round_nested(ptxcalc_results.results_flows_chain))
     # round and sort for easier comparison
-    calculation_data = _sort_nested(_round_nested(calculation_data_))
-    res_emission_mass = _sort_nested(_round_nested(res_emission_mass))
+    calculation_data = sort_nested(round_nested(calculation_data_))
+    res_emission_mass = sort_nested(round_nested(res_emission_mass))
 
     # print so we can copy/paste new results into test
     print("calculation_data_exp = ", calculation_data)
@@ -501,9 +455,9 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
         },
     ]
 
-    assert _rec_approx(calculation_data) == calculation_data_exp
-    assert _rec_approx(values) == values_exp
-    assert _rec_approx(res_emission_mass) == res_emission_mass_exp
+    assert rec_approx(calculation_data) == calculation_data_exp
+    assert rec_approx(values) == values_exp
+    assert rec_approx(res_emission_mass) == res_emission_mass_exp
 
 
 @pytest.mark.parametrize(
@@ -1197,14 +1151,14 @@ def test_new_blue_chain_real_data(
         optimize_flh=False,
     )
 
-    calculation_data = _sort_nested(_round_nested(api_result.todo_data))
-    values = _sort_nested(_round_nested(api_result.todo_results_flows))
+    calculation_data = sort_nested(round_nested(api_result.todo_data))
+    values = sort_nested(round_nested(api_result.todo_results_flows))
 
     res_emission_mass = api_result.emission_mass[  # type: ignore
         ["process_subtype", "emission_type", "gas_type", "values"]
     ].to_dict(orient="records")
     # round and sort for easier comparison
-    res_emission_mass = _sort_nested(_round_nested(res_emission_mass))
+    res_emission_mass = sort_nested(round_nested(res_emission_mass))
 
     res_costs = (
         api_result.todo_df_results_cost_unscaled[  # type: ignore
@@ -1216,19 +1170,19 @@ def test_new_blue_chain_real_data(
         .to_dict(orient="records")
     )
     # round and sort for easier comparison
-    res_costs = _sort_nested(_round_nested(res_costs))
+    res_costs = sort_nested(round_nested(res_costs))
 
     # print so we can copy/paste new results into test
     print((calculation_data, values, res_emission_mass, res_costs))
 
-    assert _rec_approx(calculation_data) == _sort_nested(
-        _round_nested(calculation_data_exp)
+    assert rec_approx(calculation_data) == sort_nested(
+        round_nested(calculation_data_exp)
     )
-    assert _rec_approx(values) == _sort_nested(_round_nested(values_exp))
-    assert _rec_approx(res_emission_mass) == _sort_nested(
-        _round_nested(res_emission_mass_exp)
+    assert rec_approx(values) == sort_nested(round_nested(values_exp))
+    assert rec_approx(res_emission_mass) == sort_nested(
+        round_nested(res_emission_mass_exp)
     )
-    assert _rec_approx(res_costs) == _sort_nested(_round_nested(res_costs_exp))
+    assert rec_approx(res_costs) == sort_nested(round_nested(res_costs_exp))
 
 
 @pytest.mark.parametrize(
@@ -1544,11 +1498,11 @@ def test_new_blue_chain_real_data_2(api_kwargs, calculation_data_exp):
         source_region_code=chain_def.source_region_code,
         target_country_code=chain_def.target_country_code,
     )
-    calculation_data = _sort_nested(_round_nested(calculation_data_))
+    calculation_data = sort_nested(round_nested(calculation_data_))
 
     # print so we can copy/paste new results into test
     print(calculation_data)
 
-    assert _rec_approx(calculation_data) == _sort_nested(
-        _round_nested(calculation_data_exp)
+    assert rec_approx(calculation_data) == sort_nested(
+        round_nested(calculation_data_exp)
     )

@@ -52,6 +52,7 @@ from ptxboa.static._type_defs import (
     ProcessStep,
     PtxCalcResult,
 )
+from tests.utils import assert_deep_equal, round_nested, sort_nested
 
 
 def _get_secproc_data(
@@ -1001,12 +1002,19 @@ class DataHandler:
         # FIXME: only use this once its tested
         chain_proc = ChainProcess.get_or_create(chain_def)
 
-        chain_proc.get_calculation_data(
+        data_new = chain_proc.get_calculation_data(
             data_handler=self,
             source_region_code=chain_def.source_region_code,
             target_country_code=chain_def.target_country_code,
             use_user_data=True,
         )
+
+        if False:  # FIXME
+            assert_deep_equal(
+                sort_nested(round_nested(data)),
+                sort_nested(round_nested(data_new)),
+                allow_new_dict_items=True,
+            )
 
         # get optimized FLH?
         if optimize_flh:
@@ -1019,12 +1027,18 @@ class DataHandler:
                 )
 
                 # FIXME: only use this once its tested
-                chain_proc.get_calculation_data(
+                data_opt_new = chain_proc.get_calculation_data(
                     data_handler=self,
                     source_region_code=chain_def.source_region_code,
                     target_country_code=chain_def.target_country_code,
                     use_user_data=False,  # THIS IS THE IMPORTANT BIT
                 )
+                if False:  # FIXME
+                    assert_deep_equal(
+                        sort_nested(round_nested(data_opt)),
+                        sort_nested(round_nested(data_opt_new)),
+                        allow_new_dict_items=True,
+                    )
 
             else:
                 data_opt = data
@@ -2346,8 +2360,6 @@ class ChainProcess(AggregateProcess):
             parameter_getters=parameter_getters,
             data_lookup_defaults=data_lookup_defaults,  # type: ignore
         )
-
-        logger.warning(parameters_chain)
 
         proc_export: AggregateProcess = self.get_subprocesses_by_class(
             # type: ignore
