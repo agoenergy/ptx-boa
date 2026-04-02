@@ -1,9 +1,10 @@
 """Handle data queries for api calculation."""
 
+import traceback
 from functools import cache
 from itertools import product
 from pathlib import Path
-from typing import Dict, Iterable, List, Literal, Tuple
+from typing import TYPE_CHECKING, Dict, Iterable, List, Literal, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -17,6 +18,7 @@ from ptxboa import (
 )
 from ptxboa.api_optimize import PtxOpt
 from ptxboa.static import (
+    ChainType,
     DimensionType,
     FlowCodeType,
     OutputUnitValues,
@@ -34,6 +36,9 @@ from ptxboa.static import (
     YearValues,
 )
 from ptxboa.static._type_defs import CalculateDataType, ChainDef
+
+if TYPE_CHECKING:
+    from ptxboa.process_classes import ChainProcess
 
 PARAMETER_DEFAULTS: dict[ParameterCodeType, float] = {
     "EFF": 1,
@@ -954,6 +959,7 @@ class DataHandler:
         chain_def: ChainDef,
         optimize_flh: bool,
         use_user_data_for_optimize_flh: bool = False,
+        chain_proc: Union["ChainProcess", None] = None,  # NEW
     ) -> CalculateDataType:
         """Create data for calculation.
 
@@ -977,6 +983,18 @@ class DataHandler:
             use_user_data=True,
         )
 
+        # FIXME: replace self._get_calculation_data with chain_proc.get_calculation_data
+        if chain_proc:
+            try:
+                chain_proc.get_calculation_data(
+                    data_handler=self,
+                    source_region_code=chain_def.source_region_code,
+                    target_country_code=chain_def.target_country_code,
+                    use_user_data=True,
+                )
+            except Exception:
+                logger.error(traceback.format_exc())
+
         # get optimized FLH?
         if optimize_flh:
             # if we have user data BUT it should NOT be used for optimization
@@ -986,6 +1004,19 @@ class DataHandler:
                     chain_def=chain_def,
                     use_user_data=False,  # THIS IS THE IMPORTANT BIT
                 )
+
+                # FIXME: replace self._get_calculation_data with chain_proc.get_calculation_data
+                if chain_proc:
+                    try:
+                        chain_proc.get_calculation_data(
+                            data_handler=self,
+                            source_region_code=chain_def.source_region_code,
+                            target_country_code=chain_def.target_country_code,
+                            use_user_data=False,  # THIS IS THE IMPORTANT BIT
+                        )
+                    except Exception:
+                        logger.error(traceback.format_exc())
+
             else:
                 data_opt = data
 
@@ -1369,3 +1400,22 @@ class DataHandler:
                 dist_transp["SHP"] = dist_ship
 
         return dist_transp
+
+
+def get_chain_color(chain: ChainType) -> ToolVersionColorType:
+    return "blue" if DataHandler.dimensions["chain"].loc[chain, "is_blue"] else "green"
+
+
+def correct_transport(
+    transport: TransportType, ship_own_fuel: bool, chain: ChainType
+) -> tuple[TransportType, bool]:
+    chain_data = DataHandler.dimensions["chain"].loc[chain]
+    if transport == "Pipeline" and not chain_data["can_pipeline"]:  # type: ignore
+        logger.warning("Cannot use Pipeline - switching to Ship")
+        transport = "Ship"
+
+    if ship_own_fuel and (transport != "Ship" or not chain_data["SHP_OWN"]):
+        logger.warning("Cannot use ship_own_fuel.")
+        ship_own_fuel = False
+
+    return transport, ship_own_fuel

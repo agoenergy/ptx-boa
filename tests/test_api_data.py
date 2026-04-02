@@ -6,13 +6,14 @@ from tempfile import TemporaryDirectory
 import pandas as pd
 import pytest
 
-from ptxboa.api import correct_transport, get_chain_color
 from ptxboa.api_data import (
     DEFAULT_DATA_DIR,
     STATIC_DATA_DIR,
     DataHandler,
     ScenarioValues,
     _load_scenario_data,
+    correct_transport,
+    get_chain_color,
 )
 from ptxboa.static import ChainType, ChainValues, TransportType
 from ptxboa.static._type_defs import ChainDef

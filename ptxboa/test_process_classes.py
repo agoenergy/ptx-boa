@@ -10,8 +10,7 @@ import coloredlogs
 import pandas as pd
 
 from ptxboa import logger
-from ptxboa.api import get_chain_color
-from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler
+from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler, get_chain_color
 from ptxboa.process_classes import ChainProcess
 from ptxboa.static import (
     ChainType,

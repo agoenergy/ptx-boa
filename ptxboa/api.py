@@ -7,14 +7,12 @@ from typing import List, Optional, Tuple
 import pandas as pd
 import pypsa
 
-from ptxboa import logger
-from ptxboa.static._type_defs import ChainDef, PtxCalcResult
-
-from . import PROFILES_DIR
-from .api_calc import PtxCalc
-from .api_data import DataHandler
-from .api_optimize import PtxOpt
-from .static import (
+from ptxboa import PROFILES_DIR, logger
+from ptxboa.api_calc import PtxCalc
+from ptxboa.api_data import DataHandler, correct_transport, get_chain_color
+from ptxboa.api_optimize import PtxOpt
+from ptxboa.process_classes import ChainProcess
+from ptxboa.static import (
     ChainType,
     DimensionType,
     FlowCodeType,
@@ -30,6 +28,7 @@ from .static import (
     TransportType,
     TransportValues,
 )
+from ptxboa.static._type_defs import ChainDef, PtxCalcResult
 
 
 @dataclass(slots=True, frozen=True)
@@ -214,18 +213,23 @@ class PtxboaAPI:
             cache_dir=self.cache_dir,
             tool_version_color=tool_version_color,
         )
+        chain_proc = ChainProcess.get_or_create(chain_def)
+
         data = data_handler.get_calculation_data(
             chain_def=chain_def,
             optimize_flh=optimize_flh,
             use_user_data_for_optimize_flh=use_user_data_for_optimize_flh,
+            chain_proc=chain_proc,  # NEW
         )
 
         # calculate results
+        # FIXME: replace PtxCalc.calculate with chain_proc.calculate
+        ptxcalc_result = chain_proc.calculate(data)  # NEW
         ptxcalc_result = PtxCalc.calculate(data)
 
         # convert to output unit
         df_results_cost_unscaled = ptxcalc_result.df_results_cost.copy()
-        convert_to_output_unit_inplace(
+        _convert_to_output_unit_inplace(
             ptxcalc_result,
             output_unit=output_unit,
             chain=chain,
@@ -487,13 +491,17 @@ def _translate_and_validate_user_settings(
         ("EL", "secproc_el", secproc_el),
         ("CO2-C", "secproc_ccs", secproc_ccs or secproc_ccs_i),
     ]:
-        if not parameter_name:
+        if not parameter_name or parameter_name == "Specific costs":
             continue
-        porcess_code = DataHandler.get_dimensions_parameter_code(
+
+        process_code = DataHandler.get_dimensions_parameter_code(
             dimension=dimension,
             parameter_name=parameter_name,
         )
-        secondary_processes[flow_code] = porcess_code  # type: ignore
+        if not process_code:
+            raise Exception(f"Invalid process: {parameter_name}")
+
+        secondary_processes[flow_code] = process_code  # type: ignore
 
     chain_def = ChainDef(
         chain_name=chain,
@@ -510,7 +518,7 @@ def _translate_and_validate_user_settings(
     return chain_def, tool_version_color, optimize_flh
 
 
-def convert_to_output_unit_inplace(
+def _convert_to_output_unit_inplace(
     ptxcalc_result: PtxCalcResult,
     output_unit: OutputUnitType,
     chain: ChainType,
@@ -544,22 +552,3 @@ def convert_to_output_unit_inplace(
         ptxcalc_result.df_results_emissions_m_g_co2e,
     ]:
         df["values"] = df["values"] * conversion
-
-
-def correct_transport(
-    transport: TransportType, ship_own_fuel: bool, chain: ChainType
-) -> tuple[TransportType, bool]:
-    chain_data = DataHandler.dimensions["chain"].loc[chain]
-    if transport == "Pipeline" and not chain_data["can_pipeline"]:  # type: ignore
-        logger.warning("Cannot use Pipeline - switching to Ship")
-        transport = "Ship"
-
-    if ship_own_fuel and (transport != "Ship" or not chain_data["SHP_OWN"]):
-        logger.warning("Cannot use ship_own_fuel.")
-        ship_own_fuel = False
-
-    return transport, ship_own_fuel
-
-
-def get_chain_color(chain: ChainType) -> ToolVersionColorType:
-    return "blue" if DataHandler.dimensions["chain"].loc[chain, "is_blue"] else "green"

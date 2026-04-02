@@ -7,8 +7,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 
 from ptxboa import logger
-from ptxboa.api import get_chain_color
-from ptxboa.api_data import PARAMETER_DEFAULTS, DataHandler
+from ptxboa.api_data import PARAMETER_DEFAULTS, DataHandler, get_chain_color
 from ptxboa.static import (
     ChainType,
     DataQueryParameterType,
@@ -180,7 +179,7 @@ class ProcessType:
 
     @property
     def is_transport_pre_post(self) -> bool:
-        """Porcess is transport pre/post."""
+        """Process is transport pre/post."""
         return self.is_transport and self.is_transformation and not self.is_storage
 
     @property
@@ -816,14 +815,16 @@ class ChainProcess(AggregateProcess):
 
     def calculate(self, data: CalculateDataType) -> PtxCalcResult:
         """Calcualte results."""
-        result = PtxCalcResult()  # TODO
+        result: PtxCalcResult = None  # type: ignore
         return result
 
     @classmethod
     def _create(cls, chain_def: ChainDefStatic) -> "ChainProcess":
         chain_color = get_chain_color(chain_def.chain_name)
 
-        secondary_process_codes = set(chain_def.secondary_processes.values())
+        secondary_process_codes = set(
+            x for x in chain_def.secondary_processes.values() if x
+        )
 
         first_process_code: ProcessCodeType
         if chain_color == "blue":
@@ -841,7 +842,7 @@ class ChainProcess(AggregateProcess):
             ship_own_fuel=chain_def.ship_own_fuel,
             chain=chain_def.chain_name,
             first_process_code=first_process_code,
-            secondary_process_codes=secondary_process_codes,
+            secondary_process_codes=secondary_process_codes,  # type: ignore
         )
 
     def __init__(
