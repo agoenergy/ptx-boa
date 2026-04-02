@@ -9,7 +9,7 @@ import pypsa
 
 from ptxboa import PROFILES_DIR, logger
 from ptxboa.api_calc import PtxCalc
-from ptxboa.api_data import ChainProcess, DataHandler
+from ptxboa.api_data import DataHandler
 from ptxboa.api_optimize import PtxOpt
 from ptxboa.static import (
     ChainType,
@@ -212,18 +212,18 @@ class PtxboaAPI:
             cache_dir=self.cache_dir,
             tool_version_color=tool_version_color,
         )
-        chain_proc = ChainProcess.get_or_create(chain_def)
+
+        # chain_proc = ChainProcess.get_or_create(chain_def) # TODO: noqas
 
         data = data_handler.get_calculation_data(
             chain_def=chain_def,
             optimize_flh=optimize_flh,
             use_user_data_for_optimize_flh=use_user_data_for_optimize_flh,
-            chain_proc=chain_proc,  # NEW
         )
 
         # calculate results
         # FIXME: replace PtxCalc.calculate with chain_proc.calculate
-        ptxcalc_result = chain_proc.calculate(data)  # NEW
+        # ptxcalc_result = chain_proc.calculate(data)  # NEW # noqa
         ptxcalc_result = PtxCalc.calculate(data)
 
         # convert to output unit

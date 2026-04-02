@@ -1,7 +1,6 @@
 """Handle data queries for api calculation."""
 
 import logging
-import traceback
 from functools import cache
 from itertools import product
 from pathlib import Path
@@ -977,7 +976,6 @@ class DataHandler:
         chain_def: ChainDef,
         optimize_flh: bool,
         use_user_data_for_optimize_flh: bool = False,
-        chain_proc: Union["ChainProcess", None] = None,  # NEW
     ) -> CalculateDataType:
         """Create data for calculation.
 
@@ -1001,16 +999,14 @@ class DataHandler:
         )
 
         # FIXME: only use this once its tested
-        if chain_proc:
-            try:
-                chain_proc.get_calculation_data(
-                    data_handler=self,
-                    source_region_code=chain_def.source_region_code,
-                    target_country_code=chain_def.target_country_code,
-                    use_user_data=True,
-                )
-            except Exception:
-                logger.error(traceback.format_exc())
+        chain_proc = ChainProcess.get_or_create(chain_def)
+
+        chain_proc.get_calculation_data(
+            data_handler=self,
+            source_region_code=chain_def.source_region_code,
+            target_country_code=chain_def.target_country_code,
+            use_user_data=True,
+        )
 
         # get optimized FLH?
         if optimize_flh:
@@ -1023,16 +1019,12 @@ class DataHandler:
                 )
 
                 # FIXME: only use this once its tested
-                if chain_proc:
-                    try:
-                        chain_proc.get_calculation_data(
-                            data_handler=self,
-                            source_region_code=chain_def.source_region_code,
-                            target_country_code=chain_def.target_country_code,
-                            use_user_data=False,  # THIS IS THE IMPORTANT BIT
-                        )
-                    except Exception:
-                        logger.error(traceback.format_exc())
+                chain_proc.get_calculation_data(
+                    data_handler=self,
+                    source_region_code=chain_def.source_region_code,
+                    target_country_code=chain_def.target_country_code,
+                    use_user_data=False,  # THIS IS THE IMPORTANT BIT
+                )
 
             else:
                 data_opt = data
