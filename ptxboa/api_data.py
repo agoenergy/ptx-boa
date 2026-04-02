@@ -976,14 +976,13 @@ class DataHandler:
         CalculateDataType
             _description_
         """
-
         # get data
         data = self._get_calculation_data(
             chain_def=chain_def,
             use_user_data=True,
         )
 
-        # FIXME: replace self._get_calculation_data with chain_proc.get_calculation_data
+        # FIXME: only use this once its tested
         if chain_proc:
             try:
                 chain_proc.get_calculation_data(
@@ -1005,7 +1004,7 @@ class DataHandler:
                     use_user_data=False,  # THIS IS THE IMPORTANT BIT
                 )
 
-                # FIXME: replace self._get_calculation_data with chain_proc.get_calculation_data
+                # FIXME: only use this once its tested
                 if chain_proc:
                     try:
                         chain_proc.get_calculation_data(

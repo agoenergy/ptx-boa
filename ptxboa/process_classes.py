@@ -822,9 +822,7 @@ class ChainProcess(AggregateProcess):
     def _create(cls, chain_def: ChainDefStatic) -> "ChainProcess":
         chain_color = get_chain_color(chain_def.chain_name)
 
-        secondary_process_codes = set(
-            x for x in chain_def.secondary_processes.values() if x
-        )
+        secondary_process_codes = set(chain_def.secondary_processes.values())
 
         first_process_code: ProcessCodeType
         if chain_color == "blue":
