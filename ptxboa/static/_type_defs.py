@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Literal, Optional
+from typing import TYPE_CHECKING, Any, Literal, Optional, Protocol
 
 import pandas as pd
 
@@ -9,10 +9,14 @@ from ptxboa.static import (
     ParameterCodeType,
     ProcessCodeResType,
     ProcessCodeType,
+    ProcessStepType,
     SourceRegionCodeType,
     TargetCountryCodeType,
     TransportType,
 )
+
+if TYPE_CHECKING:
+    from ptxboa.process_classes import Process
 
 CalculateDataType = dict[
     Literal[
@@ -69,3 +73,21 @@ class ChainDefStatic:
 class ChainDef(ChainDefStatic):
     source_region_code: SourceRegionCodeType
     target_country_code: TargetCountryCodeType
+
+
+ProcessStep = tuple[ProcessCodeType, ProcessStepType | None]
+
+
+class ParameterGetter(Protocol):
+    def __call__(
+        self,
+        process_code: ProcessCodeType | None = None,
+        flow_code: FlowCodeType | None = None,
+        **kwargs: str,
+    ) -> float | None:
+        """Get parameter value."""
+        ...
+
+
+ParameterGetters = dict[ParameterCodeType | str, ParameterGetter]
+AggregateProcessDataType = tuple[ProcessDataType, dict[Process, ProcessDataType]]

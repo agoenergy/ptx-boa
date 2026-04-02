@@ -40,13 +40,6 @@ from ptxboa.static._type_defs import CalculateDataType, ChainDef
 if TYPE_CHECKING:
     from ptxboa.process_classes import ChainProcess
 
-PARAMETER_DEFAULTS: dict[ParameterCodeType, float] = {
-    "EFF": 1,
-    "FLH": 7000,
-    "LIFETIME": 20,
-    "CALOR": 1,  # TODO: should be None
-}
-
 
 def _get_secproc_data(
     secondary_processes: dict,
@@ -396,7 +389,9 @@ class _ParameterGetter:
     def get_process_params(self, process_code: ProcessCodeType) -> dict:
         result = {}
         result["EFF"] = self.get_parameter_value_w_default(
-            "EFF", process_code=process_code, default=PARAMETER_DEFAULTS.get("EFF", 0)
+            "EFF",
+            process_code=process_code,
+            default=DataHandler.PARAMETER_DEFAULTS.get("EFF", 0),
         )
         # loss that effects main efficiency: get parameter for
         # main in flow
@@ -424,12 +419,14 @@ class _ParameterGetter:
             result["LOSS"] = main_loss_param
 
         result["FLH"] = self.get_parameter_value_w_default(
-            "FLH", process_code=process_code, default=PARAMETER_DEFAULTS.get("FLH", 0)
+            "FLH",
+            process_code=process_code,
+            default=DataHandler.PARAMETER_DEFAULTS.get("FLH", 0),
         )
         result["LIFETIME"] = self.get_parameter_value_w_default(
             "LIFETIME",
             process_code=process_code,
-            default=PARAMETER_DEFAULTS.get("LIFETIME", 20),
+            default=DataHandler.PARAMETER_DEFAULTS.get("LIFETIME", 20),
         )
         result["CAPEX"] = self.get_parameter_value_w_default(
             "CAPEX", process_code=process_code, default=0
@@ -539,6 +536,13 @@ class DataHandler:
     Instances of this class can be used to retrieve data from a single scenario and
     combine it with set user data.
     """
+
+    PARAMETER_DEFAULTS: dict[ParameterCodeType, float] = {
+        "EFF": 1,
+        "FLH": 7000,
+        "LIFETIME": 20,
+        "CALOR": 1,  # TODO: should be None
+    }
 
     dimensions: dict[DimensionType, pd.DataFrame] = _load_dimensions()
 
@@ -1400,21 +1404,23 @@ class DataHandler:
 
         return dist_transp
 
+    @classmethod
+    def get_chain_color(cls, chain: ChainType) -> ToolVersionColorType:
+        """Get color from chain."""
+        return "blue" if cls.dimensions["chain"].loc[chain, "is_blue"] else "green"
 
-def get_chain_color(chain: ChainType) -> ToolVersionColorType:
-    return "blue" if DataHandler.dimensions["chain"].loc[chain, "is_blue"] else "green"
+    @classmethod
+    def correct_transport(
+        cls, transport: TransportType, ship_own_fuel: bool, chain: ChainType
+    ) -> tuple[TransportType, bool]:
+        """Validate / correct transport."""
+        chain_data = cls.dimensions["chain"].loc[chain]
+        if transport == "Pipeline" and not chain_data["can_pipeline"]:  # type: ignore
+            logger.warning("Cannot use Pipeline - switching to Ship")
+            transport = "Ship"
 
+        if ship_own_fuel and (transport != "Ship" or not chain_data["SHP_OWN"]):
+            logger.warning("Cannot use ship_own_fuel.")
+            ship_own_fuel = False
 
-def correct_transport(
-    transport: TransportType, ship_own_fuel: bool, chain: ChainType
-) -> tuple[TransportType, bool]:
-    chain_data = DataHandler.dimensions["chain"].loc[chain]
-    if transport == "Pipeline" and not chain_data["can_pipeline"]:  # type: ignore
-        logger.warning("Cannot use Pipeline - switching to Ship")
-        transport = "Ship"
-
-    if ship_own_fuel and (transport != "Ship" or not chain_data["SHP_OWN"]):
-        logger.warning("Cannot use ship_own_fuel.")
-        ship_own_fuel = False
-
-    return transport, ship_own_fuel
+        return transport, ship_own_fuel

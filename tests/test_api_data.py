@@ -12,8 +12,6 @@ from ptxboa.api_data import (
     DataHandler,
     ScenarioValues,
     _load_scenario_data,
-    correct_transport,
-    get_chain_color,
 )
 from ptxboa.static import ChainType, ChainValues, TransportType
 from ptxboa.static._type_defs import ChainDef
@@ -546,7 +544,7 @@ def test_validate_chains(
     if chain == "Blue Iron (blue)*":
         return
 
-    tool_version_color = get_chain_color(chain)
+    tool_version_color = DataHandler.get_chain_color(chain)
     process_code_res = "RES-HYBR" if (tool_version_color == "green") else None
 
     dh = DataHandler(
@@ -556,7 +554,9 @@ def test_validate_chains(
         # we want to validate the current chains
     )
 
-    transport, ship_own_fuel = correct_transport(transport, ship_own_fuel, chain)
+    transport, ship_own_fuel = DataHandler.correct_transport(
+        transport, ship_own_fuel, chain
+    )
 
     # _validate_process_chain called inside here
     dh._get_calculation_data(

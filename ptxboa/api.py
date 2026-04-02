@@ -9,7 +9,7 @@ import pypsa
 
 from ptxboa import PROFILES_DIR, logger
 from ptxboa.api_calc import PtxCalc
-from ptxboa.api_data import DataHandler, correct_transport, get_chain_color
+from ptxboa.api_data import DataHandler
 from ptxboa.api_optimize import PtxOpt
 from ptxboa.process_classes import ChainProcess
 from ptxboa.static import (
@@ -441,7 +441,7 @@ def _translate_and_validate_user_settings(
     chain_data = DataHandler.get_dimension("chain").loc[chain]
 
     # check tool_version_color
-    tool_version_color_chain = get_chain_color(chain)
+    tool_version_color_chain = DataHandler.get_chain_color(chain)
     if tool_version_color_chain != tool_version_color:
         logger.error(
             "Chain is %s => changing tool_version_color from %s",
@@ -462,7 +462,9 @@ def _translate_and_validate_user_settings(
     if transport not in TransportValues:
         logger.error(f"Invalid choice for transport: {transport}")
 
-    transport, ship_own_fuel = correct_transport(transport, ship_own_fuel, chain)
+    transport, ship_own_fuel = DataHandler.correct_transport(
+        transport, ship_own_fuel, chain
+    )
 
     # CSS defined in chain
 

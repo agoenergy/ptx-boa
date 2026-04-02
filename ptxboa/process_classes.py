@@ -1,13 +1,13 @@
 """Class based calculation."""
 
 import logging
-from typing import Iterable, Protocol, Union, cast
+from typing import Iterable, Union, cast
 
 import matplotlib.pyplot as plt
 import networkx as nx
 
 from ptxboa import logger
-from ptxboa.api_data import PARAMETER_DEFAULTS, DataHandler, get_chain_color
+from ptxboa.api_data import DataHandler
 from ptxboa.static import (
     ChainType,
     DataQueryParameterType,
@@ -16,47 +16,23 @@ from ptxboa.static import (
     ParameterCodeValues,
     ProcessCodeType,
     ProcessStepType,
-    ProcessStepValues,
+)
+from ptxboa.static import ProcessStepValues as ProcessStepValuesSorted
+from ptxboa.static import (
     SourceRegionCodeType,
     TargetCountryCodeType,
     TransportType,
 )
 from ptxboa.static._type_defs import (
+    AggregateProcessDataType,
     CalculateDataType,
     ChainDefStatic,
+    ParameterGetter,
+    ParameterGetters,
     ProcessDataType,
+    ProcessStep,
     PtxCalcResult,
 )
-
-AggregateProcessDataType = tuple[ProcessDataType, dict["Process", ProcessDataType]]
-
-ProcessStepValuesSorted = ProcessStepValues
-assert tuple(ProcessStepValuesSorted) == (
-    "EL_STR",
-    "ELY",
-    "H2_STR",
-    "DERIV",
-    "DERIV2",
-    "PRE_SHP",
-    "SHP",
-    "SHP_OWN",
-    "POST_SHP",
-    "PRE_PPL",
-    "PPLS",
-    "PPL",
-    "PPLX",
-    "PPLR",
-    "POST_PPL",
-    "ELY_I",
-    "DERIV_I",
-    "DERIV_I2",
-)
-
-
-_df_process_by_code = DataHandler.get_dimension("process")
-_df_process_by_name = _df_process_by_code.set_index("process_name", drop=False)
-_df_chain = DataHandler.get_dimension("chain")
-_df_parameter_by_code = DataHandler.get_dimension("parameter")
 
 
 def _plot_get_pos(
@@ -227,7 +203,7 @@ class ProcessType:
 
 ProcessTypes: dict[ProcessCodeType, ProcessType] = {
     p["process_code"]: ProcessType(**cast(dict, p))
-    for p in _df_process_by_code.to_dict(orient="records")
+    for p in DataHandler.get_dimension("process").to_dict(orient="records")
 }
 
 
@@ -347,7 +323,7 @@ class AbstractProcess:
         # FIXME: for debugging:
         # parameters["region"] = data_lookup_defaults["source_region_code"]  # noqa
 
-        return merge_process_data(parameters, parent_parameters)
+        return _merge_process_data(parameters, parent_parameters)
 
     def calculate(self, main_flow_out: float):
         """Calculate all process values based on desired output flow."""
@@ -553,7 +529,7 @@ class MarketProcess(AbstractProcess):
         return self.main_flow_code_out  # type: ignore
 
 
-def get_chain_sections(
+def _get_chain_sections(
     main_process_codes_steps: list["ProcessStep"],
 ) -> list[tuple[type["ChainSectionProcess"], int, int]]:
     # split and check into export, transport, import
@@ -820,7 +796,7 @@ class ChainProcess(AggregateProcess):
 
     @classmethod
     def _create(cls, chain_def: ChainDefStatic) -> "ChainProcess":
-        chain_color = get_chain_color(chain_def.chain_name)
+        chain_color = DataHandler.get_chain_color(chain_def.chain_name)
 
         secondary_process_codes = set(chain_def.secondary_processes.values())
 
@@ -860,7 +836,7 @@ class ChainProcess(AggregateProcess):
             if chain_data[step]
         ]
 
-        main_process_codes_steps_filtered = filter_transport_process_codes(
+        main_process_codes_steps_filtered = _filter_transport_process_codes(
             main_process_codes_steps,
             transport=transport,
             ship_own_fuel=ship_own_fuel,
@@ -888,7 +864,7 @@ class ChainProcess(AggregateProcess):
 
         main_processes: list[AbstractProcess] = []
 
-        for ChainSectionProcessClass, i, j in get_chain_sections(
+        for ChainSectionProcessClass, i, j in _get_chain_sections(
             main_process_codes_steps=main_process_codes_steps_filtered
         ):
             main_process_codes_steps_part: list["ProcessStep"] = (
@@ -957,7 +933,7 @@ class ChainProcess(AggregateProcess):
         use_user_data: bool = True,
     ) -> CalculateDataType:
         """Get calculation data."""
-        parameter_getters = create_parameter_getters(
+        parameter_getters = _create_parameter_getters(
             data_handler=data_handler, use_user_data=use_user_data
         )
 
@@ -1218,13 +1194,15 @@ class ChainTransportProcess(ChainSectionProcess):
             parameters_procs[process] = process._get_calculation_data(
                 parameter_getters=parameter_getters,
                 data_lookup_defaults=data_lookup_defaults,
-                parent_parameters=merge_process_data(parent_parameters, {"DIST": dist}),  # type: ignore # noqa
+                parent_parameters=_merge_process_data(
+                    parent_parameters, {"DIST": dist}
+                ),  # type: ignore # noqa
             )
 
         return parameters_self, parameters_procs
 
 
-def group_by_flow_type_out(
+def _group_by_flow_type_out(
     process_codes: Iterable[ProcessCodeType],
 ) -> dict[FlowCodeType, ProcessCodeType]:
     result = {}
@@ -1383,7 +1361,7 @@ class ProcessGraph:
             raise Exception(f"missing_main: {missing_main}")
 
 
-def filter_transport_process_codes(
+def _filter_transport_process_codes(
     main_process_codes_steps: list["ProcessStep"],
     transport: TransportType,
     ship_own_fuel: bool,
@@ -1421,24 +1399,7 @@ def filter_transport_process_codes(
     return [(p, s) for p, s in main_process_codes_steps if s not in drop_steps]
 
 
-ProcessStep = tuple[ProcessCodeType, ProcessStepType | None]
-
-
-class ParameterGetter(Protocol):
-    def __call__(
-        self,
-        process_code: ProcessCodeType | None = None,
-        flow_code: FlowCodeType | None = None,
-        **kwargs: str,
-    ) -> float | None:
-        """Get parameter value."""
-        ...
-
-
-ParameterGetters = dict[ParameterCodeType | str, ParameterGetter]
-
-
-def create_parameter_getters(
+def _create_parameter_getters(
     data_handler: DataHandler, use_user_data: bool
 ) -> ParameterGetters:
 
@@ -1474,7 +1435,9 @@ def create_parameter_getters(
                 ]
             ]  # type: ignore
         else:
-            dims = set(_df_parameter_by_code.at[parameter_code, "dimensions"])  # type: ignore # noqa
+            dims = set(
+                DataHandler.get_dimension("parameter").at[parameter_code, "dimensions"]  # type: ignore # noqa
+            )
             return [
                 ("parameter_code", True),
                 ("process_code", "process_code" in dims),
@@ -1530,11 +1493,11 @@ def create_parameter_getters(
     def make_getter_2(
         parameter_code: ParameterCodeType,
     ) -> ParameterGetter:
-        has_global_default = _df_parameter_by_code.at[
+        has_global_default = DataHandler.get_dimension("parameter").at[
             parameter_code, "has_global_default"
         ]
 
-        default_value: float = PARAMETER_DEFAULTS.get(parameter_code, 0)
+        default_value: float = DataHandler.PARAMETER_DEFAULTS.get(parameter_code, 0)
 
         _get_value_ = make_getter(
             parameter_code=parameter_code, use_global_default=False
@@ -1570,7 +1533,7 @@ def create_parameter_getters(
     }
 
 
-def merge_process_data(
+def _merge_process_data(
     parameters: ProcessDataType | None, parent_parameters: ProcessDataType | None = None
 ) -> ProcessDataType:
     return (parameters or {}) | (parent_parameters or {})
