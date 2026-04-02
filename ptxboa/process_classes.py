@@ -8,7 +8,7 @@ import networkx as nx
 import pandas as pd
 
 from ptxboa import logger
-from ptxboa.api_data import PARAMETER_DEFAULTS, DataHandler, correct_transport
+from ptxboa.api_data import PARAMETER_DEFAULTS, DataHandler
 from ptxboa.static import (
     ChainType,
     DataQueryParameterType,
@@ -870,8 +870,6 @@ class ChainProcess(AggregateProcess):
             "green" if _df_chain.at[chain, "is_green"] else "blue"
         )
 
-        # FIXME: should already be corrected in api
-        transport = correct_transport(transport, _df_chain.at[chain, "can_pipeline"])
         secondary_process_codes: set[ProcessCodeType] = set()
         if secproc_co2:
             secondary_process_codes.add(

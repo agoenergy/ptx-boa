@@ -970,12 +970,14 @@ class DataHandler:
         CalculateDataType
             _description_
         """
+
+        # get data
         data = self._get_calculation_data(
             chain_def=chain_def,
             use_user_data=True,
         )
 
-        # get optimizedFLH?
+        # get optimized FLH?
         if optimize_flh:
             # if we have user data BUT it should NOT be used for optimization
             # get a different dataset for optimization
@@ -1081,10 +1083,6 @@ class DataHandler:
         seashare_pipeline = pg.get_parameter_value_w_default("SEASHARE", default=0)
         existing_pipeline_cap = pg.get_parameter_value_w_default("CAP-T", default=0)
         dist_ship = pg.get_parameter_value_w_default("DST-S-D", default=0)
-
-        if transport == "Pipeline" and not chain["can_pipeline"]:
-            logger.warning("Cannot use Pipeline - switching toShip")
-            transport = "Ship"
 
         transport_distances = self._get_transport_distances(
             source_region_code,

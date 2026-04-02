@@ -295,6 +295,10 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
 
     pprint(user_data)
 
+    # FIXME: this is a test chain and not (yet) marked as "blue" in data
+    # so we need to fix it manually
+    DataHandler.get_dimension("chain").loc["Blue Iron (blue)*", "is_blue"] = "True"
+
     data_handler = DataHandler(
         data_dir=ptxdata_dir_static,
         scenario=scenario,

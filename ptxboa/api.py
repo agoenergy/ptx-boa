@@ -12,7 +12,7 @@ from ptxboa.static._type_defs import ChainDef, PtxCalcResult
 
 from . import PROFILES_DIR
 from .api_calc import PtxCalc
-from .api_data import DataHandler, correct_transport
+from .api_data import DataHandler
 from .api_optimize import PtxOpt
 from .static import (
     ChainType,
@@ -437,7 +437,7 @@ def _translate_and_validate_user_settings(
     tool_version_color_chain = "blue" if chain_data["is_blue"] else "green"
     if tool_version_color_chain != tool_version_color:
         logger.error(
-            "Chains is %s => changing tool_version_color from %s",
+            "Chain is %s => changing tool_version_color from %s",
             tool_version_color_chain,
             tool_version_color,
         )
@@ -451,7 +451,8 @@ def _translate_and_validate_user_settings(
     # check transport
     if transport not in TransportValues:
         logger.error(f"Invalid choice for transport: {transport}")
-    transport = correct_transport(transport, chain_data["can_pipeline"])
+
+    transport, ship_own_fuel = correct_transport(transport, ship_own_fuel, chain)
 
     # CSS defined in chain
 
@@ -537,3 +538,18 @@ def convert_to_output_unit_inplace(
         ptxcalc_result.df_results_emissions_m_g_co2e,
     ]:
         df["values"] = df["values"] * conversion
+
+
+def correct_transport(
+    transport: TransportType, ship_own_fuel: bool, chain: ChainType
+) -> tuple[TransportType, bool]:
+    chain_data = DataHandler.dimensions["chain"].loc[chain]
+    if transport == "Pipeline" and not chain_data["can_pipeline"]:  # type: ignore
+        logger.warning("Cannot use Pipeline - switching to Ship")
+        transport = "Ship"
+
+    if ship_own_fuel and (transport != "Ship" or not chain_data["SHP_OWN"]):
+        logger.warning("Cannot use ship_own_fuel.")
+        ship_own_fuel = False
+
+    return transport, ship_own_fuel

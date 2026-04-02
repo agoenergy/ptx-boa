@@ -6,6 +6,7 @@ from tempfile import TemporaryDirectory
 import pandas as pd
 import pytest
 
+from ptxboa.api import correct_transport
 from ptxboa.api_data import (
     DEFAULT_DATA_DIR,
     STATIC_DATA_DIR,
@@ -13,6 +14,7 @@ from ptxboa.api_data import (
     ScenarioValues,
     _load_scenario_data,
 )
+from ptxboa.static import ChainType, TransportType
 from ptxboa.static._type_defs import ChainDef
 from tests.utils import assert_deep_equal
 
@@ -536,10 +538,16 @@ def test_get_calculation_data_w_opt(ptxdata_dir, scenario, kwargs, request):
     [
         ("Pipeline", False),
         ("Ship", False),
-        # ("Ship", True),  # no ship own fuel because needs SHP_OWN specified # noqa E800
+        ("Ship", True),
     ],
 )
-def test_validate_chains(chain, is_green, is_blue, transport, ship_own_fuel):
+def test_validate_chains(
+    chain: ChainType,
+    is_green: bool,
+    is_blue: bool,
+    transport: TransportType,
+    ship_own_fuel: bool,
+):
     if is_green and is_blue:
         raise ValueError("chain is both green and blue")
 
@@ -553,8 +561,9 @@ def test_validate_chains(chain, is_green, is_blue, transport, ship_own_fuel):
         # we want to validate the current chains
     )
 
-    # _validate_process_chain called inside here
+    transport, ship_own_fuel = correct_transport(transport, ship_own_fuel, chain)
 
+    # _validate_process_chain called inside here
     dh._get_calculation_data(
         ChainDef(
             secondary_processes={},
