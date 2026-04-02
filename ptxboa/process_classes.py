@@ -24,7 +24,6 @@ from ptxboa.static import (
     TransportType,
 )
 from ptxboa.static._type_defs import (
-    AggregateProcessDataType,
     CalculateDataType,
     ChainDefStatic,
     ParameterGetter,
@@ -33,6 +32,8 @@ from ptxboa.static._type_defs import (
     ProcessStep,
     PtxCalcResult,
 )
+
+AggregateProcessDataType = tuple[ProcessDataType, dict["Process", ProcessDataType]]
 
 
 def _plot_get_pos(

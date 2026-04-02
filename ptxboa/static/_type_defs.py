@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Literal, Optional, Protocol
+from typing import Any, Literal, Optional, Protocol
 
 import pandas as pd
 
@@ -14,9 +14,6 @@ from ptxboa.static import (
     TargetCountryCodeType,
     TransportType,
 )
-
-if TYPE_CHECKING:
-    from ptxboa.process_classes import Process
 
 CalculateDataType = dict[
     Literal[
@@ -90,4 +87,3 @@ class ParameterGetter(Protocol):
 
 
 ParameterGetters = dict[ParameterCodeType | str, ParameterGetter]
-AggregateProcessDataType = tuple[ProcessDataType, dict[Process, ProcessDataType]]
