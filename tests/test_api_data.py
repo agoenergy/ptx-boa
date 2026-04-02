@@ -198,7 +198,7 @@ def test_get_dimensions_parameter_code(dimension, parameter_name, expected_code)
                 "process_code_res": "PV-FIX",
                 "secondary_processes": {"H2O-L": "DESAL"},
                 "ship_own_fuel": False,
-                "use_ship": True,
+                "transport": "Ship",
             },
         ],
     ],
@@ -355,7 +355,7 @@ def test_get_calculation_data(ptxdata_dir, scenario, kwargs, request):
                 "process_code_res": "RES-HYBR",
                 "secondary_processes": {"H2O-L": "DESAL"},
                 "ship_own_fuel": False,
-                "use_ship": True,
+                "transport": "Ship",
             },
         ],
     ],
@@ -532,14 +532,14 @@ def test_get_calculation_data_w_opt(ptxdata_dir, scenario, kwargs, request):
     ],
 )
 @pytest.mark.parametrize(
-    "use_ship, ship_own_fuel",
+    "transport, ship_own_fuel",
     [
-        (False, False),
-        (True, False),
-        # (True, True),  # no ship own fuel because needs SHP_OWN specified # noqa E800
+        ("Pipeline", False),
+        ("Ship", False),
+        # ("Ship", True),  # no ship own fuel because needs SHP_OWN specified # noqa E800
     ],
 )
-def test_validate_chains(chain, is_green, is_blue, use_ship, ship_own_fuel):
+def test_validate_chains(chain, is_green, is_blue, transport, ship_own_fuel):
     if is_green and is_blue:
         raise ValueError("chain is both green and blue")
 
@@ -562,7 +562,7 @@ def test_validate_chains(chain, is_green, is_blue, use_ship, ship_own_fuel):
             process_code_res=process_code_res,
             source_region_code="ESP",
             target_country_code="DEU",
-            use_ship=use_ship,
+            transport=transport,
             ship_own_fuel=ship_own_fuel,
         ),
     )

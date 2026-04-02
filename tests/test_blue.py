@@ -96,7 +96,7 @@ def _rec_approx(x):
                 "process_code_res": None,
                 "secondary_processes": {},
                 "ship_own_fuel": False,
-                "use_ship": True,
+                "transport": "Ship",
             },
             {
                 "region": "Qatar",

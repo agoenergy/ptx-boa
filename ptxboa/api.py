@@ -252,7 +252,7 @@ class PtxboaAPI:
             target_country_code=DataHandler.get_dimensions_parameter_code(
                 "country", country
             ),  # type: ignore
-            use_ship=(transport == "Ship"),
+            transport=transport,
             ship_own_fuel=ship_own_fuel,
         )
         data = data_handler.get_calculation_data(

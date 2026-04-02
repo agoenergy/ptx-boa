@@ -11,6 +11,7 @@ from ptxboa.static import (
     ProcessCodeType,
     SourceRegionCodeType,
     TargetCountryCodeType,
+    TransportType,
 )
 
 CalculateDataType = Dict[
@@ -49,5 +50,5 @@ class ChainDef:
     process_code_res: ProcessCodeResType
     source_region_code: SourceRegionCodeType
     target_country_code: TargetCountryCodeType
-    use_ship: bool
+    transport: TransportType
     ship_own_fuel: bool

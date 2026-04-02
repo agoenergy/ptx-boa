@@ -420,7 +420,7 @@ def test_prepare_data_for_optimize_incl_sec_proc():
     target_country_code = DataHandler.get_dimensions_parameter_code(
         "country", settings["country"]
     )
-    use_ship = settings["transport"] == "Ship"
+    transport = settings["transport"]
     ship_own_fuel = settings["ship_own_fuel"]
 
     with TemporaryDirectory() as cache_dir:
@@ -438,7 +438,7 @@ def test_prepare_data_for_optimize_incl_sec_proc():
                 process_code_res=process_code_res,
                 source_region_code=source_region_code,
                 target_country_code=target_country_code,
-                use_ship=use_ship,
+                transport=transport,
                 ship_own_fuel=ship_own_fuel,
             ),
             use_user_data=False,
@@ -479,7 +479,7 @@ def test_prepare_data_for_optimize_incl_sec_proc():
                 process_code_res=process_code_res,
                 source_region_code=source_region_code,
                 target_country_code=target_country_code,
-                use_ship=use_ship,
+                transport=transport,
                 ship_own_fuel=ship_own_fuel,
             ),
             optimize_flh=True,

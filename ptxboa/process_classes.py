@@ -224,7 +224,8 @@ class ProcessType:
         # secondary: only allow CCS
         return self.allow_in_export and (
             # CSS is onlyallowed secondary(?) # TODO:generalize?
-            not self.is_secondary or self.process_code == "CO2-T+S#B"
+            not self.is_secondary
+            or self.process_code == "CO2-T+S#B"
         )
 
 
@@ -1101,7 +1102,9 @@ class ChainProcess(AggregateProcess):
             for p in proc_import.get_subprocesses_by_class(MarketProcess):
                 parameter_i["SPECCOST"] = parameter_i[
                     "SPECCOST"
-                ] | parameters_import_procs[p].get(  # type: ignore # noqa
+                ] | parameters_import_procs[
+                    p
+                ].get(  # type: ignore # noqa
                     "SPECCOST",
                     {},
                 )
@@ -1225,7 +1228,7 @@ class ChainTransportProcess(ChainSectionProcess):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # TODO: ugly
-        self.transport_type: TransportType = (
+        self.transport: TransportType = (
             "Ship"
             if any(
                 cast(Process, p)._process_type.is_shipping for p in self.full_main_chain
@@ -1261,7 +1264,7 @@ class ChainTransportProcess(ChainSectionProcess):
             DataHandler._get_transport_distances(
                 source_region_code=data_lookup_defaults["source_region_code"],  # type: ignore # noqa
                 target_country_code=data_lookup_defaults["target_country_code"],  # type: ignore # noqa
-                use_ship=self.transport_type == "Ship",
+                transport=self.transport,
                 ship_own_fuel=self.ship_own_fuel,
                 dist_ship=parameters_self["DST-S-D"],  # type: ignore
                 dist_pipeline=parameters_self["DST-S-DP"],  # type: ignore
@@ -1361,9 +1364,9 @@ class ProcessGraph:
             flow_provider_sec_or_initial[sec_proc.main_flow_code_out] = sec_proc
 
         # collect required flows
-        required_flows_procs: dict[
-            FlowCodeType, list[tuple[AbstractProcess, bool]]
-        ] = {}
+        required_flows_procs: dict[FlowCodeType, list[tuple[AbstractProcess, bool]]] = (
+            {}
+        )
 
         def add_required_flows_proc(
             proc: AbstractProcess, flow: FlowCodeType, in_main: bool

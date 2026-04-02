@@ -29,6 +29,7 @@ from ptxboa.static import (
     SourceRegionCodeType,
     TargetCountryCodeType,
     ToolVersionColorType,
+    TransportType,
     TransportValues,
     YearValues,
 )
@@ -1001,7 +1002,7 @@ class DataHandler:
         process_code_res = chain_def.process_code_res
         source_region_code = chain_def.source_region_code
         target_country_code = chain_def.target_country_code
-        use_ship = chain_def.use_ship
+        transport = chain_def.transport
         ship_own_fuel = chain_def.ship_own_fuel
 
         # get process codes for selected chain
@@ -1081,13 +1082,14 @@ class DataHandler:
         existing_pipeline_cap = pg.get_parameter_value_w_default("CAP-T", default=0)
         dist_ship = pg.get_parameter_value_w_default("DST-S-D", default=0)
 
-        if not use_ship and not chain["can_pipeline"]:
-            use_ship = True
+        if transport == "Pipeline" and not chain["can_pipeline"]:
+            logger.warning("Cannot use Pipeline - switching toShip")
+            transport = "Ship"
 
         transport_distances = self._get_transport_distances(
             source_region_code,
             target_country_code,
-            use_ship,
+            transport,
             ship_own_fuel,
             dist_ship,
             dist_pipeline,
@@ -1341,7 +1343,7 @@ class DataHandler:
     def _get_transport_distances(
         source_region_code: SourceRegionCodeType,
         target_country_code: TargetCountryCodeType,
-        use_ship: bool,
+        transport: TransportType,
         ship_own_fuel: bool,
         dist_ship: float,
         dist_pipeline: float,
@@ -1352,7 +1354,7 @@ class DataHandler:
         if source_region_code == target_country_code:
             # no transport (only China)
             pass
-        elif dist_pipeline and not use_ship:
+        elif dist_pipeline and transport == "Pipeline":
             # use pipeline if pipeline possible and ship not selected
             if existing_pipeline_cap:
                 # use retrofitting
