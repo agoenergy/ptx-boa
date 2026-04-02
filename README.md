@@ -109,6 +109,12 @@ docker ps
 docker system prune -a
 ```
 
+## Testing / code coverage
+
+```bash
+pytest --cov=ptxboa --cov-report=term-missing --cov-report=html:htmlcov
+```
+
 ## Internal documentation
 
 This section contains internal documenation on data flows, structure of the code

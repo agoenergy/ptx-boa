@@ -11,3 +11,4 @@ mkdocs>=1.5
 mkdocs-material>=9.4
 mkdocstrings-python>=1.7
 progress
+pytest-cov
