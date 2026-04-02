@@ -9,9 +9,8 @@ import pypsa
 
 from ptxboa import PROFILES_DIR, logger
 from ptxboa.api_calc import PtxCalc
-from ptxboa.api_data import DataHandler
+from ptxboa.api_data import ChainProcess, DataHandler
 from ptxboa.api_optimize import PtxOpt
-from ptxboa.process_classes import ChainProcess
 from ptxboa.static import (
     ChainType,
     DimensionType,

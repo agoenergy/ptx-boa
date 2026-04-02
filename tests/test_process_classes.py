@@ -10,8 +10,8 @@ import coloredlogs
 import pandas as pd
 
 from ptxboa import logger
-from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler
-from ptxboa.process_classes import ChainProcess
+from ptxboa.api import _translate_and_validate_user_settings
+from ptxboa.api_data import DEFAULT_DATA_DIR, ChainProcess, DataHandler
 from ptxboa.static import (
     ChainType,
     ResGenType,
@@ -124,7 +124,10 @@ def main():
             scenario=scenario, data_dir=DEFAULT_DATA_DIR, user_data=settings.user_data
         )
 
-        chain_process = ChainProcess.get_or_create(**settings.__dict__)
+        chain_def, _tool_version_color, _optimize_flh = (
+            _translate_and_validate_user_settings(**settings.__dict__)
+        )
+        chain_process = ChainProcess.get_or_create(chain_def)
 
         data = chain_process.get_calculation_data(
             data_handler=data_handler,

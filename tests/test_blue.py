@@ -6,8 +6,7 @@ import pandas as pd
 import pytest
 
 from ptxboa.api import PtxboaAPI, PtxCalc, _translate_and_validate_user_settings
-from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler
-from ptxboa.process_classes import ChainProcess
+from ptxboa.api_data import DEFAULT_DATA_DIR, ChainProcess, DataHandler
 from ptxboa.static._type_defs import ChainDef
 from tests.test_api import ptxdata_dir_static
 
