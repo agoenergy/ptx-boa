@@ -69,25 +69,29 @@ def sort_nested(xs):
         return xs
 
 
-def round_nested(xs, ndigis: int = 6, drop_null_from_dict: bool = True):
+def drop_null_nested(xs):
     if isinstance(xs, list):
-        result = [
-            round_nested(x, ndigis, drop_null_from_dict=drop_null_from_dict) for x in xs
-        ]
-        if drop_null_from_dict:
-            result = [x for x in result if x]
+        result = [drop_null_nested(x) for x in xs]
+        result = [x for x in result if x]
         return result
     elif isinstance(xs, dict):
-        result = {
-            x: round_nested(y, ndigis, drop_null_from_dict=drop_null_from_dict)
-            for x, y in xs.items()
-        }
-        if drop_null_from_dict:
-            # drop enire dict containing "values": 0
-            if "values" in result and not result["values"]:
-                result = {}
-            else:
-                result = {x: y for x, y in result.items() if y}
+        result = {x: drop_null_nested(y) for x, y in xs.items()}
+        # drop enire dict containing "values": 0
+        if "values" in result and not result["values"]:
+            result = {}
+        else:
+            result = {x: y for x, y in result.items() if y}
+        return result
+    else:
+        return xs
+
+
+def round_nested(xs, ndigis: int = 8):
+    if isinstance(xs, list):
+        result = [round_nested(x, ndigis) for x in xs]
+        return result
+    elif isinstance(xs, dict):
+        result = {x: round_nested(y, ndigis) for x, y in xs.items()}
         return result
     elif isinstance(xs, float):
         return round(xs, ndigis)

@@ -1011,6 +1011,7 @@ class DataHandler:
                 sort_nested(round_nested(data_new)),
                 allow_new_dict_items=True,
             )
+        data = data_new
 
         # get optimized FLH?
         if optimize_flh:
@@ -1036,6 +1037,7 @@ class DataHandler:
                         sort_nested(round_nested(data_opt_new)),
                         allow_new_dict_items=True,
                     )
+                data_opt = data_opt_new
 
             else:
                 data_opt = data
@@ -1445,11 +1447,11 @@ def _plot_get_pos(
     xs: list[float] = [0, 0, 0]
     proc_end_last = None
 
-    for ex_tr_imp in chain_process.process_graph.main_processes:
+    for ex_tr_imp in chain_process.main_processes:
         ex_tr_imp = cast(AggregateProcess, ex_tr_imp)
         # export / tranport / import  subgraph
 
-        process_graph = ex_tr_imp.process_graph
+        process_graph = ex_tr_imp._process_graph
 
         # add processes as nodes to DiGraph
 
@@ -1483,7 +1485,8 @@ def _plot_get_pos(
 
             node_pos[key] = (x, y)
 
-        proc_end_last = process_graph.main_processes[-1]
+        if process_graph.main_processes:
+            proc_end_last = process_graph.main_processes[-1]
 
     return node_pos
 
@@ -1818,9 +1821,9 @@ class Process(AbstractProcess):
 
         # changes
 
-        if "LOSS" in data and "EFF" in data:
+        if "LOSS" in data:
             data["LOSS_FLOW"] = data.pop("LOSS")
-            if self.main_flow_code_in_or_out in data["LOSS_FLOW"]:  # type: ignore # noqa
+            if "EFF" in data and self.main_flow_code_in_or_out in data["LOSS_FLOW"]:  # type: ignore # noqa
                 data["LOSS"] = data["LOSS_FLOW"].pop(  # type: ignore
                     self.main_flow_code_in_or_out
                 )
@@ -1979,7 +1982,7 @@ class AggregateProcess(AbstractProcess):
         parent_process: Union["AbstractProcess", None] = None,
     ):
         super().__init__(process_step=process_step, parent_process=parent_process)
-        self.process_graph: "ProcessGraph" = process_graph
+        self._process_graph: "ProcessGraph" = process_graph
 
     def get_first_main_process_by_step(self, step: ProcessStepType) -> Process:
         """May raise Exception."""
@@ -1991,18 +1994,18 @@ class AggregateProcess(AbstractProcess):
     @property
     def main_flow_code_out(self) -> FlowCodeType:
         """Main flow code out."""
-        return self.process_graph.main_processes[-1].main_flow_code_out
+        return self.main_processes[-1].main_flow_code_out
 
     @property
     def main_flow_code_in(self) -> FlowCodeType | None:
         """Main flow code in."""
-        return self.process_graph.main_processes[0].main_flow_code_in
+        return self.main_processes[0].main_flow_code_in
 
     @property
     def full_main_chain(self) -> list[Process]:
-        """List of the entire main chain (including nested aggregated processes)."""
+        """List of the entire main chain."""
         result: list[Process] = []
-        for proc in self.process_graph.main_processes:
+        for proc in self.main_processes:
             if isinstance(proc, AggregateProcess):
                 result += proc.full_main_chain
             else:
@@ -2013,13 +2016,18 @@ class AggregateProcess(AbstractProcess):
     @property
     def main_processes(self) -> list[AbstractProcess]:
         """List all main proceeses."""
-        return self.process_graph.main_processes
+        return self._process_graph.main_processes
+
+    @property
+    def all_processes(self) -> Iterable[AbstractProcess]:
+        """List of all processes."""
+        return self._process_graph.calculate_order
 
     @property
     def secondary_processes(self) -> list[SecondaryProcess]:
-        """List of all secondary processes (including nested aggregated processes)."""
+        """List of all secondary processes."""
         result: list[SecondaryProcess] = []
-        for proc in self.process_graph.calculate_order:
+        for proc in self.all_processes:
             if isinstance(proc, AggregateProcess):
                 result += proc.secondary_processes  # recursion
             elif (
@@ -2033,15 +2041,15 @@ class AggregateProcess(AbstractProcess):
 
     @property
     def secondary_processes_by_flow_code(self) -> dict[FlowCodeType, SecondaryProcess]:
-        """List of all secondary processes (including nested aggregated processes)."""
+        """List of all secondary processes."""
         return {p.main_flow_code_out: p for p in self.secondary_processes}
 
     @property
     def market_processes_by_flow_code(self) -> dict[FlowCodeType, MarketProcess]:
-        """List of all secondary processes (including nested aggregated processes)."""
+        """List of all secondary processes."""
         return {
             p.main_flow_code_out: p
-            for p in self.process_graph.calculate_order
+            for p in self.all_processes
             if isinstance(p, MarketProcess)
         }
 
@@ -2057,15 +2065,15 @@ class AggregateProcess(AbstractProcess):
         # in first in reverse order, we use the given main_flow_out
         # for all following, we combine the required flows from all links.
         # if graph iscorrect,these must have been already calculated
-        for process in self.process_graph.calculate_order:
-            if process == self.process_graph.main_processes[-1]:
+        for process in self.all_processes:
+            if process == self.main_processes[-1]:
                 # is last in main chain
                 main_flow_out_current = main_flow_out
             else:
                 main_flow_out_current = 0  # calculate
                 flow_code = process.main_flow_code_out
 
-                for proc_target, in_main in self.process_graph.links_out.get(
+                for proc_target, in_main in self._process_graph.links_out.get(
                     process, []
                 ):
                     logger.debug(f"{process}: Serve {flow_code} to {proc_target}")
@@ -2083,18 +2091,14 @@ class AggregateProcess(AbstractProcess):
             logger.debug(f"Calculate: {process} for {main_flow_out_current}")
             process.calculate(main_flow_out=main_flow_out_current)
 
-            if process == self.process_graph.main_processes[0]:
+            if process == self.main_processes[0]:
                 self._main_flow_in = process.get_main_flow_in()
 
     def get_subprocesses_by_class(
         self, class_or_classes: type | tuple[type]
     ) -> list[AbstractProcess]:
         """Get subprocesses byclass."""
-        return [
-            p
-            for p in self.process_graph.calculate_order
-            if isinstance(p, class_or_classes)
-        ]
+        return [p for p in self.all_processes if isinstance(p, class_or_classes)]
 
     def plot(self, file_basename: str):
         """Create plot and save as png."""
@@ -2106,15 +2110,15 @@ class AggregateProcess(AbstractProcess):
 
         proc_end_last = None
         len_main_total = 0
-        for ex_tr_imp in self.process_graph.main_processes:
+        for ex_tr_imp in self.main_processes:
             ex_tr_imp = cast(AggregateProcess, ex_tr_imp)
             # export / tranport / import  subgraph
 
-            process_graph = ex_tr_imp.process_graph
+            process_graph = ex_tr_imp._process_graph
 
             # add processes as nodes to DiGraph
 
-            for process in reversed(list(process_graph.calculate_order)):
+            for process in reversed(list(ex_tr_imp.all_processes)):
                 label = str(process)
 
                 G.add_node(process)
@@ -2142,19 +2146,20 @@ class AggregateProcess(AbstractProcess):
                     edge_labels[e] = f"{flow}{value_str}"
                     edge_widths[e] = 2 if in_main else 1
 
-            if proc_end_last:
-                # link from previous subpgraph
-                proc_start = process_graph.main_processes[0]
-                e = (proc_end_last, proc_start)
-                G.add_edge(*e)
-                edge_labels[e] = proc_end_last.main_flow_code_out
-                try:
-                    edge_labels[e] += f"\n{proc_start.get_main_flow_in():.4f}"
-                except Exception:  # not calculated yet, # noqa: S110
-                    pass
-                edge_widths[e] = 2
+            if process_graph.main_processes:
+                if proc_end_last:
+                    # link from previous subpgraph
+                    proc_start = process_graph.main_processes[0]
+                    e = (proc_end_last, proc_start)
+                    G.add_edge(*e)
+                    edge_labels[e] = proc_end_last.main_flow_code_out
+                    try:
+                        edge_labels[e] += f"\n{proc_start.get_main_flow_in():.4f}"
+                    except Exception:  # not calculated yet, # noqa: S110
+                        pass
+                    edge_widths[e] = 2
 
-            proc_end_last = process_graph.main_processes[-1]
+                proc_end_last = process_graph.main_processes[-1]
 
             len_main_total += len(process_graph.main_processes)
 
@@ -2289,9 +2294,6 @@ class ChainProcess(AggregateProcess):
                 main_process_codes_steps_filtered[i:j]
             )
 
-            if not main_process_codes_steps_part:
-                continue
-
             invalid_processes = [
                 p
                 for p, _s in main_process_codes_steps_part
@@ -2308,11 +2310,22 @@ class ChainProcess(AggregateProcess):
                 if ChainSectionProcessClass.process_allowed(p)
             }
 
-            process = ChainSectionProcessClass(
-                main_process_codes_steps=main_process_codes_steps_part,
-                secondary_process_codes=secondary_process_codes_part,
-                parent_process=self,
-            )
+            # only import may be empty
+            if not main_process_codes_steps_part:
+                if ChainSectionProcessClass is ChainImportProcess:
+                    flow_code = main_processes[-1].main_flow_code_out
+                    process = DummyChainImportProcess(
+                        flow_code=flow_code, parent_process=self
+                    )
+                else:
+                    raise Exception("Empty chain")
+            else:
+                process = ChainSectionProcessClass(
+                    main_process_codes_steps=main_process_codes_steps_part,
+                    secondary_process_codes=secondary_process_codes_part,
+                    parent_process=self,
+                )
+
             main_processes.append(process)
 
             check_use_all_main_process_codes = (
@@ -2325,9 +2338,7 @@ class ChainProcess(AggregateProcess):
 
         self.section_export: ChainExportProcess = main_processes[0]  # type:ignore
         self.section_transport: ChainTransportProcess = main_processes[1]  # type:ignore
-        self.section_import: ChainImportProcess | None = (  # type:ignore
-            main_processes[2] if len(main_processes) > 2 else None
-        )
+        self.section_import: ChainImportProcess = main_processes[2]  # type:ignore
 
         super().__init__(
             process_graph=process_graph,
@@ -2394,20 +2405,17 @@ class ChainProcess(AggregateProcess):
             )
             for p in self.section_transport.main_processes
         ]
-        main_import_process_chain = (
-            [
-                _add_step_and_code(
-                    p,
-                    p.get_calculation_data(
-                        parameter_getters=parameter_getters,
-                        source_region_code=target_country_code,
-                    ),
-                )
-                for p in self.section_import.main_processes
-            ]
-            if self.section_import
-            else []
-        )
+
+        main_import_process_chain = [
+            _add_step_and_code(
+                p,
+                p.get_calculation_data(
+                    parameter_getters=parameter_getters,
+                    source_region_code=target_country_code,  # !! Swapped in import
+                ),
+            )
+            for p in self.section_import.main_processes
+        ]
 
         if todo_transport_re_post_as_transport:
             # FIXME: remove after validation:
@@ -2446,20 +2454,16 @@ class ChainProcess(AggregateProcess):
             )
             for f, p in self.section_export.secondary_processes_by_flow_code.items()
         }
-        secondary_process_i = (
-            {
-                f: _add_step_and_code(
-                    p,
-                    p.get_calculation_data(
-                        parameter_getters=parameter_getters,
-                        source_region_code=target_country_code,
-                    ),
-                )
-                for f, p in self.section_import.secondary_processes_by_flow_code.items()
-            }
-            if self.section_import
-            else {}
-        )
+        secondary_process_i = {
+            f: _add_step_and_code(
+                p,
+                p.get_calculation_data(
+                    parameter_getters=parameter_getters,
+                    source_region_code=target_country_code,  # !! Swapped in import
+                ),
+            )
+            for f, p in self.section_import.secondary_processes_by_flow_code.items()
+        }
 
         market_process = {
             f: p.get_calculation_data(
@@ -2468,46 +2472,35 @@ class ChainProcess(AggregateProcess):
             )
             for f, p in self.section_export.market_processes_by_flow_code.items()
         }
-        market_process_i = (
-            {
-                f: p.get_calculation_data(
-                    parameter_getters=parameter_getters,
-                    source_region_code=target_country_code,
-                )
-                for f, p in self.section_import.market_processes_by_flow_code.items()
-            }
-            if self.section_import
-            else {}
-        )
+        market_process_i = {
+            f: p.get_calculation_data(
+                parameter_getters=parameter_getters,
+                source_region_code=target_country_code,  # !! Swapped in import
+            )
+            for f, p in self.section_import.market_processes_by_flow_code.items()
+        }
 
         parameter = self.section_export.get_calculation_data(
             parameter_getters=parameter_getters, source_region_code=source_region_code
         ) | {
-            "SPECCOST": {f: d["SPECCOST"][f] for f, d in market_process.items()}
-        }  # type: ignore # noqa
-        parameter_i = (
-            (
-                self.section_import.get_calculation_data(
-                    parameter_getters=parameter_getters,
-                    source_region_code=target_country_code,
-                )
-                | {
-                    "SPECCOST": {
-                        f: d["SPECCOST"][f]  # type: ignore # noqa
-                        for f, d in market_process_i.items()
-                    }
-                }
-            )
-            if self.section_import
-            else {}
-        )
+            "SPECCOST": {f: d["SPECCOST"][f] for f, d in market_process.items()}  # type: ignore # noqa
+        }
+        parameter_i = self.section_import.get_calculation_data(
+            parameter_getters=parameter_getters,
+            source_region_code=target_country_code,  # !! Swapped in import
+        ) | {
+            "SPECCOST": {
+                f: d["SPECCOST"][f]  # type: ignore # noqa
+                for f, d in market_process_i.items()
+            }
+        }
 
         flh_opt_process = {}  # noqa
         if optimize_flh:
             # TODO must add flh_opt_process to result
             pass
 
-        return {
+        result = {
             "context": {
                 "source_region_code": source_region_code,
                 "target_country_code": target_country_code,
@@ -2520,6 +2513,10 @@ class ChainProcess(AggregateProcess):
             "secondary_process": secondary_process,
             "secondary_process_i": secondary_process_i,
         }
+
+        # FIMXE: remove later or dont add empty to begin with
+        # result = drop_null_nested(result) # noqa
+        return result  # type: ignore
 
 
 class ChainSectionProcess(AggregateProcess):
@@ -2571,6 +2568,30 @@ class ChainImportProcess(ChainSectionProcess):
     def process_allowed(cls, process_code: ProcessCodeType) -> bool:
         """Process is allowed as subprocess."""
         return ProcessTypes[process_code].allow_in_import
+
+
+class DummyChainImportProcess(ChainImportProcess):
+    def __init__(
+        self,
+        flow_code: FlowCodeType,
+        parent_process: Union["AbstractProcess", None] = None,
+    ):
+        super().__init__(
+            main_process_codes_steps=[],
+            secondary_process_codes=set(),
+            parent_process=parent_process,
+        )
+        self._flow_code_in_out: FlowCodeType = flow_code
+
+    @property
+    def main_flow_code_out(self) -> FlowCodeType:
+        """Main flow code out."""
+        return self._flow_code_in_out
+
+    @property
+    def main_flow_code_in(self) -> FlowCodeType:
+        """Main flow code in."""
+        return self._flow_code_in_out
 
 
 class ChainTransportProcess(ChainSectionProcess):
@@ -2657,6 +2678,10 @@ class ProcessGraph:
         # calculate_order: includes main, secondary, tertiary(market) processes
         self.calculate_order: Iterable[AbstractProcess] = []
         self.links_out: dict[AbstractProcess, list[tuple[AbstractProcess, bool]]] = {}
+
+        if not main_processes:
+            # empty graph
+            return
 
         G = nx.DiGraph()
         G.add_nodes_from(main_processes)

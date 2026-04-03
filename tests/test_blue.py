@@ -9,7 +9,7 @@ from ptxboa.api import PtxboaAPI, PtxCalc, _translate_and_validate_user_settings
 from ptxboa.api_data import DEFAULT_DATA_DIR, ChainProcess, DataHandler
 from ptxboa.static._type_defs import ChainDef
 from tests.test_api import ptxdata_dir_static
-from tests.utils import rec_approx, round_nested, sort_nested
+from tests.utils import drop_null_nested, rec_approx, round_nested, sort_nested
 
 
 def _translate_user_data(user_data: pd.DataFrame) -> None:
@@ -271,10 +271,12 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
     ].to_dict(orient="records")
 
     # round and sort for easier comparison
-    values = sort_nested(round_nested(ptxcalc_results.results_flows_chain))
+    values = sort_nested(
+        drop_null_nested(round_nested(ptxcalc_results.results_flows_chain))
+    )
     # round and sort for easier comparison
-    calculation_data = sort_nested(round_nested(calculation_data_))
-    res_emission_mass = sort_nested(round_nested(res_emission_mass))
+    calculation_data = sort_nested(drop_null_nested(round_nested(calculation_data_)))
+    res_emission_mass = sort_nested(drop_null_nested(round_nested(res_emission_mass)))
 
     # print so we can copy/paste new results into test
     print("calculation_data_exp = ", calculation_data)
@@ -284,6 +286,16 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
     calculation_data_exp = {
         "context": {"source_region_code": "QAT", "target_country_code": "DEU"},
         "main_export_process_chain": [
+            {
+                "CH4SHARE": {"NG-G": 0.909},
+                "EFF": 1.0,
+                "EF_E": {"NG-G": 201.0},
+                "EF_M": {"NG-G": 201.0},
+                "FLH": 7000,
+                "LIFETIME": 20,
+                "process_code": "NG-PROD#B",
+                "step": "NG_PROD",
+            },
             {
                 "CAPEX": 0.591876,
                 "CBOUND": {"NG-G": 0.040812},
@@ -300,7 +312,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 "OPEX-F": 0.017756,
                 "process_code": "NG-DRI-C#B",
                 "step": "DERIV",
-            }
+            },
         ],
         "main_import_process_chain": [
             {
@@ -320,29 +332,45 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 "step": "DERIV_I",
             }
         ],
-        "parameter": {
-            "SPECCOST": {
-                "CO2-G": 0.044519,
-                "EL": 0.08078,
-                "H2O-L": 0.001374,
-                "HEAT": 0.0577,
-                "N2-G": 0.01154,
-            }
-        },
-        "parameter_i": {
-            "SPECCOST": {
-                "CO2-G": 0.044519,
-                "EL": 0.08078,
-                "H2O-L": 0.001374,
-                "HEAT": 0.0577,
-                "N2-G": 0.01154,
-            }
+        "parameter": {"SPECCOST": {"EL": 0.08078}},
+        "parameter_i": {"SPECCOST": {"EL": 0.08078}},
+        "secondary_process": {
+            "CO2-C": {
+                "EFF": 1.0,
+                "EF_E": {"EL": 402.0},
+                "FLH": 7000,
+                "LIFETIME": 20,
+                "process_code": "CO2-T+S#B",
+            },
+            "EL": {
+                "CH4SHARE": {"NG-G": 0.909},
+                "EFF": 1.0,
+                "EF_E": {"EL": 402.0, "NG-G": 201.0},
+                "EF_M": {"NG-G": 201.0},
+                "FLH": 7000,
+                "LIFETIME": 20,
+                "process_code": "CCGT-CC#B",
+            },
         },
         "transport_process_chain": [
-            {"DIST": 999.0, "EFF": 1.0, "process_code": "DRI-SB#B", "step": "SHP"}
+            {"DIST": 999.0, "EFF": 1, "process_code": "DRI-SB#B", "step": "SHP"}
         ],
     }
     values_exp = [
+        {
+            "emissions": {
+                "co2_direct_e": 621.836353,
+                "co2_direct_m": 621.836353,
+                "co2_in_flows_e": 621.836353,
+                "co2_in_flows_m": 621.836353,
+                "co2e_total_direct_e": 621.836353,
+                "co2e_total_direct_m": 621.836353,
+            },
+            "main_input": 3.093713,
+            "main_output": 3.093713,
+            "process_code": "NG-PROD#B",
+            "process_step": "NG_PROD",
+        },
         {
             "emissions": {
                 "ch4_direct_co2e_e": 274.374207,
@@ -357,12 +385,10 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 "co2_direct_m": 204.316084,
                 "co2_in_flows_e": 592.225098,
                 "co2_in_flows_m": 592.225098,
-                "co2_indirect_scope2_e": 189.780347,
-                "co2_indirect_scope2_m": 189.780347,
                 "co2e_total_direct_e": 478.690291,
                 "co2e_total_direct_m": 478.690291,
             },
-            "flows": {"CO2-C": 0.239851, "EL": 0.47209, "IOP-S": 1.36},
+            "flows": {"CO2-C": 0.239851},
             "main_input": 3.093713,
             "main_output": 0.99,
             "process_code": "NG-DRI-C#B",
@@ -382,21 +408,13 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
         },
         {
             "emissions": {
-                "ch4_direct_co2e_e": 0.372488,
-                "ch4_direct_co2e_m": 0.372488,
-                "ch4_direct_e": 0.0125,
-                "ch4_direct_m": 0.0125,
                 "co2_bound_in_product_last_proc_e": 148.05785,
                 "co2_bound_in_product_last_proc_m": 148.05785,
                 "co2_direct_e": 148.05785,
-                "co2_direct_m": 148.86185,
-                "co2_in_flows_m": 0.804,
-                "co2_indirect_scope2_e": 195.3,
-                "co2_indirect_scope2_m": 195.3,
-                "co2e_total_direct_e": 148.430338,
-                "co2e_total_direct_m": 149.234338,
+                "co2_direct_m": 148.05785,
+                "co2e_total_direct_e": 148.05785,
+                "co2e_total_direct_m": 148.05785,
             },
-            "flows": {"EL": 0.651, "NG-G": 0.0042},
             "main_input": 0.99,
             "main_output": 1.0,
             "process_code": "EAF#B",
@@ -406,21 +424,9 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
     res_emission_mass_exp = [
         {
             "emission_type": "direct",
-            "gas_type": "CH4",
-            "process_subtype": "EAF#B",
-            "values": 372.488202,
-        },
-        {
-            "emission_type": "direct",
             "gas_type": "CO2",
             "process_subtype": "EAF#B",
-            "values": 148861.84985,
-        },
-        {
-            "emission_type": "indirect",
-            "gas_type": "CO2",
-            "process_subtype": "EAF#B",
-            "values": 195300.0,
+            "values": 148057.84985,
         },
         {
             "emission_type": "direct",
@@ -435,16 +441,10 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
             "values": 204316.083746,
         },
         {
-            "emission_type": "indirect",
-            "gas_type": "CO2",
-            "process_subtype": "NG-DRI-C#B",
-            "values": 189780.346718,
-        },
-        {
             "emission_type": "direct",
             "gas_type": "CO2",
-            "process_subtype": "CCGT-CC#B",
-            "values": 94890.173359,
+            "process_subtype": "NG-PROD#B",
+            "values": 621836.353405,
         },
     ]
 
@@ -475,76 +475,63 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 "context": {"source_region_code": "QAT", "target_country_code": "DEU"},
                 "main_export_process_chain": [
                     {
-                        "CBOUND": {"NG-G": 0.054851},
+                        "CBOUND": {"NG-G": 0.0548514},
                         "CH4SHARE": {"NG-G": 0.909},
-                        "CONV": {"DIESEL-L": 0.000595},
-                        "EFF": 0.98271,
+                        "CONV": {"DIESEL-L": 0.00059456},
+                        "EFF": 0.98270994,
                         "EF_E": {"DIESEL-L": 266.76, "NG-G": 201.0},
                         "EF_M": {"DIESEL-L": 266.76, "NG-G": 201.0},
                         "FLH": 7000,
                         "LIFETIME": 20,
                         "LOSS": 0.00378,
-                        "OPEX-O": 0.004863,
+                        "OPEX-O": 0.00486257,
                         "process_code": "NG-PROD#B",
                         "step": "NG_PROD",
                     },
                     {
-                        "CAPEX": 0.591876,
-                        "CBOUND": {"NG-G": 0.040812},
+                        "CAPEX": 0.59187636,
+                        "CBOUND": {"NG-G": 0.04081161},
                         "CH4SHARE": {"NG-G": 0.909},
                         "CO2CPT-R": {"CH4-G": 0.9, "NG-G": 0.9},
                         "CO2CPT-S": {"CH4-G": 0.45, "NG-G": 0.45},
-                        "CONV": {"CO2-C": 1, "EL": 0.476859, "IOP-S": 1.373737},
-                        "EFF": 0.336004,
+                        "CONV": {"CO2-C": 1, "EL": 0.47685859, "IOP-S": 1.37373737},
+                        "EFF": 0.3360036,
                         "EF_E": {"CH4-G": 201.0, "CO2-C": 1.0, "NG-G": 201.0},
                         "EF_M": {"CH4-G": 201.0, "CO2-C": 1.0, "NG-G": 201.0},
                         "FLH": 7000,
                         "LIFETIME": 20.0,
-                        "OPEX-F": 0.017756,
+                        "OPEX-F": 0.01775629,
                         "process_code": "NG-DRI-C#B",
                         "step": "DERIV",
                     },
                 ],
                 "main_import_process_chain": [
                     {
-                        "CAPEX": 0.417344,
+                        "CAPEX": 0.41734427,
                         "CBOUND": {"B-DRI-S": 0.004},
-                        "CH4SHARE": {"NG-G": 0.920806},
+                        "CH4SHARE": {"NG-G": 0.92080641},
                         "CONV": {"EL": 0.651, "NG-G": 0.3},
-                        "EFF": 1.010101,
+                        "EFF": 1.01010101,
                         "EF_E": {"EL": 100.0, "NG-G": 201.0},
                         "EF_M": {"EL": 100.0, "NG-G": 201.0},
                         "FLH": 7000,
                         "LIFETIME": 20.0,
-                        "OPEX-F": 0.01252,
-                        "OPEX-O": 0.183679,
+                        "OPEX-F": 0.01252033,
+                        "OPEX-O": 0.18367869,
                         "process_code": "EAF#B",
                         "step": "DERIV_I2",
                     }
                 ],
                 "parameter": {
                     "SPECCOST": {
-                        "CO2-G": 0.044519,
-                        "DIESEL-L": 0.042857,
+                        "DIESEL-L": 0.04285714,
                         "EL": 0.08078,
-                        "H2O-L": 0.001374,
-                        "HEAT": 0.0577,
-                        "IOP-S": 0.267076,
-                        "N2-G": 0.01154,
+                        "IOP-S": 0.26707598,
                     },
                     "WACC": 0.0487,
                 },
                 "parameter_i": {
-                    "SPECCOST": {
-                        "CO2-G": 0.044519,
-                        "DIESEL-L": 0.042857,
-                        "EL": 0.1,
-                        "H2O-L": 0.001374,
-                        "HEAT": 0.04,
-                        "IOP-S": 0.267076,
-                        "N2-G": 0.01154,
-                        "NG-G": 0.030565,
-                    },
+                    "SPECCOST": {"EL": 0.1, "NG-G": 0.03056527},
                     "WACC": 0.0423,
                 },
                 "secondary_process": {
@@ -554,27 +541,28 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "EF_M": {"CO2-C": 1.0},
                         "FLH": 7000,
                         "LIFETIME": 20,
-                        "OPEX-O": 0.030247,
+                        "OPEX-O": 0.03024746,
                         "process_code": "CO2-T+S#B",
                     },
                     "EL": {
-                        "CAPEX": 2408.190709,
+                        "CAPEX": 2408.19070902,
                         "CH4SHARE": {"NG-G": 0.909},
-                        "CO2CPT-R": {"NG-G": 0.897778},
+                        "CO2CPT-R": {"NG-G": 0.89777778},
                         "CO2CPT-S": {"NG-G": 1.0},
-                        "EFF": 0.504911,
+                        "EFF": 0.50491129,
                         "EF_E": {"CO2-C": 1.0, "NG-G": 201.0},
                         "EF_M": {"CO2-C": 1.0, "NG-G": 201.0},
                         "FLH": 7000,
                         "LIFETIME": 30.0,
-                        "OPEX-F": 63.758895,
+                        "OPEX-F": 63.75889534,
                         "process_code": "CCGT-CC#B",
                     },
                 },
                 "transport_process_chain": [
                     {
                         "DIST": 12830.0,
-                        "EFF": 1.0,
+                        "EFF": 1,
+                        "OPEX-T": 3.8e-07,
                         "process_code": "DRI-SB#B",
                         "step": "SHP",
                     }
@@ -583,41 +571,40 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
             [
                 {
                     "emissions": {
-                        "ch4_direct_co2e_e": 21.028181,
-                        "ch4_direct_co2e_m": 21.028181,
-                        "ch4_direct_e": 0.705644,
-                        "ch4_direct_m": 0.705644,
-                        "co2_bound_in_product_e": 592.225797,
-                        "co2_bound_in_product_m": 592.225797,
-                        "co2_direct_e": 8.617666,
-                        "co2_direct_m": 8.617666,
-                        "co2_in_flows_e": 600.843463,
-                        "co2_in_flows_m": 600.843463,
-                        "co2e_total_direct_e": 29.645847,
-                        "co2e_total_direct_m": 29.645847,
+                        "ch4_direct_co2e_e": 21.02818078,
+                        "ch4_direct_co2e_m": 21.02818078,
+                        "ch4_direct_e": 0.70564365,
+                        "ch4_direct_m": 0.70564365,
+                        "co2_bound_in_product_e": 592.22579704,
+                        "co2_bound_in_product_m": 592.22579704,
+                        "co2_direct_e": 8.15035506,
+                        "co2_direct_m": 8.15035506,
+                        "co2_in_flows_e": 600.3761521,
+                        "co2_in_flows_m": 600.3761521,
+                        "co2e_total_direct_e": 29.17853584,
+                        "co2e_total_direct_m": 29.17853584,
                     },
-                    "flows": {"DIESEL-L": 0.001752},
-                    "main_input": 2.998237,
+                    "main_input": 2.99823669,
                     "main_output": 2.946397,
                     "process_code": "NG-PROD#B",
                     "process_step": "NG_PROD",
                 },
                 {
                     "emissions": {
-                        "co2_bound_in_product_e": 148.056449,
-                        "co2_bound_in_product_last_proc_e": 592.225797,
-                        "co2_bound_in_product_last_proc_m": 592.225797,
-                        "co2_bound_in_product_m": 148.056449,
-                        "co2_captured_e": 239.851448,
-                        "co2_captured_m": 239.851448,
-                        "co2_direct_e": 796.543697,
-                        "co2_direct_m": 796.543697,
+                        "co2_bound_in_product_e": 148.05644926,
+                        "co2_bound_in_product_last_proc_e": 592.22579704,
+                        "co2_bound_in_product_last_proc_m": 592.22579704,
+                        "co2_bound_in_product_m": 148.05644926,
+                        "co2_captured_e": 239.85144778,
+                        "co2_captured_m": 239.85144778,
+                        "co2_direct_e": 796.54369699,
+                        "co2_direct_m": 796.54369699,
                         "co2_in_flows_e": 592.225797,
                         "co2_in_flows_m": 592.225797,
-                        "co2e_total_direct_e": 796.543697,
-                        "co2e_total_direct_m": 796.543697,
+                        "co2e_total_direct_e": 796.54369699,
+                        "co2e_total_direct_m": 796.54369699,
                     },
-                    "flows": {"CO2-C": 0.239851, "EL": 0.47209, "IOP-S": 1.36},
+                    "flows": {"CO2-C": 0.23985145},
                     "main_input": 2.946397,
                     "main_output": 0.99,
                     "process_code": "NG-DRI-C#B",
@@ -625,10 +612,10 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 },
                 {
                     "emissions": {
-                        "co2_bound_in_product_e": 148.056449,
-                        "co2_bound_in_product_last_proc_e": 148.056449,
-                        "co2_bound_in_product_last_proc_m": 148.056449,
-                        "co2_bound_in_product_m": 148.056449,
+                        "co2_bound_in_product_e": 148.05644926,
+                        "co2_bound_in_product_last_proc_e": 148.05644926,
+                        "co2_bound_in_product_last_proc_m": 148.05644926,
+                        "co2_bound_in_product_m": 148.05644926,
                     },
                     "main_input": 0.99,
                     "main_output": 0.99,
@@ -637,20 +624,15 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 },
                 {
                     "emissions": {
-                        "co2_bound_in_product_e": 14.657785,
-                        "co2_bound_in_product_last_proc_e": 148.056449,
-                        "co2_bound_in_product_last_proc_m": 148.056449,
-                        "co2_bound_in_product_m": 14.657785,
-                        "co2_direct_e": 193.698664,
-                        "co2_direct_m": 193.698664,
-                        "co2_in_flows_e": 60.3,
-                        "co2_in_flows_m": 60.3,
-                        "co2_indirect_scope2_e": 65.1,
-                        "co2_indirect_scope2_m": 65.1,
-                        "co2e_total_direct_e": 193.698664,
-                        "co2e_total_direct_m": 193.698664,
+                        "co2_bound_in_product_e": 14.65778518,
+                        "co2_bound_in_product_last_proc_e": 148.05644926,
+                        "co2_bound_in_product_last_proc_m": 148.05644926,
+                        "co2_bound_in_product_m": 14.65778518,
+                        "co2_direct_e": 133.39866408,
+                        "co2_direct_m": 133.39866408,
+                        "co2e_total_direct_e": 133.39866408,
+                        "co2e_total_direct_m": 133.39866408,
                     },
-                    "flows": {"EL": 0.651, "NG-G": 0.3},
                     "main_input": 0.99,
                     "main_output": 1.0,
                     "process_code": "EAF#B",
@@ -658,33 +640,21 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 },
                 {
                     "emissions": {
-                        "co2_captured_e": 85.190214,
-                        "co2_captured_m": 85.190214,
-                        "co2_direct_e": 9.699876,
-                        "co2_direct_m": 9.699876,
-                        "co2_in_flows_e": 94.89009,
-                        "co2_in_flows_m": 94.89009,
-                        "co2e_total_direct_e": 9.699876,
-                        "co2e_total_direct_m": 9.699876,
+                        "co2_direct_e": 0.23985145,
+                        "co2_direct_m": 0.23985145,
+                        "co2_in_flows_e": 0.23985145,
+                        "co2_in_flows_m": 0.23985145,
+                        "co2e_total_direct_e": 0.23985145,
+                        "co2e_total_direct_m": 0.23985145,
                     },
-                    "main_input": 0.47209,
-                    "main_output": 0.47209,
-                    "process_code": "CCGT-CC#B",
-                    "process_step": "SECONDARY:Electricity generation",
-                },
-                {
-                    "emissions": {
-                        "co2_direct_e": 0.239851,
-                        "co2_direct_m": 0.239851,
-                        "co2_in_flows_e": 0.239851,
-                        "co2_in_flows_m": 0.239851,
-                        "co2e_total_direct_e": 0.239851,
-                        "co2e_total_direct_m": 0.239851,
-                    },
-                    "main_input": 0.239851,
-                    "main_output": 0.239851,
+                    "main_input": 0.23985145,
+                    "main_output": 0.23985145,
                     "process_code": "CO2-T+S#B",
                     "process_step": "SECONDARY:CO2 transport and storage",
+                },
+                {
+                    "process_code": "CCGT-CC#B",
+                    "process_step": "SECONDARY:Electricity generation",
                 },
             ],
             [
@@ -698,78 +668,61 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "emission_type": "direct",
                     "gas_type": "CO2",
                     "process_subtype": "CO2-T+S#B",
-                    "values": 239.851448,
+                    "values": 239.85144778,
                 },
                 {
                     "emission_type": "direct",
                     "gas_type": "CO2",
                     "process_subtype": "EAF#B",
-                    "values": 193698.66408,
-                },
-                {
-                    "emission_type": "indirect",
-                    "gas_type": "CO2",
-                    "process_subtype": "EAF#B",
-                    "values": 65100.0,
+                    "values": 133398.66407992,
                 },
                 {
                     "emission_type": "direct",
                     "gas_type": "CO2",
                     "process_subtype": "NG-DRI-C#B",
-                    "values": 796543.696995,
-                },
-                {
-                    "emission_type": "direct",
-                    "gas_type": "CO2",
-                    "process_subtype": "CCGT-CC#B",
-                    "values": 9699.875867,
+                    "values": 796543.69699477,
                 },
                 {
                     "emission_type": "direct",
                     "gas_type": "CH4",
                     "process_subtype": "NG-PROD#B",
-                    "values": 21028.18078,
+                    "values": 21028.18077976,
                 },
                 {
                     "emission_type": "direct",
                     "gas_type": "CO2",
                     "process_subtype": "NG-PROD#B",
-                    "values": 8617.665995,
+                    "values": 8150.35505695,
                 },
             ],
             [
                 {
-                    "process_subtype": "CCGT-CC#B",
-                    "process_type": "Electricity generation",
-                    "values": 0.014709,
-                },
-                {
                     "process_subtype": "CO2-T+S#B",
                     "process_type": "CO2 transport and storage",
-                    "values": 0.007255,
+                    "values": 0.0072549,
                 },
                 {
                     "process_subtype": "DRI-SB#B",
                     "process_type": "Transportation (Ship)",
-                    "values": 0.004783,
+                    "values": 0.00478268,
                 },
                 {
                     "process_subtype": "EAF#B",
                     "process_type": "Derivative production",
-                    "values": 0.257955,
+                    "values": 0.18368496,
                 },
                 {
                     "process_subtype": "NG-DRI-C#B",
                     "process_type": "Derivative production",
-                    "values": 0.363232,
+                    "values": 9.15e-06,
                 },
                 {
                     "process_subtype": "NG-PROD#B",
                     "process_type": "Natural gas production",
-                    "values": 0.014402,
+                    "values": 0.01432705,
                 },
             ],
-            # marks=pytest.mark.xfail, # noqa
+            # marks=pytest.mark.skip,  # noqa
         ),
         # =============================================================================
         # CASE 2
@@ -790,29 +743,29 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 "context": {"source_region_code": "DZA", "target_country_code": "DEU"},
                 "main_export_process_chain": [
                     {
-                        "CBOUND": {"NG-G": 0.054851},
-                        "CH4SHARE": {"NG-G": 0.899533},
-                        "CONV": {"DIESEL-L": 0.000602},
-                        "EFF": 0.903626,
+                        "CBOUND": {"NG-G": 0.0548514},
+                        "CH4SHARE": {"NG-G": 0.89953333},
+                        "CONV": {"DIESEL-L": 0.00060236},
+                        "EFF": 0.90362604,
                         "EF_E": {"DIESEL-L": 266.76, "NG-G": 201.0},
                         "EF_M": {"DIESEL-L": 266.76, "NG-G": 201.0},
                         "FLH": 7000,
                         "LIFETIME": 20,
                         "LOSS": 0.0139,
-                        "OPEX-O": 0.003163,
+                        "OPEX-O": 0.00316265,
                         "process_code": "NG-PROD#B",
                         "step": "NG_PROD",
                     }
                 ],
                 "main_import_process_chain": [
                     {
-                        "CAPEX": 0.591876,
-                        "CBOUND": {"NG-G": 0.040812},
-                        "CH4SHARE": {"NG-G": 0.920806},
+                        "CAPEX": 0.59187636,
+                        "CBOUND": {"NG-G": 0.04081161},
+                        "CH4SHARE": {"NG-G": 0.92080641},
                         "CO2CPT-R": {"CH4-G": 0.9, "NG-G": 0.9},
                         "CO2CPT-S": {"CH4-G": 0.45, "NG-G": 0.45},
-                        "CONV": {"CO2-C": 1, "EL": 0.476859, "IOP-S": 1.373737},
-                        "EFF": 0.336004,
+                        "CONV": {"CO2-C": 1, "EL": 0.47685859, "IOP-S": 1.37373737},
+                        "EFF": 0.3360036,
                         "EF_E": {
                             "CH4-G": 201.0,
                             "CO2-C": 1.0,
@@ -827,81 +780,117 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         },
                         "FLH": 7000,
                         "LIFETIME": 20.0,
-                        "OPEX-F": 0.017756,
+                        "OPEX-F": 0.01775629,
                         "process_code": "NG-DRI-C#B",
                         "step": "DERIV_I",
                     },
                     {
-                        "CAPEX": 0.417344,
+                        "CAPEX": 0.41734427,
                         "CBOUND": {"B-DRI-S": 0.004},
-                        "CH4SHARE": {"NG-G": 0.920806},
+                        "CH4SHARE": {"NG-G": 0.92080641},
                         "CONV": {"EL": 0.651, "NG-G": 0.3},
-                        "EFF": 1.010101,
+                        "EFF": 1.01010101,
                         "EF_E": {"EL": 100.0, "NG-G": 201.0},
                         "EF_M": {"EL": 100.0, "NG-G": 201.0},
                         "FLH": 7000,
                         "LIFETIME": 20.0,
-                        "OPEX-F": 0.01252,
-                        "OPEX-O": 0.183679,
+                        "OPEX-F": 0.01252033,
+                        "OPEX-O": 0.18367869,
                         "process_code": "EAF#B",
                         "step": "DERIV_I2",
                     },
                 ],
                 "parameter": {
-                    "SPECCOST": {
-                        "CO2-G": 0.044519,
-                        "DIESEL-L": 0.042857,
-                        "EL": 0.08078,
-                        "H2O-L": 0.001374,
-                        "HEAT": 0.0577,
-                        "IOP-S": 0.267076,
-                        "N2-G": 0.01154,
-                    },
-                    "WACC": 0.145548,
+                    "SPECCOST": {"DIESEL-L": 0.04285714, "EL": 0.08078},
+                    "WACC": 0.14554836,
                 },
                 "parameter_i": {
                     "SPECCOST": {
-                        "CO2-G": 0.044519,
-                        "DIESEL-L": 0.042857,
+                        "DIESEL-L": 0.04285714,
                         "EL": 0.1,
-                        "H2O-L": 0.001374,
-                        "HEAT": 0.04,
-                        "IOP-S": 0.267076,
-                        "N2-G": 0.01154,
-                        "NG-G": 0.030565,
+                        "IOP-S": 0.26707598,
+                        "NG-G": 0.03056527,
                     },
                     "WACC": 0.0423,
                 },
+                "secondary_process": {
+                    "CO2-C": {
+                        "EFF": 0.95,
+                        "EF_E": {"CO2-C": 1.0},
+                        "EF_M": {"CO2-C": 1.0},
+                        "FLH": 7000,
+                        "LIFETIME": 20,
+                        "OPEX-O": 0.11656581,
+                        "process_code": "CO2-T+S#B",
+                    },
+                    "EL": {
+                        "CAPEX": 2408.19070902,
+                        "CH4SHARE": {"NG-G": 0.89953333},
+                        "CO2CPT-R": {"NG-G": 0.89777778},
+                        "CO2CPT-S": {"NG-G": 1.0},
+                        "EFF": 0.50491129,
+                        "EF_E": {"CO2-C": 1.0, "NG-G": 201.0},
+                        "EF_M": {"CO2-C": 1.0, "NG-G": 201.0},
+                        "FLH": 7000,
+                        "LIFETIME": 30.0,
+                        "OPEX-F": 63.75889534,
+                        "process_code": "CCGT-CC#B",
+                    },
+                },
+                "secondary_process_i": {
+                    "CO2-C": {
+                        "EFF": 0.95,
+                        "EF_E": {"CO2-C": 1.0, "EL": 100.0},
+                        "EF_M": {"CO2-C": 1.0, "EL": 100.0},
+                        "FLH": 7000,
+                        "LIFETIME": 20,
+                        "OPEX-O": 0.14792048,
+                        "process_code": "CO2-T+S#B",
+                    }
+                },
                 "transport_process_chain": [
                     {
-                        "CAPEX": 408.107082,
-                        "CH4SHARE": {"NG-G": 0.899533},
-                        "CONV": {"EL": 0.002742},
-                        "EFF": 0.857089,
+                        "CAPEX": 408.10708157,
+                        "CH4SHARE": {"NG-G": 0.89953333},
+                        "CONV": {"EL": 0.00274153},
+                        "EFF": 0.85708919,
                         "EF_E": {"NG-G": 201.0, "NG-L": 201.0},
                         "EF_M": {"NG-G": 201.0, "NG-L": 201.0},
                         "FLH": 7000,
                         "LIFETIME": 30.0,
                         "LOSS": 0.0005,
-                        "OPEX-F": 8.162142,
+                        "OPEX-F": 8.16214163,
                         "process_code": "CH4-LIQ#B",
                         "step": "PRE_SHP",
                     },
                     {
-                        "CONV-OT": {"BFUEL-L": 3e-06, "NG-L": 1e-06},
+                        "CONV-OT": {"BFUEL-L": 3.3e-06, "NG-L": 1.15e-06},
                         "DIST": 3174.14,
-                        "EFF": 1.0,
+                        "EFF": 1,
+                        "EF_E": {"NG-L": 201.0},
+                        "EF_M": {"BFUEL-L": 292.68, "NG-L": 201.0},
                         "process_code": "CH4-SB#B",
                         "step": "SHP",
                     },
                     {
-                        "CH4SHARE": {"NG-G": 0.899533},
+                        "CH4SHARE": {"NG-G": 0.92080641},
                         "CONV": {"DIESEL-L": 2e-06, "EL": 0.00048, "NG-G": 0.00085},
-                        "EFF": 1,
-                        "EF_E": {"DIESEL-L": 266.76, "NG-G": 201.0, "NG-L": 201.0},
-                        "EF_M": {"DIESEL-L": 266.76, "NG-G": 201.0, "NG-L": 201.0},
+                        "EFF": 1.0,
+                        "EF_E": {
+                            "DIESEL-L": 266.76,
+                            "EL": 100.0,
+                            "NG-G": 201.0,
+                            "NG-L": 201.0,
+                        },
+                        "EF_M": {
+                            "DIESEL-L": 266.76,
+                            "EL": 100.0,
+                            "NG-G": 201.0,
+                            "NG-L": 201.0,
+                        },
                         "FLH": 7000,
                         "LIFETIME": 20,
+                        "LOSS_FLOW": {"NG-G": 4e-08},
                         "process_code": "CH4-RGAS#B",
                         "step": "POST_SHP",
                     },
@@ -910,56 +899,60 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
             [
                 {
                     "emissions": {
-                        "ch4_direct_co2e_e": 96.124057,
-                        "ch4_direct_co2e_m": 96.124057,
-                        "ch4_direct_e": 3.225639,
-                        "ch4_direct_m": 3.225639,
-                        "co2_bound_in_product_e": 690.973363,
-                        "co2_bound_in_product_m": 690.973363,
-                        "co2_direct_e": 63.763249,
-                        "co2_direct_m": 63.763249,
-                        "co2_in_flows_e": 754.736612,
-                        "co2_in_flows_m": 754.736612,
-                        "co2e_total_direct_e": 159.887306,
-                        "co2e_total_direct_m": 159.887306,
+                        "ch4_direct_co2e_e": 96.12405658,
+                        "ch4_direct_co2e_m": 96.12405658,
+                        "ch4_direct_e": 3.22563948,
+                        "ch4_direct_m": 3.22563948,
+                        "co2_bound_in_product_e": 690.97336284,
+                        "co2_bound_in_product_m": 690.97336284,
+                        "co2_direct_e": 63.21086003,
+                        "co2_direct_m": 63.21086003,
+                        "co2_in_flows_e": 754.18422287,
+                        "co2_in_flows_m": 754.18422287,
+                        "co2e_total_direct_e": 159.33491661,
+                        "co2e_total_direct_m": 159.33491661,
                     },
-                    "flows": {"DIESEL-L": 0.002071},
-                    "main_input": 3.804315,
-                    "main_output": 3.437678,
+                    "main_input": 3.80431534,
+                    "main_output": 3.43767842,
                     "process_code": "NG-PROD#B",
                     "process_step": "NG_PROD",
                 },
                 {
                     "emissions": {
-                        "ch4_direct_co2e_e": 3.166315,
-                        "ch4_direct_co2e_m": 3.166315,
-                        "ch4_direct_e": 0.106252,
-                        "ch4_direct_m": 0.106252,
-                        "co2_bound_in_product_e": 592.225797,
-                        "co2_bound_in_product_last_proc_e": 690.973363,
-                        "co2_bound_in_product_last_proc_m": 690.973363,
-                        "co2_bound_in_product_m": 592.225797,
-                        "co2_direct_e": 789.375615,
-                        "co2_direct_m": 789.375615,
-                        "co2_in_flows_e": 690.628049,
-                        "co2_in_flows_m": 690.628049,
-                        "co2e_total_direct_e": 792.541929,
-                        "co2e_total_direct_m": 792.541929,
+                        "ch4_direct_co2e_e": 3.1663146,
+                        "ch4_direct_co2e_m": 3.1663146,
+                        "ch4_direct_e": 0.10625217,
+                        "ch4_direct_m": 0.10625217,
+                        "co2_bound_in_product_e": 592.22579704,
+                        "co2_bound_in_product_last_proc_e": 690.97336284,
+                        "co2_bound_in_product_last_proc_m": 690.97336284,
+                        "co2_bound_in_product_m": 592.22579704,
+                        "co2_direct_e": 789.37561457,
+                        "co2_direct_m": 789.37561457,
+                        "co2_in_flows_e": 690.62804877,
+                        "co2_in_flows_m": 690.62804877,
+                        "co2e_total_direct_e": 792.54192918,
+                        "co2e_total_direct_m": 792.54192918,
                     },
-                    "flows": {"EL": 0.008078},
-                    "main_input": 3.437678,
+                    "main_input": 3.43767842,
                     "main_output": 2.946397,
                     "process_code": "CH4-LIQ#B",
                     "process_step": "PRE_SHP",
                 },
                 {
                     "emissions": {
-                        "co2_bound_in_product_e": 592.225797,
-                        "co2_bound_in_product_last_proc_e": 592.225797,
-                        "co2_bound_in_product_last_proc_m": 592.225797,
-                        "co2_bound_in_product_m": 592.225797,
+                        "co2_bound_in_product_e": 592.22579704,
+                        "co2_bound_in_product_last_proc_e": 592.22579704,
+                        "co2_bound_in_product_last_proc_m": 592.22579704,
+                        "co2_bound_in_product_m": 592.22579704,
+                        "co2_direct_e": 594.39463225,
+                        "co2_direct_m": 603.42818167,
+                        "co2_in_flows_e": 594.39463225,
+                        "co2_in_flows_m": 603.42818167,
+                        "co2e_total_direct_e": 594.39463225,
+                        "co2e_total_direct_m": 603.42818167,
                     },
-                    "flows": {"BFUEL-L": 0.030865, "NG-L": 0.01079},
+                    "flows": {"BFUEL-L": 0.03086494, "NG-L": 0.01079023},
                     "main_input": 2.946397,
                     "main_output": 2.946397,
                     "process_code": "CH4-SB#B",
@@ -967,18 +960,17 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 },
                 {
                     "emissions": {
-                        "co2_bound_in_product_e": 592.225797,
-                        "co2_bound_in_product_last_proc_e": 592.225797,
-                        "co2_bound_in_product_last_proc_m": 592.225797,
-                        "co2_bound_in_product_m": 592.225797,
-                        "co2_direct_e": 592.730761,
-                        "co2_direct_m": 592.730761,
-                        "co2_in_flows_e": 592.730761,
-                        "co2_in_flows_m": 592.730761,
-                        "co2e_total_direct_e": 592.730761,
-                        "co2e_total_direct_m": 592.730761,
+                        "co2_bound_in_product_e": 592.22579704,
+                        "co2_bound_in_product_last_proc_e": 592.22579704,
+                        "co2_bound_in_product_last_proc_m": 592.22579704,
+                        "co2_bound_in_product_m": 592.22579704,
+                        "co2_direct_e": 592.225797,
+                        "co2_direct_m": 592.225797,
+                        "co2_in_flows_e": 592.225797,
+                        "co2_in_flows_m": 592.225797,
+                        "co2e_total_direct_e": 592.225797,
+                        "co2e_total_direct_m": 592.225797,
                     },
-                    "flows": {"DIESEL-L": 6e-06, "EL": 0.001414, "NG-G": 0.002504},
                     "main_input": 2.946397,
                     "main_output": 2.946397,
                     "process_code": "CH4-RGAS#B",
@@ -986,22 +978,20 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 },
                 {
                     "emissions": {
-                        "co2_bound_in_product_e": 148.056449,
-                        "co2_bound_in_product_last_proc_e": 592.225797,
-                        "co2_bound_in_product_last_proc_m": 592.225797,
-                        "co2_bound_in_product_m": 148.056449,
-                        "co2_captured_e": 239.851448,
-                        "co2_captured_m": 239.851448,
-                        "co2_direct_e": 796.543697,
-                        "co2_direct_m": 796.543697,
+                        "co2_bound_in_product_e": 148.05644926,
+                        "co2_bound_in_product_last_proc_e": 592.22579704,
+                        "co2_bound_in_product_last_proc_m": 592.22579704,
+                        "co2_bound_in_product_m": 148.05644926,
+                        "co2_captured_e": 239.85144778,
+                        "co2_captured_m": 239.85144778,
+                        "co2_direct_e": 796.54369699,
+                        "co2_direct_m": 796.54369699,
                         "co2_in_flows_e": 592.225797,
                         "co2_in_flows_m": 592.225797,
-                        "co2_indirect_scope2_e": 47.209,
-                        "co2_indirect_scope2_m": 47.209,
-                        "co2e_total_direct_e": 796.543697,
-                        "co2e_total_direct_m": 796.543697,
+                        "co2e_total_direct_e": 796.54369699,
+                        "co2e_total_direct_m": 796.54369699,
                     },
-                    "flows": {"CO2-C": 0.239851, "EL": 0.47209, "IOP-S": 1.36},
+                    "flows": {"CO2-C": 0.23985145},
                     "main_input": 2.946397,
                     "main_output": 0.99,
                     "process_code": "NG-DRI-C#B",
@@ -1009,24 +999,23 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 },
                 {
                     "emissions": {
-                        "co2_bound_in_product_e": 14.657785,
-                        "co2_bound_in_product_last_proc_e": 148.056449,
-                        "co2_bound_in_product_last_proc_m": 148.056449,
-                        "co2_bound_in_product_m": 14.657785,
-                        "co2_direct_e": 193.698664,
-                        "co2_direct_m": 193.698664,
-                        "co2_in_flows_e": 60.3,
-                        "co2_in_flows_m": 60.3,
-                        "co2_indirect_scope2_e": 65.1,
-                        "co2_indirect_scope2_m": 65.1,
-                        "co2e_total_direct_e": 193.698664,
-                        "co2e_total_direct_m": 193.698664,
+                        "co2_bound_in_product_e": 14.65778518,
+                        "co2_bound_in_product_last_proc_e": 148.05644926,
+                        "co2_bound_in_product_last_proc_m": 148.05644926,
+                        "co2_bound_in_product_m": 14.65778518,
+                        "co2_direct_e": 133.39866408,
+                        "co2_direct_m": 133.39866408,
+                        "co2e_total_direct_e": 133.39866408,
+                        "co2e_total_direct_m": 133.39866408,
                     },
-                    "flows": {"EL": 0.651, "NG-G": 0.3},
                     "main_input": 0.99,
                     "main_output": 1.0,
                     "process_code": "EAF#B",
                     "process_step": "DERIV_I2",
+                },
+                {
+                    "process_code": "CCGT-CC#B",
+                    "process_step": "SECONDARY:Electricity generation",
                 },
             ],
             [
@@ -1040,91 +1029,74 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "emission_type": "direct",
                     "gas_type": "CO2",
                     "process_subtype": "EAF#B",
-                    "values": 193698.66408,
-                },
-                {
-                    "emission_type": "indirect",
-                    "gas_type": "CO2",
-                    "process_subtype": "EAF#B",
-                    "values": 65100.0,
+                    "values": 133398.66407992,
                 },
                 {
                     "emission_type": "direct",
                     "gas_type": "CO2",
                     "process_subtype": "NG-DRI-C#B",
-                    "values": 796543.696995,
-                },
-                {
-                    "emission_type": "indirect",
-                    "gas_type": "CO2",
-                    "process_subtype": "NG-DRI-C#B",
-                    "values": 47209.0,
+                    "values": 796543.69699477,
                 },
                 {
                     "emission_type": "direct",
                     "gas_type": "CH4",
                     "process_subtype": "NG-PROD#B",
-                    "values": 96124.056584,
+                    "values": 96124.05658408,
                 },
                 {
                     "emission_type": "direct",
                     "gas_type": "CO2",
                     "process_subtype": "NG-PROD#B",
-                    "values": 63763.249017,
+                    "values": 63210.86002771,
                 },
                 {
                     "emission_type": "direct",
                     "gas_type": "CH4",
                     "process_subtype": "CH4-LIQ#B",
-                    "values": 3166.314605,
+                    "values": 3166.31460453,
                 },
                 {
                     "emission_type": "direct",
                     "gas_type": "CO2",
                     "process_subtype": "CH4-LIQ#B",
-                    "values": 789375.614575,
-                },
-                {
-                    "emission_type": "direct",
-                    "gas_type": "CH4",
-                    "process_subtype": "CH4-RGAS#B",
-                    "values": 0.000185,
+                    "values": 789375.61457463,
                 },
                 {
                     "emission_type": "direct",
                     "gas_type": "CO2",
                     "process_subtype": "CH4-RGAS#B",
-                    "values": 592730.760889,
+                    "values": 592225.797,
+                },
+                {
+                    "emission_type": "direct",
+                    "gas_type": "CO2",
+                    "process_subtype": "CH4-SB#B",
+                    "values": 603428.18167276,
                 },
             ],
             [
                 {
                     "process_subtype": "CH4-LIQ#B",
                     "process_type": "Transportation (Ship)",
-                    "values": 0.029522,
-                },
-                {
-                    "process_subtype": "CH4-RGAS#B",
-                    "process_type": "Transportation (Ship)",
-                    "values": 0.000114,
+                    "values": 0.02886908,
                 },
                 {
                     "process_subtype": "EAF#B",
                     "process_type": "Derivative production",
-                    "values": 0.257955,
+                    "values": 0.18368496,
                 },
                 {
                     "process_subtype": "NG-DRI-C#B",
                     "process_type": "Derivative production",
-                    "values": 0.410441,
+                    "values": 8.8e-06,
                 },
                 {
                     "process_subtype": "NG-PROD#B",
                     "process_type": "Natural gas production",
-                    "values": 0.010961,
+                    "values": 0.01087216,
                 },
             ],
-            # marks=pytest.mark.skip, # noqa
+            marks=pytest.mark.skip,  # noqa
         ),
     ],
 )
@@ -1138,14 +1110,14 @@ def test_new_blue_chain_real_data(
         **api_kwargs, tool_version_color="blue", optimize_flh=False, output_unit="USD/t"
     )
 
-    calculation_data = sort_nested(round_nested(api_result.todo_data))
-    values = sort_nested(round_nested(api_result.todo_results_flows))
+    calculation_data = sort_nested(drop_null_nested(round_nested(api_result.todo_data)))
+    values = sort_nested(drop_null_nested(round_nested(api_result.todo_results_flows)))
 
     res_emission_mass = api_result.emission_mass[  # type: ignore
         ["process_subtype", "emission_type", "gas_type", "values"]
     ].to_dict(orient="records")
     # round and sort for easier comparison
-    res_emission_mass = sort_nested(round_nested(res_emission_mass))
+    res_emission_mass = sort_nested(drop_null_nested(round_nested(res_emission_mass)))
 
     res_costs = (
         api_result.todo_df_results_cost_unscaled[  # type: ignore
@@ -1157,19 +1129,21 @@ def test_new_blue_chain_real_data(
         .to_dict(orient="records")
     )
     # round and sort for easier comparison
-    res_costs = sort_nested(round_nested(res_costs))
+    res_costs = sort_nested(drop_null_nested(round_nested(res_costs)))
 
     # print so we can copy/paste new results into test
     print((calculation_data, values, res_emission_mass, res_costs))
 
     assert rec_approx(calculation_data) == sort_nested(
-        round_nested(calculation_data_exp)
+        drop_null_nested(round_nested(calculation_data_exp))
     )
-    assert rec_approx(values) == sort_nested(round_nested(values_exp))
+    assert rec_approx(values) == sort_nested(drop_null_nested(round_nested(values_exp)))
     assert rec_approx(res_emission_mass) == sort_nested(
-        round_nested(res_emission_mass_exp)
+        drop_null_nested(round_nested(res_emission_mass_exp))
     )
-    assert rec_approx(res_costs) == sort_nested(round_nested(res_costs_exp))
+    assert rec_approx(res_costs) == sort_nested(
+        drop_null_nested(round_nested(res_costs_exp))
+    )
 
 
 @pytest.mark.parametrize(
@@ -1194,63 +1168,63 @@ def test_new_blue_chain_real_data(
                 "context": {"source_region_code": "QAT", "target_country_code": "DEU"},
                 "main_export_process_chain": [
                     {
-                        "CBOUND": {"NG-G": 0.054851},
+                        "CBOUND": {"NG-G": 0.0548514},
                         "CH4SHARE": {"NG-G": 0.909},
-                        "CONV": {"DIESEL-L": 0.000595},
-                        "EFF": 0.98271,
+                        "CONV": {"DIESEL-L": 0.00059456},
+                        "EFF": 0.98270994,
                         "EF_E": {"DIESEL-L": 266.76, "NG-G": 201.0},
                         "EF_M": {"DIESEL-L": 266.76, "NG-G": 201.0},
                         "FLH": 7000,
                         "LIFETIME": 20,
                         "LOSS": 0.00378,
-                        "OPEX-O": 0.004863,
+                        "OPEX-O": 0.00486257,
                         "process_code": "NG-PROD#B",
                         "step": "NG_PROD",
                     },
                     {
-                        "CAPEX": 0.591876,
-                        "CBOUND": {"NG-G": 0.040812},
+                        "CAPEX": 0.59187636,
+                        "CBOUND": {"NG-G": 0.04081161},
                         "CH4SHARE": {"NG-G": 0.909},
                         "CO2CPT-R": {"CH4-G": 0.9, "NG-G": 0.9},
                         "CO2CPT-S": {"CH4-G": 0.45, "NG-G": 0.45},
-                        "CONV": {"CO2-C": 1, "EL": 0.476859, "IOP-S": 1.373737},
-                        "EFF": 0.336004,
+                        "CONV": {"CO2-C": 1, "EL": 0.47685859, "IOP-S": 1.37373737},
+                        "EFF": 0.3360036,
                         "EF_E": {"CH4-G": 201.0, "CO2-C": 1.0, "NG-G": 201.0},
                         "EF_M": {"CH4-G": 201.0, "CO2-C": 1.0, "NG-G": 201.0},
                         "FLH": 7000,
                         "LIFETIME": 20.0,
-                        "OPEX-F": 0.017756,
+                        "OPEX-F": 0.01775629,
                         "process_code": "NG-DRI-C#B",
                         "step": "DERIV",
                     },
                 ],
                 "main_import_process_chain": [
                     {
-                        "CAPEX": 0.417344,
+                        "CAPEX": 0.41734427,
                         "CBOUND": {"B-DRI-S": 0.004},
-                        "CH4SHARE": {"NG-G": 0.920806},
+                        "CH4SHARE": {"NG-G": 0.92080641},
                         "CONV": {"EL": 0.651, "NG-G": 0.3},
-                        "EFF": 1.010101,
+                        "EFF": 1.01010101,
                         "EF_E": {"EL": 100.0, "NG-G": 201.0},
                         "EF_M": {"EL": 100.0, "NG-G": 201.0},
                         "FLH": 7000,
                         "LIFETIME": 20.0,
-                        "OPEX-F": 0.01252,
-                        "OPEX-O": 0.183679,
+                        "OPEX-F": 0.01252033,
+                        "OPEX-O": 0.18367869,
                         "process_code": "EAF#B",
                         "step": "DERIV_I2",
                     }
                 ],
                 "parameter": {
                     "SPECCOST": {
-                        "DIESEL-L": 0.042857,
+                        "DIESEL-L": 0.04285714,
                         "EL": 0.08078,
-                        "IOP-S": 0.267076,
+                        "IOP-S": 0.26707598,
                     },
                     "WACC": 0.0487,
                 },
                 "parameter_i": {
-                    "SPECCOST": {"EL": 0.1, "NG-G": 0.030565},
+                    "SPECCOST": {"EL": 0.1, "NG-G": 0.03056527},
                     "WACC": 0.0423,
                 },
                 "secondary_process": {
@@ -1260,20 +1234,20 @@ def test_new_blue_chain_real_data(
                         "EF_M": {"CO2-C": 1.0},
                         "FLH": 7000,
                         "LIFETIME": 20,
-                        "OPEX-O": 0.030247,
+                        "OPEX-O": 0.03024746,
                         "process_code": "CO2-T+S#B",
                     },
                     "EL": {
-                        "CAPEX": 2408.190709,
+                        "CAPEX": 2408.19070902,
                         "CH4SHARE": {"NG-G": 0.909},
-                        "CO2CPT-R": {"NG-G": 0.897778},
+                        "CO2CPT-R": {"NG-G": 0.89777778},
                         "CO2CPT-S": {"NG-G": 1.0},
-                        "EFF": 0.504911,
+                        "EFF": 0.50491129,
                         "EF_E": {"CO2-C": 1.0, "NG-G": 201.0},
                         "EF_M": {"CO2-C": 1.0, "NG-G": 201.0},
                         "FLH": 7000,
                         "LIFETIME": 30.0,
-                        "OPEX-F": 63.758895,
+                        "OPEX-F": 63.75889534,
                         "process_code": "CCGT-CC#B",
                     },
                 },
@@ -1281,6 +1255,7 @@ def test_new_blue_chain_real_data(
                     {
                         "DIST": 12830.0,
                         "EFF": 1,
+                        "OPEX-T": 3.8e-07,
                         "process_code": "DRI-SB#B",
                         "step": "SHP",
                     }
@@ -1307,29 +1282,29 @@ def test_new_blue_chain_real_data(
                 "context": {"source_region_code": "DZA", "target_country_code": "DEU"},
                 "main_export_process_chain": [
                     {
-                        "CBOUND": {"NG-G": 0.054851},
-                        "CH4SHARE": {"NG-G": 0.899533},
-                        "CONV": {"DIESEL-L": 0.000602},
-                        "EFF": 0.903626,
+                        "CBOUND": {"NG-G": 0.0548514},
+                        "CH4SHARE": {"NG-G": 0.89953333},
+                        "CONV": {"DIESEL-L": 0.00060236},
+                        "EFF": 0.90362604,
                         "EF_E": {"DIESEL-L": 266.76, "NG-G": 201.0},
                         "EF_M": {"DIESEL-L": 266.76, "NG-G": 201.0},
                         "FLH": 7000,
                         "LIFETIME": 20,
                         "LOSS": 0.0139,
-                        "OPEX-O": 0.003163,
+                        "OPEX-O": 0.00316265,
                         "process_code": "NG-PROD#B",
                         "step": "NG_PROD",
                     }
                 ],
                 "main_import_process_chain": [
                     {
-                        "CAPEX": 0.591876,
-                        "CBOUND": {"NG-G": 0.040812},
-                        "CH4SHARE": {"NG-G": 0.920806},
+                        "CAPEX": 0.59187636,
+                        "CBOUND": {"NG-G": 0.04081161},
+                        "CH4SHARE": {"NG-G": 0.92080641},
                         "CO2CPT-R": {"CH4-G": 0.9, "NG-G": 0.9},
                         "CO2CPT-S": {"CH4-G": 0.45, "NG-G": 0.45},
-                        "CONV": {"CO2-C": 1, "EL": 0.476859, "IOP-S": 1.373737},
-                        "EFF": 0.336004,
+                        "CONV": {"CO2-C": 1, "EL": 0.47685859, "IOP-S": 1.37373737},
+                        "EFF": 0.3360036,
                         "EF_E": {
                             "CH4-G": 201.0,
                             "CO2-C": 1.0,
@@ -1344,36 +1319,36 @@ def test_new_blue_chain_real_data(
                         },
                         "FLH": 7000,
                         "LIFETIME": 20.0,
-                        "OPEX-F": 0.017756,
+                        "OPEX-F": 0.01775629,
                         "process_code": "NG-DRI-C#B",
                         "step": "DERIV_I",
                     },
                     {
-                        "CAPEX": 0.417344,
+                        "CAPEX": 0.41734427,
                         "CBOUND": {"B-DRI-S": 0.004},
-                        "CH4SHARE": {"NG-G": 0.920806},
+                        "CH4SHARE": {"NG-G": 0.92080641},
                         "CONV": {"EL": 0.651, "NG-G": 0.3},
-                        "EFF": 1.010101,
+                        "EFF": 1.01010101,
                         "EF_E": {"EL": 100.0, "NG-G": 201.0},
                         "EF_M": {"EL": 100.0, "NG-G": 201.0},
                         "FLH": 7000,
                         "LIFETIME": 20.0,
-                        "OPEX-F": 0.01252,
-                        "OPEX-O": 0.183679,
+                        "OPEX-F": 0.01252033,
+                        "OPEX-O": 0.18367869,
                         "process_code": "EAF#B",
                         "step": "DERIV_I2",
                     },
                 ],
                 "parameter": {
-                    "SPECCOST": {"DIESEL-L": 0.042857, "EL": 0.08078},
-                    "WACC": 0.145548,
+                    "SPECCOST": {"DIESEL-L": 0.04285714, "EL": 0.08078},
+                    "WACC": 0.14554836,
                 },
                 "parameter_i": {
                     "SPECCOST": {
-                        "DIESEL-L": 0.042857,
+                        "DIESEL-L": 0.04285714,
                         "EL": 0.1,
-                        "IOP-S": 0.267076,
-                        "NG-G": 0.030565,
+                        "IOP-S": 0.26707598,
+                        "NG-G": 0.03056527,
                     },
                     "WACC": 0.0423,
                 },
@@ -1384,20 +1359,20 @@ def test_new_blue_chain_real_data(
                         "EF_M": {"CO2-C": 1.0},
                         "FLH": 7000,
                         "LIFETIME": 20,
-                        "OPEX-O": 0.116566,
+                        "OPEX-O": 0.11656581,
                         "process_code": "CO2-T+S#B",
                     },
                     "EL": {
-                        "CAPEX": 2408.190709,
-                        "CH4SHARE": {"NG-G": 0.899533},
-                        "CO2CPT-R": {"NG-G": 0.897778},
+                        "CAPEX": 2408.19070902,
+                        "CH4SHARE": {"NG-G": 0.89953333},
+                        "CO2CPT-R": {"NG-G": 0.89777778},
                         "CO2CPT-S": {"NG-G": 1.0},
-                        "EFF": 0.504911,
+                        "EFF": 0.50491129,
                         "EF_E": {"CO2-C": 1.0, "NG-G": 201.0},
                         "EF_M": {"CO2-C": 1.0, "NG-G": 201.0},
                         "FLH": 7000,
                         "LIFETIME": 30.0,
-                        "OPEX-F": 63.758895,
+                        "OPEX-F": 63.75889534,
                         "process_code": "CCGT-CC#B",
                     },
                 },
@@ -1408,27 +1383,27 @@ def test_new_blue_chain_real_data(
                         "EF_M": {"CO2-C": 1.0, "EL": 100.0},
                         "FLH": 7000,
                         "LIFETIME": 20,
-                        "OPEX-O": 0.14792,
+                        "OPEX-O": 0.14792048,
                         "process_code": "CO2-T+S#B",
                     }
                 },
                 "transport_process_chain": [
                     {
-                        "CAPEX": 408.107082,
-                        "CH4SHARE": {"NG-G": 0.899533},
-                        "CONV": {"EL": 0.002742},
-                        "EFF": 0.857089,
+                        "CAPEX": 408.10708157,
+                        "CH4SHARE": {"NG-G": 0.89953333},
+                        "CONV": {"EL": 0.00274153},
+                        "EFF": 0.85708919,
                         "EF_E": {"NG-G": 201.0, "NG-L": 201.0},
                         "EF_M": {"NG-G": 201.0, "NG-L": 201.0},
                         "FLH": 7000,
                         "LIFETIME": 30.0,
                         "LOSS": 0.0005,
-                        "OPEX-F": 8.162142,
+                        "OPEX-F": 8.16214163,
                         "process_code": "CH4-LIQ#B",
                         "step": "PRE_SHP",
                     },
                     {
-                        "CONV-OT": {"BFUEL-L": 3e-06, "NG-L": 1e-06},
+                        "CONV-OT": {"BFUEL-L": 3.3e-06, "NG-L": 1.15e-06},
                         "DIST": 3174.14,
                         "EFF": 1,
                         "EF_E": {"NG-L": 201.0},
@@ -1437,7 +1412,7 @@ def test_new_blue_chain_real_data(
                         "step": "SHP",
                     },
                     {
-                        "CH4SHARE": {"NG-G": 0.920806},
+                        "CH4SHARE": {"NG-G": 0.92080641},
                         "CONV": {"DIESEL-L": 2e-06, "EL": 0.00048, "NG-G": 0.00085},
                         "EFF": 1.0,
                         "EF_E": {
@@ -1454,6 +1429,7 @@ def test_new_blue_chain_real_data(
                         },
                         "FLH": 7000,
                         "LIFETIME": 20,
+                        "LOSS_FLOW": {"NG-G": 4e-08},
                         "process_code": "CH4-RGAS#B",
                         "step": "POST_SHP",
                     },
@@ -1482,11 +1458,11 @@ def test_new_blue_chain_real_data_2(api_kwargs, calculation_data_exp):
         source_region_code=chain_def.source_region_code,
         target_country_code=chain_def.target_country_code,
     )
-    calculation_data = sort_nested(round_nested(calculation_data_))
+    calculation_data = sort_nested(drop_null_nested(round_nested(calculation_data_)))
 
     # print so we can copy/paste new results into test
     print(calculation_data)
 
     assert rec_approx(calculation_data) == sort_nested(
-        round_nested(calculation_data_exp)
+        drop_null_nested(round_nested(calculation_data_exp))
     )

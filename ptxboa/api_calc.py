@@ -363,6 +363,7 @@ class PtxCalc:
                 + len(data["transport_process_chain"])
                 <= i
             )
+
             wacc = parameters_import["WACC"] if is_import else parameters["WACC"]
             speccosts = (
                 parameters_import["SPECCOST"] if is_import else parameters["SPECCOST"]
@@ -395,7 +396,7 @@ class PtxCalc:
             )
             results_flows_chain.append(results_flows)
 
-            opex_o = step_data["OPEX-O"]
+            opex_o = step_data.get("OPEX-O", 0)
 
             if not is_transport:
                 flh = step_data["FLH"]
@@ -423,6 +424,7 @@ class PtxCalc:
                     (result_process_type, process_code, "OPEX", opex)
                 )
 
+                dist_transport = 0
             else:
                 step_before_transport = False
                 opex_t = step_data["OPEX-T"]
@@ -547,7 +549,7 @@ class PtxCalc:
                             # do not add SPECCOST below
                             continue
 
-                        sec_speccost = speccosts[sec_flow_code]
+                        sec_speccost = speccosts.get(sec_flow_code, 0)
                         sec_flow_cost = sec_flow_value * sec_speccost
 
                         sec_result_process_type = (
