@@ -1621,29 +1621,32 @@ class AbstractProcess:
         process_step: ProcessStepType | str | None = None,
         parent_process: Union["AbstractProcess", None] = None,
     ):
-        self._main_flow_out: float | None = None  # will be set in calculate()
-        self._main_flow_in: float | None = None  # will be set in calculate()
-        self._secondary_flows_in: dict[FlowCodeType, float] | None = None
+        # self._main_flow_out: float | None = None  # will be set in calculate()
+        # self._main_flow_in: float | None = None  # will be set in calculate()
+        # self._secondary_flows_in: dict[FlowCodeType, float] | None = None
         self.parent_process = parent_process
         self.process_step: ProcessStepType | str | None = process_step
 
     def get_main_flow_out(self) -> float:
         """Value of main out flow."""
-        if self._main_flow_out is None:
-            raise Exception("Not calculated yet")
-        return self._main_flow_out
+        # if self._main_flow_out is None:
+        #    raise Exception("Not calculated yet")
+        # return self._main_flow_out
+        return None
 
     def get_main_flow_in(self) -> float:
         """Value of calculated main in flow."""
-        if self._main_flow_in is None:
-            raise Exception("Not calculated yet, or main_flow_in does not exist")
-        return self._main_flow_in
+        # if self._main_flow_in is None:
+        #    raise Exception("Not calculated yet, or main_flow_in does not exist")
+        # return self._main_flow_in
+        return None
 
     def get_secondary_flow_in(self, flow_code: FlowCodeType) -> float:
         """Value of calculated secondary in flow for given flow type."""
-        if self._secondary_flows_in is None:
-            raise Exception(f"Not calculated yet: {self}")
-        return self._secondary_flows_in[flow_code]
+        # if self._secondary_flows_in is None:
+        #    raise Exception(f"Not calculated yet: {self}")
+        # return self._secondary_flows_in[flow_code]
+        return None
 
     @property
     def process_code(self) -> ProcessCodeType | None:
@@ -1705,28 +1708,21 @@ class AbstractProcess:
     def get_calculation_data(
         self,
         parameter_getters: "ParameterGetters",
-        source_region_code: SourceRegionCodeType,
-        target_country_code: TargetCountryCodeType | None = None,
+        parameter_values: dict[DataQueryParameterType, str | None],
     ) -> ProcessDataType:
         """Load parameter data for this process."""
         data: ProcessDataType = {}
         # load parameters that are process dependent
         for p in self._parameter_codes_process:
             data[p] = parameter_getters[p](
-                process_code=self.process_code,
-                flow_code=None,
-                source_region_code=source_region_code,
-                target_country_code=target_country_code,
+                process_code=self.process_code, flow_code=None, **parameter_values
             )
 
         # load parameters that are process and flow dependent
         for p in self._parameter_codes_process_flow:
             data[p] = {
                 f: parameter_getters[p](
-                    process_code=self.process_code,
-                    flow_code=f,
-                    source_region_code=source_region_code,
-                    target_country_code=target_country_code,
+                    process_code=self.process_code, flow_code=f, **parameter_values
                 )
                 for f in self._parameter_flow_types
             }
@@ -1735,12 +1731,12 @@ class AbstractProcess:
 
     def calculate(self, main_flow_out: float):
         """Calculate all process values based on desired output flow."""
-        self._main_flow_out = main_flow_out
+        # self._main_flow_out = main_flow_out
+        pass
 
     def __str__(self):
-        s_val = f"={self._main_flow_out:.4f}" if self._main_flow_out else ""
         step = f"{self.process_step}=" if self.process_step else ""
-        return f"{self.__class__.__name__}({step}{self.process_code}{s_val})"
+        return f"{self.__class__.__name__}({step}{self.process_code})"
 
 
 class Process(AbstractProcess):
@@ -1809,14 +1805,11 @@ class Process(AbstractProcess):
     def get_calculation_data(
         self,
         parameter_getters: "ParameterGetters",
-        source_region_code: SourceRegionCodeType,
-        target_country_code: TargetCountryCodeType | None = None,
+        parameter_values: dict[DataQueryParameterType, str | None],
     ) -> ProcessDataType:
         """Get parameter data for this process."""
         data = super().get_calculation_data(
-            parameter_getters=parameter_getters,
-            source_region_code=source_region_code,
-            target_country_code=target_country_code,
+            parameter_getters=parameter_getters, parameter_values=parameter_values
         )
 
         # changes
@@ -1878,14 +1871,11 @@ class TransportProcess(Process):
     def get_calculation_data(
         self,
         parameter_getters: "ParameterGetters",
-        source_region_code: SourceRegionCodeType,
-        target_country_code: TargetCountryCodeType,
+        parameter_values: dict[DataQueryParameterType, str | None],
     ) -> ProcessDataType:
         """Get parameter data for this process."""
         data = super().get_calculation_data(
-            parameter_getters=parameter_getters,
-            source_region_code=source_region_code,
-            target_country_code=target_country_code,
+            parameter_getters=parameter_getters, parameter_values=parameter_values
         )
 
         # FIXME: we very inefficiently get transport distances every time
@@ -1894,9 +1884,7 @@ class TransportProcess(Process):
         # FIXME: instead of parent_process(None) -> explicitly link to
         # transport section
         data_all_transports = self.parent_process.get_calculation_data(  # type: ignore
-            parameter_getters=parameter_getters,
-            source_region_code=source_region_code,
-            target_country_code=target_country_code,
+            parameter_getters=parameter_getters, parameter_values=parameter_values
         )
         data["DIST"] = data_all_transports["DIST"].get(self.process_step, 0)  # type: ignore # noqa
 
@@ -2274,12 +2262,11 @@ class ChainProcess(AggregateProcess):
         main_process_codes_steps_filtered.insert(0, (first_process_code, initial_step))
 
         # for FLH lookup we need these process codes
-        self._data_lookup_defaults_static: dict[str, ProcessCodeType | None] = {
+        self._process_res_ely_deriv: dict[str, ProcessCodeType | None] = {
             "process_res": (first_process_code if chain_start_with_res else None),
             "process_ely": chain_data["ELY"],
             "process_deriv": chain_data["DERIV"],
         }
-        self._data_lookup_defaults: dict | None = None  # will be set in init params
 
         check_use_all_main_process_codes = []
 
@@ -2383,12 +2370,25 @@ class ChainProcess(AggregateProcess):
                 "step": process.process_step,
             }
 
+        # for FLH lookup
+        parameter_values = self._process_res_ely_deriv
+        parameter_values_export = parameter_values | {
+            "source_region_code": source_region_code
+        }
+        parameter_values_transport = parameter_values | {
+            "source_region_code": source_region_code,
+            "target_country_code": target_country_code,
+        }
+        parameter_values_import = parameter_values | {
+            "source_region_code": target_country_code  # NOTE: switched in import
+        }
+
         main_export_process_chain = [
             _add_step_and_code(
                 p,
                 p.get_calculation_data(
                     parameter_getters=parameter_getters,
-                    source_region_code=source_region_code,
+                    parameter_values=parameter_values_export,
                 ),
             )
             for p in self.section_export.main_processes
@@ -2399,8 +2399,7 @@ class ChainProcess(AggregateProcess):
                 p,
                 p.get_calculation_data(
                     parameter_getters=parameter_getters,
-                    source_region_code=source_region_code,
-                    target_country_code=target_country_code,
+                    parameter_values=parameter_values_transport,
                 ),
             )
             for p in self.section_transport.main_processes
@@ -2411,7 +2410,7 @@ class ChainProcess(AggregateProcess):
                 p,
                 p.get_calculation_data(
                     parameter_getters=parameter_getters,
-                    source_region_code=target_country_code,  # !! Swapped in import
+                    parameter_values=parameter_values_import,
                 ),
             )
             for p in self.section_import.main_processes
@@ -2449,7 +2448,7 @@ class ChainProcess(AggregateProcess):
                 p,
                 p.get_calculation_data(
                     parameter_getters=parameter_getters,
-                    source_region_code=source_region_code,
+                    parameter_values=parameter_values_export,
                 ),
             )
             for f, p in self.section_export.secondary_processes_by_flow_code.items()
@@ -2459,7 +2458,7 @@ class ChainProcess(AggregateProcess):
                 p,
                 p.get_calculation_data(
                     parameter_getters=parameter_getters,
-                    source_region_code=target_country_code,  # !! Swapped in import
+                    parameter_values=parameter_values_import,
                 ),
             )
             for f, p in self.section_import.secondary_processes_by_flow_code.items()
@@ -2468,26 +2467,27 @@ class ChainProcess(AggregateProcess):
         market_process = {
             f: p.get_calculation_data(
                 parameter_getters=parameter_getters,
-                source_region_code=source_region_code,
+                parameter_values=parameter_values_export,
             )
             for f, p in self.section_export.market_processes_by_flow_code.items()
         }
         market_process_i = {
             f: p.get_calculation_data(
                 parameter_getters=parameter_getters,
-                source_region_code=target_country_code,  # !! Swapped in import
+                parameter_values=parameter_values_import,
             )
             for f, p in self.section_import.market_processes_by_flow_code.items()
         }
 
         parameter = self.section_export.get_calculation_data(
-            parameter_getters=parameter_getters, source_region_code=source_region_code
+            parameter_getters=parameter_getters,
+            parameter_values=parameter_values_export,
         ) | {
             "SPECCOST": {f: d["SPECCOST"][f] for f, d in market_process.items()}  # type: ignore # noqa
         }
         parameter_i = self.section_import.get_calculation_data(
             parameter_getters=parameter_getters,
-            source_region_code=target_country_code,  # !! Swapped in import
+            parameter_values=parameter_values_import,
         ) | {
             "SPECCOST": {
                 f: d["SPECCOST"][f]  # type: ignore # noqa
@@ -2625,21 +2625,18 @@ class ChainTransportProcess(ChainSectionProcess):
     def get_calculation_data(
         self,
         parameter_getters: "ParameterGetters",
-        source_region_code: SourceRegionCodeType,
-        target_country_code: TargetCountryCodeType,
+        parameter_values: dict[DataQueryParameterType, str | None],
     ) -> ProcessDataType:
         """Get parameter data for this process."""
         data = super().get_calculation_data(
-            parameter_getters=parameter_getters,
-            source_region_code=source_region_code,
-            target_country_code=target_country_code,
+            parameter_getters=parameter_getters, parameter_values=parameter_values
         )
 
         # get transport distances and options
         transport_distances: dict[ProcessStepType, float] = (
             DataHandler._get_transport_distances(
-                source_region_code=source_region_code,
-                target_country_code=target_country_code,
+                source_region_code=parameter_values["source_region_code"],
+                target_country_code=parameter_values["target_country_code"],
                 transport=self.transport,
                 ship_own_fuel=self.ship_own_fuel,
                 dist_ship=data["DST-S-D"],  # type: ignore
