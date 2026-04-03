@@ -23,7 +23,7 @@ def assert_deep_equal(
         _assert((lambda x, y: x == y), context)
     elif isinstance(expected_result, float):
         # float
-        _assert((lambda x, y: isclose(x, y, rtol=1e-6, equal_nan=True)), context)
+        _assert((lambda x, y: isclose(x, y, rtol=1e-8, equal_nan=True)), context)
     elif isinstance(expected_result, list):
         if not isinstance(actual_result, list):
             raise ValueError(f"Not a list: {expected_result}")
