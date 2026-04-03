@@ -49,7 +49,7 @@ def assert_deep_equal(
                 msg += f" New: {new_keys}"
 
             if missing_keys or (new_keys and not allow_new_dict_items):
-                raise ValueError(msg)
+                raise ValueError((msg, context))
 
         # recursion
         for k, e in expected_result.items():
@@ -107,7 +107,15 @@ def assert_deep_equal_approx(
 ):
     expected = sort_nested(round_nested(drop_null_nested(expected), ndigis=ndigis))
     actually = sort_nested(round_nested(drop_null_nested(actually), ndigis=ndigis))
-    print(actually)  # print so we can replace in test
-    assert_deep_equal(
-        expected, actually, context=context, allow_new_dict_items=allow_new_dict_items
-    )
+    try:
+        assert_deep_equal(
+            expected,
+            actually,
+            context=context,
+            allow_new_dict_items=allow_new_dict_items,
+        )
+    except Exception:
+        print("======================", context)
+        print(actually)  # print so we can replace in test
+        print("======================")
+        raise

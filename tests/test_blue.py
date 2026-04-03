@@ -439,7 +439,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
     ]
 
     assert_deep_equal_approx(calculation_data_exp, calculation_data)
-    assert_deep_equal_approx(calculation_data_exp, calculation_data)
     assert_deep_equal_approx(values_exp, values)
     assert_deep_equal_approx(res_emission_mass_exp, res_emission_mass)
 
@@ -1101,8 +1100,8 @@ def test_new_blue_chain_real_data(
         **api_kwargs, tool_version_color="blue", optimize_flh=False, output_unit="USD/t"
     )
 
-    calculation_data = api_result.todo_data
-    values = api_result.todo_results_flows
+    calculation_data = dict(api_result.todo_data)
+    values = list(api_result.todo_results_flows)
 
     res_emission_mass = api_result.emission_mass[  # type: ignore
         ["process_subtype", "emission_type", "gas_type", "values"]
@@ -1120,10 +1119,14 @@ def test_new_blue_chain_real_data(
     )
     # round and sort for easier comparison
 
-    assert_deep_equal_approx(calculation_data_exp, calculation_data)
-    assert_deep_equal_approx(values_exp, values)
-    assert_deep_equal_approx(res_emission_mass_exp, res_emission_mass)
-    assert_deep_equal_approx(res_costs_exp, res_costs)
+    assert_deep_equal_approx(
+        calculation_data_exp, calculation_data, context="calculation_data"
+    )
+    assert_deep_equal_approx(values_exp, values, context="values")
+    assert_deep_equal_approx(
+        res_emission_mass_exp, res_emission_mass, context="res_emission_mass"
+    )
+    assert_deep_equal_approx(res_costs_exp, res_costs, context="res_costs")
 
 
 @pytest.mark.parametrize(
