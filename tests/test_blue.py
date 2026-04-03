@@ -629,6 +629,10 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "process_step": "DERIV_I2",
                 },
                 {
+                    "process_code": "CCGT-CC#B",
+                    "process_step": "SECONDARY:Electricity generation",
+                },
+                {
                     "emissions": {
                         "co2_direct_e": 0.23985145,
                         "co2_direct_m": 0.23985145,
@@ -641,10 +645,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "main_output": 0.23985145,
                     "process_code": "CO2-T+S#B",
                     "process_step": "SECONDARY:CO2 transport and storage",
-                },
-                {
-                    "process_code": "CCGT-CC#B",
-                    "process_step": "SECONDARY:Electricity generation",
                 },
             ],
             [
@@ -1100,8 +1100,8 @@ def test_new_blue_chain_real_data(
         **api_kwargs, tool_version_color="blue", optimize_flh=False, output_unit="USD/t"
     )
 
-    calculation_data = dict(api_result.todo_data)
-    values = list(api_result.todo_results_flows)
+    calculation_data = api_result.todo_data
+    values = api_result.todo_results_flows
 
     res_emission_mass = api_result.emission_mass[  # type: ignore
         ["process_subtype", "emission_type", "gas_type", "values"]
