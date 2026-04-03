@@ -2289,8 +2289,8 @@ class ChainProcess(AggregateProcess):
                 main_process_codes_steps_filtered[i:j]
             )
 
-            # if not main_process_codes_steps_part:
-            #    continue
+            if not main_process_codes_steps_part:
+                continue
 
             invalid_processes = [
                 p
@@ -2325,7 +2325,9 @@ class ChainProcess(AggregateProcess):
 
         self.section_export: ChainExportProcess = main_processes[0]  # type:ignore
         self.section_transport: ChainTransportProcess = main_processes[1]  # type:ignore
-        self.section_import: ChainImportProcess = main_processes[2]  # type:ignore
+        self.section_import: ChainImportProcess | None = (  # type:ignore
+            main_processes[2] if len(main_processes) > 2 else None
+        )
 
         super().__init__(
             process_graph=process_graph,
@@ -2392,16 +2394,20 @@ class ChainProcess(AggregateProcess):
             )
             for p in self.section_transport.main_processes
         ]
-        main_import_process_chain = [
-            _add_step_and_code(
-                p,
-                p.get_calculation_data(
-                    parameter_getters=parameter_getters,
-                    source_region_code=target_country_code,
-                ),
-            )
-            for p in self.section_import.main_processes
-        ]
+        main_import_process_chain = (
+            [
+                _add_step_and_code(
+                    p,
+                    p.get_calculation_data(
+                        parameter_getters=parameter_getters,
+                        source_region_code=target_country_code,
+                    ),
+                )
+                for p in self.section_import.main_processes
+            ]
+            if self.section_import
+            else []
+        )
 
         if todo_transport_re_post_as_transport:
             # FIXME: remove after validation:
@@ -2440,16 +2446,20 @@ class ChainProcess(AggregateProcess):
             )
             for f, p in self.section_export.secondary_processes_by_flow_code.items()
         }
-        secondary_process_i = {
-            f: _add_step_and_code(
-                p,
-                p.get_calculation_data(
-                    parameter_getters=parameter_getters,
-                    source_region_code=target_country_code,
-                ),
-            )
-            for f, p in self.section_import.secondary_processes_by_flow_code.items()
-        }
+        secondary_process_i = (
+            {
+                f: _add_step_and_code(
+                    p,
+                    p.get_calculation_data(
+                        parameter_getters=parameter_getters,
+                        source_region_code=target_country_code,
+                    ),
+                )
+                for f, p in self.section_import.secondary_processes_by_flow_code.items()
+            }
+            if self.section_import
+            else {}
+        )
 
         market_process = {
             f: p.get_calculation_data(
@@ -2458,24 +2468,39 @@ class ChainProcess(AggregateProcess):
             )
             for f, p in self.section_export.market_processes_by_flow_code.items()
         }
-        market_process_i = {
-            f: p.get_calculation_data(
-                parameter_getters=parameter_getters,
-                source_region_code=target_country_code,
-            )
-            for f, p in self.section_import.market_processes_by_flow_code.items()
-        }
+        market_process_i = (
+            {
+                f: p.get_calculation_data(
+                    parameter_getters=parameter_getters,
+                    source_region_code=target_country_code,
+                )
+                for f, p in self.section_import.market_processes_by_flow_code.items()
+            }
+            if self.section_import
+            else {}
+        )
 
         parameter = self.section_export.get_calculation_data(
             parameter_getters=parameter_getters, source_region_code=source_region_code
         ) | {
             "SPECCOST": {f: d["SPECCOST"][f] for f, d in market_process.items()}
         }  # type: ignore # noqa
-        parameter_i = self.section_import.get_calculation_data(
-            parameter_getters=parameter_getters, source_region_code=target_country_code
-        ) | {
-            "SPECCOST": {f: d["SPECCOST"][f] for f, d in market_process_i.items()}
-        }  # type: ignore # noqa
+        parameter_i = (
+            (
+                self.section_import.get_calculation_data(
+                    parameter_getters=parameter_getters,
+                    source_region_code=target_country_code,
+                )
+                | {
+                    "SPECCOST": {
+                        f: d["SPECCOST"][f]  # type: ignore # noqa
+                        for f, d in market_process_i.items()
+                    }
+                }
+            )
+            if self.section_import
+            else {}
+        )
 
         flh_opt_process = {}  # noqa
         if optimize_flh:

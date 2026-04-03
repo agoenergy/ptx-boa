@@ -109,16 +109,11 @@ def main():
     permutations = create_permutation_names(create_permutations(scenario=scenario))
 
     for i, (name, settings) in enumerate(permutations.items()):
-        if name == "STL-S__NG-DRI-C_EAF__prod_in_supply_Ship":
-            # test 1
-            settings.region = "Qatar"
-        elif name == "STL-S__NG-DRI-C_EAF__prod_in_demand_Ship":
-            pass
-        else:
-            continue
-            pass
-
         logger.info(f"{i + 1}/{len(permutations)}: {settings} => {name}")
+
+        # TODO: skip test chain
+        if settings.chain == "Blue Iron (blue)*":
+            continue
 
         data_handler = DataHandler(
             scenario=scenario, data_dir=DEFAULT_DATA_DIR, user_data=settings.user_data
@@ -135,9 +130,9 @@ def main():
             target_country_code=_df_region_by_name.at[settings.country, "region_code"],  # type: ignore # noqa
         )
 
-        logger.info(data)
+        logger.debug(data)
 
-        # chain_process.calculate(1) # noqa
+        # TODO: plot with data
 
         chain_process.plot(file_basename=name)
 
