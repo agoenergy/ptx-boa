@@ -232,7 +232,7 @@ class PtxboaAPI:
             ptxcalc_result,
             output_unit=output_unit,
             chain=chain,
-            calor=data["parameter"]["CALOR"],
+            data_handler=data_handler,
         )
 
         # add user settings
@@ -516,37 +516,68 @@ def _translate_and_validate_user_settings(
         ship_own_fuel=ship_own_fuel,
     )
 
+    # FIXME: maybe also check that selected output unid is possible?
+
     return chain_def, tool_version_color, optimize_flh
+
+
+def _get_output_conversion_factor(
+    output_unit: OutputUnitType,
+    chain: ChainType,
+    data_handler: DataHandler,
+) -> float:
+    # conversion to output unit
+    if output_unit not in {"USD/MWh", "USD/t"}:
+        raise Exception(f"Invalid choice for output_unit: {output_unit}")
+
+    flow_code_chain_out: FlowCodeType = data_handler.get_dimension("chain").loc[
+        chain, "flow_out"
+    ]  # type:ignore
+    flow_unit_chain_out: str = data_handler.get_dimension("flow").loc[
+        flow_code_chain_out, "unit"
+    ]  # type: ignore
+
+    calor = data_handler._get_parameter_value(
+        parameter_code="CALOR", flow_code=flow_code_chain_out, default=0
+    )
+
+    if flow_unit_chain_out.lower().startswith("kwh"):
+        if output_unit == "USD/MWh":
+            conversion = 1000  # kWh -> MWh
+        else:
+            if not calor:
+                raise Exception(
+                    "No conversion factor CALOR "
+                    f"for {flow_code_chain_out} from kwh to kg"
+                )
+            conversion = 1000 * calor  # kWh -> kg and kg -> t
+    elif flow_unit_chain_out.lower().startswith("kg"):
+        if output_unit == "USD/t":
+            conversion = 1000  # kg -> t
+        else:
+            if not calor:
+                raise Exception(
+                    "No conversion factor CALOR "
+                    f"for {flow_code_chain_out} from kg to kwh"
+                )
+            conversion = 1000 / calor  # kg -> kWh -> Mwh
+    else:
+        raise ValueError("chain output unit must be either kWh or kg")
+
+    return conversion
 
 
 def _convert_to_output_unit_inplace(
     ptxcalc_result: PtxCalcResult,
     output_unit: OutputUnitType,
     chain: ChainType,
-    calor: float,
+    data_handler: DataHandler,
 ) -> None:
-    # conversion to output unit
-    if output_unit not in {"USD/MWh", "USD/t"}:
-        logger.error(f"Invalid choice for output_unit: {output_unit}")
-
-    flow_code_chain_out = DataHandler.get_dimension("chain").loc[chain, "flow_out"]
-    flow_unit_chain_out = DataHandler.get_dimension("flow").loc[
-        flow_code_chain_out, "unit"
-    ]  # type: ignore
-
-    if flow_unit_chain_out.lower().startswith("kwh"):
-        if output_unit == "USD/MWh":
-            conversion = 1000  # kWh -> MWh
-        else:
-            conversion = 1000 * calor  # kWh -> kg and kg -> t
-    elif flow_unit_chain_out.lower().startswith("kg"):
-        if output_unit == "USD/t":
-            conversion = 1000  # kg -> t
-        else:
-            conversion = 1000 / calor  # kg -> kWh -> Mwh
-    else:
-        raise ValueError("chain output unit must be either kWh or kg")
-
+    conversion = _get_output_conversion_factor(
+        output_unit=output_unit,
+        chain=chain,
+        data_handler=data_handler,
+    )
     for df in [
         ptxcalc_result.df_results_cost,
         ptxcalc_result.df_results_emissions_e_g_co2e,

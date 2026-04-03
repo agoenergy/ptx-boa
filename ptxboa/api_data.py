@@ -555,7 +555,6 @@ class DataHandler:
         "EFF": 1,
         "FLH": 7000,
         "LIFETIME": 20,
-        "CALOR": 1,  # TODO: should be None
     }
 
     dimensions: dict[DimensionType, pd.DataFrame] = _load_dimensions()
@@ -756,7 +755,6 @@ class DataHandler:
         ----------
         parameter_code : ParameterCodeType
             parameter category. Must be one of:
-                - 'CALOR',
                 - 'CAPEX'
                 - 'CAP-T'
                 - 'CONV'
@@ -788,7 +786,6 @@ class DataHandler:
         flow_code : str, optional
             Code for the flow, by default None. Must be set for the following
             parameters:
-                - CALOR
                 - CONV
                 - SPECCOST
         source_region_code : str, optional
@@ -914,9 +911,7 @@ class DataHandler:
         if result is None:
             # FIXME: temporary data
             if self.tool_version_color == "blue":
-                if parameter_code == "CALOR" and flow_code == "STL-S":
-                    result = 1
-                elif parameter_code == "WACC" and source_region_code == "QAT":
+                if parameter_code == "WACC" and source_region_code == "QAT":
                     result = 0
                 else:
                     result = 0
@@ -1121,15 +1116,6 @@ class DataHandler:
         # default from export country
         result["parameter_i"]["WACC"] = pg_import.get_parameter_value_w_default(
             "WACC", default=result["parameter"]["WACC"]
-        )
-
-        result["parameter"]["CALOR"] = pg_import.get_parameter_value_w_default(
-            parameter_code="CALOR", flow_code=chain["flow_out"]
-        )
-        result["parameter_i"]["CALOR"] = pg_import.get_parameter_value_w_default(
-            parameter_code="CALOR",
-            flow_code=chain["flow_out"],
-            default=result["parameter"]["CALOR"],
         )
 
         # get transport distances and options
@@ -2191,8 +2177,6 @@ class AggregateProcess(AbstractProcess):
 
 
 class ChainProcess(AggregateProcess):
-    _parameter_codes_process = ["CALOR"]  # conversion kg / kwh
-
     _instances: dict[object, "ChainProcess"] = {}
 
     @classmethod
@@ -2356,7 +2340,7 @@ class ChainProcess(AggregateProcess):
             "target_country_code": target_country_code,
         }
 
-        parameters_chain = self._get_calculation_data(
+        parameters_chain = self._get_calculation_data(  # noqa
             parameter_getters=parameter_getters,
             data_lookup_defaults=data_lookup_defaults,  # type: ignore
         )
@@ -2441,10 +2425,6 @@ class ChainProcess(AggregateProcess):
             p.main_flow_code_out: get_proc_data(p, parameters_export_procs[p])
             for p in proc_export.secondary_processes
         }
-
-        # FXIME: currently, CALOR is read from "parameters", but it is not
-        # really part of the export chain part
-        parameter["CALOR"] = parameters_chain["CALOR"]
 
         return {
             "context": data_lookup_defaults,

@@ -68,8 +68,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
     """Data test for blue iron chain using test data."""
     user_data = pd.DataFrame(
         [
-            # FIXME: all flows are (in green tool) expected to have CALOR
-            # but doesit make sense for Steel?
             {
                 "parameter_code": "CAPEX",
                 "process_code": "EAF#B",
@@ -105,11 +103,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 "target_country_code": "DEU",
                 "parameter_code": "DST-S-D",
                 "value": 999,
-            },
-            {
-                "flow_code": "STL-S",
-                "parameter_code": "CALOR",
-                "value": 0,
             },
             {
                 "flow_code": "NG-G",
@@ -530,7 +523,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     }
                 ],
                 "parameter": {
-                    "CALOR": 1,
                     "SPECCOST": {
                         "CO2-G": 0.044519,
                         "DIESEL-L": 0.042857,
@@ -543,7 +535,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "WACC": 0.0487,
                 },
                 "parameter_i": {
-                    "CALOR": 1,
                     "SPECCOST": {
                         "CO2-G": 0.044519,
                         "DIESEL-L": 0.042857,
@@ -857,7 +848,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     },
                 ],
                 "parameter": {
-                    "CALOR": 1,
                     "SPECCOST": {
                         "CO2-G": 0.044519,
                         "DIESEL-L": 0.042857,
@@ -870,7 +860,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "WACC": 0.145548,
                 },
                 "parameter_i": {
-                    "CALOR": 1,
                     "SPECCOST": {
                         "CO2-G": 0.044519,
                         "DIESEL-L": 0.042857,
@@ -1146,9 +1135,7 @@ def test_new_blue_chain_real_data(
     # test api output
     api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR)
     api_result = api.calculate(  # noqa
-        **api_kwargs,
-        tool_version_color="blue",
-        optimize_flh=False,
+        **api_kwargs, tool_version_color="blue", optimize_flh=False, output_unit="USD/t"
     )
 
     calculation_data = sort_nested(round_nested(api_result.todo_data))
@@ -1258,7 +1245,6 @@ def test_new_blue_chain_real_data(
                     }
                 ],
                 "parameter": {
-                    "CALOR": 1,
                     "SPECCOST": {
                         "DIESEL-L": 0.042857,
                         "EL": 0.08078,
@@ -1424,7 +1410,6 @@ def test_new_blue_chain_real_data(
                     },
                 ],
                 "parameter": {
-                    "CALOR": 1,
                     "SPECCOST": {"DIESEL-L": 0.042857, "EL": 0.08078},
                     "WACC": 0.145548,
                 },

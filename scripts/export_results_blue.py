@@ -77,7 +77,6 @@ rows = [
     "0:process:main_flow_code_in",
     "0:process:main_flow_code_out",
     "0:process:process_code",
-    "1:parameter:CALOR",
     "1:parameter:SPECCOST:CO2-G",
     "1:parameter:SPECCOST:DIESEL-L",
     "1:parameter:SPECCOST:EL",

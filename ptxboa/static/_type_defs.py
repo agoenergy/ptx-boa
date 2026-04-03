@@ -17,15 +17,16 @@ from ptxboa.static import (
 
 CalculateDataType = dict[
     Literal[
-        "flh_opt_process",
-        "main_export_process_chain",
-        "transport_process_chain",
-        "main_import_process_chain",
-        "secondary_process",
-        "parameter",
-        "parameter_i",
-        "context",
-        "flh_opt_hash",
+        "flh_opt_process",  # "PV-FIX"/"WIND-ON" => ProcessDataType
+        "main_export_process_chain",  # list[ProcessDataType]
+        "transport_process_chain",  # list[ProcessDataType]
+        "main_import_process_chain",  # list[ProcessDataType]
+        "secondary_process",  # dict[FlowType,ProcessDataType]
+        "secondary_process_i",  # dict[FlowType,ProcessDataType] # TODO new
+        "parameter",  # WACC and SPECCOST on export side
+        "parameter_i",  # global params and speccost on import side
+        "context",  # {source/target}
+        "flh_opt_hash",  # optional,addedby optimizer
     ],
     Any,
 ]
