@@ -1000,6 +1000,7 @@ class DataHandler:
         data_new = chain_proc.get_calculation_data(
             data_handler=self,
             source_region_code=chain_def.source_region_code,
+            optimize_flh=optimize_flh,
             target_country_code=chain_def.target_country_code,
             use_user_data=True,
         )
@@ -1026,6 +1027,7 @@ class DataHandler:
                     data_handler=self,
                     source_region_code=chain_def.source_region_code,
                     target_country_code=chain_def.target_country_code,
+                    optimize_flh=optimize_flh,
                     use_user_data=False,  # THIS IS THE IMPORTANT BIT
                 )
                 if False:  # FIXME
@@ -1697,33 +1699,36 @@ class AbstractProcess:
         """Is this a secondary process."""
         return False
 
-    def _get_calculation_data(
+    def get_calculation_data(
         self,
         parameter_getters: "ParameterGetters",
-        data_lookup_defaults: dict[DataQueryParameterType, str],
-        parent_parameters: ProcessDataType | None = None,
+        source_region_code: SourceRegionCodeType,
+        target_country_code: TargetCountryCodeType | None = None,
     ) -> ProcessDataType:
-        """Initialize parameter data for this process."""
-        parameters: ProcessDataType = {}
+        """Load parameter data for this process."""
+        data: ProcessDataType = {}
         # load parameters that are process dependent
         for p in self._parameter_codes_process:
-            parameters[p] = parameter_getters[p](
-                process_code=self.process_code, flow_code=None, **data_lookup_defaults
+            data[p] = parameter_getters[p](
+                process_code=self.process_code,
+                flow_code=None,
+                source_region_code=source_region_code,
+                target_country_code=target_country_code,
             )
 
         # load parameters that are process and flow dependent
         for p in self._parameter_codes_process_flow:
-            parameters[p] = {
+            data[p] = {
                 f: parameter_getters[p](
-                    process_code=self.process_code, flow_code=f, **data_lookup_defaults
+                    process_code=self.process_code,
+                    flow_code=f,
+                    source_region_code=source_region_code,
+                    target_country_code=target_country_code,
                 )
                 for f in self._parameter_flow_types
             }
 
-        # FIXME: for debugging:
-        # parameters["region"] = data_lookup_defaults["source_region_code"]  # noqa
-
-        return _merge_process_data(parameters, parent_parameters)
+        return data
 
     def calculate(self, main_flow_out: float):
         """Calculate all process values based on desired output flow."""
@@ -1798,51 +1803,51 @@ class Process(AbstractProcess):
         """Is this re generation process."""
         return self._process_type.is_re_generation
 
-    def _get_calculation_data(
+    def get_calculation_data(
         self,
         parameter_getters: "ParameterGetters",
-        data_lookup_defaults: dict[DataQueryParameterType, str],
-        parent_parameters: ProcessDataType | None = None,
+        source_region_code: SourceRegionCodeType,
+        target_country_code: TargetCountryCodeType | None = None,
     ) -> ProcessDataType:
-        """Initialize parameter data for this process."""
-        parameters = super()._get_calculation_data(
+        """Get parameter data for this process."""
+        data = super().get_calculation_data(
             parameter_getters=parameter_getters,
-            data_lookup_defaults=data_lookup_defaults,
-            parent_parameters=parent_parameters,
+            source_region_code=source_region_code,
+            target_country_code=target_country_code,
         )
 
         # changes
 
-        if "LOSS" in parameters and "EFF" in parameters:
-            parameters["LOSS_FLOW"] = parameters.pop("LOSS")
-            if self.main_flow_code_in_or_out in parameters["LOSS_FLOW"]:  # type: ignore # noqa
-                parameters["LOSS"] = parameters["LOSS_FLOW"].pop(  # type: ignore
+        if "LOSS" in data and "EFF" in data:
+            data["LOSS_FLOW"] = data.pop("LOSS")
+            if self.main_flow_code_in_or_out in data["LOSS_FLOW"]:  # type: ignore # noqa
+                data["LOSS"] = data["LOSS_FLOW"].pop(  # type: ignore
                     self.main_flow_code_in_or_out
                 )
             # update EFF and CONV for losses
             # TODO: keep original values for information purposes
             # NOTE: calculation: see https://github.com/agoenergy/ptx-boa/issues/581
-            if "LOSS" in parameters:
-                eff_original = parameters["EFF"]
-                parameters["EFF"] = eff_original / (1 + parameters["LOSS"])  # type: ignore # noqa
+            if "LOSS" in data:
+                eff_original = data["EFF"]
+                data["EFF"] = eff_original / (1 + data["LOSS"])  # type: ignore # noqa
 
-        if "LOSS_FLOW" in parameters and "CONV" in parameters:
+        if "LOSS_FLOW" in data and "CONV" in data:
             # LOSS for CONV (if value exists in both)
-            loss_flows = parameters.get("LOSS_FLOW", {})
-            convs = parameters.get("CONV", {})
+            loss_flows = data.get("LOSS_FLOW", {})
+            convs = data.get("CONV", {})
             for fc in set(loss_flows) & set(convs):  # type: ignore
                 conv_orig = convs[fc]  # type: ignore
-                parameters["CONV"][fc] = conv_orig * (1 + loss_flows[fc])  # type: ignore # noqa
+                data["CONV"][fc] = conv_orig * (1 + loss_flows[fc])  # type: ignore # noqa
 
         # FIXME: only for temporary test comparison?
         if (
-            any(parameters.get("CO2CPT-R", {}).values())  # type: ignore
-            or any(parameters.get("CO2CPT-S", {}).values())  # type: ignore
+            any(data.get("CO2CPT-R", {}).values())  # type: ignore
+            or any(data.get("CO2CPT-S", {}).values())  # type: ignore
         ) and self.process_code != "CCGT-CC#B":
             logger.warning("TODO: remove dummy CONV for CO2-C")
-            parameters["CONV"]["CO2-C"] = 1  # type: ignore
+            data["CONV"]["CO2-C"] = 1  # type: ignore
 
-        return parameters
+        return data
 
     def calculate(self, main_flow_out: float):
         """Calculate all process values based on desired output flow."""
@@ -1867,21 +1872,35 @@ class TransportProcess(Process):
     _parameter_codes_process = ["OPEX-T", "LOSS-T"]
     color = "teal"
 
-    def _get_calculation_data(
+    def get_calculation_data(
         self,
         parameter_getters: "ParameterGetters",
-        data_lookup_defaults: dict[DataQueryParameterType, str],
-        parent_parameters: ProcessDataType | None = None,
+        source_region_code: SourceRegionCodeType,
+        target_country_code: TargetCountryCodeType,
     ) -> ProcessDataType:
-        """Initialize parameter data for this process."""
-        parameters = super()._get_calculation_data(
+        """Get parameter data for this process."""
+        data = super().get_calculation_data(
             parameter_getters=parameter_getters,
-            data_lookup_defaults=data_lookup_defaults,
-            parent_parameters=parent_parameters,
+            source_region_code=source_region_code,
+            target_country_code=target_country_code,
         )
+
+        # FIXME: we very inefficiently get transport distances every time
+        # from parent node
+
+        # FIXME: instead of parent_process(None) -> explicitly link to
+        # transport section
+        data_all_transports = self.parent_process.get_calculation_data(  # type: ignore
+            parameter_getters=parameter_getters,
+            source_region_code=source_region_code,
+            target_country_code=target_country_code,
+        )
+        data["DIST"] = data_all_transports["DIST"].get(self.process_step, 0)  # type: ignore # noqa
+
         logger.warning("Calculate transport EFF")
-        parameters["EFF"] = 1  # FIXME
-        return parameters
+        data["EFF"] = 1  # FIXME
+
+        return data
 
 
 class StorageProcess(Process):
@@ -1992,6 +2011,11 @@ class AggregateProcess(AbstractProcess):
         return result
 
     @property
+    def main_processes(self) -> list[AbstractProcess]:
+        """List all main proceeses."""
+        return self.process_graph.main_processes
+
+    @property
     def secondary_processes(self) -> list[SecondaryProcess]:
         """List of all secondary processes (including nested aggregated processes)."""
         result: list[SecondaryProcess] = []
@@ -2007,28 +2031,24 @@ class AggregateProcess(AbstractProcess):
 
         return result
 
-    def _get_aggregated_calculation_data(
-        self,
-        parameter_getters: "ParameterGetters",
-        data_lookup_defaults: dict[DataQueryParameterType, str],
-        parent_parameters: ProcessDataType | None = None,
-    ) -> AggregateProcessDataType:
-        """Initialize parameter data for this process."""
-        parameters_self = self._get_calculation_data(
-            parameter_getters=parameter_getters,
-            data_lookup_defaults=data_lookup_defaults,
-            parent_parameters=parent_parameters,
-        )
+    @property
+    def secondary_processes_by_flow_code(self) -> dict[FlowCodeType, SecondaryProcess]:
+        """List of all secondary processes (including nested aggregated processes)."""
+        return {p.main_flow_code_out: p for p in self.secondary_processes}
 
-        parameters_procs = {}
-        for process in self.process_graph.calculate_order:
-            parameters_procs[process] = process._get_calculation_data(
-                parameter_getters=parameter_getters,
-                data_lookup_defaults=data_lookup_defaults,
-                parent_parameters=parameters_self,
-            )
+    @property
+    def market_processes_by_flow_code(self) -> dict[FlowCodeType, MarketProcess]:
+        """List of all secondary processes (including nested aggregated processes)."""
+        return {
+            p.main_flow_code_out: p
+            for p in self.process_graph.calculate_order
+            if isinstance(p, MarketProcess)
+        }
 
-        return parameters_self, parameters_procs
+    @property
+    def main_processes_by_step(self) -> dict[ProcessStepType | str, AbstractProcess]:
+        """If exists: get process by step code."""
+        return {p.process_step: p for p in self.main_processes if p.process_step}
 
     def calculate(self, main_flow_out: float):
         """Calculate all process values based on desired output flow."""
@@ -2268,8 +2288,9 @@ class ChainProcess(AggregateProcess):
             main_process_codes_steps_part: list["ProcessStep"] = (
                 main_process_codes_steps_filtered[i:j]
             )
-            if not main_process_codes_steps_part:
-                continue
+
+            # if not main_process_codes_steps_part:
+            #    continue
 
             invalid_processes = [
                 p
@@ -2302,6 +2323,10 @@ class ChainProcess(AggregateProcess):
             main_processes=main_processes, secondary_processes=[], parent_process=self
         )
 
+        self.section_export: ChainExportProcess = main_processes[0]  # type:ignore
+        self.section_transport: ChainTransportProcess = main_processes[1]  # type:ignore
+        self.section_import: ChainImportProcess = main_processes[2]  # type:ignore
+
         super().__init__(
             process_graph=process_graph,
             process_step="CHAIN",
@@ -2329,124 +2354,146 @@ class ChainProcess(AggregateProcess):
         source_region_code: SourceRegionCodeType,
         target_country_code: TargetCountryCodeType,
         use_user_data: bool = True,
+        optimize_flh: bool = True,
+        todo_transport_re_post_as_transport: bool = True,
     ) -> CalculateDataType:
         """Get calculation data."""
         parameter_getters = _create_parameter_getters(
             data_handler=data_handler, use_user_data=use_user_data
         )
 
-        data_lookup_defaults = {
-            "source_region_code": source_region_code,
-            "target_country_code": target_country_code,
-        }
-
-        parameters_chain = self._get_calculation_data(  # noqa
-            parameter_getters=parameter_getters,
-            data_lookup_defaults=data_lookup_defaults,  # type: ignore
-        )
-
-        proc_export: AggregateProcess = self.get_subprocesses_by_class(
-            # type: ignore
-            ChainExportProcess
-        )[0]
-        _parameters_export, parameters_export_procs = (
-            proc_export._get_aggregated_calculation_data(
-                parameter_getters=parameter_getters,
-                data_lookup_defaults=data_lookup_defaults,  # type: ignore
-            )
-        )
-
-        proc_transport: AggregateProcess = self.get_subprocesses_by_class(
-            # type: ignore
-            ChainTransportProcess
-        )[0]
-        _parameters_transport, parameters_transport_procs = (
-            proc_transport._get_aggregated_calculation_data(
-                parameter_getters=parameter_getters,
-                data_lookup_defaults=data_lookup_defaults,  # type: ignore
-            )
-        )
-
-        try:
-            proc_import: AggregateProcess = self.get_subprocesses_by_class(
-                # type: ignore
-                ChainImportProcess
-            )[0]
-        except Exception:
-            proc_import = None  # type: ignore
-
-        if proc_import:
-            _parameters_import, parameters_import_procs = (
-                proc_import._get_aggregated_calculation_data(
-                    parameter_getters=parameter_getters,
-                    data_lookup_defaults=data_lookup_defaults,  # type: ignore
-                )
-            )
-        else:
-            _parameters_import = {}
-            parameters_import_procs = {}
-
-        def get_proc_data(
-            process: Process, parameter: ProcessDataType
+        def _add_step_and_code(
+            process: AbstractProcess, data: ProcessDataType
         ) -> ProcessDataType:
-            return parameter | {  # type: ignore
+            return data | {  # type: ignore
                 "process_code": process.process_code,
                 "step": process.process_step,
             }
 
-        parameter = _parameters_export
-        parameter["SPECCOST"] = {}
-        # also aggregate all specccost
-        for p in proc_export.get_subprocesses_by_class(MarketProcess):
-            parameter["SPECCOST"] = parameter["SPECCOST"] | parameters_export_procs[
-                p
-            ].get(  # type: ignore # noqa
-                "SPECCOST",
-                {},
+        main_export_process_chain = [
+            _add_step_and_code(
+                p,
+                p.get_calculation_data(
+                    parameter_getters=parameter_getters,
+                    source_region_code=source_region_code,
+                ),
+            )
+            for p in self.section_export.main_processes
+        ]
+
+        main_transport_process_chain = [
+            _add_step_and_code(
+                p,
+                p.get_calculation_data(
+                    parameter_getters=parameter_getters,
+                    source_region_code=source_region_code,
+                    target_country_code=target_country_code,
+                ),
+            )
+            for p in self.section_transport.main_processes
+        ]
+        main_import_process_chain = [
+            _add_step_and_code(
+                p,
+                p.get_calculation_data(
+                    parameter_getters=parameter_getters,
+                    source_region_code=target_country_code,
+                ),
+            )
+            for p in self.section_import.main_processes
+        ]
+
+        if todo_transport_re_post_as_transport:
+            # FIXME: remove after validation:
+            # move PRE/POST into transport
+            pps_pre = [
+                d
+                for d in main_export_process_chain
+                if d["step"] in {"PRE_PPL", "PRE_SHP"}
+            ]
+            main_export_process_chain = [
+                d
+                for d in main_export_process_chain
+                if d["step"] not in {"PRE_PPL", "PRE_SHP"}
+            ]
+            pps_post = [
+                d
+                for d in main_import_process_chain
+                if d["step"] in {"POST_PPL", "POST_SHP"}
+            ]
+            main_import_process_chain = [
+                d
+                for d in main_import_process_chain
+                if d["step"] not in {"POST_PPL", "POST_SHP"}
+            ]
+            main_transport_process_chain = (
+                pps_pre + main_transport_process_chain + pps_post
             )
 
-        if proc_import:
-            parameter_i = _parameters_import
-            parameter_i["SPECCOST"] = {}
-            # also aggregate all specccost
-            for p in proc_import.get_subprocesses_by_class(MarketProcess):
-                parameter_i["SPECCOST"] = parameter_i[
-                    "SPECCOST"
-                ] | parameters_import_procs[
-                    p
-                ].get(  # type: ignore # noqa
-                    "SPECCOST",
-                    {},
-                )
-        else:
-            parameter_i = {}
-
         secondary_process = {
-            p.main_flow_code_out: get_proc_data(p, parameters_export_procs[p])
-            for p in proc_export.secondary_processes
+            f: _add_step_and_code(
+                p,
+                p.get_calculation_data(
+                    parameter_getters=parameter_getters,
+                    source_region_code=source_region_code,
+                ),
+            )
+            for f, p in self.section_export.secondary_processes_by_flow_code.items()
+        }
+        secondary_process_i = {
+            f: _add_step_and_code(
+                p,
+                p.get_calculation_data(
+                    parameter_getters=parameter_getters,
+                    source_region_code=target_country_code,
+                ),
+            )
+            for f, p in self.section_import.secondary_processes_by_flow_code.items()
         }
 
+        market_process = {
+            f: p.get_calculation_data(
+                parameter_getters=parameter_getters,
+                source_region_code=source_region_code,
+            )
+            for f, p in self.section_export.market_processes_by_flow_code.items()
+        }
+        market_process_i = {
+            f: p.get_calculation_data(
+                parameter_getters=parameter_getters,
+                source_region_code=target_country_code,
+            )
+            for f, p in self.section_import.market_processes_by_flow_code.items()
+        }
+
+        parameter = self.section_export.get_calculation_data(
+            parameter_getters=parameter_getters, source_region_code=source_region_code
+        ) | {
+            "SPECCOST": {f: d["SPECCOST"][f] for f, d in market_process.items()}
+        }  # type: ignore # noqa
+        parameter_i = self.section_import.get_calculation_data(
+            parameter_getters=parameter_getters, source_region_code=target_country_code
+        ) | {
+            "SPECCOST": {f: d["SPECCOST"][f] for f, d in market_process_i.items()}
+        }  # type: ignore # noqa
+
+        flh_opt_process = {}  # noqa
+        if optimize_flh:
+            # TODO must add flh_opt_process to result
+            pass
+
         return {
-            "context": data_lookup_defaults,
+            "context": {
+                "source_region_code": source_region_code,
+                "target_country_code": target_country_code,
+            },
             "parameter": parameter,
             "parameter_i": parameter_i,
-            "main_export_process_chain": [
-                get_proc_data(p, parameters_export_procs[p])
-                for p in proc_export.full_main_chain
-            ],
-            "transport_process_chain": [
-                get_proc_data(p, parameters_transport_procs[p])
-                for p in proc_transport.full_main_chain
-            ],
-            "main_import_process_chain": (
-                [
-                    get_proc_data(p, parameters_import_procs[p])
-                    for p in proc_import.full_main_chain
-                ]
-                if proc_import
-                else []
-            ),
+            "main_export_process_chain": main_export_process_chain,
+            "transport_process_chain": main_transport_process_chain,
+            "main_import_process_chain": main_import_process_chain,
             "secondary_process": secondary_process,
+            "secondary_process_i": secondary_process_i,
         }
 
 
@@ -2500,28 +2547,6 @@ class ChainImportProcess(ChainSectionProcess):
         """Process is allowed as subprocess."""
         return ProcessTypes[process_code].allow_in_import
 
-    @staticmethod
-    def _switch_region(
-        data_lookup_defaults: dict[DataQueryParameterType, str],
-    ) -> dict[DataQueryParameterType, str]:
-        return data_lookup_defaults | {  # type: ignore
-            "source_region_code": data_lookup_defaults["target_country_code"],
-        }
-
-    def _get_aggregated_calculation_data(
-        self,
-        parameter_getters: "ParameterGetters",
-        data_lookup_defaults: dict[DataQueryParameterType, str],
-        parent_parameters: ProcessDataType | None = None,
-    ) -> AggregateProcessDataType:
-        """Initialize parameter data for this process."""
-        # when getting data: switch region
-        return super()._get_aggregated_calculation_data(
-            parameter_getters=parameter_getters,
-            data_lookup_defaults=self._switch_region(data_lookup_defaults),
-            parent_parameters=parent_parameters,
-        )
-
 
 class ChainTransportProcess(ChainSectionProcess):
     _parameter_codes_process = [
@@ -2551,47 +2576,34 @@ class ChainTransportProcess(ChainSectionProcess):
         """Process is allowed as subprocess."""
         return ProcessTypes[process_code].allow_in_transport
 
-    def _get_aggregated_calculation_data(
+    def get_calculation_data(
         self,
         parameter_getters: "ParameterGetters",
-        data_lookup_defaults: dict[DataQueryParameterType, str],
-        parent_parameters: ProcessDataType | None = None,
-    ) -> AggregateProcessDataType:
-        """Initialize parameter data for this process."""
-        # NOTE: dont call super here
-        parameters_self = self._get_calculation_data(
+        source_region_code: SourceRegionCodeType,
+        target_country_code: TargetCountryCodeType,
+    ) -> ProcessDataType:
+        """Get parameter data for this process."""
+        data = super().get_calculation_data(
             parameter_getters=parameter_getters,
-            data_lookup_defaults=data_lookup_defaults,
-            parent_parameters=parent_parameters,
+            source_region_code=source_region_code,
+            target_country_code=target_country_code,
         )
 
         # get transport distances and options
         transport_distances: dict[ProcessStepType, float] = (
             DataHandler._get_transport_distances(
-                source_region_code=data_lookup_defaults["source_region_code"],  # type: ignore # noqa
-                target_country_code=data_lookup_defaults["target_country_code"],  # type: ignore # noqa
+                source_region_code=source_region_code,
+                target_country_code=target_country_code,
                 transport=self.transport,
                 ship_own_fuel=self.ship_own_fuel,
-                dist_ship=parameters_self["DST-S-D"],  # type: ignore
-                dist_pipeline=parameters_self["DST-S-DP"],  # type: ignore
-                seashare_pipeline=parameters_self["SEASHARE"],  # type: ignore
-                existing_pipeline_cap=parameters_self["CAP-T"],  # type: ignore
+                dist_ship=data["DST-S-D"],  # type: ignore
+                dist_pipeline=data["DST-S-DP"],  # type: ignore
+                seashare_pipeline=data["SEASHARE"],  # type: ignore
+                existing_pipeline_cap=data["CAP-T"],  # type: ignore
             )
         )
 
-        parameters_procs = {}
-        for process in self.process_graph.calculate_order:
-            dist = transport_distances.get(process.process_step, 0)  # type: ignore
-
-            parameters_procs[process] = process._get_calculation_data(
-                parameter_getters=parameter_getters,
-                data_lookup_defaults=data_lookup_defaults,
-                parent_parameters=_merge_process_data(
-                    parent_parameters, {"DIST": dist}
-                ),  # type: ignore # noqa
-            )
-
-        return parameters_self, parameters_procs
+        return data | {"DIST": transport_distances}  # type: ignore
 
 
 def _group_by_flow_type_out(
@@ -2901,7 +2913,7 @@ def _create_parameter_getters(
         def get_value(
             process_code: ProcessCodeType | None = None,
             flow_code: FlowCodeType | None = None,
-            **kwargs,
+            **kwargs: str | None,
         ) -> float:
             value = _get_value_(
                 process_code=process_code, flow_code=flow_code, **kwargs
@@ -2923,9 +2935,3 @@ def _create_parameter_getters(
         parameter_code: make_getter_2(parameter_code)  # type: ignore
         for parameter_code in ParameterCodeValues  # type: ignore
     }
-
-
-def _merge_process_data(
-    parameters: ProcessDataType | None, parent_parameters: ProcessDataType | None = None
-) -> ProcessDataType:
-    return (parameters or {}) | (parent_parameters or {})

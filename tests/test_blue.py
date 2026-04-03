@@ -1204,7 +1204,6 @@ def test_new_blue_chain_real_data(
                         "LIFETIME": 20,
                         "LOSS": 0.00378,
                         "OPEX-O": 0.004863,
-                        "WACC": 0.0487,
                         "process_code": "NG-PROD#B",
                         "step": "NG_PROD",
                     },
@@ -1221,7 +1220,6 @@ def test_new_blue_chain_real_data(
                         "FLH": 7000,
                         "LIFETIME": 20.0,
                         "OPEX-F": 0.017756,
-                        "WACC": 0.0487,
                         "process_code": "NG-DRI-C#B",
                         "step": "DERIV",
                     },
@@ -1239,7 +1237,6 @@ def test_new_blue_chain_real_data(
                         "LIFETIME": 20.0,
                         "OPEX-F": 0.01252,
                         "OPEX-O": 0.183679,
-                        "WACC": 0.0423,
                         "process_code": "EAF#B",
                         "step": "DERIV_I2",
                     }
@@ -1264,7 +1261,6 @@ def test_new_blue_chain_real_data(
                         "FLH": 7000,
                         "LIFETIME": 20,
                         "OPEX-O": 0.030247,
-                        "WACC": 0.0487,
                         "process_code": "CO2-T+S#B",
                     },
                     "EL": {
@@ -1278,7 +1274,6 @@ def test_new_blue_chain_real_data(
                         "FLH": 7000,
                         "LIFETIME": 30.0,
                         "OPEX-F": 63.758895,
-                        "WACC": 0.0487,
                         "process_code": "CCGT-CC#B",
                     },
                 },
@@ -1291,7 +1286,7 @@ def test_new_blue_chain_real_data(
                     }
                 ],
             },
-            # marks=pytest.mark.xskip,  # noqa
+            # marks=pytest.mark.skip,  # noqa
         ),
         # =============================================================================
         # CASE 2
@@ -1322,49 +1317,11 @@ def test_new_blue_chain_real_data(
                         "LIFETIME": 20,
                         "LOSS": 0.0139,
                         "OPEX-O": 0.003163,
-                        "WACC": 0.145548,
                         "process_code": "NG-PROD#B",
                         "step": "NG_PROD",
-                    },
-                    {
-                        "CAPEX": 408.107082,
-                        "CH4SHARE": {"NG-G": 0.899533},
-                        "CONV": {"EL": 0.002742},
-                        "EFF": 0.857089,
-                        "EF_E": {"NG-G": 201.0, "NG-L": 201.0},
-                        "EF_M": {"NG-G": 201.0, "NG-L": 201.0},
-                        "FLH": 7000,
-                        "LIFETIME": 30.0,
-                        "LOSS": 0.0005,
-                        "OPEX-F": 8.162142,
-                        "WACC": 0.145548,
-                        "process_code": "CH4-LIQ#B",
-                        "step": "PRE_SHP",
-                    },
+                    }
                 ],
                 "main_import_process_chain": [
-                    {
-                        "CH4SHARE": {"NG-G": 0.920806},
-                        "CONV": {"DIESEL-L": 2e-06, "EL": 0.00048, "NG-G": 0.00085},
-                        "EFF": 1.0,
-                        "EF_E": {
-                            "DIESEL-L": 266.76,
-                            "EL": 100.0,
-                            "NG-G": 201.0,
-                            "NG-L": 201.0,
-                        },
-                        "EF_M": {
-                            "DIESEL-L": 266.76,
-                            "EL": 100.0,
-                            "NG-G": 201.0,
-                            "NG-L": 201.0,
-                        },
-                        "FLH": 7000,
-                        "LIFETIME": 20,
-                        "WACC": 0.0423,
-                        "process_code": "CH4-RGAS#B",
-                        "step": "POST_SHP",
-                    },
                     {
                         "CAPEX": 0.591876,
                         "CBOUND": {"NG-G": 0.040812},
@@ -1388,7 +1345,6 @@ def test_new_blue_chain_real_data(
                         "FLH": 7000,
                         "LIFETIME": 20.0,
                         "OPEX-F": 0.017756,
-                        "WACC": 0.0423,
                         "process_code": "NG-DRI-C#B",
                         "step": "DERIV_I",
                     },
@@ -1404,7 +1360,6 @@ def test_new_blue_chain_real_data(
                         "LIFETIME": 20.0,
                         "OPEX-F": 0.01252,
                         "OPEX-O": 0.183679,
-                        "WACC": 0.0423,
                         "process_code": "EAF#B",
                         "step": "DERIV_I2",
                     },
@@ -1430,7 +1385,6 @@ def test_new_blue_chain_real_data(
                         "FLH": 7000,
                         "LIFETIME": 20,
                         "OPEX-O": 0.116566,
-                        "WACC": 0.145548,
                         "process_code": "CO2-T+S#B",
                     },
                     "EL": {
@@ -1444,11 +1398,35 @@ def test_new_blue_chain_real_data(
                         "FLH": 7000,
                         "LIFETIME": 30.0,
                         "OPEX-F": 63.758895,
-                        "WACC": 0.145548,
                         "process_code": "CCGT-CC#B",
                     },
                 },
+                "secondary_process_i": {
+                    "CO2-C": {
+                        "EFF": 0.95,
+                        "EF_E": {"CO2-C": 1.0, "EL": 100.0},
+                        "EF_M": {"CO2-C": 1.0, "EL": 100.0},
+                        "FLH": 7000,
+                        "LIFETIME": 20,
+                        "OPEX-O": 0.14792,
+                        "process_code": "CO2-T+S#B",
+                    }
+                },
                 "transport_process_chain": [
+                    {
+                        "CAPEX": 408.107082,
+                        "CH4SHARE": {"NG-G": 0.899533},
+                        "CONV": {"EL": 0.002742},
+                        "EFF": 0.857089,
+                        "EF_E": {"NG-G": 201.0, "NG-L": 201.0},
+                        "EF_M": {"NG-G": 201.0, "NG-L": 201.0},
+                        "FLH": 7000,
+                        "LIFETIME": 30.0,
+                        "LOSS": 0.0005,
+                        "OPEX-F": 8.162142,
+                        "process_code": "CH4-LIQ#B",
+                        "step": "PRE_SHP",
+                    },
                     {
                         "CONV-OT": {"BFUEL-L": 3e-06, "NG-L": 1e-06},
                         "DIST": 3174.14,
@@ -1457,7 +1435,28 @@ def test_new_blue_chain_real_data(
                         "EF_M": {"BFUEL-L": 292.68, "NG-L": 201.0},
                         "process_code": "CH4-SB#B",
                         "step": "SHP",
-                    }
+                    },
+                    {
+                        "CH4SHARE": {"NG-G": 0.920806},
+                        "CONV": {"DIESEL-L": 2e-06, "EL": 0.00048, "NG-G": 0.00085},
+                        "EFF": 1.0,
+                        "EF_E": {
+                            "DIESEL-L": 266.76,
+                            "EL": 100.0,
+                            "NG-G": 201.0,
+                            "NG-L": 201.0,
+                        },
+                        "EF_M": {
+                            "DIESEL-L": 266.76,
+                            "EL": 100.0,
+                            "NG-G": 201.0,
+                            "NG-L": 201.0,
+                        },
+                        "FLH": 7000,
+                        "LIFETIME": 20,
+                        "process_code": "CH4-RGAS#B",
+                        "step": "POST_SHP",
+                    },
                 ],
             },
             # marks=pytest.mark.skip,  # noqa

@@ -81,7 +81,7 @@ class ParameterGetter(Protocol):
         self,
         process_code: ProcessCodeType | None = None,
         flow_code: FlowCodeType | None = None,
-        **kwargs: str,
+        **kwargs: str | None,
     ) -> float | None:
         """Get parameter value."""
         ...
