@@ -15,7 +15,7 @@ from ptxboa.api_data import (
 )
 from ptxboa.static import ChainType, ChainValues, TransportType
 from ptxboa.static._type_defs import ChainDef
-from tests.utils import assert_deep_equal
+from tests.utils import assert_deep_equal_approx
 
 
 @pytest.fixture()
@@ -210,135 +210,128 @@ def test_get_calculation_data(ptxdata_dir, scenario, kwargs, request):
     data = data_handler.get_calculation_data(ChainDef(**kwargs), optimize_flh=False)
     # recursively use pytest.approx
 
-    def rec_approx(x):
-        if isinstance(x, dict):
-            return {k: rec_approx(v) for k, v in x.items()}
-        elif isinstance(x, list):
-            return [rec_approx(v) for v in x]
-        elif isinstance(x, (int, float)):
-            return pytest.approx(x)
-        else:
-            return x
-
-    assert rec_approx(data) == {
-        "flh_opt_process": {},
-        "main_export_process_chain": [
-            {
-                "EFF": 1,
-                "FLH": 1662.0,
-                "LIFETIME": 20.0,
-                "CAPEX": 334.7632213391997,
-                "OPEX-F": 5.690974762766395,
-                "OPEX-O": 0,
-                "CONV": {},
-                "step": "RES",
-                "process_code": "PV-FIX",
+    assert_deep_equal_approx(
+        data,
+        {
+            "flh_opt_process": {},
+            "main_export_process_chain": [
+                {
+                    "EFF": 1,
+                    "FLH": 1662.0,
+                    "LIFETIME": 20.0,
+                    "CAPEX": 334.7632213391997,
+                    "OPEX-F": 5.690974762766395,
+                    "OPEX-O": 0,
+                    "CONV": {},
+                    "step": "RES",
+                    "process_code": "PV-FIX",
+                },
+                {
+                    "EFF": 0.9,
+                    "FLH": 7000,
+                    "LIFETIME": 20.0,
+                    "CAPEX": 888.7736990592965,
+                    "OPEX-F": 0,
+                    "OPEX-O": 0,
+                    "CONV": {},
+                    "step": "EL_STR",
+                    "process_code": "EL-STR",
+                },
+                {
+                    "EFF": 0.715,
+                    "FLH": 2779.7,
+                    "LIFETIME": 20.0,
+                    "CAPEX": 862.3926136507007,
+                    "OPEX-F": 17.247852273014015,
+                    "OPEX-O": 0,
+                    "CONV": {"H2O-L": 0.3},
+                    "step": "ELY",
+                    "process_code": "AEL-EL",
+                },
+                {
+                    "EFF": 0.99,
+                    "FLH": 7000,
+                    "LIFETIME": 30.0,
+                    "CAPEX": 40.24887553067399,
+                    "OPEX-F": 0.5209021170671373,
+                    "OPEX-O": 0,
+                    "CONV": {},
+                    "step": "H2_STR",
+                    "process_code": "H2-STR",
+                },
+                {
+                    "EFF": 0.819,
+                    "FLH": 7752.95,
+                    "LIFETIME": 30.0,
+                    "CAPEX": 1519.4946618778151,
+                    "OPEX-F": 75.97473309389076,
+                    "OPEX-O": 0,
+                    "CONV": {"EL": 0.1419230769230769, "N2-G": 0.1598076923076923},
+                    "step": "DERIV",
+                    "process_code": "NH3SYN",
+                },
+            ],
+            "transport_process_chain": [
+                {
+                    "DIST": 12441.9,
+                    "EFF": 0.9942580439718669,
+                    "OPEX-T": 3.735743718162845e-07,
+                    "OPEX-O": 0.0004856855350958,
+                    "CONV": {"BFUEL-L": 5.343656103416341e-06},
+                    "CONV-OT": {},
+                    "step": "SHP",
+                    "process_code": "NH3-SB",
+                },
+                {
+                    "EFF": 0.7466101694915254,
+                    "FLH": 6657.599999999999,
+                    "LIFETIME": 25.0,
+                    "CAPEX": 474.7596231401004,
+                    "OPEX-F": 14.24278869420301,
+                    "OPEX-O": 0,
+                    "CONV": {"EL": 0.0076699999999999},
+                    "step": "POST_SHP",
+                    "process_code": "NH3-REC",
+                },
+            ],
+            "main_import_process_chain": [],
+            "secondary_process": {
+                "H2O-L": {
+                    "EFF": 1.0,
+                    "FLH": 7000,
+                    "LIFETIME": 20.0,
+                    "CAPEX": 0.002731203678453,
+                    "OPEX-F": 0.0001092481471381,
+                    "OPEX-O": 0,
+                    "CONV": {"EL": 0.003},
+                    "process_code": "DESAL",
+                }
             },
-            {
-                "EFF": 0.9,
-                "FLH": 7000,
-                "LIFETIME": 20.0,
-                "CAPEX": 888.7736990592965,
-                "OPEX-F": 0,
-                "OPEX-O": 0,
-                "CONV": {},
-                "step": "EL_STR",
-                "process_code": "EL-STR",
+            "parameter": {
+                "WACC": 0.0532,
+                "SPECCOST": {
+                    "BFUEL-L": 0.0032243376759515,
+                    "CO2-G": 0.0445186199587845,
+                    "EL": 0.08078,
+                    "H2O-L": 0.0013737954502618,
+                    "HEAT": 0.0577,
+                    "N2-G": 0.01154,
+                },
             },
-            {
-                "EFF": 0.715,
-                "FLH": 2779.7,
-                "LIFETIME": 20.0,
-                "CAPEX": 862.3926136507007,
-                "OPEX-F": 17.247852273014015,
-                "OPEX-O": 0,
-                "CONV": {"H2O-L": 0.3},
-                "step": "ELY",
-                "process_code": "AEL-EL",
+            "parameter_i": {
+                "WACC": 0.0532,
+                "SPECCOST": {
+                    "BFUEL-L": 0.0032243376759515,
+                    "CO2-G": 0.0445186199587845,
+                    "EL": 0.08078,
+                    "H2O-L": 0.0013737954502618,
+                    "HEAT": 0.0577,
+                    "N2-G": 0.01154,
+                },
             },
-            {
-                "EFF": 0.99,
-                "FLH": 7000,
-                "LIFETIME": 30.0,
-                "CAPEX": 40.24887553067399,
-                "OPEX-F": 0.5209021170671373,
-                "OPEX-O": 0,
-                "CONV": {},
-                "step": "H2_STR",
-                "process_code": "H2-STR",
-            },
-            {
-                "EFF": 0.819,
-                "FLH": 7752.95,
-                "LIFETIME": 30.0,
-                "CAPEX": 1519.4946618778151,
-                "OPEX-F": 75.97473309389076,
-                "OPEX-O": 0,
-                "CONV": {"EL": 0.1419230769230769, "N2-G": 0.1598076923076923},
-                "step": "DERIV",
-                "process_code": "NH3SYN",
-            },
-        ],
-        "transport_process_chain": [
-            {
-                "DIST": 12441.9,
-                "EFF": 0.9942580439718669,
-                "OPEX-T": 3.735743718162845e-07,
-                "OPEX-O": 0.0004856855350958,
-                "CONV": {"BFUEL-L": 5.343656103416341e-06},
-                "CONV-OT": {},
-                "step": "SHP",
-                "process_code": "NH3-SB",
-            },
-            {
-                "EFF": 0.7466101694915254,
-                "FLH": 6657.599999999999,
-                "LIFETIME": 25.0,
-                "CAPEX": 474.7596231401004,
-                "OPEX-F": 14.24278869420301,
-                "OPEX-O": 0,
-                "CONV": {"EL": 0.0076699999999999},
-                "step": "POST_SHP",
-                "process_code": "NH3-REC",
-            },
-        ],
-        "main_import_process_chain": [],
-        "secondary_process": {
-            "H2O-L": {
-                "EFF": 1.0,
-                "FLH": 7000,
-                "LIFETIME": 20.0,
-                "CAPEX": 0.002731203678453,
-                "OPEX-F": 0.0001092481471381,
-                "OPEX-O": 0,
-                "CONV": {"EL": 0.003},
-                "process_code": "DESAL",
-            }
+            "context": {"source_region_code": "ARE", "target_country_code": "DEU"},
         },
-        "parameter": {
-            "WACC": 0.0532,
-            "SPECCOST": {
-                "BFUEL-L": 0.0032243376759515,
-                "CO2-G": 0.0445186199587845,
-                "EL": 0.08078,
-                "H2O-L": 0.0013737954502618,
-                "HEAT": 0.0577,
-                "N2-G": 0.01154,
-            },
-        },
-        "parameter_i": {
-            "WACC": 0.0532,
-            "SPECCOST": {
-                "BFUEL-L": 0.0032243376759515,
-                "CO2-G": 0.0445186199587845,
-                "EL": 0.08078,
-                "H2O-L": 0.0013737954502618,
-                "HEAT": 0.0577,
-                "N2-G": 0.01154,
-            },
-        },
-        "context": {"source_region_code": "ARE", "target_country_code": "DEU"},
-    }
+    )
 
 
 @pytest.mark.parametrize(
@@ -516,7 +509,7 @@ def test_get_calculation_data_w_opt(ptxdata_dir, scenario, kwargs, request):
 
     del result["flh_opt_hash"]["filepath"]  # dont test this
 
-    assert_deep_equal(exp_result, result)
+    assert_deep_equal_approx(exp_result, result)
 
 
 @pytest.mark.parametrize(

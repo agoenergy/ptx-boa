@@ -18,23 +18,11 @@ from ptxboa import DEFAULT_CACHE_DIR
 from ptxboa.api import DataHandler, PtxboaAPI
 from ptxboa.static._type_defs import ChainDef
 from ptxboa.utils import annuity
+from tests.utils import assert_deep_equal_approx
 
 logging.basicConfig(level=logging.INFO)
 
 ptxdata_dir_static = Path(__file__).parent / "test_data"
-
-
-# borrowed from test_api_data.py:
-# TODO: make this available globally
-def rec_approx(x):
-    if isinstance(x, dict):
-        return {k: rec_approx(v) for k, v in x.items()}
-    elif isinstance(x, list):
-        return [rec_approx(v) for v in x]
-    elif isinstance(x, (int, float)):
-        return pytest.approx(x)
-    else:
-        return x
 
 
 # import test input data sets from json file:
@@ -78,7 +66,7 @@ def test_optimize_expected_objective_value(call_optimize):
 def test_optimize_expected_results(call_optimize):
     """Test if obtained results match expected results."""
     [res, n, input_data] = call_optimize
-    assert rec_approx(res) == input_data["expected_output"]
+    assert_deep_equal_approx(res, input_data["expected_output"])
 
 
 # settings for profile tests:

@@ -9,7 +9,7 @@ from ptxboa.api import PtxboaAPI, PtxCalc, _translate_and_validate_user_settings
 from ptxboa.api_data import DEFAULT_DATA_DIR, ChainProcess, DataHandler
 from ptxboa.static._type_defs import ChainDef
 from tests.test_api import ptxdata_dir_static
-from tests.utils import drop_null_nested, rec_approx, round_nested, sort_nested
+from tests.utils import assert_deep_equal_approx
 
 
 def _translate_user_data(user_data: pd.DataFrame) -> None:
@@ -251,10 +251,10 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
         user_data=user_data,
         tool_version_color="blue",
     )
-    calculation_data_ = data_handler.get_calculation_data(
+    calculation_data = data_handler.get_calculation_data(
         ChainDef(**kwargs), optimize_flh=False
     )
-    ptxcalc_results = PtxCalc.calculate(calculation_data_)  # type: ignore
+    ptxcalc_results = PtxCalc.calculate(calculation_data)  # type: ignore
 
     # test api output
     api = PtxboaAPI(data_dir=ptxdata_dir_static)
@@ -271,17 +271,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
     ].to_dict(orient="records")
 
     # round and sort for easier comparison
-    values = sort_nested(
-        drop_null_nested(round_nested(ptxcalc_results.results_flows_chain))
-    )
-    # round and sort for easier comparison
-    calculation_data = sort_nested(drop_null_nested(round_nested(calculation_data_)))
-    res_emission_mass = sort_nested(drop_null_nested(round_nested(res_emission_mass)))
-
-    # print so we can copy/paste new results into test
-    print("calculation_data_exp = ", calculation_data)
-    print("values_exp = ", values)
-    print("res_emission_mass_exp = ", res_emission_mass)
+    values = ptxcalc_results.results_flows_chain
 
     calculation_data_exp = {
         "context": {"source_region_code": "QAT", "target_country_code": "DEU"},
@@ -448,9 +438,10 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
         },
     ]
 
-    assert rec_approx(calculation_data) == calculation_data_exp
-    assert rec_approx(values) == values_exp
-    assert rec_approx(res_emission_mass) == res_emission_mass_exp
+    assert_deep_equal_approx(calculation_data_exp, calculation_data)
+    assert_deep_equal_approx(calculation_data_exp, calculation_data)
+    assert_deep_equal_approx(values_exp, values)
+    assert_deep_equal_approx(res_emission_mass_exp, res_emission_mass)
 
 
 @pytest.mark.parametrize(
@@ -1096,7 +1087,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "values": 0.01087216,
                 },
             ],
-            marks=pytest.mark.skip,  # noqa
+            # marks=pytest.mark.skip,  # noqa
         ),
     ],
 )
@@ -1110,14 +1101,13 @@ def test_new_blue_chain_real_data(
         **api_kwargs, tool_version_color="blue", optimize_flh=False, output_unit="USD/t"
     )
 
-    calculation_data = sort_nested(drop_null_nested(round_nested(api_result.todo_data)))
-    values = sort_nested(drop_null_nested(round_nested(api_result.todo_results_flows)))
+    calculation_data = api_result.todo_data
+    values = api_result.todo_results_flows
 
     res_emission_mass = api_result.emission_mass[  # type: ignore
         ["process_subtype", "emission_type", "gas_type", "values"]
     ].to_dict(orient="records")
     # round and sort for easier comparison
-    res_emission_mass = sort_nested(drop_null_nested(round_nested(res_emission_mass)))
 
     res_costs = (
         api_result.todo_df_results_cost_unscaled[  # type: ignore
@@ -1129,21 +1119,11 @@ def test_new_blue_chain_real_data(
         .to_dict(orient="records")
     )
     # round and sort for easier comparison
-    res_costs = sort_nested(drop_null_nested(round_nested(res_costs)))
 
-    # print so we can copy/paste new results into test
-    print((calculation_data, values, res_emission_mass, res_costs))
-
-    assert rec_approx(calculation_data) == sort_nested(
-        drop_null_nested(round_nested(calculation_data_exp))
-    )
-    assert rec_approx(values) == sort_nested(drop_null_nested(round_nested(values_exp)))
-    assert rec_approx(res_emission_mass) == sort_nested(
-        drop_null_nested(round_nested(res_emission_mass_exp))
-    )
-    assert rec_approx(res_costs) == sort_nested(
-        drop_null_nested(round_nested(res_costs_exp))
-    )
+    assert_deep_equal_approx(calculation_data_exp, calculation_data)
+    assert_deep_equal_approx(values_exp, values)
+    assert_deep_equal_approx(res_emission_mass_exp, res_emission_mass)
+    assert_deep_equal_approx(res_costs_exp, res_costs)
 
 
 @pytest.mark.parametrize(
@@ -1453,16 +1433,9 @@ def test_new_blue_chain_real_data_2(api_kwargs, calculation_data_exp):
 
     chain_process = ChainProcess.get_or_create(chain_def)
 
-    calculation_data_ = chain_process.get_calculation_data(
+    calculation_data = chain_process.get_calculation_data(
         data_handler=data_handler,
         source_region_code=chain_def.source_region_code,
         target_country_code=chain_def.target_country_code,
     )
-    calculation_data = sort_nested(drop_null_nested(round_nested(calculation_data_)))
-
-    # print so we can copy/paste new results into test
-    print(calculation_data)
-
-    assert rec_approx(calculation_data) == sort_nested(
-        drop_null_nested(round_nested(calculation_data_exp))
-    )
+    assert_deep_equal_approx(calculation_data_exp, calculation_data)

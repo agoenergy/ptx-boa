@@ -1,6 +1,5 @@
 """Test utilities."""
 
-import pytest
 from numpy import isclose
 
 
@@ -99,12 +98,16 @@ def round_nested(xs, ndigis: int = 8):
         return xs
 
 
-def rec_approx(x):
-    if isinstance(x, dict):
-        return {k: rec_approx(v) for k, v in x.items()}
-    elif isinstance(x, list):
-        return [rec_approx(v) for v in x]
-    elif isinstance(x, (int, float)):
-        return pytest.approx(x)
-    else:
-        return x
+def assert_deep_equal_approx(
+    expected,
+    actually,
+    ndigis: int = 8,
+    context=None,
+    allow_new_dict_items: bool = False,
+):
+    expected = sort_nested(round_nested(drop_null_nested(expected), ndigis=ndigis))
+    actually = sort_nested(round_nested(drop_null_nested(actually), ndigis=ndigis))
+    print(actually)  # print so we can replace in test
+    assert_deep_equal(
+        expected, actually, context=context, allow_new_dict_items=allow_new_dict_items
+    )
