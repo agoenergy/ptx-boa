@@ -321,7 +321,7 @@ class PtxCalc:
 
         # get general parameters
         parameters = data["parameter"]
-        parameters_import = data["parameter_i"]
+        parameters_import = data["parameter_import"]
 
         # start main chain calculation
         main_output_value = 1  # start with normalized value of 1

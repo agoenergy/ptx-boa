@@ -284,7 +284,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "N2-G": 0.01154,
                 }
             },
-            "parameter_i": {
+            "parameter_import": {
                 "SPECCOST": {
                     "EL": 0.08078,
                     "CO2-G": 0.04451862,
@@ -533,7 +533,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                             "N2-G": 0.01154,
                         },
                     },
-                    "parameter_i": {
+                    "parameter_import": {
                         "WACC": 0.0423,
                         "SPECCOST": {
                             "IOP-S": 0.26707598,
@@ -854,7 +854,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                             "N2-G": 0.01154,
                         },
                     },
-                    "parameter_i": {
+                    "parameter_import": {
                         "WACC": 0.0423,
                         "SPECCOST": {
                             "DIESEL-L": 0.04285714,
@@ -988,7 +988,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                             "process_code": "CO2-T+S#B",
                         },
                     },
-                    "secondary_process_i": {
+                    "secondary_process_import": {
                         "CO2-C": {
                             "LIFETIME": 20,
                             "EFF": 0.95,
@@ -1338,7 +1338,7 @@ def test_new_blue_chain_real_data(api_kwargs, expected):
                         "N2-G": 0.01154,
                     },
                 },
-                "parameter_i": {
+                "parameter_import": {
                     "WACC": 0.0423,
                     "SPECCOST": {
                         "IOP-S": 0.26707598,
@@ -1465,7 +1465,7 @@ def test_new_blue_chain_real_data(api_kwargs, expected):
                         "N2-G": 0.01154,
                     },
                 },
-                "parameter_i": {
+                "parameter_import": {
                     "WACC": 0.0423,
                     "SPECCOST": {
                         "DIESEL-L": 0.04285714,
@@ -1599,7 +1599,7 @@ def test_new_blue_chain_real_data(api_kwargs, expected):
                         "process_code": "CO2-T+S#B",
                     },
                 },
-                "secondary_process_i": {
+                "secondary_process_import": {
                     "CO2-C": {
                         "LIFETIME": 20,
                         "EFF": 0.95,

@@ -23,9 +23,9 @@ CalculateDataType = dict[
         "main_main_transport_process_chain",  # list[ProcessDataType]
         "main_import_process_chain",  # list[ProcessDataType]
         "secondary_process",  # dict[FlowType,ProcessDataType]
-        "secondary_process_i",  # dict[FlowType,ProcessDataType] # TODO new
+        "secondary_process_import",  # dict[FlowType,ProcessDataType] # TODO new
         "parameter",  # WACC and SPECCOST on export side
-        "parameter_i",  # global params and speccost on import side
+        "parameter_import",  # global params and speccost on import side
         "context",  # {source/target}
         "flh_opt_hash",  # optional,addedby optimizer
     ],

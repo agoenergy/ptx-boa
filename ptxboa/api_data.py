@@ -2250,7 +2250,7 @@ class ChainProcess(AggregateProcess):
             for f, p in self.section_export.secondary_processes_by_flow_code.items()
         }
 
-        secondary_process_i = {
+        secondary_process_import = {
             f: _add_step_and_code(
                 p,
                 p.get_calculation_data(
@@ -2289,7 +2289,7 @@ class ChainProcess(AggregateProcess):
         ) | {
             "SPECCOST": {f: d["SPECCOST"][f] for f, d in market_process.items()}  # type: ignore # noqa
         }
-        parameter_i = self.section_import.get_calculation_data(
+        parameter_import = self.section_import.get_calculation_data(
             parameter_getters=parameter_getters,
             parameter_values=parameter_values_import,
         ) | {
@@ -2355,12 +2355,12 @@ class ChainProcess(AggregateProcess):
                     )
 
         # FIXME remove later or update test data
-        # gapfill parameter_i from parameter, old data did not have some parameters
+        # gapfill parameter_import from parameter, old data did not have some parameters
         # for import countries
-        parameter_i = drop_null_nested(parameter_i)
-        parameter_i = parameter | parameter_i  # type: ignore
+        parameter_import = drop_null_nested(parameter_import)
+        parameter_import = parameter | parameter_import  # type: ignore
         for key in ["SPECCOST"]:
-            parameter_i[key] = parameter[key] | parameter_i[key]  # type: ignore
+            parameter_import[key] = parameter[key] | parameter_import[key]  # type: ignore
 
         result: CalculateDataType = {
             "context": {
@@ -2368,12 +2368,12 @@ class ChainProcess(AggregateProcess):
                 "target_country_code": target_country_code,
             },
             "parameter": parameter,
-            "parameter_i": parameter_i,
+            "parameter_import": parameter_import,
             "main_export_process_chain": main_export_process_chain,
             "main_main_transport_process_chain": main_transport_process_chain,
             "main_import_process_chain": main_import_process_chain,
             "secondary_process": secondary_process,
-            "secondary_process_i": secondary_process_i,
+            "secondary_process_import": secondary_process_import,
             "flh_opt_process": flh_opt_process,
         }
 

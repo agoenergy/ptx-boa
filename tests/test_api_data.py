@@ -316,7 +316,7 @@ def test_get_calculation_data(ptxdata_dir, scenario, kwargs, request):
                     "N2-G": 0.01154,
                 },
             },
-            "parameter_i": {
+            "parameter_import": {
                 "WACC": 0.0532,
                 "SPECCOST": {
                     "BFUEL-L": 0.0032243376759515,
@@ -490,7 +490,7 @@ def test_get_calculation_data_w_opt(ptxdata_dir, scenario, kwargs, request):
                 "N2-G": 0.01154,
             },
         },
-        "parameter_i": {
+        "parameter_import": {
             "WACC": 0.2215019750791156,
             "SPECCOST": {
                 "BFUEL-L": 0.0032243376759515,
