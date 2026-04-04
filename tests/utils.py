@@ -18,7 +18,7 @@ def assert_deep_equal(
     def _assert(comp, context=None):
         if not comp(expected_result, actual_result):
             raise ValueError(
-                f"expected values {expected_result} != {actual_result} {context or ''}"
+                f"expected values {expected_result} != {actual_result} {context}"
             )
 
     if isinstance(expected_result, (str, int, bool, type(None), set)):
@@ -29,11 +29,15 @@ def assert_deep_equal(
         _assert((lambda x, y: isclose(x, y, rtol=1e-8, equal_nan=True)), context)
     elif isinstance(expected_result, list):
         if not isinstance(actual_result, list):
-            raise ValueError(f"Not a list: {expected_result}")
+            raise ValueError(f"Not a list: {expected_result} {context}")
         if len(actual_result) != len(expected_result):
+            print("===== EXP")
+            print(sort_nested(expected_result))
+            print("===== ACT")
+            print(sort_nested(actual_result))
             raise ValueError(
                 f"list length should be {len(expected_result)}, "
-                f"not {len(actual_result)}"
+                f"not {len(actual_result)} {context}"
             )
         # recursion
         for i, (e, a) in enumerate(zip(expected_result, actual_result)):
@@ -45,7 +49,7 @@ def assert_deep_equal(
             )
     elif isinstance(expected_result, dict):
         if not isinstance(actual_result, dict):
-            raise ValueError(f"Not a dict: {expected_result}")
+            raise ValueError(f"Not a dict: {expected_result} {context}")
         # compare keys
         if set(actual_result) != set(expected_result):
             missing_keys = set(expected_result) - set(actual_result)
@@ -57,7 +61,7 @@ def assert_deep_equal(
                 msg += f" New: {new_keys}"
 
             if missing_keys or (new_keys and not allow_new_dict_items):
-                raise ValueError((msg, context))
+                raise ValueError(f"{msg} {context}")
 
         # recursion
         for k, e in expected_result.items():
@@ -118,8 +122,10 @@ def assert_deep_equal_approx(
     context: str = "",
     allow_new_dict_items: bool = False,
 ):
+
     expected = round_nested(drop_null_nested(expected), ndigis=ndigis)
     actually = round_nested(drop_null_nested(actually), ndigis=ndigis)
+
     try:
         assert_deep_equal(
             expected,
@@ -129,6 +135,6 @@ def assert_deep_equal_approx(
         )
     except Exception:
         print("======================", context)
-        print(actually)  # print so we can replace in test
+        print(sort_nested(actually))  # print so we can replace in test
         print("======================")
         raise
