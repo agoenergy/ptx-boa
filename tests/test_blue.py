@@ -45,7 +45,7 @@ def _translate_user_data(user_data: pd.DataFrame) -> None:
                 "chain_name": "Blue Iron (blue)*",
                 "source_region_code": "QAT",
                 "target_country_code": "DEU",
-                "process_code_res": None,
+                "process_res": None,
                 "secondary_processes": {},
                 "ship_own_fuel": False,
                 "transport": "Ship",

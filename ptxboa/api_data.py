@@ -263,9 +263,9 @@ class _ParameterGetter:
         data_handler,
         source_region_code,
         target_country_code,
-        process_code_res,
-        process_code_ely,
-        process_code_deriv,
+        process_res,
+        process_ely,
+        process_deriv,
         df_processes,
         df_flows,
         use_user_data: bool = True,
@@ -273,9 +273,9 @@ class _ParameterGetter:
         self.data_handler = data_handler
         self.source_region_code = source_region_code
         self.target_country_code = target_country_code
-        self.process_code_res = process_code_res
-        self.process_code_ely = process_code_ely
-        self.process_code_deriv = process_code_deriv
+        self.process_res = process_res
+        self.process_ely = process_ely
+        self.process_deriv = process_deriv
         self.df_processes = df_processes
         self.df_flows = df_flows
         self.use_user_data = use_user_data
@@ -293,9 +293,9 @@ class _ParameterGetter:
             flow_code=flow_code,
             source_region_code=self.source_region_code,
             target_country_code=self.target_country_code,
-            process_code_res=self.process_code_res,
-            process_code_ely=self.process_code_ely,
-            process_code_deriv=self.process_code_deriv,
+            process_res=self.process_res,
+            process_ely=self.process_ely,
+            process_deriv=self.process_deriv,
             default=default,
             use_user_data=self.use_user_data,
         )
@@ -741,9 +741,9 @@ class DataHandler:
         flow_code: FlowCodeType | None = None,
         source_region_code: SourceRegionCodeType | None = None,
         target_country_code: TargetCountryCodeType | None = None,
-        process_code_res: ProcessCodeType | None = None,
-        process_code_ely: ProcessCodeType | None = None,
-        process_code_deriv: ProcessCodeType | None = None,
+        process_res: ProcessCodeType | None = None,
+        process_ely: ProcessCodeType | None = None,
+        process_deriv: ProcessCodeType | None = None,
         default: float | None = None,
         use_user_data: bool = True,
     ) -> float:
@@ -807,16 +807,16 @@ class DataHandler:
                 - DST-S-D
                 - DST-S-DP
                 - SEASHARE
-        process_code_res : str, optional
-            Code for the process_code_res, by default None. Must be set for the
+        process_res : str, optional
+            Code for the process_res, by default None. Must be set for the
             following parameters:
                 - FLH
-        process_code_ely : str, optional
-            Code for the process_code_ely, by default None. Must be set for the
+        process_ely : str, optional
+            Code for the process_ely, by default None. Must be set for the
             following parameters:
                 - FLH
-        process_code_deriv : str, optional
-            Code for the process_code_deriv, by default None. Must be set for the
+        process_deriv : str, optional
+            Code for the process_deriv, by default None. Must be set for the
             following parameters:
                 - FLH
 
@@ -844,9 +844,9 @@ class DataHandler:
             "flow_code": flow_code or "",
             "source_region_code": source_region_code or "",
             "target_country_code": target_country_code or "",
-            "process_code_res": process_code_res or "",
-            "process_code_ely": process_code_ely or "",
-            "process_code_deriv": process_code_deriv or "",
+            "process_res": process_res or "",
+            "process_ely": process_ely or "",
+            "process_deriv": process_deriv or "",
         }
 
         if (
@@ -858,9 +858,9 @@ class DataHandler:
             df = self.flh
             keys = [
                 "source_region_code",
-                "process_code_res",
-                "process_code_ely",
-                "process_code_deriv",
+                "process_res",
+                "process_ely",
+                "process_deriv",
                 "process_code",
             ]
             required_keys = set(keys)
@@ -915,9 +915,9 @@ class DataHandler:
                 flow_code={flow_code},
                 source_region_code={source_region_code},
                 target_country_code={target_country_code},
-                process_code_res={process_code_res},
-                process_code_ely={process_code_ely},
-                process_code_deriv={process_code_deriv}
+                process_res={process_res},
+                process_ely={process_ely},
+                process_deriv={process_deriv}
                 ({self.tool_version_color})
             """
             )
@@ -1032,7 +1032,7 @@ class DataHandler:
         """Calculate results."""
         secondary_processes = chain_def.secondary_processes
         chain_name = chain_def.chain_name
-        process_code_res = chain_def.process_code_res
+        process_res = chain_def.process_res
         source_region_code = chain_def.source_region_code
         target_country_code = chain_def.target_country_code
         transport = chain_def.transport
@@ -1043,17 +1043,17 @@ class DataHandler:
         df_flows = self.get_dimension("flow")
 
         chain: dict = dict(self.get_dimension("chain").loc[chain_name])
-        process_code_ely = chain["ELY"]
-        process_code_deriv = chain["DERIV"]
-        chain["RES"] = process_code_res
+        process_ely = chain["ELY"]
+        process_deriv = chain["DERIV"]
+        chain["RES"] = process_res
 
         pg = _ParameterGetter(
             data_handler=self,
             source_region_code=source_region_code,
             target_country_code=target_country_code,
-            process_code_res=process_code_res,
-            process_code_ely=process_code_ely,
-            process_code_deriv=process_code_deriv,
+            process_res=process_res,
+            process_ely=process_ely,
+            process_deriv=process_deriv,
             df_processes=df_processes,
             df_flows=df_flows,
             use_user_data=use_user_data,
@@ -1064,9 +1064,9 @@ class DataHandler:
             data_handler=self,
             source_region_code=target_country_code,  # !!
             target_country_code=target_country_code,
-            process_code_res=process_code_res,
-            process_code_ely=process_code_ely,
-            process_code_deriv=process_code_deriv,
+            process_res=process_res,
+            process_ely=process_ely,
+            process_deriv=process_deriv,
             df_processes=df_processes,
             df_flows=df_flows,
             use_user_data=use_user_data,
@@ -1192,7 +1192,7 @@ class DataHandler:
             has_ccs = has_ccs or ("CO2CPT-R" in pp and "CO2CPT-S" in pp)
 
         # If RES=Hybrid: we also need PV and Wind-On
-        if process_code_res == "RES-HYBR":
+        if process_res == "RES-HYBR":
             pc: ProcessCodeType
             for pc in ["PV-FIX", "WIND-ON"]:  # type: ignore
                 result["flh_opt_process"][pc] = pg.get_process_params(pc)
@@ -2188,7 +2188,7 @@ class ChainProcess(AggregateProcess):
                 "CO2-T+S#B",
             }  # type: ignore
         else:
-            first_process_code = chain_def.process_code_res
+            first_process_code = chain_def.process_res
 
         return ChainProcess(
             transport=chain_def.transport,
@@ -2357,9 +2357,9 @@ class ChainProcess(AggregateProcess):
 
         # for FLH lookup
         parameter_values: DataQueryDicType = {
-            "process_code_res": self._process_res_ely_deriv["process_res"],
-            "process_code_ely": self._process_res_ely_deriv["process_ely"],
-            "process_code_deriv": self._process_res_ely_deriv["process_deriv"],
+            "process_res": self._process_res_ely_deriv["process_res"],
+            "process_ely": self._process_res_ely_deriv["process_ely"],
+            "process_deriv": self._process_res_ely_deriv["process_deriv"],
         }  # type: ignore
         parameter_values_export: DataQueryDicType = parameter_values | {
             "source_region_code": source_region_code

@@ -507,7 +507,7 @@ def _translate_and_validate_user_settings(
     chain_def = ChainDef(
         chain_name=chain,
         secondary_processes=secondary_processes,
-        process_code_res=DataHandler.get_dimensions_parameter_code("res_gen", res_gen),  # type: ignore # noqa
+        process_res=DataHandler.get_dimensions_parameter_code("res_gen", res_gen),  # type: ignore # noqa
         source_region_code=DataHandler.get_dimensions_parameter_code("region", region),  # type: ignore # noqa
         target_country_code=DataHandler.get_dimensions_parameter_code(  # type: ignore # noqa
             "country", country

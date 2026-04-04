@@ -313,9 +313,9 @@ class TestApi(unittest.TestCase):
             parameter_code="FLH",
             source_region_code="MAR-GUE",
             process_code="PEM-EL",
-            process_code_res="WIND-OFF",
-            process_code_ely="PEM-EL",
-            process_code_deriv="LOHC-CON",
+            process_res="WIND-OFF",
+            process_ely="PEM-EL",
+            process_deriv="LOHC-CON",
         )
         self.assertAlmostEqual(pval, 5436.92426314625)
 

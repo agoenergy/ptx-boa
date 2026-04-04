@@ -51,7 +51,7 @@ class ChainDefStatic:
     """Without region/country."""
 
     chain_name: ChainType
-    process_code_res: ProcessCodeResType
+    process_res: ProcessCodeResType
     secondary_processes: dict[FlowCodeType, ProcessCodeType]
     transport: TransportType
     ship_own_fuel: bool
@@ -61,7 +61,7 @@ class ChainDefStatic:
         """Hashable id."""
         return (
             self.chain_name,
-            self.process_code_res,
+            self.process_res,
             frozenset(self.secondary_processes.values()),  # set of ProcessCodeType
             self.transport,
             self.ship_own_fuel,

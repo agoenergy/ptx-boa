@@ -399,7 +399,7 @@ def test_prepare_data_for_optimize_incl_sec_proc():
         ),
     }
     chain_name = settings["chain"]
-    process_code_res = DataHandler.get_dimensions_parameter_code(
+    process_res = DataHandler.get_dimensions_parameter_code(
         "res_gen", settings["res_gen"]
     )
     source_region_code = DataHandler.get_dimensions_parameter_code(
@@ -423,7 +423,7 @@ def test_prepare_data_for_optimize_incl_sec_proc():
             ChainDef(
                 secondary_processes=secondary_processes,
                 chain_name=chain_name,
-                process_code_res=process_code_res,
+                process_res=process_res,
                 source_region_code=source_region_code,
                 target_country_code=target_country_code,
                 transport=transport,
@@ -464,7 +464,7 @@ def test_prepare_data_for_optimize_incl_sec_proc():
             ChainDef(
                 secondary_processes=secondary_processes,
                 chain_name=chain_name,
-                process_code_res=process_code_res,
+                process_res=process_res,
                 source_region_code=source_region_code,
                 target_country_code=target_country_code,
                 transport=transport,
