@@ -4,7 +4,10 @@ from numpy import isclose
 
 
 def assert_deep_equal(
-    expected_result, actual_result, context=None, allow_new_dict_items: bool = False
+    expected_result,
+    actual_result,
+    context: str = "",
+    allow_new_dict_items: bool = False,
 ):
     """Recursively compare nested data structure.
 
@@ -33,8 +36,13 @@ def assert_deep_equal(
                 f"not {len(actual_result)}"
             )
         # recursion
-        for e, a in zip(expected_result, actual_result):
-            assert_deep_equal(e, a, context, allow_new_dict_items=allow_new_dict_items)
+        for i, (e, a) in enumerate(zip(expected_result, actual_result)):
+            assert_deep_equal(
+                e,
+                a,
+                context=f"{context} / {i}",
+                allow_new_dict_items=allow_new_dict_items,
+            )
     elif isinstance(expected_result, dict):
         if not isinstance(actual_result, dict):
             raise ValueError(f"Not a dict: {expected_result}")
@@ -54,7 +62,12 @@ def assert_deep_equal(
         # recursion
         for k, e in expected_result.items():
             a = actual_result[k]
-            assert_deep_equal(e, a, context, allow_new_dict_items=allow_new_dict_items)
+            assert_deep_equal(
+                e,
+                a,
+                context=f"{context} / {k}",
+                allow_new_dict_items=allow_new_dict_items,
+            )
     else:
         raise NotImplementedError(type(expected_result))
 
@@ -102,11 +115,11 @@ def assert_deep_equal_approx(
     expected,
     actually,
     ndigis: int = 8,
-    context=None,
+    context: str = "",
     allow_new_dict_items: bool = False,
 ):
-    expected = sort_nested(round_nested(drop_null_nested(expected), ndigis=ndigis))
-    actually = sort_nested(round_nested(drop_null_nested(actually), ndigis=ndigis))
+    expected = round_nested(drop_null_nested(expected), ndigis=ndigis)
+    actually = round_nested(drop_null_nested(actually), ndigis=ndigis)
     try:
         assert_deep_equal(
             expected,

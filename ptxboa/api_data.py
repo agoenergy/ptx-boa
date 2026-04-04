@@ -30,6 +30,9 @@ from ptxboa.static import (
     ParameterRangeValues,
     ProcessCodeType,
     ProcessStepType,
+)
+from ptxboa.static import ProcessStepValues as ProcessStepValuesSorted
+from ptxboa.static import (
     ScenarioType,
     ScenarioValues,
     SourceRegionCodeType,
@@ -39,7 +42,6 @@ from ptxboa.static import (
     TransportValues,
     YearValues,
 )
-from ptxboa.static import ProcessStepValues as ProcessStepValuesSorted
 from ptxboa.static._type_defs import (
     CalculateDataType,
     ChainDef,
@@ -1196,7 +1198,6 @@ class DataHandler:
             pc: ProcessCodeType
             for pc in ["PV-FIX", "WIND-ON"]:  # type: ignore
                 result["flh_opt_process"][pc] = pg.get_process_params(pc)
-
         used_flows_always_for_opt: set[FlowCodeType] = {
             "H2O-L",
             "CO2-G",
@@ -1583,7 +1584,8 @@ class ProcessType:
         # secondary: only allow CCS
         return self.allow_in_export and (
             # CSS is onlyallowed secondary(?) # TODO:generalize?
-            not self.is_secondary or self.process_code == "CO2-T+S#B"
+            not self.is_secondary
+            or self.process_code == "CO2-T+S#B"
         )
 
 
@@ -1811,6 +1813,12 @@ class Process(AbstractProcess):
             logger.warning("TODO: remove dummy CONV for CO2-C")
             data["CONV"]["CO2-C"] = 1  # type: ignore
 
+        # CONV/CONV-OT drop <= 0
+        for parameter_code in ["CONV", "CONV-OT"]:
+            data[parameter_code] = {
+                k: v for k, v in data[parameter_code].items() if v and v > 0
+            }
+
         return data
 
     def calculate(self, main_flow_out: float):
@@ -1833,7 +1841,7 @@ class Process(AbstractProcess):
 
 
 class TransportProcess(Process):
-    _parameter_codes_process = ["OPEX-T", "LOSS-T"]
+    _parameter_codes_process = ["OPEX-T", "LOSS-T", "OPEX-O"]
     color = "teal"
 
     def get_calculation_data(
@@ -1854,11 +1862,14 @@ class TransportProcess(Process):
         data_all_transports = self.parent_process.get_calculation_data(  # type: ignore
             parameter_getters=parameter_getters, parameter_values=parameter_values
         )
-        data["DIST"] = data_all_transports["DIST"].get(self.process_step, 0)  # type: ignore # noqa
+        dist_transport = data_all_transports["DIST"].get(self.process_step, 0)  # type: ignore # noqa
 
-        logger.warning("Calculate transport EFF")
-        data["EFF"] = 1  # FIXME
+        loss_t = data.get("LOSS-T", 0)
 
+        data["EFF"] = 1 - loss_t * dist_transport
+        data["DIST"] = dist_transport
+
+        # FIXME: OPEX-O in transport?
         return data
 
 
@@ -2369,9 +2380,7 @@ class ChainProcess(AggregateProcess):
         )
         parameter_values_import: DataQueryDicType = parameter_values | cast(
             DataQueryDicType,
-            {
-                "source_region_code": target_country_code  # NOTE: switched in import
-            },
+            {"source_region_code": target_country_code},  # NOTE: switched in import
         )
 
         main_export_process_chain = [
@@ -2486,10 +2495,9 @@ class ChainProcess(AggregateProcess):
             }
         }
 
-        flh_opt_process = {}  # noqa
+        flh_opt_process = {}
         if optimize_flh:
-            # TODO must add flh_opt_process to result
-            # api_optimize.py: always wants SPECCOST for "H2O-L", "CO2-G", "N2-G", "HEAT"
+            # api_optimize.py: always wants SPECCOST for certain flows
             speccosts_required_for_opt: list[FlowCodeType] = [
                 "CO2-G",
                 "H2O-L",
@@ -2504,9 +2512,25 @@ class ChainProcess(AggregateProcess):
                     ).get_calculation_data(
                         parameter_getters=parameter_getters,
                         parameter_values=parameter_values_export,
-                    )["SPECCOST"][flow_code]  # type: ignore # noqa: assume its dict
+                    )[
+                        "SPECCOST"
+                    ][
+                        flow_code
+                    ]  # type: ignore # noqa: assume its dict
 
-        result = {
+            # when optimzing for RES=RES-HYBR, optimizer needs data for
+            # "PV-FIX" and "WIND-ON"
+            if main_export_process_chain[0]["process_code"] == "RES-HYBR":
+                procs_required_for_opt: list[ProcessCodeType] = ["PV-FIX", "WIND-ON"]
+                for process_code in procs_required_for_opt:
+                    flh_opt_process[process_code] = Process(
+                        process_code=process_code
+                    ).get_calculation_data(
+                        parameter_getters=parameter_getters,
+                        parameter_values=parameter_values_export,
+                    )
+
+        result: CalculateDataType = {
             "context": {
                 "source_region_code": source_region_code,
                 "target_country_code": target_country_code,
@@ -2518,11 +2542,10 @@ class ChainProcess(AggregateProcess):
             "main_import_process_chain": main_import_process_chain,
             "secondary_process": secondary_process,
             "secondary_process_i": secondary_process_i,
+            "flh_opt_process": flh_opt_process,
         }
 
-        # FIMXE: remove later or dont add empty to begin with
-        # result = drop_null_nested(result) # noqa
-        return result  # type: ignore
+        return result
 
 
 class ChainSectionProcess(AggregateProcess):
@@ -2737,9 +2760,9 @@ class ProcessGraph:
             flow_provider_sec_or_initial[sec_proc.main_flow_code_out] = sec_proc
 
         # collect required flows
-        required_flows_procs: dict[
-            FlowCodeType, list[tuple[AbstractProcess, bool]]
-        ] = {}
+        required_flows_procs: dict[FlowCodeType, list[tuple[AbstractProcess, bool]]] = (
+            {}
+        )
 
         def add_required_flows_proc(
             proc: AbstractProcess, flow: FlowCodeType, in_main: bool
