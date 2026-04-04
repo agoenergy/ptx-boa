@@ -57,6 +57,13 @@ from tests.utils import (
     drop_null_nested,
 )
 
+ProcessStepsPipeline: set[ProcessStepType] = {
+    "PPLS",
+    "PPL",
+    "PPLX",
+    "PPLR",
+}
+
 
 def _get_secproc_data(
     secondary_processes: dict,
@@ -976,7 +983,6 @@ class DataHandler:
         data = chain_proc.get_calculation_data(
             data_handler=self,
             source_region_code=source_region_code,
-            optimize_flh=optimize_flh,
             target_country_code=target_country_code,
             use_user_data=True,
         )
@@ -990,7 +996,6 @@ class DataHandler:
                     data_handler=self,
                     source_region_code=source_region_code,
                     target_country_code=target_country_code,
-                    optimize_flh=optimize_flh,
                     use_user_data=False,  # THIS IS THE IMPORTANT BIT
                 )
 
@@ -1475,6 +1480,30 @@ class AbstractProcess:
 
         return data
 
+    def _get_calculation_data_from_chain(
+        self,
+        data_by_process_step: dict[ProcessStepType, ProcessDataType],
+        data_parameter: ProcessDataType,
+        data_secondary_process: dict[FlowCodeType, ProcessDataType],
+    ) -> ProcessDataType:
+        # TODO: this is really ugly, but we need it as a legacy to the
+        # old data structure
+
+        # main processes: get data py process_step
+        # OR: we could also get it by process_code, but we have no
+        # builtin check that they have to be unique.
+        # on the other hand, process_step mightalso not be unique later on.
+
+        # grab WACC from parameters
+
+        # FIXME: special case: for compatibility with older chain: we dopped
+        # pipeline steps with DIST=0
+
+        # secondary process: grab by flow_code out
+
+        # market process: only grab SPECCOST
+        raise NotImplementedError(type(self))
+
     def calculate(
         self, process_data: ProcessDataType, main_flow_out: float
     ) -> ProcessResultType:
@@ -1600,6 +1629,18 @@ class Process(AbstractProcess):
 
         return data
 
+    def _get_calculation_data_from_chain(
+        self,
+        data_by_process_step: dict[ProcessStepType, ProcessDataType],
+        data_parameter: ProcessDataType,
+        data_secondary_process: dict[FlowCodeType, ProcessDataType],
+    ) -> ProcessDataType:
+
+        data = data_by_process_step[self.process_step]
+        # add WACC
+        data["WACC"] = data_parameter["WACC"]
+        return data
+
     def calculate(
         self, process_data: ProcessDataType, main_flow_out: float
     ) -> ProcessResultType:
@@ -1680,9 +1721,33 @@ class SecondaryProcess(Process):
         """Is this a secondary process."""
         return True
 
+    def _get_calculation_data_from_chain(
+        self,
+        data_by_process_step: dict[ProcessStepType, ProcessDataType],
+        data_parameter: ProcessDataType,
+        data_secondary_process: dict[FlowCodeType, ProcessDataType],
+    ) -> ProcessDataType:
+
+        data = data_secondary_process[self.main_flow_code_out]
+        # add WACC
+        data["WACC"] = data_parameter["WACC"]
+        return data
+
 
 class InitialProcess(SecondaryProcess):
     color = "skyblue"
+
+    # FIXME: should not be subclass of SecondaryProcess
+    def _get_calculation_data_from_chain(
+        self,
+        data_by_process_step: dict[ProcessStepType, ProcessDataType],
+        data_parameter: ProcessDataType,
+        data_secondary_process: dict[FlowCodeType, ProcessDataType],
+    ) -> ProcessDataType:
+        data = data_by_process_step[self.process_step]
+        # add WACC
+        data["WACC"] = data_parameter["WACC"]
+        return data
 
 
 class MarketProcess(AbstractProcess):
@@ -1704,6 +1769,21 @@ class MarketProcess(AbstractProcess):
         return ProcessResultType(
             main_flow_out=main_flow_out, main_flow_in=None, secondary_flows_in={}
         )
+
+    def _get_calculation_data_from_chain(
+        self,
+        data_by_process_step: dict[ProcessStepType, ProcessDataType],
+        data_parameter: ProcessDataType,
+        data_secondary_process: dict[FlowCodeType, ProcessDataType],
+    ) -> ProcessDataType:
+
+        return {
+            "SPECCOST": {
+                self.main_flow_code_out: data_parameter["SPECCOST"][
+                    self.main_flow_code_out
+                ]
+            }
+        }
 
     @property
     def main_flow_code_out(self) -> FlowCodeType:
@@ -1948,14 +2028,31 @@ class ChainProcess(AggregateProcess):
         # aggregate results in output format
 
         # TODO: it would be nicer to have one Graph, instead of 3 subgraphs
-        # for export,transport, import
+        # for export, transport, import
 
         results: dict[AbstractProcess, ProcessResultType] = {}
 
-        def _get_process_data(
-            process: AbstractProcess, data: CalculateDataType
-        ) -> ProcessDataType:
-            return {}
+        data_by_process_step: dict[ProcessStepType, ProcessDataType] = {}
+        for x in (
+            data["main_export_process_chain"]
+            + data["main_transport_process_chain"]
+            + data["main_import_process_chain"]
+        ):
+            step = x.get("step")
+            if not step:
+                logger.error("empty process_step for %s", x.get("process_code"))
+                continue
+            elif step in data_by_process_step:
+                logger.error(
+                    "duplicate process_step %s, for %s", step, x.get("process_code")
+                )
+                continue
+            data_by_process_step[step] = x
+        # FIXME: see ProcessStepsPipeline
+        for step in ProcessStepsPipeline:
+            if step not in data_by_process_step:
+                # add dummy data
+                data_by_process_step[step] = {"EFF": 1}
 
         main_flow_out_section: float = 1.0  # starting from the end
         section: ChainSectionProcess
@@ -1988,7 +2085,21 @@ class ChainProcess(AggregateProcess):
                                 process_target,
                             )
 
-                process_data = _get_process_data(process, data)
+                is_import = section is self.section_import
+                data_parameter = (
+                    data["parameter_import"] if is_import else data["parameter"]
+                )
+                data_secondary_process = (
+                    data["secondary_process_import"]
+                    if is_import
+                    else data["secondary_process"]
+                )
+
+                process_data = process._get_calculation_data_from_chain(
+                    data_by_process_step=data_by_process_step,
+                    data_parameter=data_parameter,
+                    data_secondary_process=data_secondary_process,
+                )
 
                 process_result = process.calculate(
                     process_data=process_data, main_flow_out=main_flow_out
@@ -2168,14 +2279,13 @@ class ChainProcess(AggregateProcess):
         source_region_code: SourceRegionCodeType,
         target_country_code: TargetCountryCodeType,
         use_user_data: bool = True,
-        optimize_flh: bool = True,
         todo_transport_re_post_as_transport: bool = True,
     ) -> CalculateDataType:
         """Get calculation data."""
-        parameter_getters = _create_parameter_getters_TODO(
-            data_handler=data_handler, use_user_data=use_user_data
-        )
-        parameter_getters = {}
+        # FIXME: speedup later with new parameter_getters
+        # parameter_getters = _create_parameter_getters_TODO( # noqa
+        #    data_handler=data_handler, use_user_data=use_user_data  # noqa
+        # )  # noqa
 
         def make_parameter_getters(parameter_code):
             default = data_handler.PARAMETER_DEFAULTS.get(parameter_code, 0)
@@ -2190,6 +2300,7 @@ class ChainProcess(AggregateProcess):
 
             return x
 
+        parameter_getters = {}
         for p in ParameterCodeValues:
             parameter_getters[p] = make_parameter_getters(p)
 
@@ -2201,7 +2312,7 @@ class ChainProcess(AggregateProcess):
                 "step": process.process_step,
             }
 
-        # for FLH lookup
+        # _process_res_ely_deriv: for FLH lookup
         parameter_values: DataQueryDicType = self._process_res_ely_deriv
         parameter_values_export: DataQueryDicType = parameter_values | cast(
             DataQueryDicType, {"source_region_code": source_region_code}
@@ -2270,23 +2381,14 @@ class ChainProcess(AggregateProcess):
             )
             for p in main_transport_process_chain_procs
         ]
-        # FIXME: compatibility with old test -should we keep it?
+        # FIXME: compatibility with old test - should we keep it?
         # remove pipeline steps without DIST.
         # in new system, statically created chains will still have those
         # but they should not create any cost
         main_transport_process_chain = [
             x
             for x in main_transport_process_chain
-            if x.get("DIST")
-            or (
-                x["step"]
-                not in {
-                    "PPLS",
-                    "PPL",
-                    "PPLX",
-                    "PPLR",
-                }
-            )
+            if x.get("DIST") or (x["step"] not in ProcessStepsPipeline)
         ]
 
         main_import_process_chain = [
@@ -2431,7 +2533,7 @@ class ChainProcess(AggregateProcess):
             "parameter": parameter,
             "parameter_import": parameter_import,
             "main_export_process_chain": main_export_process_chain,
-            "main_main_transport_process_chain": main_transport_process_chain,
+            "main_transport_process_chain": main_transport_process_chain,
             "main_import_process_chain": main_import_process_chain,
             "secondary_process": secondary_process,
             "secondary_process_import": secondary_process_import,
@@ -2775,6 +2877,7 @@ def _filter_transport_process_codes(
 def _create_parameter_getters_TODO(
     data_handler: DataHandler, use_user_data: bool
 ) -> ParameterGetters:
+    # FIXME: FLH lookup not correct
 
     def _get_df(
         parameter_code: ParameterCodeType, process_code: ProcessCodeType | None

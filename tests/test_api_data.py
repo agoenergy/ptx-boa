@@ -278,7 +278,7 @@ def test_get_calculation_data(ptxdata_dir, scenario, kwargs, request):
                     "process_code": "NH3SYN",
                 },
             ],
-            "main_main_transport_process_chain": [
+            "main_transport_process_chain": [
                 {
                     "DIST": 12441.9,
                     "EFF": 0.9942580439718669,
@@ -458,7 +458,7 @@ def test_get_calculation_data_w_opt(ptxdata_dir, scenario, kwargs, request):
                 "process_code": "NH3SYN",
             },
         ],
-        "main_main_transport_process_chain": [
+        "main_transport_process_chain": [
             {
                 "DIST": 12728.796,
                 "EFF": 0.994125641025641,

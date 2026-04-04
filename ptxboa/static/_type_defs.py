@@ -20,7 +20,7 @@ CalculateDataType = dict[
     Literal[
         "flh_opt_process",  # "PV-FIX"/"WIND-ON" => ProcessDataType
         "main_export_process_chain",  # list[ProcessDataType]
-        "main_main_transport_process_chain",  # list[ProcessDataType]
+        "main_transport_process_chain",  # list[ProcessDataType]
         "main_import_process_chain",  # list[ProcessDataType]
         "secondary_process",  # dict[FlowType,ProcessDataType]
         "secondary_process_import",  # dict[FlowType,ProcessDataType] # TODO new
