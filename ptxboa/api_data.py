@@ -44,6 +44,7 @@ from ptxboa.static._type_defs import (
     CalculateDataType,
     ChainDef,
     ChainDefStatic,
+    DataQueryDicType,
     ParameterGetter,
     ParameterGetters,
     ProcessDataType,
@@ -1676,7 +1677,7 @@ class AbstractProcess:
     def get_calculation_data(
         self,
         parameter_getters: "ParameterGetters",
-        parameter_values: dict[DataQueryParameterType, str | None],
+        parameter_values: DataQueryDicType,
     ) -> ProcessDataType:
         """Load parameter data for this process."""
         data: ProcessDataType = {}
@@ -1772,7 +1773,7 @@ class Process(AbstractProcess):
     def get_calculation_data(
         self,
         parameter_getters: "ParameterGetters",
-        parameter_values: dict[DataQueryParameterType, str | None],
+        parameter_values: DataQueryDicType,
     ) -> ProcessDataType:
         """Get parameter data for this process."""
         data = super().get_calculation_data(
@@ -1838,7 +1839,7 @@ class TransportProcess(Process):
     def get_calculation_data(
         self,
         parameter_getters: "ParameterGetters",
-        parameter_values: dict[DataQueryParameterType, str | None],
+        parameter_values: DataQueryDicType,
     ) -> ProcessDataType:
         """Get parameter data for this process."""
         data = super().get_calculation_data(
@@ -2355,22 +2356,21 @@ class ChainProcess(AggregateProcess):
             }
 
         # for FLH lookup
-        parameter_values = self._process_res_ely_deriv
-        parameter_values = {
+        parameter_values: DataQueryDicType = {
             "process_code_res": self._process_res_ely_deriv["process_res"],
             "process_code_ely": self._process_res_ely_deriv["process_ely"],
             "process_code_deriv": self._process_res_ely_deriv["process_deriv"],
-        }
-        parameter_values_export = parameter_values | {
+        }  # type: ignore
+        parameter_values_export: DataQueryDicType = parameter_values | {
             "source_region_code": source_region_code
-        }
-        parameter_values_transport = parameter_values | {
+        }  # type: ignore
+        parameter_values_transport: DataQueryDicType = parameter_values | {
             "source_region_code": source_region_code,
             "target_country_code": target_country_code,
-        }
-        parameter_values_import = parameter_values | {
+        }  # type: ignore
+        parameter_values_import: DataQueryDicType = parameter_values | {
             "source_region_code": target_country_code  # NOTE: switched in import
-        }
+        }  # type: ignore
 
         main_export_process_chain = [
             _add_step_and_code(
@@ -2501,7 +2501,7 @@ class ChainProcess(AggregateProcess):
                     ).get_calculation_data(
                         parameter_getters=parameter_getters,
                         parameter_values=parameter_values_export,
-                    )["SPECCOST"][flow_code]
+                    )["SPECCOST"][flow_code]  # type: ignore
 
         result = {
             "context": {
@@ -2628,7 +2628,7 @@ class ChainTransportProcess(ChainSectionProcess):
     def get_calculation_data(
         self,
         parameter_getters: "ParameterGetters",
-        parameter_values: dict[DataQueryParameterType, str | None],
+        parameter_values: DataQueryDicType,
     ) -> ProcessDataType:
         """Get parameter data for this process."""
         data = super().get_calculation_data(

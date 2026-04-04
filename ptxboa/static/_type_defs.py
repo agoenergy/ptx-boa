@@ -5,6 +5,7 @@ import pandas as pd
 
 from ptxboa.static import (
     ChainType,
+    DataQueryParameterType,
     FlowCodeType,
     ParameterCodeType,
     ProcessCodeResType,
@@ -88,3 +89,5 @@ class ParameterGetter(Protocol):
 
 
 ParameterGetters = dict[ParameterCodeType | str, ParameterGetter]
+
+DataQueryDicType = dict[DataQueryParameterType, str | None]
