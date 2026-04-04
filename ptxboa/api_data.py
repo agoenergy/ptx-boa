@@ -2230,7 +2230,7 @@ class ChainProcess(AggregateProcess):
         main_process_codes_steps_filtered.insert(0, (first_process_code, initial_step))
 
         # for FLH lookup we need these process codes
-        self._process_res_ely_deriv: dict[str, ProcessCodeType | None] = {
+        self._process_res_ely_deriv: DataQueryDicType = {
             "process_res": (first_process_code if chain_start_with_res else None),
             "process_ely": chain_data["ELY"],
             "process_deriv": chain_data["DERIV"],
@@ -2356,21 +2356,23 @@ class ChainProcess(AggregateProcess):
             }
 
         # for FLH lookup
-        parameter_values: DataQueryDicType = {
-            "process_res": self._process_res_ely_deriv["process_res"],
-            "process_ely": self._process_res_ely_deriv["process_ely"],
-            "process_deriv": self._process_res_ely_deriv["process_deriv"],
-        }  # type: ignore
-        parameter_values_export: DataQueryDicType = parameter_values | {
-            "source_region_code": source_region_code
-        }  # type: ignore
-        parameter_values_transport: DataQueryDicType = parameter_values | {
-            "source_region_code": source_region_code,
-            "target_country_code": target_country_code,
-        }  # type: ignore
-        parameter_values_import: DataQueryDicType = parameter_values | {
-            "source_region_code": target_country_code  # NOTE: switched in import
-        }  # type: ignore
+        parameter_values: DataQueryDicType = self._process_res_ely_deriv
+        parameter_values_export: DataQueryDicType = parameter_values | cast(
+            DataQueryDicType, {"source_region_code": source_region_code}
+        )
+        parameter_values_transport: DataQueryDicType = parameter_values | cast(
+            DataQueryDicType,
+            {
+                "source_region_code": source_region_code,
+                "target_country_code": target_country_code,
+            },
+        )
+        parameter_values_import: DataQueryDicType = parameter_values | cast(
+            DataQueryDicType,
+            {
+                "source_region_code": target_country_code  # NOTE: switched in import
+            },
+        )
 
         main_export_process_chain = [
             _add_step_and_code(
@@ -2494,14 +2496,15 @@ class ChainProcess(AggregateProcess):
                 "HEAT",
                 "N2-G",
             ]
+            flow_code: FlowCodeType
             for flow_code in speccosts_required_for_opt:
-                if flow_code not in parameter["SPECCOST"]:
-                    parameter["SPECCOST"][flow_code] = MarketProcess(
+                if flow_code not in parameter["SPECCOST"]:  # type: ignore # noqa: assume its dict
+                    parameter["SPECCOST"][flow_code] = MarketProcess(  # type: ignore # noqa: assume its dict
                         main_flow_code_out=flow_code
                     ).get_calculation_data(
                         parameter_getters=parameter_getters,
                         parameter_values=parameter_values_export,
-                    )["SPECCOST"][flow_code]  # type: ignore
+                    )["SPECCOST"][flow_code]  # type: ignore # noqa: assume its dict
 
         result = {
             "context": {
