@@ -44,7 +44,6 @@ from ptxboa.static import (
 )
 from ptxboa.static._type_defs import (
     CalculateDataType,
-    ChainDef,
     ChainDefStatic,
     DataQueryDicType,
     ParameterGetter,
@@ -951,7 +950,9 @@ class DataHandler:
 
     def get_calculation_data(
         self,
-        chain_def: ChainDef,
+        chain_proc: "ChainProcess",
+        source_region_code: SourceRegionCodeType,
+        target_country_code: TargetCountryCodeType,
         optimize_flh: bool,
         use_user_data_for_optimize_flh: bool = False,
     ) -> CalculateDataType:
@@ -971,12 +972,11 @@ class DataHandler:
             _description_
         """
         # get data
-        chain_proc = ChainProcess.get_or_create(chain_def)
         data = chain_proc.get_calculation_data(
             data_handler=self,
-            source_region_code=chain_def.source_region_code,
+            source_region_code=source_region_code,
             optimize_flh=optimize_flh,
-            target_country_code=chain_def.target_country_code,
+            target_country_code=target_country_code,
             use_user_data=True,
         )
 
@@ -987,8 +987,8 @@ class DataHandler:
             if self.user_data is not None and not use_user_data_for_optimize_flh:
                 data_opt = chain_proc.get_calculation_data(
                     data_handler=self,
-                    source_region_code=chain_def.source_region_code,
-                    target_country_code=chain_def.target_country_code,
+                    source_region_code=source_region_code,
+                    target_country_code=target_country_code,
                     optimize_flh=optimize_flh,
                     use_user_data=False,  # THIS IS THE IMPORTANT BIT
                 )
@@ -1955,7 +1955,25 @@ class ChainProcess(AggregateProcess):
 
     def calculate(self, data: CalculateDataType) -> PtxCalcResult:
         """Calcualte results."""
-        result: PtxCalcResult = None  # type: ignore
+
+        # iterate over all subprocesses in correct order
+        # (last to first)
+        # aggregate results in output format
+
+        df_results_cost = pd.DataFrame()
+        df_results_emissions_e_g_co2e = pd.DataFrame()
+        df_results_emissions_m_g_co2e = pd.DataFrame()
+        results_flows_chain = []
+        results_flows_secondary = []
+
+        result = PtxCalcResult(
+            df_results_cost=df_results_cost,
+            df_results_emissions_e_g_co2e=df_results_emissions_e_g_co2e,
+            df_results_emissions_m_g_co2e=df_results_emissions_m_g_co2e,
+            results_flows_chain=results_flows_chain,
+            results_flows_secondary=results_flows_secondary,
+        )
+
         return result
 
     @classmethod
@@ -2360,7 +2378,7 @@ class ChainProcess(AggregateProcess):
         parameter_import = drop_null_nested(parameter_import)
         parameter_import = parameter | parameter_import  # type: ignore
         for key in ["SPECCOST"]:
-            parameter_import[key] = parameter[key] | parameter_import[key]  # type: ignore
+            parameter_import[key] = parameter[key] | parameter_import[key]  # type: ignore # noqa
 
         result: CalculateDataType = {
             "context": {

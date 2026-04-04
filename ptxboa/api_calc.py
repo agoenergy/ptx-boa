@@ -2,13 +2,16 @@
 
 import logging
 from dataclasses import asdict, dataclass
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 import pandas as pd
 
 from ptxboa.api_data import DataHandler
 from ptxboa.static._type_defs import CalculateDataType, PtxCalcResult
 from ptxboa.utils import annuity, rescale_dict
+
+if TYPE_CHECKING:
+    from ptxboa.api_data import ChainProcess
 
 logger = logging.getLogger()
 
@@ -305,11 +308,23 @@ def _results_emissions_append(
 class PtxCalc:
     """Main module for chain calculation."""
 
-    @staticmethod
+    @classmethod
     def calculate(
+        cls,
+        chain_proc: "ChainProcess",
         data: CalculateDataType,
     ) -> PtxCalcResult:
         """Calculate results."""
+        results = cls._calculate(data=data)
+        # TODO: replace cls._calculate with chain_proc.calculate
+        results_new = chain_proc.calculate(data=data)  # noqa
+        return results
+
+    @classmethod
+    def _calculate(
+        cls,
+        data: CalculateDataType,
+    ) -> PtxCalcResult:
         df_processes = DataHandler.get_dimension("process")
         df_flows = DataHandler.get_dimension("flow")
 

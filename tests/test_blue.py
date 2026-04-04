@@ -250,10 +250,17 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
         user_data=user_data,
         tool_version_color="blue",
     )
-    calculation_data = data_handler.get_calculation_data(
-        ChainDef(**kwargs), optimize_flh=False
+
+    chain_def = ChainDef(**kwargs)
+    chain_proc = ChainProcess.get_or_create(chain_def)
+
+    data = data_handler.get_calculation_data(
+        chain_proc=chain_proc,
+        source_region_code=chain_def.source_region_code,
+        target_country_code=chain_def.target_country_code,
+        optimize_flh=False,
     )
-    ptxcalc_results = PtxCalc.calculate(calculation_data)  # type: ignore
+    ptxcalc_results = PtxCalc.calculate(chain_proc=chain_proc, data=data)
 
     # test api output
     api = PtxboaAPI(data_dir=ptxdata_dir_static)
@@ -489,7 +496,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
         ],
     }
     actually = {
-        "calculation_data": calculation_data,
+        "calculation_data": data,
         "flow_values": sorted(values, key=lambda x: x["process_step"]),  # type: ignore
         "res_emission_mass": res_emission_mass,
     }

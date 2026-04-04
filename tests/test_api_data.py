@@ -9,6 +9,7 @@ import pytest
 from ptxboa.api_data import (
     DEFAULT_DATA_DIR,
     STATIC_DATA_DIR,
+    ChainProcess,
     DataHandler,
     ScenarioValues,
     _load_scenario_data,
@@ -207,7 +208,15 @@ def test_get_dimensions_parameter_code(dimension, parameter_name, expected_code)
 def test_get_calculation_data(ptxdata_dir, scenario, kwargs, request):
     ptxdata_dir = request.getfixturevalue(ptxdata_dir)
     data_handler = DataHandler(data_dir=ptxdata_dir, scenario=scenario)
-    data = data_handler.get_calculation_data(ChainDef(**kwargs), optimize_flh=False)
+    chain_def = ChainDef(**kwargs)
+    chain_proc = ChainProcess.get_or_create(chain_def)
+
+    data = data_handler.get_calculation_data(
+        chain_proc=chain_proc,
+        source_region_code=chain_def.source_region_code,
+        target_country_code=chain_def.target_country_code,
+        optimize_flh=False,
+    )
 
     assert_deep_equal_approx(
         {
@@ -360,8 +369,14 @@ def test_get_calculation_data_w_opt(ptxdata_dir, scenario, kwargs, request):
         data_handler = DataHandler(
             data_dir=ptxdata_dir, scenario=scenario, cache_dir=Path(cache_dir)
         )
+        chain_def = ChainDef(**kwargs)
+        chain_proc = ChainProcess.get_or_create(chain_def)
+
         result = data_handler.get_calculation_data(
-            ChainDef(**kwargs), optimize_flh=True
+            chain_proc=chain_proc,
+            source_region_code=chain_def.source_region_code,
+            target_country_code=chain_def.target_country_code,
+            optimize_flh=True,
         )
     exp_result = {
         "flh_opt_process": {
@@ -548,16 +563,22 @@ def test_validate_chains(
     )
 
     # _validate_process_chain called inside here
+
+    chain_def = ChainDef(
+        secondary_processes={},
+        chain_name=chain,
+        process_res=process_res,
+        source_region_code="ESP",
+        target_country_code="DEU",
+        transport=transport,
+        ship_own_fuel=ship_own_fuel,
+    )
+    chain_proc = ChainProcess.get_or_create(chain_def)
+
     dh.get_calculation_data(
-        ChainDef(
-            secondary_processes={},
-            chain_name=chain,
-            process_res=process_res,
-            source_region_code="ESP",
-            target_country_code="DEU",
-            transport=transport,
-            ship_own_fuel=ship_own_fuel,
-        ),
+        chain_proc=chain_proc,
+        source_region_code=chain_def.source_region_code,
+        target_country_code=chain_def.target_country_code,
         optimize_flh=False,
     )
 
