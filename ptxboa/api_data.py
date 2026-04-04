@@ -30,9 +30,6 @@ from ptxboa.static import (
     ParameterRangeValues,
     ProcessCodeType,
     ProcessStepType,
-)
-from ptxboa.static import ProcessStepValues as ProcessStepValuesSorted
-from ptxboa.static import (
     ScenarioType,
     ScenarioValues,
     SourceRegionCodeType,
@@ -42,6 +39,7 @@ from ptxboa.static import (
     TransportValues,
     YearValues,
 )
+from ptxboa.static import ProcessStepValues as ProcessStepValuesSorted
 from ptxboa.static._type_defs import (
     CalculateDataType,
     ChainDef,
@@ -53,7 +51,9 @@ from ptxboa.static._type_defs import (
     ProcessStep,
     PtxCalcResult,
 )
-from tests.utils import assert_deep_equal, drop_null_nested, round_nested, sort_nested
+from tests.utils import (
+    drop_null_nested,
+)
 
 
 def _get_secproc_data(
@@ -985,12 +985,6 @@ class DataHandler:
             use_user_data=True,
         )
 
-        if False:  # FIXME
-            assert_deep_equal(
-                sort_nested(round_nested(data)),
-                sort_nested(round_nested(data_new)),
-                allow_new_dict_items=True,
-            )
         data = data_new
 
         # get optimized FLH?
@@ -1011,12 +1005,6 @@ class DataHandler:
                     optimize_flh=optimize_flh,
                     use_user_data=False,  # THIS IS THE IMPORTANT BIT
                 )
-                if False:  # FIXME
-                    assert_deep_equal(
-                        sort_nested(round_nested(data_opt)),
-                        sort_nested(round_nested(data_opt_new)),
-                        allow_new_dict_items=True,
-                    )
                 data_opt = data_opt_new
 
             else:
@@ -1584,8 +1572,7 @@ class ProcessType:
         # secondary: only allow CCS
         return self.allow_in_export and (
             # CSS is onlyallowed secondary(?) # TODO:generalize?
-            not self.is_secondary
-            or self.process_code == "CO2-T+S#B"
+            not self.is_secondary or self.process_code == "CO2-T+S#B"
         )
 
 
@@ -2435,6 +2422,24 @@ class ChainProcess(AggregateProcess):
             )
             for p in main_transport_process_chain_procs
         ]
+        # FIXME: compatibility with old test -should we keep it?
+        # remove pipeline steps without DIST.
+        # in new system, statically created chains will still have those
+        # but they should not create any cost
+        main_transport_process_chain = [
+            x
+            for x in main_transport_process_chain
+            if x.get("DIST")
+            or (
+                x["step"]
+                not in {
+                    "PPLS",
+                    "PPL",
+                    "PPLX",
+                    "PPLR",
+                }
+            )
+        ]
 
         main_import_process_chain = [
             _add_step_and_code(
@@ -2517,11 +2522,7 @@ class ChainProcess(AggregateProcess):
                 ).get_calculation_data(
                     parameter_getters=parameter_getters,
                     parameter_values=parameter_values_export,
-                )[
-                    "SPECCOST"
-                ][
-                    flow_code
-                ]  # type: ignore # noqa: assume its dict
+                )["SPECCOST"][flow_code]  # type: ignore # noqa: assume its dict
 
         flh_opt_process = {}
 
@@ -2544,11 +2545,7 @@ class ChainProcess(AggregateProcess):
                     ).get_calculation_data(
                         parameter_getters=parameter_getters,
                         parameter_values=parameter_values_export,
-                    )[
-                        "SPECCOST"
-                    ][
-                        flow_code
-                    ]  # type: ignore # noqa: assume its dict
+                    )["SPECCOST"][flow_code]  # type: ignore # noqa: assume its dict
 
             # when optimzing for RES=RES-HYBR, optimizer needs data for
             # "PV-FIX" and "WIND-ON"
@@ -2800,9 +2797,9 @@ class ProcessGraph:
             flow_provider_sec_or_initial[sec_proc.main_flow_code_out] = sec_proc
 
         # collect required flows
-        required_flows_procs: dict[FlowCodeType, list[tuple[AbstractProcess, bool]]] = (
-            {}
-        )
+        required_flows_procs: dict[
+            FlowCodeType, list[tuple[AbstractProcess, bool]]
+        ] = {}
 
         def add_required_flows_proc(
             proc: AbstractProcess, flow: FlowCodeType, in_main: bool
