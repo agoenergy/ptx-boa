@@ -91,3 +91,10 @@ class ParameterGetter(Protocol):
 ParameterGetters = dict[ParameterCodeType | str, ParameterGetter]
 
 DataQueryDicType = dict[DataQueryParameterType, str | None]
+
+
+@dataclass(slots=True, frozen=True)
+class ProcessResultType:
+    main_flow_out: float
+    main_flow_in: float | None
+    secondary_flows_in: dict[FlowCodeType, float]

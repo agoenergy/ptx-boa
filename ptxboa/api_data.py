@@ -49,6 +49,7 @@ from ptxboa.static._type_defs import (
     ParameterGetter,
     ParameterGetters,
     ProcessDataType,
+    ProcessResultType,
     ProcessStep,
     PtxCalcResult,
 )
@@ -1474,9 +1475,11 @@ class AbstractProcess:
 
         return data
 
-    def calculate(self, main_flow_out: float):
+    def calculate(
+        self, process_data: ProcessDataType, main_flow_out: float
+    ) -> ProcessResultType:
         """Calculate all process values based on desired output flow."""
-        pass
+        raise NotImplementedError()
 
     def __str__(self):
         step = f"{self.process_step}=" if self.process_step else ""
@@ -1590,28 +1593,46 @@ class Process(AbstractProcess):
         # CONV/CONV-OT drop <= 0
         for parameter_code in ["CONV", "CONV-OT"]:
             data[parameter_code] = {
-                k: v for k, v in data[parameter_code].items() if v and v > 0
+                k: v
+                for k, v in data[parameter_code].items()  # type: ignore should be dict
+                if v and v > 0
             }
 
         return data
 
-    def calculate(self, main_flow_out: float):
+    def calculate(
+        self, process_data: ProcessDataType, main_flow_out: float
+    ) -> ProcessResultType:
         """Calculate all process values based on desired output flow."""
-        super().calculate(main_flow_out=main_flow_out)
-        eff: float = self._parameters.get("EFF")  # type: ignore
-        if not eff:
-            # logger.warning("EFF = 0") # noqa
-            eff = 1
+        # calculate flows
 
-        self._main_flow_in = main_flow_out / eff
-        self._secondary_flows_in = {}
-        convs = self._parameters.get("CONV", {})  # type: ignore
+        eff: float = process_data.get("EFF")  # type: ignore
+
+        if not eff:
+            if not self.is_secondary:
+                logger.error("EFF = %s: %s", eff, self)
+                eff = 1
+        if not eff:
+            main_flow_in = None
+        else:
+            main_flow_in = main_flow_out / eff
+
+        secondary_flows_in = {}
+        convs = process_data.get("CONV", {})  # type: ignore
         for fc in self.secondary_flow_types:
             conv: float = convs.get(fc, 0)  # type: ignore
             value = main_flow_out * conv
             if value < 0:  # ignore (e.g. exothermal heat)
                 value = 0
-            self._secondary_flows_in[fc] = value
+            secondary_flows_in[fc] = value
+
+        # calculate cost
+
+        return ProcessResultType(
+            main_flow_out=main_flow_out,
+            main_flow_in=main_flow_in,
+            secondary_flows_in=secondary_flows_in,
+        )
 
 
 class TransportProcess(Process):
@@ -1676,10 +1697,13 @@ class MarketProcess(AbstractProcess):
         super().__init__(parent_process=parent_process)
         self._main_flow_code_out: FlowCodeType = main_flow_code_out
 
-    def calculate(self, main_flow_out: float):
-        """Calculate all process values based on desired output flow."""
-        super().calculate(main_flow_out=main_flow_out)
-        # TODO
+    def calculate(
+        self, process_data: ProcessDataType, main_flow_out: float
+    ) -> ProcessResultType:
+        """Calculate results."""
+        return ProcessResultType(
+            main_flow_out=main_flow_out, main_flow_in=None, secondary_flows_in={}
+        )
 
     @property
     def main_flow_code_out(self) -> FlowCodeType:
@@ -1798,42 +1822,6 @@ class AggregateProcess(AbstractProcess):
     def main_processes_by_step(self) -> dict[ProcessStepType | str, AbstractProcess]:
         """If exists: get process by step code."""
         return {p.process_step: p for p in self.main_processes if p.process_step}
-
-    def calculate(self, main_flow_out: float):
-        """Calculate all process values based on desired output flow."""
-        super().calculate(main_flow_out=main_flow_out)
-
-        # in first in reverse order, we use the given main_flow_out
-        # for all following, we combine the required flows from all links.
-        # if graph iscorrect,these must have been already calculated
-        for process in self.all_processes:
-            if process == self.main_processes[-1]:
-                # is last in main chain
-                main_flow_out_current = main_flow_out
-            else:
-                main_flow_out_current = 0  # calculate
-                flow_code = process.main_flow_code_out
-
-                for proc_target, in_main in self._process_graph.links_out.get(
-                    process, []
-                ):
-                    logger.debug(f"{process}: Serve {flow_code} to {proc_target}")
-                    main_flow_out_current += (
-                        proc_target._get_main_flow_in()
-                        if in_main
-                        else proc_target._get_secondary_flow_in(flow_code=flow_code)
-                    )
-
-                # check
-                if not main_flow_out_current:
-                    # logger.warning(f"{process}: main_flow_out is 0") # noqa
-                    if main_flow_out_current is None:
-                        raise ValueError(f"{process}: main_flow_out is None")
-            logger.debug(f"Calculate: {process} for {main_flow_out_current}")
-            process.calculate(main_flow_out=main_flow_out_current)
-
-            if process == self.main_processes[0]:
-                self._main_flow_in = process._get_main_flow_in()
 
     def get_subprocesses_by_class(
         self, class_or_classes: type | tuple[type]
@@ -1955,10 +1943,65 @@ class ChainProcess(AggregateProcess):
 
     def calculate(self, data: CalculateDataType) -> PtxCalcResult:
         """Calcualte results."""
-
         # iterate over all subprocesses in correct order
         # (last to first)
         # aggregate results in output format
+
+        # TODO: it would be nicer to have one Graph, instead of 3 subgraphs
+        # for export,transport, import
+
+        results: dict[AbstractProcess, ProcessResultType] = {}
+
+        def _get_process_data(
+            process: AbstractProcess, data: CalculateDataType
+        ) -> ProcessDataType:
+            return {}
+
+        main_flow_out_section: float = 1.0  # starting from the end
+        section: ChainSectionProcess
+        for section in [
+            self.section_import,
+            self.section_transport,
+            self.section_export,
+        ]:
+            # calculate_order ensures that process.calculate() is only called
+            # if all that depend on it have been already calculated.
+            graph = section._process_graph
+            for _i, process in enumerate(graph.calculate_order):
+                flow_code = process.main_flow_code_out
+
+                if _i == 0:
+                    main_flow_out = main_flow_out_section
+                else:
+                    # calculate required output
+                    main_flow_out = 0.0
+                    for process_target, is_main in graph.links_out[process]:
+                        # process_target is already calculated
+                        results_target = results[process_target]
+                        if is_main:
+                            main_flow_out += _get_pos_flow(
+                                results_target.main_flow_in, process_target
+                            )
+                        else:
+                            main_flow_out += _get_pos_flow(
+                                results_target.secondary_flows_in.get(flow_code),
+                                process_target,
+                            )
+
+                process_data = _get_process_data(process, data)
+
+                process_result = process.calculate(
+                    process_data=process_data, main_flow_out=main_flow_out
+                )
+                assert process not in results  # FIXME: remove later
+                results[process] = process_result
+
+            # in/out pass to previous section in loop
+            if section is not self.section_export and section.main_processes:
+                first_proc = section.main_processes[0]
+                main_flow_out_section = results[
+                    first_proc
+                ].main_flow_in  # type:ignore -should be float, not None # noqa
 
         df_results_cost = pd.DataFrame()
         df_results_emissions_e_g_co2e = pd.DataFrame()
@@ -2514,8 +2557,8 @@ class ChainTransportProcess(ChainSectionProcess):
         # get transport distances and options
         transport_distances: dict[ProcessStepType, float] = (
             DataHandler._get_transport_distances(
-                source_region_code=parameter_values["source_region_code"],
-                target_country_code=parameter_values["target_country_code"],
+                source_region_code=parameter_values["source_region_code"],  # type: ignore # noqa
+                target_country_code=parameter_values["target_country_code"],  # type: ignore # noqa
                 transport=self.transport,
                 ship_own_fuel=self.ship_own_fuel,
                 dist_ship=data["DST-S-D"],  # type: ignore
@@ -2861,3 +2904,16 @@ def _create_parameter_getters_TODO(
         parameter_code: make_getter_2(parameter_code)  # type: ignore
         for parameter_code in ParameterCodeValues  # type: ignore
     }
+
+
+def _get_pos_flow(value: float | None, context) -> float:
+    if value is None:
+        logger.error("flow value should not be None: %s", context)
+        return 0
+    elif value == 0:
+        logger.warning("flow value should not be 0: %s", context)
+        return 0
+    elif value < 0:
+        logger.debug("Dropping neg. flow value: %s", context)
+        return 0
+    return value
