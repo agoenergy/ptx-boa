@@ -1,5 +1,6 @@
 """Test utilities."""
 
+import pandas as pd
 from numpy import isclose
 
 
@@ -8,6 +9,7 @@ def assert_deep_equal(
     actual_result,
     context: str = "",
     allow_new_dict_items: bool = False,
+    sort_list_by_keys: list[str] | None = None,
 ):
     """Recursively compare nested data structure.
 
@@ -21,6 +23,12 @@ def assert_deep_equal(
                 f"expected values {expected_result} != {actual_result} {context}"
             )
 
+    if isinstance(expected_result, pd.DataFrame):
+        if not isinstance(actual_result, pd.DataFrame):
+            raise ValueError(f"Not a DataFrame: {type(actual_result)} {context}")
+        expected_result = expected_result.to_dict(orient="records")
+        actual_result = actual_result.to_dict(orient="records")
+
     if isinstance(expected_result, (str, int, bool, type(None), set)):
         # primitive
         _assert((lambda x, y: x == y), context)
@@ -29,7 +37,7 @@ def assert_deep_equal(
         _assert((lambda x, y: isclose(x, y, rtol=1e-8, equal_nan=True)), context)
     elif isinstance(expected_result, list):
         if not isinstance(actual_result, list):
-            raise ValueError(f"Not a list: {expected_result} {context}")
+            raise TypeError(f"Not a list: {type(actual_result)} {context}")
         if len(actual_result) != len(expected_result):
             print("===== EXP")
             print(sort_nested(expected_result))
@@ -39,6 +47,12 @@ def assert_deep_equal(
                 f"list length should be {len(expected_result)}, "
                 f"not {len(actual_result)} {context}"
             )
+
+        expected_result = _sort_list(
+            expected_result, sort_list_by_keys=sort_list_by_keys
+        )
+        actual_result = _sort_list(actual_result, sort_list_by_keys=sort_list_by_keys)
+
         # recursion
         for i, (e, a) in enumerate(zip(expected_result, actual_result)):
             assert_deep_equal(
@@ -46,10 +60,11 @@ def assert_deep_equal(
                 a,
                 context=f"{context} / {i}",
                 allow_new_dict_items=allow_new_dict_items,
+                sort_list_by_keys=sort_list_by_keys,
             )
     elif isinstance(expected_result, dict):
         if not isinstance(actual_result, dict):
-            raise ValueError(f"Not a dict: {expected_result} {context}")
+            raise TypeError(f"Not a dict: {type(actual_result)} {context}")
         # compare keys
         if set(actual_result) != set(expected_result):
             missing_keys = set(expected_result) - set(actual_result)
@@ -71,16 +86,36 @@ def assert_deep_equal(
                 a,
                 context=f"{context} / {k}",
                 allow_new_dict_items=allow_new_dict_items,
+                sort_list_by_keys=sort_list_by_keys,
             )
     else:
         raise NotImplementedError(type(expected_result))
 
 
-def sort_nested(xs):
+def _sort_list(xs: list, sort_list_by_keys: list[str] | None = None) -> list:
+    return sorted(
+        xs,
+        key=lambda x: (
+            tuple(x.get(k) for k in sort_list_by_keys or [])
+            if isinstance(x, dict)
+            else ()
+        ),
+    )
+
+
+def sort_nested(xs, sort_list_by_keys: list[str] | None = None):
     if isinstance(xs, list):
-        return [sort_nested(x) for x in xs]
+        result = [sort_nested(x, sort_list_by_keys=sort_list_by_keys) for x in xs]
+        return _sort_list(
+            result,
+            sort_list_by_keys=sort_list_by_keys,
+        )
+
     elif isinstance(xs, dict):
-        return {x: sort_nested(xs[x]) for x in sorted(xs.keys())}
+        return {
+            x: sort_nested(xs[x], sort_list_by_keys=sort_list_by_keys)
+            for x in sorted(xs.keys())
+        }
     else:
         return xs
 
@@ -121,6 +156,7 @@ def assert_deep_equal_approx(
     ndigis: int = 8,
     context: str = "",
     allow_new_dict_items: bool = False,
+    sort_list_by_keys: list[str] | None = None,
 ):
 
     expected = round_nested(drop_null_nested(expected), ndigis=ndigis)
@@ -132,9 +168,16 @@ def assert_deep_equal_approx(
             actually,
             context=context,
             allow_new_dict_items=allow_new_dict_items,
+            sort_list_by_keys=sort_list_by_keys,
         )
     except Exception:
         print("======================", context)
-        print(sort_nested(actually))  # print so we can replace in test
+        # print so we can replace in test
+        print(
+            sort_nested(
+                actually,
+                sort_list_by_keys=sort_list_by_keys,
+            )
+        )
         print("======================")
         raise
