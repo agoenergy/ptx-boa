@@ -548,7 +548,7 @@ def test_validate_chains(
     )
 
     # _validate_process_chain called inside here
-    dh._get_calculation_data(
+    dh.get_calculation_data(
         ChainDef(
             secondary_processes={},
             chain_name=chain,
@@ -558,6 +558,7 @@ def test_validate_chains(
             transport=transport,
             ship_own_fuel=ship_own_fuel,
         ),
+        optimize_flh=False,
     )
 
 

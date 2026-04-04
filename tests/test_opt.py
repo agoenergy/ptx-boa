@@ -419,7 +419,7 @@ def test_prepare_data_for_optimize_incl_sec_proc():
         )
 
         # prepare data in the same way as in PtxboaAPI.calculate():
-        data = data_handler._get_calculation_data(
+        data = data_handler.get_calculation_data(
             ChainDef(
                 secondary_processes=secondary_processes,
                 chain_name=chain_name,
@@ -429,7 +429,7 @@ def test_prepare_data_for_optimize_incl_sec_proc():
                 transport=transport,
                 ship_own_fuel=ship_own_fuel,
             ),
-            use_user_data=False,
+            optimize_flh=False,
         )
 
         # prepare data same way as in PtxOpt.get_data()

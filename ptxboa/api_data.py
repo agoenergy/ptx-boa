@@ -30,6 +30,9 @@ from ptxboa.static import (
     ParameterRangeValues,
     ProcessCodeType,
     ProcessStepType,
+)
+from ptxboa.static import ProcessStepValues as ProcessStepValuesSorted
+from ptxboa.static import (
     ScenarioType,
     ScenarioValues,
     SourceRegionCodeType,
@@ -39,7 +42,6 @@ from ptxboa.static import (
     TransportValues,
     YearValues,
 )
-from ptxboa.static import ProcessStepValues as ProcessStepValuesSorted
 from ptxboa.static._type_defs import (
     CalculateDataType,
     ChainDef,
@@ -969,15 +971,8 @@ class DataHandler:
             _description_
         """
         # get data
-        data = self._get_calculation_data(
-            chain_def=chain_def,
-            use_user_data=True,
-        )
-
-        # FIXME: only use this once its tested
         chain_proc = ChainProcess.get_or_create(chain_def)
-
-        data_new = chain_proc.get_calculation_data(
+        data = chain_proc.get_calculation_data(
             data_handler=self,
             source_region_code=chain_def.source_region_code,
             optimize_flh=optimize_flh,
@@ -985,27 +980,18 @@ class DataHandler:
             use_user_data=True,
         )
 
-        data = data_new
-
         # get optimized FLH?
         if optimize_flh:
             # if we have user data BUT it should NOT be used for optimization
             # get a different dataset for optimization
             if self.user_data is not None and not use_user_data_for_optimize_flh:
-                data_opt = self._get_calculation_data(
-                    chain_def=chain_def,
-                    use_user_data=False,  # THIS IS THE IMPORTANT BIT
-                )
-
-                # FIXME: only use this once its tested
-                data_opt_new = chain_proc.get_calculation_data(
+                data_opt = chain_proc.get_calculation_data(
                     data_handler=self,
                     source_region_code=chain_def.source_region_code,
                     target_country_code=chain_def.target_country_code,
                     optimize_flh=optimize_flh,
                     use_user_data=False,  # THIS IS THE IMPORTANT BIT
                 )
-                data_opt = data_opt_new
 
             else:
                 data_opt = data
@@ -1013,206 +999,6 @@ class DataHandler:
             data = self.optimizer.get_calculation_data(data_opt, data)
 
         return data
-
-    def _get_calculation_data(
-        self,
-        chain_def: ChainDef,
-        use_user_data: bool = True,
-    ) -> CalculateDataType:
-        """Calculate results."""
-        secondary_processes = chain_def.secondary_processes
-        chain_name = chain_def.chain_name
-        process_res = chain_def.process_res
-        source_region_code = chain_def.source_region_code
-        target_country_code = chain_def.target_country_code
-        transport = chain_def.transport
-        ship_own_fuel = chain_def.ship_own_fuel
-
-        # get process codes for selected chain
-        df_processes = self.get_dimension("process")
-        df_flows = self.get_dimension("flow")
-
-        chain: dict = dict(self.get_dimension("chain").loc[chain_name])
-        process_ely = chain["ELY"]
-        process_deriv = chain["DERIV"]
-        chain["RES"] = process_res
-
-        pg = _ParameterGetter(
-            data_handler=self,
-            source_region_code=source_region_code,
-            target_country_code=target_country_code,
-            process_res=process_res,
-            process_ely=process_ely,
-            process_deriv=process_deriv,
-            df_processes=df_processes,
-            df_flows=df_flows,
-            use_user_data=use_user_data,
-        )
-
-        # parameter getter if processes are in import (target) country:
-        pg_import = _ParameterGetter(
-            data_handler=self,
-            source_region_code=target_country_code,  # !!
-            target_country_code=target_country_code,
-            process_res=process_res,
-            process_ely=process_ely,
-            process_deriv=process_deriv,
-            df_processes=df_processes,
-            df_flows=df_flows,
-            use_user_data=use_user_data,
-        )
-
-        # some flows are grouped into their own output category (but not all)
-        # so we load the mapping from the data
-
-        # iterate over main chain, update the value in the main flow
-        # and accumulate result data from each process
-
-        # get general parameters
-
-        result: CalculateDataType = {
-            "flh_opt_process": {},
-            "main_export_process_chain": [],
-            "transport_process_chain": [],
-            "main_import_process_chain": [],
-            "secondary_process": {},
-            "parameter": {},
-            "parameter_i": {},
-            "context": {
-                "source_region_code": source_region_code,
-                "target_country_code": target_country_code,
-            },
-        }
-
-        result["parameter"]["WACC"] = pg.get_parameter_value_w_default("WACC")
-        # default from export country
-        result["parameter_i"]["WACC"] = pg_import.get_parameter_value_w_default(
-            "WACC", default=result["parameter"]["WACC"]
-        )
-
-        # get transport distances and options
-        dist_pipeline = pg.get_parameter_value_w_default("DST-S-DP", default=0)
-        seashare_pipeline = pg.get_parameter_value_w_default("SEASHARE", default=0)
-        existing_pipeline_cap = pg.get_parameter_value_w_default("CAP-T", default=0)
-        dist_ship = pg.get_parameter_value_w_default("DST-S-D", default=0)
-
-        transport_distances = self._get_transport_distances(
-            source_region_code,
-            target_country_code,
-            transport,
-            ship_own_fuel,
-            dist_ship,
-            dist_pipeline,
-            seashare_pipeline,
-            existing_pipeline_cap,
-        )
-
-        chain_steps_main_export, chain_steps_transport, chain_steps_main_import = (
-            self._filter_chain_processes(chain, transport_distances)
-        )
-
-        used_flows_main_chain: set[FlowCodeType] = set()
-        used_flows_main_export: set[FlowCodeType] = set()
-        has_ccs = False
-        for process_step in chain_steps_main_export:
-            process_code = chain[process_step]
-            pp = pg.get_process_params(process_code)
-            pp["step"] = process_step
-            pp["process_code"] = process_code
-            result["main_export_process_chain"].append(pp)
-            used_flows_main_export = used_flows_main_export | set(pp["CONV"])
-            proc = self.dimensions["process"].loc[process_code]
-            if proc.main_flow_code_in:
-                used_flows_main_chain.add(proc.main_flow_code_in)
-            if proc.main_flow_code_out:
-                used_flows_main_chain.add(proc.main_flow_code_out)
-
-            has_ccs = has_ccs or ("CO2CPT-R" in pp and "CO2CPT-S" in pp)
-
-        _secondary_process, used_flows_secondary, provided_flows_secondary = (
-            _get_secproc_data(
-                secondary_processes=secondary_processes,
-                pg=pg,
-                has_ccs=has_ccs,
-                used_flows_main_export=used_flows_main_export,
-            )
-        )
-        result["secondary_process"] = _secondary_process
-
-        used_flows_transport: set[FlowCodeType] = set()
-        for process_step in chain_steps_transport:
-            process_code = chain[process_step]
-            if not process_code:
-                raise Exception((process_step, chain))
-            if process_step in transport_distances:
-                dist_transport = transport_distances[process_step]
-                pp = pg.get_transport_process_params(process_code, dist_transport)
-            else:  # pre/post
-                pp = pg.get_process_params(process_code)
-            pp["step"] = process_step
-            pp["process_code"] = process_code
-            result["transport_process_chain"].append(pp)
-            used_flows_transport = used_flows_transport | set(pp["CONV"])
-
-            proc = self.dimensions["process"].loc[process_code]
-            if proc.main_flow_code_in:
-                used_flows_main_chain.add(proc.main_flow_code_in)
-            if proc.main_flow_code_out:
-                used_flows_main_chain.add(proc.main_flow_code_out)
-
-        used_flows_main_import: set[FlowCodeType] = set()
-
-        has_ccs = False
-        for process_step in chain_steps_main_import:
-            process_code = chain[process_step]
-            if not process_code:
-                raise Exception((process_step, chain))
-            pp = pg_import.get_process_params(process_code)
-            pp["step"] = process_step
-            pp["process_code"] = process_code
-            result["main_import_process_chain"].append(pp)
-            used_flows_main_import = used_flows_main_import | set(pp["CONV"])
-
-            proc = self.dimensions["process"].loc[process_code]
-            if proc.main_flow_code_in:
-                used_flows_main_chain.add(proc.main_flow_code_in)
-            if proc.main_flow_code_out:
-                used_flows_main_chain.add(proc.main_flow_code_out)
-
-            has_ccs = has_ccs or ("CO2CPT-R" in pp and "CO2CPT-S" in pp)
-
-        # If RES=Hybrid: we also need PV and Wind-On
-        if process_res == "RES-HYBR":
-            pc: ProcessCodeType
-            for pc in ["PV-FIX", "WIND-ON"]:  # type: ignore
-                result["flh_opt_process"][pc] = pg.get_process_params(pc)
-        used_flows_always_for_opt: set[FlowCodeType] = {
-            "H2O-L",
-            "CO2-G",
-            "N2-G",
-            "HEAT",
-        }
-
-        used_flows: set[FlowCodeType] = (
-            (used_flows_main_export - provided_flows_secondary)
-            | used_flows_always_for_opt
-            | used_flows_secondary
-            | used_flows_transport
-            | (used_flows_main_import)
-        )
-        # FIXME: used_flows_main_import may need to come from different country!!
-        # FIXME: SOECCOST:
-        defaults = {"NG-G": 0}
-        result["parameter"]["SPECCOST"] = pg.get_flow_params(
-            "SPECCOST", used_flows, defaults=defaults
-        )
-
-        # default from export country
-        result["parameter_i"]["SPECCOST"] = pg_import.get_flow_params(
-            "SPECCOST", used_flows, defaults=result["parameter"]["SPECCOST"]
-        )
-
-        return result
 
     @classmethod
     def get_dimensions_parameter_code(
@@ -1572,7 +1358,8 @@ class ProcessType:
         # secondary: only allow CCS
         return self.allow_in_export and (
             # CSS is onlyallowed secondary(?) # TODO:generalize?
-            not self.is_secondary or self.process_code == "CO2-T+S#B"
+            not self.is_secondary
+            or self.process_code == "CO2-T+S#B"
         )
 
 
@@ -2522,7 +2309,11 @@ class ChainProcess(AggregateProcess):
                 ).get_calculation_data(
                     parameter_getters=parameter_getters,
                     parameter_values=parameter_values_export,
-                )["SPECCOST"][flow_code]  # type: ignore # noqa: assume its dict
+                )[
+                    "SPECCOST"
+                ][
+                    flow_code
+                ]  # type: ignore # noqa: assume its dict
 
         flh_opt_process = {}
 
@@ -2545,7 +2336,11 @@ class ChainProcess(AggregateProcess):
                     ).get_calculation_data(
                         parameter_getters=parameter_getters,
                         parameter_values=parameter_values_export,
-                    )["SPECCOST"][flow_code]  # type: ignore # noqa: assume its dict
+                    )[
+                        "SPECCOST"
+                    ][
+                        flow_code
+                    ]  # type: ignore # noqa: assume its dict
 
             # when optimzing for RES=RES-HYBR, optimizer needs data for
             # "PV-FIX" and "WIND-ON"
@@ -2797,9 +2592,9 @@ class ProcessGraph:
             flow_provider_sec_or_initial[sec_proc.main_flow_code_out] = sec_proc
 
         # collect required flows
-        required_flows_procs: dict[
-            FlowCodeType, list[tuple[AbstractProcess, bool]]
-        ] = {}
+        required_flows_procs: dict[FlowCodeType, list[tuple[AbstractProcess, bool]]] = (
+            {}
+        )
 
         def add_required_flows_proc(
             proc: AbstractProcess, flow: FlowCodeType, in_main: bool
