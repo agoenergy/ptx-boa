@@ -53,7 +53,7 @@ from ptxboa.static._type_defs import (
     ProcessStep,
     PtxCalcResult,
 )
-from tests.utils import assert_deep_equal, round_nested, sort_nested
+from tests.utils import assert_deep_equal, drop_null_nested, round_nested, sort_nested
 
 
 def _get_secproc_data(
@@ -2383,6 +2383,37 @@ class ChainProcess(AggregateProcess):
             {"source_region_code": target_country_code},  # NOTE: switched in import
         )
 
+        main_export_process_chain_procs = self.section_export.main_processes
+        main_transport_process_chain_procs = self.section_transport.main_processes
+        main_import_process_chain_procs = self.section_import.main_processes
+
+        if todo_transport_re_post_as_transport:
+            # FIXME: remove after validation:
+            # move PRE/POST into transport
+            pps_pre = [
+                p
+                for p in main_export_process_chain_procs
+                if p.process_step in {"PRE_PPL", "PRE_SHP"}
+            ]
+            main_export_process_chain_procs = [
+                p
+                for p in main_export_process_chain_procs
+                if p.process_step not in {"PRE_PPL", "PRE_SHP"}
+            ]
+            pps_post = [
+                p
+                for p in main_import_process_chain_procs
+                if p.process_step in {"POST_PPL", "POST_SHP"}
+            ]
+            main_import_process_chain_procs = [
+                p
+                for p in main_import_process_chain_procs
+                if p.process_step not in {"POST_PPL", "POST_SHP"}
+            ]
+            main_transport_process_chain_procs = (
+                pps_pre + main_transport_process_chain_procs + pps_post
+            )
+
         main_export_process_chain = [
             _add_step_and_code(
                 p,
@@ -2391,7 +2422,7 @@ class ChainProcess(AggregateProcess):
                     parameter_values=parameter_values_export,
                 ),
             )
-            for p in self.section_export.main_processes
+            for p in main_export_process_chain_procs
         ]
 
         main_transport_process_chain = [
@@ -2402,7 +2433,7 @@ class ChainProcess(AggregateProcess):
                     parameter_values=parameter_values_transport,
                 ),
             )
-            for p in self.section_transport.main_processes
+            for p in main_transport_process_chain_procs
         ]
 
         main_import_process_chain = [
@@ -2413,35 +2444,8 @@ class ChainProcess(AggregateProcess):
                     parameter_values=parameter_values_import,
                 ),
             )
-            for p in self.section_import.main_processes
+            for p in main_import_process_chain_procs
         ]
-
-        if todo_transport_re_post_as_transport:
-            # FIXME: remove after validation:
-            # move PRE/POST into transport
-            pps_pre = [
-                d
-                for d in main_export_process_chain
-                if d["step"] in {"PRE_PPL", "PRE_SHP"}
-            ]
-            main_export_process_chain = [
-                d
-                for d in main_export_process_chain
-                if d["step"] not in {"PRE_PPL", "PRE_SHP"}
-            ]
-            pps_post = [
-                d
-                for d in main_import_process_chain
-                if d["step"] in {"POST_PPL", "POST_SHP"}
-            ]
-            main_import_process_chain = [
-                d
-                for d in main_import_process_chain
-                if d["step"] not in {"POST_PPL", "POST_SHP"}
-            ]
-            main_transport_process_chain = (
-                pps_pre + main_transport_process_chain + pps_post
-            )
 
         secondary_process = {
             f: _add_step_and_code(
@@ -2453,6 +2457,7 @@ class ChainProcess(AggregateProcess):
             )
             for f, p in self.section_export.secondary_processes_by_flow_code.items()
         }
+
         secondary_process_i = {
             f: _add_step_and_code(
                 p,
@@ -2464,13 +2469,20 @@ class ChainProcess(AggregateProcess):
             for f, p in self.section_import.secondary_processes_by_flow_code.items()
         }
 
-        market_process = {
+        market_process = {  # for export + transport
             f: p.get_calculation_data(
                 parameter_getters=parameter_getters,
                 parameter_values=parameter_values_export,
             )
             for f, p in self.section_export.market_processes_by_flow_code.items()
+        } | {
+            f: p.get_calculation_data(
+                parameter_getters=parameter_getters,
+                parameter_values=parameter_values_export,
+            )
+            for f, p in self.section_transport.market_processes_by_flow_code.items()
         }
+
         market_process_i = {
             f: p.get_calculation_data(
                 parameter_getters=parameter_getters,
@@ -2495,8 +2507,28 @@ class ChainProcess(AggregateProcess):
             }
         }
 
+        # FIXME: remove later: always add SPECCOST for EL
+        speccosts_required_for_opt: list[FlowCodeType] = ["EL"]
+        flow_code: FlowCodeType
+        for flow_code in speccosts_required_for_opt:
+            if flow_code not in parameter["SPECCOST"]:  # type: ignore # noqa: assume its dict
+                parameter["SPECCOST"][flow_code] = MarketProcess(  # type: ignore # noqa: assume its dict
+                    main_flow_code_out=flow_code
+                ).get_calculation_data(
+                    parameter_getters=parameter_getters,
+                    parameter_values=parameter_values_export,
+                )[
+                    "SPECCOST"
+                ][
+                    flow_code
+                ]  # type: ignore # noqa: assume its dict
+
         flh_opt_process = {}
-        if optimize_flh:
+
+        # FIXME: we only need these for optimize_flh,
+        # but old tests require them always
+        # if optimize_flh: # noqa
+        if True:
             # api_optimize.py: always wants SPECCOST for certain flows
             speccosts_required_for_opt: list[FlowCodeType] = [
                 "CO2-G",
@@ -2529,6 +2561,14 @@ class ChainProcess(AggregateProcess):
                         parameter_getters=parameter_getters,
                         parameter_values=parameter_values_export,
                     )
+
+        # FIXME remove later or update test data
+        # gapfill parameter_i from parameter, old data did not have some parameters
+        # for import countries
+        parameter_i = drop_null_nested(parameter_i)
+        parameter_i = parameter | parameter_i  # type: ignore
+        for key in ["SPECCOST"]:
+            parameter_i[key] = parameter[key] | parameter_i[key]  # type: ignore
 
         result: CalculateDataType = {
             "context": {
