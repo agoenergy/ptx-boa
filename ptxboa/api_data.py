@@ -30,9 +30,6 @@ from ptxboa.static import (
     ParameterRangeValues,
     ProcessCodeType,
     ProcessStepType,
-)
-from ptxboa.static import ProcessStepValues as ProcessStepValuesSorted
-from ptxboa.static import (
     ScenarioType,
     ScenarioValues,
     SourceRegionCodeType,
@@ -42,6 +39,7 @@ from ptxboa.static import (
     TransportValues,
     YearValues,
 )
+from ptxboa.static import ProcessStepValues as ProcessStepValuesSorted
 from ptxboa.static._type_defs import (
     CalculateDataType,
     ChainDef,
@@ -1584,8 +1582,7 @@ class ProcessType:
         # secondary: only allow CCS
         return self.allow_in_export and (
             # CSS is onlyallowed secondary(?) # TODO:generalize?
-            not self.is_secondary
-            or self.process_code == "CO2-T+S#B"
+            not self.is_secondary or self.process_code == "CO2-T+S#B"
         )
 
 
@@ -2490,7 +2487,21 @@ class ChainProcess(AggregateProcess):
         flh_opt_process = {}  # noqa
         if optimize_flh:
             # TODO must add flh_opt_process to result
-            pass
+            # api_optimize.py: always wants SPECCOST for "H2O-L", "CO2-G", "N2-G", "HEAT"
+            speccosts_required_for_opt: list[FlowCodeType] = [
+                "CO2-G",
+                "H2O-L",
+                "HEAT",
+                "N2-G",
+            ]
+            for flow_code in speccosts_required_for_opt:
+                if flow_code not in parameter["SPECCOST"]:
+                    parameter["SPECCOST"][flow_code] = MarketProcess(
+                        main_flow_code_out=flow_code
+                    ).get_calculation_data(
+                        parameter_getters=parameter_getters,
+                        parameter_values=parameter_values_export,
+                    )["SPECCOST"][flow_code]
 
         result = {
             "context": {
@@ -2723,9 +2734,9 @@ class ProcessGraph:
             flow_provider_sec_or_initial[sec_proc.main_flow_code_out] = sec_proc
 
         # collect required flows
-        required_flows_procs: dict[FlowCodeType, list[tuple[AbstractProcess, bool]]] = (
-            {}
-        )
+        required_flows_procs: dict[
+            FlowCodeType, list[tuple[AbstractProcess, bool]]
+        ] = {}
 
         def add_required_flows_proc(
             proc: AbstractProcess, flow: FlowCodeType, in_main: bool
