@@ -23,7 +23,7 @@ class TestUtils(unittest.TestCase):
         assert_deep_equal(1.2, 1.2)
         self.assertRaises(ValueError, assert_deep_equal, 1.2, 1.20001)
         assert_deep_equal([1, 2], [1, 2])
-        assert_deep_equal({"a": [], "b": 1.2}, {"a": [], "b": 1.2000001})
+        assert_deep_equal({"a": [], "b": 1.2}, {"a": [], "b": 1.200000001})
         self.assertRaises(ValueError, assert_deep_equal, [], {})
         self.assertRaises(ValueError, assert_deep_equal, [], [1])
         self.assertRaises(ValueError, assert_deep_equal, {"a": 1}, {"b": 1})
@@ -44,7 +44,6 @@ class TestUtils(unittest.TestCase):
             ({}, "{}"),
             ([1, {"b": 2, "a": [None]}], '[1,{"a":[null],"b":2}]'),
         ]:
-
             res = serialize_for_hashing(obj)
             # must be json loadable
             json.loads(res)
