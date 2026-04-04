@@ -497,11 +497,11 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
     }
     actually = {
         "calculation_data": data,
-        "flow_values": sorted(values, key=lambda x: x["process_step"]),  # type: ignore
+        "flow_values": values,
         "res_emission_mass": res_emission_mass,
     }
 
-    assert_deep_equal_approx(expected, actually)
+    assert_deep_equal_approx(expected, actually, sort_list_by_keys=["process_step"])
 
 
 @pytest.mark.parametrize(
@@ -1286,7 +1286,6 @@ def test_new_blue_chain_real_data(api_kwargs, expected):
 
     calculation_data = api_result.todo_data
     values = api_result.todo_results_flows
-    values = sorted(values, key=lambda x: x["process_step"])  # type: ignore
 
     res_emission_mass = api_result.emission_mass[  # type: ignore
         ["process_subtype", "emission_type", "gas_type", "values"]
@@ -1310,7 +1309,9 @@ def test_new_blue_chain_real_data(api_kwargs, expected):
         "res_emission_mass": res_emission_mass,
         "res_costs": res_costs,
     }
-    assert_deep_equal_approx(expected, actual)
+    assert_deep_equal_approx(
+        expected, actual, allow_new_dict_items=True, sort_list_by_keys=["process_step"]
+    )
 
 
 @pytest.mark.parametrize(

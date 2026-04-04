@@ -1779,9 +1779,9 @@ class MarketProcess(AbstractProcess):
 
         return {
             "SPECCOST": {
-                self.main_flow_code_out: data_parameter["SPECCOST"][
+                self.main_flow_code_out: data_parameter.get("SPECCOST", {}).get(
                     self.main_flow_code_out
-                ]
+                )
             }
         }
 
