@@ -169,7 +169,7 @@ def test_get_parameter_value(
         default=default,
     )
 
-    assert expected == pytest.approx(result)
+    assert_deep_equal_approx(expected, result, allow_new_dict_items=True)
 
 
 @pytest.mark.parametrize(
@@ -208,10 +208,8 @@ def test_get_calculation_data(ptxdata_dir, scenario, kwargs, request):
     ptxdata_dir = request.getfixturevalue(ptxdata_dir)
     data_handler = DataHandler(data_dir=ptxdata_dir, scenario=scenario)
     data = data_handler.get_calculation_data(ChainDef(**kwargs), optimize_flh=False)
-    # recursively use pytest.approx
 
     assert_deep_equal_approx(
-        data,
         {
             "flh_opt_process": {},
             "main_export_process_chain": [
@@ -331,6 +329,8 @@ def test_get_calculation_data(ptxdata_dir, scenario, kwargs, request):
             },
             "context": {"source_region_code": "ARE", "target_country_code": "DEU"},
         },
+        data,
+        allow_new_dict_items=True,
     )
 
 
@@ -509,7 +509,7 @@ def test_get_calculation_data_w_opt(ptxdata_dir, scenario, kwargs, request):
 
     del result["flh_opt_hash"]["filepath"]  # dont test this
 
-    assert_deep_equal_approx(exp_result, result)
+    assert_deep_equal_approx(exp_result, result, allow_new_dict_items=True)
 
 
 @pytest.mark.parametrize(

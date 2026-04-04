@@ -36,7 +36,6 @@ def _translate_user_data(user_data: pd.DataFrame) -> None:
                 user_data.loc[idx, colname] = value  # type: ignore
 
 
-# recursively use pytest.approx
 @pytest.mark.parametrize(
     "scenario, kwargs, api_kwargs",
     [

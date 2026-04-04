@@ -909,40 +909,19 @@ class DataHandler:
             result = default
 
         if result is None:
-            # FIXME: temporary data
-            if self.tool_version_color == "blue":
-                if parameter_code == "WACC" and source_region_code == "QAT":
-                    result = 0
-                else:
-                    result = 0
-                    logger.warning(
-                        f"""did not find a parameter value for:
-                        parameter_code={parameter_code},
-                        process_code={process_code},
-                        flow_code={flow_code},
-                        source_region_code={source_region_code},
-                        target_country_code={target_country_code},
-                        process_code_res={process_code_res},
-                        process_code_ely={process_code_ely},
-                        process_code_deriv={process_code_deriv},
-                        ({self.tool_version_color})
-                    """
-                    )
-
-            else:
-                raise ValueError(
-                    f"""did not find a parameter value for:
-                    parameter_code={parameter_code},
-                    process_code={process_code},
-                    flow_code={flow_code},
-                    source_region_code={source_region_code},
-                    target_country_code={target_country_code},
-                    process_code_res={process_code_res},
-                    process_code_ely={process_code_ely},
-                    process_code_deriv={process_code_deriv}
-                    ({self.tool_version_color})
-                """
-                )
+            raise ValueError(
+                f"""did not find a parameter value for:
+                parameter_code={parameter_code},
+                process_code={process_code},
+                flow_code={flow_code},
+                source_region_code={source_region_code},
+                target_country_code={target_country_code},
+                process_code_res={process_code_res},
+                process_code_ely={process_code_ely},
+                process_code_deriv={process_code_deriv}
+                ({self.tool_version_color})
+            """
+            )
         return result
 
     @classmethod
@@ -1234,7 +1213,11 @@ class DataHandler:
             | (used_flows_main_import)
         )
         # FIXME: used_flows_main_import may need to come from different country!!
-        result["parameter"]["SPECCOST"] = pg.get_flow_params("SPECCOST", used_flows)
+        # FIXME: SOECCOST:
+        defaults = {"NG-G": 0}
+        result["parameter"]["SPECCOST"] = pg.get_flow_params(
+            "SPECCOST", used_flows, defaults=defaults
+        )
 
         # default from export country
         result["parameter_i"]["SPECCOST"] = pg_import.get_flow_params(
@@ -1621,32 +1604,20 @@ class AbstractProcess:
         process_step: ProcessStepType | str | None = None,
         parent_process: Union["AbstractProcess", None] = None,
     ):
-        # self._main_flow_out: float | None = None  # will be set in calculate()
-        # self._main_flow_in: float | None = None  # will be set in calculate()
-        # self._secondary_flows_in: dict[FlowCodeType, float] | None = None
         self.parent_process = parent_process
         self.process_step: ProcessStepType | str | None = process_step
 
-    def get_main_flow_out(self) -> float:
+    def _get_main_flow_out(self) -> float:
         """Value of main out flow."""
-        # if self._main_flow_out is None:
-        #    raise Exception("Not calculated yet")
-        # return self._main_flow_out
-        return None
+        return None  # type: ignore
 
-    def get_main_flow_in(self) -> float:
+    def _get_main_flow_in(self) -> float:
         """Value of calculated main in flow."""
-        # if self._main_flow_in is None:
-        #    raise Exception("Not calculated yet, or main_flow_in does not exist")
-        # return self._main_flow_in
-        return None
+        return None  # type: ignore
 
-    def get_secondary_flow_in(self, flow_code: FlowCodeType) -> float:
+    def _get_secondary_flow_in(self, flow_code: FlowCodeType) -> float:
         """Value of calculated secondary in flow for given flow type."""
-        # if self._secondary_flows_in is None:
-        #    raise Exception(f"Not calculated yet: {self}")
-        # return self._secondary_flows_in[flow_code]
-        return None
+        return None  # type: ignore
 
     @property
     def process_code(self) -> ProcessCodeType | None:
@@ -1731,7 +1702,6 @@ class AbstractProcess:
 
     def calculate(self, main_flow_out: float):
         """Calculate all process values based on desired output flow."""
-        # self._main_flow_out = main_flow_out
         pass
 
     def __str__(self):
@@ -2066,9 +2036,9 @@ class AggregateProcess(AbstractProcess):
                 ):
                     logger.debug(f"{process}: Serve {flow_code} to {proc_target}")
                     main_flow_out_current += (
-                        proc_target.get_main_flow_in()
+                        proc_target._get_main_flow_in()
                         if in_main
-                        else proc_target.get_secondary_flow_in(flow_code=flow_code)
+                        else proc_target._get_secondary_flow_in(flow_code=flow_code)
                     )
 
                 # check
@@ -2080,7 +2050,7 @@ class AggregateProcess(AbstractProcess):
             process.calculate(main_flow_out=main_flow_out_current)
 
             if process == self.main_processes[0]:
-                self._main_flow_in = process.get_main_flow_in()
+                self._main_flow_in = process._get_main_flow_in()
 
     def get_subprocesses_by_class(
         self, class_or_classes: type | tuple[type]
@@ -2124,9 +2094,9 @@ class AggregateProcess(AbstractProcess):
                     G.add_edge(*e)
                     try:
                         value = (
-                            proc_target.get_main_flow_in()
+                            proc_target._get_main_flow_in()
                             if in_main
-                            else proc_target.get_secondary_flow_in(flow)
+                            else proc_target._get_secondary_flow_in(flow)
                         )
                         value_str = f"\n{value:.4f}"
                     except Exception:
@@ -2142,7 +2112,7 @@ class AggregateProcess(AbstractProcess):
                     G.add_edge(*e)
                     edge_labels[e] = proc_end_last.main_flow_code_out
                     try:
-                        edge_labels[e] += f"\n{proc_start.get_main_flow_in():.4f}"
+                        edge_labels[e] += f"\n{proc_start._get_main_flow_in():.4f}"
                     except Exception:  # not calculated yet, # noqa: S110
                         pass
                     edge_widths[e] = 2
@@ -2358,9 +2328,26 @@ class ChainProcess(AggregateProcess):
         todo_transport_re_post_as_transport: bool = True,
     ) -> CalculateDataType:
         """Get calculation data."""
-        parameter_getters = _create_parameter_getters(
+        parameter_getters = _create_parameter_getters_TODO(
             data_handler=data_handler, use_user_data=use_user_data
         )
+        parameter_getters = {}
+
+        def make_parameter_getters(parameter_code):
+            default = data_handler.PARAMETER_DEFAULTS.get(parameter_code, 0)
+
+            def x(**kwargs):
+                return data_handler._get_parameter_value(
+                    parameter_code=parameter_code,
+                    **kwargs,
+                    default=default,
+                    use_user_data=use_user_data,
+                )
+
+            return x
+
+        for p in ParameterCodeValues:
+            parameter_getters[p] = make_parameter_getters(p)
 
         def _add_step_and_code(
             process: AbstractProcess, data: ProcessDataType
@@ -2372,6 +2359,11 @@ class ChainProcess(AggregateProcess):
 
         # for FLH lookup
         parameter_values = self._process_res_ely_deriv
+        parameter_values = {
+            "process_code_res": self._process_res_ely_deriv["process_res"],
+            "process_code_ely": self._process_res_ely_deriv["process_ely"],
+            "process_code_deriv": self._process_res_ely_deriv["process_deriv"],
+        }
         parameter_values_export = parameter_values | {
             "source_region_code": source_region_code
         }
@@ -2850,7 +2842,7 @@ def _filter_transport_process_codes(
     return [(p, s) for p, s in main_process_codes_steps if s not in drop_steps]
 
 
-def _create_parameter_getters(
+def _create_parameter_getters_TODO(
     data_handler: DataHandler, use_user_data: bool
 ) -> ParameterGetters:
 

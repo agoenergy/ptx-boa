@@ -66,7 +66,7 @@ def test_optimize_expected_objective_value(call_optimize):
 def test_optimize_expected_results(call_optimize):
     """Test if obtained results match expected results."""
     [res, n, input_data] = call_optimize
-    assert_deep_equal_approx(res, input_data["expected_output"])
+    assert_deep_equal_approx(input_data["expected_output"], res)
 
 
 # settings for profile tests:
