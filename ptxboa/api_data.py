@@ -2370,7 +2370,7 @@ class ChainProcess(AggregateProcess):
             "parameter": parameter,
             "parameter_i": parameter_i,
             "main_export_process_chain": main_export_process_chain,
-            "transport_process_chain": main_transport_process_chain,
+            "main_main_transport_process_chain": main_transport_process_chain,
             "main_import_process_chain": main_import_process_chain,
             "secondary_process": secondary_process,
             "secondary_process_i": secondary_process_i,

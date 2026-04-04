@@ -252,7 +252,7 @@ def main(xlsx_filepath: str):
 
         data_steps = list_to_dict_by_step(
             res.todo_data["main_export_process_chain"]  # type: ignore
-            + res.todo_data["transport_process_chain"]  # type: ignore
+            + res.todo_data["main_main_transport_process_chain"]  # type: ignore
             + res.todo_data["main_import_process_chain"]  # type: ignore
             + secondary_process_steps
         )

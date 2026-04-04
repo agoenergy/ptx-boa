@@ -353,14 +353,14 @@ class PtxCalc:
 
         for i, step_data in enumerate(
             data["main_export_process_chain"]
-            + data["transport_process_chain"]
+            + data["main_main_transport_process_chain"]
             + data["main_import_process_chain"]
         ):
             process_step = step_data["step"]
             process_code = step_data["process_code"]
             is_import = (
                 len(data["main_export_process_chain"])
-                + len(data["transport_process_chain"])
+                + len(data["main_main_transport_process_chain"])
                 <= i
             )
 

@@ -322,7 +322,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "step": "DERIV",
                 },
             ],
-            "transport_process_chain": [
+            "main_main_transport_process_chain": [
                 {"EFF": 1.0, "DIST": 999.0, "process_code": "DRI-SB#B", "step": "SHP"}
             ],
             "main_import_process_chain": [
@@ -578,7 +578,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                             "step": "DERIV",
                         },
                     ],
-                    "transport_process_chain": [
+                    "main_main_transport_process_chain": [
                         {
                             "OPEX-T": 3.8e-07,
                             "EFF": 1.0,
@@ -884,7 +884,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                             "step": "NG_PROD",
                         }
                     ],
-                    "transport_process_chain": [
+                    "main_main_transport_process_chain": [
                         {
                             "LIFETIME": 30.0,
                             "EFF": 0.85708919,
@@ -1383,7 +1383,7 @@ def test_new_blue_chain_real_data(api_kwargs, expected):
                         "step": "DERIV",
                     },
                 ],
-                "transport_process_chain": [
+                "main_main_transport_process_chain": [
                     {
                         "OPEX-T": 3.8e-07,
                         "EFF": 1.0,
@@ -1495,7 +1495,7 @@ def test_new_blue_chain_real_data(api_kwargs, expected):
                         "step": "NG_PROD",
                     }
                 ],
-                "transport_process_chain": [
+                "main_main_transport_process_chain": [
                     {
                         "LIFETIME": 30.0,
                         "EFF": 0.85708919,
