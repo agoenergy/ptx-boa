@@ -129,12 +129,14 @@ def main():
             source_region_code=_df_region_by_name.at[settings.region, "region_code"],  # type: ignore # noqa
             target_country_code=_df_region_by_name.at[settings.country, "region_code"],  # type: ignore # noqa
         )
-
-        logger.debug(data)
+        process_parameters = chain_process._get_process_parameters(data=data)
+        result_flows = chain_process.calculate_flows(
+            process_parameters=process_parameters
+        )
 
         # TODO: plot with data
 
-        chain_process.plot(file_basename=name)
+        chain_process.plot(file_basename=name, result_flows=result_flows)
 
 
 if __name__ == "__main__":

@@ -32,9 +32,6 @@ from ptxboa.static import (
     ParameterRangeValues,
     ProcessCodeType,
     ProcessStepType,
-)
-from ptxboa.static import ProcessStepValues as ProcessStepValuesSorted
-from ptxboa.static import (
     ResultClassType,
     ScenarioType,
     ScenarioValues,
@@ -45,6 +42,7 @@ from ptxboa.static import (
     TransportValues,
     YearValues,
 )
+from ptxboa.static import ProcessStepValues as ProcessStepValuesSorted
 from ptxboa.static._type_defs import (
     CalculateDataType,
     ChainDefStatic,
@@ -1372,8 +1370,7 @@ class ProcessType:
         # secondary: only allow CCS
         return self.allow_in_export and (
             # CSS is onlyallowed secondary(?) # TODO:generalize?
-            not self.is_secondary
-            or self.process_code == "CO2-T+S#B"
+            not self.is_secondary or self.process_code == "CO2-T+S#B"
         )
 
 
@@ -2058,7 +2055,7 @@ class AggregateProcess(AbstractProcess):
         """Get subprocesses byclass."""
         return [p for p in self.all_processes if isinstance(p, class_or_classes)]
 
-    def plot(self, file_basename: str):
+    def plot(self, file_basename: str, result_flows: dict):
         """Create plot and save as png."""
         # Create a directed graph
         G = nx.DiGraph()
@@ -2094,11 +2091,11 @@ class AggregateProcess(AbstractProcess):
                     G.add_edge(*e)
                     try:
                         value = (
-                            proc_target._get_main_flow_in()
+                            result_flows[proc_target].main_flow_in
                             if in_main
-                            else proc_target._get_secondary_flow_in(flow)
+                            else result_flows[proc_target].secondary_flows_in.get(flow)
                         )
-                        value_str = f"\n{value:.4f}"
+                        value_str = f"\n{value:.2E}"
                     except Exception:
                         value_str = ""
                     edge_labels[e] = f"{flow}{value_str}"
@@ -2112,7 +2109,9 @@ class AggregateProcess(AbstractProcess):
                     G.add_edge(*e)
                     edge_labels[e] = proc_end_last.main_flow_code_out
                     try:
-                        edge_labels[e] += f"\n{proc_start._get_main_flow_in():.4f}"
+                        edge_labels[e] += (
+                            f"\n{result_flows[proc_start].main_flow_in:.2E}"
+                        )
                     except Exception:  # not calculated yet, # noqa: S110
                         pass
                     edge_widths[e] = 2
@@ -2713,11 +2712,7 @@ class ChainProcess(AggregateProcess):
                 ).get_calculation_data(
                     parameter_getters=parameter_getters,
                     parameter_values=parameter_values_export,
-                )[
-                    "SPECCOST"
-                ][
-                    flow_code
-                ]  # type: ignore # noqa: assume its dict
+                )["SPECCOST"][flow_code]  # type: ignore # noqa: assume its dict
 
         flh_opt_process = {}
 
@@ -2740,11 +2735,7 @@ class ChainProcess(AggregateProcess):
                     ).get_calculation_data(
                         parameter_getters=parameter_getters,
                         parameter_values=parameter_values_export,
-                    )[
-                        "SPECCOST"
-                    ][
-                        flow_code
-                    ]  # type: ignore # noqa: assume its dict
+                    )["SPECCOST"][flow_code]  # type: ignore # noqa: assume its dict
 
             # when optimzing for RES=RES-HYBR, optimizer needs data for
             # "PV-FIX" and "WIND-ON"
@@ -2994,9 +2985,9 @@ class ProcessGraph:
             flow_provider_sec_or_initial[sec_proc.main_flow_code_out] = sec_proc
 
         # collect required flows
-        required_flows_procs: dict[FlowCodeType, list[tuple[AbstractProcess, bool]]] = (
-            {}
-        )
+        required_flows_procs: dict[
+            FlowCodeType, list[tuple[AbstractProcess, bool]]
+        ] = {}
 
         def add_required_flows_proc(
             proc: AbstractProcess, flow: FlowCodeType, in_main: bool
