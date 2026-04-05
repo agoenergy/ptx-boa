@@ -14,7 +14,7 @@ from ptxboa.api_data import (
     ScenarioValues,
     _load_scenario_data,
 )
-from ptxboa.static import ChainType, ChainValues, TransportType
+from ptxboa.static import ChainType, ChainValues, ProcessCodeResType, TransportType
 from ptxboa.static._type_defs import ChainDef
 from tests.utils import assert_deep_equal_approx
 
@@ -549,10 +549,13 @@ def test_validate_chains(
         return
 
     tool_version_color = DataHandler.get_chain_color(chain)
-    process_res = "RES-HYBR" if (tool_version_color == "green") else None
+    process_res: ProcessCodeResType | None = (
+        "RES-HYBR" if (tool_version_color == "green") else None
+    )
+    scenario = "2030 (medium)"
 
     dh = DataHandler(
-        scenario="2030 (medium)",
+        scenario=scenario,
         tool_version_color=tool_version_color,
         # specifically DON'T use test data here
         # we want to validate the current chains
@@ -575,12 +578,15 @@ def test_validate_chains(
     )
     chain_proc = ChainProcess.get_or_create(chain_def)
 
-    dh.get_calculation_data(
+    data = dh.get_calculation_data(
         chain_proc=chain_proc,
         source_region_code=chain_def.source_region_code,
         target_country_code=chain_def.target_country_code,
         optimize_flh=False,
     )
+
+    # test calculate
+    chain_proc.calculate(data=data)
 
 
 def test_parameter_data():

@@ -1223,7 +1223,7 @@ def _plot_get_pos(
 
         sgn = 1  # secondary process: offset sign should alternate between -1 and 1
 
-        for process in reversed(list(process_graph.calculate_order)):
+        for process in reversed(list(process_graph.all_processes_ordered_backwards)):
             key = process
 
             # if is_main:
@@ -1866,7 +1866,7 @@ class AggregateProcess(AbstractProcess):
     @property
     def all_processes(self) -> Iterable[AbstractProcess]:
         """List of all processes."""
-        return self._process_graph.calculate_order
+        return self._process_graph.all_processes_ordered_backwards
 
     @property
     def secondary_processes(self) -> list[SecondaryProcess]:
@@ -2061,10 +2061,10 @@ class ChainProcess(AggregateProcess):
             self.section_transport,
             self.section_export,
         ]:
-            # calculate_order ensures that process.calculate() is only called
-            # if all that depend on it have been already calculated.
+            # all_processes_ordered_backwards ensures that process.calculate()
+            # is only called if all that depend on it have been already calculated.
             graph = section._process_graph
-            for _i, process in enumerate(graph.calculate_order):
+            for _i, process in enumerate(graph.all_processes_ordered_backwards):
                 flow_code = process.main_flow_code_out
 
                 if _i == 0:
@@ -2696,8 +2696,10 @@ class ProcessGraph:
     ):
         self.main_processes: list[AbstractProcess] = main_processes
 
-        # calculate_order: includes main, secondary, tertiary(market) processes
-        self.calculate_order: Iterable[AbstractProcess] = []
+        # all_processes_ordered_backwards: includes
+        # main, secondary, tertiary(market) processes
+        self.all_processes_ordered_backwards: Iterable[AbstractProcess] = []
+        # bool - is_main
         self.links_out: dict[AbstractProcess, list[tuple[AbstractProcess, bool]]] = {}
 
         if not main_processes:
@@ -2766,16 +2768,16 @@ class ProcessGraph:
                 required_flows_procs[flow] = []
             required_flows_procs[flow].append((proc, in_main))
 
-        for p in main_processes:
-            for f in p.secondary_flow_types:
-                add_required_flows_proc(p, f, in_main=False)
-        for p in secondary_processes:
-            for f in p.secondary_flow_types:
-                add_required_flows_proc(p, f, in_main=False)
-            if p.main_flow_code_in:
+        for p_from in main_processes:
+            for f in p_from.secondary_flow_types:
+                add_required_flows_proc(p_from, f, in_main=False)
+        for p_from in secondary_processes:
+            for f in p_from.secondary_flow_types:
+                add_required_flows_proc(p_from, f, in_main=False)
+            if p_from.main_flow_code_in:
                 # TODO: technically, secondary flows should not have main_flow_code_in
                 # but some have them anyways?
-                add_required_flows_proc(p, p.main_flow_code_in, in_main=True)
+                add_required_flows_proc(p_from, p_from.main_flow_code_in, in_main=True)
 
         # match required and provided flows in specific order without creating loops
         # specific order is important so we get a deterministic graph
@@ -2817,9 +2819,9 @@ class ProcessGraph:
         procs_old = set(G.nodes)
         last_proc = self.main_processes[-1]
         G = cast(nx.DiGraph, G.subgraph(nx.ancestors(G, last_proc) | {last_proc}))
-        procs_new = set(G.nodes)
+        all_procs_final = set(G.nodes)
 
-        procs_dropped = procs_old - procs_new
+        procs_dropped = procs_old - all_procs_final
         if procs_dropped:
             logger.info("Dropping unused: %s", [str(x) for x in procs_dropped])
             # drop from links_out
@@ -2827,13 +2829,52 @@ class ProcessGraph:
             for k, vs in self.links_out.items():
                 self.links_out[k] = [(p, m) for p, m in vs if p not in procs_dropped]
 
-        # calculate_order: includes main, secondary, tertiary(market) processes
-        self.calculate_order = list(reversed(list(nx.topological_sort(G))))
+        # not all have links_out, but we fill the dict to prevent key errors
+        for p in all_procs_final - set(self.links_out):
+            self.links_out[p] = []
 
-        # check (TODO:can be removed later)
-        missing_main = set(self.main_processes) - set(self.calculate_order)
+        # also create links in lookup
+        # bool - is_main
+        self.links_in: dict[AbstractProcess, list[tuple[AbstractProcess, bool]]] = {
+            p: [] for p in all_procs_final
+        }
+        for p_from, targets in self.links_out.items():
+            for p_to, is_main in targets:
+                self.links_in[p_to].append((p_from, is_main))
+
+        # all_processes_ordered_backwards includes
+        # main, secondary, tertiary(market) processes
+        self.all_processes_ordered_forwards = list(nx.topological_sort(G))
+        self.all_processes_ordered_backwards = list(
+            reversed(self.all_processes_ordered_forwards)
+        )
+
+        # check (TODO: can be removed later)
+        missing_main = set(self.main_processes) - set(
+            self.all_processes_ordered_backwards
+        )
         if missing_main:
             raise Exception(f"missing_main: {missing_main}")
+
+        # check (TODO: can be removed later)
+        # check all_processes_ordered_backwards: on call, all
+        # targets of outbound links need to be finished
+        _check_is_calculated: set[AbstractProcess] = set()
+        for p_from in self.all_processes_ordered_backwards:
+            for p_to, _is_main in self.links_out[p_from]:  # noqa: B020
+                if p_to not in _check_is_calculated:
+                    raise Exception(f"{p_from}: {p_to} not yet calculated (backwards)")
+            _check_is_calculated.add(p_from)
+
+        # check (TODO: can be removed later)
+        # check all_processes_ordered_forwards: on call, all
+        # sources of inbound links need to be finished
+        _check_is_calculated: set[AbstractProcess] = set()
+        for p_to in self.all_processes_ordered_forwards:
+            for p_from, _is_main in self.links_in[p_from]:  # noqa: B020
+                if p_from not in _check_is_calculated:
+                    raise Exception(f"{p_to}: {p_from} not yet calculated (forwards)")
+            _check_is_calculated.add(p_to)
 
 
 def _filter_transport_process_codes(

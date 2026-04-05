@@ -51,7 +51,7 @@ class ChainDefStatic:
     """Without region/country."""
 
     chain_name: ChainType
-    process_res: ProcessCodeResType
+    process_res: ProcessCodeResType | None
     secondary_processes: dict[FlowCodeType, ProcessCodeType]
     transport: TransportType
     ship_own_fuel: bool
