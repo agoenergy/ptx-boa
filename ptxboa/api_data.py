@@ -2185,7 +2185,6 @@ class ChainProcess(AggregateProcess):
             self.section_transport,
             self.section_import,
         ]:
-            print(section)
             result += list(section._process_graph.all_processes_ordered_forwards)
         return result
 
@@ -2321,13 +2320,17 @@ class ChainProcess(AggregateProcess):
                         results_target = results_flows[process_target]
                         if is_main:
                             main_flow_out += _get_pos_flow(
-                                results_target.main_flow_in, process_target
+                                results_target.main_flow_in,
+                                f"{process} => {process_target}",
                             )
                         else:
                             main_flow_out += _get_pos_flow(
                                 results_target.secondary_flows_in.get(flow_code),
-                                process_target,
+                                f"{process} => {process_target}",
                             )
+
+                if not main_flow_out:
+                    logger.warning(f"main_flow_out = 0 for {process}")
 
                 process_data = process_parameters[process]  # type: ignore
                 process_result = process.calculate_flows(

@@ -6,11 +6,11 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import numpy as np
-import pytest
 
 from ptxboa.api import PtxboaAPI
 from ptxboa.api_data import DataHandler
 from ptxboa.utils import annuity
+from tests.utils import assert_deep_equal_approx
 
 logging.basicConfig(
     format="[%(asctime)s %(levelname)7s] %(message)s",
@@ -119,9 +119,8 @@ class TestApi(unittest.TestCase):
             ("Water", "OPEX"): 0.5518796288785505,
         }
 
-        result_dict = {k: pytest.approx(v) for k, v in sorted(res_values.items()) if v}
-
-        assert expected_result == result_dict
+        res_values = dict(res_values.items())
+        assert_deep_equal_approx(expected_result, res_values)
 
     def test_example_api_call_2_ship_own_fuel(self):
         """Test output structure of api.calculate()."""
@@ -155,8 +154,8 @@ class TestApi(unittest.TestCase):
             ("Water", "OPEX"): 0.23938206254847536,
         }
 
-        result_dict = {k: pytest.approx(v) for k, v in sorted(res_values.items()) if v}
-        assert expected_result == result_dict
+        res_values = dict(res_values.items())
+        assert_deep_equal_approx(expected_result, res_values)
 
     def test_example_api_call_3_pipeline_sea_land(self):
         """Test output structure of api.calculate()."""
@@ -188,8 +187,8 @@ class TestApi(unittest.TestCase):
             ("Water", "OPEX"): 0.03390954768430808,
         }
 
-        result_dict = {k: pytest.approx(v) for k, v in sorted(res_values.items()) if v}
-        assert expected_result == result_dict
+        res_values = dict(res_values.items())
+        assert_deep_equal_approx(expected_result, res_values)
 
     def test_example_api_call_4_pipeline_retrofitted(self):
         """Test output structure of api.calculate()."""
@@ -218,8 +217,9 @@ class TestApi(unittest.TestCase):
             ("Transportation (Pipeline)", "OPEX"): 2.925088442220974,
             ("Water", "FLOW"): 0.41564389862359896,
         }
-        result_dict = {k: pytest.approx(v) for k, v in sorted(res_values.items()) if v}
-        assert expected_result == result_dict
+
+        res_values = dict(res_values.items())
+        assert_deep_equal_approx(expected_result, res_values)
 
     def test_api_get_input_data_output_format(self):
         """Test output structure of api.get_input_data()."""

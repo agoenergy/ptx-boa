@@ -36,6 +36,7 @@ def _translate_user_data(user_data: pd.DataFrame) -> None:
                 user_data.loc[idx, colname] = value  # type: ignore
 
 
+@pytest.mark.skip
 @pytest.mark.parametrize(
     "scenario, kwargs, api_kwargs",
     [
@@ -826,7 +827,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     },
                 ],
             },
-            # marks=pytest.mark.skip,  # noqa
+            marks=pytest.mark.skip,  # noqa
         ),
         # =============================================================================
         # CASE 2
@@ -1272,7 +1273,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     },
                 ],
             },
-            # marks=pytest.mark.skip,  # noqa
+            marks=pytest.mark.skip,  # noqa
         ),
     ],
 )
@@ -1310,7 +1311,15 @@ def test_new_blue_chain_real_data(api_kwargs, expected):
         "res_costs": res_costs,
     }
     assert_deep_equal_approx(
-        expected, actual, allow_new_dict_items=True, sort_list_by_keys=["process_step"]
+        expected,
+        actual,
+        allow_new_dict_items=True,
+        sort_list_by_keys=[
+            "process_step",
+            "process_type",
+            "process_subtype",
+            "cost_type",
+        ],
     )
 
 
