@@ -318,6 +318,9 @@ class PtxCalc:
         results = cls._calculate(data=data)
         # TODO: replace cls._calculate with chain_proc.calculate
         results_new = chain_proc.calculate(data=data)  # noqa
+
+        results.df_results_cost = results_new.df_results_cost
+
         return results
 
     @classmethod

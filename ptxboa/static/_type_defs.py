@@ -11,6 +11,7 @@ from ptxboa.static import (
     ProcessCodeResType,
     ProcessCodeType,
     ProcessStepType,
+    ResultClassType,
     SourceRegionCodeType,
     TargetCountryCodeType,
     TransportType,
@@ -102,12 +103,16 @@ class ProcessResultFlowsType:
 
 @dataclass(slots=True, frozen=True)
 class ProcessResultCostsType:
-    capex: float
-    opex: float
-    specccost: float
-    lc: float | None  # TODO
+    process_type: ResultClassType | str | None = None
+    process_subtype: ProcessCodeType | FlowCodeType | str | None = None
+    cost_type: str | None = None
+    values: float = 0
+    # capex: float = 0 # noqa
+    # opex: float = 0 # noqa
+    # specccost: float = 0 # noqa
+    # lc: float | None = None  # TODO # noqa
 
 
 @dataclass(slots=True, frozen=True)
 class ProcessResultEmissionType:
-    pass
+    value: float = 0

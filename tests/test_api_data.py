@@ -14,7 +14,13 @@ from ptxboa.api_data import (
     ScenarioValues,
     _load_scenario_data,
 )
-from ptxboa.static import ChainType, ChainValues, ProcessCodeResType, TransportType
+from ptxboa.static import (
+    ChainType,
+    ChainValues,
+    ProcessCodeResType,
+    ScenarioType,
+    TransportType,
+)
 from ptxboa.static._type_defs import ChainDef
 from tests.utils import assert_deep_equal_approx
 
@@ -665,7 +671,7 @@ def test_dimension_values_exist_in_dimension_tables(
         "target_country": ("country", "country_code"),
     }
 
-    scenario = f"{year} ({cost_assumption})"
+    scenario: ScenarioType = f"{year} ({cost_assumption})"  # type: ignore
     handler = DataHandler(scenario=scenario)
     input_data = handler.get_input_data(long_names=False)
 
@@ -673,7 +679,7 @@ def test_dimension_values_exist_in_dimension_tables(
 
     # Dimension table values
     if dim_name == "region_country":
-        defined_values = handler.dimensions["region_country"][
+        defined_values = handler.dimensions["region_country"][  # type: ignore
             "region_country_code"
         ].unique()
     else:
