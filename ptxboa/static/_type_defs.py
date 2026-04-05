@@ -101,8 +101,13 @@ class ProcessResultFlowsType:
 
 
 @dataclass(slots=True, frozen=True)
-class ProcessResultcostsType:
+class ProcessResultCostsType:
     capex: float
     opex: float
     specccost: float
     lc: float | None  # TODO
+
+
+@dataclass(slots=True, frozen=True)
+class ProcessResultEmissionType:
+    pass

@@ -30,9 +30,6 @@ from ptxboa.static import (
     ParameterRangeValues,
     ProcessCodeType,
     ProcessStepType,
-)
-from ptxboa.static import ProcessStepValues as ProcessStepValuesSorted
-from ptxboa.static import (
     ScenarioType,
     ScenarioValues,
     SourceRegionCodeType,
@@ -42,6 +39,7 @@ from ptxboa.static import (
     TransportValues,
     YearValues,
 )
+from ptxboa.static import ProcessStepValues as ProcessStepValuesSorted
 from ptxboa.static._type_defs import (
     CalculateDataType,
     ChainDefStatic,
@@ -49,6 +47,8 @@ from ptxboa.static._type_defs import (
     ParameterGetter,
     ParameterGetters,
     ProcessDataType,
+    ProcessResultCostsType,
+    ProcessResultEmissionType,
     ProcessResultFlowsType,
     ProcessStep,
     PtxCalcResult,
@@ -63,6 +63,7 @@ ProcessStepsPipeline: set[ProcessStepType] = {
     "PPLX",
     "PPLR",
 }
+ChainSegmentType = Literal["Export", "Transport", "Import"]
 
 
 def _get_secproc_data(
@@ -1364,8 +1365,7 @@ class ProcessType:
         # secondary: only allow CCS
         return self.allow_in_export and (
             # CSS is onlyallowed secondary(?) # TODO:generalize?
-            not self.is_secondary
-            or self.process_code == "CO2-T+S#B"
+            not self.is_secondary or self.process_code == "CO2-T+S#B"
         )
 
 
@@ -1386,6 +1386,11 @@ class AbstractProcess:
     ):
         self.parent_process = parent_process
         self.process_step: ProcessStepType | str | None = process_step
+
+        self._links_out_main: list["AbstractProcess"] = []
+        self._links_out_secondary: list["AbstractProcess"] = []
+        self._link_in_main: Union["AbstractProcess", None] = None
+        self._links_in_secondary: dict[FlowCodeType, "AbstractProcess"] = {}
 
     def _get_main_flow_out(self) -> float:
         """Value of main out flow."""
@@ -1675,6 +1680,20 @@ class Process(AbstractProcess):
             secondary_flows_in=secondary_flows_in,
         )
 
+    def calculate_costs(
+        self,
+        process_parameters: dict["Process", ProcessDataType],
+        result_flows: dict[AbstractProcess, ProcessResultFlowsType],
+    ) -> ProcessResultCostsType:
+        return {}
+
+    def calculate_emissions(
+        self,
+        process_parameters: dict["Process", ProcessDataType],
+        result_flows: dict[AbstractProcess, ProcessResultFlowsType],
+    ) -> dict[AbstractProcess, ProcessResultEmissionType]:
+        return {}
+
 
 class TransportProcess(Process):
     _parameter_codes_process = ["OPEX-T", "LOSS-T", "OPEX-O"]
@@ -1769,6 +1788,20 @@ class MarketProcess(AbstractProcess):
         return ProcessResultFlowsType(
             main_flow_out=main_flow_out, main_flow_in=None, secondary_flows_in={}
         )
+
+    def calculate_costs(
+        self,
+        process_parameters: dict["Process", ProcessDataType],
+        result_flows: dict[AbstractProcess, ProcessResultFlowsType],
+    ) -> ProcessResultCostsType:
+        return {}
+
+    def calculate_emissions(
+        self,
+        process_parameters: dict["Process", ProcessDataType],
+        result_flows: dict[AbstractProcess, ProcessResultFlowsType],
+    ) -> dict[AbstractProcess, ProcessResultEmissionType]:
+        return {}
 
     def _get_calculation_data_from_chain(
         self,
@@ -2036,7 +2069,8 @@ class ChainProcess(AggregateProcess):
             self.section_transport,
             self.section_import,
         ]:
-            result += list(section._process_graph.all_processes_ordered_forwards)  # type: ignore # noqa
+            print(section)
+            result += list(section._process_graph.all_processes_ordered_forwards)
         return result
 
     @classmethod
@@ -2051,22 +2085,26 @@ class ChainProcess(AggregateProcess):
         """Calcualte results."""
         process_parameters = self._get_process_parameters(data=data)
 
-        result_flows = self.calculate_flows(  # noqa: F841
-            process_parameters=process_parameters
+        result_flows = self.calculate_flows(process_parameters=process_parameters)
+        result_costs = self.calculate_costs(
+            process_parameters=process_parameters, result_flows=result_flows
+        )
+        result_emissions = self.calculate_emissions(
+            process_parameters=process_parameters, result_flows=result_flows
         )
 
-        df_results_cost = pd.DataFrame()
-        df_results_emissions_e_g_co2e = pd.DataFrame()
-        df_results_emissions_m_g_co2e = pd.DataFrame()
-        results_flows_chain = []
-        results_flows_secondary = []
-
         result = PtxCalcResult(
-            df_results_cost=df_results_cost,
-            df_results_emissions_e_g_co2e=df_results_emissions_e_g_co2e,
-            df_results_emissions_m_g_co2e=df_results_emissions_m_g_co2e,
-            results_flows_chain=results_flows_chain,
-            results_flows_secondary=results_flows_secondary,
+            df_results_cost=_create_df_results_cost(result_costs=result_costs),
+            df_results_emissions_e_g_co2e=_create_df_results_emissions_e_g_co2e(
+                result_emissions=result_emissions
+            ),
+            df_results_emissions_m_g_co2e=_create_df_results_emissions_m_g_co2e(
+                result_emissions=result_emissions
+            ),
+            results_flows_chain=_create_results_flows_chain(result_flows=result_flows),
+            results_flows_secondary=_create_results_flows_secondary(
+                result_flows=result_flows
+            ),
         )
 
         return result
@@ -2182,6 +2220,30 @@ class ChainProcess(AggregateProcess):
                 assert process not in results_flows  # FIXME: remove later
                 results_flows[process] = process_result
         return results_flows
+
+    def calculate_costs(
+        self,
+        process_parameters: dict[Process, ProcessDataType],
+        result_flows: dict[AbstractProcess, ProcessResultFlowsType],
+    ) -> dict[AbstractProcess, ProcessResultCostsType]:
+        return {
+            p: p.calculate_costs(
+                process_parameters=process_parameters, result_flows=result_flows
+            )
+            for p in self.all_processes_forwards
+        }
+
+    def calculate_emissions(
+        self,
+        process_parameters: dict[Process, ProcessDataType],
+        result_flows: dict[AbstractProcess, ProcessResultFlowsType],
+    ) -> dict[AbstractProcess, ProcessResultEmissionType]:
+        return {
+            p: p.calculate_emissions(
+                process_parameters=process_parameters, result_flows=result_flows
+            )
+            for p in self.all_processes_forwards
+        }
 
     @classmethod
     def _create(cls, chain_def: ChainDefStatic) -> "ChainProcess":
@@ -2525,11 +2587,7 @@ class ChainProcess(AggregateProcess):
                 ).get_calculation_data(
                     parameter_getters=parameter_getters,
                     parameter_values=parameter_values_export,
-                )[
-                    "SPECCOST"
-                ][
-                    flow_code
-                ]  # type: ignore # noqa: assume its dict
+                )["SPECCOST"][flow_code]  # type: ignore # noqa: assume its dict
 
         flh_opt_process = {}
 
@@ -2552,11 +2610,7 @@ class ChainProcess(AggregateProcess):
                     ).get_calculation_data(
                         parameter_getters=parameter_getters,
                         parameter_values=parameter_values_export,
-                    )[
-                        "SPECCOST"
-                    ][
-                        flow_code
-                    ]  # type: ignore # noqa: assume its dict
+                    )["SPECCOST"][flow_code]  # type: ignore # noqa: assume its dict
 
             # when optimzing for RES=RES-HYBR, optimizer needs data for
             # "PV-FIX" and "WIND-ON"
@@ -2755,10 +2809,6 @@ class ProcessGraph:
         # bool - is_main
         self.links_out: dict[AbstractProcess, list[tuple[AbstractProcess, bool]]] = {}
 
-        if not main_processes:
-            # empty graph
-            return
-
         G = nx.DiGraph()
         G.add_nodes_from(main_processes)
         G.add_nodes_from(secondary_processes)
@@ -2798,9 +2848,9 @@ class ProcessGraph:
 
         # collect all provider of secondary flows (can also come from initial (EL/NG))
         flow_provider_sec_or_initial: dict[FlowCodeType, AbstractProcess] = {}
-        first_proc = self.main_processes[0]
         flow_from_initial_proc: FlowCodeType | None = None
-        if first_proc.is_initial:
+        first_proc = self.main_processes[0] if self.main_processes else None
+        if first_proc and first_proc.is_initial:
             flow_provider_sec_or_initial[first_proc.main_flow_code_out] = first_proc
             flow_from_initial_proc = first_proc.main_flow_code_out
         for sec_proc in secondary_processes:
@@ -2810,9 +2860,9 @@ class ProcessGraph:
             flow_provider_sec_or_initial[sec_proc.main_flow_code_out] = sec_proc
 
         # collect required flows
-        required_flows_procs: dict[FlowCodeType, list[tuple[AbstractProcess, bool]]] = (
-            {}
-        )
+        required_flows_procs: dict[
+            FlowCodeType, list[tuple[AbstractProcess, bool]]
+        ] = {}
 
         def add_required_flows_proc(
             proc: AbstractProcess, flow: FlowCodeType, in_main: bool
@@ -2848,8 +2898,9 @@ class ProcessGraph:
             yield from sorted(flow_codes_todo)
 
         # link main chain
-        for i in range(len(main_processes) - 1):
-            add_link_out(main_processes[i], main_processes[i + 1], in_main=True)
+        if main_processes:
+            for i in range(len(main_processes) - 1):
+                add_link_out(main_processes[i], main_processes[i + 1], in_main=True)
 
         for flow in sort_flows_b_priority(required_flows_procs):
             for proc_target, in_main in required_flows_procs[flow]:
@@ -2870,8 +2921,9 @@ class ProcessGraph:
         # optional: subgraph to drop unused secondary
 
         procs_old = set(G.nodes)
-        last_proc = self.main_processes[-1]
-        G = cast(nx.DiGraph, G.subgraph(nx.ancestors(G, last_proc) | {last_proc}))
+        last_proc = self.main_processes[-1] if self.main_processes else None
+        if last_proc:
+            G = cast(nx.DiGraph, G.subgraph(nx.ancestors(G, last_proc) | {last_proc}))
         all_procs_final = set(G.nodes)
 
         procs_dropped = procs_old - all_procs_final
@@ -2894,6 +2946,19 @@ class ProcessGraph:
         for p_from, targets in self.links_out.items():
             for p_to, is_main in targets:
                 self.links_in[p_to].append((p_from, is_main))
+
+        # also add links to processes
+        for p_from, targets in self.links_out.items():
+            flow_code = p_from.main_flow_code_out
+            for p_to, is_main in targets:
+                if is_main:
+                    p_from._links_out_main.append(p_to)
+                    assert p_to._link_in_main is None
+                    p_to._link_in_main = p_from
+                else:
+                    p_from._links_out_secondary.append(p_to)
+                    assert flow_code not in p_to._links_in_secondary
+                    p_to._links_in_secondary[flow_code] = p_from
 
         # all_processes_ordered_backwards includes
         # main, secondary, tertiary(market) processes
@@ -3114,3 +3179,35 @@ def _get_pos_flow(value: float | None, context) -> float:
         logger.debug("Dropping neg. flow value: %s", context)
         return 0
     return value
+
+
+def _create_df_results_cost(
+    result_costs: dict[AbstractProcess, ProcessResultCostsType],
+) -> pd.DataFrame:
+    return pd.DataFrame()
+
+
+def _create_df_results_emissions_e_g_co2e(
+    result_emissions: dict[AbstractProcess, ProcessResultEmissionType],
+) -> pd.DataFrame:
+    return pd.DataFrame()
+
+
+def _create_df_results_emissions_m_g_co2e(
+    result_emissions: dict[AbstractProcess, ProcessResultEmissionType],
+) -> pd.DataFrame:
+    return pd.DataFrame()
+
+
+def _create_results_flows_chain(
+    result_flows: dict[AbstractProcess, ProcessResultFlowsType],
+) -> list:
+    result = []
+    return result
+
+
+def _create_results_flows_secondary(
+    result_flows: dict[AbstractProcess, ProcessResultFlowsType],
+) -> list:
+    result = []
+    return result

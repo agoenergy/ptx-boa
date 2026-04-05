@@ -268,9 +268,9 @@ class PtxboaAPI:
             costs=ptxcalc_result.df_results_cost,
             emissions=ptxcalc_result.df_results_emissions_e_g_co2e,
             emission_mass=ptxcalc_result.df_results_emissions_m_g_co2e,
-            todo_results_flows=todo_results_flows,
-            todo_data=data,
-            todo_df_results_cost_unscaled=df_results_cost_unscaled,
+            todo_results_flows=todo_results_flows,  # export & debug in frontend
+            todo_data=data,  # export & debug in frontend
+            todo_df_results_cost_unscaled=df_results_cost_unscaled,  # for export
         )
 
     def get_flh_opt_network(
