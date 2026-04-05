@@ -49,7 +49,7 @@ from ptxboa.static._type_defs import (
     ParameterGetter,
     ParameterGetters,
     ProcessDataType,
-    ProcessResultType,
+    ProcessResultFlowsType,
     ProcessStep,
     PtxCalcResult,
 )
@@ -1504,9 +1504,9 @@ class AbstractProcess:
         # market process: only grab SPECCOST
         raise NotImplementedError(type(self))
 
-    def calculate(
+    def calculate_flows(
         self, process_data: ProcessDataType, main_flow_out: float
-    ) -> ProcessResultType:
+    ) -> ProcessResultFlowsType:
         """Calculate all process values based on desired output flow."""
         raise NotImplementedError()
 
@@ -1636,14 +1636,14 @@ class Process(AbstractProcess):
         data_secondary_process: dict[FlowCodeType, ProcessDataType],
     ) -> ProcessDataType:
 
-        data = data_by_process_step[self.process_step]
+        data = data_by_process_step[self.process_step]  # type: ignore
         # add WACC
         data["WACC"] = data_parameter["WACC"]
         return data
 
-    def calculate(
+    def calculate_flows(
         self, process_data: ProcessDataType, main_flow_out: float
-    ) -> ProcessResultType:
+    ) -> ProcessResultFlowsType:
         """Calculate all process values based on desired output flow."""
         # calculate flows
 
@@ -1669,7 +1669,7 @@ class Process(AbstractProcess):
 
         # calculate cost
 
-        return ProcessResultType(
+        return ProcessResultFlowsType(
             main_flow_out=main_flow_out,
             main_flow_in=main_flow_in,
             secondary_flows_in=secondary_flows_in,
@@ -1744,7 +1744,7 @@ class InitialProcess(SecondaryProcess):
         data_parameter: ProcessDataType,
         data_secondary_process: dict[FlowCodeType, ProcessDataType],
     ) -> ProcessDataType:
-        data = data_by_process_step[self.process_step]
+        data = data_by_process_step[self.process_step]  # type: ignore
         # add WACC
         data["WACC"] = data_parameter["WACC"]
         return data
@@ -1762,11 +1762,11 @@ class MarketProcess(AbstractProcess):
         super().__init__(parent_process=parent_process)
         self._main_flow_code_out: FlowCodeType = main_flow_code_out
 
-    def calculate(
+    def calculate_flows(
         self, process_data: ProcessDataType, main_flow_out: float
-    ) -> ProcessResultType:
+    ) -> ProcessResultFlowsType:
         """Calculate results."""
-        return ProcessResultType(
+        return ProcessResultFlowsType(
             main_flow_out=main_flow_out, main_flow_in=None, secondary_flows_in={}
         )
 
@@ -1779,7 +1779,7 @@ class MarketProcess(AbstractProcess):
 
         return {
             "SPECCOST": {
-                self.main_flow_code_out: data_parameter.get("SPECCOST", {}).get(
+                self.main_flow_code_out: data_parameter.get("SPECCOST", {}).get(  # type: ignore # noqa
                     self.main_flow_code_out
                 )
             }
@@ -2013,6 +2013,32 @@ class AggregateProcess(AbstractProcess):
 class ChainProcess(AggregateProcess):
     _instances: dict[object, "ChainProcess"] = {}
 
+    @property
+    def all_processes_backwards(self) -> list[Process]:
+        """All processes backwards."""
+        result: list[Process] = []
+        section: ChainSectionProcess
+        for section in [
+            self.section_import,
+            self.section_transport,
+            self.section_export,
+        ]:
+            result += list(section._process_graph.all_processes_ordered_backwards)  # type: ignore # noqa
+        return result
+
+    @property
+    def all_processes_forwards(self) -> list[Process]:
+        """All processes forward."""
+        result: list[Process] = []
+        section: ChainSectionProcess
+        for section in [
+            self.section_export,
+            self.section_transport,
+            self.section_import,
+        ]:
+            result += list(section._process_graph.all_processes_ordered_forwards)  # type: ignore # noqa
+        return result
+
     @classmethod
     def get_or_create(cls, chain_def: ChainDefStatic) -> "ChainProcess":
         """Get or create static instance."""
@@ -2023,6 +2049,31 @@ class ChainProcess(AggregateProcess):
 
     def calculate(self, data: CalculateDataType) -> PtxCalcResult:
         """Calcualte results."""
+        process_parameters = self._get_process_parameters(data=data)
+
+        result_flows = self.calculate_flows(  # noqa: F841
+            process_parameters=process_parameters
+        )
+
+        df_results_cost = pd.DataFrame()
+        df_results_emissions_e_g_co2e = pd.DataFrame()
+        df_results_emissions_m_g_co2e = pd.DataFrame()
+        results_flows_chain = []
+        results_flows_secondary = []
+
+        result = PtxCalcResult(
+            df_results_cost=df_results_cost,
+            df_results_emissions_e_g_co2e=df_results_emissions_e_g_co2e,
+            df_results_emissions_m_g_co2e=df_results_emissions_m_g_co2e,
+            results_flows_chain=results_flows_chain,
+            results_flows_secondary=results_flows_secondary,
+        )
+
+        return result
+
+    def _get_process_parameters(
+        self, data: CalculateDataType
+    ) -> dict[Process, ProcessDataType]:
         # iterate over all subprocesses in correct order
         # (last to first)
         # aggregate results in output format
@@ -2030,7 +2081,7 @@ class ChainProcess(AggregateProcess):
         # TODO: it would be nicer to have one Graph, instead of 3 subgraphs
         # for export, transport, import
 
-        results: dict[AbstractProcess, ProcessResultType] = {}
+        results: dict[Process, ProcessDataType] = {}
 
         data_by_process_step: dict[ProcessStepType, ProcessDataType] = {}
         for x in (
@@ -2054,6 +2105,45 @@ class ChainProcess(AggregateProcess):
                 # add dummy data
                 data_by_process_step[step] = {"EFF": 1}
 
+        section: ChainSectionProcess
+        for section in [
+            self.section_import,
+            self.section_transport,
+            self.section_export,
+        ]:
+            graph = section._process_graph
+            for process in graph.all_processes_ordered_backwards:
+                is_import = section is self.section_import
+                data_parameter = (
+                    data["parameter_import"] if is_import else data["parameter"]
+                )
+                data_secondary_process = (
+                    data["secondary_process_import"]
+                    if is_import
+                    else data["secondary_process"]
+                )
+
+                process_data = process._get_calculation_data_from_chain(
+                    data_by_process_step=data_by_process_step,
+                    data_parameter=data_parameter,
+                    data_secondary_process=data_secondary_process,
+                )
+                results[process] = process_data  # type: ignore
+        return results
+
+    def calculate_flows(
+        self, process_parameters: dict[Process, ProcessDataType]
+    ) -> dict[AbstractProcess, ProcessResultFlowsType]:
+        """Calcualte results."""
+        # iterate over all subprocesses in correct order
+        # (last to first)
+        # aggregate results in output format
+
+        # TODO: it would be nicer to have one Graph, instead of 3 subgraphs
+        # for export, transport, import
+
+        results_flows: dict[AbstractProcess, ProcessResultFlowsType] = {}
+
         main_flow_out_section: float = 1.0  # starting from the end
         section: ChainSectionProcess
         for section in [
@@ -2074,7 +2164,7 @@ class ChainProcess(AggregateProcess):
                     main_flow_out = 0.0
                     for process_target, is_main in graph.links_out[process]:
                         # process_target is already calculated
-                        results_target = results[process_target]
+                        results_target = results_flows[process_target]
                         if is_main:
                             main_flow_out += _get_pos_flow(
                                 results_target.main_flow_in, process_target
@@ -2085,50 +2175,13 @@ class ChainProcess(AggregateProcess):
                                 process_target,
                             )
 
-                is_import = section is self.section_import
-                data_parameter = (
-                    data["parameter_import"] if is_import else data["parameter"]
-                )
-                data_secondary_process = (
-                    data["secondary_process_import"]
-                    if is_import
-                    else data["secondary_process"]
-                )
-
-                process_data = process._get_calculation_data_from_chain(
-                    data_by_process_step=data_by_process_step,
-                    data_parameter=data_parameter,
-                    data_secondary_process=data_secondary_process,
-                )
-
-                process_result = process.calculate(
+                process_data = process_parameters[process]  # type: ignore
+                process_result = process.calculate_flows(
                     process_data=process_data, main_flow_out=main_flow_out
                 )
-                assert process not in results  # FIXME: remove later
-                results[process] = process_result
-
-            # in/out pass to previous section in loop
-            if section is not self.section_export and section.main_processes:
-                first_proc = section.main_processes[0]
-                main_flow_out_section = results[
-                    first_proc
-                ].main_flow_in  # type:ignore -should be float, not None # noqa
-
-        df_results_cost = pd.DataFrame()
-        df_results_emissions_e_g_co2e = pd.DataFrame()
-        df_results_emissions_m_g_co2e = pd.DataFrame()
-        results_flows_chain = []
-        results_flows_secondary = []
-
-        result = PtxCalcResult(
-            df_results_cost=df_results_cost,
-            df_results_emissions_e_g_co2e=df_results_emissions_e_g_co2e,
-            df_results_emissions_m_g_co2e=df_results_emissions_m_g_co2e,
-            results_flows_chain=results_flows_chain,
-            results_flows_secondary=results_flows_secondary,
-        )
-
-        return result
+                assert process not in results_flows  # FIXME: remove later
+                results_flows[process] = process_result
+        return results_flows
 
     @classmethod
     def _create(cls, chain_def: ChainDefStatic) -> "ChainProcess":
@@ -2145,7 +2198,7 @@ class ChainProcess(AggregateProcess):
                 "CO2-T+S#B",
             }  # type: ignore
         else:
-            first_process_code = chain_def.process_res
+            first_process_code = chain_def.process_res  # type: ignore
 
         return ChainProcess(
             transport=chain_def.transport,

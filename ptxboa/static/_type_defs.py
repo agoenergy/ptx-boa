@@ -94,7 +94,15 @@ DataQueryDicType = dict[DataQueryParameterType, str | None]
 
 
 @dataclass(slots=True, frozen=True)
-class ProcessResultType:
+class ProcessResultFlowsType:
     main_flow_out: float
     main_flow_in: float | None
     secondary_flows_in: dict[FlowCodeType, float]
+
+
+@dataclass(slots=True, frozen=True)
+class ProcessResultcostsType:
+    capex: float
+    opex: float
+    specccost: float
+    lc: float | None  # TODO
