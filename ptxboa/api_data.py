@@ -2696,7 +2696,7 @@ class ProcessGraph:
     ):
         self.main_processes: list[AbstractProcess] = main_processes
 
-        # all_processes_ordered_backwards: includes
+        # all_processes_ordered_backwards - includes
         # main, secondary, tertiary(market) processes
         self.all_processes_ordered_backwards: Iterable[AbstractProcess] = []
         # bool - is_main
