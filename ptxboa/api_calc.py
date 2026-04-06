@@ -11,7 +11,7 @@ from ptxboa.static._type_defs import CalculateDataType, PtxCalcResult
 from ptxboa.utils import annuity, rescale_dict
 
 if TYPE_CHECKING:
-    from ptxboa.api_data import ChainProcess
+    from ptxboa.api_data import Chain
 
 logger = logging.getLogger()
 
@@ -311,7 +311,7 @@ class PtxCalc:
     @classmethod
     def calculate(
         cls,
-        chain_proc: "ChainProcess",
+        chain_proc: "Chain",
         data: CalculateDataType,
     ) -> PtxCalcResult:
         """Calculate results."""

@@ -11,7 +11,7 @@ import pandas as pd
 
 from ptxboa import logger
 from ptxboa.api import _translate_and_validate_user_settings
-from ptxboa.api_data import DEFAULT_DATA_DIR, ChainProcess, DataHandler
+from ptxboa.api_data import DEFAULT_DATA_DIR, Chain, DataHandler
 from ptxboa.static import (
     ChainType,
     ResGenType,
@@ -122,7 +122,7 @@ def main():
         chain_def, _tool_version_color, _optimize_flh = (
             _translate_and_validate_user_settings(**settings.__dict__)
         )
-        chain_process = ChainProcess.get_or_create(chain_def)
+        chain_process = Chain.get_or_create(chain_def)
 
         data = chain_process.get_calculation_data(
             data_handler=data_handler,

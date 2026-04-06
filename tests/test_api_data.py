@@ -9,7 +9,7 @@ import pytest
 from ptxboa.api_data import (
     DEFAULT_DATA_DIR,
     STATIC_DATA_DIR,
-    ChainProcess,
+    Chain,
     DataHandler,
     ScenarioValues,
     _load_scenario_data,
@@ -215,7 +215,7 @@ def test_get_calculation_data(ptxdata_dir, scenario, kwargs, request):
     ptxdata_dir = request.getfixturevalue(ptxdata_dir)
     data_handler = DataHandler(data_dir=ptxdata_dir, scenario=scenario)
     chain_def = ChainDef(**kwargs)
-    chain_proc = ChainProcess.get_or_create(chain_def)
+    chain_proc = Chain.get_or_create(chain_def)
 
     data = data_handler.get_calculation_data(
         chain_proc=chain_proc,
@@ -376,7 +376,7 @@ def test_get_calculation_data_w_opt(ptxdata_dir, scenario, kwargs, request):
             data_dir=ptxdata_dir, scenario=scenario, cache_dir=Path(cache_dir)
         )
         chain_def = ChainDef(**kwargs)
-        chain_proc = ChainProcess.get_or_create(chain_def)
+        chain_proc = Chain.get_or_create(chain_def)
 
         result = data_handler.get_calculation_data(
             chain_proc=chain_proc,
@@ -582,7 +582,7 @@ def test_validate_chains(
         transport=transport,
         ship_own_fuel=ship_own_fuel,
     )
-    chain_proc = ChainProcess.get_or_create(chain_def)
+    chain_proc = Chain.get_or_create(chain_def)
 
     data = dh.get_calculation_data(
         chain_proc=chain_proc,

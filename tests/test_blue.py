@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 from ptxboa.api import PtxboaAPI, PtxCalc, _translate_and_validate_user_settings
-from ptxboa.api_data import DEFAULT_DATA_DIR, ChainProcess, DataHandler
+from ptxboa.api_data import DEFAULT_DATA_DIR, Chain, DataHandler
 from ptxboa.static._type_defs import ChainDef
 from tests.test_api import ptxdata_dir_static
 from tests.utils import assert_deep_equal_approx
@@ -253,7 +253,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
     )
 
     chain_def = ChainDef(**kwargs)
-    chain_proc = ChainProcess.get_or_create(chain_def)
+    chain_proc = Chain.get_or_create(chain_def)
 
     data = data_handler.get_calculation_data(
         chain_proc=chain_proc,
@@ -1644,7 +1644,7 @@ def test_new_blue_chain_real_data_2(api_kwargs, expected):
     )
     assert tool_version_color == "blue"
 
-    chain_process = ChainProcess.get_or_create(chain_def)
+    chain_process = Chain.get_or_create(chain_def)
 
     actual = chain_process.get_calculation_data(
         data_handler=data_handler,

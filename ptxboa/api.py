@@ -9,7 +9,7 @@ import pypsa
 
 from ptxboa import PROFILES_DIR, logger
 from ptxboa.api_calc import PtxCalc
-from ptxboa.api_data import ChainProcess, DataHandler
+from ptxboa.api_data import Chain, DataHandler
 from ptxboa.api_optimize import PtxOpt
 from ptxboa.static import (
     ChainType,
@@ -213,7 +213,7 @@ class PtxboaAPI:
             tool_version_color=tool_version_color,
         )
 
-        chain_proc = ChainProcess.get_or_create(chain_def)
+        chain_proc = Chain.get_or_create(chain_def)
 
         data = data_handler.get_calculation_data(
             chain_proc=chain_proc,
