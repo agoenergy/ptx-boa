@@ -1,19 +1,17 @@
 """Classes for main process chain calculation."""
 
-import logging
 from dataclasses import asdict, dataclass
 from typing import TYPE_CHECKING, Optional
 
 import pandas as pd
 
+from ptxboa import logger
 from ptxboa.api_data import DataHandler
 from ptxboa.static._type_defs import CalculateDataType, PtxCalcResult
 from ptxboa.utils import annuity, rescale_dict
 
 if TYPE_CHECKING:
-    from ptxboa.api_data import Chain
-
-logger = logging.getLogger()
+    from ptxboa.classes import Chain
 
 
 def _sum_float(x: float | None, y: float | None) -> float:
@@ -311,15 +309,14 @@ class PtxCalc:
     @classmethod
     def calculate(
         cls,
-        chain_proc: "Chain",
+        chain: "Chain",
         data: CalculateDataType,
     ) -> PtxCalcResult:
         """Calculate results."""
         results = cls._calculate(data=data)
-        # TODO: replace cls._calculate with chain_proc.calculate
-        results_new = chain_proc.calculate(data=data)  # noqa
 
-        results.df_results_cost = results_new.df_results_cost
+        # TODO: replace cls._calculate with chain_proc.calculate
+        results_new = chain.calculate(data=data)  # noqa
 
         return results
 

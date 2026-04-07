@@ -261,7 +261,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
         target_country_code=chain_def.target_country_code,
         optimize_flh=False,
     )
-    ptxcalc_results = PtxCalc.calculate(chain_proc=chain_proc, data=data)
+    ptxcalc_results = PtxCalc.calculate(chain=chain_proc, data=data)
 
     # test api output
     api = PtxboaAPI(data_dir=ptxdata_dir_static)

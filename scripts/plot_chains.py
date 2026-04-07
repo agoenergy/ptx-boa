@@ -11,7 +11,8 @@ import pandas as pd
 
 from ptxboa import logger
 from ptxboa.api import _translate_and_validate_user_settings
-from ptxboa.api_data import DEFAULT_DATA_DIR, Chain, DataHandler
+from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler
+from ptxboa.classes import Chain
 from ptxboa.static import (
     ChainType,
     ResGenType,
@@ -120,22 +121,24 @@ def main():
         )
 
         chain_def, _tool_version_color, _optimize_flh = (
-            _translate_and_validate_user_settings(**settings.__dict__)
+            _translate_and_validate_user_settings(
+                **settings.__dict__, optimize_flh=False
+            )
         )
         chain_process = Chain.get_or_create(chain_def)
 
-        data = chain_process.get_calculation_data(
+        data = chain_process.get_calculation_data(  # noqa
             data_handler=data_handler,
             source_region_code=_df_region_by_name.at[settings.region, "region_code"],  # type: ignore # noqa
             target_country_code=_df_region_by_name.at[settings.country, "region_code"],  # type: ignore # noqa
         )
-        process_parameters = chain_process._get_process_parameters(data=data)
-        result_flows = chain_process.calculate_flows(
-            process_parameters=process_parameters
-        )
+        # process_parameters = chain_process._get_process_parameters(data=data)
+        # result_flows = chain_process.calculate_flows(
+        #    process_parameters=process_parameters
+        # )
 
         # TODO: plot with data
-
+        result_flows = {}
         chain_process.plot(file_basename=name, result_flows=result_flows)
 
 
