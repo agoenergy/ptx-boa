@@ -88,7 +88,7 @@ class Process:
             is_secondary = False
             is_main = False
             is_transport = False
-
+            ProcessClass = ProcessMarket
         else:
             proc_spec = DataHandler.dimensions["process"].loc[process_code]
             main_flow_code_out = proc_spec["main_flow_code_out"]
@@ -106,6 +106,10 @@ class Process:
                 and not proc_spec["is_secondary"]  # CSS
                 and not proc_spec["is_storage"]  # H2/EL Storage
             )
+            if is_transport:
+                ProcessClass = ProcessTransport
+            elif is_secondary:
+                ProcessClass = ProcessSecondary
 
         return ProcessClass(
             process_code=process_code,
@@ -566,7 +570,7 @@ class Chain:
             else:
                 x_export += 1.5
                 x = x_export
-            y = 0.5 + 0.008 * sgn
+            y = 0.5 + 0.05 * sgn
             node_pos[p] = (x, y)
             sgn = -sgn
 
