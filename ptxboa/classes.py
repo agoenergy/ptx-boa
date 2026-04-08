@@ -34,7 +34,6 @@ from ptxboa.static._type_defs import (
 
 
 class Process:
-    # chain: "Chain"
     def __init__(
         self,
         process_code: ProcessCodeType | FlowCodeType,
@@ -67,6 +66,13 @@ class Process:
         self.is_secondary: bool = is_secondary
         self.is_main: bool = is_main
         self.is_transport: bool = is_transport
+
+        # links - will be added by Chain
+
+        self._links_out_in_main: list[Process] = []
+        self._links_out_in_secondary: list[Process] = []
+        self._link_in_main: Process | None = None
+        self._links_in_secondary: dict[FlowCodeType, Process] = {}
 
     @classmethod
     def create_with_subclass(
@@ -198,6 +204,7 @@ class Chain:
         self._all_processes_ordered_forwards: tuple[Process, ...] = tuple(
             nx.topological_sort(self._graph)
         )
+
         self._processes_by_step: dict[ProcessStepType | str, Process] = {}
         for process in self._all_processes_ordered_forwards:
             process_step = process.process_step
@@ -208,12 +215,26 @@ class Chain:
                 continue
             self._processes_by_step[process.process_step] = process  # type: ignore
 
-        # for FLH lookup we need these process codes
-        self._process_res_ely_deriv: DataQueryDicType = {  # type: ignore
-            "process_res": self._processes_by_step.get("RES"),
-            "process_ely": self._processes_by_step.get("ELY"),
-            "process_deriv": self._processes_by_step.get("DERIV"),
-        }
+        # add links to processes for faster lookup + checks
+
+        for process in self._graph.nodes():
+            for _, other in self._graph.out_edges(process):
+                attrs = self._graph.get_edge_data(process, other)
+                if attrs["in_main"]:
+                    assert process.main_flow_code_out == other.main_flow_code_in
+                    process._links_out_in_main.append(other)
+                else:
+                    assert process.main_flow_code_out in other.secondary_flow_types
+                    process._links_out_in_secondary.append(other)
+            for other, _ in self._graph.in_edges(process):
+                attrs = self._graph.get_edge_data(other, process)
+                if attrs["in_main"]:
+                    assert not process._link_in_main
+                    process._link_in_main = other
+                else:
+                    assert other.main_flow_code_out not in process._links_in_secondary
+                    process._links_in_secondary[other.main_flow_code_out] = other
+            assert set(process._links_in_secondary) == set(process.secondary_flow_types)
 
     @classmethod
     def get_or_create(cls, chain_def: ChainDef) -> "Chain":
@@ -405,7 +426,14 @@ class Chain:
     def _all_processes_ordered_backwards(self) -> tuple[Process, ...]:
         return tuple(reversed(self._all_processes_ordered_forwards))
 
-    def _get_default_parameter_values(self) -> DataQueryDicType: ...
+    def _get_default_parameter_values(self) -> DataQueryDicType:
+        """For FLH lookup we need these process codes."""
+        return {  # type: ignore
+            "process_res": self._processes_by_step.get("RES"),
+            "process_ely": self._processes_by_step.get("ELY"),
+            "process_deriv": self._processes_by_step.get("DERIV"),
+        }
+
     def _get_parameter_getters(
         self,
         data_handler: "DataHandler",
