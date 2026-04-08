@@ -1,5 +1,6 @@
 from __future__ import annotations  # otherwise nx.DiGraph[Process] does not work
 
+from dataclasses import asdict
 from typing import Iterable, cast
 
 import matplotlib.pyplot as plt
@@ -9,11 +10,11 @@ from networkx.exception import HasACycle
 
 from ptxboa import logger
 from ptxboa.api_data import DataHandler
-from ptxboa.static import ProcessStepValues  # must be sorted
 from ptxboa.static import (
     FlowCodeType,
     ProcessCodeType,
     ProcessStepType,
+    ProcessStepValues,  # must be sorted
     SourceRegionCodeType,
     TargetCountryCodeType,
 )
@@ -37,42 +38,68 @@ class Process:
     def __init__(
         self,
         process_code: ProcessCodeType | FlowCodeType,
-        process_step: ProcessStepType | str | None = None,
-        is_last: bool = False,
-        is_in_import_region: bool = False,
+        process_step: ProcessStepType | str | None,
+        main_flow_code_out: FlowCodeType,
+        main_flow_code_in: FlowCodeType | None,
+        secondary_flow_types: frozenset[FlowCodeType],
+        is_last: bool,
+        is_in_import_region: bool,
+        is_initial: bool,
+        is_market: bool,
+        is_secondary: bool,
+        is_main: bool,
+        is_transport: bool,
     ):
+
+        if is_in_import_region:
+            assert not is_initial
+            assert not is_transport
 
         self.process_code: ProcessCodeType | FlowCodeType = process_code
         self.process_step: ProcessStepType | str | None = process_step
+        self.main_flow_code_out: FlowCodeType = main_flow_code_out
+        self.main_flow_code_in: FlowCodeType | None = main_flow_code_in
+        self.secondary_flow_types: frozenset[FlowCodeType] = secondary_flow_types
         self.is_last: bool = is_last
         self.is_in_import_region: bool = is_in_import_region
+        self.is_initial: bool = is_initial
+        self.is_market: bool = is_market
+        self.is_secondary: bool = is_secondary
+        self.is_main: bool = is_main
+        self.is_transport: bool = is_transport
 
-        self.main_flow_code_out: FlowCodeType
-        self.main_flow_code_in: FlowCodeType | None
-        self.secondary_flow_types: frozenset[FlowCodeType]
+    @classmethod
+    def create_with_subclass(
+        cls,
+        process_code: ProcessCodeType | FlowCodeType,
+        process_step: ProcessStepType | str | None = None,
+        is_last: bool = False,
+        is_in_import_region: bool = False,
+    ) -> "Process":
 
-        self.is_initial: bool
-        self.is_market: bool
-        self.is_secondary: bool
-        self.is_main: bool
-        self.is_transport: bool
+        is_market = process_code in DataHandler.dimensions["flow"].index  # is flow code
+        ProcessClass: type[Process] = Process
 
-        if self.process_code in DataHandler.dimensions["flow"].index:
-            # is market process
-            self.main_flow_code_out = cast(FlowCodeType, process_code)
-            self.main_flow_code_in = None
-            self.secondary_flow_types = frozenset()
-            self.is_initial = False
-            self.is_market = True
-            self.is_secondary = False
-            self.is_main = False
-            self.is_transport = False
+        if is_market:
+            main_flow_code_out = cast(FlowCodeType, process_code)
+            main_flow_code_in = None
+            secondary_flow_types = frozenset()
+            is_initial = False
+            is_secondary = False
+            is_main = False
+            is_transport = False
+
         else:
-            proc_spec = DataHandler.dimensions["process"].loc[self.process_code]
+            proc_spec = DataHandler.dimensions["process"].loc[process_code]
+            main_flow_code_out = proc_spec["main_flow_code_out"]
+            main_flow_code_in = proc_spec["main_flow_code_in"]
+            secondary_flow_types = frozenset(proc_spec["secondary_flows"])
             is_initial = bool(
-                proc_spec["is_re_generation"] or self.process_code == "NG-PROD#B"
+                proc_spec["is_re_generation"] or process_code == "NG-PROD#B"
             )  # FIXME
+
             is_secondary = bool(proc_spec["is_secondary"])
+            is_main = not is_secondary
             is_transport = bool(
                 proc_spec["is_transport"]
                 and not proc_spec["is_transformation"]  # no pre/post
@@ -80,18 +107,20 @@ class Process:
                 and not proc_spec["is_storage"]  # H2/EL Storage
             )
 
-            if self.is_in_import_region:
-                assert not is_initial
-                assert not is_transport, proc_spec
-
-            self.main_flow_code_out = proc_spec["main_flow_code_out"]
-            self.main_flow_code_in = proc_spec["main_flow_code_in"]
-            self.secondary_flow_types = frozenset(proc_spec["secondary_flows"])
-            self.is_initial = is_initial
-            self.is_market = False
-            self.is_secondary = is_secondary
-            self.is_main = not is_secondary
-            self.is_transport = is_transport
+        return ProcessClass(
+            process_code=process_code,
+            process_step=process_step,
+            main_flow_code_out=main_flow_code_out,
+            main_flow_code_in=main_flow_code_in,
+            secondary_flow_types=secondary_flow_types,
+            is_last=is_last,
+            is_in_import_region=is_in_import_region,
+            is_initial=is_initial,
+            is_market=is_market,
+            is_secondary=is_secondary,
+            is_main=is_main,
+            is_transport=is_transport,
+        )
 
     def __str__(self):
         result = f"{self.process_code}"
@@ -107,14 +136,7 @@ class Process:
     @property
     def color(self) -> str:
         """Color for plotting."""
-        if self.is_market:
-            return "lightgray"
-        elif self.is_transport:
-            return "teal"
-        elif self.is_secondary:
-            return "palegreen"
-        else:
-            return "lightblue"
+        return "lightblue"
 
     def get_parameter_data(
         self,
@@ -141,6 +163,27 @@ class Process:
         results_flows: dict[Process, ProcessResultFlowsType],
         results_emissions: dict[Process, ProcessResultEmissionType],
     ) -> ProcessResultEmissionType: ...
+
+
+class ProcessSecondary(Process):
+    @property
+    def color(self) -> str:
+        """Color for plotting."""
+        return "palegreen"
+
+
+class ProcessTransport(Process):
+    @property
+    def color(self) -> str:
+        """Color for plotting."""
+        return "teal"
+
+
+class ProcessMarket(Process):
+    @property
+    def color(self) -> str:
+        """Color for plotting."""
+        return "lightgray"
 
 
 class Chain:
@@ -221,7 +264,7 @@ class Chain:
         _was_transport = False
         main_processes = []
         for i, (process_code, process_step) in enumerate(main_process_codes_steps):
-            process = Process(
+            process = Process.create_with_subclass(
                 process_code=process_code,
                 process_step=process_step,
                 is_in_import_region=is_in_import_region,
@@ -240,11 +283,15 @@ class Chain:
             main_processes.append(process)
 
         secondary_processes_export = [
-            Process(process_code=process_code, is_in_import_region=False)
+            Process.create_with_subclass(
+                process_code=process_code, is_in_import_region=False
+            )
             for process_code in secondary_process_codes_export
         ]
         secondary_processes_import = [
-            Process(process_code=process_code, is_in_import_region=True)
+            Process.create_with_subclass(
+                process_code=process_code, is_in_import_region=True
+            )
             for process_code in secondary_process_codes_import
         ]
 
@@ -599,7 +646,7 @@ def _create_graph(
         in_main: bool = False,
         is_in_import_region: bool = False,
     ):
-        market_process = Process(
+        market_process = Process.create_with_subclass(
             process_code=flow_type,
             is_in_import_region=is_in_import_region,
         )
