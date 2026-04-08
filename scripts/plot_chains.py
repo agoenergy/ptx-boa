@@ -11,7 +11,7 @@ import pandas as pd
 
 from ptxboa import logger
 from ptxboa.api import _translate_and_validate_user_settings
-from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler
+from ptxboa.api_data import DataHandler
 from ptxboa.classes import Chain
 from ptxboa.static import (
     ChainType,
@@ -110,15 +110,18 @@ def main():
     permutations = create_permutation_names(create_permutations(scenario=scenario))
 
     for i, (name, settings) in enumerate(permutations.items()):
-        logger.info(f"{i + 1}/{len(permutations)}: {settings} => {name}")
-
         # TODO: skip test chain
         if settings.chain == "Blue Iron (blue)*":
             continue
 
-        data_handler = DataHandler(
-            scenario=scenario, data_dir=DEFAULT_DATA_DIR, user_data=settings.user_data
-        )
+        # if settings.chain != "STL-S__NG-DRI-C_EAF__prod_in_demand":
+        #    continue
+
+        logger.info(f"{i + 1}/{len(permutations)}: {settings} => {name}")
+
+        # data_handler = DataHandler(
+        #    scenario=scenario, data_dir=DEFAULT_DATA_DIR, user_data=settings.user_data
+        # )
 
         chain_def, _tool_version_color, _optimize_flh = (
             _translate_and_validate_user_settings(
@@ -127,11 +130,12 @@ def main():
         )
         chain_process = Chain.get_or_create(chain_def)
 
-        data = chain_process.get_calculation_data(  # noqa
-            data_handler=data_handler,
-            source_region_code=_df_region_by_name.at[settings.region, "region_code"],  # type: ignore # noqa
-            target_country_code=_df_region_by_name.at[settings.country, "region_code"],  # type: ignore # noqa
-        )
+        # data = chain_process.get_calculation_data(  # noqa
+        #    data_handler=data_handler,
+        #    source_region_code=_df_region_by_name.at[settings.region, "region_code"],  # type: ignore # noqa
+        #    target_country_code=_df_region_by_name.at[settings.country, "region_code"],  # type: ignore # noqa
+        # )
+
         # process_parameters = chain_process._get_process_parameters(data=data)
         # result_flows = chain_process.calculate_flows(
         #    process_parameters=process_parameters
@@ -139,7 +143,7 @@ def main():
 
         # TODO: plot with data
         result_flows = {}
-        chain_process.plot(file_basename=name, results_flows=result_flows)
+        chain_process.plot(file_basename=f"{i:03d}_{name}", results_flows=result_flows)
 
 
 if __name__ == "__main__":

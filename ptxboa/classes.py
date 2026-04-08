@@ -1,6 +1,5 @@
 from __future__ import annotations  # otherwise nx.DiGraph[Process] does not work
 
-from dataclasses import asdict, dataclass, field
 from typing import Iterable, cast
 
 import matplotlib.pyplot as plt
@@ -33,69 +32,89 @@ from ptxboa.static._type_defs import (
 )
 
 
-@dataclass(slots=True, frozen=True)
 class Process:
     # chain: "Chain"
+    def __init__(
+        self,
+        process_code: ProcessCodeType | FlowCodeType,
+        process_step: ProcessStepType | str | None = None,
+        is_last: bool = False,
+        is_in_import_region: bool = False,
+    ):
 
-    process_code: ProcessCodeType | FlowCodeType
-    process_step: ProcessStepType | str | None = None
-    is_last: bool = False
-    is_in_import_region: bool = False
+        self.process_code: ProcessCodeType | FlowCodeType = process_code
+        self.process_step: ProcessStepType | str | None = process_step
+        self.is_last: bool = is_last
+        self.is_in_import_region: bool = is_in_import_region
 
-    main_flow_code_out: FlowCodeType = field(init=False)
-    main_flow_code_in: FlowCodeType | None = field(init=False)
-    secondary_flow_types: frozenset[FlowCodeType] = field(init=False)
+        self.main_flow_code_out: FlowCodeType
+        self.main_flow_code_in: FlowCodeType | None
+        self.secondary_flow_types: frozenset[FlowCodeType]
 
-    is_initial: bool = field(init=False)
-    is_market: bool = field(init=False)
-    is_secondary: bool = field(init=False)
-    is_main: bool = field(init=False)
-    is_transport: bool = field(init=False)
+        self.is_initial: bool
+        self.is_market: bool
+        self.is_secondary: bool
+        self.is_main: bool
+        self.is_transport: bool
 
-    def __post_init_(self):
         if self.process_code in DataHandler.dimensions["flow"].index:
             # is market process
-            object.__setattr__(self, "main_flow_code_out", self.process_code)
-            object.__setattr__(self, "main_flow_code_in", None)
-            object.__setattr__(self, "secondary_flow_types", frozenset())
-            object.__setattr__(self, "is_initial", False)
-            object.__setattr__(self, "is_market", True)
-            object.__setattr__(self, "is_secondary", False)
-            object.__setattr__(self, "is_main", False)
-            object.__setattr__(self, "is_transport", False)
+            self.main_flow_code_out = cast(FlowCodeType, process_code)
+            self.main_flow_code_in = None
+            self.secondary_flow_types = frozenset()
+            self.is_initial = False
+            self.is_market = True
+            self.is_secondary = False
+            self.is_main = False
+            self.is_transport = False
         else:
             proc_spec = DataHandler.dimensions["process"].loc[self.process_code]
-
-            is_initial = (
+            is_initial = bool(
                 proc_spec["is_re_generation"] or self.process_code == "NG-PROD#B"
             )  # FIXME
-            is_secondary = proc_spec["is_secondary"]
-            # is_transport = proc_spec["is_transport"]
-            is_transport = proc_spec["is_pipeline"] or proc_spec["is_shipping"]
+            is_secondary = bool(proc_spec["is_secondary"])
+            is_transport = bool(
+                proc_spec["is_transport"]
+                and not proc_spec["is_transformation"]  # no pre/post
+                and not proc_spec["is_secondary"]  # CSS
+                and not proc_spec["is_storage"]  # H2/EL Storage
+            )
 
             if self.is_in_import_region:
                 assert not is_initial
-                assert not is_transport
+                assert not is_transport, proc_spec
 
-            object.__setattr__(
-                self, "main_flow_code_out", proc_spec["main_flow_code_out"]
-            )
-            object.__setattr__(
-                self, "main_flow_code_in", proc_spec["main_flow_code_in"]
-            )
-            object.__setattr__(
-                self, "secondary_flow_types", frozenset(proc_spec["secondary_flows"])
-            )
-            object.__setattr__(self, "is_initial", is_initial)
-            object.__setattr__(self, "is_market", False)
-            object.__setattr__(self, "is_secondary", is_secondary)
-            object.__setattr__(self, "is_main", not is_secondary)
-            object.__setattr__(self, "is_transport", is_transport)
+            self.main_flow_code_out = proc_spec["main_flow_code_out"]
+            self.main_flow_code_in = proc_spec["main_flow_code_in"]
+            self.secondary_flow_types = frozenset(proc_spec["secondary_flows"])
+            self.is_initial = is_initial
+            self.is_market = False
+            self.is_secondary = is_secondary
+            self.is_main = not is_secondary
+            self.is_transport = is_transport
+
+    def __str__(self):
+        result = f"{self.process_code}"
+        if self.process_step:
+            result += f", step={self.process_step}"
+        if self.is_initial:
+            result += ", initial"
+        if self.is_last:
+            result += ", last"
+
+        return result
 
     @property
     def color(self) -> str:
         """Color for plotting."""
-        return "lightblue"
+        if self.is_market:
+            return "lightgray"
+        elif self.is_transport:
+            return "teal"
+        elif self.is_secondary:
+            return "palegreen"
+        else:
+            return "lightblue"
 
     def get_parameter_data(
         self,
@@ -172,11 +191,6 @@ class Chain:
         if chain_color == "blue":
             initial_step = "NG_PROD"
             first_process_code = "NG-PROD#B"
-            secondary_process_codes_export += [  # type: ignore
-                "HEATPUMP#B",
-                "CCGT-CC#B",
-                "CO2-T+S#B",  # FIXME: not in all
-            ]
             secondary_process_codes_import = [
                 c for c in secondary_process_codes_export if c == "CO2-T+S#B"
             ]
@@ -219,12 +233,7 @@ class Chain:
                 # FIXME: better way then re-creating process?
                 # we cannot change attribtue because of frozen dataclass
                 is_in_import_region = True
-                process = Process(
-                    process_code=process_code,
-                    process_step=process_step,
-                    is_in_import_region=is_in_import_region,
-                    is_last=(i + 1 == len(main_process_codes_steps)),
-                )
+                process.is_in_import_region = is_in_import_region
 
             _was_transport = _was_transport or process.is_transport
 
@@ -288,7 +297,7 @@ class Chain:
         plt.clf()
         plt.figure(
             figsize=(
-                len(list(self._main_processes_ordered_forwards)) * scale,
+                len(list(self._main_processes_ordered_forwards)) * scale * 2,
                 2 * scale,
             )
         )
@@ -300,14 +309,16 @@ class Chain:
             with_labels=False,
             node_color=[k.color for k in self._graph.nodes()],
             width=[2 if p.is_main else 1 for p, _p in self._graph.edges()],
-            node_size=2000 * scale,
+            node_size=[
+                (1000 if p.is_market else 2000) * scale for p in self._graph.nodes()
+            ],
         )
 
         # Draw node labels
         nx.draw_networkx_labels(
             self._graph,
             node_pos,
-            labels={p: str(p) for p in self._graph.nodes()},
+            labels={p: p.process_code for p in self._graph.nodes()},
             font_size=6,
             font_color="black",
         )
@@ -508,7 +519,7 @@ class Chain:
             else:
                 x_export += 1.5
                 x = x_export
-            y = 0.1 + 0.008 * sgn
+            y = 0.5 + 0.008 * sgn
             node_pos[p] = (x, y)
             sgn = -sgn
 
@@ -523,7 +534,7 @@ class Chain:
             else:
                 x_export += 1
                 x = x_export
-            y = 0.2
+            y = 1.0
             node_pos[p] = (x, y)
 
         return node_pos
@@ -592,6 +603,7 @@ def _create_graph(
             process_code=flow_type,
             is_in_import_region=is_in_import_region,
         )
+        graph.add_node(market_process)
         add_edge(
             proc_provider=market_process, proc_recipient=proc_recipient, in_main=in_main
         )
@@ -633,17 +645,20 @@ def _create_graph(
     # collect all provider of secondary flows (can also come from initial (EL/NG))
     flow_provider_sec_or_initial_export: dict[FlowCodeType, Process] = {}
     flow_provider_sec_or_initial_export[initial_proc.main_flow_code_out] = initial_proc
+
     for sec_proc in secondary_processes_export:
         if sec_proc.main_flow_code_out in flow_provider_sec_or_initial_export:
-            logger.warning(f"flow already provided, skipping {sec_proc}")
+            logger.warning("Exp: flow already provided, skipping %s", sec_proc)
             continue
+        logger.debug("Exp: provide %s from %s", sec_proc.main_flow_code_out, sec_proc)
         flow_provider_sec_or_initial_export[sec_proc.main_flow_code_out] = sec_proc
 
     flow_provider_sec_import: dict[FlowCodeType, Process] = {}
     for sec_proc in secondary_processes_import:
         if sec_proc.main_flow_code_out in flow_provider_sec_import:
-            logger.warning(f"flow already provided, skipping {sec_proc}")
+            logger.warning("Imp: flow already provided, skipping %s", sec_proc)
             continue
+        logger.debug("Imp: provide %s from %s", sec_proc.main_flow_code_out, sec_proc)
         flow_provider_sec_import[sec_proc.main_flow_code_out] = sec_proc
 
     def get_provider(
@@ -654,7 +669,7 @@ def _create_graph(
             if is_in_import_region
             else flow_provider_sec_or_initial_export
         )
-        providers.get(flow_code)
+        return providers.get(flow_code)
 
     def link_process(process: Process, prev_main_process: Process | None = None):
         todo = []
@@ -706,6 +721,8 @@ def _create_graph(
     all_procs_final = set(graph.nodes)
     procs_dropped = procs_old - all_procs_final
     if procs_dropped:
+        # dont warn about dropped market processes
+        procs_dropped = {p for p in procs_dropped if not p.is_market}
         logger.warning("Dropped unused: %s", [str(x) for x in procs_dropped])
 
     return graph
