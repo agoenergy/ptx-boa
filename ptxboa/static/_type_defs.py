@@ -76,7 +76,7 @@ class ChainDef(ChainDefStatic):
     target_country_code: TargetCountryCodeType
 
 
-ProcessStep = tuple[ProcessCodeType, ProcessStepType | None]
+ProcessStep = tuple[ProcessCodeType, ProcessStepType | str | None]
 
 
 class ParameterGetter(Protocol):
@@ -108,7 +108,7 @@ class ProcessResultCostsType:
     process_subtype: ProcessCodeType | FlowCodeType | None = None
     cost_type: ResultCostType | None = None
     values: float = 0
-    value_rel_per_flow: float = 0
+    # value_rel_per_flow: float = 0
     # capex: float = 0 # noqa
     # opex: float = 0 # noqa
     # specccost: float = 0 # noqa

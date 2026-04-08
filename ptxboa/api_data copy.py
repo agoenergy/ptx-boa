@@ -1,12 +1,10 @@
 """Handle data queries for api calculation."""
 
 import logging
-from dataclasses import asdict
 from typing import Iterable, Literal, Union, cast
 
 import matplotlib.pyplot as plt
 import networkx as nx
-import pandas as pd
 
 from ptxboa import (
     api_calc,
@@ -355,58 +353,6 @@ class _ParameterGetter:
 AggregateProcessDataType = tuple[ProcessDataType, dict["Process", ProcessDataType]]
 
 
-def _plot_get_pos(
-    chain_process: "AggregateProcess",
-) -> dict["AbstractProcess", tuple[float, float]]:
-
-    node_pos = {}
-    xs: list[float] = [0, 0, 0]
-    proc_end_last = None
-
-    for ex_tr_imp in chain_process.main_processes:
-        ex_tr_imp = cast(AggregateProcess, ex_tr_imp)
-        # export / tranport / import  subgraph
-
-        process_graph = ex_tr_imp._process_graph
-
-        # add processes as nodes to DiGraph
-
-        xs[1] = max(xs[0] + 0.25, xs[0])  # stagger
-        xs[2] = max(xs[0], xs[2])
-
-        sgn = 1  # secondary process: offset sign should alternate between -1 and 1
-
-        for process in reversed(list(process_graph.all_processes_ordered_backwards)):
-            key = process
-
-            # if is_main:
-            if process in process_graph.main_processes:
-                xs[0] = xs[0] + 2
-                x = xs[0]
-                y = 0
-                if not proc_end_last and process == process_graph.main_processes[0]:
-                    y = 0.05  # initial a little closer to secondary
-            elif not isinstance(process, MarketProcess):
-                #  is secondary
-                xs[1] = xs[1] + 1.5
-                x = xs[1]
-                # non linear disntance for non overlapping arrows
-                y = 0.1 + 0.008 * sgn
-                sgn = -sgn  # alterante
-            else:
-                # market
-                xs[2] = xs[2] + 1
-                x = xs[2]
-                y = 0.2
-
-            node_pos[key] = (x, y)
-
-        if process_graph.main_processes:
-            proc_end_last = process_graph.main_processes[-1]
-
-    return node_pos
-
-
 class ProcessType:
     def __init__(
         self,
@@ -519,8 +465,7 @@ class ProcessType:
         # secondary: only allow CCS
         return self.allow_in_export and (
             # CSS is onlyallowed secondary(?) # TODO:generalize?
-            not self.is_secondary
-            or self.process_code == "CO2-T+S#B"
+            not self.is_secondary or self.process_code == "CO2-T+S#B"
         )
 
 
@@ -1263,106 +1208,7 @@ class AggregateProcess(AbstractProcess):
         return [p for p in self.all_processes if isinstance(p, class_or_classes)]
 
     def plot(self, file_basename: str, result_flows: dict):
-        """Create plot and save as png."""
-        # Create a directed graph
-        G = nx.DiGraph()
-        node_labels = {}
-        edge_labels = {}
-        edge_widths = {}
-
-        proc_end_last = None
-        len_main_total = 0
-        for ex_tr_imp in self.main_processes:
-            ex_tr_imp = cast(AggregateProcess, ex_tr_imp)
-            # export / tranport / import  subgraph
-
-            process_graph = ex_tr_imp._process_graph
-
-            # add processes as nodes to DiGraph
-
-            for process in reversed(list(ex_tr_imp.all_processes)):
-                label = str(process)
-
-                G.add_node(process)
-                node_labels[process] = (
-                    label.replace("=", "\n")
-                    .replace("(", "\n")
-                    .replace(")", "\n")
-                    .replace(" ", "\n")
-                    .strip()
-                )
-
-                for proc_target, in_main in process_graph.links_out.get(process, []):
-                    flow = process.main_flow_code_out
-                    e = (process, proc_target)
-                    G.add_edge(*e)
-                    try:
-                        value = (
-                            result_flows[proc_target].main_flow_in
-                            if in_main
-                            else result_flows[proc_target].secondary_flows_in.get(flow)
-                        )
-                        value_str = f"\n{value:.2E}"
-                    except Exception:
-                        value_str = ""
-                    edge_labels[e] = f"{flow}{value_str}"
-                    edge_widths[e] = 2 if in_main else 1
-
-            if process_graph.main_processes:
-                if proc_end_last:
-                    # link from previous subpgraph
-                    proc_start = process_graph.main_processes[0]
-                    e = (proc_end_last, proc_start)
-                    G.add_edge(*e)
-                    edge_labels[e] = proc_end_last.main_flow_code_out
-                    try:
-                        edge_labels[
-                            e
-                        ] += f"\n{result_flows[proc_start].main_flow_in:.2E}"
-                    except Exception:  # not calculated yet, # noqa: S110
-                        pass
-                    edge_widths[e] = 2
-
-                proc_end_last = process_graph.main_processes[-1]
-
-            len_main_total += len(process_graph.main_processes)
-
-        scale = 3
-
-        # node_pos = nx.circular_layout(G) # noqa
-        node_pos = _plot_get_pos(chain_process=self)
-
-        plt.close()
-        plt.clf()
-        plt.figure(figsize=(len_main_total * scale, 2 * scale))
-
-        # Draw nodes
-        nx.draw(
-            G,
-            node_pos,
-            with_labels=False,
-            node_color=[cast(Process, k).color for k in G.nodes()],
-            width=[edge_widths[k] for k in G.edges()],
-            node_size=2000 * scale,
-        )
-
-        # Draw node labels
-        nx.draw_networkx_labels(
-            G, node_pos, labels=node_labels, font_size=6, font_color="black"
-        )
-
-        # Draw edge labels
-        nx.draw_networkx_edge_labels(
-            G,
-            node_pos,
-            edge_labels=edge_labels,
-            font_size=6,
-            font_color="black",
-            # label_pos=0.5, # noqa
-        )
-
-        # Save to PNG
-        plt.savefig(f"chain_flowcharts/{file_basename}.png", dpi=150)
+        
 
 
 class Chain(AggregateProcess):
@@ -1895,11 +1741,7 @@ class Chain(AggregateProcess):
                 ).get_calculation_data(
                     parameter_getters=parameter_getters,
                     parameter_values=parameter_values_export,
-                )[
-                    "SPECCOST"
-                ][
-                    flow_code
-                ]  # type: ignore # noqa: assume its dict
+                )["SPECCOST"][flow_code]  # type: ignore # noqa: assume its dict
 
         flh_opt_process = {}
 
@@ -1922,11 +1764,7 @@ class Chain(AggregateProcess):
                     ).get_calculation_data(
                         parameter_getters=parameter_getters,
                         parameter_values=parameter_values_export,
-                    )[
-                        "SPECCOST"
-                    ][
-                        flow_code
-                    ]  # type: ignore # noqa: assume its dict
+                    )["SPECCOST"][flow_code]  # type: ignore # noqa: assume its dict
 
             # when optimzing for RES=RES-HYBR, optimizer needs data for
             # "PV-FIX" and "WIND-ON"
@@ -2181,9 +2019,9 @@ class ProcessGraph:
             flow_provider_sec_or_initial[sec_proc.main_flow_code_out] = sec_proc
 
         # collect required flows
-        required_flows_procs: dict[FlowCodeType, list[tuple[AbstractProcess, bool]]] = (
-            {}
-        )
+        required_flows_procs: dict[
+            FlowCodeType, list[tuple[AbstractProcess, bool]]
+        ] = {}
 
         def add_required_flows_proc(
             proc: AbstractProcess, flow: FlowCodeType, in_main: bool
@@ -2500,39 +2338,6 @@ def _get_pos_flow(value: float | None, context) -> float:
         logger.debug("Dropping neg. flow value: %s", context)
         return 0
     return value
-
-
-def _create_df_results_cost(
-    result_costs: dict[AbstractProcess, list[ProcessResultCostsType]],
-) -> pd.DataFrame:
-    costs = [c for costs in result_costs.values() for c in costs]
-    return pd.DataFrame([asdict(x) for x in costs])
-
-
-def _create_df_results_emissions_e_g_co2e(
-    result_emissions: dict[AbstractProcess, ProcessResultEmissionType],
-) -> pd.DataFrame:
-    return pd.DataFrame()
-
-
-def _create_df_results_emissions_m_g_co2e(
-    result_emissions: dict[AbstractProcess, ProcessResultEmissionType],
-) -> pd.DataFrame:
-    return pd.DataFrame()
-
-
-def _create_results_flows_chain(
-    result_flows: dict[AbstractProcess, ProcessResultFlowsType],
-) -> list:
-    result = []
-    return result
-
-
-def _create_results_flows_secondary(
-    result_flows: dict[AbstractProcess, ProcessResultFlowsType],
-) -> list:
-    result = []
-    return result
 
 
 # calculate required output

@@ -139,7 +139,7 @@ def main():
 
         # TODO: plot with data
         result_flows = {}
-        chain_process.plot(file_basename=name, result_flows=result_flows)
+        chain_process.plot(file_basename=name, results_flows=result_flows)
 
 
 if __name__ == "__main__":
