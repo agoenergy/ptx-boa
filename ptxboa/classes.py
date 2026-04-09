@@ -330,7 +330,14 @@ class ProcessSecondary(Process):
 
 
 class ProcessTransport(Process):
-    _parameter_codes_process = ["OPEX-T", "LOSS-T", "OPEX-O"]
+    _parameter_codes_process = ["OPEX-T", "LOSS-T", "OPEX-O"] + [
+        # NOTE: these are the same for all transport steps - maybe get only once?
+        "CAP-T",
+        "DST-S-D",
+        "DST-S-DP",
+        "SEASHARE",
+    ]
+
     _parameter_codes_process_flow = [
         "CH4SHARE",  # TODO: ?
         "EF_E",  # TODO: ?
@@ -368,6 +375,63 @@ class ProcessTransport(Process):
         opex = (opex_o + opex_ot) * main_flow_out
 
         return [self._create_result_cost(cost_type="OPEX", values=opex)]
+
+    def _get_parameter_data_dist(
+        self,
+        source_region_is_target_reason: bool,
+        data: ProcessDataType,
+    ) -> float:
+        if source_region_is_target_reason:
+            return 0
+
+        dist_ship: float = data.get("DST-S-D", 0)  # type: ignore
+        dist_pipeline: float = data.get("DST-S-DP", 0)  # type: ignore
+        seashare_pipeline: float = data.get("SEASHARE", 0)  # type: ignore
+        existing_pipeline_cap: float = data.get("CAP-T", 0)  # type: ignore
+
+        if self.process_step == "PPLX":
+            return dist_pipeline * seashare_pipeline if existing_pipeline_cap else 0
+        elif self.process_step == "PPLR":
+            return (
+                dist_pipeline * (1 - seashare_pipeline) if existing_pipeline_cap else 0
+            )
+        elif self.process_step == "PPLS":
+            return 0 if existing_pipeline_cap else dist_pipeline * seashare_pipeline
+        elif self.process_step == "PPL":
+            return (
+                0 if existing_pipeline_cap else dist_pipeline * (1 - seashare_pipeline)
+            )
+        elif self.process_step == "SHP_OWN":
+            return dist_ship
+        elif self.process_step == "SHP":
+            return dist_ship
+        else:
+            raise NotImplementedError(self.process_step)
+
+    def get_parameter_data(
+        self,
+        parameter_getters: "ParameterGetters",
+        parameter_values: DataQueryDicType,
+    ) -> ProcessDataType:
+        data = super().get_parameter_data(
+            parameter_getters=parameter_getters, parameter_values=parameter_values
+        )
+
+        dist_transport = self._get_parameter_data_dist(
+            source_region_is_target_reason=(
+                parameter_values["source_region_code"]
+                == parameter_values["target_country_code"]
+            ),
+            data=data,
+        )
+
+        loss_t: float = data.get("LOSS-T", 0)  # type: ignore
+
+        data["EFF"] = 1 - loss_t * dist_transport
+        data["DIST"] = dist_transport
+
+        # FIXME: OPEX-O in transport?
+        return data
 
 
 class ProcessMarket(Process):
@@ -1085,7 +1149,10 @@ def _aggregate_results_df(
     df: pd.DataFrame, columns_index: list[str], columns_value: list[str] | None = None
 ) -> pd.DataFrame:
     columns_value = columns_value or ["values"]
-    return df[columns_index + columns_value].groupby(columns_index).sum().reset_index()
+    columns_all = columns_index + columns_value
+    if df.empty:
+        return pd.DataFrame(columns=columns_all)
+    return df[columns_all].groupby(columns_index).sum().reset_index()
 
 
 def _create_graph(

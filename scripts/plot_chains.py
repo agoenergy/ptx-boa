@@ -142,6 +142,8 @@ def main():
             parameter_data=parameter_data_, results_flows=results_flows
         )
 
+        result = chain_process.calculate(data=parameter_data)
+
         edge_values_speccost = {
             (p, p_): parameter_data_[p]["SPECCOST"][p.main_flow_code_out]  # type: ignore
             for p, p_ in chain_process._graph.edges()

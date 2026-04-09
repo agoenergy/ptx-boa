@@ -822,39 +822,6 @@ class DataHandler:
 
         return result_main_export, result_transport, result_main_import
 
-    @staticmethod
-    def _get_transport_distances(
-        source_region_code: SourceRegionCodeType,
-        target_country_code: TargetCountryCodeType,
-        transport: TransportType,
-        ship_own_fuel: bool,
-        dist_ship: float,
-        dist_pipeline: float,
-        seashare_pipeline: float,
-        existing_pipeline_cap: float,
-    ) -> Dict[ProcessStepType, float]:
-        dist_transp = {}
-        if source_region_code == target_country_code:
-            # no transport (only China)
-            pass
-        elif dist_pipeline and transport == "Pipeline":
-            # use pipeline if pipeline possible and ship not selected
-            if existing_pipeline_cap:
-                # use retrofitting
-                dist_transp["PPLX"] = dist_pipeline * seashare_pipeline
-                dist_transp["PPLR"] = dist_pipeline * (1 - seashare_pipeline)
-            else:
-                dist_transp["PPLS"] = dist_pipeline * seashare_pipeline
-                dist_transp["PPL"] = dist_pipeline * (1 - seashare_pipeline)
-        else:
-            # use ship
-            if ship_own_fuel:
-                dist_transp["SHP_OWN"] = dist_ship
-            else:
-                dist_transp["SHP"] = dist_ship
-
-        return dist_transp
-
     @classmethod
     def get_chain_color(cls, chain: ChainType) -> ToolVersionColorType:
         """Get color from chain."""
