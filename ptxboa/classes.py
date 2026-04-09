@@ -8,7 +8,7 @@ import networkx as nx
 import pandas as pd
 from networkx.exception import HasACycle
 
-from ptxboa import logger
+from ptxboa import api_calc, logger
 from ptxboa.api_data import DataHandler
 from ptxboa.static import ProcessStepValues  # must be sorted
 from ptxboa.static import (
@@ -16,6 +16,8 @@ from ptxboa.static import (
     ParameterCodeValues,
     ProcessCodeType,
     ProcessStepType,
+    ResultClassType,
+    ResultCostType,
     SourceRegionCodeType,
     TargetCountryCodeType,
 )
@@ -70,6 +72,7 @@ class Process:
         is_secondary: bool,
         is_main: bool,
         is_main_in_transport_segment: bool,
+        result_process_type: ResultClassType | None,
     ):
 
         if is_in_import_segment:
@@ -88,6 +91,7 @@ class Process:
         self.is_secondary: bool = is_secondary
         self.is_main: bool = is_main
         self.is_main_in_transport_segment: bool = is_main_in_transport_segment
+        self.result_process_type: ResultClassType | None = result_process_type
 
         # links - will be added by Chain
 
@@ -121,6 +125,7 @@ class Process:
             is_main = False
             is_main_in_transport_segment = False
             ProcessClass = ProcessMarket
+            result_process_type = None
         else:
             proc_spec = DataHandler.dimensions["process"].loc[process_code]
             main_flow_code_out = proc_spec["main_flow_code_out"]
@@ -142,6 +147,7 @@ class Process:
                 ProcessClass = ProcessTransport
             elif is_secondary:
                 ProcessClass = ProcessSecondary
+            result_process_type = proc_spec["result_process_type"]
 
         return ProcessClass(
             process_code=process_code,
@@ -156,6 +162,7 @@ class Process:
             is_secondary=is_secondary,
             is_main=is_main,
             is_main_in_transport_segment=is_main_in_transport_segment,
+            result_process_type=result_process_type,
         )
 
     def __str__(self):
@@ -263,12 +270,49 @@ class Process:
             secondary_flows_in=secondary_flows_in,
         )
 
+    def _create_result_cost(
+        self, cost_type: ResultCostType, values: float
+    ) -> ProcessResultCostsType:
+        return ProcessResultCostsType(
+            process_type=self.result_process_type,
+            process_subtype=self.process_code,
+            cost_type=cost_type,
+            values=values,
+        )
+
     def calculate_costs(
         self,
         parameter_data: dict[Process, ProcessDataType],
         results_flows: dict[Process, ProcessResultFlowsType],
         results_costs: dict[Process, list[ProcessResultCostsType]],
-    ) -> list[ProcessResultCostsType]: ...
+    ) -> list[ProcessResultCostsType]:
+        parameters = parameter_data[self]
+        flows = results_flows[self]
+
+        lifetime: int = parameters["LIFETIME"]  # type: ignore
+        flh: float = parameters["FLH"]  # type: ignore
+        capex_rel: float = parameters["CAPEX"]  # type: ignore
+        opex_f: float = parameters["OPEX-F"]  # type: ignore
+        opex_o: float = parameters["OPEX-O"]  # type: ignore
+        wacc: float = parameters["WACC"]  # type: ignore
+        main_flow_out: float = flows.main_flow_out
+
+        if "CAP_F" in parameters:
+            # Storage unit: capacity
+            # TODO: double check units (division by 8760 h)?
+            cap_f: float = parameters["CAP_F"]  # type: ignore
+            capacity = main_flow_out * cap_f / 8760
+        else:
+            capacity = main_flow_out / flh
+
+        capex = capacity * capex_rel
+        capex_ann = api_calc.annuity(wacc, lifetime, capex)
+        opex = opex_f * capacity + opex_o * main_flow_out
+
+        return [
+            self._create_result_cost(cost_type="OPEX", values=opex),
+            self._create_result_cost(cost_type="CAPEX", values=capex_ann),
+        ]
 
     def calculate_emissions(
         self,
@@ -304,6 +348,27 @@ class ProcessTransport(Process):
         """Color for plotting."""
         return "teal"
 
+    def calculate_costs(
+        self,
+        parameter_data: dict[Process, ProcessDataType],
+        results_flows: dict[Process, ProcessResultFlowsType],
+        results_costs: dict[Process, list[ProcessResultCostsType]],
+    ) -> list[ProcessResultCostsType]:
+        """Calculate costs."""
+        parameters = parameter_data[self]
+        flows = results_flows[self]
+
+        opex_t: float = parameters.get("OPEX-T", 0)  # type: ignore
+        dist_transport: float = parameters.get("DIST", 0)  # type: ignore
+        opex_o: float = parameters.get("OPEX-O", 0)  # type: ignore
+
+        main_flow_out: float = flows.main_flow_out
+
+        opex_ot = opex_t * dist_transport
+        opex = (opex_o + opex_ot) * main_flow_out
+
+        return [self._create_result_cost(cost_type="OPEX", values=opex)]
+
 
 class ProcessMarket(Process):
     _parameter_codes_process = []
@@ -313,6 +378,34 @@ class ProcessMarket(Process):
     def color(self) -> str:
         """Color for plotting."""
         return "lightgray"
+
+    def calculate_costs(
+        self,
+        parameter_data: dict[Process, ProcessDataType],
+        results_flows: dict[Process, ProcessResultFlowsType],
+        results_costs: dict[Process, list[ProcessResultCostsType]],
+    ) -> list[ProcessResultCostsType]:
+        """Calculate costs."""
+        parameters = parameter_data[self]
+
+        speccost: float = parameters["SPECCOST"][self.main_flow_code_out]  # type: ignore
+        # create costs not once for main flow out,but instead
+        # for all recipients
+        result = []
+
+        process_flows: dict[Process, float] = {}
+        for p in self._links_out_in_main:
+            process_flows[p] = results_flows[p].main_flow_in  # type: ignore
+        for p in self._links_out_in_secondary:
+            process_flows[p] = results_flows[p].secondary_flows_in[
+                self.main_flow_code_out
+            ]
+
+        for p, flow in process_flows.items():
+            value = flow * speccost
+            result.append(p._create_result_cost(cost_type="FLOW", values=value))
+
+        return result
 
 
 class Chain:
@@ -989,8 +1082,9 @@ class Chain:
 
 
 def _aggregate_results_df(
-    df: pd.DataFrame, columns_index: list[str], columns_value: list[str] = ["values"]
+    df: pd.DataFrame, columns_index: list[str], columns_value: list[str] | None = None
 ) -> pd.DataFrame:
+    columns_value = columns_value or ["values"]
     return df[columns_index + columns_value].groupby(columns_index).sum().reset_index()
 
 

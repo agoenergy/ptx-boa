@@ -138,6 +138,9 @@ def main():
 
         parameter_data_ = chain_process._split_parameter_data(data=parameter_data)
         results_flows = chain_process._calculate_flows(parameter_data=parameter_data_)
+        results_costs = chain_process._calculate_costs(
+            parameter_data=parameter_data_, results_flows=results_flows
+        )
 
         edge_values_speccost = {
             (p, p_): parameter_data_[p]["SPECCOST"][p.main_flow_code_out]  # type: ignore
