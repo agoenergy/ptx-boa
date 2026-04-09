@@ -222,7 +222,46 @@ class Process:
         self,
         parameter_data: dict[Process, ProcessDataType],
         results_flows: dict[Process, ProcessResultFlowsType],
-    ) -> ProcessResultFlowsType: ...
+    ) -> ProcessResultFlowsType:
+        # main_flow_out: sum of outgoing
+        if self.is_last:
+            main_flow_out = 1
+        else:
+            main_flow_out = 0
+            for p in self._links_out_in_main:
+                main_flow_out += results_flows[p].main_flow_in  # type: ignore - this one must have a value
+            for p in self._links_out_in_secondary:
+                main_flow_out += results_flows[p].secondary_flows_in[
+                    self.main_flow_code_out
+                ]
+            if not main_flow_out:
+                logger.warning("Process with main_flow_out = 0: %s", self)
+
+        if not self.main_flow_code_in:
+            main_flow_in = None
+        else:
+            eff: float = parameter_data[self].get("EFF") or 0  # type:ignore
+            if eff <= 0:
+                logger.error("Process with eff = %s: %s", eff, self)
+                eff = 1
+            main_flow_in = main_flow_out / eff
+
+        secondary_flows_in = {}
+        for flow_code in self.secondary_flow_types:
+            conv: float = (
+                parameter_data[self].get("CONV", {}).get(flow_code) or 0
+            )  # type:ignore
+            if conv == 0:
+                logger.warning("Process with conv = 0 %s / %s", self, flow_code)
+            elif conv < 0:
+                conv = 0
+            secondary_flows_in[flow_code] = main_flow_out * conv
+
+        return ProcessResultFlowsType(
+            main_flow_out=main_flow_out,
+            main_flow_in=main_flow_in,
+            secondary_flows_in=secondary_flows_in,
+        )
 
     def calculate_costs(
         self,
@@ -512,7 +551,16 @@ class Chain:
             node_pos,
             with_labels=False,
             node_color=[k.color for k in self._graph.nodes()],
-            width=[2 if p.is_main else 1 for p, _p in self._graph.edges()],
+            width=[
+                (
+                    2
+                    if self._graph.get_edge_data(p, p_)["in_main"]
+                    and p.is_main
+                    and p_.is_main
+                    else 1
+                )
+                for p, p_ in self._graph.edges()
+            ],
             node_size=[
                 (1000 if p.is_market else 2000) * scale for p in self._graph.nodes()
             ],
