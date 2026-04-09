@@ -10,11 +10,12 @@ from networkx.exception import HasACycle
 
 from ptxboa import logger
 from ptxboa.api_data import DataHandler
+from ptxboa.static import ProcessStepValues  # must be sorted
 from ptxboa.static import (
     FlowCodeType,
+    ParameterCodeValues,
     ProcessCodeType,
     ProcessStepType,
-    ProcessStepValues,  # must be sorted
     SourceRegionCodeType,
     TargetCountryCodeType,
 )
@@ -34,6 +35,27 @@ from ptxboa.static._type_defs import (
 
 
 class Process:
+    _parameter_codes_process = [
+        "WACC",
+        "LIFETIME",
+        "EFF",
+        "FLH",
+        "CAPEX",
+        "OPEX-F",
+        "OPEX-O",
+    ]
+    _parameter_codes_process_flow = [
+        "CH4SHARE",
+        "EF_E",
+        "EF_M",
+        "CBOUND",
+        # "CONV-OT", # TODO: ?
+        "CO2CPT-R",
+        "CO2CPT-S",
+        "CONV",
+        "LOSS",
+    ]
+
     def __init__(
         self,
         process_code: ProcessCodeType | FlowCodeType,
@@ -42,17 +64,17 @@ class Process:
         main_flow_code_in: FlowCodeType | None,
         secondary_flow_types: frozenset[FlowCodeType],
         is_last: bool,
-        is_in_import_region: bool,
+        is_in_import_segment: bool,
         is_initial: bool,
         is_market: bool,
         is_secondary: bool,
         is_main: bool,
-        is_transport: bool,
+        is_main_in_transport_segment: bool,
     ):
 
-        if is_in_import_region:
+        if is_in_import_segment:
             assert not is_initial
-            assert not is_transport
+            assert not is_main_in_transport_segment
 
         self.process_code: ProcessCodeType | FlowCodeType = process_code
         self.process_step: ProcessStepType | str | None = process_step
@@ -60,12 +82,12 @@ class Process:
         self.main_flow_code_in: FlowCodeType | None = main_flow_code_in
         self.secondary_flow_types: frozenset[FlowCodeType] = secondary_flow_types
         self.is_last: bool = is_last
-        self.is_in_import_region: bool = is_in_import_region
+        self.is_in_import_segment: bool = is_in_import_segment
         self.is_initial: bool = is_initial
         self.is_market: bool = is_market
         self.is_secondary: bool = is_secondary
         self.is_main: bool = is_main
-        self.is_transport: bool = is_transport
+        self.is_main_in_transport_segment: bool = is_main_in_transport_segment
 
         # links - will be added by Chain
 
@@ -74,13 +96,17 @@ class Process:
         self._link_in_main: Process | None = None
         self._links_in_secondary: dict[FlowCodeType, Process] = {}
 
+    @property
+    def is_in_export_segment(self) -> bool:
+        return not (self.is_in_import_segment or self.is_main_in_transport_segment)
+
     @classmethod
     def create_with_subclass(
         cls,
         process_code: ProcessCodeType | FlowCodeType,
         process_step: ProcessStepType | str | None = None,
         is_last: bool = False,
-        is_in_import_region: bool = False,
+        is_in_import_segment: bool = False,
     ) -> "Process":
 
         is_market = process_code in DataHandler.dimensions["flow"].index  # is flow code
@@ -93,7 +119,7 @@ class Process:
             is_initial = False
             is_secondary = False
             is_main = False
-            is_transport = False
+            is_main_in_transport_segment = False
             ProcessClass = ProcessMarket
         else:
             proc_spec = DataHandler.dimensions["process"].loc[process_code]
@@ -106,13 +132,13 @@ class Process:
 
             is_secondary = bool(proc_spec["is_secondary"])
             is_main = not is_secondary
-            is_transport = bool(
+            is_main_in_transport_segment = bool(
                 proc_spec["is_transport"]
                 and not proc_spec["is_transformation"]  # no pre/post
                 and not proc_spec["is_secondary"]  # CSS
                 and not proc_spec["is_storage"]  # H2/EL Storage
             )
-            if is_transport:
+            if is_main_in_transport_segment:
                 ProcessClass = ProcessTransport
             elif is_secondary:
                 ProcessClass = ProcessSecondary
@@ -124,12 +150,12 @@ class Process:
             main_flow_code_in=main_flow_code_in,
             secondary_flow_types=secondary_flow_types,
             is_last=is_last,
-            is_in_import_region=is_in_import_region,
+            is_in_import_segment=is_in_import_segment,
             is_initial=is_initial,
             is_market=is_market,
             is_secondary=is_secondary,
             is_main=is_main,
-            is_transport=is_transport,
+            is_main_in_transport_segment=is_main_in_transport_segment,
         )
 
     def __str__(self):
@@ -144,6 +170,24 @@ class Process:
         return result
 
     @property
+    def _main_flow_code_in_or_out(self) -> FlowCodeType:
+        """Main flow code in, or out if it does not exist."""
+        return self.main_flow_code_in or self.main_flow_code_out
+
+    @property
+    def _parameter_flow_types(self) -> set[FlowCodeType]:
+        """Flow types for which parameter data should be loaded."""
+        result = set(self.secondary_flow_types)
+        # also add main flow in (for market/initial proces,
+        # those dont exist and we need out)
+        result.add(self._main_flow_code_in_or_out)
+        # FIXME: for testing compatebility, we also add main_flow out,
+        # but can be removed later
+        result.add(self.main_flow_code_out)
+
+        return result
+
+    @property
     def color(self) -> str:
         """Color for plotting."""
         return "lightblue"
@@ -152,7 +196,27 @@ class Process:
         self,
         parameter_getters: "ParameterGetters",
         parameter_values: DataQueryDicType,
-    ) -> ProcessDataType: ...
+    ) -> ProcessDataType:
+        data: ProcessDataType = {}
+        # load parameters that are process dependent
+
+        process_code: ProcessCodeType = self.process_code  # type: ignore
+
+        for p in self._parameter_codes_process:
+            data[p] = parameter_getters[p](
+                process_code=process_code, flow_code=None, **parameter_values
+            )
+
+        # load parameters that are process and flow dependent
+        for p in self._parameter_codes_process_flow:
+            data[p] = {
+                f: parameter_getters[p](
+                    process_code=process_code, flow_code=f, **parameter_values
+                )
+                for f in self._parameter_flow_types
+            }
+
+        return data
 
     def calculate_flows(
         self,
@@ -183,6 +247,19 @@ class ProcessSecondary(Process):
 
 
 class ProcessTransport(Process):
+    _parameter_codes_process = ["OPEX-T", "LOSS-T", "OPEX-O"]
+    _parameter_codes_process_flow = [
+        "CH4SHARE",  # TODO: ?
+        "EF_E",  # TODO: ?
+        "EF_M",  # TODO: ?
+        # "CBOUND",
+        "CONV-OT",
+        # "CO2CPT-R",
+        # "CO2CPT-S",
+        # "CONV", # TODO: ?
+        # "LOSS", # TODO: ?
+    ]
+
     @property
     def color(self) -> str:
         """Color for plotting."""
@@ -190,6 +267,9 @@ class ProcessTransport(Process):
 
 
 class ProcessMarket(Process):
+    _parameter_codes_process = []
+    _parameter_codes_process_flow = ["SPECCOST"]
+
     @property
     def color(self) -> str:
         """Color for plotting."""
@@ -235,6 +315,12 @@ class Chain:
                     assert other.main_flow_code_out not in process._links_in_secondary
                     process._links_in_secondary[other.main_flow_code_out] = other
             assert set(process._links_in_secondary) == set(process.secondary_flow_types)
+
+        # save initial and last process
+        self.initial_process = self._all_processes_ordered_forwards[0]
+        self.last_process = self._all_processes_ordered_forwards[-1]
+        assert self.initial_process.is_initial
+        assert self.last_process.is_last
 
     @classmethod
     def get_or_create(cls, chain_def: ChainDef) -> "Chain":
@@ -285,37 +371,37 @@ class Chain:
             if p and s not in dropped_transport_steps
         ]
 
-        is_in_import_region = False
+        is_in_import_segment = False
         _was_transport = False
         main_processes = []
         for i, (process_code, process_step) in enumerate(main_process_codes_steps):
             process = Process.create_with_subclass(
                 process_code=process_code,
                 process_step=process_step,
-                is_in_import_region=is_in_import_region,
+                is_in_import_segment=is_in_import_segment,
                 is_last=(i + 1 == len(main_process_codes_steps)),
             )
 
-            # is_in_import_region: first non-transport step
-            if not process.is_transport and _was_transport:
+            # is_in_import_segment: first non-transport step
+            if not process.is_main_in_transport_segment and _was_transport:
                 # FIXME: better way then re-creating process?
                 # we cannot change attribtue because of frozen dataclass
-                is_in_import_region = True
-                process.is_in_import_region = is_in_import_region
+                is_in_import_segment = True
+                process.is_in_import_segment = is_in_import_segment
 
-            _was_transport = _was_transport or process.is_transport
+            _was_transport = _was_transport or process.is_main_in_transport_segment
 
             main_processes.append(process)
 
         secondary_processes_export = [
             Process.create_with_subclass(
-                process_code=process_code, is_in_import_region=False
+                process_code=process_code, is_in_import_segment=False
             )
             for process_code in secondary_process_codes_export
         ]
         secondary_processes_import = [
             Process.create_with_subclass(
-                process_code=process_code, is_in_import_region=True
+                process_code=process_code, is_in_import_segment=True
             )
             for process_code in secondary_process_codes_import
         ]
@@ -334,13 +420,42 @@ class Chain:
         target_country_code: TargetCountryCodeType,
         use_user_data: bool = True,
     ) -> CalculateDataType:
-        parameter_data = self._get_parameter_data_from_processes(
-            data_handler=data_handler,
-            source_region_code=source_region_code,
-            target_country_code=target_country_code,
-            use_user_data=use_user_data,
+
+        parameter_getters = self._get_parameter_getters(
+            data_handler=data_handler, use_user_data=use_user_data
         )
-        return self._merge_parameter_data(parameter_data=parameter_data)
+        parameter_values: DataQueryDicType = {
+            "source_region_code": source_region_code,
+            "target_country_code": target_country_code,
+        }
+
+        parameter_data = self._get_parameter_data_from_processes(
+            parameter_getters=parameter_getters,
+            parameter_values=parameter_values,
+        )
+
+        flh_opt_process: dict[ProcessCodeType, ProcessDataType] = {}
+        speccost_for_flh_opt: dict[FlowCodeType, float] = {}
+
+        # FIXME: only if we we optimize:
+        if True:
+            speccost_for_flh_opt = self._get_speccost_for_flh_opt(
+                parameter_getters=parameter_getters,
+                parameter_values=parameter_values,
+            )
+            # only if we optimize for RES-HYBR
+            if self.initial_process.process_code == "RES-HYBR":
+                flh_opt_process = self._get_parameter_data_flh_opt_process_for_res_hybr(
+                    parameter_getters=parameter_getters,
+                    parameter_values=parameter_values,
+                )
+
+        return self._merge_parameter_data(
+            parameter_data=parameter_data,
+            context=parameter_values,
+            flh_opt_process=flh_opt_process,
+            speccost_for_flh_opt=speccost_for_flh_opt,
+        )
 
     def calculate(self, data: CalculateDataType) -> PtxCalcResult:
         parameter_data = self._split_parameter_data(data=data)
@@ -429,49 +544,119 @@ class Chain:
     def _get_default_parameter_values(self) -> DataQueryDicType:
         """For FLH lookup we need these process codes."""
         return {  # type: ignore
-            "process_res": self._processes_by_step.get("RES"),
-            "process_ely": self._processes_by_step.get("ELY"),
-            "process_deriv": self._processes_by_step.get("DERIV"),
+            key: (
+                self._processes_by_step[step].process_code
+                if step in self._processes_by_step
+                else None
+            )
+            for key, step in {
+                "process_res": "RES",
+                "process_ely": "ELY",
+                "process_deriv": "DERIV",
+            }.items()
         }
 
     def _get_parameter_getters(
         self,
         data_handler: "DataHandler",
         use_user_data: bool = True,
-    ) -> ParameterGetters: ...
+    ) -> ParameterGetters:
+
+        default_parameter_values = self._get_default_parameter_values()
+
+        def make_parameter_getters(parameter_code):
+            default = data_handler.PARAMETER_DEFAULTS.get(parameter_code, 0)
+
+            def _get_parameter_value(**kwargs):
+
+                return data_handler._get_parameter_value(
+                    parameter_code=parameter_code,
+                    **kwargs,  # type: ignore
+                    **default_parameter_values,
+                    default=default,
+                    use_user_data=use_user_data,
+                )
+
+            return _get_parameter_value
+
+        parameter_getters = {}
+        for p in ParameterCodeValues:
+            parameter_getters[p] = make_parameter_getters(p)
+
+        return parameter_getters
+
+    def _get_parameter_data_flh_opt_process_for_res_hybr(
+        self,
+        parameter_getters: ParameterGetters,
+        parameter_values: DataQueryDicType,
+    ) -> dict[ProcessCodeType, ProcessDataType]:
+        flh_opt_process = {}
+
+        procs_required_for_opt_res_hybr: list[ProcessCodeType] = ["PV-FIX", "WIND-ON"]
+
+        # when optimzing for RES=RES-HYBR, optimizer needs data for
+        # "PV-FIX" and "WIND-ON"
+        for process_code in procs_required_for_opt_res_hybr:
+            process = Process.create_with_subclass(process_code=process_code)
+            parameter_data = process.get_parameter_data(
+                parameter_getters=parameter_getters,
+                parameter_values=parameter_values,
+            )
+            flh_opt_process[process_code] = parameter_data
+
+        return flh_opt_process
+
+    def _get_speccost_for_flh_opt(
+        self,
+        parameter_getters: ParameterGetters,
+        parameter_values: DataQueryDicType,
+    ) -> dict[FlowCodeType, float]:
+        speccost_for_flh_opt = {}
+
+        # api_optimize.py: always wants SPECCOST for certain flows
+        speccosts_required_for_opt: list[FlowCodeType] = [
+            "CO2-G",
+            "H2O-L",
+            "HEAT",
+            "N2-G",
+        ]
+
+        flow_code: FlowCodeType
+        for flow_code in speccosts_required_for_opt:
+            parameter_data = Process.create_with_subclass(
+                process_code=flow_code
+            ).get_parameter_data(
+                parameter_getters=parameter_getters,
+                parameter_values=parameter_values,
+            )
+            speccost_for_flh_opt[flow_code] = parameter_data["SPECCOST"][
+                flow_code
+            ]  # type:ignore
+
+        return speccost_for_flh_opt
 
     def _get_parameter_data_from_processes(
         self,
-        data_handler: "DataHandler",
-        source_region_code: SourceRegionCodeType,
-        target_country_code: TargetCountryCodeType,
-        use_user_data: bool = True,
+        parameter_getters: ParameterGetters,
+        parameter_values: DataQueryDicType,
     ) -> dict[Process, ProcessDataType]:
         result: dict[Process, ProcessDataType] = {}
 
-        parameter_getters = self._get_parameter_getters(
-            data_handler=data_handler, use_user_data=use_user_data
-        )
-        parameter_getters_default = self._get_default_parameter_values()
+        parameter_values_export_transport = parameter_values
+        parameter_values_import: DataQueryDicType = parameter_values | {  # type:ignore
+            # Switched!
+            "source_region_code": parameter_values["target_country_code"]
+        }
 
         for process in self._all_processes_ordered_forwards:
-            parameter_values = parameter_getters_default | cast(
-                DataQueryDicType,
-                (
-                    {
-                        "source_region_code": target_country_code,
-                        "target_country_code": target_country_code,
-                    }  # NOTE: source_region_code
-                    if process.is_in_import_region
-                    else {
-                        "source_region_code": source_region_code,
-                        "target_country_code": target_country_code,
-                    }
-                ),
+            parameter_values_sel = (
+                parameter_values_import
+                if process.is_in_import_segment
+                else parameter_values_export_transport
             )
-
             result[process] = process.get_parameter_data(
-                parameter_getters=parameter_getters, parameter_values=parameter_values
+                parameter_getters=parameter_getters,
+                parameter_values=parameter_values_sel,
             )
         return result
 
@@ -562,7 +747,79 @@ class Chain:
     def _merge_parameter_data(
         self,
         parameter_data: dict[Process, ProcessDataType],
-    ) -> CalculateDataType: ...
+        flh_opt_process: dict[ProcessCodeType, ProcessDataType],
+        speccost_for_flh_opt: dict[FlowCodeType, float],
+        context: DataQueryDicType,
+    ) -> CalculateDataType:
+
+        main_export_process_chain = [
+            _add_step_and_code(p, parameter_data[p])
+            for p in self._main_processes_ordered_forwards
+            if p.is_in_export_segment
+        ]
+
+        main_transport_process_chain = [
+            _add_step_and_code(p, parameter_data[p])
+            for p in self._main_processes_ordered_forwards
+            if p.is_main_in_transport_segment
+        ]
+
+        main_import_process_chain = [
+            _add_step_and_code(p, parameter_data[p])
+            for p in self._main_processes_ordered_forwards
+            if p.is_in_import_segment
+        ]
+
+        secondary_process_import = {
+            p.main_flow_code_out: _add_step_and_code(p, parameter_data[p])
+            for p in self._secondary_processes_ordered_forwards
+            if p.is_in_export_segment
+        }
+
+        secondary_process = {
+            p.main_flow_code_out: _add_step_and_code(p, parameter_data[p])
+            for p in self._secondary_processes_ordered_forwards
+            if p.is_in_export_segment  # no secondary processes in transport segmant
+        }
+
+        # parameter: merge speccost, add wacc
+        # in export+transport sections and import section
+        speccost = speccost_for_flh_opt.copy()
+        parameter = {"WACC": parameter_data[self.initial_process], "SPECCOST": speccost}
+        for p in self._market_processes_ordered_forwards:
+            if p.is_in_import_segment:
+                # only export + transport segment
+                continue
+            for f, v in parameter_data[p]["SPECCOST"].items():  # type: ignore
+                if v:
+                    parameter["SPECCOST"][f] = v
+
+        parameter_import = {
+            "WACC": parameter_data[self.last_process],
+            # FIXME remove later or update test data
+            # gapfill parameter_import from parameter, old data did not
+            # have some parameters for import countries
+            "SPECCOST": {k: v for k, v in parameter.items() if v},
+        }
+        for p in self._market_processes_ordered_forwards:
+            if not p.is_in_import_segment:
+                continue
+            for f, v in parameter_data[p]["SPECCOST"].items():  # type: ignore
+                if v:
+                    parameter_import["SPECCOST"][f] = v
+
+        result: CalculateDataType = {
+            "context": context,
+            "parameter": parameter,
+            "parameter_import": parameter_import,
+            "main_export_process_chain": main_export_process_chain,
+            "main_transport_process_chain": main_transport_process_chain,
+            "main_import_process_chain": main_import_process_chain,
+            "secondary_process": secondary_process,
+            "secondary_process_import": secondary_process_import,
+            "flh_opt_process": flh_opt_process,
+        }
+        return result
 
     def _split_parameter_data(
         self,
@@ -581,7 +838,7 @@ class Chain:
         for i, p in enumerate(self._main_processes_ordered_forwards):
             y = 0 if i > 0 else 0.25  # initial: offset a little
             node_pos[p] = (x, y)
-            if p.is_in_import_region and x_start_import is None:
+            if p.is_in_import_segment and x_start_import is None:
                 x_start_import = x
             x += 2
 
@@ -592,7 +849,7 @@ class Chain:
         x_export = 0
         x_import = x_start_import
         for p in self._secondary_processes_ordered_forwards:
-            if p.is_in_import_region:
+            if p.is_in_import_segment:
                 x_import += 1.5
                 x = x_import
             else:
@@ -607,7 +864,7 @@ class Chain:
         x_export = 0
         x_import = x_start_import
         for p in self._market_processes_ordered_forwards:
-            if p.is_in_import_region:
+            if p.is_in_import_segment:
                 x_import += 1
                 x = x_import
             else:
@@ -676,11 +933,11 @@ def _create_graph(
         proc_recipient: Process,
         flow_type: FlowCodeType,
         in_main: bool = False,
-        is_in_import_region: bool = False,
+        is_in_import_segment: bool = False,
     ):
         market_process = Process.create_with_subclass(
             process_code=flow_type,
-            is_in_import_region=is_in_import_region,
+            is_in_import_segment=is_in_import_segment,
         )
         graph.add_node(market_process)
         add_edge(
@@ -703,7 +960,7 @@ def _create_graph(
                 proc_recipient=proc_recipient,
                 flow_type=proc_provider.main_flow_code_out,
                 in_main=in_main,
-                is_in_import_region=proc_recipient.is_in_import_region,
+                is_in_import_segment=proc_recipient.is_in_import_segment,
             )
 
     # match required and provided flows in specific order without creating loops
@@ -741,11 +998,11 @@ def _create_graph(
         flow_provider_sec_import[sec_proc.main_flow_code_out] = sec_proc
 
     def get_provider(
-        flow_code: FlowCodeType, is_in_import_region: bool
+        flow_code: FlowCodeType, is_in_import_segment: bool
     ) -> Process | None:
         providers = (
             flow_provider_sec_import
-            if is_in_import_region
+            if is_in_import_segment
             else flow_provider_sec_or_initial_export
         )
         return providers.get(flow_code)
@@ -763,7 +1020,7 @@ def _create_graph(
 
         for flow_code, in_main in todo:
             provider = get_provider(
-                flow_code=flow_code, is_in_import_region=process.is_in_import_region
+                flow_code=flow_code, is_in_import_segment=process.is_in_import_segment
             )
             if provider:
                 add_edge_or_create_market(
@@ -774,7 +1031,7 @@ def _create_graph(
                     proc_recipient=process,
                     flow_type=flow_code,
                     in_main=in_main,
-                    is_in_import_region=process.is_in_import_region,
+                    is_in_import_segment=process.is_in_import_segment,
                 )
 
     # add nodes
@@ -837,3 +1094,10 @@ def _get_dropped_transport_steps(
         raise NotImplementedError(transport)
 
     return drop_steps
+
+
+def _add_step_and_code(process: Process, data: ProcessDataType) -> ProcessDataType:
+    return data | {  # type: ignore
+        "process_code": process.process_code,
+        "step": process.process_step,
+    }

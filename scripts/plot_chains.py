@@ -9,7 +9,7 @@ from typing import Iterable
 import coloredlogs
 import pandas as pd
 
-from ptxboa import logger
+from ptxboa import DEFAULT_DATA_DIR, logger
 from ptxboa.api import _translate_and_validate_user_settings
 from ptxboa.api_data import DataHandler
 from ptxboa.classes import Chain
@@ -119,9 +119,9 @@ def main():
 
         logger.info(f"{i + 1}/{len(permutations)}: {settings} => {name}")
 
-        # data_handler = DataHandler(
-        #    scenario=scenario, data_dir=DEFAULT_DATA_DIR, user_data=settings.user_data
-        # )
+        data_handler = DataHandler(
+            scenario=scenario, data_dir=DEFAULT_DATA_DIR, user_data=settings.user_data
+        )
 
         chain_def, _tool_version_color, _optimize_flh = (
             _translate_and_validate_user_settings(
@@ -130,20 +130,18 @@ def main():
         )
         chain_process = Chain.get_or_create(chain_def)
 
-        # data = chain_process.get_calculation_data(  # noqa
-        #    data_handler=data_handler,
-        #    source_region_code=_df_region_by_name.at[settings.region, "region_code"],  # type: ignore # noqa
-        #    target_country_code=_df_region_by_name.at[settings.country, "region_code"],  # type: ignore # noqa
-        # )
+        parameter_data = chain_process.get_calculation_data(  # noqa
+            data_handler=data_handler,
+            source_region_code=_df_region_by_name.at[settings.region, "region_code"],  # type: ignore # noqa
+            target_country_code=_df_region_by_name.at[settings.country, "region_code"],  # type: ignore # noqa
+        )
 
-        # process_parameters = chain_process._get_process_parameters(data=data)
-        # result_flows = chain_process.calculate_flows(
-        #    process_parameters=process_parameters
-        # )
+        parameter_data_ = chain_process._split_parameter_data(data=parameter_data)
+        results_flows = chain_process._calculate_flows(parameter_data=parameter_data_)
 
         # TODO: plot with data
-        result_flows = {}
-        chain_process.plot(file_basename=f"{i:03d}_{name}", results_flows=result_flows)
+        results_flows = {}
+        chain_process.plot(file_basename=f"{i:03d}_{name}", results_flows=results_flows)
 
 
 if __name__ == "__main__":
