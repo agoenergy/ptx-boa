@@ -317,10 +317,10 @@ class Chain:
             assert set(process._links_in_secondary) == set(process.secondary_flow_types)
 
         # save initial and last process
-        self.initial_process = self._all_processes_ordered_forwards[0]
-        self.last_process = self._all_processes_ordered_forwards[-1]
-        assert self.initial_process.is_initial
-        assert self.last_process.is_last
+        self.initial_process = self._main_processes_ordered_forwards[0]
+        self.last_process = self._main_processes_ordered_forwards[-1]
+        assert self.initial_process.is_initial, self.initial_process
+        assert self.last_process.is_last, self.last_process
 
     @classmethod
     def get_or_create(cls, chain_def: ChainDef) -> "Chain":
@@ -474,11 +474,28 @@ class Chain:
         )
 
     def plot(
-        self, file_basename: str, results_flows: dict[Process, ProcessResultFlowsType]
+        self,
+        file_basename: str,
+        edge_values: dict[tuple[Process, Process], float] | None = None,
     ):
         """Create plot and save as png."""
         scale = 1
         node_pos = self._plot_get_pos()
+
+        def _get_label_str(item) -> str:
+            if isinstance(item, float):
+                return f"{item:.2E}"
+            return str(item)
+
+        def _get_label(*items) -> str:
+            return "\n".join(_get_label_str(x) for x in items)
+
+        def _get_edge_label(p1: Process, p2: Process) -> str:
+            items = []
+            items.append(p1.main_flow_code_out)
+            if edge_values and (p1, p2) in edge_values:
+                items.append(edge_values.get((p1, p2)))
+            return _get_label(*items)
 
         plt.close()
         plt.clf()
@@ -514,9 +531,7 @@ class Chain:
         nx.draw_networkx_edge_labels(
             self._graph,
             node_pos,
-            edge_labels={
-                (p, p_): (p.main_flow_code_out) for p, p_ in self._graph.edges()
-            },
+            edge_labels={pp: _get_edge_label(*pp) for pp in self._graph.edges()},
             font_size=6,
             font_color="black",
             # label_pos=0.5, # noqa
@@ -785,28 +800,29 @@ class Chain:
         # parameter: merge speccost, add wacc
         # in export+transport sections and import section
         speccost = speccost_for_flh_opt.copy()
-        parameter = {"WACC": parameter_data[self.initial_process], "SPECCOST": speccost}
+        parameter = {
+            "WACC": parameter_data[self.initial_process]["WACC"],
+            "SPECCOST": speccost,
+        }
         for p in self._market_processes_ordered_forwards:
             if p.is_in_import_segment:
                 # only export + transport segment
                 continue
             for f, v in parameter_data[p]["SPECCOST"].items():  # type: ignore
-                if v:
-                    parameter["SPECCOST"][f] = v
+                parameter["SPECCOST"][f] = v
 
         parameter_import = {
-            "WACC": parameter_data[self.last_process],
+            "WACC": parameter_data[self.last_process].get("WACC", parameter["WACC"]),
             # FIXME remove later or update test data
             # gapfill parameter_import from parameter, old data did not
             # have some parameters for import countries
-            "SPECCOST": {k: v for k, v in parameter.items() if v},
+            "SPECCOST": parameter["SPECCOST"].copy(),
         }
         for p in self._market_processes_ordered_forwards:
             if not p.is_in_import_segment:
                 continue
             for f, v in parameter_data[p]["SPECCOST"].items():  # type: ignore
-                if v:
-                    parameter_import["SPECCOST"][f] = v
+                parameter_import["SPECCOST"][f] = v
 
         result: CalculateDataType = {
             "context": context,
@@ -869,6 +885,8 @@ class Chain:
                     p.main_flow_code_out: pdata["SPECCOST"][p.main_flow_code_out]
                 }
             }
+
+        assert set(parameter_data) == set(self._graph.nodes())
 
         return parameter_data
 

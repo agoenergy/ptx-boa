@@ -137,11 +137,19 @@ def main():
         )
 
         parameter_data_ = chain_process._split_parameter_data(data=parameter_data)
-        results_flows = chain_process._calculate_flows(parameter_data=parameter_data_)
+        # results_flows = chain_process._calculate_flows(parameter_data=parameter_data_)
 
         # TODO: plot with data
-        results_flows = {}
-        chain_process.plot(file_basename=f"{i:03d}_{name}", results_flows=results_flows)
+        edge_values_speccost = {
+            (p, p_): parameter_data_[p]["SPECCOST"][p.main_flow_code_out]  # type: ignore
+            for p, p_ in chain_process._graph.edges()
+            if p.is_market
+        }
+
+        chain_process.plot(
+            file_basename=f"{i:03d}_{name}",
+            edge_values=edge_values_speccost,  # type: ignore
+        )
 
 
 if __name__ == "__main__":
