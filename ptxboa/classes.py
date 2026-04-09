@@ -629,9 +629,9 @@ class Chain:
                 parameter_getters=parameter_getters,
                 parameter_values=parameter_values,
             )
-            speccost_for_flh_opt[flow_code] = parameter_data["SPECCOST"][
+            speccost_for_flh_opt[flow_code] = parameter_data["SPECCOST"][  # type:ignore
                 flow_code
-            ]  # type:ignore
+            ]
 
         return speccost_for_flh_opt
 
@@ -824,7 +824,53 @@ class Chain:
     def _split_parameter_data(
         self,
         data: CalculateDataType,
-    ) -> dict[Process, ProcessDataType]: ...
+    ) -> dict[Process, ProcessDataType]:
+        parameter_data: dict[Process, ProcessDataType] = {}
+        # TODO: data for main processes is list for each segment (exp, transp, imp)
+        # we can get them by
+        # - position (assuming order has not been messed with)
+        # - they all SHOULD have a unique step - but thats not certain in the future
+        # - process codes SHOULD also be unique, at least per segment, but thats
+        #   also not guaranteed - there could be chains with multiple H2 storages
+
+        for i, p in enumerate(
+            p for p in self._main_processes_ordered_forwards if p.is_in_export_segment
+        ):
+            parameter_data[p] = data["main_export_process_chain"][i]
+        for i, p in enumerate(
+            p
+            for p in self._main_processes_ordered_forwards
+            if p.is_main_in_transport_segment
+        ):
+            parameter_data[p] = data["main_transport_process_chain"][i]
+        for i, p in enumerate(
+            p for p in self._main_processes_ordered_forwards if p.is_in_import_segment
+        ):
+            parameter_data[p] = data["main_import_process_chain"][i]
+
+        # secondary processes: not in transport
+        for p in self._secondary_processes_ordered_forwards:
+            pdata = (
+                data["secondary_process_import"]
+                if p.is_in_import_segment
+                else data["secondary_process"]
+            )
+            parameter_data[p] = pdata[p.main_flow_code_out]
+
+        # market processes: if in transport - use data from exportsegment
+        for p in self._market_processes_ordered_forwards:
+            pdata = (
+                data["parameter_import"]
+                if p.is_in_import_segment
+                else data["parameter"]
+            )
+            parameter_data[p] = {
+                "SPECCOST": {
+                    p.main_flow_code_out: pdata["SPECCOST"][p.main_flow_code_out]
+                }
+            }
+
+        return parameter_data
 
     def _plot_get_pos(self) -> dict[Process, tuple[float, float]]:
 
