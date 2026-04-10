@@ -10,13 +10,13 @@ from networkx.exception import HasACycle
 
 from ptxboa import api_calc, logger
 from ptxboa.api_data import DataHandler
+from ptxboa.static import ProcessStepValues  # must be sorted
 from ptxboa.static import (
     EmissionType,
     FlowCodeType,
     ParameterCodeValues,
     ProcessCodeType,
     ProcessStepType,
-    ProcessStepValues,  # must be sorted
     ResultClassType,
     ResultCostType,
     ResultEmissionType,
@@ -230,6 +230,14 @@ class Process:
 
         return data
 
+    @property
+    def is_css(self) -> bool:
+        # FIXME: get from process data?
+        # or from main_flow
+
+        return self.process_code == "CO2-T+S#B"
+        # return self.main_flow_code_out == "CO2-C"
+
     def calculate_flows(
         self,
         parameter_data: dict[Process, ProcessDataType],
@@ -260,7 +268,9 @@ class Process:
 
         secondary_flows_in = {}
         for flow_code in self.secondary_flow_types:
-            conv: float = parameter_data[self].get("CONV", {}).get(flow_code) or 0  # type:ignore
+            conv: float = (
+                parameter_data[self].get("CONV", {}).get(flow_code) or 0
+            )  # type:ignore
             if conv == 0:
                 logger.warning("Process with conv = 0 %s / %s", self, flow_code)
             elif conv < 0:
@@ -335,8 +345,11 @@ class Process:
         results_emissions: dict[Process, ProcessEmissionType],
     ) -> ProcessEmissionType:
         # FIMXE: DUMMY
+
         return {
-            "mass": ProcessEmissionType_E_M(co2_captured=1),
+            "mass": ProcessEmissionType_E_M(
+                co2_captured=1 if "CO2-C" in self.secondary_flow_types else 0
+            ),
             "emission": ProcessEmissionType_E_M(),
         }
 
@@ -494,24 +507,22 @@ class ProcessMarket(Process):
 class Chain:
     _instances: dict[object, "Chain"] = {}
 
-    def __init__(self, _graph: nx.DiGraph[Process]):
-        self._graph: nx.DiGraph[Process] = _graph
-        self._all_processes_ordered_forwards: tuple[Process, ...] = tuple(
-            nx.topological_sort(self._graph)
-        )
+    def _create_all_processes_ordered_forwards(self) -> tuple[Process, ...]:
+        return tuple(nx.topological_sort(self._graph))
 
-        self._processes_by_step: dict[ProcessStepType | str, Process] = {}
+    def _create_processes_by_step(self) -> dict[ProcessStepType | str, Process]:
+        processes_by_step: dict[ProcessStepType | str, Process] = {}
         for process in self._all_processes_ordered_forwards:
             process_step = process.process_step
             if not process_step:
                 continue
-            if process_step in self._processes_by_step:
+            if process_step in processes_by_step:
                 logger.error("Duplicate step: %s", process.process_step)
                 continue
-            self._processes_by_step[process.process_step] = process  # type: ignore
+            processes_by_step[process.process_step] = process  # type: ignore
+        return processes_by_step
 
-        # add links to processes for faster lookup + checks
-
+    def _link_processes(self) -> None:
         for process in self._graph.nodes():
             for _, other in self._graph.out_edges(process):
                 attrs = self._graph.get_edge_data(process, other)
@@ -531,6 +542,32 @@ class Chain:
                     process._links_in_secondary[other.main_flow_code_out] = other
             assert set(process._links_in_secondary) == set(process.secondary_flow_types)
 
+    def _create_css_subgraph_processes_ordered_backwards(
+        self,
+    ) -> tuple[Process, ...]:
+        """Subgraphs should only be css process + market processes"""
+        processes: list[Process] = []
+        for p in self._secondary_processes_ordered_forwards:
+            if not p.is_css:
+                continue
+            processes.append(p)
+            # get subgraph
+            for pm in nx.ancestors(self._graph, p):
+                assert pm.is_market
+                processes.append(pm)
+        return tuple(processes)
+
+    def __init__(self, _graph: nx.DiGraph[Process]):
+        self._graph: nx.DiGraph[Process] = _graph
+        self._all_processes_ordered_forwards = (
+            self._create_all_processes_ordered_forwards()
+        )
+        self._processes_by_step = self._create_processes_by_step()
+        self._css_subgraph_processes_ordered_backwards = (
+            self._create_css_subgraph_processes_ordered_backwards()
+        )
+        # add links to processes for faster lookup + checks
+        self._link_processes()
         # save initial and last process
         self.initial_process = self._main_processes_ordered_forwards[0]
         self.last_process = self._main_processes_ordered_forwards[-1]
@@ -672,7 +709,7 @@ class Chain:
             speccost_for_flh_opt=speccost_for_flh_opt,
         )
 
-    def calculate(self, data: CalculateDataType) -> PtxCalcResult:
+    def _calculate(self, data: CalculateDataType) -> dict:
         """
         Calculation order:
 
@@ -701,20 +738,25 @@ class Chain:
             parameter_data=parameter_data, results_flows=results_flows
         )
 
-        return self._merge_calculation_results(
-            parameter_data=parameter_data,
-            results_flows=results_flows,
-            results_costs=results_costs,
-            results_emissions=results_emissions,
-        )
+        return {
+            "parameter_data": parameter_data,
+            "results_flows": results_flows,
+            "results_costs": results_costs,
+            "results_emissions": results_emissions,
+        }
+
+    def calculate(self, data: CalculateDataType) -> PtxCalcResult:
+        results = self._calculate(data=data)
+        return self._merge_calculation_results(**results)
 
     def plot(
         self,
         file_basename: str,
         edge_values: dict[tuple[Process, Process], float] | None = None,
+        dpi: int = 150,
     ):
         """Create plot and save as png."""
-        scale = 1
+        scale_distance = 2
         node_pos = self._plot_get_pos()
 
         def _get_label_str(item) -> str:
@@ -736,8 +778,8 @@ class Chain:
         plt.clf()
         plt.figure(
             figsize=(
-                len(list(self._main_processes_ordered_forwards)) * scale * 2,
-                2 * scale,
+                len(list(self._main_processes_ordered_forwards)) * scale_distance * 2,
+                2 * scale_distance,
             )
         )
 
@@ -758,7 +800,8 @@ class Chain:
                 for p, p_ in self._graph.edges()
             ],
             node_size=[
-                (1000 if p.is_market else 2000) * scale for p in self._graph.nodes()
+                (1000 if p.is_market else 2000) * scale_distance
+                for p in self._graph.nodes()
             ],
         )
 
@@ -782,7 +825,7 @@ class Chain:
         )
 
         # Save to PNG
-        plt.savefig(f"chain_flowcharts/{file_basename}.png", dpi=150)
+        plt.savefig(f"chain_flowcharts/{file_basename}.png", dpi=dpi)
 
     @property
     def _main_processes_ordered_forwards(self) -> tuple[Process, ...]:
@@ -933,16 +976,32 @@ class Chain:
 
         """
 
-        # for process, emissions in results_emissions.items():
-        #    emissions.
+        # for all emission where we have css: set CO2-C flow
+        for process, emissions in results_emissions.items():
+            # TODO: mass or emission?
+            # mass makes more sense, should be the same anyways
+            co2_captured: float = emissions["mass"].co2_captured
+            if co2_captured:
+                if "CO2-C" not in process.secondary_flow_types:
+                    logger.error("CO2 captured where we dont expect it: %s", process)
+                    # co2_captured = 0
+                    # raise NotImplementedError()  # FIXME: remove
+                    continue
+                results_flows[process].secondary_flows_in["CO2-C"] = co2_captured
+
+        # recalculate flows for CSS subgraphs
+        for process in self._css_subgraph_processes_ordered_backwards:
+            results_flows[process] = process.calculate_flows(
+                parameter_data=parameter_data, results_flows=results_flows
+            )
 
     def _calculate_flows_backwards(
         self, parameter_data: dict[Process, ProcessDataType]
     ) -> dict[Process, ProcessResultFlowsType]:
         results_flows: dict[Process, ProcessResultFlowsType] = {}
         for process in self._all_processes_ordered_backwards:
-            # TODO: optionally skip CSS subgraphs, as they must be
-            # calculated again later
+            # TODO: optionally skip or add empty for CSS subgraphs, as they must be
+            # calculated again later. but make sure we wont get key violations
             results_flows[process] = process.calculate_flows(
                 parameter_data=parameter_data, results_flows=results_flows
             )
@@ -1053,13 +1112,14 @@ class Chain:
         for process, result_e_m in results_emissions.items():
             result = result_e_m[etype]
             # FIXME: ...
-            results.append(
-                process._create_result_emission(
-                    emission_type="indirect",
-                    gas_type="CO2",
-                    values=result.co2_indirect_scope2,
+            if result.co2_indirect_scope2:
+                results.append(
+                    process._create_result_emission(
+                        emission_type="indirect",
+                        gas_type="CO2",
+                        values=result.co2_indirect_scope2,
+                    )
                 )
-            )
 
         # FIXME: also add last bound in product
 
@@ -1399,8 +1459,7 @@ def _create_graph(
             )
             # special case: CSS (`CO2-T+S#B`) secondary processes can only get
             # their flows like EL from market, otherwise it can create loops
-            # TODO: dont hardcode process code
-            if process.process_code == "CO2-T+S#B":
+            if process.is_css:
                 provider = None  # so we will use market process
 
             if provider:

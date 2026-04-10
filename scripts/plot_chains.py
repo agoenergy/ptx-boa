@@ -138,24 +138,20 @@ def main():
             target_country_code=_df_region_by_name.at[settings.country, "region_code"],  # type: ignore # noqa
         )
 
-        parameter_data_ = chain_process._split_parameter_data(data=parameter_data)
-        results_flows = chain_process._calculate_flows_backwards(
-            parameter_data=parameter_data_
-        )
-        results_costs = chain_process._calculate_costs(
-            parameter_data=parameter_data_, results_flows=results_flows
-        )
+        results_api = chain_process.calculate(data=parameter_data)
+        logger.info(results_api.df_results_cost)
+        logger.info(results_api.df_results_emissions_m_g_co2e)
 
-        result = chain_process.calculate(data=parameter_data)
+        results = chain_process._calculate(data=parameter_data)
 
-        edge_values_speccost = {
-            (p, p_): parameter_data_[p]["SPECCOST"][p.main_flow_code_out]  # type: ignore
+        edge_values_speccost = {  # noqa
+            (p, p_): results["parameter_data"][p]["SPECCOST"][p.main_flow_code_out]  # type: ignore
             for p, p_ in chain_process._graph.edges()
             if p.is_market
         }
 
         edge_values_flows = {
-            (p, p_): results_flows[p].main_flow_out
+            (p, p_): results["results_flows"][p].main_flow_out
             for p, p_ in chain_process._graph.edges()
         }
 
