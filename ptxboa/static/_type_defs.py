@@ -6,6 +6,7 @@ import pandas as pd
 from ptxboa.static import (
     ChainType,
     DataQueryParameterType,
+    EmissionType,
     FlowCodeType,
     ParameterCodeType,
     ProcessCodeResType,
@@ -13,6 +14,8 @@ from ptxboa.static import (
     ProcessStepType,
     ResultClassType,
     ResultCostType,
+    ResultEmissionType,
+    ResultGasType,
     SourceRegionCodeType,
     TargetCountryCodeType,
     TransportType,
@@ -108,13 +111,28 @@ class ProcessResultCostsType:
     process_subtype: ProcessCodeType | FlowCodeType | None = None
     cost_type: ResultCostType | None = None
     values: float = 0
-    # value_rel_per_flow: float = 0
-    # capex: float = 0 # noqa
-    # opex: float = 0 # noqa
-    # specccost: float = 0 # noqa
-    # lc: float | None = None  # TODO # noqa
+
+
+@dataclass(slots=True, frozen=True)
+class ProcessEmissionType_E_M:
+    co2_bound_in_product_last_proc: float = 0
+    co2_in_flows: float = 0
+    co2_captured: float = 0
+    co2_bound_in_product: float = 0
+    co2_direct: float = 0
+    co2_indirect_scope2: float = 0
+    ch4_direct: float = 0
+    ch4_direct_co2e: float = 0
+    co2e_total_direct: float = 0
+
+
+ProcessEmissionType = dict[EmissionType, ProcessEmissionType_E_M]
 
 
 @dataclass(slots=True, frozen=True)
 class ProcessResultEmissionType:
-    value: float = 0
+    process_type: ResultClassType | str | None = None
+    process_subtype: ProcessCodeType | FlowCodeType | str | None = None
+    emission_type: ResultEmissionType | None = None
+    gas_type: ResultGasType | None = None
+    values: float = 0

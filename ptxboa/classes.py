@@ -11,6 +11,7 @@ from networkx.exception import HasACycle
 from ptxboa import api_calc, logger
 from ptxboa.api_data import DataHandler
 from ptxboa.static import (
+    EmissionType,
     FlowCodeType,
     ParameterCodeValues,
     ProcessCodeType,
@@ -18,6 +19,8 @@ from ptxboa.static import (
     ProcessStepValues,  # must be sorted
     ResultClassType,
     ResultCostType,
+    ResultEmissionType,
+    ResultGasType,
     SourceRegionCodeType,
     TargetCountryCodeType,
 )
@@ -27,6 +30,8 @@ from ptxboa.static._type_defs import (
     DataQueryDicType,
     ParameterGetters,
     ProcessDataType,
+    ProcessEmissionType,
+    ProcessEmissionType_E_M,
     ProcessResultCostsType,
     ProcessResultEmissionType,
     ProcessResultFlowsType,
@@ -278,6 +283,17 @@ class Process:
             values=values,
         )
 
+    def _create_result_emission(
+        self, emission_type: ResultEmissionType, gas_type: ResultGasType, values: float
+    ) -> ProcessResultEmissionType:
+        return ProcessResultEmissionType(
+            process_type=self.result_process_type,
+            process_subtype=self.process_code,
+            emission_type=emission_type,
+            gas_type=gas_type,
+            values=values,
+        )
+
     def calculate_costs(
         self,
         parameter_data: dict[Process, ProcessDataType],
@@ -316,8 +332,13 @@ class Process:
         self,
         parameter_data: dict[Process, ProcessDataType],
         results_flows: dict[Process, ProcessResultFlowsType],
-        results_emissions: dict[Process, ProcessResultEmissionType],
-    ) -> ProcessResultEmissionType: ...
+        results_emissions: dict[Process, ProcessEmissionType],
+    ) -> ProcessEmissionType:
+        # FIMXE: DUMMY
+        return {
+            "mass": ProcessEmissionType_E_M(co2_captured=1),
+            "emission": ProcessEmissionType_E_M(),
+        }
 
 
 class ProcessSecondary(Process):
@@ -652,14 +673,34 @@ class Chain:
         )
 
     def calculate(self, data: CalculateDataType) -> PtxCalcResult:
+        """
+        Calculation order:
+
+        - backwards calculate flows (except CO2-C - maybe remove from CONV) for output 1
+        - if blue tool:
+          - forward calcualte emission (because of bound in product)
+          - calculate css flows
+        - calculate costs
+
+        """
+
         parameter_data = self._split_parameter_data(data=data)
-        results_flows = self._calculate_flows(parameter_data=parameter_data)
+        results_flows = self._calculate_flows_backwards(parameter_data=parameter_data)
+
+        # TODO: only if blue tool
+        results_emissions = self._calculate_emissions_forwards(
+            parameter_data=parameter_data, results_flows=results_flows
+        )
+        self._update_flows_with_css(
+            results_flows=results_flows,
+            parameter_data=parameter_data,
+            results_emissions=results_emissions,
+        )
+
         results_costs = self._calculate_costs(
             parameter_data=parameter_data, results_flows=results_flows
         )
-        results_emissions = self._calculate_emissions(
-            parameter_data=parameter_data, results_flows=results_flows
-        )
+
         return self._merge_calculation_results(
             parameter_data=parameter_data,
             results_flows=results_flows,
@@ -878,11 +919,30 @@ class Chain:
             )
         return result
 
-    def _calculate_flows(
+    def _update_flows_with_css(
+        self,
+        results_flows: dict[Process, ProcessResultFlowsType],
+        parameter_data: dict[Process, ProcessDataType],
+        results_emissions: dict[Process, ProcessEmissionType],
+    ):
+        """inplace update flows for CSS subgraphs.
+
+        - for all emission where we have css: set CO2-C flow
+        - recalculate flows for CSS subgraphs
+          (should only be Process + Market processes)
+
+        """
+
+        # for process, emissions in results_emissions.items():
+        #    emissions.
+
+    def _calculate_flows_backwards(
         self, parameter_data: dict[Process, ProcessDataType]
     ) -> dict[Process, ProcessResultFlowsType]:
         results_flows: dict[Process, ProcessResultFlowsType] = {}
         for process in self._all_processes_ordered_backwards:
+            # TODO: optionally skip CSS subgraphs, as they must be
+            # calculated again later
             results_flows[process] = process.calculate_flows(
                 parameter_data=parameter_data, results_flows=results_flows
             )
@@ -902,12 +962,12 @@ class Chain:
             )
         return results_costs
 
-    def _calculate_emissions(
+    def _calculate_emissions_forwards(
         self,
         parameter_data: dict[Process, ProcessDataType],
         results_flows: dict[Process, ProcessResultFlowsType],
-    ) -> dict[Process, ProcessResultEmissionType]:
-        results_emissions: dict[Process, ProcessResultEmissionType] = {}
+    ) -> dict[Process, ProcessEmissionType]:
+        results_emissions: dict[Process, ProcessEmissionType] = {}
         for process in self._all_processes_ordered_forwards:
             results_emissions[process] = process.calculate_emissions(
                 parameter_data=parameter_data,
@@ -921,19 +981,19 @@ class Chain:
         parameter_data: dict[Process, ProcessDataType],
         results_flows: dict[Process, ProcessResultFlowsType],
         results_costs: dict[Process, list[ProcessResultCostsType]],
-        results_emissions: dict[Process, ProcessResultEmissionType],
+        results_emissions: dict[Process, ProcessEmissionType],
     ) -> PtxCalcResult:
         cols_dim_costs = ["process_type", "process_subtype", "cost_type"]
+
+        df_results_cost = pd.DataFrame(
+            [asdict(x) for x in [c for costs in results_costs.values() for c in costs]],
+            columns=cols_dim_costs + ["values"],
+        )
         df_results_cost = _aggregate_results_df(
-            pd.DataFrame(
-                [
-                    asdict(x)
-                    for x in [c for costs in results_costs.values() for c in costs]
-                ],
-                columns=cols_dim_costs + ["values"],
-            ),
+            df_results_cost,
             cols_dim_costs,
         )
+
         # TODO from results_emissions
         cols_dim_emissions = [
             "process_type",
@@ -941,12 +1001,35 @@ class Chain:
             "emission_type",
             "gas_type",
         ]
-        df_results_emissions_e_g_co2e = _aggregate_results_df(
-            pd.DataFrame(columns=cols_dim_costs + ["values"]), cols_dim_emissions
+
+        # mass balance
+        df_results_emissions_m_g_co2e = pd.DataFrame(
+            [
+                asdict(x)
+                for x in self._merge_emission_results(
+                    results_emissions=results_emissions, etype="mass"
+                )
+            ],
+            columns=cols_dim_emissions + ["values"],
         )
         df_results_emissions_m_g_co2e = _aggregate_results_df(
-            pd.DataFrame(columns=cols_dim_costs + ["values"]), cols_dim_emissions
+            df_results_emissions_m_g_co2e, cols_dim_emissions
         )
+
+        # emissions balance
+        df_results_emissions_e_g_co2e = pd.DataFrame(
+            [
+                asdict(x)
+                for x in self._merge_emission_results(
+                    results_emissions=results_emissions, etype="emission"
+                )
+            ],
+            columns=cols_dim_emissions + ["values"],
+        )
+        df_results_emissions_e_g_co2e = _aggregate_results_df(
+            df_results_emissions_e_g_co2e, cols_dim_emissions
+        )
+
         results_flows_chain = [
             results_flows[p] for p in self._main_processes_ordered_forwards
         ]
@@ -961,6 +1044,26 @@ class Chain:
             results_flows_chain=results_flows_chain,
             results_flows_secondary=results_flows_secondary,
         )
+
+    def _merge_emission_results(
+        self, results_emissions: dict[Process, ProcessEmissionType], etype: EmissionType
+    ) -> list[ProcessResultEmissionType]:
+        results: list[ProcessResultEmissionType] = []
+        # FIXME
+        for process, result_e_m in results_emissions.items():
+            result = result_e_m[etype]
+            # FIXME: ...
+            results.append(
+                process._create_result_emission(
+                    emission_type="indirect",
+                    gas_type="CO2",
+                    values=result.co2_indirect_scope2,
+                )
+            )
+
+        # FIXME: also add last bound in product
+
+        return results
 
     def _merge_parameter_data(
         self,

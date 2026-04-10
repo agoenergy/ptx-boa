@@ -183,6 +183,9 @@ def main():
         create_literal("Transport", ["Ship", "Pipeline"]),
         create_literal("OutputUnit", ["USD/MWh", "USD/t"]),
         create_literal("ToolVersionColor", ["blue", "green"]),
+        create_literal("ResultEmission", ["direct", "indirect"]),
+        create_literal("Emission", ["mass", "emission"]),
+        create_literal("ResultGas", ["CO2", "CH4"]),
         create_literal(
             "DataQueryParameter",
             [
