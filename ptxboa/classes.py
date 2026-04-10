@@ -10,12 +10,12 @@ from networkx.exception import HasACycle
 
 from ptxboa import api_calc, logger
 from ptxboa.api_data import DataHandler
-from ptxboa.static import ProcessStepValues  # must be sorted
 from ptxboa.static import (
     FlowCodeType,
     ParameterCodeValues,
     ProcessCodeType,
     ProcessStepType,
+    ProcessStepValues,  # must be sorted
     ResultClassType,
     ResultCostType,
     SourceRegionCodeType,
@@ -255,9 +255,7 @@ class Process:
 
         secondary_flows_in = {}
         for flow_code in self.secondary_flow_types:
-            conv: float = (
-                parameter_data[self].get("CONV", {}).get(flow_code) or 0
-            )  # type:ignore
+            conv: float = parameter_data[self].get("CONV", {}).get(flow_code) or 0  # type:ignore
             if conv == 0:
                 logger.warning("Process with conv = 0 %s / %s", self, flow_code)
             elif conv < 0:
@@ -1228,7 +1226,8 @@ def _create_graph(
                 proc_recipient=proc_recipient,
                 in_main=in_main,
             )
-        except HasACycle:
+        except HasACycle as exc:
+            logger.warning(exc)
             create_and_link_market_process(
                 proc_recipient=proc_recipient,
                 flow_type=proc_provider.main_flow_code_out,
@@ -1295,6 +1294,12 @@ def _create_graph(
             provider = get_provider(
                 flow_code=flow_code, is_in_import_segment=process.is_in_import_segment
             )
+            # special case: CSS (`CO2-T+S#B`) secondary processes can only get
+            # their flows like EL from market, otherwise it can create loops
+            # TODO: dont hardcode process code
+            if process.process_code == "CO2-T+S#B":
+                provider = None  # so we will use market process
+
             if provider:
                 add_edge_or_create_market(
                     proc_provider=provider, proc_recipient=process, in_main=in_main
