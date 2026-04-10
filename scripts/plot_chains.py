@@ -116,6 +116,8 @@ def main():
 
         # if settings.chain != "STL-S__NG-DRI-C_EAF__prod_in_demand":
         #    continue
+        if i not in (14, 164):
+            continue
 
         logger.info(f"{i + 1}/{len(permutations)}: {settings} => {name}")
 
@@ -137,7 +139,9 @@ def main():
         )
 
         parameter_data_ = chain_process._split_parameter_data(data=parameter_data)
-        results_flows = chain_process._calculate_flows(parameter_data=parameter_data_)
+        results_flows = chain_process._calculate_flows_backwards(
+            parameter_data=parameter_data_
+        )
         results_costs = chain_process._calculate_costs(
             parameter_data=parameter_data_, results_flows=results_flows
         )
