@@ -11,8 +11,8 @@ import pandas as pd
 
 from ptxboa import DEFAULT_DATA_DIR, logger
 from ptxboa.api import _translate_and_validate_user_settings
+from ptxboa.api_calc import PtxCalc
 from ptxboa.api_data import DataHandler
-from ptxboa.classes import Chain
 from ptxboa.static import (
     ChainType,
     ResGenType,
@@ -128,7 +128,7 @@ def main():
                 **settings.__dict__, optimize_flh=False
             )
         )
-        chain_process = Chain.get_or_create(chain_def)
+        chain_process = PtxCalc.get_or_create(chain_def)
 
         parameter_data = chain_process.get_calculation_data(  # noqa
             data_handler=data_handler,

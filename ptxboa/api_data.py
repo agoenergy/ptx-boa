@@ -37,7 +37,7 @@ from ptxboa.static._type_defs import (
 )
 
 if TYPE_CHECKING:
-    from ptxboa.classes import Chain
+    from ptxboa.api_calc import PtxCalc
 
 
 def _load_scenario_data(data_dir, scenario: str) -> pd.DataFrame:
@@ -636,7 +636,7 @@ class DataHandler:
 
     def get_calculation_data(
         self,
-        chain_proc: "Chain",
+        ptx_calc: "PtxCalc",
         source_region_code: SourceRegionCodeType,
         target_country_code: TargetCountryCodeType,
         optimize_flh: bool,
@@ -658,7 +658,7 @@ class DataHandler:
             _description_
         """
         # get data
-        data = chain_proc.get_calculation_data(
+        data = ptx_calc.get_calculation_data(
             data_handler=self,
             source_region_code=source_region_code,
             target_country_code=target_country_code,
@@ -670,7 +670,7 @@ class DataHandler:
             # if we have user data BUT it should NOT be used for optimization
             # get a different dataset for optimization
             if self.user_data is not None and not use_user_data_for_optimize_flh:
-                data_opt = chain_proc.get_calculation_data(
+                data_opt = ptx_calc.get_calculation_data(
                     data_handler=self,
                     source_region_code=source_region_code,
                     target_country_code=target_country_code,

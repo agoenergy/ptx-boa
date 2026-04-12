@@ -8,9 +8,9 @@ import pandas as pd
 import pypsa
 
 from ptxboa import PROFILES_DIR, logger
+from ptxboa.api_calc import PtxCalc
 from ptxboa.api_data import DataHandler
 from ptxboa.api_optimize import PtxOpt
-from ptxboa.classes import Chain
 from ptxboa.static import (
     ChainType,
     DimensionType,
@@ -213,10 +213,10 @@ class PtxboaAPI:
             tool_version_color=tool_version_color,
         )
 
-        chain_proc = Chain.get_or_create(chain_def)
+        ptx_calc = PtxCalc.get_or_create(chain_def)
 
         data = data_handler.get_calculation_data(
-            chain_proc=chain_proc,
+            ptx_calc=ptx_calc,
             source_region_code=chain_def.source_region_code,
             target_country_code=chain_def.target_country_code,
             optimize_flh=optimize_flh,
@@ -224,9 +224,7 @@ class PtxboaAPI:
         )
 
         # calculate results
-        # FIXME: replace PtxCalc.calculate with chain_proc.calculate
-        ptxcalc_result = chain_proc.calculate(data)  # NEW # noqa
-        # ptxcalc_result = PtxCalc.calculate(chain=chain_proc, data=data)
+        ptxcalc_result = ptx_calc.calculate(data)  # NEW # noqa
 
         # convert to output unit
         df_results_cost_unscaled = ptxcalc_result.df_results_cost.copy()

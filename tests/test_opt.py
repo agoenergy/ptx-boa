@@ -16,7 +16,7 @@ from app.tab_green_optimization import calc_aggregate_statistics
 from flh_opt.api_opt import get_profiles_and_weights, optimize
 from ptxboa import DEFAULT_CACHE_DIR
 from ptxboa.api import DataHandler, PtxboaAPI
-from ptxboa.api_data import Chain
+from ptxboa.api_data import PtxCalc
 from ptxboa.static._type_defs import ChainDef
 from ptxboa.utils import annuity
 from tests.utils import assert_deep_equal_approx
@@ -430,10 +430,10 @@ def test_prepare_data_for_optimize_incl_sec_proc():
             transport=transport,
             ship_own_fuel=ship_own_fuel,
         )
-        chain_proc = Chain.get_or_create(chain_def)
+        ptx_calc = PtxCalc.get_or_create(chain_def)
 
         data = data_handler.get_calculation_data(
-            chain_proc=chain_proc,
+            ptx_calc=ptx_calc,
             source_region_code=chain_def.source_region_code,
             target_country_code=chain_def.target_country_code,
             optimize_flh=False,
@@ -476,10 +476,10 @@ def test_prepare_data_for_optimize_incl_sec_proc():
             transport=transport,
             ship_own_fuel=ship_own_fuel,
         )
-        chain_proc = Chain.get_or_create(chain_def)
+        ptx_calc = PtxCalc.get_or_create(chain_def)
 
         data = data_handler.get_calculation_data(
-            chain_proc=chain_proc,
+            ptx_calc=ptx_calc,
             source_region_code=chain_def.source_region_code,
             target_country_code=chain_def.target_country_code,
             optimize_flh=True,

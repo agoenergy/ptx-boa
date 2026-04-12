@@ -110,3 +110,13 @@ def compare_sets(first: Iterable, second: Iterable, msg: str = ""):
     added = {str(x) for x in second - first}
     if missing or added:
         raise KeyError((f"Set mismatch. Missing: {missing}. Added: {added}.", msg))
+
+
+def calculate_net_loss(value_gross: float, loss_factor: float) -> tuple[float, float]:
+    """Losses, interpreted as additional to net.
+
+    see https://github.com/agoenergy/ptx-boa/issues/581
+    """
+    value_net = value_gross / (1 + loss_factor)
+    value_loss = value_net * loss_factor
+    return value_net, value_loss
