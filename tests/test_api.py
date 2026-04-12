@@ -104,24 +104,23 @@ class TestApi(unittest.TestCase):
         # test result categories
         res_values = res.groupby(["process_type", "cost_type"]).sum("values")["values"]
         expected_result = {
-            ("Carbon", "CAPEX"): 196.01309835079843,
-            ("Carbon", "OPEX"): 116.25337124331891,
-            ("Derivative production", "CAPEX"): 90.13946547212913,
-            ("Derivative production", "OPEX"): 40.0955988325783,
-            ("Electricity and H2 storage", "CAPEX"): 253.0220382601114,
-            ("Electricity and H2 storage", "OPEX"): 1.2530462794580113,
-            ("Electricity generation", "CAPEX"): 434.4326537746074,
-            ("Electricity generation", "OPEX"): 89.59100157401558,
-            ("H2 production", "CAPEX"): 421.1490770843375,
-            ("H2 production", "OPEX"): 102.17834361295175,
-            ("Heat", "FLOW"): 283.87404324169836,
-            ("Transportation (Ship)", "CAPEX"): 61.1032956243896,
-            ("Transportation (Ship)", "FLOW"): 1.823824116075305,
-            ("Transportation (Ship)", "OPEX"): 73.64164331439581,
-            ("Water", "CAPEX"): 1.1373427486958672,
-            ("Water", "OPEX"): 0.5518796288785505,
+            ("Carbon", "CAPEX"): 196.01309835,
+            ("Carbon", "OPEX"): 116.25337124,
+            ("Derivative production", "CAPEX"): 90.13946547,
+            ("Derivative production", "OPEX"): 40.09559883,
+            ("Electricity and H2 storage", "CAPEX"): 255.51185818,
+            ("Electricity and H2 storage", "OPEX"): 1.25304628,
+            ("Electricity generation", "CAPEX"): 482.27236675,
+            ("Electricity generation", "OPEX"): 99.45676043,
+            ("H2 production", "CAPEX"): 425.40310817,
+            ("H2 production", "OPEX"): 103.21044809,
+            ("Heat", "FLOW"): 283.87404324,
+            ("Transportation (Ship)", "CAPEX"): 61.10329562,
+            ("Transportation (Ship)", "FLOW"): 1.82382412,
+            ("Transportation (Ship)", "OPEX"): 73.64164331,
+            ("Water", "CAPEX"): 1.14883106,
+            ("Water", "OPEX"): 0.55745417,
         }
-
         res_values = dict(res_values.items())
         assert_deep_equal_approx(expected_result, res_values)
 

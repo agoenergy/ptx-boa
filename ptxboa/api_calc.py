@@ -368,6 +368,11 @@ class Process:
             # TODO: double check units (division by 8760 h)?
             cap_f: float = parameters["CAP_F"]  # type: ignore
             capacity = main_flow_out * cap_f / 8760
+
+        elif self.is_secondary and self.main_flow_code_out not in {"EL", "HEAT"}:
+            # TODO: get from units in process specs
+            # secondary processes like Water, DAC: capacity is main_flow_out
+            capacity = main_flow_out
         else:
             capacity = main_flow_out / flh
 
@@ -550,48 +555,6 @@ class ProcessTransport(Process):
     def color(self) -> str:
         """Color for plotting."""
         return "teal"
-
-    # def calculate_flows(
-    #    self,
-    #    parameter_data: dict[Process, ProcessDataType],
-    #    results_flows: dict[Process, ProcessResultFlowsType],
-    # ) -> ProcessResultFlowsType:
-    #    """Calculate flows."""
-    #    # main_flow_out: sum of outgoing
-    #    main_flow_out = 0
-    #    # NOTE: should only have one
-    #    for p in self._links_out_in_main:
-    #        main_flow_out += results_flows[p].main_flow_in  # type: ignore - this one must have a value # noqa
-    #    if not main_flow_out:
-    #        logger.warning("Process with main_flow_out = 0: %s", self)
-    #
-    #    eff: float = parameter_data[self].get("EFF") or 0  # type:ignore
-    #    if eff <= 0:
-    #        logger.error("Process with eff = %s: %s", eff, self)
-    #        eff = 1
-    #
-    #    main_flow_in = main_flow_out / eff
-    #
-    #    secondary_flows_in = {}
-    #    for flow_code in self.secondary_flow_types:
-    #        conv_ot: float = (
-    #            parameter_data[self].get("CONV-OT", {}).get(flow_code) or 0  # type:ignore
-    #        )
-    #        if conv_ot == 0:
-    #            logger.warning("Process with CONV-OT = 0 %s / %s", self, flow_code)
-    #        elif conv_ot < 0:
-    #            conv_ot = 0
-    #
-    #        dist: float = parameter_data[self]["DIST"]
-    #        conv = conv_ot * dist
-    #
-    #        secondary_flows_in[flow_code] = main_flow_out * conv
-    #
-    #    return ProcessResultFlowsType(
-    #        main_flow_out=main_flow_out,
-    #        main_flow_in=main_flow_in,
-    #        secondary_flows_in=secondary_flows_in,
-    #    )
 
     def calculate_costs(
         self,
