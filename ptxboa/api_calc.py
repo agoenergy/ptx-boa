@@ -55,16 +55,18 @@ class Process:
         "OPEX-F",
         "OPEX-O",
     ]
-    _parameter_codes_process_flow = [
+    _parameter_codes_process_flow_sec_or_main = [
         "CH4SHARE",
         "EF_E",
         "EF_M",
         "CBOUND",
         "LOSS",
-        # "CONV-OT", # TODO: ?
         "CO2CPT-R",
         "CO2CPT-S",
+    ]
+    _parameter_codes_process_flow_sec = [
         "CONV",
+        # "CONV-OT", # TODO: ?
     ]
 
     def __init__(
@@ -199,16 +201,12 @@ class Process:
         return self.main_flow_code_in or self.main_flow_code_out
 
     @property
-    def _parameter_flow_types(self) -> set[FlowCodeType]:
+    def _parameter_flow_types_sec_or_main(self) -> set[FlowCodeType]:
         """Flow types for which parameter data should be loaded."""
         result = set(self.secondary_flow_types)
         # also add main flow in (for market/initial proces,
         # those dont exist and we need out)
         result.add(self._main_flow_code_in_or_out)
-        # FIXME: for testing compatebility, we also add main_flow out,
-        # but can be removed later
-        result.add(self.main_flow_code_out)
-
         return result
 
     @property
@@ -233,12 +231,23 @@ class Process:
             )
 
         # load parameters that are process and flow dependent
-        for p in self._parameter_codes_process_flow:
+        # secondary or main flows
+        for p in self._parameter_codes_process_flow_sec_or_main:
             data[p] = {
                 f: parameter_getters[p](
                     process_code=process_code, flow_code=f, **parameter_values
                 )
-                for f in self._parameter_flow_types
+                for f in self._parameter_flow_types_sec_or_main
+            }
+
+        # load parameters that are process and flow dependent
+        # secondary flows
+        for p in self._parameter_codes_process_flow_sec:
+            data[p] = {
+                f: parameter_getters[p](
+                    process_code=process_code, flow_code=f, **parameter_values
+                )
+                for f in self.secondary_flow_types
             }
 
         self._inplace_correct_eff_and_conv_with_loss(data)
@@ -252,7 +261,8 @@ class Process:
             # see https://github.com/agoenergy/ptx-boa/issues/581
             data["EFF"] = data["EFF"] / (1 + LOSS[main_flow_code])
         conv: float
-        for flow_code, conv in data.get("CONV", {}).items():  # type: ignore
+        CONV: dict = data.get("CONV", {})  # type: ignore
+        for flow_code, conv in CONV.items():
             if conv <= 0:
                 # currently negative flows (i.e. additional output)
                 conv = 0
@@ -527,16 +537,12 @@ class ProcessTransport(Process):
         "SEASHARE",
     ]
 
-    _parameter_codes_process_flow = [
-        "CH4SHARE",  # TODO: ?
-        "EF_E",  # TODO: ?
-        "EF_M",  # TODO: ?
-        # "CBOUND",
+    _parameter_codes_process_flow_sec_or_main = [
+        "EF_E",
+        "EF_M",
+    ]
+    _parameter_codes_process_flow_sec = [
         "CONV-OT",
-        # "CO2CPT-R",
-        # "CO2CPT-S",
-        # "CONV", # TODO: ?
-        # "LOSS", # TODO: ?
     ]
 
     @property
@@ -626,7 +632,8 @@ class ProcessTransport(Process):
 
 class ProcessMarket(Process):
     _parameter_codes_process = []
-    _parameter_codes_process_flow = ["SPECCOST"]
+    _parameter_codes_process_flow_sec = []
+    _parameter_codes_process_flow_sec_or_main = ["SPECCOST"]
 
     @property
     def color(self) -> str:
@@ -1090,7 +1097,7 @@ class PtxCalc:
         speccost_for_flh_opt = {}
 
         # api_optimize.py: always wants SPECCOST for certain flows
-        speccosts_required_for_opt: list[FlowCodeType] = [
+        SPECCOSTS_REQUIRED_FOR_OPT: list[FlowCodeType] = [
             "CO2-G",
             "H2O-L",
             "HEAT",
@@ -1098,7 +1105,7 @@ class PtxCalc:
         ]
 
         flow_code: FlowCodeType
-        for flow_code in speccosts_required_for_opt:
+        for flow_code in SPECCOSTS_REQUIRED_FOR_OPT:
             parameter_data = Process.create_with_subclass(
                 process_code=flow_code
             ).get_parameter_data(

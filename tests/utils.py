@@ -173,7 +173,14 @@ def assert_deep_equal_approx(
             sort_list_by_keys=sort_list_by_keys,
         )
     except Exception:
-        print("======================", context)
+        print("====================== OLD", context)
+        print(
+            sort_nested(
+                expected,
+                sort_list_by_keys=sort_list_by_keys,
+            )
+        )
+        print("====================== NEW", context)
         # print so we can replace in test
         print(
             sort_nested(
