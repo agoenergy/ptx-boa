@@ -14,6 +14,7 @@ from ptxboa.static import ProcessStepValues  # must be sorted
 from ptxboa.static import (
     EmissionType,
     FlowCodeType,
+    ParameterCodeType,
     ParameterCodeValues,
     ProcessCodeType,
     ProcessStepType,
@@ -235,6 +236,8 @@ class Process:
                 for f in self._parameter_flow_types
             }
 
+        # FIXME: correct EFF with loss?
+
         return data
 
     @property
@@ -345,43 +348,145 @@ class Process:
             self._create_result_cost(cost_type="CAPEX", values=capex_ann),
         ]
 
+    def _calculate_emissions(
+        self,
+        parameter_data: ProcessDataType,
+        flows_in_gross: dict[FlowCodeType, float],
+        EF_co2_g_per_flow: dict[FlowCodeType, float],
+        main_flow_out: float,
+    ) -> ProcessEmissionType_E_M:
+
+        # constants: TODO: globally defined
+        FLOW_CO2_INDIRECT = {"HEAT", "EL"}
+        G_CH4_PER_KWH = 68.75469807
+        CH4_TO_CO2EQ = 29.8
+
+        # use parameter_data.get() because not always available (like trasnport)
+        LOSS = parameter_data.get("LOSS", {})
+        CH4SHARE = parameter_data.get("CH4SHARE", {})
+        CO2CPT_R = parameter_data.get("CO2CPT-R", {})
+        CO2CPT_S = parameter_data.get("CO2CPT-S", {})
+        CBOUND_kg_c_per_output = parameter_data.get("CBOUND", {})
+
+        # calculate direct ch4 losses
+        ch4_kwh_direct_loss = 0
+        flows_in_net: dict[FlowCodeType, float] = {}
+        for flow_code, value_gross in flows_in_gross.items():
+            # at first: set to value_gross, so we can use "continue"
+            # if we dont want to change it
+            flows_in_net[flow_code] = value_gross
+
+            if not value_gross:
+                continue
+
+            loss_factor: float = LOSS.get(flow_code, 0)  # type:ignore
+            if not loss_factor:
+                continue
+
+            ch4_kwh_per_flow: float = CH4SHARE.get(flow_code)  # type:ignore
+            if not ch4_kwh_per_flow:
+                if flow_code in ("CH4-G", "CH4-L"):
+                    logger.warning("missing CH4SHARE for CH4 - should be 1?")
+                    ch4_kwh_per_flow = 1
+                else:
+                    logger.warning("missing CH4SHARE for %s", flow_code)
+                    ch4_kwh_per_flow = 0
+                    continue
+
+            value_net, value_loss = api_calc._calculate_net_loss(
+                value_gross=value_gross, loss_factor=loss_factor
+            )
+            flows_in_net[flow_code] = value_net
+            ch4_kwh_direct_loss += value_loss * ch4_kwh_per_flow
+
+        ch4_g_direct_loss = ch4_kwh_direct_loss * G_CH4_PER_KWH
+        ch4_direct_co2e_g = ch4_g_direct_loss * CH4_TO_CO2EQ
+
+        # calculate capture, direct, indirect, bound
+        co2_g_direct_sum_in = 0
+        co2_g_indirect_scope2 = 0
+        co2_captured = 0
+        co2_g_bound_in_product = 0
+
+        for flow_code, flow in flows_in_net.items():
+            co2_g_per_flow = EF_co2_g_per_flow.get(flow_code, 0)
+            co2_g = co2_g_per_flow * flow
+            if flow_code in FLOW_CO2_INDIRECT:
+                # indirect emissions
+                co2_g_indirect_scope2 += co2_g
+            else:
+                # direct emission
+                co2_g_direct_sum_in += co2_g
+                # capture
+                co2cpt: float = CO2CPT_R.get(flow_code, 0) * CO2CPT_S.get(flow_code, 0)  # type: ignore
+                co2_captured += co2_g * co2cpt
+                # bound
+                bound_kg_c_per_output: float = CBOUND_kg_c_per_output.get(flow_code, 0)  # type: ignore
+                co2_g_bound_in_product += bound_kg_c_per_output * main_flow_out
+
+        co2_g_direct = co2_g_direct_sum_in - co2_g_bound_in_product - co2_captured
+
+        if not main_flow_out:
+            co2_bound_in_product_per_output = 0
+        else:
+            co2_bound_in_product_per_output = co2_g_bound_in_product / main_flow_out
+
+        return ProcessEmissionType_E_M(
+            co2_direct=co2_g_direct,
+            co2_indirect_scope2=co2_g_indirect_scope2,
+            ch4_direct_co2e=ch4_direct_co2e_g,
+            co2_captured=co2_captured,
+            co2_bound_in_product=co2_g_bound_in_product,
+            co2_bound_in_product_per_output=co2_bound_in_product_per_output,
+        )
+
     def calculate_emissions(
         self,
         parameter_data: dict[Process, ProcessDataType],
         results_flows: dict[Process, ProcessResultFlowsType],
-        results_emissions: dict[Process, ProcessEmissionType],
-    ) -> ProcessEmissionType:
-        # FIMXE: DUMMY
+        results_emissions: dict[Process, ProcessEmissionType | None],
+    ) -> ProcessEmissionType | None:
+
+        result: ProcessEmissionType = {}
+
+        EM_2_PARAM: dict[EmissionType, ParameterCodeType] = {
+            "emission": "EF_E",
+            "mass": "EF_M",
+        }
 
         # get all in flows (main & secondary)
-        flows: dict[FlowCodeType, float] = results_flows[self].secondary_flows_in.copy()
+        flows_in_main_and_secondary: dict[FlowCodeType, float] = results_flows[
+            self
+        ].secondary_flows_in.copy()
         if self.main_flow_code_in is not None:
-            flows[self.main_flow_code_in] = results_flows[self].main_flow_in or 0
+            flows_in_main_and_secondary[self.main_flow_code_in] = (
+                results_flows[self].main_flow_in or 0
+            )
 
-        co2_bound_in_product = 1
+        # for all in flows: rel. get bound in product for mass/emission
+        for em, param_ef in EM_2_PARAM.items():
+            g_co2_per_flows: dict[FlowCodeType, float] = {}
 
-        main_flow_out = results_flows[self].main_flow_out
-        if not main_flow_out:
-            logger.warning("main_flow_out = 0: %s", self)
-            co2_bound_in_product_per_output = 0
-        else:
-            co2_bound_in_product_per_output = co2_bound_in_product / main_flow_out
+            for flow_code, proc in self._links_in_secondary.items():
+                res = results_emissions[proc]
+                if res:
+                    g_co2_per_flow = res[em].co2_bound_in_product_per_output
+                else:
+                    g_co2_per_flow = None
+                if not g_co2_per_flow:
+                    # use emission factor, if not bound in co2
+                    params = parameter_data[self].get(param_ef, {})
+                    g_co2_per_flow = params.get(flow_code, 0)  # type: ignore
+                g_co2_per_flows[flow_code] = g_co2_per_flow  # type: ignore
 
-        co2_captured = 1 if "CO2-C" in self.secondary_flow_types else 0
+            result[em] = self._calculate_emissions(
+                parameter_data=parameter_data[self],
+                flows_in_gross=flows_in_main_and_secondary,
+                EF_co2_g_per_flow=g_co2_per_flows,
+                main_flow_out=results_flows[self].main_flow_out,
+            )
 
-        result_dummy_m = ProcessEmissionType_E_M(
-            co2_direct=1,
-            co2_indirect_scope2=1,
-            ch4_direct_co2e=1,
-            co2_captured=co2_captured,
-            co2_bound_in_product=co2_bound_in_product,
-            co2_bound_in_product_per_output=co2_bound_in_product_per_output,
-        )
-
-        return {
-            "mass": result_dummy_m,
-            "emission": result_dummy_m,
-        }
+        return result
 
 
 class ProcessSecondary(Process):
@@ -532,6 +637,14 @@ class ProcessMarket(Process):
             result.append(p._create_result_cost(cost_type="FLOW", values=value))
 
         return result
+
+    def calculate_emissions(
+        self,
+        parameter_data: dict[Process, ProcessDataType],
+        results_flows: dict[Process, ProcessResultFlowsType],
+        results_emissions: dict[Process, ProcessEmissionType | None],
+    ) -> ProcessEmissionType | None:
+        return None
 
 
 class Chain:
@@ -996,7 +1109,7 @@ class Chain:
         self,
         results_flows: dict[Process, ProcessResultFlowsType],
         parameter_data: dict[Process, ProcessDataType],
-        results_emissions: dict[Process, ProcessEmissionType],
+        results_emissions: dict[Process, ProcessEmissionType | None],
     ):
         """inplace update flows for CSS subgraphs.
 
@@ -1010,7 +1123,7 @@ class Chain:
         for process, emissions in results_emissions.items():
             # TODO: mass or emission?
             # mass makes more sense, should be the same anyways
-            co2_captured: float = emissions["mass"].co2_captured
+            co2_captured: float = emissions["mass"].co2_captured if emissions else 0
             if co2_captured:
                 if "CO2-C" not in process.secondary_flow_types:
                     logger.error("CO2 captured where we dont expect it: %s", process)
@@ -1055,8 +1168,8 @@ class Chain:
         self,
         parameter_data: dict[Process, ProcessDataType],
         results_flows: dict[Process, ProcessResultFlowsType],
-    ) -> dict[Process, ProcessEmissionType]:
-        results_emissions: dict[Process, ProcessEmissionType] = {}
+    ) -> dict[Process, ProcessEmissionType | None]:
+        results_emissions: dict[Process, ProcessEmissionType | None] = {}
         for process in self._all_processes_ordered_forwards:
             results_emissions[process] = process.calculate_emissions(
                 parameter_data=parameter_data,
@@ -1070,7 +1183,7 @@ class Chain:
         parameter_data: dict[Process, ProcessDataType],
         results_flows: dict[Process, ProcessResultFlowsType],
         results_costs: dict[Process, list[ProcessResultCostsType]],
-        results_emissions: dict[Process, ProcessEmissionType],
+        results_emissions: dict[Process, ProcessEmissionType | None],
     ) -> PtxCalcResult:
         cols_dim_costs = ["process_type", "process_subtype", "cost_type"]
 
@@ -1135,11 +1248,16 @@ class Chain:
         )
 
     def _merge_emission_results(
-        self, results_emissions: dict[Process, ProcessEmissionType], etype: EmissionType
+        self,
+        results_emissions: dict[Process, ProcessEmissionType | None],
+        etype: EmissionType,
     ) -> list[ProcessResultEmissionType]:
         results: list[ProcessResultEmissionType] = []
 
         for process, result_e_m in results_emissions.items():
+            if not result_e_m:
+                # some (like market) dont have emissions
+                continue
             result = result_e_m[etype]
             if result.co2_indirect_scope2:
                 results.append(
