@@ -316,7 +316,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
             "main_import_process_chain": [
                 {
                     "CAPEX": 0.417344,
-                    "CBOUND": {"STL-S": 0.00396},
                     "CH4SHARE": {"NG-G": 0.909},
                     "CONV": {"EL": 0.651, "NG-G": 0.0042},
                     "EFF": 1.010101,
@@ -548,32 +547,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                             "process_code": "CCGT-CC#B",
                         },
                     },
-                    "secondary_process_import": {
-                        "CO2-C": {
-                            "EFF": 0.95,
-                            "EF_E": {"CO2-C": 1.0},
-                            "EF_M": {"CO2-C": 1.0},
-                            "FLH": 7000,
-                            "LIFETIME": 20,
-                            "OPEX-O": 0.03024746,
-                            "WACC": 0.0487,
-                            "process_code": "CO2-T+S#B",
-                        },
-                        "EL": {
-                            "CAPEX": 2408.19070902,
-                            "CH4SHARE": {"NG-G": 0.909},
-                            "CO2CPT-R": {"NG-G": 0.89777778},
-                            "CO2CPT-S": {"NG-G": 1.0},
-                            "EFF": 0.50491129,
-                            "EF_E": {"CO2-C": 1.0, "NG-G": 201.0},
-                            "EF_M": {"CO2-C": 1.0, "NG-G": 201.0},
-                            "FLH": 7000,
-                            "LIFETIME": 30.0,
-                            "OPEX-F": 63.75889534,
-                            "WACC": 0.0487,
-                            "process_code": "CCGT-CC#B",
-                        },
-                    },
                 },
                 "flow_values": [
                     {
@@ -708,8 +681,8 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                             "CH4SHARE": {"NG-G": 0.89953333},
                             "CONV": {"EL": 0.00274153},
                             "EFF": 0.85708919,
-                            "EF_E": {"NG-G": 201.0, "NG-L": 201.0},
-                            "EF_M": {"NG-G": 201.0, "NG-L": 201.0},
+                            "EF_E": {"NG-G": 201.0},
+                            "EF_M": {"NG-G": 201.0},
                             "FLH": 7000,
                             "LIFETIME": 30.0,
                             "LOSS": {"NG-G": 0.0005},
@@ -789,7 +762,8 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     ],
                     "main_transport_process_chain": [
                         {
-                            "CONV-OT": {"BFUEL-L": 3.3e-06, "NG-L": 1.15e-06},
+                            "CONV": {"BFUEL-L": 0.01047548},
+                            "CONV-OT": {"BFUEL-L": 3.3e-06},
                             "DIST": 3174.14,
                             "DST-S-D": 3174.14,
                             "DST-S-DP": 3000.0,
@@ -856,28 +830,14 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "secondary_process_import": {
                         "CO2-C": {
                             "EFF": 0.95,
-                            "EF_E": {"CO2-C": 1.0},
-                            "EF_M": {"CO2-C": 1.0},
+                            "EF_E": {"CO2-C": 1.0, "EL": 100.0},
+                            "EF_M": {"CO2-C": 1.0, "EL": 100.0},
                             "FLH": 7000,
                             "LIFETIME": 20,
-                            "OPEX-O": 0.11656581,
-                            "WACC": 0.14554836,
+                            "OPEX-O": 0.14792048,
+                            "WACC": 0.0423,
                             "process_code": "CO2-T+S#B",
-                        },
-                        "EL": {
-                            "CAPEX": 2408.19070902,
-                            "CH4SHARE": {"NG-G": 0.89953333},
-                            "CO2CPT-R": {"NG-G": 0.89777778},
-                            "CO2CPT-S": {"NG-G": 1.0},
-                            "EFF": 0.50491129,
-                            "EF_E": {"CO2-C": 1.0, "NG-G": 201.0},
-                            "EF_M": {"CO2-C": 1.0, "NG-G": 201.0},
-                            "FLH": 7000,
-                            "LIFETIME": 30.0,
-                            "OPEX-F": 63.75889534,
-                            "WACC": 0.14554836,
-                            "process_code": "CCGT-CC#B",
-                        },
+                        }
                     },
                 },
                 "flow_values": [
@@ -931,6 +891,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "main_flow_in": 2.946397,
                         "main_flow_out": 2.946397,
                         "process_code": "CH4-SB#B",
+                        "secondary_flows_in": {"BFUEL-L": 0.03086494},
                         "step": "SHP",
                     },
                 ],
@@ -965,6 +926,11 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "process_type": "Transportation (Ship)",
                         "values": 0.00021823,
                     },
+                    {
+                        "process_subtype": "CH4-SB#B",
+                        "process_type": "Transportation (Ship)",
+                        "values": 9.952e-05,
+                    },
                 ],
                 "res_emission_mass": [
                     {
@@ -984,6 +950,12 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "gas_type": "CO2",
                         "process_subtype": "CH4-RGAS#B",
                         "values": 141.427056,
+                    },
+                    {
+                        "emission_type": "direct",
+                        "gas_type": "CO2",
+                        "process_subtype": "CH4-SB#B",
+                        "values": 9033.5494204,
                     },
                     {
                         "emission_type": "indirect",
@@ -1223,8 +1195,8 @@ def test_new_blue_chain_real_data(api_kwargs, expected):
                         "CH4SHARE": {"NG-G": 0.89953333},
                         "CONV": {"EL": 0.00274153},
                         "EFF": 0.85708919,
-                        "EF_E": {"NG-G": 201.0, "NG-L": 201.0},
-                        "EF_M": {"NG-G": 201.0, "NG-L": 201.0},
+                        "EF_E": {"NG-G": 201.0},
+                        "EF_M": {"NG-G": 201.0},
                         "FLH": 7000,
                         "LIFETIME": 30.0,
                         "LOSS": {"NG-G": 0.0005},
@@ -1304,7 +1276,8 @@ def test_new_blue_chain_real_data(api_kwargs, expected):
                 ],
                 "main_transport_process_chain": [
                     {
-                        "CONV-OT": {"BFUEL-L": 3.3e-06, "NG-L": 1.15e-06},
+                        "CONV": {"BFUEL-L": 0.01047548},
+                        "CONV-OT": {"BFUEL-L": 3.3e-06},
                         "DIST": 3174.14,
                         "DST-S-D": 3174.14,
                         "DST-S-DP": 3000.0,
@@ -1371,28 +1344,14 @@ def test_new_blue_chain_real_data(api_kwargs, expected):
                 "secondary_process_import": {
                     "CO2-C": {
                         "EFF": 0.95,
-                        "EF_E": {"CO2-C": 1.0},
-                        "EF_M": {"CO2-C": 1.0},
+                        "EF_E": {"CO2-C": 1.0, "EL": 100.0},
+                        "EF_M": {"CO2-C": 1.0, "EL": 100.0},
                         "FLH": 7000,
                         "LIFETIME": 20,
-                        "OPEX-O": 0.11656581,
-                        "WACC": 0.14554836,
+                        "OPEX-O": 0.14792048,
+                        "WACC": 0.0423,
                         "process_code": "CO2-T+S#B",
-                    },
-                    "EL": {
-                        "CAPEX": 2408.19070902,
-                        "CH4SHARE": {"NG-G": 0.89953333},
-                        "CO2CPT-R": {"NG-G": 0.89777778},
-                        "CO2CPT-S": {"NG-G": 1.0},
-                        "EFF": 0.50491129,
-                        "EF_E": {"CO2-C": 1.0, "NG-G": 201.0},
-                        "EF_M": {"CO2-C": 1.0, "NG-G": 201.0},
-                        "FLH": 7000,
-                        "LIFETIME": 30.0,
-                        "OPEX-F": 63.75889534,
-                        "WACC": 0.14554836,
-                        "process_code": "CCGT-CC#B",
-                    },
+                    }
                 },
             },
             # marks=pytest.mark.skip,  # noqa

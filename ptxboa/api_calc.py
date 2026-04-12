@@ -300,6 +300,9 @@ class Process:
 
         if not self.main_flow_code_in:
             main_flow_in = None
+        # TODO: we had this in the old tool - should be removed
+        # elif self.process_code in ["EL-STR", "H2-STR"]: # noqa
+        #    main_flow_in = main_flow_out  # noqa
         else:
             eff: float = parameter_data[self].get("EFF") or 0  # type:ignore
             if eff <= 0:
