@@ -836,7 +836,7 @@ class DataHandler:
         """Validate / correct transport."""
         chain_data = cls.dimensions["chain"].loc[chain]
         if transport == "Pipeline" and not chain_data["can_pipeline"]:  # type: ignore
-            logger.warning("Cannot use Pipeline - switching to Ship")
+            logger.warning("Cannot use Pipeline - switching to Ship: %s", chain)
             transport = "Ship"
 
         if ship_own_fuel and (transport != "Ship" or not bool(chain_data["SHP_OWN"])):

@@ -277,6 +277,9 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
     res_emission_mass = api_result.emission_mass[  # type: ignore
         ["process_subtype", "emission_type", "gas_type", "values"]
     ].to_dict(orient="records")
+    res_emission = api_result.emissions[  # type: ignore
+        ["process_subtype", "emission_type", "gas_type", "values"]
+    ].to_dict(orient="records")
 
     # round and sort for easier comparison
     values = ptxcalc_results.results_flows_chain
@@ -385,12 +388,44 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 "step": "SHP",
             },
         ],
+        "res_emission": [
+            {
+                "emission_type": "direct",
+                "gas_type": "CH4",
+                "process_subtype": "EAF#B",
+                "values": 372.48820245,
+            },
+            {
+                "emission_type": "indirect",
+                "gas_type": "CO2",
+                "process_subtype": "EAF#B",
+                "values": 195300.0,
+            },
+            {
+                "emission_type": "direct",
+                "gas_type": "CH4",
+                "process_subtype": "NG-DRI-C#B",
+                "values": 274374.2069403,
+            },
+            {
+                "emission_type": "indirect",
+                "gas_type": "CO2",
+                "process_subtype": "NG-DRI-C#B",
+                "values": 189780.3467178,
+            },
+        ],
         "res_emission_mass": [
             {
                 "emission_type": "direct",
                 "gas_type": "CH4",
                 "process_subtype": "EAF#B",
                 "values": 372.48820245,
+            },
+            {
+                "emission_type": "direct",
+                "gas_type": "CO2",
+                "process_subtype": "EAF#B",
+                "values": 804.0,
             },
             {
                 "emission_type": "direct",
@@ -403,6 +438,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
     actually = {
         "calculation_data": data,
         "flow_values": values,
+        "res_emission": res_emission,
         "res_emission_mass": res_emission_mass,
     }
 
@@ -618,16 +654,16 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "values": 4.0,
                     },
                     {
+                        "emission_type": "direct",
+                        "gas_type": "CO2",
+                        "process_subtype": "EAF#B",
+                        "values": 60296.0,
+                    },
+                    {
                         "emission_type": "indirect",
                         "gas_type": "CO2",
                         "process_subtype": "EAF#B",
                         "values": 65100.0,
-                    },
-                    {
-                        "emission_type": "direct",
-                        "gas_type": "CO2",
-                        "process_subtype": "NG-DRI-C#B",
-                        "values": -40.40349819,
                     },
                     {
                         "emission_type": "direct",
@@ -946,6 +982,18 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "values": 3166.31460453,
                     },
                     {
+                        "emission_type": "direct",
+                        "gas_type": "CH4",
+                        "process_subtype": "CH4-RGAS#B",
+                        "values": 0.000189,
+                    },
+                    {
+                        "emission_type": "direct",
+                        "gas_type": "CO2",
+                        "process_subtype": "CH4-RGAS#B",
+                        "values": 504.96388918,
+                    },
+                    {
                         "emission_type": "indirect",
                         "gas_type": "CO2",
                         "process_subtype": "CH4-RGAS#B",
@@ -956,6 +1004,12 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "gas_type": "CO2",
                         "process_subtype": "CH4-SB#B",
                         "values": 9033.5494204,
+                    },
+                    {
+                        "emission_type": "direct",
+                        "gas_type": "CO2",
+                        "process_subtype": "EAF#B",
+                        "values": 60296.0,
                     },
                     {
                         "emission_type": "indirect",

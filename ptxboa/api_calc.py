@@ -12,6 +12,7 @@ from networkx.exception import HasACycle
 
 from ptxboa import logger
 from ptxboa.api_data import DataHandler
+from ptxboa.static import ProcessStepValues  # must be sorted
 from ptxboa.static import (
     EmissionType,
     FlowCodeType,
@@ -19,7 +20,6 @@ from ptxboa.static import (
     ParameterCodeValues,
     ProcessCodeType,
     ProcessStepType,
-    ProcessStepValues,  # must be sorted
     ResultClassType,
     ResultCostType,
     ResultEmissionType,
@@ -300,7 +300,8 @@ class Process:
 
         if not self.main_flow_code_in:
             main_flow_in = None
-        # TODO: we had this in the old tool - should be removed
+        # TODO: we had this in the old tool - should be removed?
+        # I think its because of the FLH optimizer that does optimize Storage?
         # elif self.process_code in ["EL-STR", "H2-STR"]: # noqa
         #    main_flow_in = main_flow_out  # noqa
         else:
@@ -450,6 +451,8 @@ class Process:
         co2_g_bound_in_product = 0
 
         for flow_code, flow in flows_in_net.items():
+            if not flow:
+                continue
             co2_g_per_flow = EF_co2_g_per_flow.get(flow_code, 0)
             co2_g = co2_g_per_flow * flow
             if flow_code in FLOW_CO2_INDIRECT:
@@ -466,6 +469,9 @@ class Process:
                 co2_g_bound_in_product += bound_kg_c_per_output * main_flow_out
 
         co2_g_direct = co2_g_direct_sum_in - co2_g_bound_in_product - co2_captured
+        if co2_g_direct < 0:
+            logger.error("co2_g_direct < 0")
+            co2_g_direct = 0
 
         if not main_flow_out:
             co2_bound_in_product_per_output = 0
@@ -636,14 +642,14 @@ class ProcessTransport(Process):
         data["EFF"] = 1 - loss_t * dist_transport
         data["DIST"] = dist_transport
 
-        # FIXME:
+        # FIXME CONV in transport?
         for flow_code, conv in data["CONV"].items():  # type: ignore
             if not conv:
                 continue
 
             if data["CONV-OT"].get(flow_code):  # type: ignore
                 logger.error(
-                    "%s / %s: CONV instead of CONV-T (already defined) "
+                    "%s / %s: CONV instead of CONV-OT (already defined) "
                     "in transport input data: %s",
                     self,
                     flow_code,
@@ -651,7 +657,7 @@ class ProcessTransport(Process):
                 )
             else:
                 logger.error(
-                    "%s / %s: CONV instead of CONV-T (overwriting) "
+                    "%s / %s: CONV instead of CONV-OT (overwriting) "
                     "in transport input data: %s",
                     self,
                     flow_code,
@@ -659,7 +665,7 @@ class ProcessTransport(Process):
                 )
                 data["CONV-OT"][flow_code] = conv  # type: ignore
 
-        # create CONV from DIST * CONV-T
+        # create CONV from DIST * CONV-OT
         for flow_code, conv_ot in data["CONV-OT"].items():  # type: ignore
             if not conv_ot:
                 continue
@@ -1353,7 +1359,7 @@ class PtxCalc:
                         values=result.co2_indirect_scope2,
                     )
                 )
-            elif result.ch4_direct_co2e:
+            if result.ch4_direct_co2e:
                 results.append(
                     process._create_result_emission(
                         emission_type="direct",
@@ -1361,7 +1367,7 @@ class PtxCalc:
                         values=result.ch4_direct_co2e,
                     )
                 )
-            elif result.co2_direct:
+            if result.co2_direct:
                 results.append(
                     process._create_result_emission(
                         emission_type="direct",
