@@ -114,8 +114,6 @@ def main():
         if settings.chain == "Blue Iron (blue)*":
             continue
 
-        # if settings.chain != "STL-S__NG-DRI-C_EAF__prod_in_demand":
-        #    continue
         if i not in (14, 164):
             continue
 

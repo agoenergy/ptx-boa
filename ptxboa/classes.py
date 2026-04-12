@@ -56,11 +56,11 @@ class Process:
         "EF_E",
         "EF_M",
         "CBOUND",
+        "LOSS",
         # "CONV-OT", # TODO: ?
         "CO2CPT-R",
         "CO2CPT-S",
         "CONV",
-        "LOSS",
     ]
 
     def __init__(
@@ -79,10 +79,17 @@ class Process:
         is_main_in_transport_segment: bool,
         result_process_type: ResultClassType | None,
     ):
-
+        # checks
         if is_in_import_segment:
             assert not is_initial
             assert not is_main_in_transport_segment
+        if main_flow_code_in and main_flow_code_in in secondary_flow_types:
+            logger.error(
+                "%s has %s as main and secondary input", process_code, main_flow_code_in
+            )
+            secondary_flow_types = frozenset(
+                x for x in secondary_flow_types if x != main_flow_code_in
+            )
 
         self.process_code: ProcessCodeType | FlowCodeType = process_code
         self.process_step: ProcessStepType | str | None = process_step
@@ -346,11 +353,34 @@ class Process:
     ) -> ProcessEmissionType:
         # FIMXE: DUMMY
 
+        # get all in flows (main & secondary)
+        flows: dict[FlowCodeType, float] = results_flows[self].secondary_flows_in.copy()
+        if self.main_flow_code_in is not None:
+            flows[self.main_flow_code_in] = results_flows[self].main_flow_in or 0
+
+        co2_bound_in_product = 1
+
+        main_flow_out = results_flows[self].main_flow_out
+        if not main_flow_out:
+            logger.warning("main_flow_out = 0: %s", self)
+            co2_bound_in_product_per_output = 0
+        else:
+            co2_bound_in_product_per_output = co2_bound_in_product / main_flow_out
+
+        co2_captured = 1 if "CO2-C" in self.secondary_flow_types else 0
+
+        result_dummy_m = ProcessEmissionType_E_M(
+            co2_direct=1,
+            co2_indirect_scope2=1,
+            ch4_direct_co2e=1,
+            co2_captured=co2_captured,
+            co2_bound_in_product=co2_bound_in_product,
+            co2_bound_in_product_per_output=co2_bound_in_product_per_output,
+        )
+
         return {
-            "mass": ProcessEmissionType_E_M(
-                co2_captured=1 if "CO2-C" in self.secondary_flow_types else 0
-            ),
-            "emission": ProcessEmissionType_E_M(),
+            "mass": result_dummy_m,
+            "emission": result_dummy_m,
         }
 
 
@@ -1108,10 +1138,9 @@ class Chain:
         self, results_emissions: dict[Process, ProcessEmissionType], etype: EmissionType
     ) -> list[ProcessResultEmissionType]:
         results: list[ProcessResultEmissionType] = []
-        # FIXME
+
         for process, result_e_m in results_emissions.items():
             result = result_e_m[etype]
-            # FIXME: ...
             if result.co2_indirect_scope2:
                 results.append(
                     process._create_result_emission(
@@ -1120,8 +1149,35 @@ class Chain:
                         values=result.co2_indirect_scope2,
                     )
                 )
+            elif result.ch4_direct_co2e:
+                results.append(
+                    process._create_result_emission(
+                        emission_type="direct",
+                        gas_type="CH4",
+                        values=result.ch4_direct_co2e,
+                    )
+                )
+            elif result.co2_direct:
+                results.append(
+                    process._create_result_emission(
+                        emission_type="direct",
+                        gas_type="CO2",
+                        values=result.co2_direct,
+                    )
+                )
 
-        # FIXME: also add last bound in product
+        # for last process, add co2_bound_in_product
+        if process.is_last:
+            results.append(
+                ProcessResultEmissionType(
+                    # TODO: "Bound in product" as constant somewhere
+                    process_type="Bound in product",
+                    process_subtype="Bound in product",
+                    emission_type="direct",
+                    gas_type="CO2",
+                    values=result.co2_bound_in_product,
+                )
+            )
 
         return results
 

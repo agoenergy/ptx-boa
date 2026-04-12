@@ -115,15 +115,16 @@ class ProcessResultCostsType:
 
 @dataclass(slots=True, frozen=True)
 class ProcessEmissionType_E_M:
-    co2_bound_in_product_last_proc: float = 0
-    co2_in_flows: float = 0
-    co2_captured: float = 0
-    co2_bound_in_product: float = 0
-    co2_direct: float = 0
-    co2_indirect_scope2: float = 0
-    ch4_direct: float = 0
-    ch4_direct_co2e: float = 0
-    co2e_total_direct: float = 0
+    _co2_bound_in_product_last_proc: float = 0
+    _co2_in_flows: float = 0
+    co2_captured: float = 0  # used for CSS
+    co2_bound_in_product: float = 0  # used for next process and final bound in product
+    co2_bound_in_product_per_output: float = 0  # used for next process (partial flow)
+    co2_direct: float = 0  # used for output
+    co2_indirect_scope2: float = 0  # used for output
+    _ch4_direct: float = 0
+    ch4_direct_co2e: float = 0  # used for output
+    _co2e_total_direct: float = 0
 
 
 ProcessEmissionType = dict[EmissionType, ProcessEmissionType_E_M]
