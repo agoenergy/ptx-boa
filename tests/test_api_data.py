@@ -6,11 +6,11 @@ from tempfile import TemporaryDirectory
 import pandas as pd
 import pytest
 
+from ptxboa.api_calc import PtxCalc
 from ptxboa.api_data import (
     DEFAULT_DATA_DIR,
     STATIC_DATA_DIR,
     DataHandler,
-    PtxCalc,
     ScenarioValues,
     _load_scenario_data,
 )

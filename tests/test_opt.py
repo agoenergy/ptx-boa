@@ -16,7 +16,7 @@ from app.tab_green_optimization import calc_aggregate_statistics
 from flh_opt.api_opt import get_profiles_and_weights, optimize
 from ptxboa import DEFAULT_CACHE_DIR
 from ptxboa.api import DataHandler, PtxboaAPI
-from ptxboa.api_data import PtxCalc
+from ptxboa.api_calc import PtxCalc
 from ptxboa.static._type_defs import ChainDef
 from ptxboa.utils import annuity
 from tests.utils import assert_deep_equal_approx

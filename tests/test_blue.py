@@ -6,7 +6,8 @@ import pandas as pd
 import pytest
 
 from ptxboa.api import PtxboaAPI, _translate_and_validate_user_settings
-from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler, PtxCalc
+from ptxboa.api_calc import PtxCalc
+from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler
 from ptxboa.static._type_defs import ChainDef
 from tests.test_api import ptxdata_dir_static
 from tests.utils import assert_deep_equal_approx
