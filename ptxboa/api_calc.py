@@ -12,6 +12,7 @@ from networkx.exception import HasACycle
 
 from ptxboa import logger
 from ptxboa.api_data import DataHandler
+from ptxboa.static import ProcessStepValues  # must be sorted
 from ptxboa.static import (
     EmissionType,
     FlowCodeType,
@@ -19,7 +20,6 @@ from ptxboa.static import (
     ParameterCodeValues,
     ProcessCodeType,
     ProcessStepType,
-    ProcessStepValues,  # must be sorted
     ResultClassType,
     ResultCostType,
     ResultEmissionType,
@@ -305,6 +305,7 @@ class Process:
             if eff <= 0:
                 logger.error("Process with eff = %s: %s", eff, self)
                 eff = 1
+
             main_flow_in = main_flow_out / eff
 
         secondary_flows_in = {}
@@ -328,7 +329,7 @@ class Process:
         self, cost_type: ResultCostType, values: float
     ) -> ProcessResultCostsType:
         return ProcessResultCostsType(
-            process_type=self.result_process_type,  # type: ignore : only None for market
+            process_type=self.result_process_type,  # type: ignore : only None for market  # noqa
             process_subtype=self.process_code,
             cost_type=cost_type,
             values=values,
@@ -338,7 +339,7 @@ class Process:
         self, emission_type: ResultEmissionType, gas_type: ResultGasType, values: float
     ) -> ProcessResultEmissionType:
         return ProcessResultEmissionType(
-            process_type=self.result_process_type,  # type: ignore : only None for market
+            process_type=self.result_process_type,  # type: ignore : only None for market # noqa
             process_subtype=self.process_code,
             emission_type=emission_type,
             gas_type=gas_type,

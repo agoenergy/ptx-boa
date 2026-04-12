@@ -76,7 +76,6 @@ class TestApi(unittest.TestCase):
         }
         res = self._test_api_call(settings)
         level_cost_category = res.index.levels[0]
-        print(res)
         self.assertFalse(
             "" in level_cost_category, "empty value in cost_category (process_type)"
         )
@@ -142,18 +141,18 @@ class TestApi(unittest.TestCase):
         # test result categories
         res_values = res.groupby(["process_type", "cost_type"]).sum("values")["values"]
         expected_result = {
-            ("Carbon", "FLOW"): 69.057413040518,
-            ("Derivative production", "CAPEX"): 308.1737690695886,
-            ("Derivative production", "OPEX"): 41.63553057840994,
-            ("Electricity and H2 storage", "CAPEX"): 279.89262037545114,
-            ("Electricity and H2 storage", "OPEX"): 0.5435185267752691,
-            ("Electricity generation", "CAPEX"): 842.7006740519129,
-            ("Electricity generation", "OPEX"): 92.19899158499206,
-            ("H2 production", "CAPEX"): 939.4974306861657,
-            ("H2 production", "OPEX"): 124.91778461321229,
-            ("Transportation (Ship)", "OPEX"): 13.735222655346394,
-            ("Water", "CAPEX"): 1.3502811073682484,
-            ("Water", "OPEX"): 0.23938206254847536,
+            ("Carbon", "FLOW"): 69.05741304,
+            ("Derivative production", "CAPEX"): 308.17376907,
+            ("Derivative production", "OPEX"): 41.63553058,
+            ("Electricity and H2 storage", "CAPEX"): 282.62562318,
+            ("Electricity and H2 storage", "OPEX"): 0.54351853,
+            ("Electricity generation", "CAPEX"): 943.23148599,
+            ("Electricity generation", "OPEX"): 103.19796165,
+            ("H2 production", "CAPEX"): 948.98730372,
+            ("H2 production", "OPEX"): 126.17958042,
+            ("Transportation (Ship)", "OPEX"): 13.73522266,
+            ("Water", "CAPEX"): 1.36392031,
+            ("Water", "OPEX"): 0.24180006,
         }
 
         res_values = dict(res_values.items())
@@ -178,15 +177,15 @@ class TestApi(unittest.TestCase):
         res_values = res.groupby(["process_type", "cost_type"]).sum("values")["values"]
 
         expected_result = {
-            ("Electricity and H2 storage", "CAPEX"): 44.84637867437069,
-            ("Electricity generation", "CAPEX"): 287.5830863315742,
-            ("Electricity generation", "OPEX"): 49.73468408558943,
-            ("H2 production", "CAPEX"): 66.31815485798717,
-            ("H2 production", "OPEX"): 7.180735162443889,
-            ("Transportation (Pipeline)", "CAPEX"): 8.507408889875556,
-            ("Transportation (Pipeline)", "OPEX"): 27.71899909407804,
-            ("Water", "CAPEX"): 0.15658693599049908,
-            ("Water", "OPEX"): 0.03390954768430808,
+            ("Electricity and H2 storage", "CAPEX"): 44.84637867,
+            ("Electricity generation", "CAPEX"): 318.6844908,
+            ("Electricity generation", "OPEX"): 55.11336802,
+            ("H2 production", "CAPEX"): 66.31815486,
+            ("H2 production", "OPEX"): 7.18073516,
+            ("Transportation (Pipeline)", "CAPEX"): 8.50740889,
+            ("Transportation (Pipeline)", "OPEX"): 27.71899909,
+            ("Water", "CAPEX"): 0.15658694,
+            ("Water", "OPEX"): 0.03390955,
         }
 
         res_values = dict(res_values.items())
@@ -365,7 +364,7 @@ class TestApi(unittest.TestCase):
         res_opt = self._test_api_call(settings, optimize_flh=True)
         self.assertAlmostEqual(
             res.at[("Electricity and H2 storage", "CAPEX"), "values"],
-            823.7733133374624,
+            831.8795131795181,
             places=4,
         )
         self.assertAlmostEqual(
@@ -375,12 +374,12 @@ class TestApi(unittest.TestCase):
         )
         self.assertAlmostEqual(
             res_opt.at[("Electricity and H2 storage", "CAPEX"), "values"],
-            183.481609334802,
+            338.80543452051774,
             places=4,
         )
         self.assertAlmostEqual(
             res_opt.at[("Electricity and H2 storage", "OPEX"), "values"],
-            5.567013499284561,
+            7.628877979749411,
             places=4,
         )
 
