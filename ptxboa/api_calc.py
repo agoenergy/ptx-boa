@@ -1,3 +1,5 @@
+"""Classes for main process chain calculation."""
+
 from __future__ import annotations  # otherwise nx.DiGraph[Process] does not work
 
 from dataclasses import asdict
@@ -116,6 +118,7 @@ class Process:
 
     @property
     def is_in_export_segment(self) -> bool:
+        """Is in export segment."""
         return not (self.is_in_import_segment or self.is_main_in_transport_segment)
 
     @classmethod
@@ -126,7 +129,7 @@ class Process:
         is_last: bool = False,
         is_in_import_segment: bool = False,
     ) -> "Process":
-
+        """Create appropriate subclass of Process."""
         is_market = process_code in DataHandler.dimensions["flow"].index  # is flow code
         ProcessClass: type[Process] = Process
 
@@ -218,6 +221,7 @@ class Process:
         parameter_getters: "ParameterGetters",
         parameter_values: DataQueryDicType,
     ) -> ProcessDataType:
+        """Create data for calculation."""
         data: ProcessDataType = {}
         # load parameters that are process dependent
 
@@ -243,24 +247,24 @@ class Process:
 
     @property
     def is_css(self) -> bool:
-        # FIXME: get from process data?
-        # or from main_flow
-
+        """Is CSS process."""
+        # FIXME: get from process data? or from main_flow
+        # return self.main_flow_code_out == "CO2-C" # noqa
         return self.process_code == "CO2-T+S#B"
-        # return self.main_flow_code_out == "CO2-C"
 
     def calculate_flows(
         self,
         parameter_data: dict[Process, ProcessDataType],
         results_flows: dict[Process, ProcessResultFlowsType],
     ) -> ProcessResultFlowsType:
+        """Calculate flows."""
         # main_flow_out: sum of outgoing
         if self.is_last:
             main_flow_out = 1
         else:
             main_flow_out = 0
             for p in self._links_out_in_main:
-                main_flow_out += results_flows[p].main_flow_in  # type: ignore - this one must have a value
+                main_flow_out += results_flows[p].main_flow_in  # type: ignore - this one must have a value # noqa
             for p in self._links_out_in_secondary:
                 main_flow_out += results_flows[p].secondary_flows_in[
                     self.main_flow_code_out
@@ -280,8 +284,8 @@ class Process:
         secondary_flows_in = {}
         for flow_code in self.secondary_flow_types:
             conv: float = (
-                parameter_data[self].get("CONV", {}).get(flow_code) or 0
-            )  # type:ignore
+                parameter_data[self].get("CONV", {}).get(flow_code) or 0  # type:ignore
+            )
             if conv == 0:
                 logger.warning("Process with conv = 0 %s / %s", self, flow_code)
             elif conv < 0:
@@ -321,6 +325,7 @@ class Process:
         results_flows: dict[Process, ProcessResultFlowsType],
         results_costs: dict[Process, list[ProcessResultCostsType]],
     ) -> list[ProcessResultCostsType]:
+        """Calculate costs."""
         parameters = parameter_data[self]
         flows = results_flows[self]
 
@@ -419,10 +424,10 @@ class Process:
                 # direct emission
                 co2_g_direct_sum_in += co2_g
                 # capture
-                co2cpt: float = CO2CPT_R.get(flow_code, 0) * CO2CPT_S.get(flow_code, 0)  # type: ignore
+                co2cpt: float = CO2CPT_R.get(flow_code, 0) * CO2CPT_S.get(flow_code, 0)  # type: ignore # noqa
                 co2_captured += co2_g * co2cpt
                 # bound
-                bound_kg_c_per_output: float = CBOUND_kg_c_per_output.get(flow_code, 0)  # type: ignore
+                bound_kg_c_per_output: float = CBOUND_kg_c_per_output.get(flow_code, 0)  # type: ignore # noqa
                 co2_g_bound_in_product += bound_kg_c_per_output * main_flow_out
 
         co2_g_direct = co2_g_direct_sum_in - co2_g_bound_in_product - co2_captured
@@ -447,7 +452,7 @@ class Process:
         results_flows: dict[Process, ProcessResultFlowsType],
         results_emissions: dict[Process, ProcessEmissionType | None],
     ) -> ProcessEmissionType | None:
-
+        """Calculate emissions."""
         result: ProcessEmissionType = {}
 
         EM_2_PARAM: dict[EmissionType, ParameterCodeType] = {
@@ -581,6 +586,7 @@ class ProcessTransport(Process):
         parameter_getters: "ParameterGetters",
         parameter_values: DataQueryDicType,
     ) -> ProcessDataType:
+        """Create data for calculation."""
         data = super().get_parameter_data(
             parameter_getters=parameter_getters, parameter_values=parameter_values
         )
@@ -620,7 +626,7 @@ class ProcessMarket(Process):
         """Calculate costs."""
         parameters = parameter_data[self]
 
-        speccost: float = parameters["SPECCOST"][self.main_flow_code_out]  # type: ignore
+        speccost: float = parameters["SPECCOST"][self.main_flow_code_out]  # type: ignore # noqa
         # create costs not once for main flow out,but instead
         # for all recipients
         result = []
@@ -645,6 +651,7 @@ class ProcessMarket(Process):
         results_flows: dict[Process, ProcessResultFlowsType],
         results_emissions: dict[Process, ProcessEmissionType | None],
     ) -> ProcessEmissionType | None:
+        """Calculatae emissions."""
         return None
 
 
@@ -689,7 +696,7 @@ class PtxCalc:
     def _create_css_subgraph_processes_ordered_backwards(
         self,
     ) -> tuple[Process, ...]:
-        """Subgraphs should only be css process + market processes"""
+        """Subgraphs should only be css process + market processes."""
         processes: list[Process] = []
         for p in self._secondary_processes_ordered_forwards:
             if not p.is_css:
@@ -720,6 +727,12 @@ class PtxCalc:
 
     @classmethod
     def get_or_create(cls, chain_def: ChainDef) -> "PtxCalc":
+        """Get or create calculation instance.
+
+        We can re-use existing instances because this instance
+        represents a chain (without source/target regions), without
+        parameter data.
+        """
         key = chain_def.unique_key
         if key not in cls._instances:
             cls._instances[key] = cls._create(chain_def)
@@ -816,7 +829,7 @@ class PtxCalc:
         target_country_code: TargetCountryCodeType,
         use_user_data: bool = True,
     ) -> CalculateDataType:
-
+        """Create data for calculation."""
         parameter_getters = self._get_parameter_getters(
             data_handler=data_handler, use_user_data=use_user_data
         )
@@ -854,7 +867,8 @@ class PtxCalc:
         )
 
     def _calculate(self, data: CalculateDataType) -> dict:
-        """
+        """Calculate results.
+
         Calculation order:
 
         - backwards calculate flows (except CO2-C - maybe remove from CONV) for output 1
@@ -864,7 +878,6 @@ class PtxCalc:
         - calculate costs
 
         """
-
         parameter_data = self._split_parameter_data(data=data)
         results_flows = self._calculate_flows_backwards(parameter_data=parameter_data)
 
@@ -890,6 +903,7 @@ class PtxCalc:
         }
 
     def calculate(self, data: CalculateDataType) -> PtxCalcResult:
+        """Calculate results."""
         results = self._calculate(data=data)
         return self._merge_calculation_results(**results)
 
@@ -1112,14 +1126,13 @@ class PtxCalc:
         parameter_data: dict[Process, ProcessDataType],
         results_emissions: dict[Process, ProcessEmissionType | None],
     ):
-        """inplace update flows for CSS subgraphs.
+        """Inplace update flows for CSS subgraphs.
 
         - for all emission where we have css: set CO2-C flow
         - recalculate flows for CSS subgraphs
           (should only be Process + Market processes)
 
         """
-
         # for all emission where we have css: set CO2-C flow
         for process, emissions in results_emissions.items():
             # TODO: mass or emission?
@@ -1128,8 +1141,6 @@ class PtxCalc:
             if co2_captured:
                 if "CO2-C" not in process.secondary_flow_types:
                     logger.error("CO2 captured where we dont expect it: %s", process)
-                    # co2_captured = 0
-                    # raise NotImplementedError()  # FIXME: remove
                     continue
                 results_flows[process].secondary_flows_in["CO2-C"] = co2_captured
 

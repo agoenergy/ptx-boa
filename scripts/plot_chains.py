@@ -143,7 +143,7 @@ def main():
         results = chain_process._calculate(data=parameter_data)
 
         edge_values_speccost = {  # noqa
-            (p, p_): results["parameter_data"][p]["SPECCOST"][p.main_flow_code_out]  # type: ignore
+            (p, p_): results["parameter_data"][p]["SPECCOST"][p.main_flow_code_out]  # type: ignore  # noqa
             for p, p_ in chain_process._graph.edges()
             if p.is_market
         }

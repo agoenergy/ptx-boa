@@ -1,3 +1,5 @@
+"""Handle data queries for api calculation."""
+
 from functools import cache
 from itertools import product
 from pathlib import Path
