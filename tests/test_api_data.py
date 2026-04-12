@@ -229,10 +229,11 @@ def test_get_calculation_data(ptxdata_dir, scenario, kwargs, request):
         "main_export_process_chain": [
             {
                 "CAPEX": 334.76322134,
-                "EFF": 1,
+                "EFF": 1.0,
                 "FLH": 1662.0,
                 "LIFETIME": 20.0,
                 "OPEX-F": 5.69097476,
+                "WACC": 0.0532,
                 "process_code": "PV-FIX",
                 "step": "RES",
             },
@@ -241,6 +242,7 @@ def test_get_calculation_data(ptxdata_dir, scenario, kwargs, request):
                 "EFF": 0.9,
                 "FLH": 7000,
                 "LIFETIME": 20.0,
+                "WACC": 0.0532,
                 "process_code": "EL-STR",
                 "step": "EL_STR",
             },
@@ -251,6 +253,7 @@ def test_get_calculation_data(ptxdata_dir, scenario, kwargs, request):
                 "FLH": 2779.7,
                 "LIFETIME": 20.0,
                 "OPEX-F": 17.24785227,
+                "WACC": 0.0532,
                 "process_code": "AEL-EL",
                 "step": "ELY",
             },
@@ -260,6 +263,7 @@ def test_get_calculation_data(ptxdata_dir, scenario, kwargs, request):
                 "FLH": 7000,
                 "LIFETIME": 30.0,
                 "OPEX-F": 0.52090212,
+                "WACC": 0.0532,
                 "process_code": "H2-STR",
                 "step": "H2_STR",
             },
@@ -270,36 +274,40 @@ def test_get_calculation_data(ptxdata_dir, scenario, kwargs, request):
                 "FLH": 7752.95,
                 "LIFETIME": 30.0,
                 "OPEX-F": 75.97473309,
+                "WACC": 0.0532,
                 "process_code": "NH3SYN",
                 "step": "DERIV",
             },
         ],
-        "main_transport_process_chain": [
-            {
-                "CONV": {"BFUEL-L": 5.34e-06},
-                "DIST": 12441.9,
-                "EFF": 0.99425804,
-                "OPEX-O": 0.00048569,
-                "OPEX-T": 3.7e-07,
-                "process_code": "NH3-SB",
-                "step": "SHP",
-            },
+        "main_import_process_chain": [
             {
                 "CAPEX": 474.75962314,
                 "CONV": {"EL": 0.00767},
                 "EFF": 0.74661017,
-                "FLH": 6657.6,
+                "FLH": 7000,
                 "LIFETIME": 25.0,
                 "OPEX-F": 14.24278869,
                 "process_code": "NH3-REC",
                 "step": "POST_SHP",
-            },
+            }
+        ],
+        "main_transport_process_chain": [
+            {
+                "DIST": 12441.9,
+                "DST-S-D": 12441.9,
+                "DST-S-DP": 5500.0,
+                "EFF": 0.99425804,
+                "LOSS-T": 4.6e-07,
+                "OPEX-O": 0.00048569,
+                "OPEX-T": 3.7e-07,
+                "process_code": "NH3-SB",
+                "step": "SHP",
+            }
         ],
         "parameter": {
             "SPECCOST": {
                 "BFUEL-L": 0.00322434,
                 "CO2-G": 0.04451862,
-                "EL": 0.08078,
                 "H2O-L": 0.0013738,
                 "HEAT": 0.0577,
                 "N2-G": 0.01154,
@@ -314,8 +322,7 @@ def test_get_calculation_data(ptxdata_dir, scenario, kwargs, request):
                 "H2O-L": 0.0013738,
                 "HEAT": 0.0577,
                 "N2-G": 0.01154,
-            },
-            "WACC": 0.0532,
+            }
         },
         "secondary_process": {
             "H2O-L": {
@@ -325,6 +332,7 @@ def test_get_calculation_data(ptxdata_dir, scenario, kwargs, request):
                 "FLH": 7000,
                 "LIFETIME": 20.0,
                 "OPEX-F": 0.00010925,
+                "WACC": 0.0532,
                 "process_code": "DESAL",
             }
         },
@@ -496,18 +504,6 @@ def test_get_calculation_data_w_opt(ptxdata_dir, scenario, kwargs, request):
                 "CONV": {"EL": 0.003},
                 "EFF": 1.0,
                 "FLH": 5058.62320974,
-                "LIFETIME": 20.0,
-                "OPEX-F": 0.00010925,
-                "WACC": 0.22150198,
-                "process_code": "DESAL",
-            }
-        },
-        "secondary_process_import": {
-            "H2O-L": {
-                "CAPEX": 0.0027312,
-                "CONV": {"EL": 0.003},
-                "EFF": 1.0,
-                "FLH": 7000,
                 "LIFETIME": 20.0,
                 "OPEX-F": 0.00010925,
                 "WACC": 0.22150198,

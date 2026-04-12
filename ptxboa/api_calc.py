@@ -12,7 +12,6 @@ from networkx.exception import HasACycle
 
 from ptxboa import logger
 from ptxboa.api_data import DataHandler
-from ptxboa.static import ProcessStepValues  # must be sorted
 from ptxboa.static import (
     EmissionType,
     FlowCodeType,
@@ -20,6 +19,7 @@ from ptxboa.static import (
     ParameterCodeValues,
     ProcessCodeType,
     ProcessStepType,
+    ProcessStepValues,  # must be sorted
     ResultClassType,
     ResultCostType,
     ResultEmissionType,
@@ -1365,13 +1365,13 @@ class PtxCalc:
         secondary_process_import = {
             p.main_flow_code_out: _add_step_and_code(p, parameter_data[p])
             for p in self._secondary_processes_ordered_forwards
-            if p.is_in_export_segment
+            if not p.is_in_export_segment  # no secondary processes in transport segment
         }
 
         secondary_process = {
             p.main_flow_code_out: _add_step_and_code(p, parameter_data[p])
             for p in self._secondary_processes_ordered_forwards
-            if p.is_in_export_segment  # no secondary processes in transport segmant
+            if p.is_in_export_segment  # no secondary processes in transport segment
         }
 
         # parameter: merge speccost, add wacc
