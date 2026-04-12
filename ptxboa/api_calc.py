@@ -83,7 +83,7 @@ class Process:
         is_secondary: bool,
         is_main: bool,
         is_main_in_transport_segment: bool,
-        result_process_type: ResultClassType | None,
+        result_process_type: ResultClassType,
     ):
         # checks
         if is_in_import_segment:
@@ -96,6 +96,9 @@ class Process:
             secondary_flow_types = frozenset(
                 x for x in secondary_flow_types if x != main_flow_code_in
             )
+        if not result_process_type:
+            logger.error(f"No result_process_type for {process_code}")
+            result_process_type = "Other"  # FIXME
 
         self.process_code: ProcessCodeType | FlowCodeType = process_code
         self.process_step: ProcessStepType | str | None = process_step
@@ -109,7 +112,7 @@ class Process:
         self.is_secondary: bool = is_secondary
         self.is_main: bool = is_main
         self.is_main_in_transport_segment: bool = is_main_in_transport_segment
-        self.result_process_type: ResultClassType | None = result_process_type
+        self.result_process_type: ResultClassType = result_process_type
 
         # links - will be added by Chain
 

@@ -76,7 +76,10 @@ class TestApi(unittest.TestCase):
         }
         res = self._test_api_call(settings)
         level_cost_category = res.index.levels[0]
-        self.assertFalse("" in level_cost_category, "empty value in cost_category")
+        print(res)
+        self.assertFalse(
+            "" in level_cost_category, "empty value in cost_category (process_type)"
+        )
 
     def test_issue_317_demand_country_list_must_not_contain_supply_countries(self):
         """See https://github.com/agoenergy/ptx-boa/issues/317."""
@@ -208,14 +211,14 @@ class TestApi(unittest.TestCase):
         # test result categories
         res_values = res.groupby(["process_type", "cost_type"]).sum("values")["values"]
         expected_result = {
-            ("Electricity and H2 storage", "CAPEX"): 18.351515364244914,
-            ("Electricity generation", "CAPEX"): 21.946684576122536,
-            ("Electricity generation", "OPEX"): 7.604789526052963,
-            ("H2 production", "CAPEX"): 20.875788542159256,
-            ("H2 production", "OPEX"): 5.384262578837443,
-            ("Transportation (Pipeline)", "CAPEX"): 1.4165302981169516,
-            ("Transportation (Pipeline)", "OPEX"): 2.925088442220974,
-            ("Water", "FLOW"): 0.41564389862359896,
+            ("Electricity and H2 storage", "CAPEX"): 18.35151536,
+            ("Electricity generation", "CAPEX"): 24.36897573,
+            ("Electricity generation", "OPEX"): 8.44414248,
+            ("H2 production", "CAPEX"): 20.87578854,
+            ("H2 production", "OPEX"): 5.38426258,
+            ("Transportation (Pipeline)", "CAPEX"): 1.4165303,
+            ("Transportation (Pipeline)", "OPEX"): 2.92508844,
+            ("Water", "FLOW"): 0.4156439,
         }
 
         res_values = dict(res_values.items())

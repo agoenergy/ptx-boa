@@ -107,24 +107,24 @@ class ProcessResultFlowsType:
 
 @dataclass(slots=True, frozen=True)
 class ProcessResultCostsType:
-    process_type: ResultClassType | None = None
-    process_subtype: ProcessCodeType | FlowCodeType | None = None
-    cost_type: ResultCostType | None = None
-    values: float = 0
+    process_type: ResultClassType
+    process_subtype: ProcessCodeType | FlowCodeType
+    cost_type: ResultCostType
+    values: float
 
 
 @dataclass(slots=True, frozen=True)
 class ProcessEmissionType_E_M:
-    _co2_bound_in_product_last_proc: float = 0
-    _co2_in_flows: float = 0
+    # _co2_bound_in_product_last_proc: float = 0
+    # _co2_in_flows: float = 0
     co2_captured: float = 0  # used for CSS
     co2_bound_in_product: float = 0  # used for next process and final bound in product
     co2_bound_in_product_per_output: float = 0  # used for next process (partial flow)
     co2_direct: float = 0  # used for output
     co2_indirect_scope2: float = 0  # used for output
-    _ch4_direct: float = 0
+    # _ch4_direct: float = 0
     ch4_direct_co2e: float = 0  # used for output
-    _co2e_total_direct: float = 0
+    # _co2e_total_direct: float = 0
 
 
 ProcessEmissionType = dict[EmissionType, ProcessEmissionType_E_M]
@@ -132,8 +132,8 @@ ProcessEmissionType = dict[EmissionType, ProcessEmissionType_E_M]
 
 @dataclass(slots=True, frozen=True)
 class ProcessResultEmissionType:
-    process_type: ResultClassType | str | None = None
-    process_subtype: ProcessCodeType | FlowCodeType | str | None = None
-    emission_type: ResultEmissionType | None = None
-    gas_type: ResultGasType | None = None
-    values: float = 0
+    process_type: ResultClassType | str
+    process_subtype: ProcessCodeType | FlowCodeType | str
+    emission_type: ResultEmissionType
+    gas_type: ResultGasType
+    values: float
