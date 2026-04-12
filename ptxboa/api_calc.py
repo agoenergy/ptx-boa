@@ -137,6 +137,7 @@ class Process:
 
         if is_market:
             main_flow_code_out = cast(FlowCodeType, process_code)
+            flow_spec = DataHandler.dimensions["flow"].loc[main_flow_code_out]
             main_flow_code_in = None
             secondary_flow_types = frozenset()
             is_initial = False
@@ -144,7 +145,7 @@ class Process:
             is_main = False
             is_main_in_transport_segment = False
             ProcessClass = ProcessMarket
-            result_process_type = None
+            result_process_type = flow_spec["result_process_type"]
         else:
             proc_spec = DataHandler.dimensions["process"].loc[process_code]
             main_flow_code_out = proc_spec["main_flow_code_out"]
@@ -664,7 +665,14 @@ class ProcessMarket(Process):
 
         for p, flow in process_flows.items():
             value = flow * speccost
-            result.append(p._create_result_cost(cost_type="FLOW", values=value))
+            result.append(
+                ProcessResultCostsType(
+                    process_type=self.result_process_type,
+                    process_subtype=p.process_code,  # accounted in main process
+                    cost_type="FLOW",
+                    values=value,
+                )
+            )
 
         return result
 
