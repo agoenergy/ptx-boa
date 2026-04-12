@@ -12,7 +12,6 @@ from networkx.exception import HasACycle
 
 from ptxboa import logger
 from ptxboa.api_data import DataHandler
-from ptxboa.static import ProcessStepValues  # must be sorted
 from ptxboa.static import (
     EmissionType,
     FlowCodeType,
@@ -20,6 +19,7 @@ from ptxboa.static import (
     ParameterCodeValues,
     ProcessCodeType,
     ProcessStepType,
+    ProcessStepValues,  # must be sorted
     ResultClassType,
     ResultCostType,
     ResultEmissionType,
@@ -1570,6 +1570,8 @@ def _aggregate_results_df(
     columns_all = columns_index + columns_value
     if df.empty:
         return pd.DataFrame(columns=columns_all)
+    # drop if values is 0
+    df = df.loc[~(df["values"] == 0)]
     return df[columns_all].groupby(columns_index).sum().reset_index()
 
 
