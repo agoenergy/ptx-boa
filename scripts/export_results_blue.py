@@ -41,7 +41,7 @@ def flatten_dict(v: Any, key_prefix: None | str = None) -> Iterable[tuple[str, A
 
 
 def list_to_dict_by_step(d: list) -> dict:
-    return {(s.get("step") or s.get("process_step")): s for s in d}
+    return {s.get("step"): s for s in d}
 
 
 STEPS = [

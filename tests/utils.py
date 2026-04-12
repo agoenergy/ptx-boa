@@ -34,6 +34,8 @@ def assert_deep_equal(
         _assert((lambda x, y: x == y), context)
     elif isinstance(expected_result, float):
         # float
+        if not isinstance(actual_result, float):
+            raise TypeError(f"Not a float: {type(actual_result)}: {actual_result}")
         _assert((lambda x, y: isclose(x, y, rtol=1e-8, equal_nan=True)), context)
     elif isinstance(expected_result, list):
         if not isinstance(actual_result, list):

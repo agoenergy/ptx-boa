@@ -241,9 +241,25 @@ class Process:
                 for f in self._parameter_flow_types
             }
 
-        # FIXME: correct EFF with loss?
+        self._inplace_correct_eff_and_conv_with_loss(data)
 
         return data
+
+    def _inplace_correct_eff_and_conv_with_loss(self, data: ProcessDataType) -> None:
+        LOSS: dict = data.get("LOSS", {})  # type: ignore
+        main_flow_code: FlowCodeType = self._main_flow_code_in_or_out
+        if main_flow_code in LOSS:  # correct EFF
+            # see https://github.com/agoenergy/ptx-boa/issues/581
+            data["EFF"] = data["EFF"] / (1 + LOSS[main_flow_code])
+        conv: float
+        for flow_code, conv in data.get("CONV", {}).items():  # type: ignore
+            if conv <= 0:
+                # currently negative flows (i.e. additional output)
+                conv = 0
+            if flow_code in LOSS:
+                # new: loss can reduce the effective conversion rate
+                # see https://github.com/agoenergy/ptx-boa/issues/581
+                data["CONV"][flow_code] = conv * (1 + LOSS[flow_code])  # type: ignore
 
     @property
     def is_css(self) -> bool:
@@ -1245,10 +1261,12 @@ class PtxCalc:
         )
 
         results_flows_chain = [
-            results_flows[p] for p in self._main_processes_ordered_forwards
+            _add_step_and_code(p, asdict(results_flows[p]))
+            for p in self._main_processes_ordered_forwards
         ]
         results_flows_secondary = [
-            results_flows[p] for p in self._secondary_processes_ordered_forwards
+            _add_step_and_code(p, asdict(results_flows[p]))
+            for p in self._secondary_processes_ordered_forwards
         ]
 
         return PtxCalcResult(

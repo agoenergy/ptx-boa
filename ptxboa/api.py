@@ -258,7 +258,7 @@ class PtxboaAPI:
         todo_results_flows = ptxcalc_result.results_flows_chain or []
         for d in ptxcalc_result.results_flows_secondary or []:
             d = d.copy()
-            d["process_step"] = "SECONDARY:" + d["process_step"]
+            d["step"] = f"SECONDARY:{d['step']}"
             todo_results_flows += [d]
 
         return ApiCalculateResult(
