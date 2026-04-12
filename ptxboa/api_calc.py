@@ -66,7 +66,6 @@ class Process:
     ]
     _parameter_codes_process_flow_sec = [
         "CONV",
-        # "CONV-OT", # TODO: ?
     ]
 
     def __init__(
@@ -83,7 +82,7 @@ class Process:
         is_secondary: bool,
         is_main: bool,
         is_main_in_transport_segment: bool,
-        result_process_type: ResultClassType,
+        result_process_type: ResultClassType | None,
     ):
         # checks
         if is_in_import_segment:
@@ -96,9 +95,6 @@ class Process:
             secondary_flow_types = frozenset(
                 x for x in secondary_flow_types if x != main_flow_code_in
             )
-        if not result_process_type:
-            logger.error(f"No result_process_type for {process_code}")
-            result_process_type = "Other"  # FIXME
 
         self.process_code: ProcessCodeType | FlowCodeType = process_code
         self.process_step: ProcessStepType | str | None = process_step
@@ -112,7 +108,7 @@ class Process:
         self.is_secondary: bool = is_secondary
         self.is_main: bool = is_main
         self.is_main_in_transport_segment: bool = is_main_in_transport_segment
-        self.result_process_type: ResultClassType = result_process_type
+        self.result_process_type: ResultClassType | None = result_process_type
 
         # links - will be added by Chain
 
@@ -332,7 +328,7 @@ class Process:
         self, cost_type: ResultCostType, values: float
     ) -> ProcessResultCostsType:
         return ProcessResultCostsType(
-            process_type=self.result_process_type,
+            process_type=self.result_process_type,  # type: ignore : only None for market
             process_subtype=self.process_code,
             cost_type=cost_type,
             values=values,
@@ -342,7 +338,7 @@ class Process:
         self, emission_type: ResultEmissionType, gas_type: ResultGasType, values: float
     ) -> ProcessResultEmissionType:
         return ProcessResultEmissionType(
-            process_type=self.result_process_type,
+            process_type=self.result_process_type,  # type: ignore : only None for market
             process_subtype=self.process_code,
             emission_type=emission_type,
             gas_type=gas_type,
@@ -546,6 +542,7 @@ class ProcessTransport(Process):
         "EF_M",
     ]
     _parameter_codes_process_flow_sec = [
+        "CONV",  # FXIME: should be CONV-OT?
         "CONV-OT",
     ]
 
@@ -553,6 +550,48 @@ class ProcessTransport(Process):
     def color(self) -> str:
         """Color for plotting."""
         return "teal"
+
+    # def calculate_flows(
+    #    self,
+    #    parameter_data: dict[Process, ProcessDataType],
+    #    results_flows: dict[Process, ProcessResultFlowsType],
+    # ) -> ProcessResultFlowsType:
+    #    """Calculate flows."""
+    #    # main_flow_out: sum of outgoing
+    #    main_flow_out = 0
+    #    # NOTE: should only have one
+    #    for p in self._links_out_in_main:
+    #        main_flow_out += results_flows[p].main_flow_in  # type: ignore - this one must have a value # noqa
+    #    if not main_flow_out:
+    #        logger.warning("Process with main_flow_out = 0: %s", self)
+    #
+    #    eff: float = parameter_data[self].get("EFF") or 0  # type:ignore
+    #    if eff <= 0:
+    #        logger.error("Process with eff = %s: %s", eff, self)
+    #        eff = 1
+    #
+    #    main_flow_in = main_flow_out / eff
+    #
+    #    secondary_flows_in = {}
+    #    for flow_code in self.secondary_flow_types:
+    #        conv_ot: float = (
+    #            parameter_data[self].get("CONV-OT", {}).get(flow_code) or 0  # type:ignore
+    #        )
+    #        if conv_ot == 0:
+    #            logger.warning("Process with CONV-OT = 0 %s / %s", self, flow_code)
+    #        elif conv_ot < 0:
+    #            conv_ot = 0
+    #
+    #        dist: float = parameter_data[self]["DIST"]
+    #        conv = conv_ot * dist
+    #
+    #        secondary_flows_in[flow_code] = main_flow_out * conv
+    #
+    #    return ProcessResultFlowsType(
+    #        main_flow_out=main_flow_out,
+    #        main_flow_in=main_flow_in,
+    #        secondary_flows_in=secondary_flows_in,
+    #    )
 
     def calculate_costs(
         self,
@@ -630,6 +669,35 @@ class ProcessTransport(Process):
         data["EFF"] = 1 - loss_t * dist_transport
         data["DIST"] = dist_transport
 
+        # FIXME:
+        for flow_code, conv in data["CONV"].items():  # type: ignore
+            if not conv:
+                continue
+
+            if data["CONV-OT"].get(flow_code):  # type: ignore
+                logger.error(
+                    "%s / %s: CONV instead of CONV-T (already defined) "
+                    "in transport input data: %s",
+                    self,
+                    flow_code,
+                    conv,
+                )
+            else:
+                logger.error(
+                    "%s / %s: CONV instead of CONV-T (overwriting) "
+                    "in transport input data: %s",
+                    self,
+                    flow_code,
+                    conv,
+                )
+                data["CONV-OT"][flow_code] = conv  # type: ignore
+
+        # create CONV from DIST * CONV-T
+        for flow_code, conv_ot in data["CONV-OT"].items():  # type: ignore
+            if not conv_ot:
+                continue
+            data["CONV"][flow_code] = conv_ot * dist_transport  # type: ignore
+
         # FIXME: OPEX-O in transport?
         return data
 
@@ -670,7 +738,7 @@ class ProcessMarket(Process):
             value = flow * speccost
             result.append(
                 ProcessResultCostsType(
-                    process_type=self.result_process_type,
+                    process_type=self._get_result_process_type(target_process=p),
                     process_subtype=p.process_code,  # accounted in main process
                     cost_type="FLOW",
                     values=value,
@@ -678,6 +746,9 @@ class ProcessMarket(Process):
             )
 
         return result
+
+    def _get_result_process_type(self, target_process: Process) -> ResultClassType:
+        return self.result_process_type or target_process.result_process_type  # type: ignore # noqa - one of these must be set
 
     def calculate_emissions(
         self,
