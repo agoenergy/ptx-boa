@@ -7,16 +7,16 @@ from typing import List, Optional, Tuple
 import pandas as pd
 import pypsa
 
-from ptxboa import logger
-
-from . import PROFILES_DIR
-from .api_calc import PtxCalc
-from .api_data import DataHandler
-from .api_optimize import PtxOpt
-from .static import (
-    ChainNameType,
+from ptxboa import PROFILES_DIR, logger
+from ptxboa.api_calc import PtxCalc
+from ptxboa.api_data import DataHandler
+from ptxboa.api_optimize import PtxOpt
+from ptxboa.static import (
+    ChainType,
     DimensionType,
+    FlowCodeType,
     OutputUnitType,
+    ProcessCodeType,
     ResGenType,
     ScenarioType,
     SecProcCO2Type,
@@ -27,6 +27,7 @@ from .static import (
     TransportType,
     TransportValues,
 )
+from ptxboa.static._type_defs import ChainDef, PtxCalcResult
 
 
 @dataclass(slots=True, frozen=True)
@@ -130,7 +131,7 @@ class PtxboaAPI:
         scenario: ScenarioType,
         secproc_co2: SecProcCO2Type | None,
         secproc_water: SecProcH2OType | None,
-        chain: ChainNameType,
+        chain: ChainType,
         res_gen: ResGenType | None,
         region: SourceRegionNameType,
         country: TargetCountryNameType,
@@ -187,11 +188,23 @@ class PtxboaAPI:
             * `cost_type`: one of {RESULT_COST_TYPES}
 
         """
-        # make sure optimize_flh=False in blue tool
-        if optimize_flh and tool_version_color == "blue":
-            logger.warning("optimize_flh should be False in blue tool.")
-            optimize_flh = False
+        # validate and translate user settings
+        chain_def, tool_version_color, optimize_flh = (
+            _translate_and_validate_user_settings(
+                secproc_co2=secproc_co2,
+                secproc_water=secproc_water,
+                chain=chain,
+                res_gen=res_gen,
+                region=region,
+                country=country,
+                transport=transport,
+                ship_own_fuel=ship_own_fuel,
+                optimize_flh=optimize_flh,
+                tool_version_color=tool_version_color,
+            )
+        )
 
+        # create data handler and get data
         data_handler = DataHandler(
             scenario,
             user_data,
@@ -200,94 +213,27 @@ class PtxboaAPI:
             tool_version_color=tool_version_color,
         )
 
-        if transport not in TransportValues:
-            logger.error(f"Invalid choice for transport: {transport}")
-
-        # CSS defined in chain
-        chain_data = data_handler.get_dimension("chain").loc[chain]
-        df_proc = data_handler.get_dimension("process")
-        secproc_ccs = chain_data["CO2_TS"]
-        secproc_ccs_i = chain_data["CO2_TS_I"]
-        # in API, we pass names, not codes
-        if secproc_ccs:
-            secproc_ccs = df_proc.loc[secproc_ccs, "process_name"]
-        if secproc_ccs_i:
-            secproc_ccs_i = df_proc.loc[secproc_ccs_i, "process_name"]
-
-        if tool_version_color == "blue":
-            secproc_heat = "Large scale Heatpump (blue)"
-            secproc_el = "Combined Cycle Gas Turbine with CCS (blue)"
-        else:
-            secproc_heat = None
-            secproc_el = None
+        ptx_calc = PtxCalc.get_or_create(chain_def)
 
         data = data_handler.get_calculation_data(
-            secondary_processes={  # type:ignore
-                flow_code: (
-                    DataHandler.get_dimensions_parameter_code(
-                        dimension=dimension,  # type:ignore
-                        parameter_name=parameter_name,
-                    )
-                    if parameter_name
-                    else None
-                )
-                for flow_code, dimension, parameter_name in [
-                    ("H2O-L", "secproc_water", secproc_water),
-                    ("CO2-G", "secproc_co2", secproc_co2),
-                    ("HEAT", "secproc_heat", secproc_heat),
-                    ("EL", "secproc_el", secproc_el),
-                    ("CO2-C", "secproc_ccs", secproc_ccs or secproc_ccs_i),
-                ]
-            },
-            chain_name=chain,
-            process_code_res=DataHandler.get_dimensions_parameter_code(
-                "res_gen", res_gen
-            ),  # type:ignore
-            source_region_code=DataHandler.get_dimensions_parameter_code(
-                "region", region
-            ),  # type:ignore
-            target_country_code=DataHandler.get_dimensions_parameter_code(
-                "country", country
-            ),  # type:ignore
-            use_ship=(transport == "Ship"),
-            ship_own_fuel=ship_own_fuel,
+            ptx_calc=ptx_calc,
+            source_region_code=chain_def.source_region_code,
+            target_country_code=chain_def.target_country_code,
             optimize_flh=optimize_flh,
             use_user_data_for_optimize_flh=use_user_data_for_optimize_flh,
         )
 
-        ptxcalc_result = PtxCalc.calculate(data)
+        # calculate results
+        ptxcalc_result = ptx_calc.calculate(data)  # NEW # noqa
 
-        # conversion to output unit
-        if output_unit not in {"USD/MWh", "USD/t"}:
-            logger.error(f"Invalid choice for output_unit: {output_unit}")
-
-        flow_code_chain_out = data_handler.get_dimension("chain").loc[chain, "FLOW_OUT"]
-        flow_unit_chain_out = data_handler.get_dimension("flow").loc[
-            flow_code_chain_out, "unit"
-        ]  # type:ignore
-
-        if flow_unit_chain_out.lower().startswith("kwh"):
-            if output_unit == "USD/MWh":
-                conversion = 1000  # kWh -> MWh
-            else:
-                calor = data["parameter"]["CALOR"]
-                conversion = 1000 * calor  # kWh -> kg and kg -> t
-        elif flow_unit_chain_out.lower().startswith("kg"):
-            if output_unit == "USD/t":
-                conversion = 1000  # kg -> t
-            else:
-                calor = data["parameter"]["CALOR"]
-                conversion = 1000 / calor  # kg -> kWh -> Mwh
-        else:
-            raise ValueError("chain output unit must be either kWh or kg")
-
+        # convert to output unit
         df_results_cost_unscaled = ptxcalc_result.df_results_cost.copy()
-        for df in [
-            ptxcalc_result.df_results_cost,
-            ptxcalc_result.df_results_emissions_e_g_co2e,
-            ptxcalc_result.df_results_emissions_m_g_co2e,
-        ]:
-            df["values"] = df["values"] * conversion
+        _convert_to_output_unit_inplace(
+            ptxcalc_result,
+            output_unit=output_unit,
+            chain=chain,
+            data_handler=data_handler,
+        )
 
         # add user settings
         for df in [
@@ -304,13 +250,15 @@ class PtxboaAPI:
             df["country"] = country
             df["transport"] = transport
 
+        # structure output
+
         metadata = {"flh_opt_hash": data.get("flh_opt_hash")}  # does not always exist
 
         # combine main flows with secondary flows
         todo_results_flows = ptxcalc_result.results_flows_chain or []
         for d in ptxcalc_result.results_flows_secondary or []:
             d = d.copy()
-            d["process_step"] = "SECONDARY:" + d["process_step"]
+            d["step"] = f"SECONDARY:{d['step']}"
             todo_results_flows += [d]
 
         return ApiCalculateResult(
@@ -318,9 +266,9 @@ class PtxboaAPI:
             costs=ptxcalc_result.df_results_cost,
             emissions=ptxcalc_result.df_results_emissions_e_g_co2e,
             emission_mass=ptxcalc_result.df_results_emissions_m_g_co2e,
-            todo_results_flows=todo_results_flows,
-            todo_data=data,
-            todo_df_results_cost_unscaled=df_results_cost_unscaled,
+            todo_results_flows=todo_results_flows,  # export & debug in frontend
+            todo_data=data,  # export & debug in frontend
+            todo_df_results_cost_unscaled=df_results_cost_unscaled,  # for export
         )
 
     def get_flh_opt_network(
@@ -328,7 +276,7 @@ class PtxboaAPI:
         scenario: ScenarioType,
         secproc_co2: SecProcCO2Type,
         secproc_water: SecProcH2OType,
-        chain: ChainNameType,
+        chain: ChainType,
         res_gen: ResGenType,
         region: SourceRegionNameType,
         country: TargetCountryNameType,
@@ -474,3 +422,165 @@ class PtxboaAPI:
 
         else:
             return data
+
+
+def _translate_and_validate_user_settings(
+    secproc_co2: SecProcCO2Type | None,
+    secproc_water: SecProcH2OType | None,
+    chain: ChainType,
+    res_gen: ResGenType | None,
+    region: SourceRegionNameType,
+    country: TargetCountryNameType,
+    transport: TransportType,
+    ship_own_fuel: bool,
+    optimize_flh: bool = True,
+    tool_version_color: ToolVersionColorType = "green",
+    **_,  # allow others - unused
+) -> tuple[ChainDef, ToolVersionColorType, bool]:
+    chain_data = DataHandler.get_dimension("chain").loc[chain]
+
+    # check tool_version_color
+    tool_version_color_chain = DataHandler.get_chain_color(chain)
+    if tool_version_color_chain != tool_version_color:
+        logger.error(
+            "Chain is %s => changing tool_version_color from %s",
+            tool_version_color_chain,
+            tool_version_color,
+        )
+        tool_version_color = tool_version_color_chain
+
+    if tool_version_color == "green" and not res_gen:
+        raise Exception("No RES defined.")
+
+    # check optimize_flh: make sure optimize_flh=False in blue tool
+    if optimize_flh and tool_version_color == "blue":
+        logger.warning("optimize_flh should be False in blue tool.")
+        optimize_flh = False
+
+    # check transport
+    if transport not in TransportValues:
+        logger.error(f"Invalid choice for transport: {transport}")
+
+    transport, ship_own_fuel = DataHandler.correct_transport(
+        transport, ship_own_fuel, chain
+    )
+
+    # CSS defined in chain
+
+    secproc_ccs = chain_data["CO2_TS"]
+    secproc_ccs_i = chain_data["CO2_TS_I"]
+
+    # in API, we pass names, not codes
+    df_proc = DataHandler.get_dimension("process")
+    if secproc_ccs:
+        secproc_ccs = df_proc.loc[secproc_ccs, "process_name"]
+    if secproc_ccs_i:
+        secproc_ccs_i = df_proc.loc[secproc_ccs_i, "process_name"]
+
+    if tool_version_color == "blue":
+        secproc_heat = "Large scale Heatpump (blue)"
+        secproc_el = "Combined Cycle Gas Turbine with CCS (blue)"
+    else:
+        secproc_heat = None
+        secproc_el = None
+
+    secondary_processes: dict[FlowCodeType, ProcessCodeType] = {}
+    for flow_code, dimension, parameter_name in [
+        ("H2O-L", "secproc_water", secproc_water),
+        ("CO2-G", "secproc_co2", secproc_co2),
+        ("HEAT", "secproc_heat", secproc_heat),
+        ("EL", "secproc_el", secproc_el),
+        ("CO2-C", "secproc_ccs", secproc_ccs or secproc_ccs_i),
+    ]:
+        if not parameter_name or parameter_name == "Specific costs":
+            continue
+
+        process_code = DataHandler.get_dimensions_parameter_code(
+            dimension=dimension,
+            parameter_name=parameter_name,
+        )
+        if not process_code:
+            raise Exception(f"Invalid process: {parameter_name}")
+
+        secondary_processes[flow_code] = process_code  # type: ignore
+
+    chain_def = ChainDef(
+        chain_name=chain,
+        secondary_processes=secondary_processes,
+        process_res=DataHandler.get_dimensions_parameter_code("res_gen", res_gen),  # type: ignore # noqa
+        source_region_code=DataHandler.get_dimensions_parameter_code("region", region),  # type: ignore # noqa
+        target_country_code=DataHandler.get_dimensions_parameter_code(  # type: ignore # noqa
+            "country", country
+        ),
+        transport=transport,
+        ship_own_fuel=ship_own_fuel,
+    )
+
+    # FIXME: maybe also check that selected output unid is possible?
+
+    return chain_def, tool_version_color, optimize_flh
+
+
+def _get_output_conversion_factor(
+    output_unit: OutputUnitType,
+    chain: ChainType,
+    data_handler: DataHandler,
+) -> float:
+    # conversion to output unit
+    if output_unit not in {"USD/MWh", "USD/t"}:
+        raise Exception(f"Invalid choice for output_unit: {output_unit}")
+
+    flow_code_chain_out: FlowCodeType = data_handler.get_dimension("chain").loc[
+        chain, "flow_out"
+    ]  # type:ignore
+    flow_unit_chain_out: str = data_handler.get_dimension("flow").loc[
+        flow_code_chain_out, "unit"
+    ]  # type: ignore
+
+    calor = data_handler._get_parameter_value(
+        parameter_code="CALOR", flow_code=flow_code_chain_out, default=0
+    )
+
+    if flow_unit_chain_out.lower().startswith("kwh"):
+        if output_unit == "USD/MWh":
+            conversion = 1000  # kWh -> MWh
+        else:
+            if not calor:
+                raise Exception(
+                    "No conversion factor CALOR "
+                    f"for {flow_code_chain_out} from kwh to kg"
+                )
+            conversion = 1000 * calor  # kWh -> kg and kg -> t
+    elif flow_unit_chain_out.lower().startswith("kg"):
+        if output_unit == "USD/t":
+            conversion = 1000  # kg -> t
+        else:
+            if not calor:
+                raise Exception(
+                    "No conversion factor CALOR "
+                    f"for {flow_code_chain_out} from kg to kwh"
+                )
+            conversion = 1000 / calor  # kg -> kWh -> Mwh
+    else:
+        raise ValueError("chain output unit must be either kWh or kg")
+
+    return conversion
+
+
+def _convert_to_output_unit_inplace(
+    ptxcalc_result: PtxCalcResult,
+    output_unit: OutputUnitType,
+    chain: ChainType,
+    data_handler: DataHandler,
+) -> None:
+    conversion = _get_output_conversion_factor(
+        output_unit=output_unit,
+        chain=chain,
+        data_handler=data_handler,
+    )
+    for df in [
+        ptxcalc_result.df_results_cost,
+        ptxcalc_result.df_results_emissions_e_g_co2e,
+        ptxcalc_result.df_results_emissions_m_g_co2e,
+    ]:
+        df["values"] = df["values"] * conversion
