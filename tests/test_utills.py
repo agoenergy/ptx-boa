@@ -7,7 +7,7 @@ import pandas as pd
 
 from ptxboa.utils import serialize_for_hashing
 
-from .utils import assert_deep_equal
+from .utils import assert_deep_equal, assert_deep_equal_approx
 
 
 class TestUtils(unittest.TestCase):
@@ -61,5 +61,7 @@ class TestUtils(unittest.TestCase):
 
     def test_assert_deep_equal_dataframe(self):
         """Test comparison of DataFrame."""
-        data = pd.DataFrame({"x": [1, 2, 3]})
-        assert_deep_equal(data, data)
+        data = [{"x": 1}, {"x": 2}, {"x": 3}]
+        df = pd.DataFrame(data)
+        assert_deep_equal_approx(data, df)
+        self.assertRaises(Exception, assert_deep_equal_approx, df, pd.DataFrame())

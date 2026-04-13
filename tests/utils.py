@@ -1,5 +1,7 @@
 """Test utilities."""
 
+from dataclasses import asdict, is_dataclass
+
 import pandas as pd
 from numpy import isclose
 
@@ -22,12 +24,6 @@ def assert_deep_equal(
             raise ValueError(
                 f"expected values {expected_result} != {actual_result} {context}"
             )
-
-    if isinstance(expected_result, pd.DataFrame):
-        if not isinstance(actual_result, pd.DataFrame):
-            raise ValueError(f"Not a DataFrame: {type(actual_result)} {context}")
-        expected_result = expected_result.to_dict(orient="records")
-        actual_result = actual_result.to_dict(orient="records")
 
     if isinstance(expected_result, (str, int, bool, type(None), set)):
         # primitive
@@ -105,6 +101,19 @@ def _sort_list(xs: list, sort_list_by_keys: list[str] | None = None) -> list:
     )
 
 
+def asdict_nested(xs):
+    if isinstance(xs, pd.DataFrame):
+        return asdict_nested(xs.to_dict(orient="records"))
+    elif is_dataclass(xs):
+        return asdict_nested(asdict(xs))  # type:ignore
+    elif isinstance(xs, (tuple, list)):
+        return [asdict_nested(x) for x in xs]
+    elif isinstance(xs, dict):
+        return {k: asdict_nested(v) for k, v in xs.items()}
+    else:
+        return xs
+
+
 def sort_nested(xs, sort_list_by_keys: list[str] | None = None):
     if isinstance(xs, list):
         result = [sort_nested(x, sort_list_by_keys=sort_list_by_keys) for x in xs]
@@ -161,8 +170,8 @@ def assert_deep_equal_approx(
     sort_list_by_keys: list[str] | None = None,
 ):
 
-    expected = round_nested(drop_null_nested(expected), ndigis=ndigis)
-    actually = round_nested(drop_null_nested(actually), ndigis=ndigis)
+    expected = round_nested(drop_null_nested(asdict_nested(expected)), ndigis=ndigis)
+    actually = round_nested(drop_null_nested(asdict_nested(actually)), ndigis=ndigis)
 
     try:
         assert_deep_equal(
@@ -174,19 +183,9 @@ def assert_deep_equal_approx(
         )
     except Exception:
         print("====================== OLD", context)
-        print(
-            sort_nested(
-                expected,
-                sort_list_by_keys=sort_list_by_keys,
-            )
-        )
+        print(sort_nested(expected))
         print("====================== NEW", context)
         # print so we can replace in test
-        print(
-            sort_nested(
-                actually,
-                sort_list_by_keys=sort_list_by_keys,
-            )
-        )
+        print(sort_nested(actually))
         print("======================")
         raise
