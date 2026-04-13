@@ -390,10 +390,6 @@ def sidebar_logo():
 
 
 def logo_section():
-    st.logo(
-        image="img/transparent_10x10.png",  # placeholder when sidebar is expanded
-        icon_image="img/Agora_Industry_logo_612x306.png",
-    )
     with st.sidebar:
         sidebar_logo()
 
