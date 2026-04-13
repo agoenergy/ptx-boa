@@ -26,6 +26,7 @@ from ptxboa.static import (
     ResultGasType,
     SourceRegionCodeType,
     TargetCountryCodeType,
+    ToolVersionColorType,
 )
 from ptxboa.static._type_defs import (
     CalculateDataType,
@@ -88,9 +89,13 @@ class Process:
         if is_in_import_segment:
             assert not is_initial
             assert not is_main_in_transport_segment
-        if main_flow_code_in and main_flow_code_in in secondary_flow_types:
+
+        main_flow_code_in_or_out = main_flow_code_in or main_flow_code_out
+        if main_flow_code_in_or_out in secondary_flow_types:
             logger.error(
-                "%s has %s as main and secondary input", process_code, main_flow_code_in
+                "%s has %s as main and secondary input",
+                process_code,
+                main_flow_code_in_or_out,
             )
             secondary_flow_types = frozenset(
                 x for x in secondary_flow_types if x != main_flow_code_in
@@ -213,6 +218,19 @@ class Process:
     def color(self) -> str:
         """Color for plotting."""
         return "lightblue"
+
+    @property
+    def keep_cbound_from_main_input(self) -> bool:
+        """Similar to is_transformation, but no pre/post transport.
+
+        should only be processes in steps NG_PROD, ELY_*, DERIV_*
+        """
+        return (
+            self.process_step
+            not in {"ELY", "DERIV", "DERIV2", "ELY_I", "DERIV_I", "DERIV_I2"}
+            and not self.is_secondary
+            and not self.is_initial
+        )
 
     def get_parameter_data(
         self,
@@ -396,6 +414,7 @@ class Process:
         flows_in_gross: dict[FlowCodeType, float],
         EF_co2_g_per_flow: dict[FlowCodeType, float],
         main_flow_out: float,
+        main_flow_in: float | None,
     ) -> ProcessEmissionType_E_M:
 
         # constants: TODO: globally defined
@@ -467,6 +486,7 @@ class Process:
                 co2_captured += co2_g * co2cpt
                 # bound
                 bound_kg_c_per_output: float = CBOUND_kg_c_per_output.get(flow_code, 0)  # type: ignore # noqa
+
                 # only add if EFF exist (EFF_FLAG)
                 # TODO: special case B-DRI-S - generalized rule?
                 allow_cbound = bool(co2_g_per_flow) or flow_code in {"B-DRI-S"}
@@ -475,9 +495,49 @@ class Process:
                         bound_kg_c_per_output * 1000 * CO2_PER_C * main_flow_out
                     )
 
+        # special case initial process (NG-PROD): cbound for output
+        if self.is_initial:
+            flow_code = self.main_flow_code_out
+            if flow_code in flows_in_net:
+                logger.error("initial flow out also in flows in")
+            else:
+                flow = main_flow_out
+                co2_g_per_flow = EF_co2_g_per_flow.get(flow_code, 0)
+                co2_g = co2_g_per_flow * flow
+                co2_g_direct_sum_in += co2_g
+                # TODO: reuse code from above?
+                bound_kg_c_per_output: float = CBOUND_kg_c_per_output.get(flow_code, 0)  # type: ignore # noqa
+                co2_g_bound_in_product += (
+                    bound_kg_c_per_output * 1000 * CO2_PER_C * main_flow_out
+                )
+
+        if self.keep_cbound_from_main_input:
+            # no transformation has happend (e.g. shipping)
+            if co2_g_bound_in_product:
+                raise Exception("co2_g_bound_in_product should not happen in %s", self)
+            co2_g_per_flow = EF_co2_g_per_flow.get(
+                self.main_flow_code_in
+            )  # type:ignore
+            if co2_g_per_flow is None:
+                raise Exception(
+                    "no cbound/flow for main in %s in %s"
+                    % (self, self.main_flow_code_in)
+                )
+            elif co2_g_per_flow == 0:
+                logger.warning(
+                    "cbound/flow=0 for main in %s in %s"
+                    % (self, self.main_flow_code_in)
+                )
+
+            co2_g_bound_in_product = main_flow_out * co2_g_per_flow  # type:ignore
+
         co2_g_direct = co2_g_direct_sum_in - co2_g_bound_in_product - co2_captured
         if co2_g_direct < 0:
-            logger.error("co2_g_direct < 0")
+            logger.error(
+                "%s: co2_g_bound_in_product + co2_captured > co2_g_direct_sum_in: %s",
+                self,
+                co2_g_direct,
+            )
             co2_g_direct = 0
 
         if not main_flow_out:
@@ -512,13 +572,14 @@ class Process:
         flows_in_main_and_secondary: dict[FlowCodeType, float] = results_flows[
             self
         ].secondary_flows_in.copy()
-        if self.main_flow_code_in is not None:
+        if self.main_flow_code_in:
             flows_in_main_and_secondary[self.main_flow_code_in] = (
                 results_flows[self].main_flow_in or 0
             )
 
         # for all in flows: rel. get bound in product for mass/emission
-        for em, param_ef in EM_2_PARAM.items():
+        for em, param_ef_code in EM_2_PARAM.items():
+            params_ef = parameter_data[self].get(param_ef_code, {})
             g_co2_per_flows: dict[FlowCodeType, float] = {}
 
             for flow_code, proc in self._links_in_secondary.items():
@@ -529,8 +590,8 @@ class Process:
                     g_co2_per_flow = None
                 if not g_co2_per_flow:
                     # use emission factor, if not bound in co2
-                    params = parameter_data[self].get(param_ef, {})
-                    g_co2_per_flow = params.get(flow_code, 0)  # type: ignore
+
+                    g_co2_per_flow = params_ef.get(flow_code, 0)  # type: ignore
                 g_co2_per_flows[flow_code] = g_co2_per_flow  # type: ignore
 
             if self._link_in_main:
@@ -543,10 +604,14 @@ class Process:
                     g_co2_per_flow = res[em].co2_bound_in_product_per_output
                 else:
                     g_co2_per_flow = None
-                if not g_co2_per_flow:
+                if g_co2_per_flow is None:
                     # use emission factor, if not bound in co2
-                    params = parameter_data[self].get(param_ef, {})
-                    g_co2_per_flow = params.get(flow_code, 0)  # type: ignore
+                    g_co2_per_flow = params_ef.get(flow_code, 0)  # type: ignore
+                g_co2_per_flows[flow_code] = g_co2_per_flow  # type: ignore
+            elif self.is_initial:
+                # add emission factor for main out (NG)
+                flow_code = self.main_flow_code_out
+                g_co2_per_flow = params_ef.get(flow_code, 0)  # type: ignore
                 g_co2_per_flows[flow_code] = g_co2_per_flow  # type: ignore
 
             result[em] = self._calculate_emissions(
@@ -554,6 +619,7 @@ class Process:
                 flows_in_gross=flows_in_main_and_secondary,
                 EF_co2_g_per_flow=g_co2_per_flows,
                 main_flow_out=results_flows[self].main_flow_out,
+                main_flow_in=results_flows[self].main_flow_in,
             )
 
         return result
@@ -809,8 +875,10 @@ class PtxCalc:
                 processes.append(pm)
         return tuple(processes)
 
-    def __init__(self, _graph: nx.DiGraph[Process]):
+    def __init__(self, _graph: nx.DiGraph[Process], chain_color: ToolVersionColorType):
+        self.chain_color = chain_color
         self._graph: nx.DiGraph[Process] = _graph
+
         self._all_processes_ordered_forwards = (
             self._create_all_processes_ordered_forwards()
         )
@@ -921,7 +989,7 @@ class PtxCalc:
             secondary_processes_export=secondary_processes_export,
             secondary_processes_import=secondary_processes_import,
         )
-        return PtxCalc(_graph=_graph)
+        return PtxCalc(_graph=_graph, chain_color=chain_color)
 
     def get_calculation_data(
         self,
@@ -1286,11 +1354,16 @@ class PtxCalc:
     ) -> dict[Process, ProcessEmissionType | None]:
         results_emissions: dict[Process, ProcessEmissionType | None] = {}
         for process in self._all_processes_ordered_forwards:
-            results_emissions[process] = process.calculate_emissions(
-                parameter_data=parameter_data,
-                results_flows=results_flows,
-                results_emissions=results_emissions,
-            )
+            if self.chain_color == "blue":
+                emissions = process.calculate_emissions(
+                    parameter_data=parameter_data,
+                    results_flows=results_flows,
+                    results_emissions=results_emissions,
+                )
+            else:
+                emissions = None
+
+            results_emissions[process] = emissions
         return results_emissions
 
     def _merge_calculation_results(
@@ -1399,18 +1472,19 @@ class PtxCalc:
             )
 
         # for last process, add co2_bound_in_product
-        results.append(
-            ProcessResultEmissionType(
-                # TODO: "Bound in product" as constant somewhere
-                process_type="Bound in product",
-                process_subtype="Bound in product",
-                emission_type="direct",
-                gas_type="CO2",
-                values=results_emissions[self.last_process][  # type: ignore - should exist # noqa
-                    "mass"
-                ].co2_bound_in_product,
+        if self.chain_color == "blue":
+            results.append(
+                ProcessResultEmissionType(
+                    # TODO: "Bound in product" as constant somewhere
+                    process_type="Bound in product",
+                    process_subtype="Bound in product",
+                    emission_type="direct",
+                    gas_type="CO2",
+                    values=results_emissions[self.last_process][  # type: ignore - should exist # noqa
+                        "mass"
+                    ].co2_bound_in_product,
+                )
             )
-        )
 
         return results
 
