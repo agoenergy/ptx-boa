@@ -47,8 +47,8 @@ class PtxCalcResult:
     df_results_cost: pd.DataFrame
     df_results_emissions_e_g_co2e: Optional[pd.DataFrame]
     df_results_emissions_m_g_co2e: Optional[pd.DataFrame]
-    results_flows_chain: Optional[list]
-    results_flows_secondary: Optional[list]
+    results_flows_chain: Optional[list[dict]]
+    results_flows_secondary: Optional[list[dict]]
 
 
 @dataclass(slots=True, frozen=True)

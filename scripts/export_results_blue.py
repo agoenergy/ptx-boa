@@ -16,16 +16,6 @@ from ptxboa.api import PtxboaAPI
 from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler
 
 
-def _get_secproc_step(process_code: str) -> str:
-    prefix = "SECONDARY:"
-    proc_cls = DataHandler.get_dimension("process").loc[
-        process_code, "result_process_type"
-    ]
-    if proc_cls == "Electricity":
-        proc_cls = "Electricity generation"  # ??
-    return prefix + proc_cls  # type: ignore
-
-
 def flatten_dict(v: Any, key_prefix: None | str = None) -> Iterable[tuple[str, Any]]:
     if isinstance(v, list):
         raise NotImplementedError(v)
@@ -66,11 +56,12 @@ STEPS = [
     "DERIV_I",
     "DERIV_I2",
     # "CO2_TS_I",
-    "SECONDARY:Carbon",
-    "SECONDARY:CO2 transport and storage",
-    "SECONDARY:Electricity generation",
-    "SECONDARY:Heat",
-    "SECONDARY:Water",
+    "SECONDARY:CO2-G",
+    "SECONDARY:CO2-C",
+    "SECONDARY:EL",
+    "SECONDARY:HEAT",
+    "SECONDARY:H2O-L",
+    "SECONDARY:IMPORT:CO2-C",
 ]
 
 rows = [
@@ -182,18 +173,16 @@ rows = [
 df_proc = DataHandler.get_dimension("process")
 
 sec_proc = {
-    "Electricity generation": df_proc.loc["CCGT-CC#B"],
-    "CO2 transport and storage": df_proc.loc["CO2-T+S#B"],
-    "Carbon": df_proc.loc["DAC#B"],
-    "Water": df_proc.loc["DESAL"],
-    "Heat": df_proc.loc["HEATPUMP#B"],
+    "EL": df_proc.loc["CCGT-CC#B"],
+    "CO2-C": df_proc.loc["CO2-T+S#B"],
+    "CO2-G": df_proc.loc["DAC#B"],
+    "H2O-L": df_proc.loc["DESAL"],
+    "HEAT": df_proc.loc["HEATPUMP#B"],
 }
 
 
 def get_secproc_process(secproc_step: str) -> str:
-    proc_cls = secproc_step.split(":")[1]
-    if proc_cls == "Electricity":
-        proc_cls = "Electricity generation"  # ??
+    proc_cls = secproc_step.split(":")[-1]
     return sec_proc[proc_cls]["process_code"]
 
 
@@ -226,8 +215,8 @@ def main(xlsx_filepath: str):
             "region": "Algeria",
             "country": "Germany",
             "transport": "Ship",
-            "secproc_co2": sec_proc["Carbon"]["process_name"],
-            "secproc_water": sec_proc["Water"]["process_name"],
+            "secproc_co2": None,  # "Direct Air Capture",
+            "secproc_water": "Sea Water desalination",
         }
 
         res = api.calculate(
@@ -255,9 +244,6 @@ def main(xlsx_filepath: str):
         secondary_process_steps = list(
             res.todo_data["secondary_process"].values()  # type: ignore
         )
-
-        for s in secondary_process_steps:
-            s["step"] = _get_secproc_step(process_code=s["process_code"])
 
         data_steps = list_to_dict_by_step(
             res.todo_data["main_export_process_chain"]  # type: ignore

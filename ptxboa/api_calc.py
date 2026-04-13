@@ -173,6 +173,12 @@ class Process:
                 ProcessClass = ProcessSecondary
             result_process_type = proc_spec["result_process_type"]
 
+        if is_secondary and not process_step:
+            if is_in_import_segment:
+                process_step = f"SECONDARY:IMPORT:{main_flow_code_out}"
+            else:
+                process_step = f"SECONDARY:{main_flow_code_out}"
+
         return ProcessClass(
             process_code=process_code,
             process_step=process_step,
@@ -1903,7 +1909,8 @@ def _get_dropped_transport_steps(
 
 
 def _add_step_and_code(process: Process, data: ProcessDataType) -> ProcessDataType:
-    return data | {  # type: ignore
+    result = data | {  # type: ignore
         "process_code": process.process_code,
         "step": process.process_step,
     }
+    return result

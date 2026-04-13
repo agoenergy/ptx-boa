@@ -255,11 +255,9 @@ class PtxboaAPI:
         metadata = {"flh_opt_hash": data.get("flh_opt_hash")}  # does not always exist
 
         # combine main flows with secondary flows
-        todo_results_flows = ptxcalc_result.results_flows_chain or []
-        for d in ptxcalc_result.results_flows_secondary or []:
-            d = d.copy()
-            d["step"] = f"SECONDARY:{d['step']}"
-            todo_results_flows += [d]
+        todo_results_flows = (ptxcalc_result.results_flows_chain or []) + (
+            ptxcalc_result.results_flows_secondary or []
+        )
 
         return ApiCalculateResult(
             metadata=metadata,
