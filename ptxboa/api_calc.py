@@ -1677,7 +1677,8 @@ def _aggregate_results_df(
     if df.empty:
         return pd.DataFrame(columns=columns_all)
     # drop if values is 0 ?
-    # df = df.loc[~(df["values"] == 0)] # noqa
+    # required for test_issue_403_fix_no_heat_demand_for_methane_production
+    df = df.loc[~(df["values"] == 0)]  # noqa
     return df[columns_all].groupby(columns_index).sum().reset_index()
 
 
