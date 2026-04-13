@@ -3,7 +3,7 @@
 import json
 import os
 from types import NoneType
-from typing import Any, Union
+from typing import Any, Iterable, Union
 
 
 def annuity(rate: float, periods: int, value: float) -> float:
@@ -101,3 +101,22 @@ def serialize_for_hashing(
 
 def rescale_dict(d: dict[Any, float], factor: float) -> dict[Any, float]:
     return {k: v * factor for k, v in d.items()}
+
+
+def compare_sets(first: Iterable, second: Iterable, msg: str = ""):
+    first = set(first)
+    second = set(second)
+    missing = {str(x) for x in first - second}
+    added = {str(x) for x in second - first}
+    if missing or added:
+        raise KeyError((f"Set mismatch. Missing: {missing}. Added: {added}.", msg))
+
+
+def calculate_net_loss(value_gross: float, loss_factor: float) -> tuple[float, float]:
+    """Losses, interpreted as additional to net.
+
+    see https://github.com/agoenergy/ptx-boa/issues/581
+    """
+    value_net = value_gross / (1 + loss_factor)
+    value_loss = value_net * loss_factor
+    return value_net, value_loss

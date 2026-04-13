@@ -228,7 +228,7 @@ def content_costs(api: PtxboaAPI):
                 blue_chains.index.str.endswith(
                     f"prod_in_{st.session_state['conversion_location']}"
                 )
-                & (blue_chains["FLOW_OUT"] == st.session_state["output_product"])
+                & (blue_chains["flow_out"] == st.session_state["output_product"])
             ].index
 
             results_equal_output_product = blue_results_over_dimension(
@@ -267,7 +267,7 @@ def content_costs(api: PtxboaAPI):
                         (blue_chains["ELY"] == st.session_state["reformer"])
                         | (blue_chains["ELY_I"] == st.session_state["reformer"])
                     )
-                    & blue_chains["FLOW_OUT"].isin(
+                    & blue_chains["flow_out"].isin(
                         st.session_state["output_product_group"]
                     )
                 ].index
@@ -277,7 +277,7 @@ def content_costs(api: PtxboaAPI):
                         f"prod_in_{st.session_state['conversion_location']}"
                     )
                     & ((blue_chains["ELY"] == "") & (blue_chains["ELY_I"] == ""))
-                    & blue_chains["FLOW_OUT"].isin(
+                    & blue_chains["flow_out"].isin(
                         st.session_state["output_product_group"]
                     )
                 ].index

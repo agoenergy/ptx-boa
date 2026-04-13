@@ -11,7 +11,7 @@ import streamlit as st
 
 from ptxboa.api import ApiCalculateResult, PtxboaAPI
 from ptxboa.static import (
-    ChainNameType,
+    ChainType,
     OutputUnitType,
     ResGenType,
     ScenarioType,
@@ -33,7 +33,7 @@ def calculate_cached(
     scenario: ScenarioType,
     secproc_co2: SecProcCO2Type,
     secproc_water: SecProcH2OType,
-    chain: ChainNameType,
+    chain: ChainType,
     res_gen: ResGenType,
     region: SourceRegionNameType,
     country: TargetCountryNameType,

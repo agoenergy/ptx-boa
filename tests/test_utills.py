@@ -3,6 +3,8 @@
 import json
 import unittest
 
+import pandas as pd
+
 from ptxboa.utils import serialize_for_hashing
 
 from .utils import assert_deep_equal
@@ -23,8 +25,8 @@ class TestUtils(unittest.TestCase):
         assert_deep_equal(1.2, 1.2)
         self.assertRaises(ValueError, assert_deep_equal, 1.2, 1.20001)
         assert_deep_equal([1, 2], [1, 2])
-        assert_deep_equal({"a": [], "b": 1.2}, {"a": [], "b": 1.2000001})
-        self.assertRaises(ValueError, assert_deep_equal, [], {})
+        assert_deep_equal({"a": [], "b": 1.2}, {"a": [], "b": 1.200000001})
+        self.assertRaises(TypeError, assert_deep_equal, [], {})
         self.assertRaises(ValueError, assert_deep_equal, [], [1])
         self.assertRaises(ValueError, assert_deep_equal, {"a": 1}, {"b": 1})
         self.assertRaises(ValueError, assert_deep_equal, {"a": 1}, {"a": 2})
@@ -44,8 +46,20 @@ class TestUtils(unittest.TestCase):
             ({}, "{}"),
             ([1, {"b": 2, "a": [None]}], '[1,{"a":[null],"b":2}]'),
         ]:
-
             res = serialize_for_hashing(obj)
             # must be json loadable
             json.loads(res)
             self.assertEqual(res, exp_str)
+
+    def test_assert_deep_equal_sort_list_by_keys(self):
+        """Test comparison of list sorting."""
+        data = [{"x": 1}, {"x": 2}]
+        data_rev = list(reversed(data))
+
+        self.assertRaises(Exception, assert_deep_equal, data, data_rev)
+        assert_deep_equal(data, data_rev, sort_list_by_keys=["x"])
+
+    def test_assert_deep_equal_dataframe(self):
+        """Test comparison of DataFrame."""
+        data = pd.DataFrame({"x": [1, 2, 3]})
+        assert_deep_equal(data, data)

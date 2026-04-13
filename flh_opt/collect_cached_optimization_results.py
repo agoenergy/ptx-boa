@@ -124,7 +124,7 @@ def main(
 def extract_secondary_process_data(results):
     secondary_process = pd.json_normalize(results)
     secondary_process = secondary_process.drop(
-        columns=["main_export_process_chain", "transport_process_chain"]
+        columns=["main_export_process_chain", "main_transport_process_chain"]
     )
 
     return secondary_process
@@ -140,7 +140,7 @@ def extract_main_process_chain_data(results):
     df = pd.concat(
         [
             df.drop(columns="context"),
-            pd.json_normalize(df["context"]),  # type:ignore
+            pd.json_normalize(df["context"]),  # type: ignore
         ],
         axis=1,
     )

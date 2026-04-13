@@ -74,7 +74,7 @@ scp -r ptxboa2:ptx-boa_offline_optimization/optimization_cache/* .
 ssh ptxboa
 
 # set variables
-VERSION=2.1.42
+VERSION=2.2.0
 APP=app
 PORT=9000
 
@@ -107,6 +107,12 @@ docker image ls
 docker ps
 # delete all unused objects
 docker system prune -a
+```
+
+## Testing / code coverage
+
+```bash
+pytest --cov=ptxboa --cov-report=term-missing --cov-report=html:htmlcov
 ```
 
 ## Internal documentation

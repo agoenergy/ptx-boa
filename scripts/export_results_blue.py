@@ -13,8 +13,17 @@ from typing import Any, Iterable
 import pandas as pd
 
 from ptxboa.api import PtxboaAPI
-from ptxboa.api_calc import get_secproc_step
 from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler
+
+
+def _get_secproc_step(process_code: str) -> str:
+    prefix = "SECONDARY:"
+    proc_cls = DataHandler.get_dimension("process").loc[
+        process_code, "result_process_type"
+    ]
+    if proc_cls == "Electricity":
+        proc_cls = "Electricity generation"  # ??
+    return prefix + proc_cls  # type: ignore
 
 
 def flatten_dict(v: Any, key_prefix: None | str = None) -> Iterable[tuple[str, Any]]:
@@ -32,7 +41,7 @@ def flatten_dict(v: Any, key_prefix: None | str = None) -> Iterable[tuple[str, A
 
 
 def list_to_dict_by_step(d: list) -> dict:
-    return {(s.get("step") or s.get("process_step")): s for s in d}
+    return {s.get("step"): s for s in d}
 
 
 STEPS = [
@@ -44,14 +53,14 @@ STEPS = [
     "DERIV2",
     # "CO2_TS",
     "PRE_SHP",
-    "PRE_PPL",
     "SHP",
     "SHP_OWN",
+    "POST_SHP",
+    "PRE_PPL",
     "PPLS",
     "PPL",
     "PPLX",
     "PPLR",
-    "POST_SHP",
     "POST_PPL",
     "ELY_I",
     "DERIV_I",
@@ -77,7 +86,6 @@ rows = [
     "0:process:main_flow_code_in",
     "0:process:main_flow_code_out",
     "0:process:process_code",
-    "1:parameter:CALOR",
     "1:parameter:SPECCOST:CO2-G",
     "1:parameter:SPECCOST:DIESEL-L",
     "1:parameter:SPECCOST:EL",
@@ -199,13 +207,13 @@ def main(xlsx_filepath: str):
     all_row_keys = set()
 
     for idx, (_, chain) in enumerate(chains.iterrows()):
-        chain_flow_out = chain["FLOW_OUT"]
+        chain_flow_out = chain["flow_out"]
         flow_out_unit = api.get_dimension("flow").loc[chain_flow_out, "unit"]
-        if flow_out_unit.lower().startswith("kwh"):  # type:ignore
+        if flow_out_unit.lower().startswith("kwh"):  # type: ignore
             output_unit = "USD/MWh"
             output_unit_cost = "USD/kWh"  # unconverted
             output_unit_data = "X/kWh"
-        elif flow_out_unit.lower().startswith("kg"):  # type:ignore
+        elif flow_out_unit.lower().startswith("kg"):  # type: ignore
             output_unit = "USD/t"
             output_unit_cost = "USD/kg"  # unconverted
             output_unit_data = "X/kg"
@@ -234,7 +242,7 @@ def main(xlsx_filepath: str):
         data_general = (
             dict(flatten_dict(settings, "0:settings"))
             | dict(
-                flatten_dict(res.todo_data["parameter"], "1:parameter")  # type:ignore
+                flatten_dict(res.todo_data["parameter"], "1:parameter")  # type: ignore
             )
             | {
                 "0:settings:output_unit_cost": output_unit_cost,
@@ -245,24 +253,24 @@ def main(xlsx_filepath: str):
         pd_series = [pd.Series(data_general, name="")]
 
         secondary_process_steps = list(
-            res.todo_data["secondary_process"].values()  # type:ignore
+            res.todo_data["secondary_process"].values()  # type: ignore
         )
 
         for s in secondary_process_steps:
-            s["step"] = get_secproc_step(process_code=s["process_code"])
+            s["step"] = _get_secproc_step(process_code=s["process_code"])
 
         data_steps = list_to_dict_by_step(
-            res.todo_data["main_export_process_chain"]  # type:ignore
-            + res.todo_data["transport_process_chain"]  # type:ignore
-            + res.todo_data["main_import_process_chain"]  # type:ignore
+            res.todo_data["main_export_process_chain"]  # type: ignore
+            + res.todo_data["main_transport_process_chain"]  # type: ignore
+            + res.todo_data["main_import_process_chain"]  # type: ignore
             + secondary_process_steps
         )
 
         results_flows_steps = list_to_dict_by_step(
-            res.todo_results_flows  # type:ignore
+            res.todo_results_flows  # type: ignore
         )
 
-        df_costs: pd.DataFrame = res.todo_df_results_cost_unscaled  # type:ignore
+        df_costs: pd.DataFrame = res.todo_df_results_cost_unscaled  # type: ignore
 
         for step in STEPS:
             d_data = dict(
