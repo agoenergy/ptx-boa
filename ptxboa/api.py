@@ -1,8 +1,7 @@
 """Api for calculations for webapp."""
 
-from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 import pandas as pd
 import pypsa
@@ -27,18 +26,7 @@ from ptxboa.static import (
     TransportType,
     TransportValues,
 )
-from ptxboa.static._type_defs import ChainDef, PtxCalcResult
-
-
-@dataclass(slots=True, frozen=True)
-class ApiCalculateResult:
-    costs: pd.DataFrame
-    metadata: dict
-    emissions: Optional[pd.DataFrame] = None
-    emission_mass: Optional[pd.DataFrame] = None
-    todo_results_flows: Optional[list] = None
-    todo_data: Optional[object] = None
-    todo_df_results_cost_unscaled: Optional[pd.DataFrame] = None
+from ptxboa.static._type_defs import ApiCalculateResult, ChainDef, PtxCalcResult
 
 
 class PtxboaAPI:
@@ -227,7 +215,6 @@ class PtxboaAPI:
         ptxcalc_result = ptx_calc.calculate(data)  # NEW # noqa
 
         # convert to output unit
-        df_results_cost_unscaled = ptxcalc_result.df_results_cost.copy()
         _convert_to_output_unit_inplace(
             ptxcalc_result,
             output_unit=output_unit,
@@ -250,23 +237,14 @@ class PtxboaAPI:
             df["country"] = country
             df["transport"] = transport
 
-        # structure output
-
         metadata = {"flh_opt_hash": data.get("flh_opt_hash")}  # does not always exist
-
-        # combine main flows with secondary flows
-        todo_results_flows = (ptxcalc_result.results_flows_chain or []) + (
-            ptxcalc_result.results_flows_secondary or []
-        )
 
         return ApiCalculateResult(
             metadata=metadata,
             costs=ptxcalc_result.df_results_cost,
             emissions=ptxcalc_result.df_results_emissions_e_g_co2e,
             emission_mass=ptxcalc_result.df_results_emissions_m_g_co2e,
-            todo_results_flows=todo_results_flows,  # export & debug in frontend
-            todo_data=data,  # export & debug in frontend
-            todo_df_results_cost_unscaled=df_results_cost_unscaled,  # for export
+            _internal_process_data=ptxcalc_result._internal_process_data,
         )
 
     def get_flh_opt_network(

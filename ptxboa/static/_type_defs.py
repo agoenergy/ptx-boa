@@ -47,8 +47,16 @@ class PtxCalcResult:
     df_results_cost: pd.DataFrame
     df_results_emissions_e_g_co2e: Optional[pd.DataFrame]
     df_results_emissions_m_g_co2e: Optional[pd.DataFrame]
-    results_flows_chain: Optional[list[dict]]
-    results_flows_secondary: Optional[list[dict]]
+    _internal_process_data: Optional[list] = None
+
+
+@dataclass(slots=True, frozen=True)
+class ApiCalculateResult:
+    metadata: dict
+    costs: pd.DataFrame
+    emissions: Optional[pd.DataFrame] = None
+    emission_mass: Optional[pd.DataFrame] = None
+    _internal_process_data: Optional[list] = None
 
 
 @dataclass(slots=True, frozen=True)

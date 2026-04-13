@@ -24,10 +24,12 @@ def flatten_dict(v: Any, key_prefix: None | str = None) -> Iterable[tuple[str, A
             yield from flatten_dict(
                 v2, key_prefix=k2 if key_prefix is None else f"{key_prefix}:{k2}"
             )
-    else:  # scalar
+    elif isinstance(v, (float, str, int, type(None))):
         if not key_prefix:
             raise NotImplementedError(v)
         yield (key_prefix, v)
+    else:
+        raise TypeError(type(v))
 
 
 def list_to_dict_by_step(d: list) -> dict:
@@ -74,99 +76,86 @@ rows = [
     "0:settings:secproc_co2",
     "0:settings:secproc_water",
     "0:settings:transport",
-    "0:process:main_flow_code_in",
-    "0:process:main_flow_code_out",
-    "0:process:process_code",
+    "1:parameter:process_code",
+    "1:parameter:CAPEX",
+    "1:parameter:CBOUND:B-DRI-S",
+    "1:parameter:CBOUND:CO2-G",
+    "1:parameter:CBOUND:NG-G",
+    "1:parameter:CH4SHARE:NG-G",
+    "1:parameter:CO2CPT-R:CH4-G",
+    "1:parameter:CO2CPT-R:NG-G",
+    "1:parameter:CO2CPT-S:CH4-G",
+    "1:parameter:CO2CPT-S:NG-G",
+    "1:parameter:CONV-OT:BFUEL-L",
+    "1:parameter:CONV:BFUEL-L",
+    "1:parameter:CONV:CO2-G",
+    "1:parameter:CONV:DIESEL-L",
+    "1:parameter:CONV:EL",
+    "1:parameter:CONV:IOP-S",
+    "1:parameter:CONV:NG-G",
+    "1:parameter:DIST",
+    "1:parameter:DST-S-D",
+    "1:parameter:DST-S-DP",
+    "1:parameter:EFF",
+    "1:parameter:EF_E:CH3OH-L",
+    "1:parameter:EF_E:CH4-G",
+    "1:parameter:EF_E:CO2-C",
+    "1:parameter:EF_E:CO2-G",
+    "1:parameter:EF_E:DIESEL-L",
+    "1:parameter:EF_E:EL",
+    "1:parameter:EF_E:HEAT",
+    "1:parameter:EF_E:NG-G",
+    "1:parameter:EF_E:NG-L",
+    "1:parameter:EF_M:BFUEL-L",
+    "1:parameter:EF_M:CH3OH-L",
+    "1:parameter:EF_M:CH4-G",
+    "1:parameter:EF_M:CO2-C",
+    "1:parameter:EF_M:CO2-G",
+    "1:parameter:EF_M:DIESEL-L",
+    "1:parameter:EF_M:EL",
+    "1:parameter:EF_M:HEAT",
+    "1:parameter:EF_M:NG-G",
+    "1:parameter:EF_M:NG-L",
+    "1:parameter:FLH",
+    "1:parameter:LIFETIME",
+    "1:parameter:LOSS-T",
+    "1:parameter:LOSS:NG-G",
+    "1:parameter:OPEX-F",
+    "1:parameter:OPEX-O",
+    "1:parameter:OPEX-T",
+    "1:parameter:SEASHARE",
+    "1:parameter:SPECCOST:BFUEL-L",
     "1:parameter:SPECCOST:CO2-G",
     "1:parameter:SPECCOST:DIESEL-L",
     "1:parameter:SPECCOST:EL",
-    "1:parameter:SPECCOST:H2O-L",
     "1:parameter:SPECCOST:HEAT",
     "1:parameter:SPECCOST:IOP-S",
-    "1:parameter:SPECCOST:N2-G",
     "1:parameter:SPECCOST:NG-G",
     "1:parameter:WACC",
-    "2:data:CAPEX",
-    "2:data:CBOUND:B-DRI-S",
-    "2:data:CBOUND:CO2-G",
-    "2:data:CBOUND:NG-G",
-    "2:data:CH4SHARE:NG-G",
-    "2:data:CO2CPT-R:CH4-G",
-    "2:data:CO2CPT-R:NG-G",
-    "2:data:CO2CPT-S:CH4-G",
-    "2:data:CO2CPT-S:NG-G",
-    "2:data:CONV-OT:BFUEL-L",
-    "2:data:CONV-OT:NG-L",
-    "2:data:CONV:CO2-C",
-    "2:data:CONV:CO2-G",
-    "2:data:CONV:DIESEL-L",
-    "2:data:CONV:EL",
-    "2:data:CONV:HEAT",
-    "2:data:CONV:IOP-S",
-    "2:data:CONV:NG-G",
-    "2:data:DIST",
-    "2:data:EF_E:CH3OH-L",
-    "2:data:EF_E:CH4-G",
-    "2:data:EF_E:CO2-C",
-    "2:data:EF_E:CO2-G",
-    "2:data:EF_E:DIESEL-L",
-    "2:data:EF_E:EL",
-    "2:data:EF_E:HEAT",
-    "2:data:EF_E:NG-G",
-    "2:data:EF_E:NG-L",
-    "2:data:EF_M:CH3OH-L",
-    "2:data:EF_M:CH4-G",
-    "2:data:EF_M:CO2-C",
-    "2:data:EF_M:CO2-G",
-    "2:data:EF_M:DIESEL-L",
-    "2:data:EF_M:EL",
-    "2:data:EF_M:HEAT",
-    "2:data:EF_M:NG-G",
-    "2:data:EF_M:NG-L",
-    "2:data:EFF",
-    "2:data:FLH",
-    "2:data:LIFETIME",
-    "2:data:LOSS_FLOW:NG-G",
-    "2:data:LOSS",
-    "2:data:OPEX-F",
-    "2:data:OPEX-O",
-    "2:data:OPEX-T",
-    # "2:data:process_code", # noqa
-    # "2:data:step", # noqa
-    "3:flows:emissions:ch4_direct_co2e_e",
-    "3:flows:emissions:ch4_direct_co2e_m",
-    "3:flows:emissions:ch4_direct_e",
-    "3:flows:emissions:ch4_direct_m",
-    "3:flows:emissions:co2_bound_in_product_e",
-    "3:flows:emissions:co2_bound_in_product_last_proc_e",
-    "3:flows:emissions:co2_bound_in_product_last_proc_m",
-    "3:flows:emissions:co2_bound_in_product_m",
-    "3:flows:emissions:co2_captured_e",
-    "3:flows:emissions:co2_captured_m",
-    "3:flows:emissions:co2_direct_e",
-    "3:flows:emissions:co2_direct_m",
-    "3:flows:emissions:co2_in_flows_e",
-    "3:flows:emissions:co2_in_flows_m",
-    "3:flows:emissions:co2_indirect_scope2_e",
-    "3:flows:emissions:co2_indirect_scope2_m",
-    "3:flows:emissions:co2e_total_direct_e",
-    "3:flows:emissions:co2e_total_direct_m",
-    "3:flows:flows:BFUEL-L",
-    "3:flows:flows:CO2-C",
-    "3:flows:flows:CO2-G",
-    "3:flows:flows:DIESEL-L",
-    "3:flows:flows:EL",
-    "3:flows:flows:HEAT",
-    "3:flows:flows:IOP-S",
-    "3:flows:flows:NG-G",
-    "3:flows:flows:NG-L",
-    "3:flows:main_input",
-    "3:flows:main_output",
-    # "3:flows:process_code", # noqa
-    # "3:flows:process_step", # noqa
-    "4:costs:CAPEX",
-    "4:costs:FLOW",
-    "4:costs:OPEX",
+    "2:flows:main_flow_in",
+    "2:flows:main_flow_out",
+    "2:flows:secondary_flows_in:BFUEL-L",
+    "2:flows:secondary_flows_in:CO2-C",
+    "2:flows:secondary_flows_in:CO2-G",
+    "2:flows:secondary_flows_in:DIESEL-L",
+    "2:flows:secondary_flows_in:EL",
+    "2:flows:secondary_flows_in:IOP-S",
+    "2:flows:secondary_flows_in:NG-G",
+    "3:costs:CAPEX",
+    "3:costs:FLOW",
+    "3:costs:OPEX",
+    "4:emissions:emission:ch4_direct_co2e",
+    "4:emissions:emission:co2_bound_in_product",
+    # "4:emissions:emission:co2_bound_in_product_per_output", # noqa
+    "4:emissions:emission:co2_captured",
+    "4:emissions:emission:co2_direct",
+    "4:emissions:emission:co2_indirect_scope2",
+    "4:emissions:mass:ch4_direct_co2e",
+    "4:emissions:mass:co2_bound_in_product",
+    "4:emissions:mass:co2_bound_in_product_per_output",
+    "4:emissions:mass:co2_captured",
+    "4:emissions:mass:co2_direct",
+    "4:emissions:mass:co2_indirect_scope2",
 ]
 
 
@@ -228,98 +217,43 @@ def main(xlsx_filepath: str):
             optimize_flh=False,
         )
 
-        data_general = (
-            dict(flatten_dict(settings, "0:settings"))
-            | dict(
-                flatten_dict(res.todo_data["parameter"], "1:parameter")  # type: ignore
-            )
-            | {
-                "0:settings:output_unit_cost": output_unit_cost,
-                "0:settings:output_unit_data": output_unit_data,
-            }
-        )
+        data_general = dict(flatten_dict(settings, "0:settings")) | {
+            "0:settings:output_unit_cost": output_unit_cost,
+            "0:settings:output_unit_data": output_unit_data,
+        }
         all_row_keys = all_row_keys | set(data_general)
+
         pd_series = [pd.Series(data_general, name="")]
 
-        secondary_process_steps = list(
-            res.todo_data["secondary_process"].values()  # type: ignore
-        )
+        steps = set()
+        for proc_data in res._internal_process_data:  # type: ignore
+            step = proc_data["process_step"]
+            assert step, f"not process_step in {proc_data['process_code']}"
+            if step in steps:
+                # duplicate market
+                steps_ = {x for x in steps if x.startswith(step + "/")}
+                nmax = max(int(x.split("/")[-1]) for x in steps_) if steps_ else 1
+                step = step + f"/{nmax + 1}"
+                assert step not in steps
 
-        data_steps = list_to_dict_by_step(
-            res.todo_data["main_export_process_chain"]  # type: ignore
-            + res.todo_data["main_transport_process_chain"]  # type: ignore
-            + res.todo_data["main_import_process_chain"]  # type: ignore
-            + secondary_process_steps
-        )
+            steps.add(step)
 
-        results_flows_steps = list_to_dict_by_step(
-            res.todo_results_flows  # type: ignore
-        )
-
-        df_costs: pd.DataFrame = res.todo_df_results_cost_unscaled  # type: ignore
-
-        for step in STEPS:
-            d_data = dict(
-                flatten_dict(
-                    data_steps.pop(step) if step in data_steps else {}, "2:data"
+            proc_data_dict = {}
+            for i, k in enumerate(["parameter", "flows", "costs", "emissions"]):
+                proc_data_dict = proc_data_dict | dict(
+                    flatten_dict(proc_data[k], key_prefix=f"{i + 1}:{k}")
                 )
-            )
-            d_flows = dict(
-                flatten_dict(
-                    (
-                        results_flows_steps.pop(step)
-                        if step in results_flows_steps
-                        else {}
-                    ),
-                    "3:flows",
-                )
-            )
 
-            if not step.startswith("SECONDARY"):
-                process_code = chain[step]
-            else:
-                process_code = get_secproc_process(step)
-
-            if process_code:
-                d_data["0:process:process_code"] = process_code
-                d_data["0:process:main_flow_code_in"] = api.get_dimension(
-                    "process"
-                ).loc[process_code, "main_flow_code_in"]
-                d_data["0:process:main_flow_code_out"] = api.get_dimension(
-                    "process"
-                ).loc[process_code, "main_flow_code_out"]
-
-                process_code_cost = process_code
-                if "IMPORT" in step:
-                    process_code_cost += " (import)"
-
-                idx_c = df_costs["process_subtype"] == process_code_cost
-
-                d_costs = dict(
-                    flatten_dict(
-                        dict(
-                            df_costs.loc[idx_c]
-                            .groupby(["cost_type"])
-                            .sum(["values"])["values"]
-                            .items()
-                        ),
-                        "4:costs",
-                    )
-                )
-                df_costs = df_costs.loc[~idx_c]
-            else:
-                d_costs = {}
-
-            pd_series.append(pd.Series(d_data | d_flows | d_costs, name=step))
-
-            all_row_keys = all_row_keys | set(d_data)
-            all_row_keys = all_row_keys | set(d_flows)
-            all_row_keys = all_row_keys | set(d_costs)
-
-        # check all datahas been used
-        assert not data_steps, data_steps.keys()
-        assert not results_flows_steps, results_flows_steps.keys()
-        assert df_costs.empty, set(df_costs["process_subtype"])
+            s_all = pd.Series(proc_data_dict, name=step)
+            # drop 0/empty
+            s_all = s_all.loc[
+                (~s_all.isna())
+                & (~(s_all == 0))
+                & (~(s_all == None))  # noqa
+                & (~(s_all == ""))
+            ]
+            pd_series.append(s_all)
+            all_row_keys = all_row_keys | set(s_all.index)
 
         df = pd.concat(pd_series, axis=1)
         df = df.reindex(rows)
@@ -328,10 +262,8 @@ def main(xlsx_filepath: str):
         results[sheet_name] = df
 
     all_row_keys = all_row_keys - {
-        "3:flows:process_code",
-        "3:flows:process_step",
-        "2:data:process_code",
-        "2:data:step",
+        "1:parameter:step",
+        "4:emissions:emission:co2_bound_in_product_per_output",
     }
 
     assert all_row_keys == set(rows), (

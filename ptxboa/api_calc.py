@@ -179,6 +179,12 @@ class Process:
             else:
                 process_step = f"SECONDARY:{main_flow_code_out}"
 
+        if is_market and not process_step:
+            if is_in_import_segment:
+                process_step = f"MARKET:IMPORT:{main_flow_code_out}"
+            else:
+                process_step = f"MARKET:{main_flow_code_out}"
+
         return ProcessClass(
             process_code=process_code,
             process_step=process_step,
@@ -1426,21 +1432,37 @@ class PtxCalc:
             df_results_emissions_e_g_co2e, cols_dim_emissions
         )
 
-        results_flows_chain = [
-            _add_step_and_code(p, asdict(results_flows[p]))
-            for p in self._main_processes_ordered_forwards
-        ]
-        results_flows_secondary = [
-            _add_step_and_code(p, asdict(results_flows[p]))
-            for p in self._secondary_processes_ordered_forwards
-        ]
+        # go over all main and secondary processes
+
+        _internal_process_data = []
+        for p in (
+            self._main_processes_ordered_forwards
+            + self._secondary_processes_ordered_forwards
+            + self._market_processes_ordered_forwards
+        ):
+            _data = {
+                "process_code": p.process_code,
+                "process_step": p.process_step,
+                "is_in_import_segment": p.is_in_import_segment,
+                "parameter": parameter_data[p],
+                "flows": asdict(results_flows[p]),
+                "costs": {c.cost_type: c.values for c in results_costs[p]},
+                "emissions": (
+                    {
+                        e: asdict(x) for e, x in results_emissions[p].items()
+                    }  # type:ignore noqa
+                    if results_emissions[p]
+                    else {}
+                ),
+            }
+
+            _internal_process_data.append(_data)
 
         return PtxCalcResult(
             df_results_cost=df_results_cost,
             df_results_emissions_e_g_co2e=df_results_emissions_e_g_co2e,
             df_results_emissions_m_g_co2e=df_results_emissions_m_g_co2e,
-            results_flows_chain=results_flows_chain,
-            results_flows_secondary=results_flows_secondary,
+            _internal_process_data=_internal_process_data,
         )
 
     def _merge_emission_results(
