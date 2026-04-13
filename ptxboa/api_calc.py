@@ -1405,7 +1405,7 @@ class PtxCalc:
                 process_subtype="Bound in product",
                 emission_type="direct",
                 gas_type="CO2",
-                values=results_emissions[self.last_process][
+                values=results_emissions[self.last_process][  # type: ignore - should exist # noqa
                     "mass"
                 ].co2_bound_in_product,
             )
