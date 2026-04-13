@@ -402,6 +402,7 @@ class Process:
         FLOW_CO2_INDIRECT = {"HEAT", "EL"}
         G_CH4_PER_KWH = 68.75469807
         CH4_TO_CO2EQ = 29.8
+        CO2_PER_C = 3.664446295  # 44.01 / 12.01
 
         # use parameter_data.get() because not always available (like trasnport)
         LOSS = parameter_data.get("LOSS", {})
@@ -466,9 +467,12 @@ class Process:
                 co2_captured += co2_g * co2cpt
                 # bound
                 bound_kg_c_per_output: float = CBOUND_kg_c_per_output.get(flow_code, 0)  # type: ignore # noqa
-                if co2_g_per_flow:  # only add if EFF exist (EFF_FLAG)
+                # only add if EFF exist (EFF_FLAG)
+                # TODO: special case B-DRI-S - generalized rule?
+                allow_cbound = bool(co2_g_per_flow) or flow_code in {"B-DRI-S"}
+                if allow_cbound:
                     co2_g_bound_in_product += (
-                        bound_kg_c_per_output * 1000 * main_flow_out
+                        bound_kg_c_per_output * 1000 * CO2_PER_C * main_flow_out
                     )
 
         co2_g_direct = co2_g_direct_sum_in - co2_g_bound_in_product - co2_captured
@@ -1372,30 +1376,27 @@ class PtxCalc:
                 # some (like market) dont have emissions
                 continue
             result = result_e_m[etype]
-            if result.co2_indirect_scope2:
-                results.append(
-                    process._create_result_emission(
-                        emission_type="indirect",
-                        gas_type="CO2",
-                        values=result.co2_indirect_scope2,
-                    )
+            results.append(
+                process._create_result_emission(
+                    emission_type="indirect",
+                    gas_type="CO2",
+                    values=result.co2_indirect_scope2,
                 )
-            if result.ch4_direct_co2e:
-                results.append(
-                    process._create_result_emission(
-                        emission_type="direct",
-                        gas_type="CH4",
-                        values=result.ch4_direct_co2e,
-                    )
+            )
+            results.append(
+                process._create_result_emission(
+                    emission_type="direct",
+                    gas_type="CH4",
+                    values=result.ch4_direct_co2e,
                 )
-            if result.co2_direct:
-                results.append(
-                    process._create_result_emission(
-                        emission_type="direct",
-                        gas_type="CO2",
-                        values=result.co2_direct,
-                    )
+            )
+            results.append(
+                process._create_result_emission(
+                    emission_type="direct",
+                    gas_type="CO2",
+                    values=result.co2_direct,
                 )
+            )
 
         # for last process, add co2_bound_in_product
         results.append(
@@ -1601,8 +1602,8 @@ def _aggregate_results_df(
     columns_all = columns_index + columns_value
     if df.empty:
         return pd.DataFrame(columns=columns_all)
-    # drop if values is 0
-    df = df.loc[~(df["values"] == 0)]
+    # drop if values is 0 ?
+    # df = df.loc[~(df["values"] == 0)] # noqa
     return df[columns_all].groupby(columns_index).sum().reset_index()
 
 

@@ -325,7 +325,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 "gas_type": "CO2",
                 "process_subtype": "NG-DRI-C#B",
                 "process_type": "Derivative production",
-                "values": 311.97005319,
+                "values": 204.31608375,
             },
             {
                 "emission_type": "indirect",
@@ -339,7 +339,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 "gas_type": "CO2",
                 "process_subtype": "DRI-SB#B",
                 "process_type": "Transportation (Ship)",
-                "values": 40.4038804,
+                "values": 148.05784985,
             },
         ],
         "df_results_emissions_m_g_co2e": [
@@ -369,14 +369,14 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 "gas_type": "CO2",
                 "process_subtype": "NG-DRI-C#B",
                 "process_type": "Derivative production",
-                "values": 311.97005319,
+                "values": 204.31608375,
             },
             {
                 "emission_type": "direct",
                 "gas_type": "CO2",
                 "process_subtype": "DRI-SB#B",
                 "process_type": "Transportation (Ship)",
-                "values": 40.4038804,
+                "values": 148.05784985,
             },
         ],
         "results_flows_chain": [
@@ -490,7 +490,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "gas_type": "CO2",
                         "process_subtype": "EFUELSYNC#B",
                         "process_type": "Derivative production",
-                        "values": 204.17438018,
+                        "values": 10.21118998,
                     },
                     {
                         "emission_type": "direct",
@@ -511,7 +511,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "gas_type": "CO2",
                         "process_subtype": "SYN-SB#B",
                         "process_type": "Transportation (Ship)",
-                        "values": 72.79680982,
+                        "values": 266.76000002,
                     },
                 ],
                 "df_results_emissions_m_g_co2e": [
@@ -520,7 +520,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "gas_type": "CO2",
                         "process_subtype": "EFUELSYNC#B",
                         "process_type": "Derivative production",
-                        "values": 204.17438018,
+                        "values": 10.21118998,
                     },
                     {
                         "emission_type": "direct",
@@ -541,7 +541,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "gas_type": "CO2",
                         "process_subtype": "SYN-SB#B",
                         "process_type": "Transportation (Ship)",
-                        "values": 77.54396363,
+                        "values": 271.50715383,
                     },
                 ],
                 "results_flows_chain": [
@@ -696,14 +696,14 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "gas_type": "CO2",
                         "process_subtype": "Bound in product",
                         "process_type": "Bound in product",
-                        "values": 4.0,
+                        "values": 14.65778518,
                     },
                     {
                         "emission_type": "direct",
                         "gas_type": "CO2",
                         "process_subtype": "EAF#B",
                         "process_type": "Derivative production",
-                        "values": 96.70349819,
+                        "values": 193.69866408,
                     },
                     {
                         "emission_type": "indirect",
@@ -717,7 +717,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "gas_type": "CO2",
                         "process_subtype": "NG-DRI-C#B",
                         "process_type": "Derivative production",
-                        "values": 311.97085102,
+                        "values": 204.31789996,
                     },
                     {
                         "emission_type": "indirect",
@@ -789,14 +789,14 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "gas_type": "CO2",
                         "process_subtype": "Bound in product",
                         "process_type": "Bound in product",
-                        "values": 4.0,
+                        "values": 14.65778518,
                     },
                     {
                         "emission_type": "direct",
                         "gas_type": "CO2",
                         "process_subtype": "EAF#B",
                         "process_type": "Derivative production",
-                        "values": 96.70349819,
+                        "values": 193.69866408,
                     },
                     {
                         "emission_type": "indirect",
@@ -810,7 +810,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "gas_type": "CO2",
                         "process_subtype": "NG-DRI-C#B",
                         "process_type": "Derivative production",
-                        "values": 311.97085102,
+                        "values": 204.31789996,
                     },
                     {
                         "emission_type": "indirect",
