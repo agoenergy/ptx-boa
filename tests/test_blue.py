@@ -256,13 +256,13 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
     chain_def = ChainDef(**kwargs)
     ptx_calc = PtxCalc.get_or_create(chain_def)
 
-    data = data_handler.get_calculation_data(
+    calculation_data = data_handler.get_calculation_data(
         ptx_calc=ptx_calc,
         source_region_code=chain_def.source_region_code,
         target_country_code=chain_def.target_country_code,
         optimize_flh=False,
     )
-    ptxcalc_results = ptx_calc.calculate(data=data)
+    ptxcalc_results = ptx_calc.calculate(data=calculation_data)
 
     # test api output
     api = PtxboaAPI(data_dir=ptxdata_dir_static)
@@ -274,15 +274,16 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
         optimize_flh=False,
         output_unit="USD/t",  # must be per ton for steel
     )
-    res_emission_mass = api_result.emission_mass[  # type: ignore
+    emission_mass = api_result.emission_mass[  # type: ignore
         ["process_subtype", "emission_type", "gas_type", "values"]
     ].to_dict(orient="records")
-    res_emission = api_result.emissions[  # type: ignore
+    emissions = api_result.emissions[  # type: ignore
         ["process_subtype", "emission_type", "gas_type", "values"]
     ].to_dict(orient="records")
 
     # round and sort for easier comparison
-    values = ptxcalc_results.results_flows_chain
+    results_flows_chain = ptxcalc_results.results_flows_chain
+    results_flows_secondary = ptxcalc_results.results_flows_secondary
 
     expected = {
         "calculation_data": {
@@ -361,7 +362,53 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 }
             },
         },
-        "flow_values": [
+        "emission_mass": [
+            {
+                "emission_type": "direct",
+                "gas_type": "CH4",
+                "process_subtype": "EAF#B",
+                "values": 372.48820245,
+            },
+            {
+                "emission_type": "direct",
+                "gas_type": "CO2",
+                "process_subtype": "EAF#B",
+                "values": 804.0,
+            },
+            {
+                "emission_type": "direct",
+                "gas_type": "CH4",
+                "process_subtype": "NG-DRI-C#B",
+                "values": 274374.2069403,
+            },
+        ],
+        "emissions": [
+            {
+                "emission_type": "direct",
+                "gas_type": "CH4",
+                "process_subtype": "EAF#B",
+                "values": 372.48820245,
+            },
+            {
+                "emission_type": "indirect",
+                "gas_type": "CO2",
+                "process_subtype": "EAF#B",
+                "values": 195300.0,
+            },
+            {
+                "emission_type": "direct",
+                "gas_type": "CH4",
+                "process_subtype": "NG-DRI-C#B",
+                "values": 274374.2069403,
+            },
+            {
+                "emission_type": "indirect",
+                "gas_type": "CO2",
+                "process_subtype": "NG-DRI-C#B",
+                "values": 189780.3467178,
+            },
+        ],
+        "results_flows_main": [
             {
                 "main_flow_in": 3.0937132,
                 "main_flow_out": 0.99000001,
@@ -388,58 +435,13 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 "step": "SHP",
             },
         ],
-        "res_emission": [
-            {
-                "emission_type": "direct",
-                "gas_type": "CH4",
-                "process_subtype": "EAF#B",
-                "values": 372.48820245,
-            },
-            {
-                "emission_type": "indirect",
-                "gas_type": "CO2",
-                "process_subtype": "EAF#B",
-                "values": 195300.0,
-            },
-            {
-                "emission_type": "direct",
-                "gas_type": "CH4",
-                "process_subtype": "NG-DRI-C#B",
-                "values": 274374.2069403,
-            },
-            {
-                "emission_type": "indirect",
-                "gas_type": "CO2",
-                "process_subtype": "NG-DRI-C#B",
-                "values": 189780.3467178,
-            },
-        ],
-        "res_emission_mass": [
-            {
-                "emission_type": "direct",
-                "gas_type": "CH4",
-                "process_subtype": "EAF#B",
-                "values": 372.48820245,
-            },
-            {
-                "emission_type": "direct",
-                "gas_type": "CO2",
-                "process_subtype": "EAF#B",
-                "values": 804.0,
-            },
-            {
-                "emission_type": "direct",
-                "gas_type": "CH4",
-                "process_subtype": "NG-DRI-C#B",
-                "values": 274374.2069403,
-            },
-        ],
     }
     actually = {
-        "calculation_data": data,
-        "flow_values": values,
-        "res_emission": res_emission,
-        "res_emission_mass": res_emission_mass,
+        "calculation_data": calculation_data,
+        "results_flows_main": results_flows_chain,
+        "results_flows_secondary": results_flows_secondary,
+        "emissions": emissions,
+        "emission_mass": emission_mass,
     }
 
     assert_deep_equal_approx(expected, actually, sort_list_by_keys=["step"])

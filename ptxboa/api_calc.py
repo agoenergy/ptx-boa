@@ -467,7 +467,9 @@ class Process:
                 # bound
                 bound_kg_c_per_output: float = CBOUND_kg_c_per_output.get(flow_code, 0)  # type: ignore # noqa
                 if co2_g_per_flow:  # only add if EFF exist (EFF_FLAG)
-                    co2_g_bound_in_product += bound_kg_c_per_output * main_flow_out
+                    co2_g_bound_in_product += (
+                        bound_kg_c_per_output * 1000 * main_flow_out
+                    )
 
         co2_g_direct = co2_g_direct_sum_in - co2_g_bound_in_product - co2_captured
         if co2_g_direct < 0:
@@ -516,6 +518,22 @@ class Process:
             g_co2_per_flows: dict[FlowCodeType, float] = {}
 
             for flow_code, proc in self._links_in_secondary.items():
+                res = results_emissions[proc]
+                if res:
+                    g_co2_per_flow = res[em].co2_bound_in_product_per_output
+                else:
+                    g_co2_per_flow = None
+                if not g_co2_per_flow:
+                    # use emission factor, if not bound in co2
+                    params = parameter_data[self].get(param_ef, {})
+                    g_co2_per_flow = params.get(flow_code, 0)  # type: ignore
+                g_co2_per_flows[flow_code] = g_co2_per_flow  # type: ignore
+
+            if self._link_in_main:
+                proc = self._link_in_main
+                flow_code = self.main_flow_code_in
+
+                # also for main flow in: # TODO: reuse code fromabove
                 res = results_emissions[proc]
                 if res:
                     g_co2_per_flow = res[em].co2_bound_in_product_per_output
