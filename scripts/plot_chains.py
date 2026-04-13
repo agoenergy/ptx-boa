@@ -114,8 +114,8 @@ def main():
         if settings.chain == "Blue Iron (blue)*":
             continue
 
-        if i not in (14, 164):
-            continue
+        # if i not in (14, 164):
+        #    continue
 
         logger.info(f"{i + 1}/{len(permutations)}: {settings} => {name}")
 

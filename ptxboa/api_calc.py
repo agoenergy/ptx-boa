@@ -466,7 +466,8 @@ class Process:
                 co2_captured += co2_g * co2cpt
                 # bound
                 bound_kg_c_per_output: float = CBOUND_kg_c_per_output.get(flow_code, 0)  # type: ignore # noqa
-                co2_g_bound_in_product += bound_kg_c_per_output * main_flow_out
+                if co2_g_per_flow:  # only add if EFF exist (EFF_FLAG)
+                    co2_g_bound_in_product += bound_kg_c_per_output * main_flow_out
 
         co2_g_direct = co2_g_direct_sum_in - co2_g_bound_in_product - co2_captured
         if co2_g_direct < 0:
@@ -1377,17 +1378,18 @@ class PtxCalc:
                 )
 
         # for last process, add co2_bound_in_product
-        if process.is_last:
-            results.append(
-                ProcessResultEmissionType(
-                    # TODO: "Bound in product" as constant somewhere
-                    process_type="Bound in product",
-                    process_subtype="Bound in product",
-                    emission_type="direct",
-                    gas_type="CO2",
-                    values=result.co2_bound_in_product,
-                )
+        results.append(
+            ProcessResultEmissionType(
+                # TODO: "Bound in product" as constant somewhere
+                process_type="Bound in product",
+                process_subtype="Bound in product",
+                emission_type="direct",
+                gas_type="CO2",
+                values=results_emissions[self.last_process][
+                    "mass"
+                ].co2_bound_in_product,
             )
+        )
 
         return results
 
