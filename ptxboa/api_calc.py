@@ -1234,12 +1234,14 @@ class PtxCalc:
         for process, emissions in results_emissions.items():
             # TODO: mass or emission?
             # mass makes more sense, should be the same anyways
-            co2_captured: float = emissions["mass"].co2_captured if emissions else 0
-            if co2_captured:
+            co2_g_captured: float = emissions["mass"].co2_captured if emissions else 0
+            if co2_g_captured:
                 if "CO2-C" not in process.secondary_flow_types:
                     logger.error("CO2 captured where we dont expect it: %s", process)
                     continue
-                results_flows[process].secondary_flows_in["CO2-C"] = co2_captured
+                # flows main unit is always kg
+                co2_kg_captured = co2_g_captured / 1000
+                results_flows[process].secondary_flows_in["CO2-C"] = co2_kg_captured
 
         # recalculate flows for CSS subgraphs
         for process in self._css_subgraph_processes_ordered_backwards:
