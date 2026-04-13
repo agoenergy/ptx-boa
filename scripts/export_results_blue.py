@@ -152,7 +152,7 @@ rows = [
     "4:emissions:emission:co2_indirect_scope2",
     "4:emissions:mass:ch4_direct_co2e",
     "4:emissions:mass:co2_bound_in_product",
-    "4:emissions:mass:co2_bound_in_product_per_output",
+    # "4:emissions:mass:co2_bound_in_product_per_output", # noqa
     "4:emissions:mass:co2_captured",
     "4:emissions:mass:co2_direct",
     "4:emissions:mass:co2_indirect_scope2",
@@ -264,6 +264,7 @@ def main(xlsx_filepath: str):
     all_row_keys = all_row_keys - {
         "1:parameter:step",
         "4:emissions:emission:co2_bound_in_product_per_output",
+        "4:emissions:mass:co2_bound_in_product_per_output",
     }
 
     assert all_row_keys == set(rows), (
