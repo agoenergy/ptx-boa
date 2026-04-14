@@ -840,9 +840,14 @@ class PtxCalc:
     def _create_all_processes_ordered_forwards(self) -> tuple[Process, ...]:
         return tuple(nx.topological_sort(self._graph))
 
-    def _create_processes_by_step(self) -> dict[ProcessStepType | str, Process]:
+    def _create_main_and_secondary_processes_by_step(
+        self,
+    ) -> dict[ProcessStepType | str, Process]:
         processes_by_step: dict[ProcessStepType | str, Process] = {}
-        for process in self._all_processes_ordered_forwards:
+        for process in (
+            self._main_processes_ordered_forwards
+            + self._secondary_processes_ordered_forwards
+        ):
             process_step = process.process_step
             if not process_step:
                 continue
@@ -894,7 +899,9 @@ class PtxCalc:
         self._all_processes_ordered_forwards = (
             self._create_all_processes_ordered_forwards()
         )
-        self._processes_by_step = self._create_processes_by_step()
+        self._main_and_secondar_processes_by_step = (
+            self._create_main_and_secondary_processes_by_step()
+        )
         self._css_subgraph_processes_ordered_backwards = (
             self._create_css_subgraph_processes_ordered_backwards()
         )
@@ -1186,8 +1193,8 @@ class PtxCalc:
         """For FLH lookup we need these process codes."""
         return {  # type: ignore
             key: (
-                self._processes_by_step[step].process_code
-                if step in self._processes_by_step
+                self._main_and_secondar_processes_by_step[step].process_code
+                if step in self._main_and_secondar_processes_by_step
                 else None
             )
             for key, step in {
@@ -1893,7 +1900,7 @@ def _create_graph(
     if procs_dropped:
         # dont warn about dropped market processes
         procs_dropped = {p for p in procs_dropped if not p.is_market}
-        logger.warning("Dropped unused: %s", [str(x) for x in procs_dropped])
+        logger.info("Dropped unused: %s", [str(x) for x in procs_dropped])
 
     return graph
 
