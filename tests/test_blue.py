@@ -524,7 +524,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "process_step": "SHP",
                 },
                 {
-                    "flows": {"main_flow_in": 0.09129249, "main_flow_out": 0.08672787},
+                    "flows": {"main_flow_out": 0.08672787},
                     "parameter": {
                         "EFF": 0.95,
                         "EF_E": {"CO2-C": 1000.0},
@@ -569,11 +569,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     },
                     "process_code": "CCGT-CC#B",
                     "process_step": "SECONDARY:EL",
-                },
-                {
-                    "flows": {"main_flow_out": 0.09129249},
-                    "process_code": "CO2-C",
-                    "process_step": "MARKET:CO2-C",
                 },
                 {
                     "parameter": {"SPECCOST": {"EL": 0.08078}},
@@ -875,7 +870,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 },
                 {
                     "costs": {"OPEX": 0.03547894},
-                    "flows": {"main_flow_in": 0.25247521, "main_flow_out": 0.23985145},
+                    "flows": {"main_flow_out": 0.23985145},
                     "is_in_import_segment": True,
                     "parameter": {
                         "EFF": 0.95,
@@ -890,21 +885,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     },
                     "process_code": "CO2-T+S#B",
                     "process_step": "SECONDARY:IMPORT:CO2-C",
-                },
-                {
-                    "flows": {"main_flow_in": 0.00303886, "main_flow_out": 0.00288691},
-                    "parameter": {
-                        "EFF": 0.95,
-                        "EF_E": {"CO2-C": 1000.0},
-                        "EF_M": {"CO2-C": 1000.0},
-                        "FLH": 7000,
-                        "LIFETIME": 20,
-                        "WACC": 0.14554836,
-                        "process_code": "CO2-T+S#B",
-                        "step": "SECONDARY:CO2-C",
-                    },
-                    "process_code": "CO2-T+S#B",
-                    "process_step": "SECONDARY:CO2-C",
                 },
                 {
                     "costs": {"CAPEX": 0.00041145, "OPEX": 7.357e-05},
@@ -939,27 +919,12 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "process_step": "SECONDARY:EL",
                 },
                 {
-                    "flows": {"main_flow_out": 0.25247521},
-                    "is_in_import_segment": True,
-                    "process_code": "CO2-C",
-                    "process_step": "MARKET:IMPORT:CO2-C",
-                },
-                {
                     "is_in_import_segment": True,
                     "parameter": {"SPECCOST": {"EL": 0.1}},
                     "process_code": "EL",
                     "process_step": "MARKET:IMPORT:EL",
                 },
-                {
-                    "flows": {"main_flow_out": 0.00303886},
-                    "process_code": "CO2-C",
-                    "process_step": "MARKET:CO2-C",
-                },
-                {
-                    "parameter": {"SPECCOST": {"EL": 0.08078}},
-                    "process_code": "EL",
-                    "process_step": "MARKET:EL",
-                },
+                {"process_code": "CO2-C", "process_step": "MARKET:CO2-C"},
                 {
                     "costs": {"FLOW": 8.916e-05},
                     "flows": {"main_flow_out": 0.00208037},

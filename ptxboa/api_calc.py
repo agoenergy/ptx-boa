@@ -185,6 +185,11 @@ class Process:
             else:
                 process_step = f"MARKET:{main_flow_code_out}"
 
+        # FIXME: should be removed from data?
+        if process_code == "CO2-T+S#B" and main_flow_code_in == "CO2-C":  # type:ignore
+            logger.warning("Manually removing  main_flow_code_in=CO2-C for css")
+            main_flow_code_in = None
+
         return ProcessClass(
             process_code=process_code,
             process_step=process_step,
@@ -936,15 +941,22 @@ class PtxCalc:
 
         secondary_process_codes_export: list[ProcessCodeType] = list(
             chain_def.secondary_processes.values()
-        )  # FIXME: not set/dict - we want fixed order
+        )
         secondary_process_codes_import: list[ProcessCodeType] = []
         first_process_code: ProcessCodeType
         if chain_color == "blue":
             initial_step = "NG_PROD"
             first_process_code = "NG-PROD#B"
-            secondary_process_codes_import = [
-                c for c in secondary_process_codes_export if c == "CO2-T+S#B"
-            ]
+            # FIXME: more elegant way: currently, we want CSS only either in export
+            # or import.
+            css_in_import = "in_demand" in chain_def.chain_name  # TODO: ugly / unstable
+            css_proc_code = "CO2-T+S#B"
+            if css_in_import and css_proc_code in secondary_process_codes_export:
+                # move "CO2-T+S#B" from export to import
+                secondary_process_codes_export = [
+                    c for c in secondary_process_codes_export if c != css_proc_code
+                ]
+                secondary_process_codes_import.append(css_proc_code)
         else:
             assert chain_def.process_res is not None
             initial_step = "RES"
