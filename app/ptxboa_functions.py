@@ -1170,7 +1170,7 @@ def blue_results_over_dimension(
     override_session_state=None,
 ) -> BlueResultOverDimension:
 
-    if parameter_list is None or parameter_list.empty:
+    if parameter_list is not None and parameter_list.empty:
         logger.error("No parameter_list for blue_results_over_dimension: %s", dim)
         return BlueResultOverDimension(
             costs=pd.DataFrame(),
