@@ -974,13 +974,13 @@ ResultClassValues: list[ResultClassType] = [
 
 SecProcCO2Type = Literal[
     "CO2 from fossil source",
-    "CO2 from from sustainable source",
+    "CO2 from sustainable source",
     "Direct Air Capture",
     "Direct Air Capture (blue)",
 ]
 SecProcCO2Values: list[SecProcCO2Type] = [
     "CO2 from fossil source",
-    "CO2 from from sustainable source",
+    "CO2 from sustainable source",
     "Direct Air Capture",
     "Direct Air Capture (blue)",
 ]

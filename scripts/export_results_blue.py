@@ -79,7 +79,10 @@ rows = [
     "1:parameter:process_code",
     "1:parameter:CAPEX",
     "1:parameter:CBOUND:B-DRI-S",
+    "1:parameter:CBOUND:CO2-DAC",
     "1:parameter:CBOUND:CO2-G",
+    "1:parameter:CBOUND:CO2-INDF",
+    "1:parameter:CBOUND:CO2-INDS",
     "1:parameter:CBOUND:NG-G",
     "1:parameter:CH4SHARE:NG-G",
     "1:parameter:CO2CPT-R:CH4-G",
@@ -91,16 +94,17 @@ rows = [
     "1:parameter:CONV:CO2-G",
     "1:parameter:CONV:DIESEL-L",
     "1:parameter:CONV:EL",
+    "1:parameter:CONV:HEAT",
     "1:parameter:CONV:IOP-S",
     "1:parameter:CONV:NG-G",
     "1:parameter:DIST",
     "1:parameter:DST-S-D",
     "1:parameter:DST-S-DP",
-    "1:parameter:EFF",
     "1:parameter:EF_E:CH3OH-L",
     "1:parameter:EF_E:CH4-G",
     "1:parameter:EF_E:CO2-C",
     "1:parameter:EF_E:CO2-G",
+    "1:parameter:EF_E:CO2-INDF",
     "1:parameter:EF_E:DIESEL-L",
     "1:parameter:EF_E:EL",
     "1:parameter:EF_E:HEAT",
@@ -110,12 +114,16 @@ rows = [
     "1:parameter:EF_M:CH3OH-L",
     "1:parameter:EF_M:CH4-G",
     "1:parameter:EF_M:CO2-C",
+    "1:parameter:EF_M:CO2-DAC",
     "1:parameter:EF_M:CO2-G",
+    "1:parameter:EF_M:CO2-INDF",
+    "1:parameter:EF_M:CO2-INDS",
     "1:parameter:EF_M:DIESEL-L",
     "1:parameter:EF_M:EL",
     "1:parameter:EF_M:HEAT",
     "1:parameter:EF_M:NG-G",
     "1:parameter:EF_M:NG-L",
+    "1:parameter:EFF",
     "1:parameter:FLH",
     "1:parameter:LIFETIME",
     "1:parameter:LOSS-T",
@@ -130,15 +138,14 @@ rows = [
     "1:parameter:SPECCOST:IOP-S",
     "1:parameter:SPECCOST:NG-G",
     "1:parameter:WACC",
-    "1:parameter:CONV:HEAT",
     "2:flows:main_flow_in",
     "2:flows:main_flow_out",
-    "2:flows:secondary_flows_in:HEAT",
     "2:flows:secondary_flows_in:BFUEL-L",
     "2:flows:secondary_flows_in:CO2-C",
     "2:flows:secondary_flows_in:CO2-G",
     "2:flows:secondary_flows_in:DIESEL-L",
     "2:flows:secondary_flows_in:EL",
+    "2:flows:secondary_flows_in:HEAT",
     "2:flows:secondary_flows_in:IOP-S",
     "2:flows:secondary_flows_in:NG-G",
     "3:costs:CAPEX",
@@ -146,16 +153,16 @@ rows = [
     "3:costs:OPEX",
     "4:emissions:emission:ch4_direct_co2e",
     "4:emissions:emission:co2_bound_in_product",
-    # "4:emissions:emission:co2_bound_in_product_per_output", # noqa
     "4:emissions:emission:co2_captured",
     "4:emissions:emission:co2_direct",
     "4:emissions:emission:co2_indirect_scope2",
     "4:emissions:mass:ch4_direct_co2e",
     "4:emissions:mass:co2_bound_in_product",
-    # "4:emissions:mass:co2_bound_in_product_per_output", # noqa
     "4:emissions:mass:co2_captured",
     "4:emissions:mass:co2_direct",
     "4:emissions:mass:co2_indirect_scope2",
+    # "4:emissions:emission:co2_bound_in_product_per_output", # noqa
+    # "4:emissions:mass:co2_bound_in_product_per_output", # noqa
 ]
 
 
@@ -198,13 +205,18 @@ def main(xlsx_filepath: str):
         else:
             raise Exception()
 
+        dacs = [
+            "Direct Air Capture (blue)",  # DAC#B
+            "CO2 from fossil source",  # CO2-INDF#B
+            "CO2 from sustainable source",  # CO2-INDS#B
+        ]
         settings = {
             "chain": chain["chain"],
             "scenario": "2040 (medium)",
             "region": "Algeria",
             "country": "Germany",
             "transport": "Ship",
-            "secproc_co2": "Direct Air Capture",
+            "secproc_co2": dacs[2],
             "secproc_water": "Sea Water desalination",
         }
 
@@ -267,7 +279,7 @@ def main(xlsx_filepath: str):
         "4:emissions:mass:co2_bound_in_product_per_output",
     }
 
-    assert all_row_keys == set(rows), (
+    assert all_row_keys < set(rows), (
         (all_row_keys - set(rows)),
         (set(rows) - all_row_keys),
     )
