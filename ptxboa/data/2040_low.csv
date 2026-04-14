@@ -390,6 +390,9 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CAP-T,,,RUS,DEU",CAP-T,,,RUS,DEU,1.0,kWh/a,
 "CBOUND,CH3OHSYC#B,NG-G,,",CBOUND,CH3OHSYC#B,NG-G,,,0.0678122348290827,KgC/kwh CH3OH,
 "CBOUND,CH3OHSYN#B,CO2-G,,",CBOUND,CH3OHSYN#B,CO2-G,,,0.0678122348290827,KgC/kwh CH3OH,
+"CBOUND,CO2-INDF#B,CO2-INDF,,",CBOUND,CO2-INDF#B,CO2-INDF,,,0.2728925244262667,kgC/kgCO2,
+"CBOUND,CO2-INDS#B,CO2-INDS,,",CBOUND,CO2-INDS#B,CO2-INDS,,,0.2728925244262667,kgC/kgCO2,
+"CBOUND,DAC#B,CO2-DAC,,",CBOUND,DAC#B,CO2-DAC,,,0.2728925244262667,kgC/kgCO2,
 "CBOUND,EAF#B,B-DRI-S,,",CBOUND,EAF#B,B-DRI-S,,,0.004,fraction,
 "CBOUND,EFUELSYN#B,CO2-G,,",CBOUND,EFUELSYN#B,CO2-G,,,0.0727968098159509,KgC/kwh diesel (liquid),
 "CBOUND,EFUELSYNC#B,NG-G,,",CBOUND,EFUELSYNC#B,NG-G,,,0.0727968098159509,KgC/kwh diesel (liquid),
@@ -1435,7 +1438,10 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "EF_E,,CH4-G,,",EF_E,,CH4-G,,,201.0,gCO2e/kWh CH4 (g),
 "EF_E,,CH4-L,,",EF_E,,CH4-L,,,201.0,gCO2e/kWh CH4 (l),
 "EF_E,,CO2-C,,",EF_E,,CO2-C,,,1000.0,gCO2e/kg CO2 (c),
+"EF_E,,CO2-DAC,,",EF_E,,CO2-DAC,,,0.0,gCO2e/kg CO2 (g),
 "EF_E,,CO2-G,,",EF_E,,CO2-G,,,1000.0,gCO2e/kg CO2 (g),
+"EF_E,,CO2-INDF,,",EF_E,,CO2-INDF,,,1000.0,gCO2e/kg CO2 (g),
+"EF_E,,CO2-INDS,,",EF_E,,CO2-INDS,,,0.0,gCO2e/kg CO2 (g),
 "EF_E,,DIESEL-L,,",EF_E,,DIESEL-L,,,266.76,gCO2e/kWh diesel LHV,
 "EF_E,,EL,BRA,",EF_E,,EL,BRA,,47.0,gCO2e/kWh (el.),
 "EF_E,,EL,CHN,",EF_E,,EL,CHN,,157.0,gCO2e/kWh (el.),
@@ -1462,7 +1468,10 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "EF_M,,CH4-G,,",EF_M,,CH4-G,,,201.0,gCO2e/kWh CH4 (g),
 "EF_M,,CH4-L,,",EF_M,,CH4-L,,,201.0,gCO2e/kWh CH4 (l),
 "EF_M,,CO2-C,,",EF_M,,CO2-C,,,1000.0,gCO2e/kg CO2 (c),
+"EF_M,,CO2-DAC,,",EF_M,,CO2-DAC,,,1000.0,gCO2e/kg CO2 (g),
 "EF_M,,CO2-G,,",EF_M,,CO2-G,,,1000.0,gCO2e/kg CO2 (g),
+"EF_M,,CO2-INDF,,",EF_M,,CO2-INDF,,,1000.0,gCO2e/kg CO2 (g),
+"EF_M,,CO2-INDS,,",EF_M,,CO2-INDS,,,1000.0,gCO2e/kg CO2 (g),
 "EF_M,,DIESEL-L,,",EF_M,,DIESEL-L,,,266.76,gCO2e/kWh diesel LHV,
 "EF_M,,EL,BRA,",EF_M,,EL,BRA,,47.0,gCO2e/kWh (el.),
 "EF_M,,EL,CHN,",EF_M,,EL,CHN,,157.0,gCO2e/kWh (el.),
@@ -1506,7 +1515,10 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "EFF,CH4-LIQ#B,,USA,",EFF,CH4-LIQ#B,,USA,,0.9042590829366072,kWh natural gas LHV/kWh natural gas LHV,Sphera (2021)
 "EFF,CH4-RGAS,,,",EFF,CH4-RGAS,,,,0.98,various (output per main input),Pospíšil et al. 2019
 "EFF,CH4SYN,,,",EFF,CH4SYN,,,,0.83,various (output per main input),Öko-Institut 2020
+"EFF,CO2-INDF#B,,,",EFF,CO2-INDF#B,,,,1.0,kgCO2/kgCO2,
+"EFF,CO2-INDS#B,,,",EFF,CO2-INDS#B,,,,1.0,kgCO2/kgCO2,
 "EFF,CO2-T+S#B,,,",EFF,CO2-T+S#B,,,,0.95,kg CO2/kg CO2,
+"EFF,DAC#B,,,",EFF,DAC#B,,,,1.0,kgCO2/kgCO2,
 "EFF,DESAL,,,",EFF,DESAL,,,,1.0,various (output per main input),
 "EFF,DRI#B,,,",EFF,DRI#B,,,,0.4348260913047826,kg DRI (s)/kWh H2 (g),Agora 2025 Green iron trade
 "EFF,DRI,,,",EFF,DRI,,,,0.4335693684975433,kg DRI (s)/kwhh2,"Agora Industry, Wuppertal Institute and Lund University (2024)"
@@ -1940,18 +1952,18 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "LOSS,CH4-LIQ#B,NG-G,USA,",LOSS,CH4-LIQ#B,NG-G,USA,,0.0035,kWh natural gas LHV/kWh natural gas LHV,UBA (2021)
 "LOSS,CH4-RGAS#B,NG-G,,",LOSS,CH4-RGAS#B,NG-G,,,4e-08,kWh natural gas LHV/kWh natural gas LHV,
 "LOSS,NG-PROD#B,NG-G,AUS,",LOSS,NG-PROD#B,NG-G,AUS,,0.00168,kWh natural gas LHV/kWh natural gas LHV,IEA Methane Tracker 2025
-"LOSS,NG-PROD#B,NG-G,BRA,",LOSS,NG-PROD#B,NG-G,BRA,,0.0050399999999999,kWh natural gas LHV/kWh natural gas LHV,IEA Methane Tracker 2025
-"LOSS,NG-PROD#B,NG-G,CHN,",LOSS,NG-PROD#B,NG-G,CHN,,0.00752,kWh diesel LHV/kWh natural gas LHV,IEA Methane Tracker 2025
+"LOSS,NG-PROD#B,NG-G,BRA,",LOSS,NG-PROD#B,NG-G,BRA,,0.0050399999999999,kWh diesel LHV/kWh natural gas LHV,IEA Methane Tracker 2025
+"LOSS,NG-PROD#B,NG-G,CHN,",LOSS,NG-PROD#B,NG-G,CHN,,0.00752,kWh natural gas LHV/kWh natural gas LHV,IEA Methane Tracker 2025
 "LOSS,NG-PROD#B,NG-G,DZA,",LOSS,NG-PROD#B,NG-G,DZA,,0.0139,kWh diesel LHV/kWh natural gas LHV,IFEU2023--> Eco inv.
-"LOSS,NG-PROD#B,NG-G,IDN,",LOSS,NG-PROD#B,NG-G,IDN,,0.0063,,IEA Methane Tracker 2025
-"LOSS,NG-PROD#B,NG-G,IND,",LOSS,NG-PROD#B,NG-G,IND,,0.00752,,IEA Methane Tracker 2025
-"LOSS,NG-PROD#B,NG-G,MYS,",LOSS,NG-PROD#B,NG-G,MYS,,0.0058799999999999,kWh diesel LHV/kWh natural gas LHV,IEA Methane Tracker 2025
-"LOSS,NG-PROD#B,NG-G,NOR,",LOSS,NG-PROD#B,NG-G,NOR,,0.000138725596286,kWh natural gas LHV/kWh natural gas LHV,Rystad 2023
-"LOSS,NG-PROD#B,NG-G,OMN,",LOSS,NG-PROD#B,NG-G,OMN,,0.00378,,IEA Methane Tracker 2025
+"LOSS,NG-PROD#B,NG-G,IDN,",LOSS,NG-PROD#B,NG-G,IDN,,0.0063,kWh natural gas LHV/kWh natural gas LHV,IEA Methane Tracker 2025
+"LOSS,NG-PROD#B,NG-G,IND,",LOSS,NG-PROD#B,NG-G,IND,,0.00752,kWh diesel LHV/kWh natural gas LHV,IEA Methane Tracker 2025
+"LOSS,NG-PROD#B,NG-G,MYS,",LOSS,NG-PROD#B,NG-G,MYS,,0.0058799999999999,kWh natural gas LHV/kWh natural gas LHV,IEA Methane Tracker 2025
+"LOSS,NG-PROD#B,NG-G,NOR,",LOSS,NG-PROD#B,NG-G,NOR,,0.000138725596286,kWh diesel LHV/kWh natural gas LHV,Rystad 2023
+"LOSS,NG-PROD#B,NG-G,OMN,",LOSS,NG-PROD#B,NG-G,OMN,,0.00378,kWh diesel LHV/kWh natural gas LHV,IEA Methane Tracker 2025
 "LOSS,NG-PROD#B,NG-G,QAT,",LOSS,NG-PROD#B,NG-G,QAT,,0.00378,kWh natural gas LHV/kWh natural gas LHV,IEA Methane Tracker 2025
 "LOSS,NG-PROD#B,NG-G,SAU,",LOSS,NG-PROD#B,NG-G,SAU,,0.00168,kWh diesel LHV/kWh natural gas LHV,IEA Methane Tracker 2025
 "LOSS,NG-PROD#B,NG-G,THA,",LOSS,NG-PROD#B,NG-G,THA,,0.0058799999999999,kWh natural gas LHV/kWh natural gas LHV,IEA Methane Tracker 2025
-"LOSS,NG-PROD#B,NG-G,USA,",LOSS,NG-PROD#B,NG-G,USA,,0.028,,IEA Methane Tracker 2025
+"LOSS,NG-PROD#B,NG-G,USA,",LOSS,NG-PROD#B,NG-G,USA,,0.028,kWh natural gas LHV/kWh natural gas LHV,IEA Methane Tracker 2025
 "LOSS-T,CH3OH-S,,,",LOSS-T,CH3OH-S,,,,3.0509883673175365e-06,fraction/km,calc_shipping
 "LOSS-T,CH3OH-SB#B,,,",LOSS-T,CH3OH-SB#B,,,,2.399808015358772e-07,kWh CH3OH (l)/kWh CH3OH (l),
 "LOSS-T,CH3OH-SB,,,",LOSS-T,CH3OH-SB,,,,2.399808015358772e-07,fraction/km,calc_shipping
@@ -2342,6 +2354,8 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "OPEX-O,CH3OH-SB,,,",OPEX-O,CH3OH-SB,,,,0.0001251978850843,USD2023/kWh,UNSW Sydney 2021
 "OPEX-O,CH4-S,,,",OPEX-O,CH4-S,,,,0.0003813147912294,USD2023/kWh,UNSW Sydney 2021
 "OPEX-O,CH4-SB,,,",OPEX-O,CH4-SB,,,,0.0003813147912294,USD2023/kWh,UNSW Sydney 2021
+"OPEX-O,CO2-INDF#B,,,",OPEX-O,CO2-INDF#B,,,,0.02,USD2021/kgCO2,
+"OPEX-O,CO2-INDS#B,,,",OPEX-O,CO2-INDS#B,,,,0.08,USD2021/kgCO2,
 "OPEX-O,CO2-T+S#B,,AUS,",OPEX-O,CO2-T+S#B,,AUS,,0.0494293163055503,USD2021/kgCO2,
 "OPEX-O,CO2-T+S#B,,BRA,",OPEX-O,CO2-T+S#B,,BRA,,0.0605163450680049,USD2021/kgCO2,
 "OPEX-O,CO2-T+S#B,,CHN,",OPEX-O,CO2-T+S#B,,CHN,,0.0605163450680049,USD2021/kgCO2,

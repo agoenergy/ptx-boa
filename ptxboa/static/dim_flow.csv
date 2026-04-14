@@ -6,7 +6,10 @@ CH4-G,methane (gas),kWh CH4 (g),False,False,,kwh
 CH4-L,methane (liquid),kWh CH4 (l),False,False,,kwh
 CHX-L,FT e-fuels,kwh CHx (l),False,False,,kwh
 CO2-C,carbon dioxide (critical phase),kg CO2 (c),True,False,,kg
+CO2-DAC,carbon dioxide from DAC,kg CO2 (g),True,True,Carbon,kg
 CO2-G,carbon dioxide,kg CO2 (g),True,True,Carbon,kg
+CO2-INDF,carbon dioxide fossil source,kg CO2 (g),True,True,Carbon,kg
+CO2-INDS,carbon dioxide from sustainable source,kg CO2 (g),True,True,Carbon,kg
 DIESEL-L,diesel (liquid),kWh diesel LHV,False,False,,kwh
 DRI-S,Green iron,kg DRI (s),False,False,,kg
 EL,electricity,kWh (el.),False,True,,kwh

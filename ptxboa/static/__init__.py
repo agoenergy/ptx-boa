@@ -447,6 +447,8 @@ ProcessCodeType = Literal[
     "CH4-SB",
     "CH4-SB#B",
     "CH4SYN",
+    "CO2-INDF#B",
+    "CO2-INDS#B",
     "CO2-T+S#B",
     "DAC",
     "DAC#B",
@@ -539,6 +541,8 @@ ProcessCodeValues: list[ProcessCodeType] = [
     "CH4-SB",
     "CH4-SB#B",
     "CH4SYN",
+    "CO2-INDF#B",
+    "CO2-INDS#B",
     "CO2-T+S#B",
     "DAC",
     "DAC#B",
@@ -610,7 +614,10 @@ FlowCodeType = Literal[
     "CH4-L",
     "CHX-L",
     "CO2-C",
+    "CO2-DAC",
     "CO2-G",
+    "CO2-INDF",
+    "CO2-INDS",
     "DIESEL-L",
     "DRI-S",
     "EL",
@@ -634,7 +641,10 @@ FlowCodeValues: list[FlowCodeType] = [
     "CH4-L",
     "CHX-L",
     "CO2-C",
+    "CO2-DAC",
     "CO2-G",
+    "CO2-INDF",
+    "CO2-INDS",
     "DIESEL-L",
     "DRI-S",
     "EL",
@@ -962,8 +972,15 @@ ResultClassValues: list[ResultClassType] = [
 ]
 
 
-SecProcCO2Type = Literal["Direct Air Capture", "Direct Air Capture (blue)"]
+SecProcCO2Type = Literal[
+    "CO2 from fossil source",
+    "CO2 from from sustainable source",
+    "Direct Air Capture",
+    "Direct Air Capture (blue)",
+]
 SecProcCO2Values: list[SecProcCO2Type] = [
+    "CO2 from fossil source",
+    "CO2 from from sustainable source",
     "Direct Air Capture",
     "Direct Air Capture (blue)",
 ]
