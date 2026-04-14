@@ -173,6 +173,10 @@ class Process:
                 ProcessClass = ProcessSecondary
             result_process_type = proc_spec["result_process_type"]
 
+        # TODO
+        if is_initial:
+            main_flow_code_in = main_flow_code_out
+
         if is_secondary and not process_step:
             if is_in_import_segment:
                 process_step = f"SECONDARY:IMPORT:{main_flow_code_out}"
