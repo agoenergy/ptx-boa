@@ -5,6 +5,13 @@ Ammonia (PEM),Ammonia (PEM),,EL-STR,PEM-EL,H2-STR,NH3SYN,,,,NH3-SB,NH3-S,,,,,,,,
 Ammonia (PEM) + reconv. to H2,Ammonia (PEM) + reconv. to H2,,EL-STR,PEM-EL,H2-STR,NH3SYN,,,,NH3-SB,NH3-S,NH3-REC,,,,,,,,,,,H2-G,False,True,False
 Ammonia (SOEC),Ammonia (SOEC),,EL-STR,SOEC-EL,H2-STR,NH3SYN,,,,NH3-SB,NH3-S,,,,,,,,,,,,NH3-L,False,True,False
 Ammonia (SOEC) + reconv. to H2,Ammonia (SOEC) + reconv. to H2,,EL-STR,SOEC-EL,H2-STR,NH3SYN,,,,NH3-SB,NH3-S,NH3-REC,,,,,,,,,,,H2-G,False,True,False
+B-DRI-S__ATR_91%_DRI__prod_in_supply,Direct Reduced Iron (ATR),NG-PROD#B,,ATR_91%#B,,DRI#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,,,B-DRI-S,False,False,True
+B-DRI-S__NG-DRI-C__prod_in_demand,Direct Reduced Iron (NG-based)*,NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,,NG-DRI-C#B,,CO2-T+S#B,B-DRI-S,True,False,True
+B-DRI-S__NG-DRI-C__prod_in_supply,Direct Reduced Iron (NG-based),NG-PROD#B,,,,NG-DRI-C#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,,,B-DRI-S,False,False,True
+B-DRI-S__SMR_52%_BF_DRI__prod_in_demand,Direct Reduced Iron (SMR-BF)*,NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,SMR_52%_BF#B,DRI#B,,CO2-T+S#B,B-DRI-S,True,False,True
+B-DRI-S__SMR_52%_BF_DRI__prod_in_supply,Direct Reduced Iron (SMR-BF),NG-PROD#B,,SMR_52%_BF#B,,DRI#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,,,B-DRI-S,False,False,True
+B-DRI-S__SMR_52%_DRI__prod_in_demand,Direct Reduced Iron (SMR)*,NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,SMR_52%#B,DRI#B,,CO2-T+S#B,B-DRI-S,True,False,True
+B-DRI-S__SMR_52%_DRI__prod_in_supply,Direct Reduced Iron (SMR),NG-PROD#B,,SMR_52%#B,,DRI#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,,,B-DRI-S,False,False,True
 Blue Iron (blue)*,TEST Blue Iron (blue)*,,,,,NG-DRI-C#B,,,,DRI-SB#B,,,,,,,,,,EAF#B,,,STL-S,False,False,False
 CH3OH-L__ATR_91%_CH3OHSYN__prod_in_demand,Methanol (ATR)*,NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,ATR_91%#B,CH3OHSYN#B,,CO2-T+S#B,CH3OH-L,True,False,True
 CH3OH-L__ATR_91%_CH3OHSYN__prod_in_supply,Methanol (ATR),NG-PROD#B,,ATR_91%#B,,CH3OHSYN#B,,CO2-T+S#B,,CH3OH-SB#B,CH3OH-S#B,,,,,,,,,,,,CH3OH-L,False,False,True
@@ -23,13 +30,6 @@ CHX-L__SMR_52%_BF_EFUELSYN__prod_in_supply,FT-fuel (SMR-BF),NG-PROD#B,,SMR_52%_B
 CHX-L__SMR_52%_EFUELSYN__prod_in_demand,FT-fuel (SMR)*,NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,SMR_52%#B,EFUELSYN#B,,CO2-T+S#B,CHX-L,True,False,True
 CHX-L__SMR_52%_EFUELSYN__prod_in_supply,FT-fuel (SMR),NG-PROD#B,,SMR_52%#B,,EFUELSYN#B,,CO2-T+S#B,,SYN-SB#B,SYN-S#B,,,,,,,,,,,,CHX-L,False,False,True
 DRI-S__ATR_91%_DRI__prod_in_demand,Direct Reduced Iron (ATR)*,NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,ATR_91%#B,DRI#B,,CO2-T+S#B,B-DRI-S,True,False,True
-DRI-S__ATR_91%_DRI__prod_in_supply,Direct Reduced Iron (ATR),NG-PROD#B,,ATR_91%#B,,DRI#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,,,B-DRI-S,False,False,True
-DRI-S__NG-DRI-C__prod_in_demand,Direct Reduced Iron (NG-based)*,NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,,NG-DRI-C#B,,CO2-T+S#B,B-DRI-S,True,False,True
-DRI-S__NG-DRI-C__prod_in_supply,Direct Reduced Iron (NG-based),NG-PROD#B,,,,NG-DRI-C#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,,,B-DRI-S,False,False,True
-DRI-S__SMR_52%_BF_DRI__prod_in_demand,Direct Reduced Iron (SMR-BF)*,NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,SMR_52%_BF#B,DRI#B,,CO2-T+S#B,B-DRI-S,True,False,True
-DRI-S__SMR_52%_BF_DRI__prod_in_supply,Direct Reduced Iron (SMR-BF),NG-PROD#B,,SMR_52%_BF#B,,DRI#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,,,B-DRI-S,False,False,True
-DRI-S__SMR_52%_DRI__prod_in_demand,Direct Reduced Iron (SMR)*,NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,SMR_52%#B,DRI#B,,CO2-T+S#B,B-DRI-S,True,False,True
-DRI-S__SMR_52%_DRI__prod_in_supply,Direct Reduced Iron (SMR),NG-PROD#B,,SMR_52%#B,,DRI#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,,,B-DRI-S,False,False,True
 FT e-fuels (AEL),FT e-fuels (AEL),,EL-STR,AEL-EL,H2-STR,EFUELSYN,,,,SYN-SB,SYN-S,,,,,,,,,,,,CHX-L,False,True,False
 FT e-fuels (PEM),FT e-fuels (PEM),,EL-STR,PEM-EL,H2-STR,EFUELSYN,,,,SYN-SB,SYN-S,,,,,,,,,,,,CHX-L,False,True,False
 FT e-fuels (SOEC),FT e-fuels (SOEC),,EL-STR,SOEC-EL,H2-STR,EFUELSYN,,,,SYN-SB,SYN-S,,,,,,,,,,,,CHX-L,False,True,False

@@ -154,7 +154,7 @@ def main():
         }
 
         chain_process.plot(
-            file_basename=f"{i:03d}_{name}",
+            file_basename=f"{settings.tool_version_color}/{name}",
             edge_values=edge_values_flows,  # type: ignore
         )
 

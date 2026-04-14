@@ -1168,7 +1168,15 @@ def blue_results_over_dimension(
     emissions_included: Literal["upstream", "final_use", "upstream_and_final_use"],
     parameter_list: None | pd.Series | pd.Index = None,
     override_session_state=None,
-):
+) -> BlueResultOverDimension:
+
+    if parameter_list is None or parameter_list.empty:
+        logger.error("No parameter_list for blue_results_over_dimension: %s", dim)
+        return BlueResultOverDimension(
+            costs=pd.DataFrame(),
+            emissions=pd.DataFrame(),
+            emissions_not_modified=pd.DataFrame(),
+        )
 
     def filter_co2_bound_in_product(
         emissions: pd.DataFrame | None,

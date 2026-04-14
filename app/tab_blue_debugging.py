@@ -7,6 +7,7 @@ import pandas as pd
 import streamlit as st
 
 from app.ptxboa_functions import calculate_cached
+from ptxboa.static._type_defs import ApiCalculateResult
 
 Mode = Literal["markdown", "streamlit_app"]
 Renderer = Callable[[Any, Mode], str | None]
@@ -79,7 +80,7 @@ def drop_debug_columns(df: pd.DataFrame | None) -> pd.DataFrame | None:
 
 
 def debug_report(
-    result: Any,
+    result: ApiCalculateResult,
     user_data: pd.DataFrame | None,
     settings: dict[str, Any],
     mode: Mode,
@@ -87,8 +88,11 @@ def debug_report(
     sections: list[tuple[str, Any, Renderer]] = [
         ("Sidebar settings", settings, json_print),
         ("User data", user_data, dataframe_print),
-        ("Calculation input data", result.todo_data, json_print),
-        ("Flow results", result.todo_results_flows, json_print),
+        (
+            "Internal calculation input / result data",
+            result._internal_process_data,
+            json_print,
+        ),
         ("Cost results", drop_debug_columns(result.costs), dataframe_print),
         ("Emission results", drop_debug_columns(result.emissions), dataframe_print),
         (
