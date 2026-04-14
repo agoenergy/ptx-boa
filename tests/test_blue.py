@@ -143,6 +143,12 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 "value": 0.05,  # process_calc!J9
             },
             {
+                "process_code": "NG-PROD#B",
+                "flow_code": "NG-G",  # main flow in
+                "parameter_code": "LOSS",
+                "value": 0.05,  # process_calc!E9
+            },
+            {
                 "process_code": "EAF#B",
                 "parameter_code": "EFF",
                 "value": 1.010101,  # process_calc!J3
@@ -262,17 +268,21 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
     expected = [
         {
             "emissions": {
-                "emission": {"co2_direct": 621.8363534},
-                "mass": {"co2_direct": 621.8363534},
+                "emission": {
+                    "ch4_direct_co2e": 288.09291729,
+                    "co2_direct": 621.8363534,
+                },
+                "mass": {"ch4_direct_co2e": 288.09291729, "co2_direct": 621.8363534},
             },
-            "flows": {"main_flow_out": 3.0937132},
+            "flows": {"main_flow_in": 3.24839886, "main_flow_out": 3.0937132},
             "parameter": {
                 "CH4SHARE": {"NG-G": 0.909},
-                "EFF": 1.0,
+                "EFF": 0.95238095,
                 "EF_E": {"NG-G": 201.0},
                 "EF_M": {"NG-G": 201.0},
                 "FLH": 7000,
                 "LIFETIME": 20,
+                "LOSS": {"NG-G": 0.05},
                 "process_code": "NG-PROD#B",
                 "step": "NG_PROD",
             },
@@ -417,17 +427,20 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "costs": {"OPEX": 0.00880988},
                     "emissions": {
                         "emission": {
+                            "ch4_direct_co2e": 12.93049073,
                             "co2_bound_in_product": 364.16703194,
                             "co2_bound_in_product_per_output": 201.00000001,
-                            "co2_direct": 0.2873553,
+                            "co2_direct": 5.29911034,
                         },
                         "mass": {
+                            "ch4_direct_co2e": 12.93049073,
                             "co2_bound_in_product": 364.16703194,
                             "co2_bound_in_product_per_output": 201.00000001,
-                            "co2_direct": 0.2873553,
+                            "co2_direct": 5.29911034,
                         },
                     },
                     "flows": {
+                        "main_flow_in": 1.84365315,
                         "main_flow_out": 1.81177628,
                         "secondary_flows_in": {"DIESEL-L": 0.00107721},
                     },
@@ -609,17 +622,20 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "costs": {"OPEX": 0.01087216},
                     "emissions": {
                         "emission": {
+                            "ch4_direct_co2e": 96.12405658,
                             "co2_bound_in_product": 690.97336284,
                             "co2_bound_in_product_per_output": 201.00000001,
-                            "co2_direct": 0.55238894,
+                            "co2_direct": 63.76324902,
                         },
                         "mass": {
+                            "ch4_direct_co2e": 96.12405658,
                             "co2_bound_in_product": 690.97336284,
                             "co2_bound_in_product_per_output": 201.00000001,
-                            "co2_direct": 0.55238894,
+                            "co2_direct": 63.76324902,
                         },
                     },
                     "flows": {
+                        "main_flow_in": 3.80431534,
                         "main_flow_out": 3.43767842,
                         "secondary_flows_in": {"DIESEL-L": 0.00207073},
                     },
