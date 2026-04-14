@@ -947,16 +947,13 @@ class PtxCalc:
         if chain_color == "blue":
             initial_step = "NG_PROD"
             first_process_code = "NG-PROD#B"
-            # FIXME: more elegant way: currently, we want CSS only either in export
-            # or import.
-            css_in_import = "in_demand" in chain_def.chain_name  # TODO: ugly / unstable
-            css_proc_code = "CO2-T+S#B"
-            if css_in_import and css_proc_code in secondary_process_codes_export:
-                # move "CO2-T+S#B" from export to import
-                secondary_process_codes_export = [
-                    c for c in secondary_process_codes_export if c != css_proc_code
-                ]
-                secondary_process_codes_import.append(css_proc_code)
+            # currently, we can have secondary processes only either inexport or import
+            production_in_import = (
+                "in_demand" in chain_def.chain_name
+            )  # TODO: ugly / unstable
+            if production_in_import:
+                secondary_process_codes_import = secondary_process_codes_export
+                secondary_process_codes_export = []
         else:
             assert chain_def.process_res is not None
             initial_step = "RES"

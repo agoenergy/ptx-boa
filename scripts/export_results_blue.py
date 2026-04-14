@@ -128,7 +128,6 @@ rows = [
     "1:parameter:SPECCOST:CO2-G",
     "1:parameter:SPECCOST:DIESEL-L",
     "1:parameter:SPECCOST:EL",
-    "1:parameter:SPECCOST:HEAT",
     "1:parameter:SPECCOST:IOP-S",
     "1:parameter:SPECCOST:NG-G",
     "1:parameter:WACC",
