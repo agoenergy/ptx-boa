@@ -524,6 +524,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "process_step": "SHP",
                 },
                 {
+                    "costs": {"OPEX": 0.0026233},
                     "flows": {"main_flow_out": 0.08672787},
                     "parameter": {
                         "EFF": 0.95,
@@ -531,6 +532,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "EF_M": {"CO2-C": 1000.0},
                         "FLH": 7000,
                         "LIFETIME": 20,
+                        "OPEX-O": 0.03024746,
                         "WACC": 0.0487,
                         "process_code": "CO2-T+S#B",
                         "step": "SECONDARY:CO2-C",
@@ -569,11 +571,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     },
                     "process_code": "CCGT-CC#B",
                     "process_step": "SECONDARY:EL",
-                },
-                {
-                    "parameter": {"SPECCOST": {"EL": 0.08078}},
-                    "process_code": "EL",
-                    "process_step": "MARKET:EL",
                 },
                 {
                     "costs": {"FLOW": 4.617e-05},
@@ -874,8 +871,8 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "is_in_import_segment": True,
                     "parameter": {
                         "EFF": 0.95,
-                        "EF_E": {"CO2-C": 1000.0, "EL": 100.0},
-                        "EF_M": {"CO2-C": 1000.0, "EL": 100.0},
+                        "EF_E": {"CO2-C": 1000.0},
+                        "EF_M": {"CO2-C": 1000.0},
                         "FLH": 7000,
                         "LIFETIME": 20,
                         "OPEX-O": 0.14792048,
@@ -929,12 +926,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "parameter": {"SPECCOST": {"NG-G": 0.03056527}},
                     "process_code": "NG-G",
                     "process_step": "MARKET:IMPORT:NG-G",
-                },
-                {
-                    "is_in_import_segment": True,
-                    "parameter": {"SPECCOST": {"EL": 0.1}},
-                    "process_code": "EL",
-                    "process_step": "MARKET:IMPORT:EL",
                 },
                 {
                     "costs": {"FLOW": 8.875e-05},
