@@ -535,7 +535,7 @@ def unit_toggle_blue():
             disabled=disabled,
         )
 
-    if st.session_state["output_product"] in ["STL-S", "DRI-S"]:
+    if st.session_state["output_product"] in ["STL-S", "B-DRI-S"]:
         unit = _radio("_blue_unit_disabled", disabled=True)
     else:
         unit = _radio("_blue_unit", disabled=False)
