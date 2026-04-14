@@ -202,7 +202,7 @@ def main_settings_blue(api: PtxboaAPI):
 
     product_labels = {
         "CHX-L": "FT e-fuels",
-        "DRI-S": "Iron",
+        "B-DRI-S": "Iron",
         "STL-S": "Crude steel",
         "NH3-L": "Ammonia",
         "H2-G": "Hydrogen",
@@ -214,11 +214,11 @@ def main_settings_blue(api: PtxboaAPI):
         "CHX-L": ["NH3-L", "CHX-L", "H2-G", "CH3OH-L"],
         "H2-G": ["NH3-L", "CHX-L", "H2-G", "CH3OH-L"],
         "CH3OH-L": ["NH3-L", "CHX-L", "H2-G", "CH3OH-L"],
-        "STL-S": ["STL-S", "DRI-S"],
-        "DRI-S": ["STL-S", "DRI-S"],
+        "STL-S": ["STL-S", "B-DRI-S"],
+        "B-DRI-S": ["STL-S", "B-DRI-S"],
     }
 
-    product_options = ["H2-G", "NH3-L", "CHX-L", "CH3OH-L", "STL-S", "DRI-S"]
+    product_options = ["H2-G", "NH3-L", "CHX-L", "CH3OH-L", "STL-S", "B-DRI-S"]
 
     product = st.selectbox(
         label="Final Product",
@@ -265,7 +265,7 @@ def main_settings_blue(api: PtxboaAPI):
             "SMR_52%_DRI_EAF",
             "SMR_52%_BF_DRI_EAF",
         ],
-        "DRI-S": [
+        "B-DRI-S": [
             "NG-DRI-C",
             "ATR_91%_DRI",
             "SMR_52%_DRI",
