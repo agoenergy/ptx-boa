@@ -1,1 +1,1 @@
-Where does final PtX production take place?
+Where does production of final product take place?

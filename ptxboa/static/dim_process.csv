@@ -29,7 +29,7 @@ CH4-S#B,LNG ship (own fuel consumption) (blue),NG-L,NG-L,False,False,True,False,
 CH4-SB,LNG ship (bunker fuel consumption),CH4-L,CH4-L,False,False,True,False,False,False,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,True,False
 CH4-SB#B,LNG ship (bunker fuel consumption) (blue),NG-L,NG-L,False,False,True,False,False,False,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L/NG-L,False,True
 CH4SYN,Methane Synthesis,CH4-G,H2-G,True,False,False,False,False,False,False,False,False,False,DERIV,False,True,Derivative production,CO2-G/H2O-L/HEAT,True,False
-CO2-T+S#B,CO2 transport and storage (blue),CO2-C,CO2-C,False,False,True,True,True,False,False,False,False,False,STORC,False,False,CO2 transport and storage,EL,False,True
+CO2-T+S#B,CO2 transport and storage (blue),CO2-C,CO2-C,False,False,True,True,True,False,False,False,False,False,STORC,False,False,CO2 transport and storage,,False,True
 DAC,Direct Air Capture,CO2-G,,False,False,False,True,False,False,False,False,False,False,PROV_C,False,False,Carbon,EL/H2O-L/HEAT,True,False
 DAC#B,Direct Air Capture (blue),CO2-G,,False,False,False,True,False,False,False,False,False,False,PROV_C,False,False,Carbon,EL/HEAT,False,True
 DESAL,Sea Water desalination,H2O-L,,False,False,False,True,False,False,False,False,False,False,PROV_H2O,False,False,Water,EL,True,False

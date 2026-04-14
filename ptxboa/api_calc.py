@@ -173,6 +173,23 @@ class Process:
                 ProcessClass = ProcessSecondary
             result_process_type = proc_spec["result_process_type"]
 
+        if is_secondary and not process_step:
+            if is_in_import_segment:
+                process_step = f"SECONDARY:IMPORT:{main_flow_code_out}"
+            else:
+                process_step = f"SECONDARY:{main_flow_code_out}"
+
+        if is_market and not process_step:
+            if is_in_import_segment:
+                process_step = f"MARKET:IMPORT:{main_flow_code_out}"
+            else:
+                process_step = f"MARKET:{main_flow_code_out}"
+
+        # FIXME: should be removed from data?
+        if process_code == "CO2-T+S#B" and main_flow_code_in == "CO2-C":  # type:ignore
+            logger.warning("Manually removing  main_flow_code_in=CO2-C for css")
+            main_flow_code_in = None
+
         return ProcessClass(
             process_code=process_code,
             process_step=process_step,
@@ -828,9 +845,14 @@ class PtxCalc:
     def _create_all_processes_ordered_forwards(self) -> tuple[Process, ...]:
         return tuple(nx.topological_sort(self._graph))
 
-    def _create_processes_by_step(self) -> dict[ProcessStepType | str, Process]:
+    def _create_main_and_secondary_processes_by_step(
+        self,
+    ) -> dict[ProcessStepType | str, Process]:
         processes_by_step: dict[ProcessStepType | str, Process] = {}
-        for process in self._all_processes_ordered_forwards:
+        for process in (
+            self._main_processes_ordered_forwards
+            + self._secondary_processes_ordered_forwards
+        ):
             process_step = process.process_step
             if not process_step:
                 continue
@@ -882,7 +904,9 @@ class PtxCalc:
         self._all_processes_ordered_forwards = (
             self._create_all_processes_ordered_forwards()
         )
-        self._processes_by_step = self._create_processes_by_step()
+        self._main_and_secondar_processes_by_step = (
+            self._create_main_and_secondary_processes_by_step()
+        )
         self._css_subgraph_processes_ordered_backwards = (
             self._create_css_subgraph_processes_ordered_backwards()
         )
@@ -917,15 +941,19 @@ class PtxCalc:
 
         secondary_process_codes_export: list[ProcessCodeType] = list(
             chain_def.secondary_processes.values()
-        )  # FIXME: not set/dict - we want fixed order
+        )
         secondary_process_codes_import: list[ProcessCodeType] = []
         first_process_code: ProcessCodeType
         if chain_color == "blue":
             initial_step = "NG_PROD"
             first_process_code = "NG-PROD#B"
-            secondary_process_codes_import = [
-                c for c in secondary_process_codes_export if c == "CO2-T+S#B"
-            ]
+            # currently, we can have secondary processes only either inexport or import
+            production_in_import = (
+                "in_demand" in chain_def.chain_name
+            )  # TODO: ugly / unstable
+            if production_in_import:
+                secondary_process_codes_import = secondary_process_codes_export
+                secondary_process_codes_export = []
         else:
             assert chain_def.process_res is not None
             initial_step = "RES"
@@ -1174,8 +1202,8 @@ class PtxCalc:
         """For FLH lookup we need these process codes."""
         return {  # type: ignore
             key: (
-                self._processes_by_step[step].process_code
-                if step in self._processes_by_step
+                self._main_and_secondar_processes_by_step[step].process_code
+                if step in self._main_and_secondar_processes_by_step
                 else None
             )
             for key, step in {
@@ -1420,21 +1448,37 @@ class PtxCalc:
             df_results_emissions_e_g_co2e, cols_dim_emissions
         )
 
-        results_flows_chain = [
-            _add_step_and_code(p, asdict(results_flows[p]))
-            for p in self._main_processes_ordered_forwards
-        ]
-        results_flows_secondary = [
-            _add_step_and_code(p, asdict(results_flows[p]))
-            for p in self._secondary_processes_ordered_forwards
-        ]
+        # go over all main and secondary processes
+
+        _internal_process_data = []
+        for p in (
+            self._main_processes_ordered_forwards
+            + self._secondary_processes_ordered_forwards
+            + self._market_processes_ordered_forwards
+        ):
+            _data = {
+                "process_code": p.process_code,
+                "process_step": p.process_step,
+                "is_in_import_segment": p.is_in_import_segment,
+                "parameter": parameter_data[p],
+                "flows": asdict(results_flows[p]),
+                "costs": {c.cost_type: c.values for c in results_costs[p]},
+                "emissions": (
+                    {
+                        e: asdict(x) for e, x in results_emissions[p].items()
+                    }  # type:ignore noqa
+                    if results_emissions[p]
+                    else {}
+                ),
+            }
+
+            _internal_process_data.append(_data)
 
         return PtxCalcResult(
             df_results_cost=df_results_cost,
             df_results_emissions_e_g_co2e=df_results_emissions_e_g_co2e,
             df_results_emissions_m_g_co2e=df_results_emissions_m_g_co2e,
-            results_flows_chain=results_flows_chain,
-            results_flows_secondary=results_flows_secondary,
+            _internal_process_data=_internal_process_data,
         )
 
     def _merge_emission_results(
@@ -1865,7 +1909,7 @@ def _create_graph(
     if procs_dropped:
         # dont warn about dropped market processes
         procs_dropped = {p for p in procs_dropped if not p.is_market}
-        logger.warning("Dropped unused: %s", [str(x) for x in procs_dropped])
+        logger.info("Dropped unused: %s", [str(x) for x in procs_dropped])
 
     return graph
 
@@ -1903,7 +1947,8 @@ def _get_dropped_transport_steps(
 
 
 def _add_step_and_code(process: Process, data: ProcessDataType) -> ProcessDataType:
-    return data | {  # type: ignore
+    result = data | {  # type: ignore
         "process_code": process.process_code,
         "step": process.process_step,
     }
+    return result

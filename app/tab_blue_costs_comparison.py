@@ -57,7 +57,7 @@ def get_green_results(
 
     if output_product not in [
         "NH3-L",
-        "DRI-S",
+        "B-DRI-S",
         "CHX-L",
         "H2-G",
         "CH3OH-L",
