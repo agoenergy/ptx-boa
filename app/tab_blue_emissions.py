@@ -393,7 +393,48 @@ def content_emissions(api: PtxboaAPI):
             data_type="emissions",
         )
 
-        st.divider()
-        with st.expander("Detailed emissions data per region"):
-            st.warning("Will be removed in final version.")
-            st.dataframe(results_per_region.emissions)
+    with st.container(border=True):
+        with st.spinner(
+            "Please wait. Calculating results for different secondary CO₂ sources."
+        ):
+            results_per_secproc_co2 = blue_results_over_dimension(
+                api,
+                dim="secproc_co2",
+                emissions_included=st.session_state["emissions_included"],
+                parameter_list=pd.Series(
+                    [
+                        "CO2 from fossil source",
+                        "CO2 from sustainable source",
+                        "Direct Air Capture (blue)",
+                    ]
+                ),
+            )
+
+        display_results_bar_and_table(
+            df=aggregate_emissions(
+                results_per_secproc_co2.emissions,
+                index="secproc_co2",
+                columns="process_type",
+            ),
+            df_without_user_changes=(
+                aggregate_emissions(
+                    results_per_secproc_co2.emissions_not_modified,
+                    index="secproc_co2",
+                    columns="process_type",
+                )
+                if results_per_secproc_co2.emissions_not_modified is not None
+                else None
+            ),
+            key="secproc_co2",
+            titlestring=read_markdown_file(
+                "md/tab_blue_emissions/figure_title_emission_per_secproc_co2.md"
+            ),
+            help_string=read_markdown_file(
+                "md/tab_blue_emissions/figure_description_emission_per_secproc_co2.md"
+            ),
+            tool_version_color="blue",
+            data_type="emissions",
+            x_label_mapping={"Direct Air Capture (blue)": "Direct Air Capture"},
+            xaxis_title="Secondary CO₂ source",
+            sorting="off",
+        )

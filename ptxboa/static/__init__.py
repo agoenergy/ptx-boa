@@ -447,6 +447,8 @@ ProcessCodeType = Literal[
     "CH4-SB",
     "CH4-SB#B",
     "CH4SYN",
+    "CO2-INDF#B",
+    "CO2-INDS#B",
     "CO2-T+S#B",
     "DAC",
     "DAC#B",
@@ -539,6 +541,8 @@ ProcessCodeValues: list[ProcessCodeType] = [
     "CH4-SB",
     "CH4-SB#B",
     "CH4SYN",
+    "CO2-INDF#B",
+    "CO2-INDS#B",
     "CO2-T+S#B",
     "DAC",
     "DAC#B",
@@ -610,7 +614,10 @@ FlowCodeType = Literal[
     "CH4-L",
     "CHX-L",
     "CO2-C",
+    "CO2-DAC",
     "CO2-G",
+    "CO2-INDF",
+    "CO2-INDS",
     "DIESEL-L",
     "DRI-S",
     "EL",
@@ -634,7 +641,10 @@ FlowCodeValues: list[FlowCodeType] = [
     "CH4-L",
     "CHX-L",
     "CO2-C",
+    "CO2-DAC",
     "CO2-G",
+    "CO2-INDF",
+    "CO2-INDS",
     "DIESEL-L",
     "DRI-S",
     "EL",
@@ -767,6 +777,7 @@ ChainType = Literal[
     "Ammonia (PEM) + reconv. to H2",
     "Ammonia (SOEC)",
     "Ammonia (SOEC) + reconv. to H2",
+    "B-DRI-S__ATR_91%_DRI__prod_in_demand",
     "B-DRI-S__ATR_91%_DRI__prod_in_supply",
     "B-DRI-S__NG-DRI-C__prod_in_demand",
     "B-DRI-S__NG-DRI-C__prod_in_supply",
@@ -791,7 +802,6 @@ ChainType = Literal[
     "CHX-L__SMR_52%_BF_EFUELSYN__prod_in_supply",
     "CHX-L__SMR_52%_EFUELSYN__prod_in_demand",
     "CHX-L__SMR_52%_EFUELSYN__prod_in_supply",
-    "DRI-S__ATR_91%_DRI__prod_in_demand",
     "FT e-fuels (AEL)",
     "FT e-fuels (PEM)",
     "FT e-fuels (SOEC)",
@@ -844,6 +854,7 @@ ChainValues: list[ChainType] = [
     "Ammonia (PEM) + reconv. to H2",
     "Ammonia (SOEC)",
     "Ammonia (SOEC) + reconv. to H2",
+    "B-DRI-S__ATR_91%_DRI__prod_in_demand",
     "B-DRI-S__ATR_91%_DRI__prod_in_supply",
     "B-DRI-S__NG-DRI-C__prod_in_demand",
     "B-DRI-S__NG-DRI-C__prod_in_supply",
@@ -868,7 +879,6 @@ ChainValues: list[ChainType] = [
     "CHX-L__SMR_52%_BF_EFUELSYN__prod_in_supply",
     "CHX-L__SMR_52%_EFUELSYN__prod_in_demand",
     "CHX-L__SMR_52%_EFUELSYN__prod_in_supply",
-    "DRI-S__ATR_91%_DRI__prod_in_demand",
     "FT e-fuels (AEL)",
     "FT e-fuels (PEM)",
     "FT e-fuels (SOEC)",
@@ -962,8 +972,15 @@ ResultClassValues: list[ResultClassType] = [
 ]
 
 
-SecProcCO2Type = Literal["Direct Air Capture", "Direct Air Capture (blue)"]
+SecProcCO2Type = Literal[
+    "CO2 from fossil source",
+    "CO2 from sustainable source",
+    "Direct Air Capture",
+    "Direct Air Capture (blue)",
+]
 SecProcCO2Values: list[SecProcCO2Type] = [
+    "CO2 from fossil source",
+    "CO2 from sustainable source",
     "Direct Air Capture",
     "Direct Air Capture (blue)",
 ]

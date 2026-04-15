@@ -464,23 +464,25 @@ def co2_source_toggle_green():
 def co2_source_toggle_blue():
     co2_source = st.radio(
         "CO₂ source:",
-        ["Direct Air Capture", "industrial_capture"],
+        ["Direct Air Capture (blue)", "industrial_capture"],
         format_func=lambda x: {
             "industrial_capture": "captured  CO₂ from industrial process",
+            "Direct Air Capture (blue)": "Direct Air Capture",
         }.get(x, x),
         horizontal=True,
-        help=read_markdown_file(
-            "md/sidebar/helptext_sidebar_carbon_source.md"
-        ),  # FIXME
+        help=read_markdown_file("md/sidebar/helptext_sidebar_blue_carbon_source.md"),
     )
 
     if co2_source == "industrial_capture":
         co2_source = st.radio(
             "Emission balance for captured industrial CO₂:",
-            ["industrial_full_accounting", "industrial_no_accounting"],
+            [
+                "CO2 from fossil source",
+                "CO2 from sustainable source",
+            ],
             format_func=lambda x: {
-                "industrial_full_accounting": "fully accounted",
-                "industrial_no_accounting": "not accounted",
+                "CO2 from fossil source": "fully accounted",
+                "CO2 from sustainable source": "not accounted",
             }.get(x, x),
             horizontal=True,
             help=read_markdown_file(
@@ -489,19 +491,11 @@ def co2_source_toggle_blue():
         )
 
     if co2_source not in [
-        "Direct Air Capture",
-        "industrial_full_accounting",
-        "industrial_no_accounting",
+        "Direct Air Capture (blue)",
+        "CO2 from fossil source",
+        "CO2 from sustainable source",
     ]:
         raise ValueError(f"invalid {co2_source=}")
-
-    if co2_source in [
-        "industrial_full_accounting",
-        "industrial_no_accounting",
-    ]:
-        # FIXME remove this fallback guard when backend ready
-        # see https://github.com/agoenergy/ptx-boa/issues/624
-        co2_source = "Specific costs"
 
     st.session_state["secproc_co2"] = co2_source
 
@@ -541,7 +535,7 @@ def unit_toggle_blue():
             disabled=disabled,
         )
 
-    if st.session_state["output_product"] in ["STL-S", "DRI-S"]:
+    if st.session_state["output_product"] in ["STL-S", "B-DRI-S"]:
         unit = _radio("_blue_unit_disabled", disabled=True)
     else:
         unit = _radio("_blue_unit", disabled=False)

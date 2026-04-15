@@ -221,6 +221,7 @@ def calculate_results_list_blue(
         "scenario",
         "WACC",
         "Natural gas price",
+        "secproc_co2",
     ],
     parameter_list: None | list | pd.Series | pd.Index = None,
     override_session_state: dict | None = None,
@@ -267,7 +268,7 @@ def calculate_results_list_blue(
         settings.update(override_session_state)
 
     if parameter_list is None:
-        if parameter_to_change in ["region", "chain", "scenario"]:
+        if parameter_to_change in ["region", "chain", "scenario", "secproc_co2"]:
             parameter_list = api.get_dimension(
                 parameter_to_change, tool_version_color="blue"
             ).index
@@ -280,7 +281,7 @@ def calculate_results_list_blue(
     emissions_list = []
     emissions_mass_list = []
 
-    if parameter_to_change in ["region", "chain", "scenario"]:
+    if parameter_to_change in ["region", "chain", "scenario", "secproc_co2"]:
         for change_factor in parameter_list:
             settings.update({parameter_to_change: change_factor})
             if parameter_to_change == "chain":
@@ -1101,6 +1102,7 @@ def change_index_names(df: pd.DataFrame, mapping: dict | None = None) -> pd.Data
             "chain": "Chain",
             "flow_code": "Carrier/Material",
             "process_type": "Processing step",
+            "secproc_co2": "Secondary CO2 source",
         }
     new_idx_names = [mapping.get(i, i) for i in df.index.names]
     df.index.names = new_idx_names
@@ -1164,7 +1166,9 @@ class BlueResultOverDimension:
 
 def blue_results_over_dimension(
     api,
-    dim: Literal["region", "chain", "scenario", "WACC", "Natural gas price"],
+    dim: Literal[
+        "region", "chain", "scenario", "WACC", "Natural gas price", "secproc_co2"
+    ],
     emissions_included: Literal["upstream", "final_use", "upstream_and_final_use"],
     parameter_list: None | pd.Series | pd.Index = None,
     override_session_state=None,
