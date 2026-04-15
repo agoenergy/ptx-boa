@@ -1102,7 +1102,7 @@ def change_index_names(df: pd.DataFrame, mapping: dict | None = None) -> pd.Data
             "chain": "Chain",
             "flow_code": "Carrier/Material",
             "process_type": "Processing step",
-            "secproc_co2": "Secondary CO2 source",
+            "secproc_co2": "Secondary CO₂ source",
         }
     new_idx_names = [mapping.get(i, i) for i in df.index.names]
     df.index.names = new_idx_names
@@ -1111,7 +1111,11 @@ def change_index_names(df: pd.DataFrame, mapping: dict | None = None) -> pd.Data
 
 @st.cache_data(show_spinner=False)
 def check_if_input_is_needed(
-    _api: PtxboaAPI, flow_code: str, chain: str = None, scenario: str = None
+    _api: PtxboaAPI,
+    flow_code: str,
+    chain: str = None,
+    scenario: str = None,
+    tool_version_color: ToolVersionColorType = "green",
 ) -> bool:
     """Check if a certain input is required by the selected process chain."""
     if chain is None:
@@ -1124,7 +1128,9 @@ def check_if_input_is_needed(
     process_codes = [p for p in process_codes if p != ""]
 
     # get list of conversion coefficients for these processes:
-    df = _api.get_input_data(scenario=scenario, long_names=False)
+    df = _api.get_input_data(
+        scenario=scenario, long_names=False, tool_version_color=tool_version_color
+    )
     flow_codes = df.loc[
         (df["process_code"].isin(process_codes)) & (df["parameter_code"] == "CONV"),
         "flow_code",
