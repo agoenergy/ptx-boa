@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Functions for plotting input data and results (cost_data)."""
 
+import logging
 from pathlib import Path
 from typing import Literal
 
@@ -18,6 +19,8 @@ from app.ptxboa_functions import (
 )
 from ptxboa.api import PtxboaAPI
 from ptxboa.static import ToolVersionColorType
+
+logger = logging.getLogger()
 
 
 @st.cache_data()
@@ -57,6 +60,8 @@ def discrete_colors_process_type() -> dict:
         "Heat",
         "Carbon",
         "Bound in product",
+        "Natural gas production",
+        "CO2 transport and storage",
         # TODO: add missing category (GH #145)
     ]
     colors = read_agora_colors()
@@ -574,6 +579,10 @@ def create_bar_chart_costs(
     """
     if res_costs.empty:  # nodata to plot (FIXME: migth not be required later)
         return go.Figure()
+
+    missing_colors = set(res_costs.columns[:-1]) - set(discrete_colors().keys())
+    if missing_colors:
+        logger.warning(f"Undefined colors for categories: {missing_colors}")
 
     fig = px.bar(
         res_costs,

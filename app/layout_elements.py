@@ -161,7 +161,9 @@ def display_results_bar_and_table(
 
     if x_label_mapping:
         df_res = df_res.rename(index=x_label_mapping)
-        current_selection = x_label_mapping.get(st.session_state[key])
+        current_selection = x_label_mapping.get(
+            st.session_state[key], st.session_state[key]
+        )
     else:
         current_selection = st.session_state[key]
 
