@@ -70,18 +70,6 @@ def content_input_data(api: PtxboaAPI) -> None:
                 tool_version_color="blue",
             )
 
-        with st.expander("**Storage**"):
-            st.caption(
-                read_markdown_file("md/tab_blue_input_data/description_storage.md")
-            )
-            display_and_edit_input_data(
-                api,
-                data_type="storage",
-                scope=None,
-                key="input_data_storage",
-                tool_version_color="blue",
-            )
-
         with st.expander("**Transportation (ships and pipelines)**"):
             st.caption(
                 read_markdown_file(
