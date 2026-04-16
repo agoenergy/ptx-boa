@@ -243,10 +243,14 @@ class PtxboaAPI:
             metadata=metadata,
             costs=ptxcalc_result.df_results_cost,
             emissions_t_co2e=(
-                ptxcalc_result.df_results_emissions_e_g_co2e * 1e-6
+                ptxcalc_result.df_results_emissions_e_g_co2e.assign(
+                    values=lambda x: x["values"] * 1e-6
+                )
             ),  # g => t
             emission_mass_t_co2e=(
-                ptxcalc_result.df_results_emissions_m_g_co2e * 1e-6
+                ptxcalc_result.df_results_emissions_m_g_co2e.assign(
+                    values=lambda x: x["values"] * 1e-6
+                )
             ),  # g => t
             _internal_process_data=ptxcalc_result._internal_process_data,
         )
