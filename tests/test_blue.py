@@ -3,7 +3,7 @@
 import pandas as pd
 import pytest
 
-from ptxboa.api import _translate_and_validate_user_settings
+from ptxboa.api import PtxboaAPI, _translate_and_validate_user_settings
 from ptxboa.api_calc import PtxCalc
 from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler
 from ptxboa.static._type_defs import ChainDef
@@ -1045,3 +1045,107 @@ def test_new_blue_chain_real_data(api_kwargs, expected):
             "gas_type",
         ],
     )
+
+
+@pytest.mark.parametrize(
+    "api_kwargs, expected",
+    [
+        [
+            {
+                "scenario": "2030 (high)",
+                "secproc_co2": "Direct Air Capture (blue)",
+                "secproc_water": None,
+                "res_gen": None,
+                "chain": "CH3OH-L__ATR_91%_CH3OHSYN__prod_in_demand",
+                "region": "China",
+                "country": "Japan",
+                "transport": "Ship",
+                "ship_own_fuel": False,
+            },
+            # DAC process in import region
+            {
+                "SECONDARY:IMPORT:CO2-G": {
+                    "costs": {"CAPEX": 0.00744419, "OPEX": 0.00413846},
+                    "emissions": {
+                        "emission": {"co2_indirect_scope2": 91.02097751},
+                        "mass": {
+                            "co2_bound_in_product": 248.4875171,
+                            "co2_bound_in_product_per_output": 1000.00000007,
+                            "co2_indirect_scope2": 91.02097751,
+                        },
+                    },
+                    "flows": {
+                        "main_flow_in": 0.24848752,
+                        "main_flow_out": 0.24848752,
+                        "secondary_flows_in": {"EL": 0.05590969, "HEAT": 0.37273128},
+                    },
+                    "is_in_import_segment": True,
+                    "parameter": {
+                        "CAPEX": 0.4163652,
+                        "CBOUND": {"CO2-DAC": 0.27289252},
+                        "CONV": {"EL": 0.225, "HEAT": 1.5},
+                        "EFF": 1.0,
+                        "EF_E": {"EL": 288.0, "HEAT": 201.0},
+                        "EF_M": {"CO2-DAC": 1000.0, "EL": 288.0, "HEAT": 201.0},
+                        "FLH": 7000,
+                        "LIFETIME": 25.0,
+                        "OPEX-F": 0.01665461,
+                        "WACC": 0.0514,
+                        "process_code": "DAC#B",
+                        "step": "SECONDARY:IMPORT:CO2-G",
+                    },
+                    "process_code": "DAC#B",
+                    "process_step": "SECONDARY:IMPORT:CO2-G",
+                },
+                "DERIV_I": {
+                    "costs": {"CAPEX": 0.00634495, "OPEX": 0.00288},
+                    "emissions": {
+                        "emission": {
+                            "co2_bound_in_product": 248.49429268,
+                            "co2_bound_in_product_per_output": 248.49429268,
+                            "co2_indirect_scope2": 15.46211741,
+                        },
+                        "mass": {
+                            "co2_bound_in_product": 248.49429268,
+                            "co2_bound_in_product_per_output": 248.49429268,
+                            "co2_indirect_scope2": 15.46211741,
+                        },
+                    },
+                    "flows": {
+                        "main_flow_in": 1.16206724,
+                        "main_flow_out": 1,
+                        "secondary_flows_in": {"CO2-G": 0.24848752, "EL": 0.05368791},
+                    },
+                    "is_in_import_segment": True,
+                    "parameter": {
+                        "CAPEX": 672.0,
+                        "CBOUND": {"CO2-G": 0.06781223},
+                        "CONV": {"CO2-G": 0.24848752, "EL": 0.05368791},
+                        "EFF": 0.86053541,
+                        "EF_E": {"CO2-G": 1000.0, "EL": 288.0, "HEAT": 201.0},
+                        "EF_M": {"CO2-G": 1000.0, "EL": 288.0, "HEAT": 201.0},
+                        "FLH": 7000,
+                        "LIFETIME": 30.0,
+                        "OPEX-F": 20.16,
+                        "WACC": 0.0514,
+                        "process_code": "CH3OHSYN#B",
+                        "step": "DERIV_I",
+                    },
+                    "process_code": "CH3OHSYN#B",
+                    "process_step": "DERIV_I",
+                },
+            },
+        ],
+    ],
+)
+def test_new_blue_chain_dac(api_kwargs, expected):
+
+    api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR)
+    result = api.calculate(**api_kwargs)
+
+    # only compare partial results
+    actual_step_data = {
+        x["process_step"]: x for x in result._internal_process_data or []
+    }
+    for step, expected_step_data in expected.items():
+        assert_deep_equal_approx(expected_step_data, actual_step_data[step])

@@ -1133,6 +1133,13 @@ class PtxCalc:
                 items.append(edge_values.get((p1, p2)))
             return _get_label(*items)
 
+        def _get_node_label(p: Process) -> str:
+            items = []
+            if p.process_step:
+                items.append(p.process_step)
+            items.append(p.process_code)
+            return _get_label(*items)
+
         plt.close()
         plt.clf()
         plt.figure(
@@ -1168,7 +1175,7 @@ class PtxCalc:
         nx.draw_networkx_labels(
             self._graph,
             node_pos,
-            labels={p: p.process_code for p in self._graph.nodes()},
+            labels={p: _get_node_label(p) for p in self._graph.nodes()},
             font_size=6,
             font_color="black",
         )

@@ -30,6 +30,8 @@ _df_chain = DataHandler.get_dimension("chain")
 _df_region_by_name = DataHandler.get_dimension("region")
 _df_region_by_code = _df_region_by_name.set_index("region_code", drop=False)
 
+PLOT_TYPES = ["flows", "speccost", "cbound"]
+
 
 @dataclass
 class Settings:
@@ -105,7 +107,7 @@ def create_permutations(scenario: ScenarioType) -> Iterable[Settings]:
             )
 
 
-def main():
+def main(chains: list[str], plot_type: str):
     scenario: ScenarioType = "2040 (medium)"
     permutations = create_permutation_names(create_permutations(scenario=scenario))
 
@@ -114,8 +116,10 @@ def main():
         if settings.chain == "Blue Iron (blue)*":
             continue
 
-        # if i not in (14, 164):
-        #    continue
+        if chains:
+            # only do that
+            if settings.chain not in chains:
+                continue
 
         logger.info(f"{i + 1}/{len(permutations)}: {settings} => {name}")
 
@@ -142,20 +146,43 @@ def main():
 
         results = chain_process._calculate(data=parameter_data)
 
-        edge_values_speccost = {  # noqa
-            (p, p_): results["parameter_data"][p]["SPECCOST"][p.main_flow_code_out]  # type: ignore  # noqa
-            for p, p_ in chain_process._graph.edges()
-            if p.is_market
-        }
+        if plot_type == "flows":
+            edge_values = {
+                (p, p_): results["results_flows"][p].main_flow_out
+                for p, p_ in chain_process._graph.edges()
+            }
+        elif plot_type == "speccost":
+            edge_values = {  # noqa
+                (p, p_): results["parameter_data"][p]["SPECCOST"][p.main_flow_code_out]  # type: ignore  # noqa
+                for p, p_ in chain_process._graph.edges()
+                if p.is_market
+            }
+        elif plot_type == "cbound":
 
-        edge_values_flows = {
-            (p, p_): results["results_flows"][p].main_flow_out
-            for p, p_ in chain_process._graph.edges()
-        }
+            def _get_cbound(p):
+                try:
+                    return results["results_emissions"][p][
+                        "mass"
+                    ].co2_bound_in_product_per_output
+                except Exception:
+                    return None
+
+            edge_values = {}
+            for p in chain_process._graph.nodes():
+                cbound = _get_cbound(p)
+                if not cbound:
+                    continue
+                for p_ in p._links_out_in_main:
+                    edge_values[(p, p_)] = (
+                        results["results_flows"][p_].main_flow_in * cbound
+                    )
+
+        else:
+            raise NotImplementedError(plot_type)
 
         chain_process.plot(
-            file_basename=f"{settings.tool_version_color}/{name}",
-            edge_values=edge_values_flows,  # type: ignore
+            file_basename=f"{settings.tool_version_color}/{name}_{plot_type}",
+            edge_values=edge_values,  # type: ignore
         )
 
 
@@ -167,6 +194,8 @@ if __name__ == "__main__":
         choices=["debug", "info", "warning", "error"],
         default="warning",
     )
+    ap.add_argument("chains", nargs="?")
+    ap.add_argument("--plot-type", choices=PLOT_TYPES, default=PLOT_TYPES[0])
     # parse args
     kwargs = vars(ap.parse_args())
     # logging
