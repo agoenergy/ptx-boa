@@ -309,8 +309,8 @@ def calculate_results_list_blue(
                     **settings,
                 )
                 costs_list.append(res_single.costs)
-                emissions_list.append(res_single.emissions)
-                emissions_mass_list.append(res_single.emission_mass)
+                emissions_list.append(res_single.emissions_t_co2e)
+                emissions_mass_list.append(res_single.emission_mass_t_co2e)
 
             except Exception as exc:
                 logging.warning(
@@ -440,15 +440,15 @@ def calculate_results_list_blue(
                 costs_list.append(costs)
                 costs[parameter_to_change] = value_label
 
-                emissions = res_single.emissions
+                emissions = res_single.emissions_t_co2e
                 if emissions is not None:
                     emissions[parameter_to_change] = value_label
-                    emissions_list.append(res_single.emissions)
+                    emissions_list.append(res_single.emissions_t_co2e)
 
-                emissions_mass = res_single.emission_mass
+                emissions_mass = res_single.emission_mass_t_co2e
                 if emissions_mass is not None:
                     emissions_mass[parameter_to_change] = value_label
-                    emissions_mass_list.append(res_single.emission_mass)
+                    emissions_mass_list.append(res_single.emission_mass_t_co2e)
 
             except Exception as exc:
                 logging.warning(
