@@ -606,6 +606,7 @@ def get_data_type_from_input_data(
         "specific_costs",
         "conversion_coefficients",
         "dac_and_desalination",
+        "secondary_processes_blue",
         "storage",
         "Natural gas price",
     ],
@@ -670,6 +671,7 @@ def get_data_type_from_input_data(
         "transportation_processes",
         "reconversion_processes",
         "dac_and_desalination",
+        "secondary_processes_blue",
         "storage",
     ]:
         scope = None
@@ -726,6 +728,17 @@ def get_data_type_from_input_data(
         parameter_code = [
             "CAPEX",
             "OPEX (fix)",
+            "lifetime / amortization period",
+        ]
+        process_code = processes.loc[
+            processes["is_secondary"], "process_name"
+        ].to_list()
+
+    if data_type == "secondary_processes_blue":
+        parameter_code = [
+            "CAPEX",
+            "OPEX (fix)",
+            "OPEX (other variable)",
             "lifetime / amortization period",
         ]
         process_code = processes.loc[

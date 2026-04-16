@@ -93,7 +93,7 @@ def content_input_data(api: PtxboaAPI) -> None:
                 key="input_data_reconversion_processes",
                 tool_version_color="blue",
             )
-        with st.expander("**Direct air capture**"):
+        with st.expander("**Secondary CO₂, electricity and heat generation**"):
             st.caption(
                 read_markdown_file(
                     "md/tab_blue_input_data/description_direct_air_capture.md"
@@ -101,9 +101,9 @@ def content_input_data(api: PtxboaAPI) -> None:
             )
             display_and_edit_input_data(
                 api,
-                data_type="dac_and_desalination",
+                data_type="secondary_processes_blue",
                 scope=None,
-                key="input_data_dac_and_desalination",
+                key="input_data_secproc",
                 tool_version_color="blue",
             )
         with st.expander("**Specific costs for materials and energy carriers**"):
