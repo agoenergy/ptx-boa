@@ -161,7 +161,9 @@ def display_results_bar_and_table(
 
     if x_label_mapping:
         df_res = df_res.rename(index=x_label_mapping)
-        current_selection = x_label_mapping.get(st.session_state[key])
+        current_selection = x_label_mapping.get(
+            st.session_state[key], st.session_state[key]
+        )
     else:
         current_selection = st.session_state[key]
 
@@ -201,6 +203,8 @@ def display_results_bar_and_table(
 
     with st.expander("**Data**"):
         column_config = config_number_columns(df_res, format=f"%.1f {output_unit}")
+        # remove <br> html tags from dataframe index
+        df_res.index = df_res.index.str.replace("<br>", " ")
         st.dataframe(df_res, width="stretch", column_config=column_config)
         fn = f"{data_type}_per_{key}_{key_suffix}".strip("_")
         if st.session_state["user_changes_df"] is not None:
@@ -382,6 +386,7 @@ def display_and_edit_input_data(
     )
     df_orig = df.copy()
 
+    column_config = get_column_config()
     if data_type in [
         "electricity_generation",
         "conversion_processes",
@@ -393,7 +398,6 @@ def display_and_edit_input_data(
         index = "process_code"
         columns = "parameter_code"
         missing_index = {"source_region_code": None}
-        column_config = get_column_config()
 
     if data_type == "conversion_processes":
         custom_column_config = {
@@ -483,17 +487,32 @@ def display_and_edit_input_data(
             format="%.2f USD/kW", min_value=0
         )
 
+    if data_type == "Natural gas production costs":
+        index = "source_region_code"
+        columns = "parameter_code"
+        missing_index = {"process_code": "production of natural gas (blue)"}
+        column_config["OPEX (other variable)"] = st.column_config.NumberColumn(
+            label="production costs",
+            format="%.4f USD/kWh",
+            min_value=0,
+        )
+
+    if data_type == "Natural gas production losses":
+        index = "source_region_code"
+        columns = "parameter_code"
+        missing_index = {
+            "process_code": "production of natural gas (blue)",
+            "flow_code": "natural gas (gasous)",
+        }
+        column_config["losses (own fuel)"] = st.column_config.NumberColumn(
+            format="%.4f [fraction]",
+            min_value=0,
+        )
+
     if data_type == "Natural gas price":
         index = "source_region_code"
         columns = "parameter_code"
-        missing_index = {"process_code": "NG production"}
-        column_config = {
-            "OPEX (other variable)": st.column_config.NumberColumn(
-                label="Natural gas price",
-                format="%.4f USD/kWh",
-                min_value=0,
-            )
-        }
+        missing_index = {"flow_code": "natural gas (gasous)"}
 
     df = change_index_names(df)
 
@@ -535,3 +554,22 @@ def display_and_edit_input_data(
 def what_is_a_boxplot():
     with st.popover("What is a boxplot?"):
         st.image("img/boxplot_explanation.png")
+
+
+def report_processes_contained_in_process_result_type(
+    _api: PtxboaAPI, tool_version_color: ToolVersionColorType
+):
+    data = (
+        _api.get_dimension("process", tool_version_color=tool_version_color)
+        .loc[:, ["process_name", "result_process_type"]]
+        .groupby("result_process_type")
+        .agg(list)
+        .to_dict()["process_name"]
+    )
+    with st.expander("Aggregated process categories and associated processes"):
+        for process_result_type, processes in data.items():
+            with st.expander(process_result_type):
+                section = []
+                for p in processes:
+                    section.append(f"- {p}")
+                st.markdown("\n".join(section))

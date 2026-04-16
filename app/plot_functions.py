@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Functions for plotting input data and results (cost_data)."""
 
+import logging
 from pathlib import Path
 from typing import Literal
 
@@ -18,6 +19,8 @@ from app.ptxboa_functions import (
 )
 from ptxboa.api import PtxboaAPI
 from ptxboa.static import ToolVersionColorType
+
+logger = logging.getLogger()
 
 
 @st.cache_data()
@@ -57,6 +60,8 @@ def discrete_colors_process_type() -> dict:
         "Heat",
         "Carbon",
         "Bound in product",
+        "Natural gas production",
+        "CO2 transport and storage",
         # TODO: add missing category (GH #145)
     ]
     colors = read_agora_colors()
@@ -167,7 +172,14 @@ def plot_emissions_on_map(
 
 def plot_input_data_on_map(
     api: PtxboaAPI,
-    data_type: Literal["CAPEX", "full load hours", "WACC", "Natural gas price"],
+    data_type: Literal[
+        "CAPEX",
+        "full load hours",
+        "WACC",
+        "Natural gas production costs",
+        "Natural gas production losses",
+        "Natural gas price",
+    ],
     color_col: Literal[
         "PV tilted",
         "Wind Offshore",
@@ -176,6 +188,8 @@ def plot_input_data_on_map(
         "PV tilted (hybrid)",
         "WACC",
         "specific costs",
+        "OPEX (other variable)",
+        "losses (own fuel)",
     ],
     scope: Literal["world", "Argentina", "Morocco", "South Africa"] = "world",
     tool_version_color: ToolVersionColorType = "green",
@@ -202,6 +216,7 @@ def plot_input_data_on_map(
     input_data = get_data_type_from_input_data(
         api, data_type=data_type, scope=scope, tool_version_color=tool_version_color
     )
+    custom_data_func_kwargs = {}
 
     units = {
         "CAPEX": "USD/kW",
@@ -209,10 +224,11 @@ def plot_input_data_on_map(
         "WACC": "%",
         "Natural gas price": "USD/kWh natural gas LHV",
     }
+    custom_data_func_kwargs["unit"] = units.get(data_type, "")
 
     if data_type == "WACC":
         assert color_col == "WACC"
-        custom_data_func_kwargs = {"float_precision": 2}
+        custom_data_func_kwargs.update({"float_precision": 2})
     if data_type == "full load hours":
         assert color_col in [
             "PV tilted",
@@ -221,19 +237,27 @@ def plot_input_data_on_map(
             "Wind Onshore (hybrid)",
             "PV tilted (hybrid)",
         ]
-        custom_data_func_kwargs = {"float_precision": 0}
+        custom_data_func_kwargs.update({"float_precision": 0})
     if data_type == "CAPEX":
         assert color_col in [
             "PV tilted",
             "Wind Offshore",
             "Wind Onshore",
         ]
-        custom_data_func_kwargs = {"float_precision": 0}
+        custom_data_func_kwargs.update({"float_precision": 0})
     if data_type == "Natural gas price":
-        assert color_col == "OPEX (other variable)"
-        custom_data_func_kwargs = {"float_precision": 4}
+        assert color_col == "specific costs"
+        custom_data_func_kwargs.update({"float_precision": 4})
+    if data_type == "Natural gas production costs":
+        assert color_col == "OPEX (other variable)", color_col
+        custom_data_func_kwargs["unit"] = "USD/kWh"
+        custom_data_func_kwargs["float_precision"] = 4
 
-    custom_data_func_kwargs["unit"] = units[data_type]
+    if data_type == "Natural gas production losses":
+        assert color_col == "losses (own fuel)", color_col
+        custom_data_func_kwargs["unit"] = "fraction"
+        custom_data_func_kwargs["float_precision"] = 4
+
     custom_data_func_kwargs["data_type"] = data_type
     custom_data_func_kwargs["map_variable"] = color_col
 
@@ -245,6 +269,7 @@ def plot_input_data_on_map(
             color_col=color_col,
             custom_data_func=_make_inputs_hoverdata,
             custom_data_func_kwargs=custom_data_func_kwargs,
+            highlight="country" if data_type == "Natural gas price" else "region",
         )
     else:
         fig = _choropleth_map_deep_dive_country(
@@ -265,6 +290,7 @@ def _choropleth_map_world(
     color_col: str,
     custom_data_func: callable,
     custom_data_func_kwargs: dict | None = None,
+    highlight: Literal["region", "country"] | None = "region",
 ):
     """
     Plot a chorpleth map for the whole world and one color for each country.
@@ -285,6 +311,10 @@ def _choropleth_map_world(
     """
     if custom_data_func_kwargs is None:
         custom_data_func_kwargs = {}
+
+    if color_col not in df.columns:
+        df[color_col] = np.nan
+
     df = df.dropna(subset=color_col)
     fig = px.scatter_geo(
         locations=df.index,
@@ -295,7 +325,10 @@ def _choropleth_map_world(
         opacity=0.8,
     )
     fig.update_traces({"marker": {"size": 20}})
-    fig = _highlight_selected_region_world(fig)
+    if highlight == "region":
+        fig = _highlight_selected_region_world(fig)
+    if highlight == "country":
+        fig = _highlight_selected_country_world(fig)
     return fig
 
 
@@ -405,6 +438,26 @@ def _highlight_selected_region_world(fig: go.Figure) -> go.Figure:
     return fig
 
 
+def _highlight_selected_country_world(fig: go.Figure) -> go.Figure:
+    country = st.session_state["country"]
+    fig.add_trace(
+        go.Scattergeo(
+            locations=[country],
+            locationmode="country names",
+            marker={
+                "size": 21,
+                "color": "rgba(0, 0, 0, 0)",
+                "line": {"width": 3, "color": "black"},
+            },
+            hoverinfo="skip",
+            customdata=["selected demand country"],
+            name="selected county",
+            showlegend=False,
+        )
+    )
+    return fig
+
+
 def _set_map_layout(fig: go.Figure, colorbar_title: str) -> go.Figure:
     """
     Apply a unified layout for all maps used in the app.
@@ -454,7 +507,12 @@ def _set_map_layout(fig: go.Figure, colorbar_title: str) -> go.Figure:
 
 def _make_inputs_hoverdata(df, data_type, map_variable, unit, float_precision):
     custom_hover_data = []
-    if data_type in ["WACC", "Natural gas price"]:
+    if data_type in [
+        "WACC",
+        "Natural gas production costs",
+        "Natural gas production losses",
+        "Natural gas price",
+    ]:
         for idx, row in df.iterrows():
             hover = (
                 f"<b>{idx} | {data_type} </b><br><br>"
@@ -521,6 +579,10 @@ def create_bar_chart_costs(
     """
     if res_costs.empty:  # nodata to plot (FIXME: migth not be required later)
         return go.Figure()
+
+    missing_colors = set(res_costs.columns[:-1]) - set(discrete_colors().keys())
+    if missing_colors:
+        logger.warning(f"Undefined colors for categories: {missing_colors}")
 
     fig = px.bar(
         res_costs,

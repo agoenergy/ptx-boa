@@ -57,7 +57,7 @@ def get_green_results(
 
     if output_product not in [
         "NH3-L",
-        "DRI-S",
+        "B-DRI-S",
         "CHX-L",
         "H2-G",
         "CH3OH-L",
@@ -93,7 +93,7 @@ def get_green_results(
             "chain": (
                 _api.get_dimension("chain", tool_version_color="green")
                 .loc[
-                    _api.get_dimension("chain", tool_version_color="green")["FLOW_OUT"]
+                    _api.get_dimension("chain", tool_version_color="green")["flow_out"]
                     == output_product
                 ]
                 .index.tolist()
@@ -120,7 +120,7 @@ def get_green_results(
             "chain": (
                 _api.get_dimension("chain", tool_version_color="green")
                 .loc[
-                    _api.get_dimension("chain", tool_version_color="green")["FLOW_OUT"]
+                    _api.get_dimension("chain", tool_version_color="green")["flow_out"]
                     == output_product
                 ]
                 .index.tolist()
@@ -239,7 +239,7 @@ def content_costs_comparison(api):
                 mode="markers",
                 marker={
                     "size": 15,
-                    "symbol": "hexagram-dot",
+                    "symbol": "circle-dot",
                     "line": {
                         "width": 2,
                         "color": "DarkSlateGrey",
@@ -248,8 +248,16 @@ def content_costs_comparison(api):
             )
         )
         fig.update_layout(
-            xaxis={"title": {"text": "Scenario"}},
-            yaxis={"title": {"text": st.session_state["output_unit"]}},
+            xaxis={
+                "title": {"text": "Scenario"},
+                "tickformat": ",",
+            },
+            yaxis={
+                "title": {"text": st.session_state["output_unit"]},
+                "range": [0, None],
+                "tickformat": ",",
+            },
             boxmode="group",
+            separators=". ",
         )
         st.plotly_chart(fig)

@@ -6,11 +6,11 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import numpy as np
-import pytest
 
 from ptxboa.api import PtxboaAPI
 from ptxboa.api_data import DataHandler
 from ptxboa.utils import annuity
+from tests.utils import assert_deep_equal_approx
 
 logging.basicConfig(
     format="[%(asctime)s %(levelname)7s] %(message)s",
@@ -76,7 +76,9 @@ class TestApi(unittest.TestCase):
         }
         res = self._test_api_call(settings)
         level_cost_category = res.index.levels[0]
-        self.assertFalse("" in level_cost_category, "empty value in cost_category")
+        self.assertFalse(
+            "" in level_cost_category, "empty value in cost_category (process_type)"
+        )
 
     def test_issue_317_demand_country_list_must_not_contain_supply_countries(self):
         """See https://github.com/agoenergy/ptx-boa/issues/317."""
@@ -101,27 +103,25 @@ class TestApi(unittest.TestCase):
         # test result categories
         res_values = res.groupby(["process_type", "cost_type"]).sum("values")["values"]
         expected_result = {
-            ("Carbon", "CAPEX"): 196.01309835079843,
-            ("Carbon", "OPEX"): 116.25337124331891,
-            ("Derivative production", "CAPEX"): 90.13946547212913,
-            ("Derivative production", "OPEX"): 40.0955988325783,
-            ("Electricity and H2 storage", "CAPEX"): 253.0220382601114,
-            ("Electricity and H2 storage", "OPEX"): 1.2530462794580113,
-            ("Electricity generation", "CAPEX"): 434.4326537746074,
-            ("Electricity generation", "OPEX"): 89.59100157401558,
-            ("H2 production", "CAPEX"): 421.1490770843375,
-            ("H2 production", "OPEX"): 102.17834361295175,
-            ("Heat", "FLOW"): 283.87404324169836,
-            ("Transportation (Ship)", "CAPEX"): 61.1032956243896,
-            ("Transportation (Ship)", "FLOW"): 1.823824116075305,
-            ("Transportation (Ship)", "OPEX"): 73.64164331439581,
-            ("Water", "CAPEX"): 1.1373427486958672,
-            ("Water", "OPEX"): 0.5518796288785505,
+            ("Carbon", "CAPEX"): 196.01309835,
+            ("Carbon", "OPEX"): 116.25337124,
+            ("Derivative production", "CAPEX"): 90.13946547,
+            ("Derivative production", "OPEX"): 40.09559883,
+            ("Electricity and H2 storage", "CAPEX"): 255.51185818,
+            ("Electricity and H2 storage", "OPEX"): 1.25304628,
+            ("Electricity generation", "CAPEX"): 482.27236675,
+            ("Electricity generation", "OPEX"): 99.45676043,
+            ("H2 production", "CAPEX"): 425.40310817,
+            ("H2 production", "OPEX"): 103.21044809,
+            ("Heat", "FLOW"): 283.87404324,
+            ("Transportation (Ship)", "CAPEX"): 61.10329562,
+            ("Transportation (Ship)", "FLOW"): 1.82382412,
+            ("Transportation (Ship)", "OPEX"): 73.64164331,
+            ("Water", "CAPEX"): 1.14883106,
+            ("Water", "OPEX"): 0.55745417,
         }
-
-        result_dict = {k: pytest.approx(v) for k, v in sorted(res_values.items()) if v}
-
-        assert expected_result == result_dict
+        res_values = dict(res_values.items())
+        assert_deep_equal_approx(expected_result, res_values)
 
     def test_example_api_call_2_ship_own_fuel(self):
         """Test output structure of api.calculate()."""
@@ -141,22 +141,22 @@ class TestApi(unittest.TestCase):
         # test result categories
         res_values = res.groupby(["process_type", "cost_type"]).sum("values")["values"]
         expected_result = {
-            ("Carbon", "FLOW"): 69.057413040518,
-            ("Derivative production", "CAPEX"): 308.1737690695886,
-            ("Derivative production", "OPEX"): 41.63553057840994,
-            ("Electricity and H2 storage", "CAPEX"): 279.89262037545114,
-            ("Electricity and H2 storage", "OPEX"): 0.5435185267752691,
-            ("Electricity generation", "CAPEX"): 842.7006740519129,
-            ("Electricity generation", "OPEX"): 92.19899158499206,
-            ("H2 production", "CAPEX"): 939.4974306861657,
-            ("H2 production", "OPEX"): 124.91778461321229,
-            ("Transportation (Ship)", "OPEX"): 13.735222655346394,
-            ("Water", "CAPEX"): 1.3502811073682484,
-            ("Water", "OPEX"): 0.23938206254847536,
+            ("Carbon", "FLOW"): 69.05741304,
+            ("Derivative production", "CAPEX"): 308.17376907,
+            ("Derivative production", "OPEX"): 41.63553058,
+            ("Electricity and H2 storage", "CAPEX"): 282.62562318,
+            ("Electricity and H2 storage", "OPEX"): 0.54351853,
+            ("Electricity generation", "CAPEX"): 943.23148599,
+            ("Electricity generation", "OPEX"): 103.19796165,
+            ("H2 production", "CAPEX"): 948.98730372,
+            ("H2 production", "OPEX"): 126.17958042,
+            ("Transportation (Ship)", "OPEX"): 13.73522266,
+            ("Water", "CAPEX"): 1.36392031,
+            ("Water", "OPEX"): 0.24180006,
         }
 
-        result_dict = {k: pytest.approx(v) for k, v in sorted(res_values.items()) if v}
-        assert expected_result == result_dict
+        res_values = dict(res_values.items())
+        assert_deep_equal_approx(expected_result, res_values)
 
     def test_example_api_call_3_pipeline_sea_land(self):
         """Test output structure of api.calculate()."""
@@ -177,19 +177,19 @@ class TestApi(unittest.TestCase):
         res_values = res.groupby(["process_type", "cost_type"]).sum("values")["values"]
 
         expected_result = {
-            ("Electricity and H2 storage", "CAPEX"): 44.84637867437069,
-            ("Electricity generation", "CAPEX"): 287.5830863315742,
-            ("Electricity generation", "OPEX"): 49.73468408558943,
-            ("H2 production", "CAPEX"): 66.31815485798717,
-            ("H2 production", "OPEX"): 7.180735162443889,
-            ("Transportation (Pipeline)", "CAPEX"): 8.507408889875556,
-            ("Transportation (Pipeline)", "OPEX"): 27.71899909407804,
-            ("Water", "CAPEX"): 0.15658693599049908,
-            ("Water", "OPEX"): 0.03390954768430808,
+            ("Electricity and H2 storage", "CAPEX"): 44.84637867,
+            ("Electricity generation", "CAPEX"): 318.6844908,
+            ("Electricity generation", "OPEX"): 55.11336802,
+            ("H2 production", "CAPEX"): 66.31815486,
+            ("H2 production", "OPEX"): 7.18073516,
+            ("Transportation (Pipeline)", "CAPEX"): 8.50740889,
+            ("Transportation (Pipeline)", "OPEX"): 27.71899909,
+            ("Water", "CAPEX"): 0.15658694,
+            ("Water", "OPEX"): 0.03390955,
         }
 
-        result_dict = {k: pytest.approx(v) for k, v in sorted(res_values.items()) if v}
-        assert expected_result == result_dict
+        res_values = dict(res_values.items())
+        assert_deep_equal_approx(expected_result, res_values)
 
     def test_example_api_call_4_pipeline_retrofitted(self):
         """Test output structure of api.calculate()."""
@@ -209,17 +209,18 @@ class TestApi(unittest.TestCase):
         # test result categories
         res_values = res.groupby(["process_type", "cost_type"]).sum("values")["values"]
         expected_result = {
-            ("Electricity and H2 storage", "CAPEX"): 18.351515364244914,
-            ("Electricity generation", "CAPEX"): 21.946684576122536,
-            ("Electricity generation", "OPEX"): 7.604789526052963,
-            ("H2 production", "CAPEX"): 20.875788542159256,
-            ("H2 production", "OPEX"): 5.384262578837443,
-            ("Transportation (Pipeline)", "CAPEX"): 1.4165302981169516,
-            ("Transportation (Pipeline)", "OPEX"): 2.925088442220974,
-            ("Water", "FLOW"): 0.41564389862359896,
+            ("Electricity and H2 storage", "CAPEX"): 18.35151536,
+            ("Electricity generation", "CAPEX"): 24.36897573,
+            ("Electricity generation", "OPEX"): 8.44414248,
+            ("H2 production", "CAPEX"): 20.87578854,
+            ("H2 production", "OPEX"): 5.38426258,
+            ("Transportation (Pipeline)", "CAPEX"): 1.4165303,
+            ("Transportation (Pipeline)", "OPEX"): 2.92508844,
+            ("Water", "FLOW"): 0.4156439,
         }
-        result_dict = {k: pytest.approx(v) for k, v in sorted(res_values.items()) if v}
-        assert expected_result == result_dict
+
+        res_values = dict(res_values.items())
+        assert_deep_equal_approx(expected_result, res_values)
 
     def test_api_get_input_data_output_format(self):
         """Test output structure of api.get_input_data()."""
@@ -313,9 +314,9 @@ class TestApi(unittest.TestCase):
             parameter_code="FLH",
             source_region_code="MAR-GUE",
             process_code="PEM-EL",
-            process_code_res="WIND-OFF",
-            process_code_ely="PEM-EL",
-            process_code_deriv="LOHC-CON",
+            process_res="WIND-OFF",
+            process_ely="PEM-EL",
+            process_deriv="LOHC-CON",
         )
         self.assertAlmostEqual(pval, 5436.92426314625)
 
@@ -363,7 +364,7 @@ class TestApi(unittest.TestCase):
         res_opt = self._test_api_call(settings, optimize_flh=True)
         self.assertAlmostEqual(
             res.at[("Electricity and H2 storage", "CAPEX"), "values"],
-            823.7733133374624,
+            831.8795131795181,
             places=4,
         )
         self.assertAlmostEqual(
@@ -373,12 +374,12 @@ class TestApi(unittest.TestCase):
         )
         self.assertAlmostEqual(
             res_opt.at[("Electricity and H2 storage", "CAPEX"), "values"],
-            183.481609334802,
+            338.80543452051774,
             places=4,
         )
         self.assertAlmostEqual(
             res_opt.at[("Electricity and H2 storage", "OPEX"), "values"],
-            5.567013499284561,
+            7.628877979749411,
             places=4,
         )
 

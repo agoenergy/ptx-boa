@@ -3,11 +3,11 @@
 from typing import Literal
 
 YearType = Literal["2030", "2040"]
-YearValues = ["2030", "2040"]
+YearValues: list[YearType] = ["2030", "2040"]
 
 
 ParameterRangeType = Literal["high", "low", "medium"]
-ParameterRangeValues = ["high", "low", "medium"]
+ParameterRangeValues: list[ParameterRangeType] = ["high", "low", "medium"]
 
 
 SourceRegionCodeType = Literal[
@@ -99,7 +99,7 @@ SourceRegionCodeType = Literal[
     "ZAF-NW",
     "ZAF-WC",
 ]
-SourceRegionCodeValues = [
+SourceRegionCodeValues: list[SourceRegionCodeType] = [
     "ARE",
     "ARG",
     "ARG-BA",
@@ -193,7 +193,7 @@ SourceRegionCodeValues = [
 TargetCountryCodeType = Literal[
     "BRA", "CHN", "DEU", "ESP", "FRA", "IND", "JPN", "KOR", "NLD", "THA", "USA"
 ]
-TargetCountryCodeValues = [
+TargetCountryCodeValues: list[TargetCountryCodeType] = [
     "BRA",
     "CHN",
     "DEU",
@@ -297,7 +297,7 @@ SourceRegionNameType = Literal[
     "USA",
     "Vietnam",
 ]
-SourceRegionNameValues = [
+SourceRegionNameValues: list[SourceRegionNameType] = [
     "Algeria",
     "Argentina",
     "Argentina (Autonomous City of Buenos Aires)",
@@ -401,7 +401,7 @@ TargetCountryNameType = Literal[
     "Thailand",
     "USA",
 ]
-TargetCountryNameValues = [
+TargetCountryNameValues: list[TargetCountryNameType] = [
     "Brazil",
     "China",
     "France",
@@ -447,6 +447,8 @@ ProcessCodeType = Literal[
     "CH4-SB",
     "CH4-SB#B",
     "CH4SYN",
+    "CO2-INDF#B",
+    "CO2-INDS#B",
     "CO2-T+S#B",
     "DAC",
     "DAC#B",
@@ -460,7 +462,6 @@ ProcessCodeType = Literal[
     "EFUELSYN#B",
     "EFUELSYNC#B",
     "EL-STR",
-    "EL-TRANS",
     "H2-COMP",
     "H2-COMP#B",
     "H2-LIQ",
@@ -509,7 +510,7 @@ ProcessCodeType = Literal[
     "WIND-OFF",
     "WIND-ON",
 ]
-ProcessCodeValues = [
+ProcessCodeValues: list[ProcessCodeType] = [
     "AEL-EL",
     "ATR",
     "ATR_91%#B",
@@ -540,6 +541,8 @@ ProcessCodeValues = [
     "CH4-SB",
     "CH4-SB#B",
     "CH4SYN",
+    "CO2-INDF#B",
+    "CO2-INDS#B",
     "CO2-T+S#B",
     "DAC",
     "DAC#B",
@@ -553,7 +556,6 @@ ProcessCodeValues = [
     "EFUELSYN#B",
     "EFUELSYNC#B",
     "EL-STR",
-    "EL-TRANS",
     "H2-COMP",
     "H2-COMP#B",
     "H2-LIQ",
@@ -610,11 +612,12 @@ FlowCodeType = Literal[
     "CH3OH-L",
     "CH4-G",
     "CH4-L",
-    "CH4L-G",
     "CHX-L",
     "CO2-C",
+    "CO2-DAC",
     "CO2-G",
-    "C-S",
+    "CO2-INDF",
+    "CO2-INDS",
     "DIESEL-L",
     "DRI-S",
     "EL",
@@ -630,17 +633,18 @@ FlowCodeType = Literal[
     "NH3-L",
     "STL-S",
 ]
-FlowCodeValues = [
+FlowCodeValues: list[FlowCodeType] = [
     "B-DRI-S",
     "BFUEL-L",
     "CH3OH-L",
     "CH4-G",
     "CH4-L",
-    "CH4L-G",
     "CHX-L",
     "CO2-C",
+    "CO2-DAC",
     "CO2-G",
-    "C-S",
+    "CO2-INDF",
+    "CO2-INDS",
     "DIESEL-L",
     "DRI-S",
     "EL",
@@ -662,8 +666,8 @@ ParameterCodeType = Literal[
     "CALOR",
     "CAPEX",
     "CAP-T",
+    "CBOUND",
     "CH4SHARE",
-    "CO2BOUND",
     "CO2CPT-R",
     "CO2CPT-S",
     "CONV",
@@ -684,12 +688,12 @@ ParameterCodeType = Literal[
     "SPECCOST",
     "WACC",
 ]
-ParameterCodeValues = [
+ParameterCodeValues: list[ParameterCodeType] = [
     "CALOR",
     "CAPEX",
     "CAP-T",
+    "CBOUND",
     "CH4SHARE",
-    "CO2BOUND",
     "CO2CPT-R",
     "CO2CPT-S",
     "CONV",
@@ -713,10 +717,10 @@ ParameterCodeValues = [
 
 
 ParameterNameType = Literal[
+    "C bound in product",
     "calorific values",
     "CAPEX",
     "capture rate by flow",
-    "CO2 bound in product",
     "CO2 for capture share",
     "conversion factors",
     "conversion factors (other fuel, transport)",
@@ -738,11 +742,11 @@ ParameterNameType = Literal[
     "transport capacity",
     "WACC",
 ]
-ParameterNameValues = [
+ParameterNameValues: list[ParameterNameType] = [
+    "C bound in product",
     "calorific values",
     "CAPEX",
     "capture rate by flow",
-    "CO2 bound in product",
     "CO2 for capture share",
     "conversion factors",
     "conversion factors (other fuel, transport)",
@@ -766,13 +770,21 @@ ParameterNameValues = [
 ]
 
 
-ChainNameType = Literal[
+ChainType = Literal[
     "Ammonia (AEL)",
     "Ammonia (AEL) + reconv. to H2",
     "Ammonia (PEM)",
     "Ammonia (PEM) + reconv. to H2",
     "Ammonia (SOEC)",
     "Ammonia (SOEC) + reconv. to H2",
+    "B-DRI-S__ATR_91%_DRI__prod_in_demand",
+    "B-DRI-S__ATR_91%_DRI__prod_in_supply",
+    "B-DRI-S__NG-DRI-C__prod_in_demand",
+    "B-DRI-S__NG-DRI-C__prod_in_supply",
+    "B-DRI-S__SMR_52%_BF_DRI__prod_in_demand",
+    "B-DRI-S__SMR_52%_BF_DRI__prod_in_supply",
+    "B-DRI-S__SMR_52%_DRI__prod_in_demand",
+    "B-DRI-S__SMR_52%_DRI__prod_in_supply",
     "Blue Iron (blue)*",
     "CH3OH-L__ATR_91%_CH3OHSYN__prod_in_demand",
     "CH3OH-L__ATR_91%_CH3OHSYN__prod_in_supply",
@@ -790,14 +802,6 @@ ChainNameType = Literal[
     "CHX-L__SMR_52%_BF_EFUELSYN__prod_in_supply",
     "CHX-L__SMR_52%_EFUELSYN__prod_in_demand",
     "CHX-L__SMR_52%_EFUELSYN__prod_in_supply",
-    "DRI-S__ATR_91%_DRI__prod_in_demand",
-    "DRI-S__ATR_91%_DRI__prod_in_supply",
-    "DRI-S__NG-DRI-C__prod_in_demand",
-    "DRI-S__NG-DRI-C__prod_in_supply",
-    "DRI-S__SMR_52%_BF_DRI__prod_in_demand",
-    "DRI-S__SMR_52%_BF_DRI__prod_in_supply",
-    "DRI-S__SMR_52%_DRI__prod_in_demand",
-    "DRI-S__SMR_52%_DRI__prod_in_supply",
     "FT e-fuels (AEL)",
     "FT e-fuels (PEM)",
     "FT e-fuels (SOEC)",
@@ -843,13 +847,21 @@ ChainNameType = Literal[
     "STL-S__SMR_52%_DRI_EAF__prod_in_demand",
     "STL-S__SMR_52%_DRI_EAF__prod_in_supply",
 ]
-ChainNameValues = [
+ChainValues: list[ChainType] = [
     "Ammonia (AEL)",
     "Ammonia (AEL) + reconv. to H2",
     "Ammonia (PEM)",
     "Ammonia (PEM) + reconv. to H2",
     "Ammonia (SOEC)",
     "Ammonia (SOEC) + reconv. to H2",
+    "B-DRI-S__ATR_91%_DRI__prod_in_demand",
+    "B-DRI-S__ATR_91%_DRI__prod_in_supply",
+    "B-DRI-S__NG-DRI-C__prod_in_demand",
+    "B-DRI-S__NG-DRI-C__prod_in_supply",
+    "B-DRI-S__SMR_52%_BF_DRI__prod_in_demand",
+    "B-DRI-S__SMR_52%_BF_DRI__prod_in_supply",
+    "B-DRI-S__SMR_52%_DRI__prod_in_demand",
+    "B-DRI-S__SMR_52%_DRI__prod_in_supply",
     "Blue Iron (blue)*",
     "CH3OH-L__ATR_91%_CH3OHSYN__prod_in_demand",
     "CH3OH-L__ATR_91%_CH3OHSYN__prod_in_supply",
@@ -867,14 +879,6 @@ ChainNameValues = [
     "CHX-L__SMR_52%_BF_EFUELSYN__prod_in_supply",
     "CHX-L__SMR_52%_EFUELSYN__prod_in_demand",
     "CHX-L__SMR_52%_EFUELSYN__prod_in_supply",
-    "DRI-S__ATR_91%_DRI__prod_in_demand",
-    "DRI-S__ATR_91%_DRI__prod_in_supply",
-    "DRI-S__NG-DRI-C__prod_in_demand",
-    "DRI-S__NG-DRI-C__prod_in_supply",
-    "DRI-S__SMR_52%_BF_DRI__prod_in_demand",
-    "DRI-S__SMR_52%_BF_DRI__prod_in_supply",
-    "DRI-S__SMR_52%_DRI__prod_in_demand",
-    "DRI-S__SMR_52%_DRI__prod_in_supply",
     "FT e-fuels (AEL)",
     "FT e-fuels (PEM)",
     "FT e-fuels (SOEC)",
@@ -930,7 +934,7 @@ ScenarioType = Literal[
     "2040 (low)",
     "2040 (medium)",
 ]
-ScenarioValues = [
+ScenarioValues: list[ScenarioType] = [
     "2030 (high)",
     "2030 (low)",
     "2030 (medium)",
@@ -941,30 +945,26 @@ ScenarioValues = [
 
 
 ResultClassType = Literal[
-    "Captured Carbon",
     "Carbon",
     "CO2 transport and storage",
     "Derivative production",
-    "Electricity",
     "Electricity and H2 storage",
     "Electricity generation",
     "H2 production",
-    "HEAT",
+    "Heat",
     "Natural gas production",
     "Transportation (Pipeline)",
     "Transportation (Ship)",
     "Water",
 ]
-ResultClassValues = [
-    "Captured Carbon",
+ResultClassValues: list[ResultClassType] = [
     "Carbon",
     "CO2 transport and storage",
     "Derivative production",
-    "Electricity",
     "Electricity and H2 storage",
     "Electricity generation",
     "H2 production",
-    "HEAT",
+    "Heat",
     "Natural gas production",
     "Transportation (Pipeline)",
     "Transportation (Ship)",
@@ -972,20 +972,52 @@ ResultClassValues = [
 ]
 
 
-SecProcCO2Type = Literal["Direct Air Capture", "Direct Air Capture (blue)"]
-SecProcCO2Values = ["Direct Air Capture", "Direct Air Capture (blue)"]
+SecProcCO2Type = Literal[
+    "CO2 from fossil source",
+    "CO2 from sustainable source",
+    "Direct Air Capture",
+    "Direct Air Capture (blue)",
+]
+SecProcCO2Values: list[SecProcCO2Type] = [
+    "CO2 from fossil source",
+    "CO2 from sustainable source",
+    "Direct Air Capture",
+    "Direct Air Capture (blue)",
+]
 
 
 SecProcH2OType = Literal["Sea Water desalination"]
-SecProcH2OValues = ["Sea Water desalination"]
+SecProcH2OValues: list[SecProcH2OType] = ["Sea Water desalination"]
+
+
+SecProcHEATType = Literal["Large scale Heatpump (blue)"]
+SecProcHEATValues: list[SecProcHEATType] = ["Large scale Heatpump (blue)"]
+
+
+SecProcELType = Literal["Combined Cycle Gas Turbine with CCS (blue)"]
+SecProcELValues: list[SecProcELType] = ["Combined Cycle Gas Turbine with CCS (blue)"]
+
+
+SecProcCCSType = Literal["CO2 transport and storage (blue)"]
+SecProcCCSValues: list[SecProcCCSType] = ["CO2 transport and storage (blue)"]
 
 
 ResGenType = Literal["PV tilted", "Wind-PV-Hybrid", "Wind Offshore", "Wind Onshore"]
-ResGenValues = ["PV tilted", "Wind-PV-Hybrid", "Wind Offshore", "Wind Onshore"]
+ResGenValues: list[ResGenType] = [
+    "PV tilted",
+    "Wind-PV-Hybrid",
+    "Wind Offshore",
+    "Wind Onshore",
+]
 
 
 ProcessCodeResType = Literal["PV-FIX", "RES-HYBR", "WIND-OFF", "WIND-ON"]
-ProcessCodeResValues = ["PV-FIX", "RES-HYBR", "WIND-OFF", "WIND-ON"]
+ProcessCodeResValues: list[ProcessCodeResType] = [
+    "PV-FIX",
+    "RES-HYBR",
+    "WIND-OFF",
+    "WIND-ON",
+]
 
 
 DimensionType = Literal[
@@ -999,10 +1031,14 @@ DimensionType = Literal[
     "process",
     "secproc_co2",
     "secproc_water",
+    "secproc_heat",
+    "secproc_el",
+    "secproc_ccs",
+    "secproc_ccs_i",
     "res_gen",
     "parameter",
 ]
-DimensionValues = [
+DimensionValues: list[DimensionType] = [
     "scenario",
     "chain",
     "region",
@@ -1013,6 +1049,10 @@ DimensionValues = [
     "process",
     "secproc_co2",
     "secproc_water",
+    "secproc_heat",
+    "secproc_el",
+    "secproc_ccs",
+    "secproc_ccs_i",
     "res_gen",
     "parameter",
 ]
@@ -1025,35 +1065,35 @@ ProcessStepType = Literal[
     "DERIV",
     "DERIV2",
     "PRE_SHP",
-    "PRE_PPL",
-    "POST_SHP",
-    "POST_PPL",
     "SHP",
     "SHP_OWN",
+    "POST_SHP",
+    "PRE_PPL",
     "PPLS",
     "PPL",
     "PPLX",
     "PPLR",
+    "POST_PPL",
     "ELY_I",
     "DERIV_I",
     "DERIV_I2",
 ]
-ProcessStepValues = [
+ProcessStepValues: list[ProcessStepType] = [
     "EL_STR",
     "ELY",
     "H2_STR",
     "DERIV",
     "DERIV2",
     "PRE_SHP",
-    "PRE_PPL",
-    "POST_SHP",
-    "POST_PPL",
     "SHP",
     "SHP_OWN",
+    "POST_SHP",
+    "PRE_PPL",
     "PPLS",
     "PPL",
     "PPLX",
     "PPLR",
+    "POST_PPL",
     "ELY_I",
     "DERIV_I",
     "DERIV_I2",
@@ -1061,16 +1101,58 @@ ProcessStepValues = [
 
 
 ResultCostType = Literal["CAPEX", "OPEX", "FLOW", "LC"]
-ResultCostValues = ["CAPEX", "OPEX", "FLOW", "LC"]
+ResultCostValues: list[ResultCostType] = ["CAPEX", "OPEX", "FLOW", "LC"]
 
 
 TransportType = Literal["Ship", "Pipeline"]
-TransportValues = ["Ship", "Pipeline"]
+TransportValues: list[TransportType] = ["Ship", "Pipeline"]
 
 
 OutputUnitType = Literal["USD/MWh", "USD/t"]
-OutputUnitValues = ["USD/MWh", "USD/t"]
+OutputUnitValues: list[OutputUnitType] = ["USD/MWh", "USD/t"]
 
 
 ToolVersionColorType = Literal["blue", "green"]
-ToolVersionColorValues = ["blue", "green"]
+ToolVersionColorValues: list[ToolVersionColorType] = ["blue", "green"]
+
+
+ResultEmissionType = Literal["direct", "indirect"]
+ResultEmissionValues: list[ResultEmissionType] = ["direct", "indirect"]
+
+
+EmissionType = Literal["mass", "emission"]
+EmissionValues: list[EmissionType] = ["mass", "emission"]
+
+
+ResultGasType = Literal["CO2", "CH4"]
+ResultGasValues: list[ResultGasType] = ["CO2", "CH4"]
+
+
+DataQueryParameterType = Literal[
+    "parameter_code",
+    "process_code",
+    "flow_code",
+    "source_region_code",
+    "target_country_code",
+    "default",
+    "use_user_data",
+    "region",
+    "process_res",
+    "process_ely",
+    "process_deriv",
+    "process_flh",
+]
+DataQueryParameterValues: list[DataQueryParameterType] = [
+    "parameter_code",
+    "process_code",
+    "flow_code",
+    "source_region_code",
+    "target_country_code",
+    "default",
+    "use_user_data",
+    "region",
+    "process_res",
+    "process_ely",
+    "process_deriv",
+    "process_flh",
+]

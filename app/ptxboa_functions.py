@@ -11,7 +11,7 @@ import streamlit as st
 
 from ptxboa.api import ApiCalculateResult, PtxboaAPI
 from ptxboa.static import (
-    ChainNameType,
+    ChainType,
     OutputUnitType,
     ResGenType,
     ScenarioType,
@@ -33,7 +33,7 @@ def calculate_cached(
     scenario: ScenarioType,
     secproc_co2: SecProcCO2Type,
     secproc_water: SecProcH2OType,
-    chain: ChainNameType,
+    chain: ChainType,
     res_gen: ResGenType,
     region: SourceRegionNameType,
     country: TargetCountryNameType,
@@ -221,6 +221,7 @@ def calculate_results_list_blue(
         "scenario",
         "WACC",
         "Natural gas price",
+        "secproc_co2",
     ],
     parameter_list: None | list | pd.Series | pd.Index = None,
     override_session_state: dict | None = None,
@@ -267,7 +268,7 @@ def calculate_results_list_blue(
         settings.update(override_session_state)
 
     if parameter_list is None:
-        if parameter_to_change in ["region", "chain", "scenario"]:
+        if parameter_to_change in ["region", "chain", "scenario", "secproc_co2"]:
             parameter_list = api.get_dimension(
                 parameter_to_change, tool_version_color="blue"
             ).index
@@ -280,7 +281,7 @@ def calculate_results_list_blue(
     emissions_list = []
     emissions_mass_list = []
 
-    if parameter_to_change in ["region", "chain", "scenario"]:
+    if parameter_to_change in ["region", "chain", "scenario", "secproc_co2"]:
         for change_factor in parameter_list:
             settings.update({parameter_to_change: change_factor})
             if parameter_to_change == "chain":
@@ -332,7 +333,7 @@ def calculate_results_list_blue(
 
         if parameter_to_change == "Natural gas price":
             parameter_code = "OPEX (other variable)"
-            process_code = "NG production"
+            process_code = "production of natural gas (blue)"
             flow_code = ""
             # NG price in supply region
             source_region_code = settings["region"]
@@ -426,7 +427,12 @@ def calculate_results_list_blue(
 
                     value_label = f"{(value):.{float_precision[parameter_to_change]}f} "
 
-                    return value_label
+                    if change_factor == 1:
+                        change_label = "(from input data)"
+                    else:
+                        change_label = f"({int(round((change_factor - 1) * 100)):+}%)"
+
+                    return f"{value_label}<br>{change_label}"
 
                 value_label = get_value_label(change_factor, value, parameter_to_change)
                 costs = res_single.costs
@@ -519,6 +525,7 @@ def sort_by_position_in_chain(
         "CO2",
         "CO2 (direct)",
         "CO2 (indirect)",
+        "CO2 transport and storage",
         "Total",
     ]
 
@@ -653,6 +660,7 @@ def get_data_type_from_input_data(
         tool_version_color=tool_version_color,
     )
 
+    processes = api.get_dimension("process", tool_version_color=tool_version_color)
     # green data types not specied by flow code
     flow_code = None
 
@@ -668,7 +676,6 @@ def get_data_type_from_input_data(
         source_region_code = [""]
         index = "process_code"
         columns = "parameter_code"
-        processes = api.get_dimension("process")
 
     if data_type == "specific_costs":
         scope = None
@@ -684,9 +691,11 @@ def get_data_type_from_input_data(
         index = "process_code"
         columns = "flow_code"
         parameter_code = ["conversion factors"]
-        process_code = input_data.loc[
-            input_data["parameter_code"] == "conversion factors", "process_code"
-        ].unique()
+        process_code = set(
+            input_data.loc[
+                input_data["parameter_code"] == "conversion factors", "process_code"
+            ].unique()
+        ).intersection(set(processes["process_name"]))
 
     if data_type == "electricity_generation":
         parameter_code = [
@@ -774,11 +783,31 @@ def get_data_type_from_input_data(
             processes["process_name"].str.contains("storage"), "process_name"
         ].to_list()
 
+    if data_type == "Natural gas production costs":
+        source_region_code = None
+        parameter_code = [
+            "OPEX (other variable)",
+        ]
+        process_code = ["production of natural gas (blue)"]
+        flow_code = [""]
+        index = "source_region_code"
+        columns = "parameter_code"
+
+    if data_type == "Natural gas production losses":
+        source_region_code = None
+        parameter_code = [
+            "losses (own fuel)",
+        ]
+        process_code = ["production of natural gas (blue)"]
+        flow_code = ["natural gas (gasous)"]
+        index = "source_region_code"
+        columns = "parameter_code"
+
     if data_type == "Natural gas price":
         source_region_code = None
-        parameter_code = ["OPEX (other variable)"]
-        process_code = ["NG production"]
-        flow_code = [""]
+        parameter_code = ["specific costs"]
+        process_code = None
+        flow_code = ["natural gas (gasous)"]
         index = "source_region_code"
         columns = "parameter_code"
 
@@ -1073,6 +1102,7 @@ def change_index_names(df: pd.DataFrame, mapping: dict | None = None) -> pd.Data
             "chain": "Chain",
             "flow_code": "Carrier/Material",
             "process_type": "Processing step",
+            "secproc_co2": "Secondary CO₂ source",
         }
     new_idx_names = [mapping.get(i, i) for i in df.index.names]
     df.index.names = new_idx_names
@@ -1081,7 +1111,11 @@ def change_index_names(df: pd.DataFrame, mapping: dict | None = None) -> pd.Data
 
 @st.cache_data(show_spinner=False)
 def check_if_input_is_needed(
-    _api: PtxboaAPI, flow_code: str, chain: str = None, scenario: str = None
+    _api: PtxboaAPI,
+    flow_code: str,
+    chain: str = None,
+    scenario: str = None,
+    tool_version_color: ToolVersionColorType = "green",
 ) -> bool:
     """Check if a certain input is required by the selected process chain."""
     if chain is None:
@@ -1094,7 +1128,9 @@ def check_if_input_is_needed(
     process_codes = [p for p in process_codes if p != ""]
 
     # get list of conversion coefficients for these processes:
-    df = _api.get_input_data(scenario=scenario, long_names=False)
+    df = _api.get_input_data(
+        scenario=scenario, long_names=False, tool_version_color=tool_version_color
+    )
     flow_codes = df.loc[
         (df["process_code"].isin(process_codes)) & (df["parameter_code"] == "CONV"),
         "flow_code",
@@ -1136,11 +1172,21 @@ class BlueResultOverDimension:
 
 def blue_results_over_dimension(
     api,
-    dim: Literal["region", "chain", "scenario", "WACC", "Natural gas price"],
+    dim: Literal[
+        "region", "chain", "scenario", "WACC", "Natural gas price", "secproc_co2"
+    ],
     emissions_included: Literal["upstream", "final_use", "upstream_and_final_use"],
     parameter_list: None | pd.Series | pd.Index = None,
     override_session_state=None,
-):
+) -> BlueResultOverDimension:
+
+    if parameter_list is not None and parameter_list.empty:
+        logger.error("No parameter_list for blue_results_over_dimension: %s", dim)
+        return BlueResultOverDimension(
+            costs=pd.DataFrame(),
+            emissions=pd.DataFrame(),
+            emissions_not_modified=pd.DataFrame(),
+        )
 
     def filter_co2_bound_in_product(
         emissions: pd.DataFrame | None,

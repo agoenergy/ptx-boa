@@ -52,7 +52,7 @@ def get_data_hash_md5(key: Union[None, int, float, str, bool, dict, list]) -> st
     return hash_md5
 
 
-class TempFile:
+class _TempFile:
     """Custom temporary file handler."""
 
     def __init__(self, filepath):
@@ -82,7 +82,7 @@ class TempFile:
             logger.info(f"saved file {self.filepath}")
 
 
-class ProfilesHashes(metaclass=SingletonMeta):
+class _ProfilesHashes(metaclass=SingletonMeta):
     """Only instanciated once for path."""
 
     PATTERN = re.compile(
@@ -116,7 +116,7 @@ class ProfilesHashes(metaclass=SingletonMeta):
         return result
 
 
-class ProfilesFLH(metaclass=SingletonMeta):
+class _ProfilesFLH(metaclass=SingletonMeta):
     """Only instanciated once for profiles_path."""
 
     PATTERN = re.compile(r"^(?P<region>[^_]+)_(?P<res>.+)_aggregated.csv$")
@@ -152,10 +152,10 @@ class ProfilesFLH(metaclass=SingletonMeta):
             we = pd.read_csv(weights_file, index_col=["period_id", "TimeStep"])
             # multiply columns in profiles with weightings
             pr_weighted = (
-                pr.mul(we.squeeze(), axis=0)  # type:ignore
+                pr.mul(we.squeeze(), axis=0)  # type: ignore
                 .reset_index(drop=True)
                 .stack()
-                .rename("specific_generation")  # type:ignore
+                .rename("specific_generation")  # type: ignore
             )
             pr_weighted.index = pr_weighted.index.set_names("re_source", level=-1)
             pr_weighted = pr_weighted.reset_index()
@@ -194,25 +194,25 @@ class PtxOpt:
 
     def __init__(self, profiles_path: Path, cache_dir: Path | None = None):
         self.cache_dir = Path(cache_dir) if cache_dir else None
-        self.profiles_hashes = ProfilesHashes(profiles_path)
-        self.profiles_flh = ProfilesFLH(profiles_path)
+        self.profiles_hashes = _ProfilesHashes(profiles_path)
+        self.profiles_flh = _ProfilesFLH(profiles_path)
 
     def _save(
         self, filepath: Path | str, data: object, network: Network, metadata: dict
     ) -> None:
         filepath = str(filepath)
 
-        with TempFile(filepath) as filepath_tmp:
+        with _TempFile(filepath) as filepath_tmp:
             with open(filepath_tmp, "wb") as file:
                 pickle.dump(data, file)
 
         # also save network
         filepath_nw = filepath + ".network.nc"
-        with TempFile(filepath_nw) as filepath_tmp:
+        with _TempFile(filepath_nw) as filepath_tmp:
             network.export_to_netcdf(filepath_tmp)
 
         # also save metadata
-        with TempFile(filepath + ".metadata.json") as filepath_tmp:
+        with _TempFile(filepath + ".metadata.json") as filepath_tmp:
             with open(filepath_tmp, "w", encoding="utf-8") as file:
                 json.dump(metadata, file, indent=2, ensure_ascii=False)
 
@@ -262,13 +262,13 @@ class PtxOpt:
             "H2_STR": None,
             "CO2": None,
             "H2O": None,
-        }  # type:ignore # TODO: update OptInputDataType
+        }  # type: ignore # TODO: update OptInputDataType
 
         for step in input_data["main_export_process_chain"]:
             if step["step"] == "RES":
                 if step["process_code"] == "RES-HYBR":
                     pc: ProcessCodeResType
-                    for pc in ["PV-FIX", "WIND-ON"]:  # type:ignore
+                    for pc in ["PV-FIX", "WIND-ON"]:  # type: ignore
                         proc_data = input_data["flh_opt_process"][pc]
                         result["RES"].append(
                             {
@@ -433,7 +433,7 @@ class PtxOpt:
         hashsum = get_data_hash_md5(hash_data)
         return hash_data, hashsum
 
-    def get_data(
+    def get_calculation_data(
         self, data_opt: CalculateDataType, data: CalculateDataType
     ) -> CalculateDataType:
         """Get calculation data including optimized FLH.
@@ -484,7 +484,7 @@ class PtxOpt:
         else:
             # load existing results
             opt_output_data: OptOutputDataType = self._load(
-                hash_filepath  # type:ignore
+                hash_filepath  # type: ignore
             )
 
         self._merge_data(data, opt_output_data)

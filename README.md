@@ -74,7 +74,7 @@ scp -r ptxboa2:ptx-boa_offline_optimization/optimization_cache/* .
 ssh ptxboa
 
 # set variables
-VERSION=2.1.23
+VERSION=2.2.6
 APP=app
 PORT=9000
 
@@ -104,9 +104,15 @@ docker logs --follow $APP
 # check which docker images are downloaded
 docker image ls
 # show running containers
-docker image ps
+docker ps
 # delete all unused objects
 docker system prune -a
+```
+
+## Testing / code coverage
+
+```bash
+pytest --cov=ptxboa --cov-report=term-missing --cov-report=html:htmlcov
 ```
 
 ## Internal documentation
@@ -278,8 +284,6 @@ pypsa network object that contains the solved model.
   }
 }
 ```
-
-- TODO: model components
 
 #### Example flowchart
 

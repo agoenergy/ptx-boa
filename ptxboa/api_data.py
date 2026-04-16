@@ -3,7 +3,7 @@
 from functools import cache
 from itertools import product
 from pathlib import Path
-from typing import Dict, Iterable, List, Literal, Tuple
+from typing import TYPE_CHECKING, Dict, List, Literal, Tuple
 
 import numpy as np
 import pandas as pd
@@ -17,13 +17,12 @@ from ptxboa import (
 )
 from ptxboa.api_optimize import PtxOpt
 from ptxboa.static import (
-    ChainNameType,
+    ChainType,
     DimensionType,
     FlowCodeType,
     OutputUnitValues,
     ParameterCodeType,
     ParameterRangeValues,
-    ProcessCodeResType,
     ProcessCodeType,
     ProcessStepType,
     ScenarioType,
@@ -31,55 +30,33 @@ from ptxboa.static import (
     SourceRegionCodeType,
     TargetCountryCodeType,
     ToolVersionColorType,
+    TransportType,
     TransportValues,
     YearValues,
 )
-from ptxboa.static._type_defs import CalculateDataType
+from ptxboa.static._type_defs import (
+    CalculateDataType,
+)
+
+if TYPE_CHECKING:
+    from ptxboa.api_calc import PtxCalc
 
 
-def _assign_key(
-    df: pd.DataFrame, key_columns: str | List[str] | Tuple[str]
-) -> pd.DataFrame:
-    if isinstance(key_columns, str):
-        key_columns = [key_columns]
-    key_columns = list(key_columns)  # in case we got tuple
-    df = df.assign(key=df[key_columns].agg(KEY_SEPARATOR.join, axis=1)).set_index("key")
-    if not df.index.unique:
-        raise ValueError("duplicate keys in data")
-    return df
-
-
-@cache
-def _load_data(
-    data_dir: str | Path, name: str, key_columns: str | Tuple[str] | None = None
-) -> pd.DataFrame:
-    filepath = Path(data_dir) / f"{name}.csv"
-    df = pd.read_csv(
-        filepath,
-        # need to define custom na values due to Alpha2 code of Namibia
-        na_values=[
-            "N/A",
-            "n/a",
-            "NULL",
-            "null",
-            "NaN",
-            "-NaN",
-            "nan",
-            "-nan",
-            "",
-            "None",
-        ],
-        keep_default_na=False,
-    ).drop(columns="key", errors="ignore")
-    # numerical columns should never be empty, dimension columns
-    # maybe empty and will be filled with ""
-    df = df.fillna("")
-
-    # set index
-    if key_columns:
-        df = _assign_key(df, key_columns)
-
-    return df
+def _load_scenario_data(data_dir, scenario: str) -> pd.DataFrame:
+    scenario_filename = (
+        f"{scenario.replace(' ', '_').replace(')', '').replace('(', '')}"
+    )
+    return _load_data(
+        data_dir,
+        scenario_filename,
+        key_columns=(
+            "parameter_code",
+            "process_code",
+            "flow_code",
+            "source_region_code",
+            "target_country_code",
+        ),
+    )
 
 
 def _load_dimensions() -> dict[DimensionType, pd.DataFrame]:
@@ -131,24 +108,26 @@ def _load_dimensions() -> dict[DimensionType, pd.DataFrame]:
             for year, parameter_range in product(YearValues, ParameterRangeValues)
         ]
     ).set_index("scenario_name")
-    dimensions["secproc_co2"] = pd.concat(
-        [
-            dimensions["process"]
-            .loc[dimensions["process"]["process_class"] == "PROV_C"]
-            .copy(),
-            pd.DataFrame([{"process_name": "Specific costs"}]),
-        ]
-    ).set_index("process_name", drop=False)
-    dimensions["secproc_water"] = pd.concat(
-        [
-            (
-                dimensions["process"]
-                .loc[dimensions["process"]["process_class"] == "PROV_H2O"]
-                .copy()
-            ),
-            pd.DataFrame([{"process_name": "Specific costs"}]),
-        ]
-    ).set_index("process_name", drop=False)
+
+    dimensions["secproc_co2"] = _create_secproc_dimension(
+        dimensions=dimensions, process_class="PROV_C"
+    )
+    dimensions["secproc_water"] = _create_secproc_dimension(
+        dimensions=dimensions, process_class="PROV_H2O"
+    )
+    dimensions["secproc_heat"] = _create_secproc_dimension(
+        dimensions=dimensions, process_class="PROV_HT"
+    )
+    dimensions["secproc_el"] = _create_secproc_dimension(
+        dimensions=dimensions, process_class="PROV_EL"
+    )
+    dimensions["secproc_ccs"] = _create_secproc_dimension(
+        dimensions=dimensions, process_class="STORC"
+    )
+    dimensions["secproc_ccs_i"] = _create_secproc_dimension(
+        dimensions=dimensions, process_class="STORC"
+    )
+
     dimensions["chain"] = _load_data(
         STATIC_DATA_DIR, name="chains", key_columns="chain"
     )
@@ -198,238 +177,60 @@ def _load_dimensions() -> dict[DimensionType, pd.DataFrame]:
     return dimensions
 
 
-class _ParameterGetter:
-    def __init__(
-        self,
-        data_handler,
-        source_region_code,
-        target_country_code,
-        process_code_res,
-        process_code_ely,
-        process_code_deriv,
-        df_processes,
-        df_flows,
-        use_user_data: bool = True,
-    ):
-        self.data_handler = data_handler
-        self.source_region_code = source_region_code
-        self.target_country_code = target_country_code
-        self.process_code_res = process_code_res
-        self.process_code_ely = process_code_ely
-        self.process_code_deriv = process_code_deriv
-        self.df_processes = df_processes
-        self.df_flows = df_flows
-        self.use_user_data = use_user_data
+@cache
+def _load_data(
+    data_dir: str | Path, name: str, key_columns: str | Tuple[str] | None = None
+) -> pd.DataFrame:
+    filepath = Path(data_dir) / f"{name}.csv"
+    df = pd.read_csv(
+        filepath,
+        # need to define custom na values due to Alpha2 code of Namibia
+        na_values=[
+            "N/A",
+            "n/a",
+            "NULL",
+            "null",
+            "NaN",
+            "-NaN",
+            "nan",
+            "-nan",
+            "",
+            "None",
+        ],
+        keep_default_na=False,
+    ).drop(columns="key", errors="ignore")
+    # numerical columns should never be empty, dimension columns
+    # maybe empty and will be filled with ""
+    df = df.fillna("")
 
-    def get_parameter_value_w_default(
-        self,
-        parameter_code: ParameterCodeType,
-        process_code: ProcessCodeType | Literal[""] = "",
-        flow_code: FlowCodeType | Literal[""] = "",
-        default: float | None = None,
-    ):
-        return self.data_handler._get_parameter_value(
-            parameter_code=parameter_code,
-            process_code=process_code,
-            flow_code=flow_code,
-            source_region_code=self.source_region_code,
-            target_country_code=self.target_country_code,
-            process_code_res=self.process_code_res,
-            process_code_ely=self.process_code_ely,
-            process_code_deriv=self.process_code_deriv,
-            default=default,
-            use_user_data=self.use_user_data,
-        )
+    # set index
+    if key_columns:
+        df = _assign_key(df, key_columns)
 
-    def get_secondary_flows(self, process_code: ProcessCodeType) -> list[FlowCodeType]:
-        flows = self.df_processes.loc[process_code, "secondary_flows"]
-        flows = [x for x in flows if x]
-        return flows
+    return df
 
-    def get_secondary_and_main_flows(
-        self, process_code: ProcessCodeType
-    ) -> list[FlowCodeType]:
-        flows = self.get_secondary_flows(process_code)
-        proc = self.df_processes.loc[process_code]
-        for flow in [proc.main_flow_code_out, proc.main_flow_code_in]:
-            if flow and flow not in flows:
-                flows.append(flow)
-        return list(flows)
 
-    def get_flow_co2_params(
-        self, process_code: ProcessCodeType, parameter_code: ParameterCodeType
-    ) -> dict:
-        result = {}
-        flow_codes = self.get_secondary_and_main_flows(process_code)
-        for flow_code in flow_codes:
-            # new: loss can reduce the effective conversion rate
-            value = self.get_parameter_value_w_default(
-                parameter_code, flow_code=flow_code, default=0
-            )
-            if value:
-                result[flow_code] = value
-        return result
+def _assign_key(
+    df: pd.DataFrame, key_columns: str | List[str] | Tuple[str]
+) -> pd.DataFrame:
+    if isinstance(key_columns, str):
+        key_columns = [key_columns]
+    key_columns = list(key_columns)  # in case we got tuple
+    df = df.assign(key=df[key_columns].agg(KEY_SEPARATOR.join, axis=1)).set_index("key")
+    if not df.index.unique:
+        raise ValueError("duplicate keys in data")
+    return df
 
-    def get_flow_co2_params_w_process(
-        self, process_code: ProcessCodeType, parameter_code: ParameterCodeType
-    ) -> dict:
-        result = {}
-        flow_codes = self.get_secondary_and_main_flows(process_code)
-        for flow_code in flow_codes:
-            # new: loss can reduce the effective conversion rate
-            value = self.get_parameter_value_w_default(
-                parameter_code,
-                process_code=process_code,
-                flow_code=flow_code,
-                default=0,
-            )
-            if value:
-                result[flow_code] = value
-        return result
 
-    def get_flow_loss_params(self, process_code: ProcessCodeType) -> dict:
-        result = {}
-        for flow_code in self.get_secondary_flows(process_code):
-            # new: loss can reduce the effective conversion rate
-            loss = self.get_parameter_value_w_default(
-                "LOSS", process_code=process_code, flow_code=flow_code, default=0
-            )
-            if loss:
-                result[flow_code] = loss
-        return result
-
-    def get_flow_conv_params(
-        self,
-        process_code: ProcessCodeType,
-        flow_loss_params: dict[FlowCodeType, float] | None = None,
-    ) -> dict:
-        flow_loss_params = flow_loss_params or {}
-        result = {}
-        for flow_code in self.get_secondary_flows(process_code):
-            conv = self.get_parameter_value_w_default(
-                parameter_code="CONV",
-                process_code=process_code,
-                flow_code=flow_code,
-                default=0,
-            )
-            if conv <= 0:
-                # currently negative flows (i.e. additional output)
-                # has no value
-                continue
-
-            # new: loss can reduce the effective conversion rate
-            loss = flow_loss_params.get(flow_code)
-            if loss:
-                # see https://github.com/agoenergy/ptx-boa/issues/581
-                conv = conv * (1 + loss)
-
-            result[flow_code] = conv
-        return result
-
-    def get_process_params(self, process_code: ProcessCodeType) -> dict:
-        result = {}
-        result["EFF"] = self.get_parameter_value_w_default(
-            "EFF", process_code=process_code, default=1
-        )
-        # loss that effects main efficiency: get parameter for
-        # main in flow
-        main_flow_code_in = self.df_processes.loc[process_code, "main_flow_code_in"]
-        main_loss_param = self.get_parameter_value_w_default(
-            "LOSS", process_code=process_code, flow_code=main_flow_code_in, default=0
-        )
-        flow_loss_params = self.get_flow_loss_params(process_code)
-        if main_loss_param:
-            # see https://github.com/agoenergy/ptx-boa/issues/581
-            result["EFF"] = result["EFF"] / (1 + main_loss_param)
-            result["LOSS"] = main_loss_param
-
-        result["FLH"] = self.get_parameter_value_w_default(
-            "FLH",
-            process_code=process_code,
-            default=7000,  # TODO: default?
-        )
-        result["LIFETIME"] = self.get_parameter_value_w_default(
-            "LIFETIME",
-            process_code=process_code,
-            default=20,  # TODO: default?
-        )
-        result["CAPEX"] = self.get_parameter_value_w_default(
-            "CAPEX", process_code=process_code, default=0
-        )  # TODO
-        result["OPEX-F"] = self.get_parameter_value_w_default(
-            "OPEX-F", process_code=process_code, default=0
-        )
-        result["OPEX-O"] = self.get_parameter_value_w_default(
-            "OPEX-O", process_code=process_code, default=0
-        )
-        result["CONV"] = self.get_flow_conv_params(
-            process_code, flow_loss_params=flow_loss_params
-        )
-        if flow_loss_params:
-            result["LOSS_FLOW"] = flow_loss_params
-
-        # additional parameters for co2
-        # TODO: country dependent?
-
-        for param in ["CO2BOUND", "CH4SHARE", "EF_M", "EF_E"]:
-            value = self.get_flow_co2_params(
-                process_code, parameter_code=param
-            )  # type:ignore
-            if value:
-                result[param] = value
-        for param in ["CO2CPT-R", "CO2CPT-S"]:
-            value = self.get_flow_co2_params_w_process(
-                process_code,
-                parameter_code=param,  # type:ignore
-            )
-            if value:
-                result[param] = value
-
-        return result
-
-    def get_transport_process_params(
-        self, process_code: ProcessCodeType, dist_transport: float
-    ) -> dict:
-        result = {}
-        # TODO: also save in results
-        loss_t = self.get_parameter_value_w_default(
-            "LOSS-T", process_code=process_code, default=0
-        )
-        result["DIST"] = dist_transport  # TODO: `DIST` not oficcial parameter
-        result["EFF"] = 1 - loss_t * dist_transport
-        result["OPEX-T"] = self.get_parameter_value_w_default(
-            "OPEX-T", process_code=process_code, default=0
-        )
-        result["OPEX-O"] = self.get_parameter_value_w_default(
-            "OPEX-O", process_code=process_code, default=0
-        )
-        result["CONV"] = self.get_flow_conv_params(process_code)
-        return result
-
-    def get_flow_params(
-        self, parameter_code: ParameterCodeType, flow_codes: Iterable[FlowCodeType]
-    ):
-        result = {}
-        for flow_code in flow_codes:
-            result[flow_code] = self.get_parameter_value_w_default(
-                parameter_code,
-                flow_code=flow_code,
-            )
-        return result
-
-    def get_flow_params_for_proc_if_exist(
-        self, parameter_code: ParameterCodeType, flow_codes: Iterable[FlowCodeType]
-    ):
-        result = {}
-        for flow_code in flow_codes:
-            value = self.get_parameter_value_w_default(
-                parameter_code,
-                flow_code=flow_code,
-                default=0,
-            )
-            if value:
-                result[flow_code] = value
-        return result
+def _create_secproc_dimension(dimensions: dict[str, pd.DataFrame], process_class: str):
+    return pd.concat(
+        [
+            dimensions["process"]
+            .loc[dimensions["process"]["process_class"] == process_class]
+            .copy(),
+            pd.DataFrame([{"process_name": "Specific costs"}]),
+        ]
+    ).set_index("process_name", drop=False)
 
 
 class DataHandler:
@@ -439,6 +240,12 @@ class DataHandler:
     Instances of this class can be used to retrieve data from a single scenario and
     combine it with set user data.
     """
+
+    PARAMETER_DEFAULTS: dict[ParameterCodeType, float] = {
+        "EFF": 1,
+        "FLH": 7000,
+        "LIFETIME": 20,
+    }
 
     dimensions: dict[DimensionType, pd.DataFrame] = _load_dimensions()
 
@@ -472,20 +279,7 @@ class DataHandler:
             ),
         )
 
-        scenario_filename = (
-            f"{scenario.replace(' ', '_').replace(')', '').replace('(', '')}"
-        )
-        self._scenario_data = _load_data(
-            self.data_dir,
-            scenario_filename,
-            key_columns=(
-                "parameter_code",
-                "process_code",
-                "flow_code",
-                "source_region_code",
-                "target_country_code",
-            ),
-        ).copy()
+        self._scenario_data = _load_scenario_data(self.data_dir, scenario).copy()
 
         if user_data is not None:
             self.scenario_data = self._update_scenario_data_with_user_data(
@@ -538,17 +332,17 @@ class DataHandler:
             if dim in {"region", "country"}:
                 # unified mapping for country and region
                 mapping = pd.Series(
-                    cls.dimensions["region_country"][  # type:ignore
+                    cls.dimensions["region_country"][  # type: ignore
                         f"region_country_{out_type}"
                     ].to_list(),
-                    index=cls.dimensions["region_country"][
+                    index=cls.dimensions["region_country"][  # type: ignore
                         f"region_country_{in_type}"
-                    ],  # type:ignore
+                    ],
                 )
             else:
                 mapping = pd.Series(
-                    cls.dimensions[dim][f"{dim}_{out_type}"].to_list(),  # type:ignore
-                    index=cls.dimensions[dim][f"{dim}_{in_type}"],  # type:ignore
+                    cls.dimensions[dim][f"{dim}_{out_type}"].to_list(),  # type: ignore
+                    index=cls.dimensions[dim][f"{dim}_{in_type}"],  # type: ignore
                 )
             if dim not in ["region", "country"]:
                 column_name = f"{dim}_code"
@@ -602,7 +396,7 @@ class DataHandler:
 
         # we only can user DataFrame.update with matching index values
         for key, value in user_data["value"].items():
-            scenario_data.at[key, "value"] = value  # type:ignore
+            scenario_data.at[key, "value"] = value  # type: ignore
 
         return scenario_data
 
@@ -638,9 +432,9 @@ class DataHandler:
         flow_code: FlowCodeType | None = None,
         source_region_code: SourceRegionCodeType | None = None,
         target_country_code: TargetCountryCodeType | None = None,
-        process_code_res: ProcessCodeType | None = None,
-        process_code_ely: ProcessCodeType | None = None,
-        process_code_deriv: ProcessCodeType | None = None,
+        process_res: ProcessCodeType | None = None,
+        process_ely: ProcessCodeType | None = None,
+        process_deriv: ProcessCodeType | None = None,
         default: float | None = None,
         use_user_data: bool = True,
     ) -> float:
@@ -651,7 +445,6 @@ class DataHandler:
         ----------
         parameter_code : ParameterCodeType
             parameter category. Must be one of:
-                - 'CALOR',
                 - 'CAPEX'
                 - 'CAP-T'
                 - 'CONV'
@@ -683,7 +476,6 @@ class DataHandler:
         flow_code : str, optional
             Code for the flow, by default None. Must be set for the following
             parameters:
-                - CALOR
                 - CONV
                 - SPECCOST
         source_region_code : str, optional
@@ -706,16 +498,16 @@ class DataHandler:
                 - DST-S-D
                 - DST-S-DP
                 - SEASHARE
-        process_code_res : str, optional
-            Code for the process_code_res, by default None. Must be set for the
+        process_res : str, optional
+            Code for the process_res, by default None. Must be set for the
             following parameters:
                 - FLH
-        process_code_ely : str, optional
-            Code for the process_code_ely, by default None. Must be set for the
+        process_ely : str, optional
+            Code for the process_ely, by default None. Must be set for the
             following parameters:
                 - FLH
-        process_code_deriv : str, optional
-            Code for the process_code_deriv, by default None. Must be set for the
+        process_deriv : str, optional
+            Code for the process_deriv, by default None. Must be set for the
             following parameters:
                 - FLH
 
@@ -735,8 +527,6 @@ class DataHandler:
         ValueError
             if no value is found for a parameter combination and no default is given.
         """
-        # FIXME: replace with a cleaner, faster,class based lookup per parameter
-
         # convert missing codes tom empty strings
         # for data matching
         params = {
@@ -745,9 +535,9 @@ class DataHandler:
             "flow_code": flow_code or "",
             "source_region_code": source_region_code or "",
             "target_country_code": target_country_code or "",
-            "process_code_res": process_code_res or "",
-            "process_code_ely": process_code_ely or "",
-            "process_code_deriv": process_code_deriv or "",
+            "process_res": process_res or "",
+            "process_ely": process_ely or "",
+            "process_deriv": process_deriv or "",
         }
 
         if (
@@ -759,9 +549,9 @@ class DataHandler:
             df = self.flh
             keys = [
                 "source_region_code",
-                "process_code_res",
-                "process_code_ely",
-                "process_code_deriv",
+                "process_res",
+                "process_ely",
+                "process_deriv",
                 "process_code",
             ]
             required_keys = set(keys)
@@ -780,9 +570,7 @@ class DataHandler:
                 "target_country_code",
             ]
             required_keys = set(
-                self.dimensions["parameter"].at[
-                    parameter_code, "dimensions"
-                ]  # type:ignore
+                self.dimensions["parameter"].at[parameter_code, "dimensions"]  # type: ignore # noqa
             ) | {"parameter_code"}
 
         def _get_value(
@@ -792,7 +580,7 @@ class DataHandler:
                 [params[k] if k in required_keys else "" for k in keys]
             )
             try:
-                return df.at[key, "value"]  # type:ignore
+                return df.at[key, "value"]  # type: ignore
             except KeyError:
                 return None
 
@@ -811,42 +599,19 @@ class DataHandler:
             result = default
 
         if result is None:
-            # FIXME: temporary data
-            if self.tool_version_color == "blue":
-                if parameter_code == "CALOR" and flow_code == "STL-S":
-                    result = 1
-                elif parameter_code == "WACC" and source_region_code == "QAT":
-                    result = 0
-                else:
-                    result = 0
-                    logger.warning(
-                        f"""did not find a parameter value for:
-                        parameter_code={parameter_code},
-                        process_code={process_code},
-                        flow_code={flow_code},
-                        source_region_code={source_region_code},
-                        target_country_code={target_country_code},
-                        process_code_res={process_code_res},
-                        process_code_ely={process_code_ely},
-                        process_code_deriv={process_code_deriv},
-                        ({self.tool_version_color})
-                    """
-                    )
-
-            else:
-                raise ValueError(
-                    f"""did not find a parameter value for:
-                    parameter_code={parameter_code},
-                    process_code={process_code},
-                    flow_code={flow_code},
-                    source_region_code={source_region_code},
-                    target_country_code={target_country_code},
-                    process_code_res={process_code_res},
-                    process_code_ely={process_code_ely},
-                    process_code_deriv={process_code_deriv}
-                    ({self.tool_version_color})
-                """
-                )
+            raise ValueError(
+                f"""did not find a parameter value for:
+                parameter_code={parameter_code},
+                process_code={process_code},
+                flow_code={flow_code},
+                source_region_code={source_region_code},
+                target_country_code={target_country_code},
+                process_res={process_res},
+                process_ely={process_ely},
+                process_deriv={process_deriv}
+                ({self.tool_version_color})
+            """
+            )
         return result
 
     @classmethod
@@ -873,13 +638,9 @@ class DataHandler:
 
     def get_calculation_data(
         self,
-        secondary_processes: Dict[FlowCodeType, ProcessCodeType],
-        chain_name: ChainNameType,
-        process_code_res: ProcessCodeResType,
+        ptx_calc: "PtxCalc",
         source_region_code: SourceRegionCodeType,
         target_country_code: TargetCountryCodeType,
-        use_ship: bool,
-        ship_own_fuel: bool,
         optimize_flh: bool,
         use_user_data_for_optimize_flh: bool = False,
     ) -> CalculateDataType:
@@ -887,20 +648,7 @@ class DataHandler:
 
         Parameters
         ----------
-        secondary_processes : Dict[FlowCodeType, ProcessCodeType]
-            _description_
-        chain_name : ChainNameType
-            _description_
-        process_code_res : ProcessCodeResType
-            _description_
-        source_region_code : SourceRegionCodeType
-            _description_
-        target_country_code : TargetCountryCodeType
-            _description_
-        use_ship : bool
-            _description_
-        ship_own_fuel : bool
-            _description_
+        chain_def: ChainDef
         optimize_flh : bool
             _description_
         use_user_data_for_optimize_flh : bool, optional
@@ -911,234 +659,38 @@ class DataHandler:
         CalculateDataType
             _description_
         """
-        data = self._get_calculation_data(
-            secondary_processes=secondary_processes,
-            chain_name=chain_name,
-            process_code_res=process_code_res,
+        # get data
+        data = ptx_calc.get_calculation_data(
+            data_handler=self,
             source_region_code=source_region_code,
             target_country_code=target_country_code,
-            use_ship=use_ship,
-            ship_own_fuel=ship_own_fuel,
             use_user_data=True,
         )
 
-        # get optimizedFLH?
+        # get optimized FLH?
         if optimize_flh:
             # if we have user data BUT it should NOT be used for optimization
             # get a different dataset for optimization
             if self.user_data is not None and not use_user_data_for_optimize_flh:
-                data_opt = self._get_calculation_data(
-                    secondary_processes=secondary_processes,
-                    chain_name=chain_name,
-                    process_code_res=process_code_res,
+                data_opt = ptx_calc.get_calculation_data(
+                    data_handler=self,
                     source_region_code=source_region_code,
                     target_country_code=target_country_code,
-                    use_ship=use_ship,
-                    ship_own_fuel=ship_own_fuel,
                     use_user_data=False,  # THIS IS THE IMPORTANT BIT
                 )
+
             else:
                 data_opt = data
 
-            data = self.optimizer.get_data(data_opt, data)
+            data = self.optimizer.get_calculation_data(data_opt, data)
 
         return data
-
-    def _get_calculation_data(
-        self,
-        secondary_processes: Dict[FlowCodeType, ProcessCodeType],
-        chain_name: ChainNameType,
-        process_code_res: ProcessCodeResType,
-        source_region_code: SourceRegionCodeType,
-        target_country_code: TargetCountryCodeType,
-        use_ship: bool,
-        ship_own_fuel: bool,
-        use_user_data: bool = True,
-    ) -> CalculateDataType:
-        """Calculate results."""
-        # get process codes for selected chain
-        df_processes = self.get_dimension("process")
-        df_flows = self.get_dimension("flow")
-
-        chain: dict = dict(self.get_dimension("chain").loc[chain_name])
-        process_code_ely = chain["ELY"]
-        process_code_deriv = chain["DERIV"]
-        chain["RES"] = process_code_res
-
-        pg = _ParameterGetter(
-            data_handler=self,
-            source_region_code=source_region_code,
-            target_country_code=target_country_code,
-            process_code_res=process_code_res,
-            process_code_ely=process_code_ely,
-            process_code_deriv=process_code_deriv,
-            df_processes=df_processes,
-            df_flows=df_flows,
-            use_user_data=use_user_data,
-        )
-
-        # parameter getter if processes are in import (target) country:
-        pg_import = _ParameterGetter(
-            data_handler=self,
-            source_region_code=target_country_code,  # !!
-            target_country_code=target_country_code,
-            process_code_res=process_code_res,
-            process_code_ely=process_code_ely,
-            process_code_deriv=process_code_deriv,
-            df_processes=df_processes,
-            df_flows=df_flows,
-            use_user_data=use_user_data,
-        )
-
-        # some flows are grouped into their own output category (but not all)
-        # so we load the mapping from the data
-
-        # iterate over main chain, update the value in the main flow
-        # and accumulate result data from each process
-
-        # get general parameters
-
-        result: CalculateDataType = {
-            "flh_opt_process": {},
-            "main_export_process_chain": [],
-            "transport_process_chain": [],
-            "main_import_process_chain": [],
-            "secondary_process": {},
-            "parameter": {},
-            "context": {
-                "source_region_code": source_region_code,
-                "target_country_code": target_country_code,
-            },
-        }
-
-        result["parameter"]["WACC"] = pg.get_parameter_value_w_default("WACC")
-        result["parameter"]["CALOR"] = pg.get_parameter_value_w_default(
-            parameter_code="CALOR", flow_code=chain["FLOW_OUT"]
-        )
-
-        # get transport distances and options
-        # TODO? add these also to data
-        dist_pipeline = pg.get_parameter_value_w_default("DST-S-DP", default=0)
-        seashare_pipeline = pg.get_parameter_value_w_default("SEASHARE", default=0)
-        existing_pipeline_cap = pg.get_parameter_value_w_default("CAP-T", default=0)
-        dist_ship = pg.get_parameter_value_w_default("DST-S-D", default=0)
-
-        if not use_ship and not chain["CAN_PIPELINE"]:
-            use_ship = True
-
-        transport_distances = self._get_transport_distances(
-            source_region_code,
-            target_country_code,
-            use_ship,
-            ship_own_fuel,
-            dist_ship,
-            dist_pipeline,
-            seashare_pipeline,
-            existing_pipeline_cap,
-        )
-
-        chain_steps_main_export, chain_steps_transport, chain_steps_main_import = (
-            self._filter_chain_processes(chain, transport_distances)
-        )
-
-        used_flows_main_chain: set[FlowCodeType] = set()
-        used_flows_main_export: set[FlowCodeType] = set()
-        for process_step in chain_steps_main_export:
-            process_code = chain[process_step]
-            pp = pg.get_process_params(process_code)
-            pp["step"] = process_step
-            pp["process_code"] = process_code
-            result["main_export_process_chain"].append(pp)
-            used_flows_main_export = used_flows_main_export | set(pp["CONV"])
-
-            proc = self.dimensions["process"].loc[process_code]
-            if proc.main_flow_code_in:
-                used_flows_main_chain.add(proc.main_flow_code_in)
-            if proc.main_flow_code_out:
-                used_flows_main_chain.add(proc.main_flow_code_out)
-
-        used_flows_secondary: set[FlowCodeType] = set()
-        provided_flows_secondary: set[FlowCodeType] = set()
-        for flow_code, process_code in secondary_processes.items():
-            if not process_code:
-                continue
-            if flow_code not in used_flows_main_export:
-                continue
-            pp = pg.get_process_params(process_code)
-            pp["process_code"] = process_code
-            # FIXME: we now also need secondary processes for import regions
-            result["secondary_process"][flow_code] = pp
-            used_flows_secondary = used_flows_secondary | set(pp["CONV"])
-            provided_flows_secondary.add(flow_code)
-
-        used_flows_transport: set[FlowCodeType] = set()
-        for process_step in chain_steps_transport:
-            process_code = chain[process_step]
-            if not process_code:
-                raise Exception((process_step, chain))
-            if process_step in transport_distances:
-                dist_transport = transport_distances[process_step]
-                pp = pg.get_transport_process_params(process_code, dist_transport)
-            else:  # pre/post
-                pp = pg.get_process_params(process_code)
-            pp["step"] = process_step
-            pp["process_code"] = process_code
-            result["transport_process_chain"].append(pp)
-            used_flows_transport = used_flows_transport | set(pp["CONV"])
-
-            proc = self.dimensions["process"].loc[process_code]
-            if proc.main_flow_code_in:
-                used_flows_main_chain.add(proc.main_flow_code_in)
-            if proc.main_flow_code_out:
-                used_flows_main_chain.add(proc.main_flow_code_out)
-
-        used_flows_main_import: set[FlowCodeType] = set()
-        for process_step in chain_steps_main_import:
-            process_code = chain[process_step]
-            if not process_code:
-                raise Exception((process_step, chain))
-            pp = pg_import.get_process_params(process_code)
-            pp["step"] = process_step
-            pp["process_code"] = process_code
-            result["main_import_process_chain"].append(pp)
-            used_flows_main_import = used_flows_main_import | set(pp["CONV"])
-
-            proc = self.dimensions["process"].loc[process_code]
-            if proc.main_flow_code_in:
-                used_flows_main_chain.add(proc.main_flow_code_in)
-            if proc.main_flow_code_out:
-                used_flows_main_chain.add(proc.main_flow_code_out)
-
-        # If RES=Hybrid: we also need PV and Wind-On
-        if process_code_res == "RES-HYBR":
-            pc: ProcessCodeType
-            for pc in ["PV-FIX", "WIND-ON"]:  # type:ignore
-                result["flh_opt_process"][pc] = pg.get_process_params(pc)
-
-        used_flows_always_for_opt: set[FlowCodeType] = {
-            "H2O-L",
-            "CO2-G",
-            "N2-G",
-            "HEAT",
-        }
-
-        used_flows: set[FlowCodeType] = (
-            (used_flows_main_export - provided_flows_secondary)
-            | used_flows_always_for_opt
-            | used_flows_secondary
-            | used_flows_transport
-            | used_flows_main_import
-        )
-        # FIXME: used_flows_main_import may need to come from different country!!
-        result["parameter"]["SPECCOST"] = pg.get_flow_params("SPECCOST", used_flows)
-
-        return result
 
     @classmethod
     def get_dimensions_parameter_code(
         cls,
         dimension: DimensionType,
-        parameter_name: str,
+        parameter_name: str | None,
     ) -> str:
         """
         Get the internal code for a paremeter within a certain dimension.
@@ -1162,6 +714,10 @@ class DataHandler:
             "res_gen": "process",
             "secproc_co2": "process",
             "secproc_water": "process",
+            "secproc_heat": "process",
+            "secproc_el": "process",
+            "secproc_ccs": "process",
+            "secproc_ccs_i": "process",
             "region": "region",
             "country": "country",
         }
@@ -1193,7 +749,7 @@ class DataHandler:
                     f"flow_code != flow_code_in in {process_code}: "
                     f"{flow_code} != {flow_code_in}"
                 )
-            flow_code = process["main_flow_code_out"]  # type:ignore
+            flow_code = process["main_flow_code_out"]  # type: ignore
         if flow_code != final_flow_code:
             raise AssertionError(
                 f"flow_code != final_flow_code in {process_code}: "
@@ -1263,40 +819,28 @@ class DataHandler:
                 chain[p]
                 for p in result_main_export + result_transport + result_main_import
             ],
-            chain["FLOW_OUT"],
+            chain["flow_out"],
         )
 
         return result_main_export, result_transport, result_main_import
 
-    @staticmethod
-    def _get_transport_distances(
-        source_region_code: SourceRegionCodeType,
-        target_country_code: TargetCountryCodeType,
-        use_ship: bool,
-        ship_own_fuel: bool,
-        dist_ship: float,
-        dist_pipeline: float,
-        seashare_pipeline: float,
-        existing_pipeline_cap: float,
-    ) -> Dict[ProcessStepType, float]:
-        dist_transp = {}
-        if source_region_code == target_country_code:
-            # no transport (only China)
-            pass
-        elif dist_pipeline and not use_ship:
-            # use pipeline if pipeline possible and ship not selected
-            if existing_pipeline_cap:
-                # use retrofitting
-                dist_transp["PPLX"] = dist_pipeline * seashare_pipeline
-                dist_transp["PPLR"] = dist_pipeline * (1 - seashare_pipeline)
-            else:
-                dist_transp["PPLS"] = dist_pipeline * seashare_pipeline
-                dist_transp["PPL"] = dist_pipeline * (1 - seashare_pipeline)
-        else:
-            # use ship
-            if ship_own_fuel:
-                dist_transp["SHP_OWN"] = dist_ship
-            else:
-                dist_transp["SHP"] = dist_ship
+    @classmethod
+    def get_chain_color(cls, chain: ChainType) -> ToolVersionColorType:
+        """Get color from chain."""
+        return "blue" if cls.dimensions["chain"].loc[chain, "is_blue"] else "green"
 
-        return dist_transp
+    @classmethod
+    def correct_transport(
+        cls, transport: TransportType, ship_own_fuel: bool, chain: ChainType
+    ) -> tuple[TransportType, bool]:
+        """Validate / correct transport."""
+        chain_data = cls.dimensions["chain"].loc[chain]
+        if transport == "Pipeline" and not chain_data["can_pipeline"]:  # type: ignore
+            logger.warning("Cannot use Pipeline - switching to Ship: %s", chain)
+            transport = "Ship"
+
+        if ship_own_fuel and (transport != "Ship" or not bool(chain_data["SHP_OWN"])):
+            logger.warning("Cannot use ship_own_fuel.")
+            ship_own_fuel = False
+
+        return transport, ship_own_fuel

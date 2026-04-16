@@ -6,7 +6,7 @@ Execution:
 >>> streamlit run  ptxboa_streamlit.py
 """
 
-__version__ = "2.1.23"
+__version__ = "2.2.6"
 
 import logging
 
@@ -42,13 +42,10 @@ css = """
 """
 st.markdown(css, unsafe_allow_html=True)
 
-# https://discuss.streamlit.io/t/delete-red-bar-at-the-top-of-the-app/9658
-hide_decoration_bar_style = """
-    <style>
-        header {visibility: hidden;}
-    </style>
-"""
-st.markdown(hide_decoration_bar_style, unsafe_allow_html=True)
+st.logo(
+    image="img/transparent_10x10.png",  # placeholder when sidebar is expanded
+    icon_image="img/Agora_Industry_logo_612x306.png",
+)
 
 page = st.navigation(
     [

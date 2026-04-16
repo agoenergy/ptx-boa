@@ -2,10 +2,9 @@
 
 from typing import Literal
 
-import plotly.express as px
 import streamlit as st
 
-from app.layout_elements import display_and_edit_input_data, what_is_a_boxplot
+from app.layout_elements import display_and_edit_input_data
 from app.plot_functions import plot_input_data_on_map
 from app.ptxboa_functions import read_markdown_file
 from ptxboa.api import PtxboaAPI
@@ -21,57 +20,55 @@ def content_input_data(api: PtxboaAPI) -> None:
     with st.container(border=True):
         st.subheader("Region specific data")
 
-        data_selection: Literal["WACC"] = st.radio(
+        data_selection: Literal[
+            "WACC",
+            "Natural gas production costs",
+            "Natural gas production losses",
+            "Natural gas price",
+        ] = st.selectbox(
             "Select data type",
-            ["WACC", "Natural gas price"],
-            horizontal=True,
+            [
+                "WACC",
+                "Natural gas production costs",
+                "Natural gas production losses",
+                "Natural gas price",
+            ],
         )
 
         with st.expander("**Map**", expanded=True):
+            map_parameter = {
+                "Natural gas price": "specific costs",
+                "Natural gas production costs": "OPEX (other variable)",
+                "Natural gas production losses": "losses (own fuel)",
+            }.get(data_selection, data_selection)
             fig = plot_input_data_on_map(
                 api=api,
                 data_type=data_selection,
-                color_col={"Natural gas price": "OPEX (other variable)"}.get(
-                    data_selection, data_selection
-                ),
+                color_col=map_parameter,
                 scope="world",
                 tool_version_color="blue",
             )
             st.plotly_chart(fig, width="stretch")
 
         with st.expander("**Data**"):
-            df = display_and_edit_input_data(
+            display_and_edit_input_data(
                 api,
                 data_type=data_selection,
                 scope="world",
                 key=f"input_data_{data_selection}",
                 tool_version_color="blue",
             )
-        with st.expander("**Regional distribution**"):
-            # create plot:
-            if data_selection == "WACC":
-                ylabel = "WACC (%)"
-                hover_name = "parameter_code"
-            if data_selection == "Natural gas price":
-                ylabel = "Natural gas price (USD/kWh)"
-                hover_name = "parameter_code"
-
-            fig = px.box(
-                df,
-                hover_data=[df.index],
-                hover_name=hover_name,
-            )
-            fig.update_layout(xaxis_title=None, yaxis_title=ylabel)
-            st.plotly_chart(fig, width="stretch")
-            what_is_a_boxplot()
 
     with st.container(border=True):
         st.subheader("Global data")
-        with st.expander("**Natural gas production**"):
-            st.warning("Data not ready.")
-
         with st.expander("**Conversion**"):
-            st.warning("Data not ready.")
+            display_and_edit_input_data(
+                api,
+                data_type="conversion_processes",
+                scope=None,
+                key="input_data_conversion_processes",
+                tool_version_color="blue",
+            )
 
         with st.expander("**Storage**"):
             st.caption(
@@ -82,6 +79,7 @@ def content_input_data(api: PtxboaAPI) -> None:
                 data_type="storage",
                 scope=None,
                 key="input_data_storage",
+                tool_version_color="blue",
             )
 
         with st.expander("**Transportation (ships and pipelines)**"):
@@ -95,6 +93,7 @@ def content_input_data(api: PtxboaAPI) -> None:
                 data_type="transportation_processes",
                 scope=None,
                 key="input_data_transportation_processes",
+                tool_version_color="blue",
             )
         with st.expander(
             "**Transportation (compression, liquefication and reconversion)**"
@@ -104,6 +103,7 @@ def content_input_data(api: PtxboaAPI) -> None:
                 data_type="reconversion_processes",
                 scope=None,
                 key="input_data_reconversion_processes",
+                tool_version_color="blue",
             )
         with st.expander("**Direct air capture**"):
             st.caption(
@@ -116,6 +116,7 @@ def content_input_data(api: PtxboaAPI) -> None:
                 data_type="dac_and_desalination",
                 scope=None,
                 key="input_data_dac_and_desalination",
+                tool_version_color="blue",
             )
         with st.expander("**Specific costs for materials and energy carriers**"):
             st.caption(
@@ -128,6 +129,7 @@ def content_input_data(api: PtxboaAPI) -> None:
                 data_type="specific_costs",
                 scope=None,
                 key="input_data_specific_costs",
+                tool_version_color="blue",
             )
         with st.expander("**Conversion coefficients**"):
             st.caption(
@@ -140,4 +142,5 @@ def content_input_data(api: PtxboaAPI) -> None:
                 data_type="conversion_coefficients",
                 scope=None,
                 key="input_data_conversion_coefficients",
+                tool_version_color="blue",
             )

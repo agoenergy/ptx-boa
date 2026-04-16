@@ -18,14 +18,17 @@ def sql_to_df(query: str) -> pd.DataFrame:
     )
 
 
-def update_csv(query: str, filename: str, data_dir: str = None) -> None:
+def update_csv(query: str, filename: str, data_dir: str | None = None) -> None:
     data_dir = data_dir or os.path.dirname(__file__)
     sql_to_df(query).to_csv(data_dir + "/" + filename, index=False, lineterminator="\n")
 
 
 def create_literal(name: str, items: list) -> str:
-    items = ", ".join(f'"{x}"' for x in items)
-    return f"{name}Type = Literal[{items}]\n{name}Values = [{items}]\n"
+    items_str = ", ".join(f'"{x}"' for x in items)
+    return (
+        f"{name}Type = Literal[{items_str}]\n"
+        f"{name}Values:list[{name}Type] = [{items_str}]\n"
+    )
 
 
 def create_literal_from_query(name: str, column: str, query: str) -> str:
@@ -68,7 +71,7 @@ def main():
         create_literal_from_db("FlowCode", "flow_code", "ptxboa_flow"),
         create_literal_from_db("ParameterCode", "parameter_code", "ptxboa_parameter"),
         create_literal_from_db("ParameterName", "parameter_name", "ptxboa_parameter"),
-        create_literal_from_db("ChainName", "chain", "ptxboa_chains"),
+        create_literal_from_db("Chain", "chain", "ptxboa_chains"),
         create_literal_from_query(
             "Scenario",
             "scenario",
@@ -99,6 +102,30 @@ def main():
             ),
         ),
         create_literal_from_query(
+            "SecProcHEAT",
+            "process_name",
+            (
+                "SELECT process_name from ptxboa_process where "
+                "main_flow_code_out='HEAT' and is_secondary=1"
+            ),
+        ),
+        create_literal_from_query(
+            "SecProcEL",
+            "process_name",
+            (
+                "SELECT process_name from ptxboa_process where "
+                "main_flow_code_out='EL' and is_secondary=1"
+            ),
+        ),
+        create_literal_from_query(
+            "SecProcCCS",
+            "process_name",
+            (
+                "SELECT process_name from ptxboa_process where "
+                "main_flow_code_out='CO2-C' and is_secondary=1"
+            ),
+        ),
+        create_literal_from_query(
             "ResGen",
             "process_name",
             "SELECT process_name from ptxboa_process where is_re_generation=1",
@@ -121,6 +148,10 @@ def main():
                 "process",
                 "secproc_co2",  # subset of process
                 "secproc_water",  # subset of process
+                "secproc_heat",  # subset of process
+                "secproc_el",  # subset of process
+                "secproc_ccs",  # subset of process
+                "secproc_ccs_i",  # subset of process
                 "res_gen",  # subset of process
                 "parameter",
             ],
@@ -134,15 +165,15 @@ def main():
                 "DERIV",
                 "DERIV2",
                 "PRE_SHP",
-                "PRE_PPL",
-                "POST_SHP",
-                "POST_PPL",
                 "SHP",
                 "SHP_OWN",
+                "POST_SHP",
+                "PRE_PPL",
                 "PPLS",
                 "PPL",
                 "PPLX",
                 "PPLR",
+                "POST_PPL",
                 "ELY_I",
                 "DERIV_I",
                 "DERIV_I2",
@@ -152,6 +183,26 @@ def main():
         create_literal("Transport", ["Ship", "Pipeline"]),
         create_literal("OutputUnit", ["USD/MWh", "USD/t"]),
         create_literal("ToolVersionColor", ["blue", "green"]),
+        create_literal("ResultEmission", ["direct", "indirect"]),
+        create_literal("Emission", ["mass", "emission"]),
+        create_literal("ResultGas", ["CO2", "CH4"]),
+        create_literal(
+            "DataQueryParameter",
+            [
+                "parameter_code",
+                "process_code",
+                "flow_code",
+                "source_region_code",
+                "target_country_code",
+                "default",
+                "use_user_data",
+                "region",
+                "process_res",
+                "process_ely",
+                "process_deriv",
+                "process_flh",
+            ],
+        ),
     ]
 
     with open(PYTHON_FILE, "w", encoding="utf-8") as file:
@@ -194,11 +245,15 @@ def main():
         ,"is_re_generation"
         ,"is_transport"
         ,"is_secondary"
+        ,"is_storage"
+        ,"is_pipeline"
+        ,"is_pipeline_retrofitted"
+        ,"is_pipeline_sea"
+        ,"is_shipping"
+        ,"is_shipping_own_fuel"
         ,"process_class"
-        /*,"is_secondary_all"*/
         ,"is_ely"
         ,"is_deriv"
-        /*,"class_name"*/
         ,"result_process_type"
         ,"secondary_flows"
         ,"is_green"
@@ -217,7 +272,8 @@ def main():
         "unit",
         "secondary_process",
         "secondary_flow",
-        "result_process_type"
+        "result_process_type",
+        "unit_short"
         FROM "ptxboa_flow"
         ORDER BY "flow_code"
         """,
@@ -268,21 +324,21 @@ def main():
         ,"DERIV2"
         ,"CO2_TS"
         ,"PRE_SHP"
-        ,"PRE_PPL"
-        ,"POST_SHP"
-        ,"POST_PPL"
         ,"SHP"
         ,"SHP_OWN"
+        ,"POST_SHP"
+        ,"PRE_PPL"
         ,"PPLS"
         ,"PPL"
         ,"PPLX"
         ,"PPLR"
+        ,"POST_PPL"
         ,"ELY_I"
         ,"DERIV_I"
         ,"DERIV_I2"
         ,"CO2_TS_I"
-        ,"FLOW_OUT"
-        ,"CAN_PIPELINE"
+        ,"flow_out"
+        ,"can_pipeline"
         ,"is_green"
         ,"is_blue"
         FROM "ptxboa_chains"

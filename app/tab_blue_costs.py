@@ -104,50 +104,68 @@ def content_costs(api: PtxboaAPI):
     blue_chain_labels = blue_chains["chain_name"].to_dict()
 
     with st.container(border=True):
-        with st.spinner("Please wait. Calculating results for conversion locations."):
-            results_supply_demand = blue_results_over_dimension(
-                api,
-                dim="chain",
-                emissions_included=st.session_state["emissions_included"],
-                parameter_list=pd.Series(
-                    [
-                        st.session_state["chain"].replace(
-                            "__prod_in_demand", "__prod_in_supply"
-                        ),
-                        st.session_state["chain"].replace(
-                            "__prod_in_supply", "__prod_in_demand"
-                        ),
-                    ]
-                ),
-            )
-
-        supply = st.session_state["region"]
-        demand = st.session_state["country"]
-        xlabel_mapping = {
-            k: (f"{v}<br>conversion in {supply if 'prod_in_supply' in k else demand}")
-            for k, v in blue_chain_labels.items()
-        }
-
-        display_results_bar_and_table(
-            results_supply_demand.costs.sort_index(ascending=False),
-            (
-                results_supply_demand.costs_not_modified.sort_index(ascending=False)
-                if results_supply_demand.costs_not_modified is not None
-                else None
-            ),
-            key="chain",
-            key_suffix="demand_supply",
-            titlestring=read_markdown_file(
-                "md/tab_blue_costs/figure_title_cost_per_conversion_location.md"
-            ),
-            help_string=read_markdown_file(
-                "md/tab_blue_costs/figure_description_cost_per_conversion_location.md"
-            ),
-            x_label_mapping=xlabel_mapping,
-            xaxis_title="Conversion location",
-            tool_version_color="blue",
-            sorting="off",
+        conversion_location_title = read_markdown_file(
+            "md/tab_blue_costs/figure_title_cost_per_conversion_location.md"
         )
+        conversion_location_help = read_markdown_file(
+            "md/tab_blue_costs/figure_description_cost_per_conversion_location.md"
+        )
+        if st.session_state["chain"].endswith("__transport_NH3-L"):
+            st.subheader(conversion_location_title)
+            st.markdown(conversion_location_help)
+            chain_label = blue_chain_labels.get(
+                st.session_state["chain"], st.session_state["chain"]
+            )
+            st.warning(
+                f'For the conversion route "{chain_label}", '
+                "conversion can only take place in the supply country."
+            )
+        else:
+            with st.spinner(
+                "Please wait. Calculating results for conversion locations."
+            ):
+                results_supply_demand = blue_results_over_dimension(
+                    api,
+                    dim="chain",
+                    emissions_included=st.session_state["emissions_included"],
+                    parameter_list=pd.Series(
+                        [
+                            st.session_state["chain"].replace(
+                                "__prod_in_demand", "__prod_in_supply"
+                            ),
+                            st.session_state["chain"].replace(
+                                "__prod_in_supply", "__prod_in_demand"
+                            ),
+                        ]
+                    ),
+                )
+
+            supply = st.session_state["region"]
+            demand = st.session_state["country"]
+            xlabel_mapping = {
+                k: (
+                    f"{v}<br>conversion in "
+                    f"{supply if 'prod_in_supply' in k else demand}"
+                )
+                for k, v in blue_chain_labels.items()
+            }
+
+            display_results_bar_and_table(
+                results_supply_demand.costs.sort_index(ascending=False),
+                (
+                    results_supply_demand.costs_not_modified.sort_index(ascending=False)
+                    if results_supply_demand.costs_not_modified is not None
+                    else None
+                ),
+                key="chain",
+                key_suffix="demand_supply",
+                titlestring=conversion_location_title,
+                help_string=conversion_location_help,
+                x_label_mapping=xlabel_mapping,
+                xaxis_title="Conversion location",
+                tool_version_color="blue",
+                sorting="off",
+            )
 
     with st.container(border=True):
         display_results_bar_and_table(
@@ -228,7 +246,7 @@ def content_costs(api: PtxboaAPI):
                 blue_chains.index.str.endswith(
                     f"prod_in_{st.session_state['conversion_location']}"
                 )
-                & (blue_chains["FLOW_OUT"] == st.session_state["output_product"])
+                & (blue_chains["flow_out"] == st.session_state["output_product"])
             ].index
 
             results_equal_output_product = blue_results_over_dimension(
@@ -267,7 +285,7 @@ def content_costs(api: PtxboaAPI):
                         (blue_chains["ELY"] == st.session_state["reformer"])
                         | (blue_chains["ELY_I"] == st.session_state["reformer"])
                     )
-                    & blue_chains["FLOW_OUT"].isin(
+                    & blue_chains["flow_out"].isin(
                         st.session_state["output_product_group"]
                     )
                 ].index
@@ -277,7 +295,7 @@ def content_costs(api: PtxboaAPI):
                         f"prod_in_{st.session_state['conversion_location']}"
                     )
                     & ((blue_chains["ELY"] == "") & (blue_chains["ELY_I"] == ""))
-                    & blue_chains["FLOW_OUT"].isin(
+                    & blue_chains["flow_out"].isin(
                         st.session_state["output_product_group"]
                     )
                 ].index

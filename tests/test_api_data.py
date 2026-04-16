@@ -6,8 +6,23 @@ from tempfile import TemporaryDirectory
 import pandas as pd
 import pytest
 
-from ptxboa.api_data import DEFAULT_DATA_DIR, STATIC_DATA_DIR, DataHandler
-from tests.utils import assert_deep_equal
+from ptxboa.api_calc import PtxCalc
+from ptxboa.api_data import (
+    DEFAULT_DATA_DIR,
+    STATIC_DATA_DIR,
+    DataHandler,
+    ScenarioValues,
+    _load_scenario_data,
+)
+from ptxboa.static import (
+    ChainType,
+    ChainValues,
+    ProcessCodeResType,
+    ScenarioType,
+    TransportType,
+)
+from ptxboa.static._type_defs import ChainDef
+from tests.utils import assert_deep_equal_approx
 
 
 @pytest.fixture()
@@ -50,7 +65,7 @@ def ptxdata_dir_live():
 
 
 @pytest.mark.parametrize(
-    "scenario, parameter_code, process_code, flow_code, source_region_code, target_country_code, process_code_res, process_code_ely, process_code_deriv, user_data, expected, default",  # noqa
+    "scenario, parameter_code, process_code, flow_code, source_region_code, target_country_code, process_res, process_ely, process_deriv, user_data, expected, default",  # noqa
     (
         (
             "2030 (low)",  # scenario
@@ -60,8 +75,8 @@ def ptxdata_dir_live():
             "",  # source_region_code
             "",  # target_country_code
             "",  # process_code
-            "",  # process_code_ely
-            "",  # process_code_deriv
+            "",  # process_ely
+            "",  # process_deriv
             None,  # user_data
             5.527777777777777,  # expected
             None,  # default
@@ -74,8 +89,8 @@ def ptxdata_dir_live():
             "",  # source_region_code
             "",  # target_country_code
             "",  # process_code
-            "",  # process_code_ely
-            "",  # process_code_deriv
+            "",  # process_ely
+            "",  # process_deriv
             "user_data_01",  # user_data
             5.527777777777777,  # expected
             None,  # default
@@ -88,8 +103,8 @@ def ptxdata_dir_live():
             "AUS",  # source_region_code
             "",  # target_country_code
             "",  # process_code
-            "",  # process_code_ely
-            "",  # process_code_deriv
+            "",  # process_ely
+            "",  # process_deriv
             None,  # user_data
             595.0020882465886,  # expected
             None,  # default
@@ -102,8 +117,8 @@ def ptxdata_dir_live():
             "AUS",  # source_region_code
             "",  # target_country_code
             "",  # process_code
-            "",  # process_code_ely
-            "",  # process_code_deriv
+            "",  # process_ely
+            "",  # process_deriv
             "user_data_01",  # user_data
             800,  # expected
             None,  # default
@@ -116,8 +131,8 @@ def ptxdata_dir_live():
             "SWE",  # source_region_code
             "",  # target_country_code
             "PEM-EL",  # process_code
-            "",  # process_code_ely
-            "",  # process_code_deriv
+            "",  # process_ely
+            "",  # process_deriv
             None,  # user_data
             8760,  # expected: default value
             8760,  # default
@@ -133,9 +148,9 @@ def test_get_parameter_value(
     flow_code,
     source_region_code,
     target_country_code,
-    process_code_res,
-    process_code_ely,
-    process_code_deriv,
+    process_res,
+    process_ely,
+    process_deriv,
     user_data,
     expected,
     request,
@@ -155,13 +170,13 @@ def test_get_parameter_value(
         flow_code=flow_code,
         source_region_code=source_region_code,
         target_country_code=target_country_code,
-        process_code_res=process_code_res,
-        process_code_ely=process_code_ely,
-        process_code_deriv=process_code_deriv,
+        process_res=process_res,
+        process_ely=process_ely,
+        process_deriv=process_deriv,
         default=default,
     )
 
-    assert expected == pytest.approx(result)
+    assert_deep_equal_approx(expected, result, allow_new_dict_items=True)
 
 
 @pytest.mark.parametrize(
@@ -188,10 +203,10 @@ def test_get_dimensions_parameter_code(dimension, parameter_name, expected_code)
                 "source_region_code": "ARE",
                 "target_country_code": "DEU",
                 "chain_name": "Ammonia (AEL) + reconv. to H2",
-                "process_code_res": "PV-FIX",
+                "process_res": "PV-FIX",
                 "secondary_processes": {"H2O-L": "DESAL"},
                 "ship_own_fuel": False,
-                "use_ship": True,
+                "transport": "Ship",
             },
         ],
     ],
@@ -199,127 +214,134 @@ def test_get_dimensions_parameter_code(dimension, parameter_name, expected_code)
 def test_get_calculation_data(ptxdata_dir, scenario, kwargs, request):
     ptxdata_dir = request.getfixturevalue(ptxdata_dir)
     data_handler = DataHandler(data_dir=ptxdata_dir, scenario=scenario)
-    data = data_handler.get_calculation_data(**kwargs, optimize_flh=False)
-    # recursively use pytest.approx
+    chain_def = ChainDef(**kwargs)
+    ptx_calc = PtxCalc.get_or_create(chain_def)
 
-    def rec_approx(x):
-        if isinstance(x, dict):
-            return {k: rec_approx(v) for k, v in x.items()}
-        elif isinstance(x, list):
-            return [rec_approx(v) for v in x]
-        elif isinstance(x, (int, float)):
-            return pytest.approx(x)
-        else:
-            return x
+    actually = data_handler.get_calculation_data(
+        ptx_calc=ptx_calc,
+        source_region_code=chain_def.source_region_code,
+        target_country_code=chain_def.target_country_code,
+        optimize_flh=False,
+    )
 
-    assert rec_approx(data) == {
-        "flh_opt_process": {},
+    expected = {
+        "context": {"source_region_code": "ARE", "target_country_code": "DEU"},
         "main_export_process_chain": [
             {
-                "EFF": 1,
+                "CAPEX": 334.76322134,
+                "EFF": 1.0,
                 "FLH": 1662.0,
                 "LIFETIME": 20.0,
-                "CAPEX": 334.7632213391997,
-                "OPEX-F": 5.690974762766395,
-                "OPEX-O": 0,
-                "CONV": {},
-                "step": "RES",
+                "OPEX-F": 5.69097476,
+                "WACC": 0.0532,
                 "process_code": "PV-FIX",
+                "step": "RES",
             },
             {
+                "CAPEX": 888.77369906,
                 "EFF": 0.9,
                 "FLH": 7000,
                 "LIFETIME": 20.0,
-                "CAPEX": 888.7736990592965,
-                "OPEX-F": 0,
-                "OPEX-O": 0,
-                "CONV": {},
-                "step": "EL_STR",
+                "WACC": 0.0532,
                 "process_code": "EL-STR",
+                "step": "EL_STR",
             },
             {
+                "CAPEX": 862.39261365,
+                "CONV": {"H2O-L": 0.3},
                 "EFF": 0.715,
                 "FLH": 2779.7,
                 "LIFETIME": 20.0,
-                "CAPEX": 862.3926136507007,
-                "OPEX-F": 17.247852273014015,
-                "OPEX-O": 0,
-                "CONV": {"H2O-L": 0.3},
-                "step": "ELY",
+                "OPEX-F": 17.24785227,
+                "WACC": 0.0532,
                 "process_code": "AEL-EL",
+                "step": "ELY",
             },
             {
+                "CAPEX": 40.24887553,
                 "EFF": 0.99,
                 "FLH": 7000,
                 "LIFETIME": 30.0,
-                "CAPEX": 40.24887553067399,
-                "OPEX-F": 0.5209021170671373,
-                "OPEX-O": 0,
-                "CONV": {},
-                "step": "H2_STR",
+                "OPEX-F": 0.52090212,
+                "WACC": 0.0532,
                 "process_code": "H2-STR",
+                "step": "H2_STR",
             },
             {
+                "CAPEX": 1519.49466188,
+                "CONV": {"EL": 0.14192308, "N2-G": 0.15980769},
                 "EFF": 0.819,
                 "FLH": 7752.95,
                 "LIFETIME": 30.0,
-                "CAPEX": 1519.4946618778151,
-                "OPEX-F": 75.97473309389076,
-                "OPEX-O": 0,
-                "CONV": {"EL": 0.1419230769230769, "N2-G": 0.1598076923076923},
-                "step": "DERIV",
+                "OPEX-F": 75.97473309,
+                "WACC": 0.0532,
                 "process_code": "NH3SYN",
+                "step": "DERIV",
             },
         ],
-        "transport_process_chain": [
+        "main_import_process_chain": [
+            {
+                "CAPEX": 474.75962314,
+                "CONV": {"EL": 0.00767},
+                "EFF": 0.74661017,
+                "FLH": 7000,
+                "LIFETIME": 25.0,
+                "OPEX-F": 14.24278869,
+                "process_code": "NH3-REC",
+                "step": "POST_SHP",
+            }
+        ],
+        "main_transport_process_chain": [
             {
                 "DIST": 12441.9,
-                "EFF": 0.9942580439718669,
-                "OPEX-T": 3.735743718162845e-07,
-                "OPEX-O": 0.0004856855350958,
-                "CONV": {"BFUEL-L": 5.343656103416341e-06},
-                "step": "SHP",
+                "DST-S-D": 12441.9,
+                "DST-S-DP": 5500.0,
+                "EFF": 0.99425804,
+                "LOSS-T": 4.6e-07,
+                "OPEX-O": 0.00048569,
+                "OPEX-T": 3.7e-07,
                 "process_code": "NH3-SB",
-            },
-            {
-                "EFF": 0.7466101694915254,
-                "FLH": 6657.599999999999,
-                "LIFETIME": 25.0,
-                "CAPEX": 474.7596231401004,
-                "OPEX-F": 14.24278869420301,
-                "OPEX-O": 0,
-                "CONV": {"EL": 0.0076699999999999},
-                "step": "POST_SHP",
-                "process_code": "NH3-REC",
-            },
-        ],
-        "main_import_process_chain": [],
-        "secondary_process": {
-            "H2O-L": {
-                "EFF": 1.0,
-                "FLH": 7000,
-                "LIFETIME": 20.0,
-                "CAPEX": 0.002731203678453,
-                "OPEX-F": 0.0001092481471381,
-                "OPEX-O": 0,
-                "CONV": {"EL": 0.003},
-                "process_code": "DESAL",
+                "step": "SHP",
             }
-        },
+        ],
         "parameter": {
-            "WACC": 0.0532,
-            "CALOR": 33.33,
             "SPECCOST": {
-                "BFUEL-L": 0.0032243376759515,
-                "CO2-G": 0.0445186199587845,
-                "EL": 0.08078,
-                "H2O-L": 0.0013737954502618,
+                "BFUEL-L": 0.00322434,
+                "CO2-G": 0.04451862,
+                "H2O-L": 0.0013738,
                 "HEAT": 0.0577,
                 "N2-G": 0.01154,
             },
+            "WACC": 0.0532,
         },
-        "context": {"source_region_code": "ARE", "target_country_code": "DEU"},
+        "parameter_import": {
+            "SPECCOST": {
+                "BFUEL-L": 0.00322434,
+                "CO2-G": 0.04451862,
+                "EL": 0.08078,
+                "H2O-L": 0.0013738,
+                "HEAT": 0.0577,
+                "N2-G": 0.01154,
+            }
+        },
+        "secondary_process": {
+            "H2O-L": {
+                "CAPEX": 0.0027312,
+                "CONV": {"EL": 0.003},
+                "EFF": 1.0,
+                "FLH": 7000,
+                "LIFETIME": 20.0,
+                "OPEX-F": 0.00010925,
+                "WACC": 0.0532,
+                "process_code": "DESAL",
+            }
+        },
     }
+    assert_deep_equal_approx(
+        expected,
+        actually,
+        allow_new_dict_items=True,
+    )
 
 
 @pytest.mark.parametrize(
@@ -332,10 +354,10 @@ def test_get_calculation_data(ptxdata_dir, scenario, kwargs, request):
                 "source_region_code": "ARG",
                 "target_country_code": "DEU",
                 "chain_name": "Ammonia (AEL) + reconv. to H2",
-                "process_code_res": "RES-HYBR",
+                "process_res": "RES-HYBR",
                 "secondary_processes": {"H2O-L": "DESAL"},
                 "ship_own_fuel": False,
-                "use_ship": True,
+                "transport": "Ship",
             },
         ],
     ],
@@ -348,187 +370,213 @@ def test_get_calculation_data_w_opt(ptxdata_dir, scenario, kwargs, request):
         data_handler = DataHandler(
             data_dir=ptxdata_dir, scenario=scenario, cache_dir=Path(cache_dir)
         )
-        result = data_handler.get_calculation_data(**kwargs, optimize_flh=True)
+        chain_def = ChainDef(**kwargs)
+        ptx_calc = PtxCalc.get_or_create(chain_def)
+
+        result = data_handler.get_calculation_data(
+            ptx_calc=ptx_calc,
+            source_region_code=chain_def.source_region_code,
+            target_country_code=chain_def.target_country_code,
+            optimize_flh=True,
+        )
     exp_result = {
+        "context": {"source_region_code": "ARG", "target_country_code": "DEU"},
+        "flh_opt_hash": {"hash_md5": "10f4f69711354343d67b81a86ae20cf3"},
         "flh_opt_process": {
             "PV-FIX": {
-                "EFF": 1,
+                "CAPEX": 503.26780185,
+                "EFF": 1.0,
                 "FLH": 1494.0,
                 "LIFETIME": 20.0,
-                "CAPEX": 503.2678018543936,
-                "OPEX-F": 8.555552631524693,
-                "OPEX-O": 0,
-                "CONV": {},
+                "OPEX-F": 8.55555263,
+                "WACC": 0.22150198,
             },
             "WIND-ON": {
-                "EFF": 1,
+                "CAPEX": 1046.94944932,
+                "EFF": 1.0,
                 "FLH": 5369.0,
                 "LIFETIME": 20.0,
-                "CAPEX": 1046.9494493187117,
-                "OPEX-F": 29.314584580923928,
-                "OPEX-O": 0,
-                "CONV": {},
+                "OPEX-F": 29.31458458,
+                "WACC": 0.22150198,
             },
         },
         "main_export_process_chain": [
             {
-                "EFF": 1,
-                "FLH": 3041.279224698365,
+                "CAPEX": 855.89062109,
+                "EFF": 1.0,
+                "FLH": 3041.2792247,
                 "LIFETIME": 20.0,
-                "CAPEX": 855.8906210874661,
-                "OPEX-F": 22.019513397327447,
-                "OPEX-O": 0.0,
-                "CONV": {},
-                "step": "RES",
+                "OPEX-F": 22.0195134,
+                "WACC": 0.22150198,
                 "process_code": "RES-HYBR",
+                "step": "RES",
             },
             {
+                "CAPEX": 888.77369906,
                 "EFF": 0.9,
                 "FLH": 7000,
                 "LIFETIME": 20.0,
-                "CAPEX": 888.7736990592965,
-                "OPEX-F": 0,
-                "OPEX-O": 0,
-                "CONV": {},
-                "step": "EL_STR",
+                "WACC": 0.22150198,
                 "process_code": "EL-STR",
-                "CAP_F": 0.0,
+                "step": "EL_STR",
             },
             {
-                "EFF": 0.715,
-                "FLH": 5058.623209737518,
-                "LIFETIME": 20.0,
-                "CAPEX": 862.3926136507007,
-                "OPEX-F": 17.247852273014015,
-                "OPEX-O": 0,
+                "CAPEX": 862.39261365,
                 "CONV": {"H2O-L": 0.3},
-                "step": "ELY",
+                "EFF": 0.715,
+                "FLH": 5058.62320974,
+                "LIFETIME": 20.0,
+                "OPEX-F": 17.24785227,
+                "WACC": 0.22150198,
                 "process_code": "AEL-EL",
+                "step": "ELY",
             },
             {
+                "CAPEX": 40.24887553,
+                "CAP_F": 0.68166054,
                 "EFF": 0.99,
                 "FLH": 7000,
                 "LIFETIME": 30.0,
-                "CAPEX": 40.24887553067399,
-                "OPEX-F": 0.5209021170671373,
-                "OPEX-O": 0,
-                "CONV": {},
-                "step": "H2_STR",
+                "OPEX-F": 0.52090212,
+                "WACC": 0.22150198,
                 "process_code": "H2-STR",
-                "CAP_F": 0.6816605398116187,
+                "step": "H2_STR",
             },
             {
+                "CAPEX": 1519.49466188,
+                "CONV": {"EL": 0.14192308, "N2-G": 0.15980769},
                 "EFF": 0.819,
-                "FLH": 7448.511114960053,
+                "FLH": 7448.51111496,
                 "LIFETIME": 30.0,
-                "CAPEX": 1519.4946618778151,
-                "OPEX-F": 75.97473309389076,
-                "OPEX-O": 0,
-                "CONV": {"EL": 0.1419230769230769, "N2-G": 0.1598076923076923},
-                "step": "DERIV",
+                "OPEX-F": 75.97473309,
+                "WACC": 0.22150198,
                 "process_code": "NH3SYN",
+                "step": "DERIV",
             },
         ],
-        "transport_process_chain": [
+        "main_import_process_chain": [
+            {
+                "CAPEX": 474.75962314,
+                "CONV": {"EL": 0.00767},
+                "EFF": 0.74661017,
+                "FLH": 7000,
+                "LIFETIME": 25.0,
+                "OPEX-F": 14.24278869,
+                "process_code": "NH3-REC",
+                "step": "POST_SHP",
+            }
+        ],
+        "main_transport_process_chain": [
             {
                 "DIST": 12728.796,
-                "EFF": 0.994125641025641,
-                "OPEX-T": 3.735743718162845e-07,
-                "OPEX-O": 0.0004856855350958,
-                "CONV": {"BFUEL-L": 5.343656103416341e-06},
-                "step": "SHP",
+                "DST-S-D": 12728.796,
+                "EFF": 0.99412564,
+                "LOSS-T": 4.6e-07,
+                "OPEX-O": 0.00048569,
+                "OPEX-T": 3.7e-07,
                 "process_code": "NH3-SB",
-            },
-            {
-                "EFF": 0.7466101694915254,
-                "FLH": 6657.599999999999,
-                "LIFETIME": 25.0,
-                "CAPEX": 474.7596231401004,
-                "OPEX-F": 14.24278869420301,
-                "OPEX-O": 0,
-                "CONV": {"EL": 0.0076699999999999},
-                "step": "POST_SHP",
-                "process_code": "NH3-REC",
-            },
-        ],
-        "main_import_process_chain": [],
-        "secondary_process": {
-            "H2O-L": {
-                "EFF": 1.0,
-                "FLH": 5058.623209737517,
-                "LIFETIME": 20.0,
-                "CAPEX": 0.002731203678453,
-                "OPEX-F": 0.0001092481471381,
-                "OPEX-O": 0,
-                "CONV": {"EL": 0.003},
-                "process_code": "DESAL",
+                "step": "SHP",
             }
-        },
+        ],
         "parameter": {
-            "WACC": 0.2215019750791156,
-            "CALOR": 33.33,
             "SPECCOST": {
-                "BFUEL-L": 0.0032243376759515,
-                "CO2-G": 0.0445186199587845,
-                "EL": 0.08078,
-                "H2O-L": 0.0013737954502618,
+                "BFUEL-L": 0.00322434,
+                "CO2-G": 0.04451862,
+                "H2O-L": 0.0013738,
                 "HEAT": 0.0577,
                 "N2-G": 0.01154,
             },
+            "WACC": 0.22150198,
         },
-        "context": {"source_region_code": "ARG", "target_country_code": "DEU"},
-        "flh_opt_hash": {
-            "hash_md5": "10f4f69711354343d67b81a86ae20cf3",
+        "parameter_import": {
+            "SPECCOST": {
+                "BFUEL-L": 0.00322434,
+                "CO2-G": 0.04451862,
+                "EL": 0.08078,
+                "H2O-L": 0.0013738,
+                "HEAT": 0.0577,
+                "N2-G": 0.01154,
+            }
+        },
+        "secondary_process": {
+            "H2O-L": {
+                "CAPEX": 0.0027312,
+                "CONV": {"EL": 0.003},
+                "EFF": 1.0,
+                "FLH": 5058.62320974,
+                "LIFETIME": 20.0,
+                "OPEX-F": 0.00010925,
+                "WACC": 0.22150198,
+                "process_code": "DESAL",
+            }
         },
     }
 
     del result["flh_opt_hash"]["filepath"]  # dont test this
 
-    assert_deep_equal(exp_result, result)
+    assert_deep_equal_approx(exp_result, result, allow_new_dict_items=True)
 
 
 @pytest.mark.parametrize(
-    "chain, is_green, is_blue",
-    [
-        (x.chain, x.is_green, x.is_blue)
-        for x in DataHandler.get_dimension(
-            "chain", tool_version_color=None
-        ).itertuples()
-    ],
+    "chain",
+    ChainValues,
 )
 @pytest.mark.parametrize(
-    "use_ship, ship_own_fuel",
+    "transport, ship_own_fuel",
     [
-        (False, False),
-        (True, False),
-        # (True, True),  # no ship own fuel because needs SHP_OWN specified # noqa E800
+        ("Pipeline", False),
+        ("Ship", False),
+        ("Ship", True),
     ],
 )
-def test_validate_chains(chain, is_green, is_blue, use_ship, ship_own_fuel):
-    if is_green and is_blue:
-        raise ValueError("chain is both green and blue")
+def test_validate_chains(
+    chain: ChainType,
+    transport: TransportType,
+    ship_own_fuel: bool,
+):
+    # skip test chain
+    if chain == "Blue Iron (blue)*":
+        return
 
-    tool_version_color = "green" if is_green else "blue"
-    process_code_res = "RES-HYBR" if is_green else None
+    tool_version_color = DataHandler.get_chain_color(chain)
+    process_res: ProcessCodeResType | None = (
+        "RES-HYBR" if (tool_version_color == "green") else None
+    )
+    scenario = "2030 (medium)"
 
     dh = DataHandler(
-        scenario="2030 (medium)",
+        scenario=scenario,
         tool_version_color=tool_version_color,
         # specifically DON'T use test data here
         # we want to validate the current chains
     )
 
+    transport, ship_own_fuel = DataHandler.correct_transport(
+        transport, ship_own_fuel, chain
+    )
+
     # _validate_process_chain called inside here
 
-    dh._get_calculation_data(
+    chain_def = ChainDef(
         secondary_processes={},
         chain_name=chain,
-        process_code_res=process_code_res,
+        process_res=process_res,
         source_region_code="ESP",
         target_country_code="DEU",
-        use_ship=use_ship,
+        transport=transport,
         ship_own_fuel=ship_own_fuel,
     )
+    ptx_calc = PtxCalc.get_or_create(chain_def)
+
+    data = dh.get_calculation_data(
+        ptx_calc=ptx_calc,
+        source_region_code=chain_def.source_region_code,
+        target_country_code=chain_def.target_country_code,
+        optimize_flh=False,
+    )
+
+    # test calculate
+    ptx_calc.calculate(data=data)
 
 
 def test_parameter_data():
@@ -551,13 +599,17 @@ def test_parameter_data():
         if not isinstance(secondary_flows, str) or not secondary_flows:
             continue
         for flow_code in secondary_flows.split("/"):
+            # TODO: CO2-C has no CONV, because it comes from captured CO2
+            # so we ignore for now
+            if flow_code == "CO2-C":
+                continue
             expected_conv_proc_flow.add((proc["process_code"], flow_code))
 
     # get in data
 
     data_conv_proc_flow = {
         tuple(x)
-        for x in df_data.loc[df_data["parameter_code"] == "CONV"][
+        for x in df_data.loc[df_data["parameter_code"].isin({"CONV", "CONV-OT"})][
             ["process_code", "flow_code"]
         ].values
     }
@@ -565,11 +617,12 @@ def test_parameter_data():
     # compare
 
     missing_data = expected_conv_proc_flow - data_conv_proc_flow
+
     if missing_data:
         raise Exception("Missing CONV data for: %s", missing_data)
 
     unused_data = data_conv_proc_flow - expected_conv_proc_flow
-    # known special cases (TODO):
+    # known special cases (FIXME):
     unused_data = unused_data - {("H2-STR", "EL"), ("SYN-S", "CHX-L")}
     if unused_data:
         raise Exception("Unexpected CONV data for: %s", unused_data)
@@ -602,7 +655,7 @@ def test_dimension_values_exist_in_dimension_tables(
         "target_country": ("country", "country_code"),
     }
 
-    scenario = f"{year} ({cost_assumption})"
+    scenario: ScenarioType = f"{year} ({cost_assumption})"  # type: ignore
     handler = DataHandler(scenario=scenario)
     input_data = handler.get_input_data(long_names=False)
 
@@ -610,7 +663,7 @@ def test_dimension_values_exist_in_dimension_tables(
 
     # Dimension table values
     if dim_name == "region_country":
-        defined_values = handler.dimensions["region_country"][
+        defined_values = handler.dimensions["region_country"][  # type: ignore
             "region_country_code"
         ].unique()
     else:
@@ -699,3 +752,120 @@ def test_parameter_has_data(year, cost_assumption, parameter_code):
     parameter_data = input_data.loc[input_data["parameter_code"] == parameter_code]
     if len(parameter_data) == 0:
         pytest.fail(f"No data defined for {parameter_code=}")
+
+
+def test_chains():
+    # check known columns in chain
+    df_chain = DataHandler.get_dimension("chain")
+    df_process = DataHandler.get_dimension("process")
+    df_flow = DataHandler.get_dimension("flow")
+
+    COLS_PROC_MAIN_CHAIN = [
+        "NG_PROD",
+        "EL_STR",
+        "ELY",
+        "H2_STR",
+        "DERIV",
+        "DERIV2",
+        "PRE_SHP",
+        "SHP",
+        "SHP_OWN",
+        "POST_SHP",
+        "PRE_PPL",
+        "PPLS",
+        "PPL",
+        "PPLX",
+        "PPLR",
+        "POST_PPL",
+        "ELY_I",
+        "DERIV_I",
+        "DERIV_I2",
+    ]
+    COLS_OTHER = [
+        "chain",
+        "chain_name",
+        "flow_out",
+        "can_pipeline",
+        "is_green",
+        "is_blue",
+        "CO2_TS",
+        "CO2_TS_I",
+    ]
+
+    expected_cols = set(COLS_PROC_MAIN_CHAIN + COLS_OTHER)
+    cols = set(df_chain.columns)
+
+    assert expected_cols == cols
+
+    # for blue/green chains: find all used processes
+    procs_res = set(df_process.loc[df_process["is_re_generation"], "process_code"])
+    procs_green = (
+        set(df_process.loc[df_process["is_green"], "process_code"]) - procs_res
+    )
+    procs_blue = set(df_process.loc[df_process["is_blue"], "process_code"])
+    procs_sec = set(df_process.loc[df_process["is_secondary"], "process_code"])
+    procs_all = set(df_process["process_code"])
+
+    # assert no overlap
+    assert not procs_green & procs_blue
+
+    used_procs_green = set()
+    used_procs_blue = set()
+    for col in COLS_PROC_MAIN_CHAIN:
+        used_procs_green = used_procs_green | set(
+            df_chain.loc[(df_chain[col] != "") & df_chain["is_green"], col]
+        )
+        used_procs_blue = used_procs_blue | set(
+            df_chain.loc[(df_chain[col] != "") & df_chain["is_blue"], col]
+        )
+
+    # check for proper subsets
+    assert not used_procs_blue - procs_blue, used_procs_blue - procs_blue
+    assert not used_procs_green - procs_green, used_procs_green - procs_green
+
+    # check for unused/missing processes
+    used_procs = used_procs_green | used_procs_blue | procs_sec | procs_res
+    assert used_procs == procs_all, (used_procs - procs_all, procs_all - used_procs)
+
+    # find all used flows
+    used_flows = set()
+    # combinations of process and flow
+    used_process_flows = set()
+
+    # ... per process
+    for process_code, proc in df_process.iterrows():
+        used_flows_proc = (
+            {proc["main_flow_code_in"], proc["main_flow_code_out"]}
+            | set(proc["secondary_flows"])
+        ) - {""}
+        used_flows = used_flows | used_flows_proc
+        used_process_flows = used_process_flows | {
+            (process_code, f) for f in used_flows_proc
+        }
+
+    flows = set(df_flow["flow_code"])
+
+    assert used_flows == flows, (used_flows - flows, flows - used_flows)
+
+    # check if in current data, we have combinations of process/flow that
+    # is never used
+    dfs = []
+    for scen in ScenarioValues:
+        df = _load_scenario_data(data_dir=DEFAULT_DATA_DIR, scenario=scen)
+        dfs.append(df)
+    df_data = pd.concat(dfs)
+    data_proc_flow_combos = {
+        tuple(x)
+        for x in df_data.loc[
+            (df_data["process_code"] != "") & (df_data["flow_code"] != ""),
+            ["process_code", "flow_code"],
+        ]
+        .drop_duplicates()
+        .values
+    }
+    unused_data_proc_flow_combos = data_proc_flow_combos - used_process_flows
+    unused_data_proc_flow_combos = unused_data_proc_flow_combos - {
+        ("H2-STR", "EL")  # FIXME (affects green tool)
+    }
+    print(unused_data_proc_flow_combos)
+    assert not unused_data_proc_flow_combos, unused_data_proc_flow_combos
