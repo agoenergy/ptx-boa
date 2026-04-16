@@ -45,8 +45,8 @@ ProcessDataType = dict[
 @dataclass(slots=True)
 class PtxCalcResult:
     df_results_cost: pd.DataFrame
-    df_results_emissions_e_g_co2e: Optional[pd.DataFrame]
-    df_results_emissions_m_g_co2e: Optional[pd.DataFrame]
+    df_results_emissions_e_g_co2e: pd.DataFrame
+    df_results_emissions_m_g_co2e: pd.DataFrame
     _internal_process_data: Optional[list] = None
 
 
@@ -54,8 +54,8 @@ class PtxCalcResult:
 class ApiCalculateResult:
     metadata: dict
     costs: pd.DataFrame
-    emissions: Optional[pd.DataFrame] = None
-    emission_mass: Optional[pd.DataFrame] = None
+    emissions_t_co2e: pd.DataFrame
+    emission_mass_t_co2e: pd.DataFrame
     _internal_process_data: Optional[list] = None
 
 
