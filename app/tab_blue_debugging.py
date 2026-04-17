@@ -94,10 +94,14 @@ def debug_report(
             json_print,
         ),
         ("Cost results", drop_debug_columns(result.costs), dataframe_print),
-        ("Emission results", drop_debug_columns(result.emissions), dataframe_print),
+        (
+            "Emission results",
+            drop_debug_columns(result.emissions_t_co2e),
+            dataframe_print,
+        ),
         (
             "Emission mass results",
-            drop_debug_columns(result.emission_mass),
+            drop_debug_columns(result.emission_mass_t_co2e),
             dataframe_print,
         ),
     ]

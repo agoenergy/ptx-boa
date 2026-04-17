@@ -45,17 +45,18 @@ ProcessDataType = dict[
 @dataclass(slots=True)
 class PtxCalcResult:
     df_results_cost: pd.DataFrame
-    df_results_emissions_e_g_co2e: Optional[pd.DataFrame]
-    df_results_emissions_m_g_co2e: Optional[pd.DataFrame]
+    df_results_emissions_e_g_co2e: pd.DataFrame
+    df_results_emissions_m_g_co2e: pd.DataFrame
     _internal_process_data: Optional[list] = None
+    _internal_data: Optional[dict] = None
 
 
 @dataclass(slots=True, frozen=True)
 class ApiCalculateResult:
     metadata: dict
     costs: pd.DataFrame
-    emissions: Optional[pd.DataFrame] = None
-    emission_mass: Optional[pd.DataFrame] = None
+    emissions_t_co2e: pd.DataFrame
+    emission_mass_t_co2e: pd.DataFrame
     _internal_process_data: Optional[list] = None
 
 
@@ -125,7 +126,9 @@ class ProcessResultCostsType:
 class ProcessEmissionType_E_M:
     co2_captured: float = 0  # used for CSS
     co2_bound_in_product: float = 0  # used for next process and final bound in product
-    co2_bound_in_product_per_output: float = 0  # used for next process (partial flow)
+    co2_bound_in_product_per_output: float | None = (
+        None  # used for next process (partial flow)
+    )
     co2_direct: float = 0  # used for output
     co2_indirect_scope2: float = 0  # used for output
     ch4_direct_co2e: float = 0  # used for output

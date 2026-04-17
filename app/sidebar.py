@@ -542,7 +542,7 @@ def unit_toggle_blue():
 
     st.session_state["output_unit"] = unit
     st.session_state["emissions_output_unit"] = st.session_state["output_unit"].replace(
-        "USD", "gCO₂eq"
+        "USD", "tCO₂eq"
     )
 
 
