@@ -450,6 +450,7 @@ class Process:
         CO2CPT_R = parameter_data.get("CO2CPT-R", {})
         CO2CPT_S = parameter_data.get("CO2CPT-S", {})
         CBOUND_kg_c_per_output = parameter_data.get("CBOUND", {})
+        used_cbound: bool = False
 
         # calculate direct ch4 losses
         ch4_kwh_direct_loss = 0
@@ -507,14 +508,22 @@ class Process:
                 co2_captured += co2_g * co2cpt
                 # bound
                 bound_kg_c_per_output: float = CBOUND_kg_c_per_output.get(flow_code, 0)  # type: ignore # noqa
-
-                # only add if EFF exist (EFF_FLAG)
-                # TODO: special case B-DRI-S - generalized rule?
-                allow_cbound = bool(co2_g_per_flow) or flow_code in {"B-DRI-S"}
-                if allow_cbound:
-                    co2_g_bound_in_product += (
-                        bound_kg_c_per_output * 1000 * CO2_PER_C * main_flow_out
-                    )
+                if bound_kg_c_per_output:
+                    # only add if EFF exist (EFF_FLAG)
+                    # TODO: special cases - generalized rule?
+                    allow_cbound = bool(co2_g_per_flow) or flow_code in {
+                        "B-DRI-S",
+                        "CO2-DAC",  # may have emission factor (co2_g_per_flow) of 0
+                    }
+                    if allow_cbound:
+                        # special case:
+                        if flow_code == "CO2-DAC" and not co2_g_per_flow:
+                            # we still want to add 0 to bound_kg_c_per_output
+                            bound_kg_c_per_output = 0
+                        co2_g_bound_in_product += (
+                            bound_kg_c_per_output * 1000 * CO2_PER_C * main_flow_out
+                        )
+                        used_cbound = used_cbound | True
 
         # special case initial process (NG-PROD): cbound for output
         if self.is_initial:
@@ -528,9 +537,11 @@ class Process:
                 co2_g_direct_sum_in += co2_g
                 # TODO: reuse code from above?
                 bound_kg_c_per_output: float = CBOUND_kg_c_per_output.get(flow_code, 0)  # type: ignore # noqa
-                co2_g_bound_in_product += (
-                    bound_kg_c_per_output * 1000 * CO2_PER_C * main_flow_out
-                )
+                if bound_kg_c_per_output:
+                    co2_g_bound_in_product += (
+                        bound_kg_c_per_output * 1000 * CO2_PER_C * main_flow_out
+                    )
+                    used_cbound = True
 
         if self.keep_cbound_from_main_input:
             # no transformation has happend (e.g. shipping)
@@ -549,7 +560,7 @@ class Process:
                     "cbound/flow=0 for main in %s in %s"
                     % (self, self.main_flow_code_in)
                 )
-
+            used_cbound = True
             co2_g_bound_in_product = main_flow_out * co2_g_per_flow  # type:ignore
 
         co2_g_direct = co2_g_direct_sum_in - co2_g_bound_in_product - co2_captured
@@ -561,8 +572,8 @@ class Process:
             )
             co2_g_direct = 0
 
-        if not main_flow_out:
-            co2_bound_in_product_per_output = 0
+        if not main_flow_out or not used_cbound:
+            co2_bound_in_product_per_output = None
         else:
             co2_bound_in_product_per_output = co2_g_bound_in_product / main_flow_out
 
@@ -606,12 +617,16 @@ class Process:
             for flow_code, proc in self._links_in_secondary.items():
                 res = results_emissions[proc]
                 if res:
+                    # NOTE: can be 0 or None. None means it cannot have a value
+                    # 0 can happen if the emission factor is set to 0 for accounting
                     g_co2_per_flow = res[em].co2_bound_in_product_per_output
                 else:
                     g_co2_per_flow = None
-                if not g_co2_per_flow:
-                    # use emission factor, if not bound in co2
 
+                # IMPORTANT: g_co2_per_flow may be 0, so we must only check
+                # for g_co2_per_flow is None
+                if g_co2_per_flow is None:
+                    # use emission factor, if not bound in co2
                     g_co2_per_flow = params_ef.get(flow_code, 0)  # type: ignore
                 g_co2_per_flows[flow_code] = g_co2_per_flow  # type: ignore
 
@@ -1490,6 +1505,13 @@ class PtxCalc:
             df_results_emissions_e_g_co2e=df_results_emissions_e_g_co2e,
             df_results_emissions_m_g_co2e=df_results_emissions_m_g_co2e,
             _internal_process_data=_internal_process_data,
+            _internal_data={
+                "parameter_data": parameter_data,
+                "results_flows": results_flows,
+                "results_costs": results_costs,
+                "results_emissions": results_emissions,
+                "chain": self,
+            },
         )
 
     def _merge_emission_results(

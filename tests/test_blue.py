@@ -294,14 +294,28 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
             "emissions": {
                 "emission": {
                     "ch4_direct_co2e": 274.37420694,
+                    "co2_bound_in_product": 148.05784985,
+                    "co2_bound_in_product_per_output": 149.55338219,
+                    "co2_captured": 239.85116488,
+                    "co2_direct": 204.31608375,
                     "co2_indirect_scope2": 189.78034672,
                 },
-                "mass": {"ch4_direct_co2e": 274.37420694},
+                "mass": {
+                    "ch4_direct_co2e": 274.37420694,
+                    "co2_bound_in_product": 148.05784985,
+                    "co2_bound_in_product_per_output": 149.55338219,
+                    "co2_captured": 239.85116488,
+                    "co2_direct": 204.31608375,
+                },
             },
             "flows": {
                 "main_flow_in": 3.0937132,
                 "main_flow_out": 0.99000001,
-                "secondary_flows_in": {"EL": 0.47209041, "IOP-S": 1.35999964},
+                "secondary_flows_in": {
+                    "CO2-C": 0.23985116,
+                    "EL": 0.47209041,
+                    "IOP-S": 1.35999964,
+                },
             },
             "parameter": {
                 "CAPEX": 0.591876,
@@ -324,6 +338,16 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
             "process_step": "DERIV",
         },
         {
+            "emissions": {
+                "emission": {
+                    "co2_bound_in_product": 148.05784985,
+                    "co2_bound_in_product_per_output": 149.55338219,
+                },
+                "mass": {
+                    "co2_bound_in_product": 148.05784985,
+                    "co2_bound_in_product_per_output": 149.55338219,
+                },
+            },
             "flows": {"main_flow_in": 0.99000001, "main_flow_out": 0.99000001},
             "parameter": {
                 "DIST": 999.0,
@@ -340,9 +364,10 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
             "emissions": {
                 "emission": {
                     "ch4_direct_co2e": 0.3724882,
+                    "co2_direct": 148.05784985,
                     "co2_indirect_scope2": 195.3,
                 },
-                "mass": {"ch4_direct_co2e": 0.3724882, "co2_direct": 0.804},
+                "mass": {"ch4_direct_co2e": 0.3724882, "co2_direct": 148.86184985},
             },
             "flows": {
                 "main_flow_in": 0.99000001,
@@ -506,13 +531,9 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 {
                     "costs": {"OPEX": 0.00057767},
                     "emissions": {
-                        "emission": {
-                            "co2_bound_in_product": 266.76000002,
-                            "co2_bound_in_product_per_output": 266.76000002,
-                        },
+                        "emission": {"co2_bound_in_product": 266.76000002},
                         "mass": {
                             "co2_bound_in_product": 266.76000002,
-                            "co2_bound_in_product_per_output": 266.76000002,
                             "co2_direct": 4.74715381,
                         },
                     },
@@ -663,13 +684,11 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "emission": {
                             "ch4_direct_co2e": 3.1663146,
                             "co2_bound_in_product": 592.22579704,
-                            "co2_bound_in_product_per_output": 201.00000001,
                             "co2_direct": 98.40225178,
                         },
                         "mass": {
                             "ch4_direct_co2e": 3.1663146,
                             "co2_bound_in_product": 592.22579704,
-                            "co2_bound_in_product_per_output": 201.00000001,
                             "co2_direct": 98.40225178,
                         },
                     },
@@ -698,13 +717,9 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 },
                 {
                     "emissions": {
-                        "emission": {
-                            "co2_bound_in_product": 592.22579704,
-                            "co2_bound_in_product_per_output": 201.00000001,
-                        },
+                        "emission": {"co2_bound_in_product": 592.225797},
                         "mass": {
-                            "co2_bound_in_product": 592.22579704,
-                            "co2_bound_in_product_per_output": 201.00000001,
+                            "co2_bound_in_product": 592.225797,
                             "co2_direct": 9.03354942,
                         },
                     },
@@ -733,15 +748,13 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "emissions": {
                         "emission": {
                             "ch4_direct_co2e": 1.9e-07,
-                            "co2_bound_in_product": 592.22579704,
-                            "co2_bound_in_product_per_output": 201.00000001,
+                            "co2_bound_in_product": 592.225797,
                             "co2_direct": 0.50496389,
                             "co2_indirect_scope2": 0.14142706,
                         },
                         "mass": {
                             "ch4_direct_co2e": 1.9e-07,
-                            "co2_bound_in_product": 592.22579704,
-                            "co2_bound_in_product_per_output": 201.00000001,
+                            "co2_bound_in_product": 592.225797,
                             "co2_direct": 0.50496389,
                             "co2_indirect_scope2": 0.14142706,
                         },
@@ -788,15 +801,15 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "emission": {
                             "co2_bound_in_product": 148.05644926,
                             "co2_bound_in_product_per_output": 149.55196895,
-                            "co2_captured": 239.8514478,
-                            "co2_direct": 204.31789998,
+                            "co2_captured": 239.85144778,
+                            "co2_direct": 204.31789996,
                             "co2_indirect_scope2": 47.209,
                         },
                         "mass": {
                             "co2_bound_in_product": 148.05644926,
                             "co2_bound_in_product_per_output": 149.55196895,
-                            "co2_captured": 239.8514478,
-                            "co2_direct": 204.31789998,
+                            "co2_captured": 239.85144778,
+                            "co2_direct": 204.31789996,
                             "co2_indirect_scope2": 47.209,
                         },
                     },
@@ -1100,11 +1113,7 @@ def test_new_blue_chain_real_data(api_kwargs, expected):
                 "DERIV_I": {
                     "costs": {"CAPEX": 0.00634495, "OPEX": 0.00288},
                     "emissions": {
-                        "emission": {
-                            "co2_bound_in_product": 248.49429268,
-                            "co2_bound_in_product_per_output": 248.49429268,
-                            "co2_indirect_scope2": 15.46211741,
-                        },
+                        "emission": {"co2_indirect_scope2": 15.46211741},
                         "mass": {
                             "co2_bound_in_product": 248.49429268,
                             "co2_bound_in_product_per_output": 248.49429268,
@@ -1148,4 +1157,6 @@ def test_new_blue_chain_dac(api_kwargs, expected):
         x["process_step"]: x for x in result._internal_process_data or []
     }
     for step, expected_step_data in expected.items():
-        assert_deep_equal_approx(expected_step_data, actual_step_data[step])
+        assert_deep_equal_approx(
+            expected_step_data, actual_step_data[step], context=step
+        )

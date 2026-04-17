@@ -10,8 +10,7 @@ import coloredlogs
 import pandas as pd
 
 from ptxboa import DEFAULT_DATA_DIR, logger
-from ptxboa.api import _translate_and_validate_user_settings
-from ptxboa.api_calc import PtxCalc
+from ptxboa.api import PtxboaAPI, PtxCalc
 from ptxboa.api_data import DataHandler
 from ptxboa.static import (
     ChainType,
@@ -30,7 +29,7 @@ _df_chain = DataHandler.get_dimension("chain")
 _df_region_by_name = DataHandler.get_dimension("region")
 _df_region_by_code = _df_region_by_name.set_index("region_code", drop=False)
 
-PLOT_TYPES = ["flows", "speccost", "cbound"]
+PLOT_TYPES = ["flows", "speccost", "cbound_m", "cbound_e"]
 
 
 @dataclass
@@ -123,64 +122,56 @@ def main(chains: list[str], plot_type: str):
 
         logger.info(f"{i + 1}/{len(permutations)}: {settings} => {name}")
 
-        data_handler = DataHandler(
-            scenario=scenario, data_dir=DEFAULT_DATA_DIR, user_data=settings.user_data
+        api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR)
+        output_unit = "USD/t"  # works always
+        results = (
+            api.calculate(
+                **settings.__dict__, output_unit=output_unit, optimize_flh=False
+            )._internal_data
+            or {}
         )
-
-        chain_def, _tool_version_color, _optimize_flh = (
-            _translate_and_validate_user_settings(
-                **settings.__dict__, optimize_flh=False
-            )
-        )
-        chain_process = PtxCalc.get_or_create(chain_def)
-
-        parameter_data = chain_process.get_calculation_data(  # noqa
-            data_handler=data_handler,
-            source_region_code=_df_region_by_name.at[settings.region, "region_code"],  # type: ignore # noqa
-            target_country_code=_df_region_by_name.at[settings.country, "region_code"],  # type: ignore # noqa
-        )
-
-        results_api = chain_process.calculate(data=parameter_data)
-        logger.info(results_api.df_results_cost)
-        logger.info(results_api.df_results_emissions_m_g_co2e)
-
-        results = chain_process._calculate(data=parameter_data)
+        chain: PtxCalc = results["chain"]
+        graph = chain._graph
+        results_flows = results["results_flows"]
+        results_emissions = results["results_emissions"]
+        parameter_data = results["parameter_data"]
 
         if plot_type == "flows":
             edge_values = {
-                (p, p_): results["results_flows"][p].main_flow_out
-                for p, p_ in chain_process._graph.edges()
+                (p, p_): results_flows[p].main_flow_out for p, p_ in graph.edges()
             }
         elif plot_type == "speccost":
             edge_values = {  # noqa
-                (p, p_): results["parameter_data"][p]["SPECCOST"][p.main_flow_code_out]  # type: ignore  # noqa
-                for p, p_ in chain_process._graph.edges()
+                (p, p_): parameter_data[p]["SPECCOST"][p.main_flow_code_out]  # type: ignore  # noqa
+                for p, p_ in graph.edges()
                 if p.is_market
             }
-        elif plot_type == "cbound":
-
-            def _get_cbound(p):
-                try:
-                    return results["results_emissions"][p][
-                        "mass"
-                    ].co2_bound_in_product_per_output
-                except Exception:
-                    return None
-
+        elif plot_type in ("cbound_m", "cbound_e"):
             edge_values = {}
-            for p in chain_process._graph.nodes():
-                cbound = _get_cbound(p)
-                if not cbound:
+            me = {"cbound_m": "mass", "cbound_e": "emission"}[plot_type]
+            for p in graph.nodes():
+                res = results_emissions.get(p)
+                if not res:
+                    continue
+
+                cbound_rel = res[me].co2_bound_in_product_per_output
+                cbound_abs = res[me].co2_bound_in_product
+                cbound_rel = cbound_abs / results_flows[p].main_flow_out
+
+                if not cbound_rel:
                     continue
                 for p_ in p._links_out_in_main:
+                    edge_values[(p, p_)] = results_flows[p_].main_flow_in * cbound_rel
+                for p_ in p._links_out_in_secondary:
                     edge_values[(p, p_)] = (
-                        results["results_flows"][p_].main_flow_in * cbound
+                        results_flows[p_].secondary_flows_in[p.main_flow_code_out]
+                        * cbound_rel
                     )
 
         else:
             raise NotImplementedError(plot_type)
 
-        chain_process.plot(
+        chain.plot(
             file_basename=f"{settings.tool_version_color}/{name}_{plot_type}",
             edge_values=edge_values,  # type: ignore
         )

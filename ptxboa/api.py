@@ -253,6 +253,7 @@ class PtxboaAPI:
                 )
             ),  # g => t
             _internal_process_data=ptxcalc_result._internal_process_data,
+            _internal_data=ptxcalc_result._internal_data,
         )
 
     def get_flh_opt_network(
