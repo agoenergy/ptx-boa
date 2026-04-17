@@ -10,8 +10,7 @@ import coloredlogs
 import pandas as pd
 
 from ptxboa import DEFAULT_DATA_DIR, logger
-from ptxboa.api import _translate_and_validate_user_settings
-from ptxboa.api_calc import PtxCalc
+from ptxboa.api import PtxCalc, _translate_and_validate_user_settings
 from ptxboa.api_data import DataHandler
 from ptxboa.static import (
     ChainType,
@@ -29,6 +28,8 @@ _df_process_by_code = DataHandler.get_dimension("process")
 _df_chain = DataHandler.get_dimension("chain")
 _df_region_by_name = DataHandler.get_dimension("region")
 _df_region_by_code = _df_region_by_name.set_index("region_code", drop=False)
+
+PLOT_TYPES = ["flows", "speccost", "cbound_m", "cbound_e"]
 
 
 @dataclass
@@ -105,7 +106,7 @@ def create_permutations(scenario: ScenarioType) -> Iterable[Settings]:
             )
 
 
-def main():
+def main(chains: list[str], plot_type: str):
     scenario: ScenarioType = "2040 (medium)"
     permutations = create_permutation_names(create_permutations(scenario=scenario))
 
@@ -114,48 +115,77 @@ def main():
         if settings.chain == "Blue Iron (blue)*":
             continue
 
-        # if i not in (14, 164):
-        #    continue
+        if chains:
+            # only do that
+            if settings.chain not in chains:
+                continue
 
         logger.info(f"{i + 1}/{len(permutations)}: {settings} => {name}")
 
-        data_handler = DataHandler(
-            scenario=scenario, data_dir=DEFAULT_DATA_DIR, user_data=settings.user_data
-        )
-
-        chain_def, _tool_version_color, _optimize_flh = (
+        chain_def, tool_version_color, optimize_flh = (
             _translate_and_validate_user_settings(
                 **settings.__dict__, optimize_flh=False
             )
         )
-        chain_process = PtxCalc.get_or_create(chain_def)
-
-        parameter_data = chain_process.get_calculation_data(  # noqa
-            data_handler=data_handler,
-            source_region_code=_df_region_by_name.at[settings.region, "region_code"],  # type: ignore # noqa
-            target_country_code=_df_region_by_name.at[settings.country, "region_code"],  # type: ignore # noqa
+        data_handler = DataHandler(
+            scenario, data_dir=DEFAULT_DATA_DIR, tool_version_color=tool_version_color
         )
+        ptx_calc = PtxCalc.get_or_create(chain_def)
+        data = data_handler.get_calculation_data(
+            ptx_calc=ptx_calc,
+            source_region_code=chain_def.source_region_code,
+            target_country_code=chain_def.target_country_code,
+            optimize_flh=optimize_flh,
+            use_user_data_for_optimize_flh=False,
+        )
+        # calculate results
+        ptxcalc_result = ptx_calc.calculate(data)  # NEW # noqa
 
-        results_api = chain_process.calculate(data=parameter_data)
-        logger.info(results_api.df_results_cost)
-        logger.info(results_api.df_results_emissions_m_g_co2e)
+        results = ptxcalc_result._internal_data or {}
+        chain: PtxCalc = results["chain"]
+        graph = chain._graph
+        results_flows = results["results_flows"]
+        results_emissions = results["results_emissions"]
+        parameter_data = results["parameter_data"]
 
-        results = chain_process._calculate(data=parameter_data)
+        if plot_type == "flows":
+            edge_values = {
+                (p, p_): results_flows[p].main_flow_out for p, p_ in graph.edges()
+            }
+        elif plot_type == "speccost":
+            edge_values = {  # noqa
+                (p, p_): parameter_data[p]["SPECCOST"][p.main_flow_code_out]  # type: ignore  # noqa
+                for p, p_ in graph.edges()
+                if p.is_market
+            }
+        elif plot_type in ("cbound_m", "cbound_e"):
+            edge_values = {}
+            me = {"cbound_m": "mass", "cbound_e": "emission"}[plot_type]
+            for p in graph.nodes():
+                res = results_emissions.get(p)
+                if not res:
+                    continue
 
-        edge_values_speccost = {  # noqa
-            (p, p_): results["parameter_data"][p]["SPECCOST"][p.main_flow_code_out]  # type: ignore  # noqa
-            for p, p_ in chain_process._graph.edges()
-            if p.is_market
-        }
+                cbound_rel = res[me].co2_bound_in_product_per_output
+                cbound_abs = res[me].co2_bound_in_product
+                cbound_rel = cbound_abs / results_flows[p].main_flow_out
 
-        edge_values_flows = {
-            (p, p_): results["results_flows"][p].main_flow_out
-            for p, p_ in chain_process._graph.edges()
-        }
+                if not cbound_rel:
+                    continue
+                for p_ in p._links_out_in_main:
+                    edge_values[(p, p_)] = results_flows[p_].main_flow_in * cbound_rel
+                for p_ in p._links_out_in_secondary:
+                    edge_values[(p, p_)] = (
+                        results_flows[p_].secondary_flows_in[p.main_flow_code_out]
+                        * cbound_rel
+                    )
 
-        chain_process.plot(
-            file_basename=f"{settings.tool_version_color}/{name}",
-            edge_values=edge_values_flows,  # type: ignore
+        else:
+            raise NotImplementedError(plot_type)
+
+        chain.plot(
+            file_basename=f"{settings.tool_version_color}/{name}_{plot_type}",
+            edge_values=edge_values,  # type: ignore
         )
 
 
@@ -167,6 +197,8 @@ if __name__ == "__main__":
         choices=["debug", "info", "warning", "error"],
         default="warning",
     )
+    ap.add_argument("chains", nargs="?")
+    ap.add_argument("--plot-type", choices=PLOT_TYPES, default=PLOT_TYPES[0])
     # parse args
     kwargs = vars(ap.parse_args())
     # logging

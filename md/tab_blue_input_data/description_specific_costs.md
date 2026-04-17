@@ -4,3 +4,4 @@ Specific costs of CO₂, water, heat and bunker fuel. The following units are us
 - Water: USD/kg
 - Heat: USD/kWh
 - Bunker fuel: USD/kWh
+- iron ore pellets: USD/kg
