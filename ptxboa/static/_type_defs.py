@@ -58,7 +58,6 @@ class ApiCalculateResult:
     emissions_t_co2e: pd.DataFrame
     emission_mass_t_co2e: pd.DataFrame
     _internal_process_data: Optional[list] = None
-    _internal_data: Optional[dict] = None
 
 
 @dataclass(slots=True, frozen=True)

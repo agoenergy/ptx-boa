@@ -10,7 +10,7 @@ import coloredlogs
 import pandas as pd
 
 from ptxboa import DEFAULT_DATA_DIR, logger
-from ptxboa.api import PtxboaAPI, PtxCalc
+from ptxboa.api import PtxCalc, _translate_and_validate_user_settings
 from ptxboa.api_data import DataHandler
 from ptxboa.static import (
     ChainType,
@@ -122,14 +122,26 @@ def main(chains: list[str], plot_type: str):
 
         logger.info(f"{i + 1}/{len(permutations)}: {settings} => {name}")
 
-        api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR)
-        output_unit = "USD/t"  # works always
-        results = (
-            api.calculate(
-                **settings.__dict__, output_unit=output_unit, optimize_flh=False
-            )._internal_data
-            or {}
+        chain_def, tool_version_color, optimize_flh = (
+            _translate_and_validate_user_settings(
+                **settings.__dict__, optimize_flh=False
+            )
         )
+        data_handler = DataHandler(
+            scenario, data_dir=DEFAULT_DATA_DIR, tool_version_color=tool_version_color
+        )
+        ptx_calc = PtxCalc.get_or_create(chain_def)
+        data = data_handler.get_calculation_data(
+            ptx_calc=ptx_calc,
+            source_region_code=chain_def.source_region_code,
+            target_country_code=chain_def.target_country_code,
+            optimize_flh=optimize_flh,
+            use_user_data_for_optimize_flh=False,
+        )
+        # calculate results
+        ptxcalc_result = ptx_calc.calculate(data)  # NEW # noqa
+
+        results = ptxcalc_result._internal_data or {}
         chain: PtxCalc = results["chain"]
         graph = chain._graph
         results_flows = results["results_flows"]
