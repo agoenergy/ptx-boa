@@ -5,20 +5,20 @@ Ammonia (PEM),Ammonia (PEM),,EL-STR,PEM-EL,H2-STR,NH3SYN,,,,NH3-SB,NH3-S,,,,,,,,
 Ammonia (PEM) + reconv. to H2,Ammonia (PEM) + reconv. to H2,,EL-STR,PEM-EL,H2-STR,NH3SYN,,,,NH3-SB,NH3-S,NH3-REC,,,,,,,,,,,H2-G,False,True,False
 Ammonia (SOEC),Ammonia (SOEC),,EL-STR,SOEC-EL,H2-STR,NH3SYN,,,,NH3-SB,NH3-S,,,,,,,,,,,,NH3-L,False,True,False
 Ammonia (SOEC) + reconv. to H2,Ammonia (SOEC) + reconv. to H2,,EL-STR,SOEC-EL,H2-STR,NH3SYN,,,,NH3-SB,NH3-S,NH3-REC,,,,,,,,,,,H2-G,False,True,False
-B-DRI-S__ATR_91%_DRI__prod_in_demand,Direct Reduced Iron (ATR)*,NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,ATR_91%#B,DRI#B,,CO2-T+S#B,B-DRI-S,True,False,True
-B-DRI-S__ATR_91%_DRI__prod_in_supply,Direct Reduced Iron (ATR),NG-PROD#B,,ATR_91%#B,,DRI#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,,,B-DRI-S,False,False,True
-B-DRI-S__ATR_91%_DRI-rotary__prod_in_demand,"Direct Reduced Iron (AT, rotaryR)*",NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,ATR_91%#B,DRI-rotary#B,,CO2-T+S#B,B-DRI-S,True,False,True
-B-DRI-S__ATR_91%_DRI-rotary__prod_in_supply,"Direct Reduced Iron (ATR, rotary)",NG-PROD#B,,ATR_91%#B,,DRI-rotary#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,,,B-DRI-S,False,False,True
+B-DRI-S__ATR_91%_DRI__prod_in_demand,"Direct Reduced Iron (ATR, shaft furnace)*",NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,ATR_91%#B,DRI#B,,CO2-T+S#B,B-DRI-S,True,False,True
+B-DRI-S__ATR_91%_DRI__prod_in_supply,"Direct Reduced Iron (ATR, shaft furnace)",NG-PROD#B,,ATR_91%#B,,DRI#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,,,B-DRI-S,False,False,True
+B-DRI-S__ATR_91%_DRI-rotary__prod_in_demand,"Direct Reduced Iron (AT, rotary kiln)*",NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,ATR_91%#B,DRI-rotary#B,,CO2-T+S#B,B-DRI-S,True,False,True
+B-DRI-S__ATR_91%_DRI-rotary__prod_in_supply,"Direct Reduced Iron (ATR, rotary kiln)",NG-PROD#B,,ATR_91%#B,,DRI-rotary#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,,,B-DRI-S,False,False,True
 B-DRI-S__NG-DRI-C__prod_in_demand,Direct Reduced Iron (NG-based)*,NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,,NG-DRI-C#B,,CO2-T+S#B,B-DRI-S,True,False,True
 B-DRI-S__NG-DRI-C__prod_in_supply,Direct Reduced Iron (NG-based),NG-PROD#B,,,,NG-DRI-C#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,,,B-DRI-S,False,False,True
-B-DRI-S__SMR_52%_BF_DRI__prod_in_demand,Direct Reduced Iron (SMR-BF)*,NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,SMR_52%_BF#B,DRI#B,,CO2-T+S#B,B-DRI-S,True,False,True
-B-DRI-S__SMR_52%_BF_DRI__prod_in_supply,Direct Reduced Iron (SMR-BF),NG-PROD#B,,SMR_52%_BF#B,,DRI#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,,,B-DRI-S,False,False,True
-B-DRI-S__SMR_52%_BF_DRI-rotary__prod_in_demand,"Direct Reduced Iron (SMR-BF, rotary)*",NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,SMR_52%_BF#B,DRI-rotary#B,,CO2-T+S#B,B-DRI-S,True,False,True
-B-DRI-S__SMR_52%_BF_DRI-rotary__prod_in_supply,"Direct Reduced Iron (SMR-BF, rotary)",NG-PROD#B,,SMR_52%_BF#B,,DRI-rotary#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,,,B-DRI-S,False,False,True
-B-DRI-S__SMR_52%_DRI__prod_in_demand,Direct Reduced Iron (SMR)*,NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,SMR_52%#B,DRI#B,,CO2-T+S#B,B-DRI-S,True,False,True
-B-DRI-S__SMR_52%_DRI__prod_in_supply,Direct Reduced Iron (SMR),NG-PROD#B,,SMR_52%#B,,DRI#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,,,B-DRI-S,False,False,True
-B-DRI-S__SMR_52%_DRI-rotary__prod_in_demand,"Direct Reduced Iron (SMR, rotary)*",NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,SMR_52%#B,DRI-rotary#B,,CO2-T+S#B,B-DRI-S,True,False,True
-B-DRI-S__SMR_52%_DRI-rotary__prod_in_supply,"Direct Reduced Iron (SMR, rotary)",NG-PROD#B,,SMR_52%#B,,DRI-rotary#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,,,B-DRI-S,False,False,True
+B-DRI-S__SMR_52%_BF_DRI__prod_in_demand,"Direct Reduced Iron (SMR-BF, shaft furnace)*",NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,SMR_52%_BF#B,DRI#B,,CO2-T+S#B,B-DRI-S,True,False,True
+B-DRI-S__SMR_52%_BF_DRI__prod_in_supply,"Direct Reduced Iron (SMR-BF, shaft furnace)",NG-PROD#B,,SMR_52%_BF#B,,DRI#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,,,B-DRI-S,False,False,True
+B-DRI-S__SMR_52%_BF_DRI-rotary__prod_in_demand,"Direct Reduced Iron (SMR-BF, rotary kiln)*",NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,SMR_52%_BF#B,DRI-rotary#B,,CO2-T+S#B,B-DRI-S,True,False,True
+B-DRI-S__SMR_52%_BF_DRI-rotary__prod_in_supply,"Direct Reduced Iron (SMR-BF, rotary kiln)",NG-PROD#B,,SMR_52%_BF#B,,DRI-rotary#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,,,B-DRI-S,False,False,True
+B-DRI-S__SMR_52%_DRI__prod_in_demand,"Direct Reduced Iron (SMR, shaft furnace)*",NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,SMR_52%#B,DRI#B,,CO2-T+S#B,B-DRI-S,True,False,True
+B-DRI-S__SMR_52%_DRI__prod_in_supply,"Direct Reduced Iron (SMR, shaft furnace)",NG-PROD#B,,SMR_52%#B,,DRI#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,,,B-DRI-S,False,False,True
+B-DRI-S__SMR_52%_DRI-rotary__prod_in_demand,"Direct Reduced Iron (SMR, rotary kiln)*",NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,SMR_52%#B,DRI-rotary#B,,CO2-T+S#B,B-DRI-S,True,False,True
+B-DRI-S__SMR_52%_DRI-rotary__prod_in_supply,"Direct Reduced Iron (SMR, rotary kiln)",NG-PROD#B,,SMR_52%#B,,DRI-rotary#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,,,B-DRI-S,False,False,True
 Blue Iron (blue)*,TEST Blue Iron (blue)*,,,,,NG-DRI-C#B,,,,DRI-SB#B,,,,,,,,,,EAF#B,,,STL-S,False,False,False
 CH3OH-L__ATR_91%_CH3OHSYN__prod_in_demand,Methanol (ATR)*,NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,ATR_91%#B,CH3OHSYN#B,,CO2-T+S#B,CH3OH-L,True,False,True
 CH3OH-L__ATR_91%_CH3OHSYN__prod_in_supply,Methanol (ATR),NG-PROD#B,,ATR_91%#B,,CH3OHSYN#B,,CO2-T+S#B,,CH3OH-SB#B,CH3OH-S#B,,,,,,,,,,,,CH3OH-L,False,False,True
@@ -72,17 +72,17 @@ NH3-L__SMR_52%_BF_NH3SYN__prod_in_demand,Ammonia (SMR-BF)*,NG-PROD#B,,,,,,,CH4-L
 NH3-L__SMR_52%_BF_NH3SYN__prod_in_supply,Ammonia (SMR-BF),NG-PROD#B,,SMR_52%_BF#B,,NH3SYN#B,,CO2-T+S#B,,NH3-SB#B,NH3-S#B,,,,,,,,,,,,NH3-L,False,False,True
 NH3-L__SMR_52%_NH3SYN__prod_in_demand,Ammonia (SMR)*,NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,SMR_52%#B,NH3SYN#B,,CO2-T+S#B,NH3-L,True,False,True
 NH3-L__SMR_52%_NH3SYN__prod_in_supply,Ammonia (SMR),NG-PROD#B,,SMR_52%#B,,NH3SYN#B,,CO2-T+S#B,,NH3-SB#B,NH3-S#B,,,,,,,,,,,,NH3-L,False,False,True
-STL-S__ATR_91%_DRI_EAF__prod_in_demand,Crude Steel (ATR)*,NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,ATR_91%#B,DRI#B,EAF#B,CO2-T+S#B,STL-S,True,False,True
-STL-S__ATR_91%_DRI_EAF__prod_in_supply,Crude Steel (ATR),NG-PROD#B,,ATR_91%#B,,DRI#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,EAF#B,,STL-S,False,False,True
-STL-S__ATR_91%_DRI-rotary_EAF__prod_in_demand,"Crude Steel (ATR, rotary)*",NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,ATR_91%#B,DRI-rotary#B,EAF#B,CO2-T+S#B,STL-S,True,False,True
-STL-S__ATR_91%_DRI-rotary_EAF__prod_in_supply,"Crude Steel (ATR, rotary)",NG-PROD#B,,ATR_91%#B,,DRI-rotary#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,EAF#B,,STL-S,False,False,True
+STL-S__ATR_91%_DRI_EAF__prod_in_demand,"Crude Steel (ATR, shaft furnace)*",NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,ATR_91%#B,DRI#B,EAF#B,CO2-T+S#B,STL-S,True,False,True
+STL-S__ATR_91%_DRI_EAF__prod_in_supply,"Crude Steel (ATR, shaft furnace)",NG-PROD#B,,ATR_91%#B,,DRI#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,EAF#B,,STL-S,False,False,True
+STL-S__ATR_91%_DRI-rotary_EAF__prod_in_demand,"Crude Steel (ATR, rotary kiln)*",NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,ATR_91%#B,DRI-rotary#B,EAF#B,CO2-T+S#B,STL-S,True,False,True
+STL-S__ATR_91%_DRI-rotary_EAF__prod_in_supply,"Crude Steel (ATR, rotary kiln)",NG-PROD#B,,ATR_91%#B,,DRI-rotary#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,EAF#B,,STL-S,False,False,True
 STL-S__NG-DRI-C_EAF__prod_in_demand,Crude Steel (NG-based)*,NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,,NG-DRI-C#B,EAF#B,CO2-T+S#B,STL-S,True,False,True
 STL-S__NG-DRI-C_EAF__prod_in_supply,Crude Steel (NG-based),NG-PROD#B,,,,NG-DRI-C#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,EAF#B,,STL-S,False,False,True
-STL-S__SMR_52%_BF_DRI_EAF__prod_in_demand,Crude Steel (SMR-BF)*,NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,SMR_52%_BF#B,DRI#B,EAF#B,CO2-T+S#B,STL-S,True,False,True
-STL-S__SMR_52%_BF_DRI_EAF__prod_in_supply,Crude Steel (SMR-BF),NG-PROD#B,,SMR_52%_BF#B,,DRI#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,EAF#B,,STL-S,False,False,True
-STL-S__SMR_52%_BF_DRI-rotary_EAF__prod_in_demand,"Crude Steel (SMR-BF, rotary)*",NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,SMR_52%_BF#B,DRI-rotary#B,EAF#B,CO2-T+S#B,STL-S,True,False,True
-STL-S__SMR_52%_BF_DRI-rotary_EAF__prod_in_supply,"Crude Steel (SMR-BF, rotary)",NG-PROD#B,,SMR_52%_BF#B,,DRI-rotary#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,EAF#B,,STL-S,False,False,True
-STL-S__SMR_52%_DRI_EAF__prod_in_demand,Crude Steel (SMR)*,NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,SMR_52%#B,DRI#B,EAF#B,CO2-T+S#B,STL-S,True,False,True
-STL-S__SMR_52%_DRI_EAF__prod_in_supply,Crude Steel (SMR),NG-PROD#B,,SMR_52%#B,,DRI#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,EAF#B,,STL-S,False,False,True
-STL-S__SMR_52%_DRI-rotary_EAF__prod_in_demand,"Crude Steel (SMR, rotary)*",NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,SMR_52%#B,DRI-rotary#B,EAF#B,CO2-T+S#B,STL-S,True,False,True
-STL-S__SMR_52%_DRI-rotary_EAF__prod_in_supply,"Crude Steel (SMR, rotary)",NG-PROD#B,,SMR_52%#B,,DRI-rotary#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,EAF#B,,STL-S,False,False,True
+STL-S__SMR_52%_BF_DRI_EAF__prod_in_demand,"Crude Steel (SMR-BF, shaft furnace)*",NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,SMR_52%_BF#B,DRI#B,EAF#B,CO2-T+S#B,STL-S,True,False,True
+STL-S__SMR_52%_BF_DRI_EAF__prod_in_supply,"Crude Steel (SMR-BF, shaft furnace)",NG-PROD#B,,SMR_52%_BF#B,,DRI#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,EAF#B,,STL-S,False,False,True
+STL-S__SMR_52%_BF_DRI-rotary_EAF__prod_in_demand,"Crude Steel (SMR-BF, rotary kiln)*",NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,SMR_52%_BF#B,DRI-rotary#B,EAF#B,CO2-T+S#B,STL-S,True,False,True
+STL-S__SMR_52%_BF_DRI-rotary_EAF__prod_in_supply,"Crude Steel (SMR-BF, rotary kiln)",NG-PROD#B,,SMR_52%_BF#B,,DRI-rotary#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,EAF#B,,STL-S,False,False,True
+STL-S__SMR_52%_DRI_EAF__prod_in_demand,"Crude Steel (SMR, shaft furnace)*",NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,SMR_52%#B,DRI#B,EAF#B,CO2-T+S#B,STL-S,True,False,True
+STL-S__SMR_52%_DRI_EAF__prod_in_supply,"Crude Steel (SMR, shaft furnace)",NG-PROD#B,,SMR_52%#B,,DRI#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,EAF#B,,STL-S,False,False,True
+STL-S__SMR_52%_DRI-rotary_EAF__prod_in_demand,"Crude Steel (SMR, rotary kiln)*",NG-PROD#B,,,,,,,CH4-LIQ#B,CH4-SB#B,CH4-S#B,CH4-RGAS#B,CH4-COMP#B,CH4-P-S#B,CH4-P-L#B,CH4-P-SR#B,CH4-P-LR#B,,SMR_52%#B,DRI-rotary#B,EAF#B,CO2-T+S#B,STL-S,True,False,True
+STL-S__SMR_52%_DRI-rotary_EAF__prod_in_supply,"Crude Steel (SMR, rotary kiln)",NG-PROD#B,,SMR_52%#B,,DRI-rotary#B,,CO2-T+S#B,,DRI-SB#B,,,,,,,,,,,EAF#B,,STL-S,False,False,True
