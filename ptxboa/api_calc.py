@@ -212,13 +212,6 @@ class Process:
 
     def __str__(self):
         result = f"{self.process_code}"
-        if self.process_step:
-            result += f", step={self.process_step}"
-        if self.is_initial:
-            result += ", initial"
-        if self.is_last:
-            result += ", last"
-
         return result
 
     @property
@@ -358,6 +351,9 @@ class Process:
                     # for CSS: no warning - this is expected, because flow value is
                     # calulated in emission step
                     logger.warning("Process with conv = 0 %s / %s", self, flow_code)
+                    if flow_code == "HEAT":
+                        raise Exception()
+
             elif conv < 0:
                 conv = 0
             secondary_flows_in[flow_code] = main_flow_out * conv
@@ -565,11 +561,14 @@ class Process:
 
         co2_g_direct = co2_g_direct_sum_in - co2_g_bound_in_product - co2_captured
         if co2_g_direct < 0:
-            logger.error(
-                "co2_g_bound_in_product + co2_captured > co2_g_direct_sum_in: %s %s",
-                self,
-                co2_g_direct,
-            )
+            if co2_g_direct < -0.01:
+                logger.error(
+                    "co2_g_direct < 0 "
+                    "(co2_g_direct_sum_in - co2_g_bound_in_product - co2_captured): "
+                    "%s %s",
+                    self,
+                    co2_g_direct,
+                )
             co2_g_direct = 0
 
         if not main_flow_out or not used_cbound:
