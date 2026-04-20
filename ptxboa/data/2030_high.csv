@@ -523,7 +523,6 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CONV-OT,CH3OH-S#B,BFUEL-L,,",CONV-OT,CH3OH-S#B,BFUEL-L,,,3.0509883673175365e-06,kwh bunker fuel (l)/kWh CH3OH (l),
 "CONV-OT,CH3OH-SB#B,BFUEL-L,,",CONV-OT,CH3OH-SB#B,BFUEL-L,,,3.050988367317537e-06,kwh bunker fuel (l)/kWh CH3OH (l),
 "CONV-OT,CH4-P-L#B,NG-G,,",CONV-OT,CH4-P-L#B,NG-G,,,3e-05,kWh natural gas LHV/kWh natural gas LHV*km,
-"CONV-OT,CH4-S#B,NG-L,,",CONV-OT,CH4-S#B,NG-L,,,3.1919329450619476e-06,kWh natural gas LHV/kWh natural gas LHV*km,
 "CONV-OT,CH4-SB#B,BFUEL-L,,",CONV-OT,CH4-SB#B,BFUEL-L,,,3.3002590965851548e-06,kwh bunker fuel (l)/kWh natural gas LHV*km,
 "CONV-OT,CH4-SB#B,NG-L,,",CONV-OT,CH4-SB#B,NG-L,,,1.1537538535378707e-06,kWh natural gas LHV/kWh natural gas LHV*km,
 "CONV-OT,H2-S#B,H2-L,,",CONV-OT,H2-S#B,H2-L,,,9.251193689684598e-06,kWh H2 (l)/kWh H2 (l),
@@ -1973,7 +1972,6 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "LOSS-T,CH4-P-S,,,",LOSS-T,CH4-P-S,,,,5.666666666666667e-06,fraction/km,
 "LOSS-T,CH4-P-SR#B,,,",LOSS-T,CH4-P-SR#B,,,,5.666666666666667e-06,fraction/km,
 "LOSS-T,CH4-P-SR,,,",LOSS-T,CH4-P-SR,,,,5.666666666666667e-06,fraction/km,
-"LOSS-T,CH4-S#B,,,",LOSS-T,CH4-S#B,,,,1.0832615152320683e-07,kWh natural gas LHV/kWh natural gas LHV*km,
 "LOSS-T,CH4-S,,,",LOSS-T,CH4-S,,,,3.3002590965851543e-06,fraction/km,calc_shipping
 "LOSS-T,CH4-SB,,,",LOSS-T,CH4-SB,,,,1.1537538535378707e-06,fraction/km,calc_shipping
 "LOSS-T,H2-P-L#B,,,",LOSS-T,H2-P-L#B,,,,1.6866666666666666e-05,fraction/km,
