@@ -33,15 +33,13 @@ def content_info():
         st.image("img/inout_header.png", width=800)
         st.image(f"img/inout_{step.replace(' ', '_').lower()}.png", width=800)
 
-        st.markdown(
-            """
+        st.markdown("""
     Note that this overview is not comprehensive in the sense that it shows
       all assumptions at a glance.
     Rather, the issues listed are aspects that have emerged in discussions
       with stakeholders (deep-dive country workshops) prior to the publication
         of the tool and which we believe require detailed explanation.
-    """
-        )
+    """)
 
     with st.container(border=True):
         st.markdown(read_markdown_file("md/info_disclaimer.md"), unsafe_allow_html=True)

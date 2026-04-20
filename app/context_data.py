@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Module for loading context data."""
+
 import pandas as pd
 import streamlit as st
 

@@ -516,7 +516,7 @@ def _get_output_conversion_factor(
 
     flow_code_chain_out: FlowCodeType = data_handler.get_dimension("chain").loc[
         chain, "flow_out"
-    ]  # type:ignore
+    ]  # type: ignore
     flow_unit_chain_out: str = data_handler.get_dimension("flow").loc[
         flow_code_chain_out, "unit"
     ]  # type: ignore

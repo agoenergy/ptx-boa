@@ -599,8 +599,7 @@ class DataHandler:
             result = default
 
         if result is None:
-            raise ValueError(
-                f"""did not find a parameter value for:
+            raise ValueError(f"""did not find a parameter value for:
                 parameter_code={parameter_code},
                 process_code={process_code},
                 flow_code={flow_code},
@@ -610,8 +609,7 @@ class DataHandler:
                 process_ely={process_ely},
                 process_deriv={process_deriv}
                 ({self.tool_version_color})
-            """
-            )
+            """)
         return result
 
     @classmethod

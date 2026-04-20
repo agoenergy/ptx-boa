@@ -105,7 +105,7 @@ def asdict_nested(xs):
     if isinstance(xs, pd.DataFrame):
         return asdict_nested(xs.to_dict(orient="records"))
     elif is_dataclass(xs):
-        return asdict_nested(asdict(xs))  # type:ignore
+        return asdict_nested(asdict(xs))  # type: ignore
     elif isinstance(xs, (tuple, list)):
         return [asdict_nested(x) for x in xs]
     elif isinstance(xs, dict):

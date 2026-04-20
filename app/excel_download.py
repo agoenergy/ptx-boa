@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Utility functions to download a pd.DataFrame as Excel file with streamlit."""
+
 from io import BytesIO
 
 import pandas as pd

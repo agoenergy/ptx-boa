@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Functions related to user modified input data in frontend."""
+
 import numpy as np
 import pandas as pd
 import streamlit as st
