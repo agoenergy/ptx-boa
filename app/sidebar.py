@@ -264,12 +264,18 @@ def main_settings_blue(api: PtxboaAPI):
             "ATR_91%_DRI_EAF",
             "SMR_52%_DRI_EAF",
             "SMR_52%_BF_DRI_EAF",
+            "ATR_91%_DRI-rotary_EAF",
+            "SMR_52%_DRI-rotary_EAF",
+            "SMR_52%_BF_DRI-rotary_EAF",
         ],
         "B-DRI-S": [
             "NG-DRI-C",
             "ATR_91%_DRI",
             "SMR_52%_DRI",
             "SMR_52%_BF_DRI",
+            "ATR_91%_DRI-rotary",
+            "SMR_52%_DRI-rotary",
+            "SMR_52%_BF_DRI-rotary",
         ],
     }
 
@@ -291,14 +297,20 @@ def main_settings_blue(api: PtxboaAPI):
             "SMR_52%_EFUELSYN": "H₂ (SMR) | efuel synthesis (Fischer-Tropsch)",
             "SMR_52%_BF_EFUELSYN": "H₂ (brownfield SMR) | efuel synthesis (Fischer-Tropsch)",  # noqa E501
             "EFUELSYNC": "natural gas-based efuel synthesis (GtL)",
-            "ATR_91%_DRI_EAF": "H₂ (ATR) | iron making (DRI) | steel making (EAF)",
-            "SMR_52%_DRI_EAF": "H₂ (SMR) | iron making (DRI) | steel making (EAF)",
-            "SMR_52%_BF_DRI_EAF": "H₂ (brownfield SMR) | iron making (DRI) | steel making (EAF)",  # noqa E501
-            "NG-DRI-C_EAF": "natural gas-based iron making (DRI) | steel making (EAF)",
-            "ATR_91%_DRI": "H₂ (ATR) | iron making (DRI)",
-            "SMR_52%_DRI": "H₂ (SMR) | iron making (DRI)",
-            "SMR_52%_BF_DRI": "H₂ (brownfield SMR) | iron making (DRI)",
-            "NG-DRI-C": "natural gas-based iron making (DRI)",
+            "ATR_91%_DRI_EAF": "H₂ (ATR) | shaft furnace (DRI) | steel making (EAF)",
+            "SMR_52%_DRI_EAF": "H₂ (SMR) | shaft furnace (DRI) | steel making (EAF)",
+            "SMR_52%_BF_DRI_EAF": "H₂ (brownfield SMR) | shaft furnace (DRI) | steel making (EAF)",  # noqa E501
+            "ATR_91%_DRI-rotary_EAF": "H₂ (ATR) | rotary kiln (DRI) | steel making (EAF)",  # noqa E501
+            "SMR_52%_DRI-rotary_EAF": "H₂ (SMR) | rotary kiln (DRI) | steel making (EAF)",  # noqa E501
+            "SMR_52%_BF_DRI-rotary_EAF": "H₂ (brownfield SMR) | rotary kiln (DRI) | steel making (EAF)",  # noqa E501
+            "NG-DRI-C_EAF": "natural gas | shaft furnace (DRI) | steel making (EAF)",
+            "ATR_91%_DRI": "H₂ (ATR) | shaft furnace (DRI)",
+            "SMR_52%_DRI": "H₂ (SMR) | shaft furnace (DRI)",
+            "SMR_52%_BF_DRI": "H₂ (brownfield SMR) | shaft furnace (DRI)",
+            "NG-DRI-C": "natural gas | shaft furnace (DRI)",
+            "ATR_91%_DRI-rotary": "H₂ (ATR) | rotary kiln (DRI)",
+            "SMR_52%_DRI-rotary": "H₂ (SMR) | rotary kiln (DRI)",
+            "SMR_52%_BF_DRI-rotary": "H₂ (brownfield SMR) | rotary kiln (DRI)",
         }.get(x, x),
         help=read_markdown_file("md/sidebar/helptext_sidebar_blue_conversion.md"),
         index=0,
