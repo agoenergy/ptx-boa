@@ -25,6 +25,7 @@ def content_input_data(api: PtxboaAPI) -> None:
             "Natural gas production costs",
             "Natural gas production losses",
             "Natural gas price",
+            "CO2 transport and storage costs",
         ] = st.selectbox(
             "Select data type",
             [
@@ -32,7 +33,9 @@ def content_input_data(api: PtxboaAPI) -> None:
                 "Natural gas production costs",
                 "Natural gas production losses",
                 "Natural gas price",
+                "CO2 transport and storage costs",
             ],
+            format_func=lambda x: x.replace("CO2", "CO₂"),
         )
 
         with st.expander("**Map**", expanded=True):
@@ -40,6 +43,7 @@ def content_input_data(api: PtxboaAPI) -> None:
                 "Natural gas price": "specific costs",
                 "Natural gas production costs": "OPEX (other variable)",
                 "Natural gas production losses": "losses (own fuel)",
+                "CO2 transport and storage costs": "OPEX (other variable)",
             }.get(data_selection, data_selection)
             fig = plot_input_data_on_map(
                 api=api,
@@ -93,7 +97,7 @@ def content_input_data(api: PtxboaAPI) -> None:
                 key="input_data_reconversion_processes",
                 tool_version_color="blue",
             )
-        with st.expander("**Secondary CO₂, electricity and heat generation**"):
+        with st.expander("**Electricity, heat and CO₂ sources**"):
             st.caption(
                 read_markdown_file(
                     "md/tab_blue_input_data/description_direct_air_capture.md"

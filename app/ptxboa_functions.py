@@ -609,6 +609,7 @@ def get_data_type_from_input_data(
         "secondary_processes_blue",
         "storage",
         "Natural gas price",
+        "CO2 transport and storage costs",
     ],
     scope: Literal[None, "world", "Argentina", "Morocco", "South Africa"],
     tool_version_color: ToolVersionColorType = "green",
@@ -821,6 +822,14 @@ def get_data_type_from_input_data(
         parameter_code = ["specific costs"]
         process_code = None
         flow_code = ["natural gas (gasous)"]
+        index = "source_region_code"
+        columns = "parameter_code"
+
+    if data_type == "CO2 transport and storage costs":
+        source_region_code = None
+        parameter_code = ["OPEX (other variable)"]
+        process_code = ["CO2 transport and storage (blue)"]
+        flow_code = None
         index = "source_region_code"
         columns = "parameter_code"
 

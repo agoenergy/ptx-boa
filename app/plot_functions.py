@@ -179,6 +179,7 @@ def plot_input_data_on_map(
         "Natural gas production costs",
         "Natural gas production losses",
         "Natural gas price",
+        "CO2 transport and storage costs",
     ],
     color_col: Literal[
         "PV tilted",
@@ -256,6 +257,11 @@ def plot_input_data_on_map(
     if data_type == "Natural gas production losses":
         assert color_col == "losses (own fuel)", color_col
         custom_data_func_kwargs["unit"] = "fraction"
+        custom_data_func_kwargs["float_precision"] = 4
+
+    if data_type == "CO2 transport and storage costs":
+        assert color_col == "OPEX (other variable)", color_col
+        custom_data_func_kwargs["unit"] = "USD/kgCO₂"
         custom_data_func_kwargs["float_precision"] = 4
 
     custom_data_func_kwargs["data_type"] = data_type
