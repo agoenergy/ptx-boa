@@ -334,8 +334,10 @@ def display_and_edit_input_data(
         "specific_costs",
         "conversion_coefficients",
         "dac_and_desalination",
+        "secondary_processes_blue",
         "storage",
         "Natural gas price",
+        "CO2 transport and storage costs",
     ],
     scope: Literal["world", "Argentina", "Morocco", "South Africa"],
     key: str,
@@ -393,6 +395,7 @@ def display_and_edit_input_data(
         "transportation_processes",
         "reconversion_processes",
         "dac_and_desalination",
+        "secondary_processes_blue",
         "storage",
     ]:
         index = "process_code"
@@ -420,13 +423,19 @@ def display_and_edit_input_data(
         }
         column_config.update(custom_column_config)
 
-    if data_type == "dac_and_desalination":
+    if data_type in {
+        "dac_and_desalination",
+        "secondary_processes_blue",
+    }:
         index = "process_code"
         columns = "parameter_code"
         missing_index = {"source_region_code": None}
         column_config = {
             "CAPEX": st.column_config.NumberColumn(format="%.5f USD/kg", min_value=0),
             "OPEX (fix)": st.column_config.NumberColumn(
+                format="%.5f USD/kg", min_value=0
+            ),
+            "OPEX (other variable)": st.column_config.NumberColumn(
                 format="%.5f USD/kg", min_value=0
             ),
             "efficiency": st.column_config.NumberColumn(
@@ -513,6 +522,18 @@ def display_and_edit_input_data(
         index = "source_region_code"
         columns = "parameter_code"
         missing_index = {"flow_code": "natural gas (gasous)"}
+
+    if data_type == "CO2 transport and storage costs":
+        index = "source_region_code"
+        columns = "parameter_code"
+        missing_index = {
+            "process_code": "CO2 transport and storage (blue)",
+        }
+        column_config["OPEX (other variable)"] = st.column_config.NumberColumn(
+            label="CO₂ transport and storage costs",
+            format="%.4f USD/kgCO₂",
+            min_value=0,
+        )
 
     df = change_index_names(df)
 
