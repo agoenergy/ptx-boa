@@ -679,16 +679,17 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "process_step": "NG_PROD",
                 },
                 {
-                    "costs": {"CAPEX": 0.02543352, "OPEX": 0.00343556},
                     "emissions": {
                         "emission": {
                             "ch4_direct_co2e": 3.1663146,
                             "co2_bound_in_product": 592.22579704,
+                            "co2_bound_in_product_per_output": 201.00000001,
                             "co2_direct": 98.40225178,
                         },
                         "mass": {
                             "ch4_direct_co2e": 3.1663146,
                             "co2_bound_in_product": 592.22579704,
+                            "co2_bound_in_product_per_output": 201.00000001,
                             "co2_direct": 98.40225178,
                         },
                     },
@@ -698,16 +699,14 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "secondary_flows_in": {"EL": 0.00807763},
                     },
                     "parameter": {
-                        "CAPEX": 408.10708157,
                         "CH4SHARE": {"NG-G": 0.89953333},
                         "CONV": {"EL": 0.00274153},
                         "EFF": 0.85708919,
                         "EF_E": {"NG-G": 201.0},
                         "EF_M": {"NG-G": 201.0},
                         "FLH": 7000,
-                        "LIFETIME": 30.0,
+                        "LIFETIME": 20,
                         "LOSS": {"NG-G": 0.0005},
-                        "OPEX-F": 8.16214163,
                         "WACC": 0.14554836,
                         "process_code": "CH4-LIQ#B",
                         "step": "PRE_SHP",
@@ -717,9 +716,13 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 },
                 {
                     "emissions": {
-                        "emission": {"co2_bound_in_product": 592.225797},
+                        "emission": {
+                            "co2_bound_in_product": 592.22579704,
+                            "co2_bound_in_product_per_output": 201.00000001,
+                        },
                         "mass": {
-                            "co2_bound_in_product": 592.225797,
+                            "co2_bound_in_product": 592.22579704,
+                            "co2_bound_in_product_per_output": 201.00000001,
                             "co2_direct": 9.03354942,
                         },
                     },
@@ -748,13 +751,15 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "emissions": {
                         "emission": {
                             "ch4_direct_co2e": 1.9e-07,
-                            "co2_bound_in_product": 592.225797,
+                            "co2_bound_in_product": 592.22579704,
+                            "co2_bound_in_product_per_output": 201.00000001,
                             "co2_direct": 0.50496389,
                             "co2_indirect_scope2": 0.14142706,
                         },
                         "mass": {
                             "ch4_direct_co2e": 1.9e-07,
-                            "co2_bound_in_product": 592.225797,
+                            "co2_bound_in_product": 592.22579704,
+                            "co2_bound_in_product_per_output": 201.00000001,
                             "co2_direct": 0.50496389,
                             "co2_indirect_scope2": 0.14142706,
                         },
@@ -801,15 +806,15 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "emission": {
                             "co2_bound_in_product": 148.05644926,
                             "co2_bound_in_product_per_output": 149.55196895,
-                            "co2_captured": 239.85144778,
-                            "co2_direct": 204.31789996,
+                            "co2_captured": 239.8514478,
+                            "co2_direct": 204.31789998,
                             "co2_indirect_scope2": 47.209,
                         },
                         "mass": {
                             "co2_bound_in_product": 148.05644926,
                             "co2_bound_in_product_per_output": 149.55196895,
-                            "co2_captured": 239.85144778,
-                            "co2_direct": 204.31789996,
+                            "co2_captured": 239.8514478,
+                            "co2_direct": 204.31789998,
                             "co2_indirect_scope2": 47.209,
                         },
                     },
