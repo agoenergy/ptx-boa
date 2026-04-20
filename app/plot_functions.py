@@ -562,10 +562,11 @@ def _make_per_column_hoverdata(res_costs: pd.DataFrame, unit: str) -> list[pd.Se
     return [custom_hover_data]
 
 
-def create_bar_chart_costs(
+def create_bar_chart_results(
     res_costs: pd.DataFrame,
     current_selection: str | None = None,
     output_unit: str | None = None,
+    float_format: str = ".0f",
 ):
     """Create bar plot for costs by components, and dots for total costs.
 
@@ -612,7 +613,7 @@ def create_bar_chart_costs(
         marker={"size": 10, "color": "black"},
         name="Total",
         text=res_costs["Total"].apply(
-            lambda x: f"{x:.0f}"
+            lambda x: f"{x:{float_format}}"
         ),  # Use 'total' column values as text labels
         textposition="top center",  # Position of the text label above the marker
     )

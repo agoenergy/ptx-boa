@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 
 from app.excel_download import prepare_and_download_df_as_excel
-from app.plot_functions import create_bar_chart_costs
+from app.plot_functions import create_bar_chart_results
 from app.ptxboa_functions import (
     change_index_names,
     config_number_columns,
@@ -171,10 +171,11 @@ def display_results_bar_and_table(
     change_index_names(df_res)
 
     # create graph:
-    fig = create_bar_chart_costs(
+    fig = create_bar_chart_results(
         df_res,
         current_selection=current_selection,
         output_unit=output_unit,
+        float_format=".0f" if data_type == "costs" else ".2f",
     )
     if xaxis_title is not None:
         fig.update_layout(xaxis_title=xaxis_title)
@@ -202,7 +203,10 @@ def display_results_bar_and_table(
         st.caption(f"**Note**: {unit_note}{green_iron_note}")
 
     with st.expander("**Data**"):
-        column_config = config_number_columns(df_res, format=f"%.1f {output_unit}")
+        float_precision = 1 if data_type == "costs" else 2
+        column_config = config_number_columns(
+            df_res, format=f"%.{float_precision}f {output_unit}"
+        )
         # remove <br> html tags from dataframe index
         df_res.index = df_res.index.str.replace("<br>", " ")
         st.dataframe(df_res, width="stretch", column_config=column_config)

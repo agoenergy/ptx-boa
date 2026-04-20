@@ -5,7 +5,7 @@ from plotly.subplots import make_subplots
 
 from app.layout_elements import display_results_bar_and_table, what_is_a_boxplot
 from app.plot_functions import (
-    create_bar_chart_costs,
+    create_bar_chart_results,
     create_box_plot,
     plot_costs_on_map,
 )
@@ -77,7 +77,7 @@ def content_costs(api: PtxboaAPI):
         filtered_data = costs_per_region[
             costs_per_region.index == st.session_state["region"]
         ]
-        fig2 = create_bar_chart_costs(filtered_data)
+        fig2 = create_bar_chart_results(filtered_data)
         doublefig = make_subplots(rows=1, cols=2, shared_yaxes=True)
 
         for trace in fig1.data:
