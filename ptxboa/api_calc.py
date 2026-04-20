@@ -93,7 +93,7 @@ class Process:
         main_flow_code_in_or_out = main_flow_code_in or main_flow_code_out
         if main_flow_code_in_or_out in secondary_flow_types:
             logger.error(
-                "%s has %s as main and secondary input",
+                "Process h same main and secondary input: %s, %s",
                 process_code,
                 main_flow_code_in_or_out,
             )
@@ -302,10 +302,7 @@ class Process:
         conv: float
         CONV: dict = data.get("CONV", {})  # type: ignore
         for flow_code, conv in CONV.items():
-            if conv <= 0:
-                # currently negative flows (i.e. additional output)
-                conv = 0
-            if flow_code in LOSS:
+            if conv > 0 and LOSS.get(flow_code):
                 # new: loss can reduce the effective conversion rate
                 # see https://github.com/agoenergy/ptx-boa/issues/581
                 data["CONV"][flow_code] = conv * (1 + LOSS[flow_code])  # type: ignore
@@ -357,7 +354,10 @@ class Process:
                 parameter_data[self].get("CONV", {}).get(flow_code) or 0  # type:ignore
             )
             if conv == 0:
-                logger.warning("Process with conv = 0 %s / %s", self, flow_code)
+                if flow_code != "CO2-C":
+                    # for CSS: no warning - this is expected, because flow value is
+                    # calulated in emission step
+                    logger.warning("Process with conv = 0 %s / %s", self, flow_code)
             elif conv < 0:
                 conv = 0
             secondary_flows_in[flow_code] = main_flow_out * conv
@@ -529,7 +529,7 @@ class Process:
         if self.is_initial:
             flow_code = self.main_flow_code_out
             if flow_code in flows_in_net:
-                logger.error("initial flow out also in flows in")
+                logger.error("initial flow out also in flows in: %s", self)
             else:
                 flow = main_flow_out
                 co2_g_per_flow = EF_co2_g_per_flow.get(flow_code, 0)
@@ -548,8 +548,8 @@ class Process:
             if co2_g_bound_in_product:
                 raise Exception("co2_g_bound_in_product should not happen in %s", self)
             co2_g_per_flow = EF_co2_g_per_flow.get(
-                self.main_flow_code_in
-            )  # type:ignore
+                self.main_flow_code_in  # type:ignore
+            )
             if co2_g_per_flow is None:
                 raise Exception(
                     "no cbound/flow for main in %s in %s"
@@ -566,7 +566,7 @@ class Process:
         co2_g_direct = co2_g_direct_sum_in - co2_g_bound_in_product - co2_captured
         if co2_g_direct < 0:
             logger.error(
-                "%s: co2_g_bound_in_product + co2_captured > co2_g_direct_sum_in: %s",
+                "co2_g_bound_in_product + co2_captured > co2_g_direct_sum_in: %s %s",
                 self,
                 co2_g_direct,
             )
@@ -774,16 +774,16 @@ class ProcessTransport(Process):
 
             if data["CONV-OT"].get(flow_code):  # type: ignore
                 logger.error(
-                    "%s / %s: CONV instead of CONV-OT (already defined) "
-                    "in transport input data: %s",
+                    "CONV instead of CONV-OT (already defined) "
+                    "in transport input data: %s %s %s",
                     self,
                     flow_code,
                     conv,
                 )
             else:
                 logger.error(
-                    "%s / %s: CONV instead of CONV-OT (overwriting) "
-                    "in transport input data: %s",
+                    "CONV instead of CONV-OT (overwriting) "
+                    "in transport input data: %s %s %s",
                     self,
                     flow_code,
                     conv,
