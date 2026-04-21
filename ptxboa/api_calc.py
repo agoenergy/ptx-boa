@@ -324,7 +324,7 @@ class Process:
                 main_flow_out += results_flows[p].secondary_flows_in[
                     self.main_flow_code_out
                 ]
-            if not main_flow_out:
+            if self.is_main and not main_flow_out:
                 logger.warning("Process with main_flow_out = 0: %s", self)
 
         if not self.main_flow_code_in:
@@ -549,11 +549,6 @@ class Process:
             if co2_g_per_flow is None:
                 raise Exception(
                     "no cbound/flow for main in %s in %s"
-                    % (self, self.main_flow_code_in)
-                )
-            elif co2_g_per_flow == 0:
-                logger.warning(
-                    "cbound/flow=0 for main in %s in %s"
                     % (self, self.main_flow_code_in)
                 )
             used_cbound = True
