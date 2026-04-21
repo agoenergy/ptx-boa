@@ -179,6 +179,7 @@ def plot_input_data_on_map(
         "Natural gas production costs",
         "Natural gas production losses",
         "Natural gas price",
+        "CO2 transport and storage costs",
     ],
     color_col: Literal[
         "PV tilted",
@@ -256,6 +257,11 @@ def plot_input_data_on_map(
     if data_type == "Natural gas production losses":
         assert color_col == "losses (own fuel)", color_col
         custom_data_func_kwargs["unit"] = "fraction"
+        custom_data_func_kwargs["float_precision"] = 4
+
+    if data_type == "CO2 transport and storage costs":
+        assert color_col == "OPEX (other variable)", color_col
+        custom_data_func_kwargs["unit"] = "USD/kgCO₂"
         custom_data_func_kwargs["float_precision"] = 4
 
     custom_data_func_kwargs["data_type"] = data_type
@@ -556,10 +562,11 @@ def _make_per_column_hoverdata(res_costs: pd.DataFrame, unit: str) -> list[pd.Se
     return [custom_hover_data]
 
 
-def create_bar_chart_costs(
+def create_bar_chart_results(
     res_costs: pd.DataFrame,
     current_selection: str | None = None,
     output_unit: str | None = None,
+    float_format: str = ".0f",
 ):
     """Create bar plot for costs by components, and dots for total costs.
 
@@ -606,7 +613,7 @@ def create_bar_chart_costs(
         marker={"size": 10, "color": "black"},
         name="Total",
         text=res_costs["Total"].apply(
-            lambda x: f"{x:.0f}"
+            lambda x: f"{x:{float_format}}"
         ),  # Use 'total' column values as text labels
         textposition="top center",  # Position of the text label above the marker
     )
