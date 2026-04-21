@@ -488,7 +488,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "process_step": "NG_PROD",
                 },
                 {
-                    "costs": {"CAPEX": 0.00952357, "OPEX": 0.00298571},
+                    "costs": {"CAPEX": 0.0110973, "OPEX": 0.00298571},
                     "emissions": {
                         "emission": {
                             "co2_bound_in_product": 266.76000002,
@@ -509,7 +509,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "secondary_flows_in": {"CO2-C": 0.08261781, "EL": 0.0115},
                     },
                     "parameter": {
-                        "CAPEX": 951.9379845,
+                        "CAPEX": 1109.2414246,
                         "CBOUND": {"NG-G": 0.07279681},
                         "CH4SHARE": {"NG-G": 0.909},
                         "CO2CPT-R": {"NG-G": 0.89},
@@ -531,9 +531,13 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 {
                     "costs": {"OPEX": 0.00057767},
                     "emissions": {
-                        "emission": {"co2_bound_in_product": 266.76000002},
+                        "emission": {
+                            "co2_bound_in_product": 266.76000002,
+                            "co2_bound_in_product_per_output": 266.76000002,
+                        },
                         "mass": {
                             "co2_bound_in_product": 266.76000002,
+                            "co2_bound_in_product_per_output": 266.76000002,
                             "co2_direct": 4.74715381,
                         },
                     },
@@ -801,7 +805,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "process_step": "POST_SHP",
                 },
                 {
-                    "costs": {"CAPEX": 6.29e-06, "OPEX": 2.51e-06},
+                    "costs": {"CAPEX": 5.24e-06, "OPEX": 2.09e-06},
                     "emissions": {
                         "emission": {
                             "co2_bound_in_product": 148.05644926,
@@ -829,7 +833,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     },
                     "is_in_import_segment": True,
                     "parameter": {
-                        "CAPEX": 0.59187636,
+                        "CAPEX": 0.49319758,
                         "CBOUND": {"NG-G": 0.04081161},
                         "CH4SHARE": {"NG-G": 0.92080641},
                         "CO2CPT-R": {"CH4-G": 0.9, "NG-G": 0.9},
@@ -850,7 +854,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         },
                         "FLH": 7000,
                         "LIFETIME": 20.0,
-                        "OPEX-F": 0.01775629,
+                        "OPEX-F": 0.01479593,
                         "WACC": 0.0423,
                         "process_code": "NG-DRI-C#B",
                         "step": "DERIV_I",
@@ -859,7 +863,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "process_step": "DERIV_I",
                 },
                 {
-                    "costs": {"CAPEX": 4.48e-06, "OPEX": 0.18368048},
+                    "costs": {"CAPEX": 3.69e-06, "OPEX": 0.1516002},
                     "emissions": {
                         "emission": {
                             "co2_bound_in_product": 14.65778518,
@@ -881,7 +885,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     },
                     "is_in_import_segment": True,
                     "parameter": {
-                        "CAPEX": 0.41734427,
+                        "CAPEX": 0.344454,
                         "CBOUND": {"B-DRI-S": 0.004},
                         "CH4SHARE": {"NG-G": 0.92080641},
                         "CONV": {"EL": 0.651, "NG-G": 0.3},
@@ -890,8 +894,8 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "EF_M": {"EL": 100.0, "NG-G": 201.0},
                         "FLH": 7000,
                         "LIFETIME": 20.0,
-                        "OPEX-F": 0.01252033,
-                        "OPEX-O": 0.18367869,
+                        "OPEX-F": 0.01033362,
+                        "OPEX-O": 0.15159873,
                         "WACC": 0.0423,
                         "process_code": "EAF#B",
                         "step": "DERIV_I2",
@@ -1083,7 +1087,7 @@ def test_new_blue_chain_real_data(api_kwargs, expected):
             # DAC process in import region
             {
                 "SECONDARY:IMPORT:CO2-G": {
-                    "costs": {"CAPEX": 0.00744419, "OPEX": 0.00413846},
+                    "costs": {"CAPEX": 0.0070417, "OPEX": 0.0039147},
                     "emissions": {
                         "emission": {"co2_indirect_scope2": 91.02097751},
                         "mass": {
@@ -1099,7 +1103,7 @@ def test_new_blue_chain_real_data(api_kwargs, expected):
                     },
                     "is_in_import_segment": True,
                     "parameter": {
-                        "CAPEX": 0.4163652,
+                        "CAPEX": 0.39385297,
                         "CBOUND": {"CO2-DAC": 0.27289252},
                         "CONV": {"EL": 0.225, "HEAT": 1.5},
                         "EFF": 1.0,
@@ -1107,7 +1111,7 @@ def test_new_blue_chain_real_data(api_kwargs, expected):
                         "EF_M": {"CO2-DAC": 1000.0, "EL": 288.0, "HEAT": 201.0},
                         "FLH": 7000,
                         "LIFETIME": 25.0,
-                        "OPEX-F": 0.01665461,
+                        "OPEX-F": 0.01575412,
                         "WACC": 0.0514,
                         "process_code": "DAC#B",
                         "step": "SECONDARY:IMPORT:CO2-G",
@@ -1116,7 +1120,7 @@ def test_new_blue_chain_real_data(api_kwargs, expected):
                     "process_step": "SECONDARY:IMPORT:CO2-G",
                 },
                 "DERIV_I": {
-                    "costs": {"CAPEX": 0.00634495, "OPEX": 0.00288},
+                    "costs": {"CAPEX": 0.00739343, "OPEX": 0.00335591},
                     "emissions": {
                         "emission": {"co2_indirect_scope2": 15.46211741},
                         "mass": {
@@ -1132,15 +1136,19 @@ def test_new_blue_chain_real_data(api_kwargs, expected):
                     },
                     "is_in_import_segment": True,
                     "parameter": {
-                        "CAPEX": 672.0,
+                        "CAPEX": 783.04495615,
                         "CBOUND": {"CO2-G": 0.06781223},
-                        "CONV": {"CO2-G": 0.24848752, "EL": 0.05368791},
+                        "CONV": {
+                            "CO2-G": 0.24848752,
+                            "EL": 0.05368791,
+                            "HEAT": -0.08630206,
+                        },
                         "EFF": 0.86053541,
                         "EF_E": {"CO2-G": 1000.0, "EL": 288.0, "HEAT": 201.0},
                         "EF_M": {"CO2-G": 1000.0, "EL": 288.0, "HEAT": 201.0},
                         "FLH": 7000,
                         "LIFETIME": 30.0,
-                        "OPEX-F": 20.16,
+                        "OPEX-F": 23.49134868,
                         "WACC": 0.0514,
                         "process_code": "CH3OHSYN#B",
                         "step": "DERIV_I",
