@@ -581,6 +581,7 @@ def what_is_a_boxplot():
         st.image("img/boxplot_explanation.png")
 
 
+@st.cache_data(show_spinner=False)
 def report_processes_contained_in_process_result_type(
     _api: PtxboaAPI, tool_version_color: ToolVersionColorType
 ):
@@ -591,10 +592,11 @@ def report_processes_contained_in_process_result_type(
         .agg(list)
         .to_dict()["process_name"]
     )
-    with st.expander("Aggregated process categories and associated processes"):
-        for process_result_type, processes in data.items():
-            with st.expander(process_result_type):
-                section = []
-                for p in processes:
-                    section.append(f"- {p}")
-                st.markdown("\n".join(section))
+
+    st.subheader("Aggregated process categories and associated processes")
+    for process_result_type, processes in data.items():
+        with st.expander(process_result_type):
+            section = []
+            for p in processes:
+                section.append(f"- {p}")
+            st.markdown("\n".join(section))
