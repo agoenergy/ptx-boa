@@ -17,6 +17,7 @@ H2-G,hydrogen (gas),kWh H2 (g),False,False,,kwh
 H2-L,hydrogen (liquid),kWh H2 (l),False,False,,kwh
 H2O-L,water,kg H2O (l),True,True,Water,kg
 HEAT,heat,kWh (heat),False,True,Heat,kwh
+IOF-S,iron ore fines,kg IOP (s),False,True,,kg
 IOP-S,iron ore pellets,kg IOP (s),False,True,,kg
 LOHC-L,hydrogen (LOHC),kWh H2 (l),False,False,,kwh
 N2-G,nitrogen,kg N2 (g),False,True,,kg

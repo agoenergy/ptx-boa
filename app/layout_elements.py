@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 
 from app.excel_download import prepare_and_download_df_as_excel
-from app.plot_functions import create_bar_chart_costs
+from app.plot_functions import create_bar_chart_results
 from app.ptxboa_functions import (
     change_index_names,
     config_number_columns,
@@ -171,10 +171,11 @@ def display_results_bar_and_table(
     change_index_names(df_res)
 
     # create graph:
-    fig = create_bar_chart_costs(
+    fig = create_bar_chart_results(
         df_res,
         current_selection=current_selection,
         output_unit=output_unit,
+        float_format=".0f" if data_type == "costs" else ".2f",
     )
     if xaxis_title is not None:
         fig.update_layout(xaxis_title=xaxis_title)
@@ -202,7 +203,10 @@ def display_results_bar_and_table(
         st.caption(f"**Note**: {unit_note}{green_iron_note}")
 
     with st.expander("**Data**"):
-        column_config = config_number_columns(df_res, format=f"%.1f {output_unit}")
+        float_precision = 1 if data_type == "costs" else 2
+        column_config = config_number_columns(
+            df_res, format=f"%.{float_precision}f {output_unit}"
+        )
         # remove <br> html tags from dataframe index
         df_res.index = df_res.index.str.replace("<br>", " ")
         st.dataframe(df_res, width="stretch", column_config=column_config)
@@ -334,8 +338,10 @@ def display_and_edit_input_data(
         "specific_costs",
         "conversion_coefficients",
         "dac_and_desalination",
+        "secondary_processes_blue",
         "storage",
         "Natural gas price",
+        "CO2 transport and storage costs",
     ],
     scope: Literal["world", "Argentina", "Morocco", "South Africa"],
     key: str,
@@ -393,6 +399,7 @@ def display_and_edit_input_data(
         "transportation_processes",
         "reconversion_processes",
         "dac_and_desalination",
+        "secondary_processes_blue",
         "storage",
     ]:
         index = "process_code"
@@ -420,13 +427,19 @@ def display_and_edit_input_data(
         }
         column_config.update(custom_column_config)
 
-    if data_type == "dac_and_desalination":
+    if data_type in {
+        "dac_and_desalination",
+        "secondary_processes_blue",
+    }:
         index = "process_code"
         columns = "parameter_code"
         missing_index = {"source_region_code": None}
         column_config = {
             "CAPEX": st.column_config.NumberColumn(format="%.5f USD/kg", min_value=0),
             "OPEX (fix)": st.column_config.NumberColumn(
+                format="%.5f USD/kg", min_value=0
+            ),
+            "OPEX (other variable)": st.column_config.NumberColumn(
                 format="%.5f USD/kg", min_value=0
             ),
             "efficiency": st.column_config.NumberColumn(
@@ -513,6 +526,18 @@ def display_and_edit_input_data(
         index = "source_region_code"
         columns = "parameter_code"
         missing_index = {"flow_code": "natural gas (gasous)"}
+
+    if data_type == "CO2 transport and storage costs":
+        index = "source_region_code"
+        columns = "parameter_code"
+        missing_index = {
+            "process_code": "CO2 transport and storage (blue)",
+        }
+        column_config["OPEX (other variable)"] = st.column_config.NumberColumn(
+            label="CO₂ transport and storage costs",
+            format="%.4f USD/kgCO₂",
+            min_value=0,
+        )
 
     df = change_index_names(df)
 
