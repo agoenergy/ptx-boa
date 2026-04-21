@@ -15,6 +15,7 @@ Here is a list of tabs and what you can find there:
 
 - **Info:** (this is what you are currently reading) This tab contains general information on the app and the methodology behind it.
 - **Costs:** lets you compare the costs of producing different molecules and exporting them to different countries.
+- **Emissions:** lets you compare greenhouse gas emissions of producing different molecules and exporting them to different countries.
 - **Input data:** shows the data that goes into the calculations and lets you modify it.
 - **Costs comparisson to Renewable Based Product:** lets you compare the production costs of natural gas based products with one that are based on renewable electricity. 
 
@@ -30,7 +31,7 @@ Monetary units are denominated in 2025 US dollars (USD).
 
 You can edit most input data that goes into the calculations. To activate data edit mode, you need to toggle the respective switch at the bottom of the sidebar. If you do so, you can edit the data in the tables on the **Input data** tab. At the top of the screen, you will see an overview of the changes you made, and the option to download changes to file, or upload a file with changes from a previous session.
 
-If you have modified the input data, you can choose in the **Costs** tab if you want to visualize the results based on the original data, the modified data, or the difference between both.
+If you have modified the input data, you can choose in the **Costs** and **Emissions** tab if you want to visualize the results based on the original data, the modified data, or the difference between both.
 
 You can revert all data back to  default by turnin data edit mode off again.
 
@@ -45,12 +46,6 @@ or make a contribution, please check out our Github repository:
 
 Visit our website for data documentation, additional resources and updates:
 <https://www.agora-energiewende.de/en/publications/business-opportunity-analyser-boa>
-
-#### Software that has been used
-
-- The optimization model has been implemented in [pypsa](https://pypsa.readthedocs.io/en/latest/) and solved with the [HiGHS](https://highs.dev/) solver.
-- Renewable power supply profiles have been created with  [atlite](https://atlite.readthedocs.io/en/latest/).
-- The aggregation of annual hourly time series by representing them via characteristic weeks has been done with [tsam](https://tsam.readthedocs.io/en/latest/).
 
 #### Disclaimer
 
