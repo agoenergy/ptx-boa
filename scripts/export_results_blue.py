@@ -66,7 +66,7 @@ STEPS = [
     "SECONDARY:IMPORT:CO2-C",
 ]
 
-rows = [
+expected_rows = [
     "0:settings:chain",
     "0:settings:country",
     "0:settings:output_unit",
@@ -95,6 +95,7 @@ rows = [
     "1:parameter:CONV:DIESEL-L",
     "1:parameter:CONV:EL",
     "1:parameter:CONV:HEAT",
+    "1:parameter:CONV:IOF-S",
     "1:parameter:CONV:IOP-S",
     "1:parameter:CONV:NG-G",
     "1:parameter:DIST",
@@ -146,6 +147,7 @@ rows = [
     "2:flows:secondary_flows_in:DIESEL-L",
     "2:flows:secondary_flows_in:EL",
     "2:flows:secondary_flows_in:HEAT",
+    "2:flows:secondary_flows_in:IOF-S",
     "2:flows:secondary_flows_in:IOP-S",
     "2:flows:secondary_flows_in:NG-G",
     "3:costs:CAPEX",
@@ -264,7 +266,7 @@ def main(xlsx_filepath: str):
             all_row_keys = all_row_keys | set(s_all.index)
 
         df = pd.concat(pd_series, axis=1)
-        df = df.reindex(rows)
+        df = df.reindex(expected_rows)
 
         sheet_name = f"{idx}_" + chain["chain_name"][:28].replace("*", "")
         results[sheet_name] = df
@@ -275,9 +277,10 @@ def main(xlsx_filepath: str):
         "4:emissions:mass:co2_bound_in_product_per_output",
     }
 
-    assert all_row_keys < set(rows), (
-        (all_row_keys - set(rows)),
-        (set(rows) - all_row_keys),
+    assert all_row_keys < set(expected_rows), (
+        "Keys (new/missing)",
+        (all_row_keys - set(expected_rows)),
+        (set(expected_rows) - all_row_keys),
     )
 
     with pd.ExcelWriter(xlsx_filepath) as xlsx:
