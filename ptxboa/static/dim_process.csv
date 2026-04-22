@@ -63,7 +63,7 @@ H2-S,Hydrogen ship (own fuel consumption),H2-L,H2-L,False,False,True,False,False
 H2-S#B,Hydrogen ship (own fuel consumption) (blue),H2-L,H2-L,False,False,True,False,False,False,False,False,True,True,TRNSP-S,False,False,Transportation (Ship),H2-L,False,True
 H2-SB,Hydrogen ship (bunker fuel consumption),H2-L,H2-L,False,False,True,False,False,False,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,True,False
 H2-SB#B,Hydrogen ship (bunker fuel consumption) (blue),H2-L,H2-L,False,False,True,False,False,False,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,False,True
-H2-STR,Hydrogen storage,H2-G,H2-G,False,False,True,False,True,False,False,False,False,False,STORE,False,False,Electricity and H2 storage,,True,False
+H2-STR,Hydrogen storage,H2-G,H2-G,False,False,True,False,True,False,False,False,False,False,STORE,False,False,Electricity and H2 storage,EL,True,False
 HEATPUMP#B,Large scale Heatpump (blue),HEAT,EL,False,False,False,True,False,False,False,False,False,False,PROV_HT,False,False,Heat,,False,True
 LOHC-CON,LOHC conversion,LOHC-L,H2-G,True,False,True,False,False,False,False,False,True,True,TRNSP-SP,False,False,Transportation (Ship),EL,True,False
 LOHC-REC,LOHC reconversion,H2-G,LOHC-L,True,False,True,False,False,False,False,False,True,True,TRNSP-SP,False,False,Transportation (Ship),EL/HEAT,True,False
