@@ -219,32 +219,32 @@ def display_results_bar_and_table(
 
 
 @st.cache_resource()
-def display_footer():
+def display_footer(tool_version_color: ToolVersionColorType):
     with st.container(border=True):
-        c1, c2, c3 = st.columns(3)
-        with c1:
+        cols = st.columns([1, 2, 2, 2, 1], gap="large")
+        with cols[1]:
             st.markdown(
                 """
                 ##### Developed by
-                Öko-Institut<br/>
-                Merzhauser Straße 173<br/>
-                D-79100 Freiburg im Breisgau<br/>
-                www.oeko.de
+                Öko-Institut Consult GmbH<br/>
+                Borkumstraße 2<br/>
+                D-13189 Berlin<br/>
+                https://oeko-consult.de
                 """,
                 unsafe_allow_html=True,
             )
-        with c2:
+        with cols[2]:
             st.markdown(
                 """
                 ##### On behalf of
                 Agora Industry<br/>
                 Anna-Louisa-Karsch-Str. 2<br/>
                 D-10178 Berlin<br/>
-                www.agora-industry.org
+                https://agora-industry.org
                 """,
                 unsafe_allow_html=True,
             )
-        with c3:
+        with cols[3]:
             st.markdown(
                 """
                 ##### Authors
@@ -259,19 +259,21 @@ def display_footer():
                 unsafe_allow_html=True,
             )
 
-        # TODO: fix uneven height and vertical alignment of logos
-        c0, c1, c2, c3, c4, c5 = st.columns(
-            [1, 2, 2, 2, 2, 1],
+        cols = st.columns(
+            [1, 2, 2, 2, 2, 1] if tool_version_color == "green" else [1, 2, 2, 2, 1],
             gap="large",
+            vertical_alignment="center",
         )
-        with c1:
+        with cols[1]:
             st.image("img/Agora_Industry_logo_612x306.png")
-        with c2:
+        with cols[2]:
             st.image("img/agora-energiewende_logo_612x306.png")
-        with c3:
-            st.image("img/oeko_logo_612x306.png")
-        with c4:
-            st.image("img/PtX-Hub_Logo_international_612x306.png")
+        with cols[3]:
+            st.image("img/GMBH_Logo_Oeko-Institut_web_klein.png")
+        if tool_version_color == "green":
+            # ptx hub logo only in green version
+            with cols[4]:
+                st.image("img/PtX-Hub_Logo_international_612x306.png")
 
 
 def _form_data_editor(
@@ -581,6 +583,7 @@ def what_is_a_boxplot():
         st.image("img/boxplot_explanation.png")
 
 
+@st.cache_data(show_spinner=False)
 def report_processes_contained_in_process_result_type(
     _api: PtxboaAPI, tool_version_color: ToolVersionColorType
 ):
@@ -591,10 +594,11 @@ def report_processes_contained_in_process_result_type(
         .agg(list)
         .to_dict()["process_name"]
     )
-    with st.expander("Aggregated process categories and associated processes"):
-        for process_result_type, processes in data.items():
-            with st.expander(process_result_type):
-                section = []
-                for p in processes:
-                    section.append(f"- {p}")
-                st.markdown("\n".join(section))
+
+    st.subheader("Aggregated process categories and associated processes")
+    for process_result_type, processes in data.items():
+        with st.expander(process_result_type):
+            section = []
+            for p in processes:
+                section.append(f"- {p}")
+            st.markdown("\n".join(section))

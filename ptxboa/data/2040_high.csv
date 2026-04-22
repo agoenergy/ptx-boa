@@ -432,7 +432,6 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CONV,AEL-EL,H2O-L,,",CONV,AEL-EL,H2O-L,,,0.3,kg H2O (l)/H2-G,
 "CONV,ATR,EL,,",CONV,ATR,EL,,,0.1077107710771077,,Oni et al. 2022
 "CONV,ATR_91%#B,EL,,",CONV,ATR_91%#B,EL,,,0.1077107710771077,kWh (el.)/kwh H2 LHV (gasous),
-"CONV,CH3OH-SB,BFUEL-L,,",CONV,CH3OH-SB,BFUEL-L,,,3.050988367317537e-06,kwh bunker fuel (l)/(km*CH3OH-L),calc_shipping
 "CONV,CH3OHSYC#B,EL,,",CONV,CH3OHSYC#B,EL,,,0.0315,kWh (el)/kwh CH3OH,Concawe 2024
 "CONV,CH3OHSYN#B,CO2-G,,",CONV,CH3OHSYN#B,CO2-G,,,0.24848751708127706,kg CO2/kwh CH3OH,Concawe 2024
 "CONV,CH3OHSYN#B,EL,,",CONV,CH3OHSYN#B,EL,,,0.053687907676869054,kWh (el)/kwh CH3OH,Concawe 2024
@@ -458,7 +457,6 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CONV,CH4-RGAS#B,DIESEL-L,,",CONV,CH4-RGAS#B,DIESEL-L,,,2e-06,kWh diesel LHV/kWh natural gas LHV,
 "CONV,CH4-RGAS#B,EL,,",CONV,CH4-RGAS#B,EL,,,0.00048,kWh (el.)/kWh natural gas LHV,
 "CONV,CH4-RGAS#B,NG-G,,",CONV,CH4-RGAS#B,NG-G,,,0.00085,kWh natural gas LHV/kWh natural gas LHV,
-"CONV,CH4-SB,BFUEL-L,,",CONV,CH4-SB,BFUEL-L,,,3.3002590965851548e-06,kwh bunker fuel (l)/(km*CH4-L),calc_shipping
 "CONV,CH4SYN,CO2-G,,",CONV,CH4SYN,CO2-G,,,0.20196,kg CO2 (g)/kWh CH4 (g),
 "CONV,CH4SYN,H2O-L,,",CONV,CH4SYN,H2O-L,,,-0.1426332288401254,kg H2O (l)/kWh CH4 (g),Fasihi & Breyer 2018
 "CONV,CH4SYN,HEAT,,",CONV,CH4SYN,HEAT,,,-0.18495297805642633,kWh (heat)/kWh CH4 (g),Fasihi & Breyer 2018
@@ -487,12 +485,10 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CONV,H2-COMP,EL,,",CONV,H2-COMP,EL,,,0.04,kWh (el.)/H2-G,DNV GL 2020
 "CONV,H2-LIQ#B,EL,,",CONV,H2-LIQ#B,EL,,,0.39013004334778256,kWh (el.)/H2-L,DNV GL 2020
 "CONV,H2-LIQ,EL,,",CONV,H2-LIQ,EL,,,0.39013004334778256,kWh (el.)/H2-L,DNV GL 2020
-"CONV,H2-SB,BFUEL-L,,",CONV,H2-SB,BFUEL-L,,,7.956026573128753e-06,kwh bunker fuel (l)/(km*H2-L),calc_shipping
 "CONV,H2-STR,EL,,",CONV,H2-STR,EL,,,0.08000000000000002,kWh (el.)/H2-G,
 "CONV,LOHC-CON,EL,,",CONV,LOHC-CON,EL,,,0.02,kWh (el.)/LOHC-L,DNV GL 2020
 "CONV,LOHC-REC,EL,,",CONV,LOHC-REC,EL,,,0.028502850285028507,kWh (el.)/H2-G,Staiß et al. 2022 nach Wasserscheid
 "CONV,LOHC-REC,HEAT,,",CONV,LOHC-REC,HEAT,,,0.4534534534534535,kWh (heat)/H2-G,DNV GL 2020
-"CONV,LOHC-SB,BFUEL-L,,",CONV,LOHC-SB,BFUEL-L,,,9.92041609041782e-06,kwh bunker fuel (l)/(km*LOHC-L),calc_shipping
 "CONV,NG-DRI-C#B,CH4-G,,",CONV,NG-DRI-C#B,CH4-G,,,0.0,kwh biomethane/kg DRI (s),
 "CONV,NG-DRI-C#B,EL,,",CONV,NG-DRI-C#B,EL,,,0.4768585858585858,kWh (el.)/kg DRI (s),Agora 2024 Steel
 "CONV,NG-DRI-C#B,IOP-S,,",CONV,NG-DRI-C#B,IOP-S,,,1.373737373737374,kg IOP (s)/kg DRI (s),Agora 2024 steel AND Zang 2023
@@ -511,7 +507,6 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CONV,NG-PROD#B,DIESEL-L,USA,",CONV,NG-PROD#B,DIESEL-L,USA,,0.0011268131072691338,kWh diesel LHV/kWh natural gas LHV,IFEU 2023 (Ecoinvent 3.9.1)
 "CONV,NH3-REC#B,EL,,",CONV,NH3-REC#B,EL,,,0.013923999999999999,kWh (el.)/H2-G,NGN; Equinor 2018
 "CONV,NH3-REC,EL,,",CONV,NH3-REC,EL,,,0.013923999999999999,kWh (el.)/H2-G,NGN; Equinor 2018
-"CONV,NH3-SB,BFUEL-L,,",CONV,NH3-SB,BFUEL-L,,,5.343656103416341e-06,kwh bunker fuel (l)/(km*NH3-L),calc_shipping
 "CONV,NH3SYN#B,EL,,",CONV,NH3SYN#B,EL,,,0.16570000000000001,kWh (el.)/kwh NH3 LHV (gasous),Concawe 2024
 "CONV,NH3SYN#B,HEAT,,",CONV,NH3SYN#B,HEAT,,,-0.1165775401069519,kWh (heat)/kWh NH3 LHV (gasous),Concawe 2024
 "CONV,NH3SYN,EL,,",CONV,NH3SYN,EL,,,0.14192307692307693,kWh (el.)/kWh NH3 (l),Fasihi et al. 2021
@@ -522,19 +517,24 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CONV,SMR_52%_BF#B,EL,,",CONV,SMR_52%_BF#B,EL,,,0.039603960396039604,kWh (el.)/kwh H2 LHV (gasous),
 "CONV,SOEC-EL,H2O-L,,",CONV,SOEC-EL,H2O-L,,,0.3,kg H2O (l)/H2-G,
 "CONV,SYN-S,CHX-L,,",CONV,SYN-S,CHX-L,,,1.264193639501289e-06,kwh CHx (l)/(km*CHX-L),calc_shipping
-"CONV,SYN-SB,BFUEL-L,,",CONV,SYN-SB,BFUEL-L,,,1.264193639501289e-06,kwh bunker fuel (l)/(km*CHX-L),calc_shipping
 "CONV-OT,CH3OH-S#B,BFUEL-L,,",CONV-OT,CH3OH-S#B,BFUEL-L,,,3.0509883673175365e-06,kwh bunker fuel (l)/kWh CH3OH (l),
 "CONV-OT,CH3OH-SB#B,BFUEL-L,,",CONV-OT,CH3OH-SB#B,BFUEL-L,,,3.050988367317537e-06,kwh bunker fuel (l)/kWh CH3OH (l),
+"CONV-OT,CH3OH-SB,BFUEL-L,,",CONV-OT,CH3OH-SB,BFUEL-L,,,3.050988367317537e-06,kwh bunker fuel (l)/(km*CH3OH-L),calc_shipping
 "CONV-OT,CH4-P-L#B,NG-G,,",CONV-OT,CH4-P-L#B,NG-G,,,3e-05,kWh natural gas LHV/kWh natural gas LHV*km,
 "CONV-OT,CH4-S#B,NG-L,,",CONV-OT,CH4-S#B,NG-L,,,3.1919329450619476e-06,kWh natural gas LHV/kWh natural gas LHV*km,
 "CONV-OT,CH4-SB#B,BFUEL-L,,",CONV-OT,CH4-SB#B,BFUEL-L,,,3.3002590965851548e-06,kwh bunker fuel (l)/kWh natural gas LHV*km,
 "CONV-OT,CH4-SB#B,NG-L,,",CONV-OT,CH4-SB#B,NG-L,,,1.1537538535378707e-06,kWh natural gas LHV/kWh natural gas LHV*km,
+"CONV-OT,CH4-SB,BFUEL-L,,",CONV-OT,CH4-SB,BFUEL-L,,,3.3002590965851548e-06,kwh bunker fuel (l)/(km*CH4-L),calc_shipping
 "CONV-OT,H2-S#B,H2-L,,",CONV-OT,H2-S#B,H2-L,,,9.251193689684598e-06,kWh H2 (l)/kWh H2 (l),
 "CONV-OT,H2-SB#B,BFUEL-L,,",CONV-OT,H2-SB#B,BFUEL-L,,,3.3002590965851543e-06,kwh bunker fuel (l)/kWh H2 (l),
+"CONV-OT,H2-SB,BFUEL-L,,",CONV-OT,H2-SB,BFUEL-L,,,7.956026573128753e-06,kwh bunker fuel (l)/(km*H2-L),calc_shipping
+"CONV-OT,LOHC-SB,BFUEL-L,,",CONV-OT,LOHC-SB,BFUEL-L,,,9.92041609041782e-06,kwh bunker fuel (l)/(km*LOHC-L),calc_shipping
 "CONV-OT,NH3-S#B,NH3-L,,",CONV-OT,NH3-S#B,NH3-L,,,4.615015414151483e-07,kwh NH3 LHV (gasous)/kwh NH3 LHV (gasous),
 "CONV-OT,NH3-SB#B,BFUEL-L,,",CONV-OT,NH3-SB#B,BFUEL-L,,,5.343656103416341e-06,kwh bunker fuel (l)/kwh NH3 LHV (gasous),
+"CONV-OT,NH3-SB,BFUEL-L,,",CONV-OT,NH3-SB,BFUEL-L,,,5.343656103416341e-06,kwh bunker fuel (l)/(km*NH3-L),calc_shipping
 "CONV-OT,SYN-S#B,BFUEL-L,,",CONV-OT,SYN-S#B,BFUEL-L,,,1.264193639501289e-06,kwh bunker fuel (l)/CHX-L,
 "CONV-OT,SYN-SB#B,BFUEL-L,,",CONV-OT,SYN-SB#B,BFUEL-L,,,1.264193639501289e-06,kwh bunker fuel (l)/CHX-L,
+"CONV-OT,SYN-SB,BFUEL-L,,",CONV-OT,SYN-SB,BFUEL-L,,,1.264193639501289e-06,kwh bunker fuel (l)/(km*CHX-L),calc_shipping
 "DST-S-D,,,ARE,CHN",DST-S-D,,,ARE,CHN,10367.8,,CERDI
 "DST-S-D,,,ARE,DEU",DST-S-D,,,ARE,DEU,12441.9,,CERDI
 "DST-S-D,,,ARE,ESP",DST-S-D,,,ARE,ESP,8992.74,,CERDI
