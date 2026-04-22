@@ -17,9 +17,9 @@ CH4-LIQ#B,Methane Liquefaction (blue),NG-L,NG-G,True,False,True,False,False,Fals
 CH4-P-L,Methane land pipeline new,CH4-G,CH4-G,False,False,True,False,False,True,False,False,False,False,TRNSP-P,False,False,Transportation (Pipeline),,True,False
 CH4-P-L#B,Methane land pipeline new (blue),NG-G,NG-G,False,False,True,False,False,True,False,False,False,False,TRNSP-P,False,False,Transportation (Pipeline),NG-G,False,True
 CH4-P-LR,Methane land pipeline retrofitted,CH4-G,CH4-G,False,False,True,False,False,True,True,False,False,False,TRNSP-P,False,False,Transportation (Pipeline),,True,False
-CH4-P-LR#B,Methane land pipeline retrofitted (blue),NG-G,NG-G,False,False,True,False,False,True,True,False,False,False,TRNSP-P,False,False,Transportation (Pipeline),,False,True
+CH4-P-LR#B,Methane land pipeline retrofitted (blue),NG-G,NG-G,False,False,True,False,False,True,True,False,False,False,TRNSP-P,False,False,Transportation (Pipeline),NG-G,False,True
 CH4-P-S,Methane sea pipeline,CH4-G,CH4-G,False,False,True,False,False,True,False,True,False,False,TRNSP-P,False,False,Transportation (Pipeline),,True,False
-CH4-P-S#B,Methane sea pipeline (blue),NG-G,NG-G,False,False,True,False,False,True,False,True,False,False,TRNSP-P,False,False,Transportation (Pipeline),,False,True
+CH4-P-S#B,Methane sea pipeline (blue),NG-G,NG-G,False,False,True,False,False,True,False,True,False,False,TRNSP-P,False,False,Transportation (Pipeline),NG-G,False,True
 CH4-P-SR,Methane sea pipeline retrofitted,CH4-G,CH4-G,False,False,True,False,False,True,True,True,False,False,TRNSP-P,False,False,Transportation (Pipeline),,True,False
 CH4-P-SR#B,Methane sea pipeline retrofitted (blue),NG-G,NG-G,False,False,True,False,False,True,True,True,False,False,TRNSP-P,False,False,Transportation (Pipeline),,False,True
 CH4-RGAS,Methane Regasification,CH4-G,CH4-L,True,False,True,False,False,False,False,False,True,True,TRNSP-SP,False,False,Transportation (Ship),,True,False
@@ -46,9 +46,9 @@ EFUELSYN#B,FT e-fuels Synthesis (Fischer-Tropsch) (blue),CHX-L,H2-G,True,False,F
 EFUELSYNC#B,FT Synthesis (Fischer-Tropsch) using NG with CCS (blue),CHX-L,NG-G,True,False,False,False,False,False,False,False,False,False,DERIV,False,True,Derivative production,CO2-C/EL,False,True
 EL-STR,electricity storage,EL,EL,False,False,True,False,True,False,False,False,False,False,STORE,False,False,Electricity and H2 storage,,True,False
 H2-COMP,Hydrogen compression,H2-G,H2-G,True,False,True,False,False,True,False,False,False,False,TRNSP-PP,False,False,Transportation (Pipeline),EL,True,False
-H2-COMP#B,Hydrogen compression (blue),H2-G,H2-G,True,False,True,False,False,True,False,False,False,False,TRNSP-PP,False,False,Transportation (Pipeline),EL,False,True
+H2-COMP#B,Hydrogen compression (blue),H2-G,H2-G,True,False,True,False,False,True,False,False,False,False,TRNSP-PP,False,False,Transportation (Pipeline),,False,True
 H2-LIQ,Hydrogen Liquefaction,H2-L,H2-G,True,False,True,False,False,False,False,False,True,True,TRNSP-SP,False,False,Transportation (Ship),EL,True,False
-H2-LIQ#B,Hydrogen Liquefaction (blue),H2-L,H2-G,True,False,True,False,False,False,False,False,True,True,TRNSP-SP,False,False,Transportation (Ship),EL,False,True
+H2-LIQ#B,Hydrogen Liquefaction (blue),H2-L,H2-G,True,False,True,False,False,False,False,False,True,True,TRNSP-SP,False,False,Transportation (Ship),,False,True
 H2-P-L,Hydrogen land pipeline new,H2-G,H2-G,False,False,True,False,False,True,False,False,False,False,TRNSP-P,False,False,Transportation (Pipeline),,True,False
 H2-P-L#B,Hydrogen land pipeline new (blue),H2-G,H2-G,False,False,True,False,False,True,False,False,False,False,TRNSP-P,False,False,Transportation (Pipeline),,False,True
 H2-P-LR,Hydrogen land pipeline retrofitted,H2-G,H2-G,False,False,True,False,False,True,True,False,False,False,TRNSP-P,False,False,Transportation (Pipeline),,True,False
@@ -72,7 +72,7 @@ LOHC-SB,LOHC ship (bunker fuel consumption),LOHC-L,LOHC-L,False,False,True,False
 NG-DRI-C#B,NG-based iron reduction with CCS (blue),B-DRI-S,NG-G,True,False,False,False,False,False,False,False,False,False,DERIV,False,True,Derivative production,CH4-G/CO2-C/EL/IOP-S,False,True
 NG-PROD#B,production of natural gas (blue),NG-G,,False,False,False,False,False,False,False,False,False,False,NG,False,False,Natural gas production,DIESEL-L,False,True
 NH3-REC,Ammonia reconversion,H2-G,NH3-L,True,False,True,False,False,False,False,False,True,True,TRNSP-SP,False,False,Transportation (Ship),EL,True,False
-NH3-REC#B,Ammonia reconversion (blue),H2-G,NH3-L,True,False,True,False,False,False,False,False,True,True,TRNSP-SP,False,False,Transportation (Ship),EL,False,True
+NH3-REC#B,Ammonia reconversion (blue),H2-G,NH3-L,True,False,True,False,False,False,False,False,True,True,TRNSP-SP,False,False,Transportation (Ship),,False,True
 NH3-S,Ammonia ship (own fuel consumption),NH3-L,NH3-L,False,False,True,False,False,False,False,False,True,True,TRNSP-S,False,False,Transportation (Ship),,True,False
 NH3-S#B,Ammonia ship (own fuel consumption) (blue),NH3-L,NH3-L,False,False,True,False,False,False,False,False,True,True,TRNSP-S,False,False,Transportation (Ship),NH3-L,False,True
 NH3-SB,Ammonia ship (bunker fuel consumption),NH3-L,NH3-L,False,False,True,False,False,False,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,True,False
