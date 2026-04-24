@@ -6,6 +6,7 @@ import pytest
 from ptxboa.api import PtxboaAPI, _translate_and_validate_user_settings
 from ptxboa.api_calc import PtxCalc
 from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler
+from ptxboa.static import SecProcCO2Values, TransportType
 from ptxboa.static._type_defs import ChainDef
 from tests.test_api import ptxdata_dir_static
 from tests.utils import assert_deep_equal_approx
@@ -294,28 +295,14 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
             "emissions": {
                 "emission": {
                     "ch4_direct_co2e": 274.37420694,
-                    "co2_bound_in_product": 148.05784985,
-                    "co2_bound_in_product_per_output": 149.55338219,
-                    "co2_captured": 239.85116488,
-                    "co2_direct": 204.31608375,
                     "co2_indirect_scope2": 189.78034672,
                 },
-                "mass": {
-                    "ch4_direct_co2e": 274.37420694,
-                    "co2_bound_in_product": 148.05784985,
-                    "co2_bound_in_product_per_output": 149.55338219,
-                    "co2_captured": 239.85116488,
-                    "co2_direct": 204.31608375,
-                },
+                "mass": {"ch4_direct_co2e": 274.37420694},
             },
             "flows": {
                 "main_flow_in": 3.0937132,
                 "main_flow_out": 0.99000001,
-                "secondary_flows_in": {
-                    "CO2-C": 0.23985116,
-                    "EL": 0.47209041,
-                    "IOP-S": 1.35999964,
-                },
+                "secondary_flows_in": {"EL": 0.47209041, "IOP-S": 1.35999964},
             },
             "parameter": {
                 "CAPEX": 0.591876,
@@ -338,16 +325,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
             "process_step": "DERIV",
         },
         {
-            "emissions": {
-                "emission": {
-                    "co2_bound_in_product": 148.05784985,
-                    "co2_bound_in_product_per_output": 149.55338219,
-                },
-                "mass": {
-                    "co2_bound_in_product": 148.05784985,
-                    "co2_bound_in_product_per_output": 149.55338219,
-                },
-            },
             "flows": {"main_flow_in": 0.99000001, "main_flow_out": 0.99000001},
             "parameter": {
                 "DIST": 999.0,
@@ -364,10 +341,9 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
             "emissions": {
                 "emission": {
                     "ch4_direct_co2e": 0.3724882,
-                    "co2_direct": 148.05784985,
                     "co2_indirect_scope2": 195.3,
                 },
-                "mass": {"ch4_direct_co2e": 0.3724882, "co2_direct": 148.86184985},
+                "mass": {"ch4_direct_co2e": 0.3724882, "co2_direct": 0.804},
             },
             "flows": {
                 "main_flow_in": 0.99000001,
@@ -758,14 +734,12 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                             "co2_bound_in_product": 592.22579704,
                             "co2_bound_in_product_per_output": 201.00000001,
                             "co2_direct": 0.50496389,
-                            "co2_indirect_scope2": 0.14142706,
                         },
                         "mass": {
                             "ch4_direct_co2e": 1.9e-07,
                             "co2_bound_in_product": 592.22579704,
                             "co2_bound_in_product_per_output": 201.00000001,
                             "co2_direct": 0.50496389,
-                            "co2_indirect_scope2": 0.14142706,
                         },
                     },
                     "flows": {
@@ -812,14 +786,12 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                             "co2_bound_in_product_per_output": 149.55196895,
                             "co2_captured": 239.8514478,
                             "co2_direct": 204.31789998,
-                            "co2_indirect_scope2": 47.209,
                         },
                         "mass": {
                             "co2_bound_in_product": 148.05644926,
                             "co2_bound_in_product_per_output": 149.55196895,
                             "co2_captured": 239.8514478,
                             "co2_direct": 204.31789998,
-                            "co2_indirect_scope2": 47.209,
                         },
                     },
                     "flows": {
@@ -869,13 +841,11 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                             "co2_bound_in_product": 14.65778518,
                             "co2_bound_in_product_per_output": 14.65778518,
                             "co2_direct": 193.69866408,
-                            "co2_indirect_scope2": 65.1,
                         },
                         "mass": {
                             "co2_bound_in_product": 14.65778518,
                             "co2_bound_in_product_per_output": 14.65778518,
                             "co2_direct": 193.69866408,
-                            "co2_indirect_scope2": 65.1,
                         },
                     },
                     "flows": {
@@ -1089,12 +1059,10 @@ def test_new_blue_chain_real_data(api_kwargs, expected):
                 "SECONDARY:IMPORT:CO2-G": {
                     "costs": {"CAPEX": 0.0070417, "OPEX": 0.0039147},
                     "emissions": {
-                        "emission": {"co2_indirect_scope2": 91.02097751},
                         "mass": {
                             "co2_bound_in_product": 248.4875171,
                             "co2_bound_in_product_per_output": 1000.00000007,
-                            "co2_indirect_scope2": 91.02097751,
-                        },
+                        }
                     },
                     "flows": {
                         "main_flow_in": 0.24848752,
@@ -1122,12 +1090,10 @@ def test_new_blue_chain_real_data(api_kwargs, expected):
                 "DERIV_I": {
                     "costs": {"CAPEX": 0.00739343, "OPEX": 0.00335591},
                     "emissions": {
-                        "emission": {"co2_indirect_scope2": 15.46211741},
                         "mass": {
                             "co2_bound_in_product": 248.49429268,
                             "co2_bound_in_product_per_output": 248.49429268,
-                            "co2_indirect_scope2": 15.46211741,
-                        },
+                        }
                     },
                     "flows": {
                         "main_flow_in": 1.16206724,
@@ -1173,3 +1139,315 @@ def test_new_blue_chain_dac(api_kwargs, expected):
         assert_deep_equal_approx(
             expected_step_data, actual_step_data[step], context=step
         )
+
+
+def test_overall_sums():
+    """Create one instance of each blue chain andcheck expected results (totals)."""
+    df_chains = DataHandler.get_dimension(dim="chain", tool_version_color="blue")
+    df_process = DataHandler.get_dimension(dim="process")
+
+    flows_own_fuel = set(
+        df_process.loc[df_process["is_shipping_own_fuel"], "main_flow_code_out"]
+    )
+
+    api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR)
+
+    for chain_name, chain in df_chains.iterrows():
+        transport: TransportType = "Pipeline" if chain["can_pipeline"] else "Ship"
+        ship_own_fuel: bool = (
+            transport == "Ship" and chain["flow_out"] in flows_own_fuel
+        )
+        # Create different routes so we can test all 4 pipeline types
+        # only for Norway/Spain + Algeria/Spain can we test all!
+        if transport == "Pipeline" and chain["flow_out"] in flows_own_fuel:
+            region = "Algeria"
+        else:
+            region = "Norway"
+        country = "Spain"
+
+        api.calculate(
+            scenario="2030 (medium)",
+            secproc_co2="Direct Air Capture (blue)",
+            secproc_water=None,
+            chain=chain_name,  # type: ignore
+            res_gen=None,
+            region=region,
+            country=country,
+            transport=transport,
+            ship_own_fuel=ship_own_fuel,
+            output_unit="USD/t",
+            optimize_flh=False,
+            tool_version_color="blue",
+        )
+
+
+def test_emissions_issue_775():
+    """Create one instance of each blue chain andcheck expected results (totals)."""
+    api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR)
+
+    actual_results = []
+
+    for secproc_co2 in SecProcCO2Values:
+        if secproc_co2 == "Direct Air Capture":
+            continue  # only blue
+        for demand_supply in ["demand", "supply"]:
+            chain = f"CH3OH-L__ATR_91%_CH3OHSYN__prod_in_{demand_supply}"
+            result = api.calculate(
+                scenario="2040 (medium)",
+                secproc_co2=secproc_co2,
+                secproc_water="Sea Water desalination",
+                chain=chain,  # type: ignore
+                res_gen=None,
+                region="Algeria",
+                country="Germany",
+                transport="Ship",
+                ship_own_fuel=False,
+                output_unit="USD/t",
+                optimize_flh=False,
+                tool_version_color="blue",
+            )
+
+            # get all co2_bound_in_product
+            for mass_emission, df_e in [
+                ("emission", result.emissions_t_co2e),
+                ("mass", result.emission_mass_t_co2e),
+            ]:
+                actual_result = {
+                    "demand_supply": demand_supply,
+                    "secproc_co2": secproc_co2,
+                    "mass_emission": mass_emission,
+                    "co2_bound_in_product": [],
+                }
+                actual_results.append(actual_result)
+
+                for process_data in result._internal_process_data:
+                    try:
+                        actual_result["co2_bound_in_product"].append(
+                            {
+                                "process": process_data["process_code"],
+                                "value": process_data["emissions"][mass_emission][
+                                    "co2_bound_in_product"
+                                ],
+                            }
+                        )
+
+                    except KeyError:
+                        pass
+
+                # final bound in product
+                try:
+                    actual_result["co2_bound_in_product"].append(
+                        {
+                            "process": "Bound in product",
+                            "value": df_e.loc[
+                                df_e["process_type"] == "Bound in product",
+                                "values",
+                            ].iloc[0],
+                        }
+                    )
+                except IndexError:
+                    pass
+
+    expected_reults = [
+        {
+            "co2_bound_in_product": [
+                {"process": "NG-PROD#B", "value": 340.68635745},
+                {"process": "CH4-LIQ#B", "value": 291.99859275},
+                {"process": "CH4-SB#B", "value": 291.99859275},
+                {"process": "CH4-RGAS#B", "value": 291.99859275},
+                {"process": "ATR_91%#B"},
+                {"process": "CH3OHSYN#B", "value": 248.49429268},
+                {"process": "CO2-T+S#B"},
+                {"process": "CO2-INDF#B", "value": 248.4875171},
+                {"process": "CCGT-CC#B"},
+                {"process": "HEATPUMP#B"},
+                {"process": "Bound in product", "value": 1.37362123},
+            ],
+            "demand_supply": "demand",
+            "mass_emission": "emission",
+            "secproc_co2": "CO2 from fossil source",
+        },
+        {
+            "co2_bound_in_product": [
+                {"process": "NG-PROD#B", "value": 340.68635745},
+                {"process": "CH4-LIQ#B", "value": 291.99859275},
+                {"process": "CH4-SB#B", "value": 291.99859275},
+                {"process": "CH4-RGAS#B", "value": 291.99859275},
+                {"process": "ATR_91%#B"},
+                {"process": "CH3OHSYN#B", "value": 248.49429268},
+                {"process": "CO2-T+S#B"},
+                {"process": "CO2-INDF#B", "value": 248.4875171},
+                {"process": "CCGT-CC#B"},
+                {"process": "HEATPUMP#B"},
+                {"process": "Bound in product", "value": 1.37362123},
+            ],
+            "demand_supply": "demand",
+            "mass_emission": "mass",
+            "secproc_co2": "CO2 from fossil source",
+        },
+        {
+            "co2_bound_in_product": [
+                {"process": "NG-PROD#B", "value": 363.47582923},
+                {"process": "ATR_91%#B"},
+                {"process": "CH3OHSYN#B", "value": 248.68372319},
+                {"process": "CH3OH-SB#B", "value": 248.49429268},
+                {"process": "CO2-T+S#B"},
+                {"process": "CO2-INDF#B", "value": 248.67694245},
+                {"process": "CCGT-CC#B"},
+                {"process": "HEATPUMP#B"},
+                {"process": "Bound in product", "value": 1.37362123},
+            ],
+            "demand_supply": "supply",
+            "mass_emission": "emission",
+            "secproc_co2": "CO2 from fossil source",
+        },
+        {
+            "co2_bound_in_product": [
+                {"process": "NG-PROD#B", "value": 363.47582923},
+                {"process": "ATR_91%#B"},
+                {"process": "CH3OHSYN#B", "value": 248.68372319},
+                {"process": "CH3OH-SB#B", "value": 248.49429268},
+                {"process": "CO2-T+S#B"},
+                {"process": "CO2-INDF#B", "value": 248.67694245},
+                {"process": "CCGT-CC#B"},
+                {"process": "HEATPUMP#B"},
+                {"process": "Bound in product", "value": 1.37362123},
+            ],
+            "demand_supply": "supply",
+            "mass_emission": "mass",
+            "secproc_co2": "CO2 from fossil source",
+        },
+        {
+            "co2_bound_in_product": [
+                {"process": "NG-PROD#B", "value": 340.68635745},
+                {"process": "CH4-LIQ#B", "value": 291.99859275},
+                {"process": "CH4-SB#B", "value": 291.99859275},
+                {"process": "CH4-RGAS#B", "value": 291.99859275},
+                {"process": "ATR_91%#B"},
+                {"process": "CH3OHSYN#B"},
+                {"process": "CO2-T+S#B"},
+                {"process": "CO2-INDS#B"},
+                {"process": "CCGT-CC#B"},
+                {"process": "HEATPUMP#B"},
+            ],
+            "demand_supply": "demand",
+            "mass_emission": "emission",
+            "secproc_co2": "CO2 from sustainable source",
+        },
+        {
+            "co2_bound_in_product": [
+                {"process": "NG-PROD#B", "value": 340.68635745},
+                {"process": "CH4-LIQ#B", "value": 291.99859275},
+                {"process": "CH4-SB#B", "value": 291.99859275},
+                {"process": "CH4-RGAS#B", "value": 291.99859275},
+                {"process": "ATR_91%#B"},
+                {"process": "CH3OHSYN#B", "value": 248.49429268},
+                {"process": "CO2-T+S#B"},
+                {"process": "CO2-INDS#B", "value": 248.4875171},
+                {"process": "CCGT-CC#B"},
+                {"process": "HEATPUMP#B"},
+                {"process": "Bound in product", "value": 1.37362123},
+            ],
+            "demand_supply": "demand",
+            "mass_emission": "mass",
+            "secproc_co2": "CO2 from sustainable source",
+        },
+        {
+            "co2_bound_in_product": [
+                {"process": "NG-PROD#B", "value": 363.47582923},
+                {"process": "ATR_91%#B"},
+                {"process": "CH3OHSYN#B"},
+                {"process": "CH3OH-SB#B"},
+                {"process": "CO2-T+S#B"},
+                {"process": "CO2-INDS#B"},
+                {"process": "CCGT-CC#B"},
+                {"process": "HEATPUMP#B"},
+            ],
+            "demand_supply": "supply",
+            "mass_emission": "emission",
+            "secproc_co2": "CO2 from sustainable source",
+        },
+        {
+            "co2_bound_in_product": [
+                {"process": "NG-PROD#B", "value": 363.47582923},
+                {"process": "ATR_91%#B"},
+                {"process": "CH3OHSYN#B", "value": 248.68372319},
+                {"process": "CH3OH-SB#B", "value": 248.49429268},
+                {"process": "CO2-T+S#B"},
+                {"process": "CO2-INDS#B", "value": 248.67694245},
+                {"process": "CCGT-CC#B"},
+                {"process": "HEATPUMP#B"},
+                {"process": "Bound in product", "value": 1.37362123},
+            ],
+            "demand_supply": "supply",
+            "mass_emission": "mass",
+            "secproc_co2": "CO2 from sustainable source",
+        },
+        {
+            "co2_bound_in_product": [
+                {"process": "NG-PROD#B", "value": 340.68635745},
+                {"process": "CH4-LIQ#B", "value": 291.99859275},
+                {"process": "CH4-SB#B", "value": 291.99859275},
+                {"process": "CH4-RGAS#B", "value": 291.99859275},
+                {"process": "ATR_91%#B"},
+                {"process": "CH3OHSYN#B"},
+                {"process": "CO2-T+S#B"},
+                {"process": "CCGT-CC#B"},
+                {"process": "HEATPUMP#B"},
+                {"process": "DAC#B"},
+            ],
+            "demand_supply": "demand",
+            "mass_emission": "emission",
+            "secproc_co2": "Direct Air Capture (blue)",
+        },
+        {
+            "co2_bound_in_product": [
+                {"process": "NG-PROD#B", "value": 340.68635745},
+                {"process": "CH4-LIQ#B", "value": 291.99859275},
+                {"process": "CH4-SB#B", "value": 291.99859275},
+                {"process": "CH4-RGAS#B", "value": 291.99859275},
+                {"process": "ATR_91%#B"},
+                {"process": "CH3OHSYN#B", "value": 248.49429268},
+                {"process": "CO2-T+S#B"},
+                {"process": "CCGT-CC#B"},
+                {"process": "HEATPUMP#B"},
+                {"process": "DAC#B", "value": 248.4875171},
+                {"process": "Bound in product", "value": 1.37362123},
+            ],
+            "demand_supply": "demand",
+            "mass_emission": "mass",
+            "secproc_co2": "Direct Air Capture (blue)",
+        },
+        {
+            "co2_bound_in_product": [
+                {"process": "NG-PROD#B", "value": 425.58797647},
+                {"process": "ATR_91%#B"},
+                {"process": "CH3OHSYN#B"},
+                {"process": "CH3OH-SB#B"},
+                {"process": "CO2-T+S#B"},
+                {"process": "CCGT-CC#B"},
+                {"process": "HEATPUMP#B"},
+                {"process": "DAC#B"},
+            ],
+            "demand_supply": "supply",
+            "mass_emission": "emission",
+            "secproc_co2": "Direct Air Capture (blue)",
+        },
+        {
+            "co2_bound_in_product": [
+                {"process": "NG-PROD#B", "value": 425.58797647},
+                {"process": "ATR_91%#B"},
+                {"process": "CH3OHSYN#B", "value": 248.68372319},
+                {"process": "CH3OH-SB#B", "value": 248.49429268},
+                {"process": "CO2-T+S#B"},
+                {"process": "CCGT-CC#B"},
+                {"process": "HEATPUMP#B"},
+                {"process": "DAC#B", "value": 248.67694245},
+                {"process": "Bound in product", "value": 1.37362123},
+            ],
+            "demand_supply": "supply",
+            "mass_emission": "mass",
+            "secproc_co2": "Direct Air Capture (blue)",
+        },
+    ]
+    assert_deep_equal_approx(expected_reults, actual_results)

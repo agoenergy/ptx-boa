@@ -170,8 +170,12 @@ def assert_deep_equal_approx(
     sort_list_by_keys: list[str] | None = None,
 ):
 
-    expected = round_nested(drop_null_nested(asdict_nested(expected)), ndigis=ndigis)
-    actually = round_nested(drop_null_nested(asdict_nested(actually)), ndigis=ndigis)
+    expected = drop_null_nested(
+        round_nested(drop_null_nested(asdict_nested(expected)), ndigis=ndigis)
+    )
+    actually = drop_null_nested(
+        round_nested(drop_null_nested(asdict_nested(actually)), ndigis=ndigis)
+    )
 
     try:
         assert_deep_equal(

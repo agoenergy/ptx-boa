@@ -1,6 +1,7 @@
 """Class based calculation."""
 
 import argparse
+import json
 import logging
 import re
 from dataclasses import dataclass
@@ -183,10 +184,22 @@ def main(chains: list[str], plot_type: str):
         else:
             raise NotImplementedError(plot_type)
 
+        file_basename = f"{settings.tool_version_color}/{name}_{plot_type}"
         chain.plot(
-            file_basename=f"{settings.tool_version_color}/{name}_{plot_type}",
+            file_basename=file_basename,
             edge_values=edge_values,  # type: ignore
         )
+
+        # save json
+        with open(
+            "chain_flowcharts/" + file_basename + ".json", "w", encoding="utf-8"
+        ) as file:
+            json.dump(
+                ptxcalc_result._internal_process_data,
+                file,
+                indent=2,
+                ensure_ascii=False,
+            )
 
 
 if __name__ == "__main__":
