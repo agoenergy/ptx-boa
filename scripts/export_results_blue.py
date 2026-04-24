@@ -90,6 +90,7 @@ expected_rows = [
     "1:parameter:CO2CPT-S:CH4-G",
     "1:parameter:CO2CPT-S:NG-G",
     "1:parameter:CONV-OT:BFUEL-L",
+    "1:parameter:CONV-OT:NG-L",
     "1:parameter:CONV:BFUEL-L",
     "1:parameter:CONV:CO2-G",
     "1:parameter:CONV:DIESEL-L",

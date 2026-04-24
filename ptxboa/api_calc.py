@@ -57,7 +57,7 @@ class Process:
         "OPEX-O",
     ]
     _parameter_codes_process_flow_sec_or_main = [
-        "CH4SHARE",
+        "CH4SHARE",  # actually independent of process,but no problem
         "EF_E",
         "EF_M",
         "CBOUND",
@@ -90,17 +90,6 @@ class Process:
             assert not is_initial
             assert not is_main_in_transport_segment
 
-        main_flow_code_in_or_out = main_flow_code_in or main_flow_code_out
-        if main_flow_code_in_or_out in secondary_flow_types:
-            logger.error(
-                "Process has same main and secondary input: %s, %s",
-                process_code,
-                main_flow_code_in_or_out,
-            )
-            secondary_flow_types = frozenset(
-                x for x in secondary_flow_types if x != main_flow_code_in
-            )
-
         self.process_code: ProcessCodeType | FlowCodeType = process_code
         self.process_step: ProcessStepType | str | None = process_step
         self.main_flow_code_out: FlowCodeType = main_flow_code_out
@@ -121,6 +110,11 @@ class Process:
         self._links_out_in_secondary: list[Process] = []
         self._link_in_main: Process | None = None
         self._links_in_secondary: dict[FlowCodeType, Process] = {}
+
+    @property
+    def is_pipeline_w_ch4_losses(self) -> bool:
+        """Is pipeline that can have CH4 losses."""
+        return False
 
     @property
     def is_in_export_segment(self) -> bool:
@@ -191,7 +185,7 @@ class Process:
 
         # FIXME: should be removed from data?
         if process_code == "CO2-T+S#B" and main_flow_code_in == "CO2-C":  # type:ignore
-            logger.warning("Manually removing  main_flow_code_in=CO2-C for css")
+            logger.info("Manually removing main_flow_code_in=CO2-C for css")
             main_flow_code_in = None
 
         return ProcessClass(
@@ -347,7 +341,7 @@ class Process:
                 parameter_data[self].get("CONV", {}).get(flow_code) or 0  # type:ignore
             )
             if conv == 0:
-                if flow_code != "CO2-C":
+                if flow_code != "CO2-C" and flow_code != self._main_flow_code_in_or_out:
                     # for CSS: no warning - this is expected, because flow value is
                     # calulated in emission step
                     logger.warning("Process with conv = 0 %s / %s", self, flow_code)
@@ -356,6 +350,14 @@ class Process:
 
             elif conv < 0:
                 conv = 0
+
+            if conv and flow_code == self._main_flow_code_in_or_out:
+                logger.error(
+                    "Process has same main and secondary input: %s, %s",
+                    self,
+                    flow_code,
+                )
+
             secondary_flows_in[flow_code] = main_flow_out * conv
 
         return ProcessResultFlowsType(
@@ -535,10 +537,11 @@ class Process:
                         used_cbound = used_cbound | True
 
         # special case initial process (NG-PROD): cbound for output
-        if self.is_initial:
+        if self.is_initial and self.process_step == "NG_PROD":
             flow_code = self.main_flow_code_out
+            # FIXME
             if flow_code in flows_in_net:
-                logger.error("initial flow out also in flows in: %s", self)
+                logger.info("initial flow out also in flows in: %s", self)
             else:
                 flow = main_flow_out
                 co2_g_per_flow = EF_co2_g_per_flow.get(flow_code, 0)
@@ -676,6 +679,22 @@ class ProcessSecondary(Process):
 
 
 class ProcessTransport(Process):
+    @property
+    def is_pipeline_w_ch4_losses(self) -> bool:
+        """Is pipeline that can have CH4 losses."""
+        # TODO: better system
+        return self.main_flow_code_out in {
+            "NG-G",
+            "NG-L",
+            "CH4-G",
+            "CH4-L",
+        } and self.process_step in {
+            "PPLS",
+            "PPL",
+            "PPLX",
+            "PPLR",
+        }
+
     _parameter_codes_process = ["OPEX-T", "LOSS-T", "OPEX-O"] + [
         # NOTE: these are the same for all transport steps - maybe get only once?
         "CAP-T",
@@ -685,6 +704,7 @@ class ProcessTransport(Process):
     ]
 
     _parameter_codes_process_flow_sec_or_main = [
+        "CH4SHARE",  # actually independent of process,but no problem
         "EF_E",
         "EF_M",
     ]
@@ -776,9 +796,21 @@ class ProcessTransport(Process):
         )
 
         loss_t: float = data.get("LOSS-T", 0)  # type: ignore
+
+        # TODO:NOTE: more accurately, it should be a exp function,
+        # but input data was calibrated linear to distance
         loss = loss_t * dist_transport
 
-        data["EFF"] = 1 - loss
+        if self.is_pipeline_w_ch4_losses:
+            # create loss factor so emissions can calculate direct CH4 emissions
+            data["EFF"] = 1
+            data["LOSS"] = {self.main_flow_code_out: loss}
+        else:
+            # correct EFF
+            data["EFF"] = 1 - loss
+            if data["EFF"] <= 0:
+                raise Exception("EFF <= 0 because of losses: %s", self)
+
         data["DIST"] = dist_transport
 
         # TODO: fixed in new data,but still to fix in test data
@@ -821,15 +853,24 @@ class ProcessTransport(Process):
                 )
                 raise Exception()
 
+            # TODO:NOTE: more accurately, it should be a exp function,
+            # but input data was calibrated linear to distance
             conv = conv_ot * dist_transport
 
+            # correct EFF
             if flow_code == self.main_flow_code_out:
-                pass
-
-            data["CONV"][flow_code] = conv  # type: ignore
-
-        if data["EFF"] <= 0:
-            raise Exception("EFF <= 0 because of losses: %s", self)
+                eff_correct = 1 / (1 + conv)
+                data["EFF"] *= eff_correct
+            elif flow_code != "BFUEL-L":
+                logger.error(
+                    "CONV-OT in can only be bunker fuel or own fuel."
+                    "in transport input data: %s %s %s",
+                    self,
+                    flow_code,
+                )
+            else:
+                # should only be bunker fuel
+                data["CONV"][flow_code] = conv  # type: ignore
 
         return data
 
