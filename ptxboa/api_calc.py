@@ -93,7 +93,7 @@ class Process:
         main_flow_code_in_or_out = main_flow_code_in or main_flow_code_out
         if main_flow_code_in_or_out in secondary_flow_types:
             logger.error(
-                "Process h same main and secondary input: %s, %s",
+                "Process has same main and secondary input: %s, %s",
                 process_code,
                 main_flow_code_in_or_out,
             )
@@ -689,7 +689,7 @@ class ProcessTransport(Process):
         "EF_M",
     ]
     _parameter_codes_process_flow_sec = [
-        "CONV",  # FXIME: should be CONV-OT?
+        "CONV",  # FXIME: should be CONV-OT - already fixed in new data,to fix in test data # noqa
         "CONV-OT",
     ]
 
@@ -776,11 +776,12 @@ class ProcessTransport(Process):
         )
 
         loss_t: float = data.get("LOSS-T", 0)  # type: ignore
+        loss = loss_t * dist_transport
 
-        data["EFF"] = 1 - loss_t * dist_transport
+        data["EFF"] = 1 - loss
         data["DIST"] = dist_transport
 
-        # FIXME CONV in transport?
+        # TODO: fixed in new data,but still to fix in test data
         for flow_code, conv in data["CONV"].items():  # type: ignore
             if not conv:
                 continue
@@ -805,12 +806,31 @@ class ProcessTransport(Process):
                 data["CONV-OT"][flow_code] = conv  # type: ignore
 
         # create CONV from DIST * CONV-OT
+        if "CONV" not in data:
+            data["CONV"] = {}
         for flow_code, conv_ot in data["CONV-OT"].items():  # type: ignore
             if not conv_ot:
                 continue
-            data["CONV"][flow_code] = conv_ot * dist_transport  # type: ignore
 
-        # FIXME: OPEX-O in transport?
+            if flow_code not in {"BFUEL-L", self.main_flow_code_out}:
+                logger.error(
+                    "CONV-OT in can only be bunker fuel or own fuel."
+                    "in transport input data: %s %s %s",
+                    self,
+                    flow_code,
+                )
+                raise Exception()
+
+            conv = conv_ot * dist_transport
+
+            if flow_code == self.main_flow_code_out:
+                pass
+
+            data["CONV"][flow_code] = conv  # type: ignore
+
+        if data["EFF"] <= 0:
+            raise Exception("EFF <= 0 because of losses: %s", self)
+
         return data
 
 
