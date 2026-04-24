@@ -504,16 +504,29 @@ class Process:
                 co2_captured += co2_g * co2cpt
                 # bound
                 bound_kg_c_per_output: float = CBOUND_kg_c_per_output.get(flow_code, 0)  # type: ignore # noqa
-                if bound_kg_c_per_output:
+                if bound_kg_c_per_output and not self.keep_cbound_from_main_input:
                     # only add if EFF exist (EFF_FLAG)
                     # TODO: special cases - generalized rule?
-                    allow_cbound = bool(co2_g_per_flow) or flow_code in {
+                    allow_cbound_flow = bool(co2_g_per_flow) or flow_code in {
                         "B-DRI-S",
-                        "CO2-DAC",  # may have emission factor (co2_g_per_flow) of 0
+                        # may have emission factor (co2_g_per_flow) of 0
+                        "CO2-DAC",
+                        "CO2-INDF",
+                        "CO2-INDS",
                     }
-                    if allow_cbound:
+
+                    if allow_cbound_flow:
                         # special case:
-                        if flow_code == "CO2-DAC" and not co2_g_per_flow:
+                        if (
+                            flow_code
+                            in {
+                                # may have emission factor (co2_g_per_flow) of 0
+                                "CO2-DAC",
+                                "CO2-INDF",
+                                "CO2-INDS",
+                            }
+                            and not co2_g_per_flow
+                        ):
                             # we still want to add 0 to bound_kg_c_per_output
                             bound_kg_c_per_output = 0
                         co2_g_bound_in_product += (
@@ -566,7 +579,7 @@ class Process:
                 )
             co2_g_direct = 0
 
-        if not main_flow_out or not used_cbound:
+        if not main_flow_out:
             co2_bound_in_product_per_output = None
         else:
             co2_bound_in_product_per_output = co2_g_bound_in_product / main_flow_out
@@ -717,23 +730,29 @@ class ProcessTransport(Process):
         dist_ship: float = data.get("DST-S-D", 0)  # type: ignore
         dist_pipeline: float = data.get("DST-S-DP", 0)  # type: ignore
         seashare_pipeline: float = data.get("SEASHARE", 0)  # type: ignore
-        existing_pipeline_cap: float = data.get("CAP-T", 0)  # type: ignore
+        existing_pipeline_cap: bool = bool(data.get("CAP-T", 0))
 
         if self.process_step == "PPLX":
+            # existing sea pipeline
             return dist_pipeline * seashare_pipeline if existing_pipeline_cap else 0
         elif self.process_step == "PPLR":
+            # existing land pipeline
             return (
                 dist_pipeline * (1 - seashare_pipeline) if existing_pipeline_cap else 0
             )
         elif self.process_step == "PPLS":
+            # new sea pipeline
             return 0 if existing_pipeline_cap else dist_pipeline * seashare_pipeline
         elif self.process_step == "PPL":
+            # new land pipeline
             return (
                 0 if existing_pipeline_cap else dist_pipeline * (1 - seashare_pipeline)
             )
         elif self.process_step == "SHP_OWN":
+            # ship own fuel
             return dist_ship
         elif self.process_step == "SHP":
+            # ship bunker fuel
             return dist_ship
         else:
             raise NotImplementedError(self.process_step)
@@ -766,6 +785,7 @@ class ProcessTransport(Process):
             if not conv:
                 continue
 
+            # TODO: can be removed now?
             if data["CONV-OT"].get(flow_code):  # type: ignore
                 logger.error(
                     "CONV instead of CONV-OT (already defined) "
@@ -1552,7 +1572,7 @@ class PtxCalc:
                     emission_type="direct",
                     gas_type="CO2",
                     values=results_emissions[self.last_process][  # type: ignore - should exist # noqa
-                        "mass"
+                        etype
                     ].co2_bound_in_product,
                 )
             )
