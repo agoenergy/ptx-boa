@@ -15,7 +15,7 @@ repos:
 
   # ==================== BLACK ====================
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 25.12.0
+    rev: 26.3.1
     hooks:
       - id: black
         args: ["--line-length", "88"]
@@ -23,7 +23,7 @@ repos:
 
   # ==================== ISORT ====================
   - repo: https://github.com/pycqa/isort
-    rev: 7.0.0
+    rev: 9.0.0a3
     hooks:
       - id: isort
         name: isort (python)
