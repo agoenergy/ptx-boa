@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Content of country fact sheets tab and functions to create it."""
+
 import streamlit as st
 
 from app.ptxboa_functions import get_region_from_subregion, read_markdown_file
