@@ -105,4 +105,4 @@ def blue_page():
     if st.session_state[st.session_state["tab_key"]] == "Debugging":
         content_debugging(api)
 
-    display_footer()
+    display_footer(tool_version_color="blue")

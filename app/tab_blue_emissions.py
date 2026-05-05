@@ -6,7 +6,7 @@ from plotly.subplots import make_subplots
 
 from app.layout_elements import display_results_bar_and_table, what_is_a_boxplot
 from app.plot_functions import (
-    create_bar_chart_costs,
+    create_bar_chart_results,
     create_box_plot,
     plot_emissions_on_map,
 )
@@ -88,7 +88,7 @@ def content_emissions(api: PtxboaAPI):
             else None
         )
 
-        fig2 = create_bar_chart_costs(
+        fig2 = create_bar_chart_results(
             pd.concat(
                 [
                     aggregate_emissions(
@@ -97,7 +97,8 @@ def content_emissions(api: PtxboaAPI):
                     ),  # here we aggregate all gas types
                     aggregate_emissions(current_region_data, index="gas_type"),
                 ]
-            ).sort_index()
+            ).sort_index(),
+            float_format=".2f",
         )
         doublefig = make_subplots(rows=1, cols=2, shared_yaxes=True)
 
@@ -464,7 +465,11 @@ def content_emissions(api: PtxboaAPI):
                 help_string=secproc_co2_help,
                 tool_version_color="blue",
                 data_type="emissions",
-                x_label_mapping={"Direct Air Capture (blue)": "Direct Air Capture"},
+                x_label_mapping={
+                    "Direct Air Capture (blue)": "Direct Air Capture",
+                    "CO2 from fossil source": "CO₂ from other industrial sources",
+                    "CO2 from sustainable source": "CO₂ from hard-to-abate or sustainable sources",  # noqa E501
+                },
                 xaxis_title="Secondary CO₂ source",
                 sorting="off",
             )

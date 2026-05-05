@@ -66,17 +66,17 @@ STEPS = [
     "SECONDARY:IMPORT:CO2-C",
 ]
 
-rows = [
+expected_rows = [
     "0:settings:chain",
     "0:settings:country",
-    "0:settings:output_unit_cost",
-    "0:settings:output_unit_data",
+    "0:settings:output_unit",
     "0:settings:region",
     "0:settings:scenario",
     "0:settings:secproc_co2",
     "0:settings:secproc_water",
     "0:settings:transport",
     "1:parameter:process_code",
+    "1:parameter:main_flow_code_out",
     "1:parameter:CAPEX",
     "1:parameter:CBOUND:B-DRI-S",
     "1:parameter:CBOUND:CO2-DAC",
@@ -90,11 +90,13 @@ rows = [
     "1:parameter:CO2CPT-S:CH4-G",
     "1:parameter:CO2CPT-S:NG-G",
     "1:parameter:CONV-OT:BFUEL-L",
+    "1:parameter:CONV-OT:NG-L",
     "1:parameter:CONV:BFUEL-L",
     "1:parameter:CONV:CO2-G",
     "1:parameter:CONV:DIESEL-L",
     "1:parameter:CONV:EL",
     "1:parameter:CONV:HEAT",
+    "1:parameter:CONV:IOF-S",
     "1:parameter:CONV:IOP-S",
     "1:parameter:CONV:NG-G",
     "1:parameter:DIST",
@@ -146,6 +148,7 @@ rows = [
     "2:flows:secondary_flows_in:DIESEL-L",
     "2:flows:secondary_flows_in:EL",
     "2:flows:secondary_flows_in:HEAT",
+    "2:flows:secondary_flows_in:IOF-S",
     "2:flows:secondary_flows_in:IOP-S",
     "2:flows:secondary_flows_in:NG-G",
     "3:costs:CAPEX",
@@ -192,18 +195,7 @@ def main(xlsx_filepath: str):
     all_row_keys = set()
 
     for idx, (_, chain) in enumerate(chains.iterrows()):
-        chain_flow_out = chain["flow_out"]
-        flow_out_unit = api.get_dimension("flow").loc[chain_flow_out, "unit"]
-        if flow_out_unit.lower().startswith("kwh"):  # type: ignore
-            output_unit = "USD/MWh"
-            output_unit_cost = "USD/kWh"  # unconverted
-            output_unit_data = "X/kWh"
-        elif flow_out_unit.lower().startswith("kg"):  # type: ignore
-            output_unit = "USD/t"
-            output_unit_cost = "USD/kg"  # unconverted
-            output_unit_data = "X/kg"
-        else:
-            raise Exception()
+        output_unit = "USD/t"  # works always
 
         dacs = [
             "Direct Air Capture (blue)",  # DAC#B
@@ -216,7 +208,7 @@ def main(xlsx_filepath: str):
             "region": "Algeria",
             "country": "Germany",
             "transport": "Ship",
-            "secproc_co2": dacs[2],
+            "secproc_co2": dacs[0],
             "secproc_water": "Sea Water desalination",
         }
 
@@ -227,20 +219,21 @@ def main(xlsx_filepath: str):
             tool_version_color="blue",
             output_unit=output_unit,
             optimize_flh=False,
-        )
+        )._internal_process_data
 
         data_general = dict(flatten_dict(settings, "0:settings")) | {
-            "0:settings:output_unit_cost": output_unit_cost,
-            "0:settings:output_unit_data": output_unit_data,
+            "0:settings:output_unit": output_unit,
         }
         all_row_keys = all_row_keys | set(data_general)
 
         pd_series = [pd.Series(data_general, name="")]
 
         steps = set()
-        for proc_data in res._internal_process_data:  # type: ignore
+        for proc_data in res:  # type: ignore
+            proc_or_flow_code = proc_data["process_code"]
+
             step = proc_data["process_step"]
-            assert step, f"not process_step in {proc_data['process_code']}"
+            assert step, f"not process_step in {proc_or_flow_code}"
             if step in steps:
                 # duplicate market
                 steps_ = {x for x in steps if x.startswith(step + "/")}
@@ -250,7 +243,13 @@ def main(xlsx_filepath: str):
 
             steps.add(step)
 
-            proc_data_dict = {}
+            proc_data_dict = {
+                "1:parameter:main_flow_code_out": (
+                    df_proc.at[proc_or_flow_code, "main_flow_code_out"]
+                    if proc_or_flow_code in df_proc.index
+                    else proc_or_flow_code
+                )
+            }
             for i, k in enumerate(["parameter", "flows", "costs", "emissions"]):
                 proc_data_dict = proc_data_dict | dict(
                     flatten_dict(proc_data[k], key_prefix=f"{i + 1}:{k}")
@@ -268,7 +267,7 @@ def main(xlsx_filepath: str):
             all_row_keys = all_row_keys | set(s_all.index)
 
         df = pd.concat(pd_series, axis=1)
-        df = df.reindex(rows)
+        df = df.reindex(expected_rows)
 
         sheet_name = f"{idx}_" + chain["chain_name"][:28].replace("*", "")
         results[sheet_name] = df
@@ -279,9 +278,10 @@ def main(xlsx_filepath: str):
         "4:emissions:mass:co2_bound_in_product_per_output",
     }
 
-    assert all_row_keys < set(rows), (
-        (all_row_keys - set(rows)),
-        (set(rows) - all_row_keys),
+    assert all_row_keys < set(expected_rows), (
+        "Keys (new/missing)",
+        (all_row_keys - set(expected_rows)),
+        (set(expected_rows) - all_row_keys),
     )
 
     with pd.ExcelWriter(xlsx_filepath) as xlsx:

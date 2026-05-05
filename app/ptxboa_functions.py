@@ -309,8 +309,8 @@ def calculate_results_list_blue(
                     **settings,
                 )
                 costs_list.append(res_single.costs)
-                emissions_list.append(res_single.emissions)
-                emissions_mass_list.append(res_single.emission_mass)
+                emissions_list.append(res_single.emissions_t_co2e)
+                emissions_mass_list.append(res_single.emission_mass_t_co2e)
 
             except Exception as exc:
                 logging.warning(
@@ -440,15 +440,15 @@ def calculate_results_list_blue(
                 costs_list.append(costs)
                 costs[parameter_to_change] = value_label
 
-                emissions = res_single.emissions
+                emissions = res_single.emissions_t_co2e
                 if emissions is not None:
                     emissions[parameter_to_change] = value_label
-                    emissions_list.append(res_single.emissions)
+                    emissions_list.append(res_single.emissions_t_co2e)
 
-                emissions_mass = res_single.emission_mass
+                emissions_mass = res_single.emission_mass_t_co2e
                 if emissions_mass is not None:
                     emissions_mass[parameter_to_change] = value_label
-                    emissions_mass_list.append(res_single.emission_mass)
+                    emissions_mass_list.append(res_single.emission_mass_t_co2e)
 
             except Exception as exc:
                 logging.warning(
@@ -606,8 +606,10 @@ def get_data_type_from_input_data(
         "specific_costs",
         "conversion_coefficients",
         "dac_and_desalination",
+        "secondary_processes_blue",
         "storage",
         "Natural gas price",
+        "CO2 transport and storage costs",
     ],
     scope: Literal[None, "world", "Argentina", "Morocco", "South Africa"],
     tool_version_color: ToolVersionColorType = "green",
@@ -670,6 +672,7 @@ def get_data_type_from_input_data(
         "transportation_processes",
         "reconversion_processes",
         "dac_and_desalination",
+        "secondary_processes_blue",
         "storage",
     ]:
         scope = None
@@ -726,6 +729,17 @@ def get_data_type_from_input_data(
         parameter_code = [
             "CAPEX",
             "OPEX (fix)",
+            "lifetime / amortization period",
+        ]
+        process_code = processes.loc[
+            processes["is_secondary"], "process_name"
+        ].to_list()
+
+    if data_type == "secondary_processes_blue":
+        parameter_code = [
+            "CAPEX",
+            "OPEX (fix)",
+            "OPEX (other variable)",
             "lifetime / amortization period",
         ]
         process_code = processes.loc[
@@ -808,6 +822,14 @@ def get_data_type_from_input_data(
         parameter_code = ["specific costs"]
         process_code = None
         flow_code = ["natural gas (gasous)"]
+        index = "source_region_code"
+        columns = "parameter_code"
+
+    if data_type == "CO2 transport and storage costs":
+        source_region_code = None
+        parameter_code = ["OPEX (other variable)"]
+        process_code = ["CO2 transport and storage (blue)"]
+        flow_code = None
         index = "source_region_code"
         columns = "parameter_code"
 

@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 
 from app.excel_download import prepare_and_download_df_as_excel
-from app.plot_functions import create_bar_chart_costs
+from app.plot_functions import create_bar_chart_results
 from app.ptxboa_functions import (
     change_index_names,
     config_number_columns,
@@ -171,10 +171,11 @@ def display_results_bar_and_table(
     change_index_names(df_res)
 
     # create graph:
-    fig = create_bar_chart_costs(
+    fig = create_bar_chart_results(
         df_res,
         current_selection=current_selection,
         output_unit=output_unit,
+        float_format=".0f" if data_type == "costs" else ".2f",
     )
     if xaxis_title is not None:
         fig.update_layout(xaxis_title=xaxis_title)
@@ -202,7 +203,10 @@ def display_results_bar_and_table(
         st.caption(f"**Note**: {unit_note}{green_iron_note}")
 
     with st.expander("**Data**"):
-        column_config = config_number_columns(df_res, format=f"%.1f {output_unit}")
+        float_precision = 1 if data_type == "costs" else 2
+        column_config = config_number_columns(
+            df_res, format=f"%.{float_precision}f {output_unit}"
+        )
         # remove <br> html tags from dataframe index
         df_res.index = df_res.index.str.replace("<br>", " ")
         st.dataframe(df_res, width="stretch", column_config=column_config)
@@ -215,32 +219,32 @@ def display_results_bar_and_table(
 
 
 @st.cache_resource()
-def display_footer():
+def display_footer(tool_version_color: ToolVersionColorType):
     with st.container(border=True):
-        c1, c2, c3 = st.columns(3)
-        with c1:
+        cols = st.columns([1, 2, 2, 2, 1], gap="large")
+        with cols[1]:
             st.markdown(
                 """
                 ##### Developed by
-                Öko-Institut<br/>
-                Merzhauser Straße 173<br/>
-                D-79100 Freiburg im Breisgau<br/>
-                www.oeko.de
+                Öko-Institut Consult GmbH<br/>
+                Borkumstraße 2<br/>
+                D-13189 Berlin<br/>
+                https://oeko-consult.de
                 """,
                 unsafe_allow_html=True,
             )
-        with c2:
+        with cols[2]:
             st.markdown(
                 """
                 ##### On behalf of
                 Agora Industry<br/>
                 Anna-Louisa-Karsch-Str. 2<br/>
                 D-10178 Berlin<br/>
-                www.agora-industry.org
+                https://agora-industry.org
                 """,
                 unsafe_allow_html=True,
             )
-        with c3:
+        with cols[3]:
             st.markdown(
                 """
                 ##### Authors
@@ -255,19 +259,21 @@ def display_footer():
                 unsafe_allow_html=True,
             )
 
-        # TODO: fix uneven height and vertical alignment of logos
-        c0, c1, c2, c3, c4, c5 = st.columns(
-            [1, 2, 2, 2, 2, 1],
+        cols = st.columns(
+            [1, 2, 2, 2, 2, 1] if tool_version_color == "green" else [1, 2, 2, 2, 1],
             gap="large",
+            vertical_alignment="center",
         )
-        with c1:
+        with cols[1]:
             st.image("img/Agora_Industry_logo_612x306.png")
-        with c2:
+        with cols[2]:
             st.image("img/agora-energiewende_logo_612x306.png")
-        with c3:
-            st.image("img/oeko_logo_612x306.png")
-        with c4:
-            st.image("img/PtX-Hub_Logo_international_612x306.png")
+        with cols[3]:
+            st.image("img/GMBH_Logo_Oeko-Institut_web_klein.png")
+        if tool_version_color == "green":
+            # ptx hub logo only in green version
+            with cols[4]:
+                st.image("img/PtX-Hub_Logo_international_612x306.png")
 
 
 def _form_data_editor(
@@ -334,8 +340,10 @@ def display_and_edit_input_data(
         "specific_costs",
         "conversion_coefficients",
         "dac_and_desalination",
+        "secondary_processes_blue",
         "storage",
         "Natural gas price",
+        "CO2 transport and storage costs",
     ],
     scope: Literal["world", "Argentina", "Morocco", "South Africa"],
     key: str,
@@ -393,6 +401,7 @@ def display_and_edit_input_data(
         "transportation_processes",
         "reconversion_processes",
         "dac_and_desalination",
+        "secondary_processes_blue",
         "storage",
     ]:
         index = "process_code"
@@ -420,13 +429,19 @@ def display_and_edit_input_data(
         }
         column_config.update(custom_column_config)
 
-    if data_type == "dac_and_desalination":
+    if data_type in {
+        "dac_and_desalination",
+        "secondary_processes_blue",
+    }:
         index = "process_code"
         columns = "parameter_code"
         missing_index = {"source_region_code": None}
         column_config = {
             "CAPEX": st.column_config.NumberColumn(format="%.5f USD/kg", min_value=0),
             "OPEX (fix)": st.column_config.NumberColumn(
+                format="%.5f USD/kg", min_value=0
+            ),
+            "OPEX (other variable)": st.column_config.NumberColumn(
                 format="%.5f USD/kg", min_value=0
             ),
             "efficiency": st.column_config.NumberColumn(
@@ -514,6 +529,18 @@ def display_and_edit_input_data(
         columns = "parameter_code"
         missing_index = {"flow_code": "natural gas (gasous)"}
 
+    if data_type == "CO2 transport and storage costs":
+        index = "source_region_code"
+        columns = "parameter_code"
+        missing_index = {
+            "process_code": "CO2 transport and storage (blue)",
+        }
+        column_config["OPEX (other variable)"] = st.column_config.NumberColumn(
+            label="CO₂ transport and storage costs",
+            format="%.4f USD/kgCO₂",
+            min_value=0,
+        )
+
     df = change_index_names(df)
 
     # if editing is enabled, store modifications in session_state:
@@ -556,6 +583,7 @@ def what_is_a_boxplot():
         st.image("img/boxplot_explanation.png")
 
 
+@st.cache_data(show_spinner=False)
 def report_processes_contained_in_process_result_type(
     _api: PtxboaAPI, tool_version_color: ToolVersionColorType
 ):
@@ -566,10 +594,11 @@ def report_processes_contained_in_process_result_type(
         .agg(list)
         .to_dict()["process_name"]
     )
-    with st.expander("Aggregated process categories and associated processes"):
-        for process_result_type, processes in data.items():
-            with st.expander(process_result_type):
-                section = []
-                for p in processes:
-                    section.append(f"- {p}")
-                st.markdown("\n".join(section))
+
+    st.subheader("Aggregated process categories and associated processes")
+    for process_result_type, processes in data.items():
+        with st.expander(process_result_type):
+            section = []
+            for p in processes:
+                section.append(f"- {p}")
+            st.markdown("\n".join(section))

@@ -57,7 +57,7 @@ class Process:
         "OPEX-O",
     ]
     _parameter_codes_process_flow_sec_or_main = [
-        "CH4SHARE",
+        "CH4SHARE",  # actually independent of process,but no problem
         "EF_E",
         "EF_M",
         "CBOUND",
@@ -90,17 +90,6 @@ class Process:
             assert not is_initial
             assert not is_main_in_transport_segment
 
-        main_flow_code_in_or_out = main_flow_code_in or main_flow_code_out
-        if main_flow_code_in_or_out in secondary_flow_types:
-            logger.error(
-                "%s has %s as main and secondary input",
-                process_code,
-                main_flow_code_in_or_out,
-            )
-            secondary_flow_types = frozenset(
-                x for x in secondary_flow_types if x != main_flow_code_in
-            )
-
         self.process_code: ProcessCodeType | FlowCodeType = process_code
         self.process_step: ProcessStepType | str | None = process_step
         self.main_flow_code_out: FlowCodeType = main_flow_code_out
@@ -121,6 +110,11 @@ class Process:
         self._links_out_in_secondary: list[Process] = []
         self._link_in_main: Process | None = None
         self._links_in_secondary: dict[FlowCodeType, Process] = {}
+
+    @property
+    def is_pipeline_w_ch4_losses(self) -> bool:
+        """Is pipeline that can have CH4 losses."""
+        return False
 
     @property
     def is_in_export_segment(self) -> bool:
@@ -191,7 +185,7 @@ class Process:
 
         # FIXME: should be removed from data?
         if process_code == "CO2-T+S#B" and main_flow_code_in == "CO2-C":  # type:ignore
-            logger.warning("Manually removing  main_flow_code_in=CO2-C for css")
+            logger.info("Manually removing main_flow_code_in=CO2-C for css")
             main_flow_code_in = None
 
         return ProcessClass(
@@ -212,13 +206,6 @@ class Process:
 
     def __str__(self):
         result = f"{self.process_code}"
-        if self.process_step:
-            result += f", step={self.process_step}"
-        if self.is_initial:
-            result += ", initial"
-        if self.is_last:
-            result += ", last"
-
         return result
 
     @property
@@ -302,10 +289,7 @@ class Process:
         conv: float
         CONV: dict = data.get("CONV", {})  # type: ignore
         for flow_code, conv in CONV.items():
-            if conv <= 0:
-                # currently negative flows (i.e. additional output)
-                conv = 0
-            if flow_code in LOSS:
+            if conv > 0 and LOSS.get(flow_code):
                 # new: loss can reduce the effective conversion rate
                 # see https://github.com/agoenergy/ptx-boa/issues/581
                 data["CONV"][flow_code] = conv * (1 + LOSS[flow_code])  # type: ignore
@@ -334,7 +318,7 @@ class Process:
                 main_flow_out += results_flows[p].secondary_flows_in[
                     self.main_flow_code_out
                 ]
-            if not main_flow_out:
+            if self.is_main and not main_flow_out:
                 logger.warning("Process with main_flow_out = 0: %s", self)
 
         if not self.main_flow_code_in:
@@ -357,9 +341,23 @@ class Process:
                 parameter_data[self].get("CONV", {}).get(flow_code) or 0  # type:ignore
             )
             if conv == 0:
-                logger.warning("Process with conv = 0 %s / %s", self, flow_code)
+                if flow_code != "CO2-C" and flow_code != self._main_flow_code_in_or_out:
+                    # for CSS: no warning - this is expected, because flow value is
+                    # calulated in emission step
+                    logger.warning("Process with conv = 0 %s / %s", self, flow_code)
+                    if flow_code == "HEAT":
+                        raise Exception()
+
             elif conv < 0:
                 conv = 0
+
+            if conv and flow_code == self._main_flow_code_in_or_out:
+                logger.error(
+                    "Process has same main and secondary input: %s, %s",
+                    self,
+                    flow_code,
+                )
+
             secondary_flows_in[flow_code] = main_flow_out * conv
 
         return ProcessResultFlowsType(
@@ -450,6 +448,7 @@ class Process:
         CO2CPT_R = parameter_data.get("CO2CPT-R", {})
         CO2CPT_S = parameter_data.get("CO2CPT-S", {})
         CBOUND_kg_c_per_output = parameter_data.get("CBOUND", {})
+        used_cbound: bool = False
 
         # calculate direct ch4 losses
         ch4_kwh_direct_loss = 0
@@ -507,20 +506,42 @@ class Process:
                 co2_captured += co2_g * co2cpt
                 # bound
                 bound_kg_c_per_output: float = CBOUND_kg_c_per_output.get(flow_code, 0)  # type: ignore # noqa
+                if bound_kg_c_per_output and not self.keep_cbound_from_main_input:
+                    # only add if EFF exist (EFF_FLAG)
+                    # TODO: special cases - generalized rule?
+                    allow_cbound_flow = bool(co2_g_per_flow) or flow_code in {
+                        "B-DRI-S",
+                        # may have emission factor (co2_g_per_flow) of 0
+                        "CO2-DAC",
+                        "CO2-INDF",
+                        "CO2-INDS",
+                    }
 
-                # only add if EFF exist (EFF_FLAG)
-                # TODO: special case B-DRI-S - generalized rule?
-                allow_cbound = bool(co2_g_per_flow) or flow_code in {"B-DRI-S"}
-                if allow_cbound:
-                    co2_g_bound_in_product += (
-                        bound_kg_c_per_output * 1000 * CO2_PER_C * main_flow_out
-                    )
+                    if allow_cbound_flow:
+                        # special case:
+                        if (
+                            flow_code
+                            in {
+                                # may have emission factor (co2_g_per_flow) of 0
+                                "CO2-DAC",
+                                "CO2-INDF",
+                                "CO2-INDS",
+                            }
+                            and not co2_g_per_flow
+                        ):
+                            # we still want to add 0 to bound_kg_c_per_output
+                            bound_kg_c_per_output = 0
+                        co2_g_bound_in_product += (
+                            bound_kg_c_per_output * 1000 * CO2_PER_C * main_flow_out
+                        )
+                        used_cbound = used_cbound | True
 
         # special case initial process (NG-PROD): cbound for output
-        if self.is_initial:
+        if self.is_initial and self.process_step == "NG_PROD":
             flow_code = self.main_flow_code_out
+            # FIXME
             if flow_code in flows_in_net:
-                logger.error("initial flow out also in flows in")
+                logger.info("initial flow out also in flows in: %s", self)
             else:
                 flow = main_flow_out
                 co2_g_per_flow = EF_co2_g_per_flow.get(flow_code, 0)
@@ -528,41 +549,41 @@ class Process:
                 co2_g_direct_sum_in += co2_g
                 # TODO: reuse code from above?
                 bound_kg_c_per_output: float = CBOUND_kg_c_per_output.get(flow_code, 0)  # type: ignore # noqa
-                co2_g_bound_in_product += (
-                    bound_kg_c_per_output * 1000 * CO2_PER_C * main_flow_out
-                )
+                if bound_kg_c_per_output:
+                    co2_g_bound_in_product += (
+                        bound_kg_c_per_output * 1000 * CO2_PER_C * main_flow_out
+                    )
+                    used_cbound = True
 
         if self.keep_cbound_from_main_input:
             # no transformation has happend (e.g. shipping)
             if co2_g_bound_in_product:
                 raise Exception("co2_g_bound_in_product should not happen in %s", self)
             co2_g_per_flow = EF_co2_g_per_flow.get(
-                self.main_flow_code_in
-            )  # type:ignore
+                self.main_flow_code_in  # type:ignore
+            )
             if co2_g_per_flow is None:
                 raise Exception(
                     "no cbound/flow for main in %s in %s"
                     % (self, self.main_flow_code_in)
                 )
-            elif co2_g_per_flow == 0:
-                logger.warning(
-                    "cbound/flow=0 for main in %s in %s"
-                    % (self, self.main_flow_code_in)
-                )
-
+            used_cbound = True
             co2_g_bound_in_product = main_flow_out * co2_g_per_flow  # type:ignore
 
         co2_g_direct = co2_g_direct_sum_in - co2_g_bound_in_product - co2_captured
         if co2_g_direct < 0:
-            logger.error(
-                "%s: co2_g_bound_in_product + co2_captured > co2_g_direct_sum_in: %s",
-                self,
-                co2_g_direct,
-            )
+            if co2_g_direct < -0.01:
+                logger.error(
+                    "co2_g_direct < 0 "
+                    "(co2_g_direct_sum_in - co2_g_bound_in_product - co2_captured): "
+                    "%s %s",
+                    self,
+                    co2_g_direct,
+                )
             co2_g_direct = 0
 
         if not main_flow_out:
-            co2_bound_in_product_per_output = 0
+            co2_bound_in_product_per_output = None
         else:
             co2_bound_in_product_per_output = co2_g_bound_in_product / main_flow_out
 
@@ -606,12 +627,16 @@ class Process:
             for flow_code, proc in self._links_in_secondary.items():
                 res = results_emissions[proc]
                 if res:
+                    # NOTE: can be 0 or None. None means it cannot have a value
+                    # 0 can happen if the emission factor is set to 0 for accounting
                     g_co2_per_flow = res[em].co2_bound_in_product_per_output
                 else:
                     g_co2_per_flow = None
-                if not g_co2_per_flow:
-                    # use emission factor, if not bound in co2
 
+                # IMPORTANT: g_co2_per_flow may be 0, so we must only check
+                # for g_co2_per_flow is None
+                if g_co2_per_flow is None:
+                    # use emission factor, if not bound in co2
                     g_co2_per_flow = params_ef.get(flow_code, 0)  # type: ignore
                 g_co2_per_flows[flow_code] = g_co2_per_flow  # type: ignore
 
@@ -654,6 +679,22 @@ class ProcessSecondary(Process):
 
 
 class ProcessTransport(Process):
+    @property
+    def is_pipeline_w_ch4_losses(self) -> bool:
+        """Is pipeline that can have CH4 losses."""
+        # TODO: better system
+        return self.main_flow_code_out in {
+            "NG-G",
+            "NG-L",
+            "CH4-G",
+            "CH4-L",
+        } and self.process_step in {
+            "PPLS",
+            "PPL",
+            "PPLX",
+            "PPLR",
+        }
+
     _parameter_codes_process = ["OPEX-T", "LOSS-T", "OPEX-O"] + [
         # NOTE: these are the same for all transport steps - maybe get only once?
         "CAP-T",
@@ -663,11 +704,12 @@ class ProcessTransport(Process):
     ]
 
     _parameter_codes_process_flow_sec_or_main = [
+        "CH4SHARE",  # actually independent of process,but no problem
         "EF_E",
         "EF_M",
     ]
     _parameter_codes_process_flow_sec = [
-        "CONV",  # FXIME: should be CONV-OT?
+        "CONV",  # FXIME: should be CONV-OT - already fixed in new data,to fix in test data # noqa
         "CONV-OT",
     ]
 
@@ -708,23 +750,29 @@ class ProcessTransport(Process):
         dist_ship: float = data.get("DST-S-D", 0)  # type: ignore
         dist_pipeline: float = data.get("DST-S-DP", 0)  # type: ignore
         seashare_pipeline: float = data.get("SEASHARE", 0)  # type: ignore
-        existing_pipeline_cap: float = data.get("CAP-T", 0)  # type: ignore
+        existing_pipeline_cap: bool = bool(data.get("CAP-T", 0))
 
         if self.process_step == "PPLX":
+            # existing sea pipeline
             return dist_pipeline * seashare_pipeline if existing_pipeline_cap else 0
         elif self.process_step == "PPLR":
+            # existing land pipeline
             return (
                 dist_pipeline * (1 - seashare_pipeline) if existing_pipeline_cap else 0
             )
         elif self.process_step == "PPLS":
+            # new sea pipeline
             return 0 if existing_pipeline_cap else dist_pipeline * seashare_pipeline
         elif self.process_step == "PPL":
+            # new land pipeline
             return (
                 0 if existing_pipeline_cap else dist_pipeline * (1 - seashare_pipeline)
             )
         elif self.process_step == "SHP_OWN":
+            # ship own fuel
             return dist_ship
         elif self.process_step == "SHP":
+            # ship bunker fuel
             return dist_ship
         else:
             raise NotImplementedError(self.process_step)
@@ -749,26 +797,40 @@ class ProcessTransport(Process):
 
         loss_t: float = data.get("LOSS-T", 0)  # type: ignore
 
-        data["EFF"] = 1 - loss_t * dist_transport
+        # TODO:NOTE: more accurately, it should be a exp function,
+        # but input data was calibrated linear to distance
+        loss = loss_t * dist_transport
+
+        if self.is_pipeline_w_ch4_losses:
+            # create loss factor so emissions can calculate direct CH4 emissions
+            data["EFF"] = 1
+            data["LOSS"] = {self.main_flow_code_out: loss}
+        else:
+            # correct EFF
+            data["EFF"] = 1 - loss
+            if data["EFF"] <= 0:
+                raise Exception("EFF <= 0 because of losses: %s", self)
+
         data["DIST"] = dist_transport
 
-        # FIXME CONV in transport?
+        # TODO: fixed in new data,but still to fix in test data
         for flow_code, conv in data["CONV"].items():  # type: ignore
             if not conv:
                 continue
 
+            # TODO: can be removed now?
             if data["CONV-OT"].get(flow_code):  # type: ignore
                 logger.error(
-                    "%s / %s: CONV instead of CONV-OT (already defined) "
-                    "in transport input data: %s",
+                    "CONV instead of CONV-OT (already defined) "
+                    "in transport input data: %s %s %s",
                     self,
                     flow_code,
                     conv,
                 )
             else:
                 logger.error(
-                    "%s / %s: CONV instead of CONV-OT (overwriting) "
-                    "in transport input data: %s",
+                    "CONV instead of CONV-OT (overwriting) "
+                    "in transport input data: %s %s %s",
                     self,
                     flow_code,
                     conv,
@@ -776,12 +838,40 @@ class ProcessTransport(Process):
                 data["CONV-OT"][flow_code] = conv  # type: ignore
 
         # create CONV from DIST * CONV-OT
+        if "CONV" not in data:
+            data["CONV"] = {}
         for flow_code, conv_ot in data["CONV-OT"].items():  # type: ignore
             if not conv_ot:
                 continue
-            data["CONV"][flow_code] = conv_ot * dist_transport  # type: ignore
 
-        # FIXME: OPEX-O in transport?
+            if flow_code not in {"BFUEL-L", self.main_flow_code_out}:
+                logger.error(
+                    "CONV-OT in can only be bunker fuel or own fuel."
+                    "in transport input data: %s %s %s",
+                    self,
+                    flow_code,
+                )
+                raise Exception()
+
+            # TODO:NOTE: more accurately, it should be a exp function,
+            # but input data was calibrated linear to distance
+            conv = conv_ot * dist_transport
+
+            # correct EFF
+            if flow_code == self.main_flow_code_out:
+                eff_correct = 1 / (1 + conv)
+                data["EFF"] *= eff_correct
+            elif flow_code != "BFUEL-L":
+                logger.error(
+                    "CONV-OT in can only be bunker fuel or own fuel."
+                    "in transport input data: %s %s %s",
+                    self,
+                    flow_code,
+                )
+            else:
+                # should only be bunker fuel
+                data["CONV"][flow_code] = conv  # type: ignore
+
         return data
 
 
@@ -1133,6 +1223,13 @@ class PtxCalc:
                 items.append(edge_values.get((p1, p2)))
             return _get_label(*items)
 
+        def _get_node_label(p: Process) -> str:
+            items = []
+            if p.process_step:
+                items.append(p.process_step)
+            items.append(p.process_code)
+            return _get_label(*items)
+
         plt.close()
         plt.clf()
         plt.figure(
@@ -1168,7 +1265,7 @@ class PtxCalc:
         nx.draw_networkx_labels(
             self._graph,
             node_pos,
-            labels={p: p.process_code for p in self._graph.nodes()},
+            labels={p: _get_node_label(p) for p in self._graph.nodes()},
             font_size=6,
             font_color="black",
         )
@@ -1483,6 +1580,13 @@ class PtxCalc:
             df_results_emissions_e_g_co2e=df_results_emissions_e_g_co2e,
             df_results_emissions_m_g_co2e=df_results_emissions_m_g_co2e,
             _internal_process_data=_internal_process_data,
+            _internal_data={
+                "parameter_data": parameter_data,
+                "results_flows": results_flows,
+                "results_costs": results_costs,
+                "results_emissions": results_emissions,
+                "chain": self,
+            },
         )
 
     def _merge_emission_results(
@@ -1529,7 +1633,7 @@ class PtxCalc:
                     emission_type="direct",
                     gas_type="CO2",
                     values=results_emissions[self.last_process][  # type: ignore - should exist # noqa
-                        "mass"
+                        etype
                     ].co2_bound_in_product,
                 )
             )
