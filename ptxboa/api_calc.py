@@ -1387,9 +1387,7 @@ class PtxCalc:
                 parameter_getters=parameter_getters,
                 parameter_values=parameter_values,
             )
-            speccost_for_flh_opt[flow_code] = parameter_data["SPECCOST"][  # type: ignore
-                flow_code
-            ]
+            speccost_for_flh_opt[flow_code] = parameter_data["SPECCOST"][flow_code]  # type: ignore # noqa
 
         return speccost_for_flh_opt
 
@@ -1565,9 +1563,7 @@ class PtxCalc:
                 "flows": asdict(results_flows[p]),
                 "costs": {c.cost_type: c.values for c in results_costs[p]},
                 "emissions": (
-                    {
-                        e: asdict(x) for e, x in results_emissions[p].items()
-                    }  # type: ignore noqa
+                    {e: asdict(x) for e, x in results_emissions[p].items()}  # type: ignore # noqa
                     if results_emissions[p]
                     else {}
                 ),
