@@ -487,14 +487,14 @@ def co2_source_toggle_blue():
 
     if co2_source == "industrial_capture":
         co2_source = st.radio(
-            "Emission balance for captured industrial CO₂:",
+            "Type of industrial CO₂ source:",
             [
-                "CO2 from fossil source",
                 "CO2 from sustainable source",
+                "CO2 from fossil source",
             ],
             format_func=lambda x: {
-                "CO2 from fossil source": "fully accounted",
-                "CO2 from sustainable source": "not accounted",
+                "CO2 from fossil source": "CO₂ from other industrial sources",
+                "CO2 from sustainable source": "CO₂ from hard-to-abate or sustainable sources",  # noqa E501
             }.get(x, x),
             horizontal=True,
             help=read_markdown_file(

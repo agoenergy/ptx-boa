@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Content of optimization tab."""
+
 import numpy as np
 import pandas as pd
 import pypsa

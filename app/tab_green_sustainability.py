@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Content of sustainability tab."""
+
 import streamlit as st
 
 from app.ptxboa_functions import read_markdown_file

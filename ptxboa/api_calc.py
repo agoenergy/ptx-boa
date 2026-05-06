@@ -184,7 +184,7 @@ class Process:
                 process_step = f"MARKET:{main_flow_code_out}"
 
         # FIXME: should be removed from data?
-        if process_code == "CO2-T+S#B" and main_flow_code_in == "CO2-C":  # type:ignore
+        if process_code == "CO2-T+S#B" and main_flow_code_in == "CO2-C":  # type: ignore
             logger.info("Manually removing main_flow_code_in=CO2-C for css")
             main_flow_code_in = None
 
@@ -328,7 +328,7 @@ class Process:
         # elif self.process_code in ["EL-STR", "H2-STR"]: # noqa
         #    main_flow_in = main_flow_out  # noqa
         else:
-            eff: float = parameter_data[self].get("EFF") or 0  # type:ignore
+            eff: float = parameter_data[self].get("EFF") or 0  # type: ignore
             if eff <= 0:
                 logger.error("Process with eff = %s: %s", eff, self)
                 eff = 1
@@ -338,7 +338,7 @@ class Process:
         secondary_flows_in = {}
         for flow_code in self.secondary_flow_types:
             conv: float = (
-                parameter_data[self].get("CONV", {}).get(flow_code) or 0  # type:ignore
+                parameter_data[self].get("CONV", {}).get(flow_code) or 0  # type: ignore
             )
             if conv == 0:
                 if flow_code != "CO2-C" and flow_code != self._main_flow_code_in_or_out:
@@ -461,11 +461,11 @@ class Process:
             if not value_gross:
                 continue
 
-            loss_factor: float = LOSS.get(flow_code, 0)  # type:ignore
+            loss_factor: float = LOSS.get(flow_code, 0)  # type: ignore
             if not loss_factor:
                 continue
 
-            ch4_kwh_per_flow: float = CH4SHARE.get(flow_code)  # type:ignore
+            ch4_kwh_per_flow: float = CH4SHARE.get(flow_code)  # type: ignore
             if not ch4_kwh_per_flow:
                 if flow_code in ("CH4-G", "CH4-L"):
                     logger.warning("missing CH4SHARE for CH4 - should be 1?")
@@ -560,7 +560,7 @@ class Process:
             if co2_g_bound_in_product:
                 raise Exception("co2_g_bound_in_product should not happen in %s", self)
             co2_g_per_flow = EF_co2_g_per_flow.get(
-                self.main_flow_code_in  # type:ignore
+                self.main_flow_code_in  # type: ignore
             )
             if co2_g_per_flow is None:
                 raise Exception(
@@ -568,7 +568,7 @@ class Process:
                     % (self, self.main_flow_code_in)
                 )
             used_cbound = True
-            co2_g_bound_in_product = main_flow_out * co2_g_per_flow  # type:ignore
+            co2_g_bound_in_product = main_flow_out * co2_g_per_flow  # type: ignore
 
         co2_g_direct = co2_g_direct_sum_in - co2_g_bound_in_product - co2_captured
         if co2_g_direct < 0:
@@ -1387,9 +1387,7 @@ class PtxCalc:
                 parameter_getters=parameter_getters,
                 parameter_values=parameter_values,
             )
-            speccost_for_flh_opt[flow_code] = parameter_data["SPECCOST"][  # type:ignore
-                flow_code
-            ]
+            speccost_for_flh_opt[flow_code] = parameter_data["SPECCOST"][flow_code]  # type: ignore # noqa
 
         return speccost_for_flh_opt
 
@@ -1401,7 +1399,7 @@ class PtxCalc:
         result: dict[Process, ProcessDataType] = {}
 
         parameter_values_export_transport = parameter_values
-        parameter_values_import: DataQueryDicType = parameter_values | {  # type:ignore
+        parameter_values_import: DataQueryDicType = parameter_values | {  # type: ignore
             # Switched!
             "source_region_code": parameter_values["target_country_code"]
         }
@@ -1565,9 +1563,7 @@ class PtxCalc:
                 "flows": asdict(results_flows[p]),
                 "costs": {c.cost_type: c.values for c in results_costs[p]},
                 "emissions": (
-                    {
-                        e: asdict(x) for e, x in results_emissions[p].items()
-                    }  # type:ignore noqa
+                    {e: asdict(x) for e, x in results_emissions[p].items()}  # type: ignore # noqa
                     if results_emissions[p]
                     else {}
                 ),

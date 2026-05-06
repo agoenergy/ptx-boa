@@ -465,7 +465,11 @@ def content_emissions(api: PtxboaAPI):
                 help_string=secproc_co2_help,
                 tool_version_color="blue",
                 data_type="emissions",
-                x_label_mapping={"Direct Air Capture (blue)": "Direct Air Capture"},
+                x_label_mapping={
+                    "Direct Air Capture (blue)": "Direct Air Capture",
+                    "CO2 from fossil source": "CO₂ from other industrial sources",
+                    "CO2 from sustainable source": "CO₂ from hard-to-abate or sustainable sources",  # noqa E501
+                },
                 xaxis_title="Secondary CO₂ source",
                 sorting="off",
             )
