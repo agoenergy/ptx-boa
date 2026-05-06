@@ -27,5 +27,5 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: wingechr/ptx-boa:2.2.12-${{ github.ref_name }}
+          tags: wingechr/ptx-boa:2.2.13-${{ github.ref_name }}
           context: .
