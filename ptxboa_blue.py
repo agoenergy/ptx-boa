@@ -26,7 +26,7 @@ def blue_page():
     if "edit_input_data" not in st.session_state:
         st.session_state["edit_input_data"] = False
 
-    st.title("Blue PtX Business Opportunity Analyser")
+    st.title("Low-Carbon Business Opportunity Analyser")
 
     with st.container():
         if st.session_state["edit_input_data"]:
