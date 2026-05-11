@@ -6,7 +6,7 @@ Execution:
 >>> streamlit run  ptxboa_streamlit.py
 """
 
-__version__ = "2.3.0"
+__version__ = "2.3.1"
 
 import logging
 
@@ -52,12 +52,12 @@ page = st.navigation(
         st.Page(
             green_page,
             default=True,
-            title="Green PtX Business Opportunity Analyser",
+            title="PtX Business Opportunity Analyser",
         ),
         st.Page(
             blue_page,
             url_path="blue",
-            title="Blue PtX Business Opportunity Analyser",
+            title="Low-Carbon Business Opportunity Analyser",
         ),
     ],
     position="hidden",
