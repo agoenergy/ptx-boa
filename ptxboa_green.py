@@ -35,7 +35,7 @@ def green_page():
     if "edit_input_data" not in st.session_state:
         st.session_state["edit_input_data"] = False
 
-    st.title("Green PtX Business Opportunity Analyser")
+    st.title("PtX Business Opportunity Analyser")
 
     with st.container():
         if st.session_state["edit_input_data"]:
