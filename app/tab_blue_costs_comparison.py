@@ -7,6 +7,7 @@ all export countries and chains that have the current product as output product.
 """
 
 import itertools
+import json
 import logging
 from typing import Literal
 
@@ -132,10 +133,9 @@ def get_green_results(
     raw = []
 
     for scenario in scenarios:
-        costs = []
         for param_set in list(product_dict(**dimensions)):
             try:
-                costs.append(
+                costs = (
                     calculate_cached(
                         _api,
                         user_data=None,  # we do not respect user data here
@@ -150,12 +150,41 @@ def get_green_results(
                     .costs["values"]
                     .sum()
                 )
+
+                raw.append(
+                    {
+                        "scenario": scenario,
+                        "country": import_country,
+                        "values": costs,
+                        **param_set,
+                    }
+                )
             except Exception as exc:
                 logging.info(f"could not get data: {exc}")
 
-        raw.append(pd.DataFrame({"scenario": scenario, "values": costs}))
+    df = pd.DataFrame.from_records(raw)
+    df.insert(0, "product_type", "green")
+    # reorder columns
+    df = df[["values"] + [c for c in df.columns if c != "values"]]
+    return df
 
-    return pd.concat(raw)
+
+def get_blue_results(api, scenarios):
+    df = calculate_results_list_blue(
+        api,
+        parameter_to_change="scenario",
+        parameter_list=scenarios,
+        apply_user_data=True,
+        override_session_state=None,
+        agg_costs=False,
+    )[0]
+    df = df.drop(columns=["process_type", "process_subtype", "cost_type"])
+    group_by_cols = [c for c in df.columns if c != "values"]
+    df = df.groupby(by=group_by_cols, dropna=False).sum()
+    df = df.reset_index()
+    df.insert(0, "product_type", "blue")
+    df = df[["values"] + [c for c in df.columns if c != "values"]]
+    return df
 
 
 def get_data(
@@ -170,19 +199,9 @@ def get_data(
             output_unit=output_unit,
         )
 
-    costs_blue = (
-        calculate_results_list_blue(
-            api,
-            parameter_to_change="scenario",
-            parameter_list=scenarios,
-            apply_user_data=True,
-            override_session_state=None,
-        )[0]
-        .add_prefix("blue_")
-        .reset_index()
-    )
+    costs_blue_raw = get_blue_results(api, scenarios)
 
-    return costs_blue, cost_green_raw
+    return costs_blue_raw, cost_green_raw
 
 
 def crude_steel_warning():
@@ -206,7 +225,7 @@ def content_costs_comparison(api):
             crude_steel_warning()
             return
 
-        costs_blue, costs_green_raw = get_data(
+        costs_blue_raw, costs_green_raw = get_data(
             api,
             scenarios=["2030 (medium)", "2040 (medium)"],
             import_country=st.session_state["country"],
@@ -228,12 +247,15 @@ def content_costs_comparison(api):
                 y=costs_green_raw["values"],
                 name=f"Green {st.session_state['output_product_label']} cost range",
                 marker_color=GREEN_COLOR,
+                customdata=get_hoverdata(costs_green_raw),
+                hovertemplate="%{customdata}<extra></extra>",
+                boxpoints="all",
             )
         )
         fig.add_trace(
             go.Scatter(
-                x=costs_blue["scenario"],
-                y=costs_blue["blue_Total"],
+                x=costs_blue_raw["scenario"],
+                y=costs_blue_raw["values"],
                 name=f"Blue {st.session_state['output_product_label']}",
                 marker_color=BLUE_COLOR,
                 mode="markers",
@@ -261,3 +283,26 @@ def content_costs_comparison(api):
             separators=". ",
         )
         st.plotly_chart(fig)
+
+        with st.expander("**Data**"):
+            data = pd.concat([costs_blue_raw, costs_green_raw])
+            st.dataframe(
+                data,
+                column_config={
+                    "values": st.column_config.NumberColumn(
+                        label="Total cost",
+                        format=f"%.1f {st.session_state['output_unit']}",
+                    )
+                },
+            )
+
+
+def get_hoverdata(df):
+    df = df.drop(columns=["product_type", "values"])
+    return [
+        json.dumps(r, separators=("<br>", " = "), ensure_ascii=False)
+        .replace('"', "")
+        .replace("{", "")
+        .replace("}", "")
+        for r in df.to_dict(orient="records")
+    ]

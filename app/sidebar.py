@@ -534,7 +534,7 @@ def unit_toggle_green():
 def unit_toggle_blue():
     def _radio(key: str, disabled: bool):
         return st.radio(
-            "Unit for costs and emissions:",
+            "Unit for costs:",
             ["USD/MWh", "USD/t"],
             horizontal=True,
             format_func=lambda x: {
@@ -553,8 +553,9 @@ def unit_toggle_blue():
         unit = _radio("_blue_unit", disabled=False)
 
     st.session_state["output_unit"] = unit
-    st.session_state["emissions_output_unit"] = st.session_state["output_unit"].replace(
-        "USD", "tCO₂eq"
+
+    st.session_state["emissions_output_unit"] = (
+        st.session_state["output_unit"].replace("USD", "gCO₂eq").replace("MWh", "GJ")
     )
 
 
