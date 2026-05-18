@@ -240,54 +240,14 @@ def content_costs_comparison(api):
         st.subheader(title_string)
 
         # --------------------------
-        fig = go.Figure()
-        fig.add_trace(
-            go.Box(
-                x=costs_green_raw["scenario"],
-                y=costs_green_raw["values"],
-                name=f"Green {st.session_state['output_product_label']} cost range",
-                marker_color=GREEN_COLOR,
-                customdata=get_hoverdata(costs_green_raw),
-                hovertemplate="%{customdata}<extra></extra>",
-                boxpoints="all",
-            )
-        )
-        fig.add_trace(
-            go.Scatter(
-                x=costs_blue_raw["scenario"],
-                y=costs_blue_raw["values"],
-                name=f"Blue {st.session_state['output_product_label']}",
-                marker_color=BLUE_COLOR,
-                mode="markers",
-                marker={
-                    "size": 15,
-                    "symbol": "circle-dot",
-                    "line": {
-                        "width": 2,
-                        "color": "DarkSlateGrey",
-                    },
-                },
-            )
-        )
-        fig.update_layout(
-            xaxis={
-                "title": {"text": "Scenario"},
-                "tickformat": ",",
-            },
-            yaxis={
-                "title": {"text": st.session_state["output_unit"]},
-                "range": [0, None],
-                "tickformat": ",",
-            },
-            boxmode="group",
-            separators=". ",
-        )
+        fig = create_figure(costs_blue_raw, costs_green_raw, green_display="box")
         st.plotly_chart(fig)
 
         with st.expander("**Data**"):
             data = pd.concat([costs_blue_raw, costs_green_raw])
             st.dataframe(
                 data,
+                hide_index=True,
                 column_config={
                     "values": st.column_config.NumberColumn(
                         label="Total cost",
@@ -295,6 +255,130 @@ def content_costs_comparison(api):
                     )
                 },
             )
+
+
+def create_figure(
+    costs_blue_raw,
+    costs_green_raw,
+    green_display: Literal["box", "violin", "bar"],
+):
+    fig = go.Figure()
+
+    # =====================================================================
+    # OPTIONS
+    # ---------------------------------------------------------------------
+    # A) BOX
+    # ---------------------------------------------------------------------
+    if green_display == "box":
+        fig.add_trace(
+            go.Box(
+                x=costs_green_raw["scenario"],
+                y=costs_green_raw["values"],
+                name=f"Green {st.session_state['output_product_label']} cost range",
+                marker_color=GREEN_COLOR,
+                marker_size=3,
+                customdata=get_hoverdata(costs_green_raw),
+                hovertemplate="%{customdata}<extra></extra>",
+                boxpoints="all",
+            )
+        )
+
+    # ---------------------------------------------------------------------
+    # B) VIOLIN
+    # ---------------------------------------------------------------------
+    if green_display == "violin":
+        fig.add_trace(
+            go.Violin(
+                x=costs_green_raw["scenario"],
+                y=costs_green_raw["values"],
+                name=f"Green {st.session_state['output_product_label']} cost range",
+                marker_color=GREEN_COLOR,
+                marker_size=3,
+                customdata=get_hoverdata(costs_green_raw),
+                hovertemplate="%{customdata}<extra></extra>",
+                points="all",
+            )
+        )
+
+    # ---------------------------------------------------------------------
+    # C) Stripe + Bar
+    # ---------------------------------------------------------------------
+    if green_display == "bar":
+        fig.add_trace(
+            go.Box(
+                x=costs_green_raw["scenario"],
+                y=costs_green_raw["values"],
+                boxpoints="all",
+                customdata=get_hoverdata(costs_green_raw),
+                hovertemplate="%{customdata}<extra></extra>",
+                hoveron="points",
+                jitter=0.2,
+                pointpos=-0.5,
+                fillcolor="rgba(255,255,255,0)",
+                line={
+                    "color": "rgba(255,255,255,0)",
+                },
+                marker={
+                    "color": GREEN_COLOR,
+                    "size": 3,
+                },
+                alignmentgroup=True,
+                showlegend=False,
+                legendgroup="green",
+            )
+        )
+
+        scenario_min_max = costs_green_raw.groupby("scenario")["values"].agg(
+            ["min", "max"]
+        )
+
+        fig.add_trace(
+            go.Bar(
+                x=scenario_min_max.index,
+                y=scenario_min_max["max"] - scenario_min_max["min"],
+                base=scenario_min_max["min"],
+                marker={
+                    "color": GREEN_COLOR,
+                    "opacity": 0.5,
+                },
+                name=f"Green {st.session_state['output_product_label']} cost range",
+                legendgroup="green",
+            )
+        )
+
+    # =====================================================================
+    fig.add_trace(
+        go.Scatter(
+            x=costs_blue_raw["scenario"],
+            y=costs_blue_raw["values"],
+            name=f"Blue {st.session_state['output_product_label']}",
+            marker_color=BLUE_COLOR,
+            mode="markers",
+            marker={
+                "size": 15,
+                "symbol": "circle-dot",
+                "line": {
+                    "width": 2,
+                    "color": "DarkSlateGrey",
+                },
+            },
+        )
+    )
+    fig.update_layout(
+        xaxis={
+            "title": {"text": "Scenario"},
+            "tickformat": ",",
+        },
+        yaxis={
+            "title": {"text": st.session_state["output_unit"]},
+            "range": [0, None],
+            "tickformat": ",",
+        },
+        boxmode="group",
+        separators=". ",
+    )
+
+    return fig
 
 
 def get_hoverdata(df):
