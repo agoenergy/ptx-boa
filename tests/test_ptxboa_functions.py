@@ -34,16 +34,16 @@ class TestPtxboaFunctions(unittest.TestCase):
         api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR)
         df_in = api.get_dimension("region", tool_version_color="green")
 
-        # regions including subregions: 79
-        self.assertEqual(len(df_in), 79)
+        # regions including subregions: 80
+        self.assertEqual(len(df_in), 80)
 
         df_out = pf.remove_subregions(api, df_in)
 
         # output is dataframe:
         self.assertIsInstance(df_out, pd.DataFrame)
 
-        # regions without subregions: 34
-        self.assertEqual(len(df_out), 34)
+        # regions without subregions: 35
+        self.assertEqual(len(df_out), 35)
         # Argentina should be in:
         self.assertTrue("Argentina" in df_out["region_name"])
         # Argentina (Buenos Aires) should be out:
@@ -51,5 +51,5 @@ class TestPtxboaFunctions(unittest.TestCase):
 
         settings["country"] = "China"
         df_out = pf.remove_subregions(api, df_in)
-        self.assertEqual(len(df_out), 34)
+        self.assertEqual(len(df_out), 35)
         self.assertTrue("China" in df_out["region_name"])

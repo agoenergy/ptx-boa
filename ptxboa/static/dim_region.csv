@@ -64,6 +64,7 @@ NAM,Namibia,NAM,,,True,NA,True,False
 NLD,Netherlands,,,,,,,
 NOR,Norway,NOR,,,True,NO,True,True
 OMN,Oman,OMN,,,True,OM,False,True
+PAK,Pakistan,PAK,,,False,,True,False
 PER,Peru,PER,,,True,PE,True,False
 PRT,Portugal,PRT,,,True,PT,True,False
 QAT,Qatar,QAT,,,True,QA,False,True
