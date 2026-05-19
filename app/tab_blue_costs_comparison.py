@@ -25,6 +25,20 @@ from ptxboa.static import OutputUnitType, ScenarioType, TargetCountryNameType
 GREEN_COLOR = "#2fac66"
 BLUE_COLOR = "#1E83B3"
 
+COLUMN_NAME_MAP = {
+    "values": "values",
+    "product_type": "Primary energy type",
+    "scenario": "Scenario",
+    "country": "Import country",
+    "transport": "Transport",
+    "ship_own_fuel": "Ship use product as own fuel",
+    "secproc_water": "Secondary water source",
+    "secproc_co2": "Secondary CO₂ source",
+    "res_gen": "Renewable energy source",
+    "region": "Export country",
+    "chain": "Conversion route",
+}
+
 
 def product_dict(**kwargs):
     """Yield the cartesian product of a dictionary of lists.
@@ -202,29 +216,17 @@ def get_data(
 
     costs_blue_raw = get_blue_results(api, scenarios)
 
-    return costs_blue_raw, costs_green_raw
+    return relabel_chains(api, costs_blue_raw), costs_green_raw
 
 
-def prepare_data_for_display(api: PtxboaAPI, df: pd.DataFrame):
-    # use chain labels
+def relabel_chains(api, df):
     chain_labels = api.get_dimension("chain")["chain_name"].to_dict()
     df["chain"] = df["chain"].replace(chain_labels)
+    return df
 
-    # rename columns
-    column_name_map = {
-        "values": "values",
-        "product_type": "Primary energy type",
-        "scenario": "Scenario",
-        "country": "Import country",
-        "transport": "Transport",
-        "ship_own_fuel": "Ship use product as own fuel",
-        "secproc_water": "Secondary water source",
-        "secproc_co2": "Secondary CO₂ source",
-        "res_gen": "Renewable energy source",
-        "region": "Export country",
-        "chain": "Conversion route",
-    }
-    df = df.rename(columns=column_name_map)
+
+def rename_data_columns(df):
+    df = df.rename(columns=COLUMN_NAME_MAP)
     return df
 
 
@@ -270,7 +272,7 @@ def content_costs_comparison(api):
         with st.expander("**Data**"):
             data = pd.concat([costs_blue_raw, costs_green_raw])
             st.dataframe(
-                prepare_data_for_display(api, data),
+                rename_data_columns(data),
                 hide_index=True,
                 column_config={
                     "values": st.column_config.NumberColumn(
@@ -289,16 +291,19 @@ def create_figure(
 ):
     fig = go.Figure()
     HOVER_CUSTOM_DATA_COLS = {
-        "product_type": "Primary energy type",
-        "scenario": "Scenario",
-        "country": "Import country",
-        "transport": "Transport",
-        "ship_own_fuel": "Ship use product as own fuel",
-        "secproc_water": "Secondary water source",
-        "secproc_co2": "Secondary CO₂ source",
-        "res_gen": "Renewable energy source",
-        "region": "Export country",
-        "chain": "Conversion route",
+        k: COLUMN_NAME_MAP[k]
+        for k in [
+            "product_type",
+            "scenario",
+            "country",
+            "transport",
+            "ship_own_fuel",
+            "secproc_water",
+            "secproc_co2",
+            "res_gen",
+            "region",
+            "chain",
+        ]
     }
     HOVERTEMPLATE = (
         "<b>Total cost: %{y:.1f} "
@@ -332,6 +337,7 @@ def create_figure(
                 customdata=costs_green_raw[list(HOVER_CUSTOM_DATA_COLS.keys())],
                 hovertemplate=HOVERTEMPLATE,
                 boxpoints="all",
+                hoveron="points",
             )
         )
 
@@ -349,6 +355,7 @@ def create_figure(
                 customdata=costs_green_raw[list(HOVER_CUSTOM_DATA_COLS.keys())],
                 hovertemplate=HOVERTEMPLATE,
                 points="all",
+                hoveron="points",
             )
         )
 
@@ -414,6 +421,8 @@ def create_figure(
                     "color": "DarkSlateGrey",
                 },
             },
+            customdata=costs_blue_raw[list(HOVER_CUSTOM_DATA_COLS.keys())],
+            hovertemplate=HOVERTEMPLATE,
         )
     )
     fig.update_layout(
