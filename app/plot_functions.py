@@ -553,7 +553,7 @@ def _make_per_column_hoverdata(res_costs: pd.DataFrame, unit: str) -> list[pd.Se
                 + [
                     f"──────────<br><b>{res_costs.columns[-1]}</b>: "
                     f"{x[res_costs.columns[-1]]}"
-                    f"{unit}"
+                    f" {unit}"
                 ]
             )
         ),
