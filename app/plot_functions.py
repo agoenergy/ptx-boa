@@ -119,7 +119,10 @@ def plot_costs_on_map(
             df=res_costs,
             color_col=cost_component,
             custom_data_func=_make_per_column_hoverdata,
-            custom_data_func_kwargs={"unit": st.session_state["output_unit"]},
+            custom_data_func_kwargs={
+                "unit": st.session_state["output_unit"],
+                "float_precision": 0,
+            },
         )
 
     else:
@@ -129,7 +132,10 @@ def plot_costs_on_map(
             deep_dive_country=scope,
             color_col=cost_component,
             custom_data_func=_make_per_column_hoverdata,
-            custom_data_func_kwargs={"unit": st.session_state["output_unit"]},
+            custom_data_func_kwargs={
+                "unit": st.session_state["output_unit"],
+                "float_precision": 0,
+            },
         )
 
     return _set_map_layout(fig, colorbar_title=st.session_state["output_unit"])
@@ -162,7 +168,10 @@ def plot_emissions_on_map(
         df=aggregated_results,
         color_col=color_col,
         custom_data_func=_make_per_column_hoverdata,
-        custom_data_func_kwargs={"unit": st.session_state["emissions_output_unit"]},
+        custom_data_func_kwargs={
+            "unit": st.session_state["emissions_output_unit"],
+            "float_precision": 1,
+        },
     )
 
     return _set_map_layout(
@@ -540,8 +549,11 @@ def _make_inputs_hoverdata(df, data_type, map_variable, unit, float_precision):
     return [custom_hover_data]
 
 
-def _make_per_column_hoverdata(res_costs: pd.DataFrame, unit: str) -> list[pd.Series]:
-    custom_hover_data = res_costs.map("{:,.1f}".format).apply(
+def _make_per_column_hoverdata(
+    res_costs: pd.DataFrame, unit: str, float_precision: int
+) -> list[pd.Series]:
+    number_fmt = f"{{:.{float_precision}f}}"
+    custom_hover_data = res_costs.map(number_fmt.format).apply(
         lambda x: (
             f"<b>{x.name}</b><br><br>"
             + "<br>".join(
