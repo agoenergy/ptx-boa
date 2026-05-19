@@ -7,7 +7,6 @@ all export countries and chains that have the current product as output product.
 """
 
 import itertools
-import json
 import logging
 from typing import Literal
 
@@ -163,7 +162,7 @@ def get_green_results(
                 logging.info(f"could not get data: {exc}")
 
     df = pd.DataFrame.from_records(raw)
-    df.insert(0, "product_type", "green")
+    df.insert(0, "product_type", "Renewable based")
     # reorder columns
     df = df[["values"] + [c for c in df.columns if c != "values"]]
     return df
@@ -179,10 +178,12 @@ def get_blue_results(api, scenarios):
         agg_costs=False,
     )[0]
     df = df.drop(columns=["process_type", "process_subtype", "cost_type"])
+    # add ship_own_fuel as it is not returned from api.calculate
+    df["ship_own_fuel"] = st.session_state["ship_own_fuel"]
     group_by_cols = [c for c in df.columns if c != "values"]
     df = df.groupby(by=group_by_cols, dropna=False).sum()
     df = df.reset_index()
-    df.insert(0, "product_type", "blue")
+    df.insert(0, "product_type", "Natural gas based")
     df = df[["values"] + [c for c in df.columns if c != "values"]]
     return df
 
@@ -191,7 +192,7 @@ def get_data(
     api, scenarios: list[ScenarioType], import_country, output_product, output_unit
 ):
     with st.spinner("Calculating green results"):
-        cost_green_raw = get_green_results(
+        costs_green_raw = get_green_results(
             api,
             scenarios=scenarios,
             import_country=import_country,
@@ -201,7 +202,30 @@ def get_data(
 
     costs_blue_raw = get_blue_results(api, scenarios)
 
-    return costs_blue_raw, cost_green_raw
+    return costs_blue_raw, costs_green_raw
+
+
+def prepare_data_for_display(api: PtxboaAPI, df: pd.DataFrame):
+    # use chain labels
+    chain_labels = api.get_dimension("chain")["chain_name"].to_dict()
+    df["chain"] = df["chain"].replace(chain_labels)
+
+    # rename columns
+    column_name_map = {
+        "values": "values",
+        "product_type": "Primary energy type",
+        "scenario": "Scenario",
+        "country": "Import country",
+        "transport": "Transport",
+        "ship_own_fuel": "Ship use product as own fuel",
+        "secproc_water": "Secondary water source",
+        "secproc_co2": "Secondary CO₂ source",
+        "res_gen": "Renewable energy source",
+        "region": "Export country",
+        "chain": "Conversion route",
+    }
+    df = df.rename(columns=column_name_map)
+    return df
 
 
 def crude_steel_warning():
@@ -246,23 +270,51 @@ def content_costs_comparison(api):
         with st.expander("**Data**"):
             data = pd.concat([costs_blue_raw, costs_green_raw])
             st.dataframe(
-                data,
+                prepare_data_for_display(api, data),
                 hide_index=True,
                 column_config={
                     "values": st.column_config.NumberColumn(
                         label="Total cost",
                         format=f"%.1f {st.session_state['output_unit']}",
-                    )
+                    ),
+                    "Ship use product as own fuel": st.column_config.TextColumn(),
                 },
             )
 
 
 def create_figure(
-    costs_blue_raw,
-    costs_green_raw,
+    costs_blue_raw: pd.DataFrame,
+    costs_green_raw: pd.DataFrame,
     green_display: Literal["box", "violin", "bar"],
 ):
     fig = go.Figure()
+    HOVER_CUSTOM_DATA_COLS = {
+        "product_type": "Primary energy type",
+        "scenario": "Scenario",
+        "country": "Import country",
+        "transport": "Transport",
+        "ship_own_fuel": "Ship use product as own fuel",
+        "secproc_water": "Secondary water source",
+        "secproc_co2": "Secondary CO₂ source",
+        "res_gen": "Renewable energy source",
+        "region": "Export country",
+        "chain": "Conversion route",
+    }
+    HOVERTEMPLATE = (
+        "<b>Total cost: %{y:.1f} "
+        + st.session_state["output_unit"]
+        + "</b><br><br>"
+        + "<br>".join(
+            [
+                f"{label}: %{{customdata[{i}]}}"
+                for i, label in enumerate(HOVER_CUSTOM_DATA_COLS.values())
+            ]
+        )
+        + "<extra></extra>"
+    )
+    GREEN_NAME = (
+        f"Renewable based {st.session_state['output_product_label']} cost range"
+    )
 
     # =====================================================================
     # OPTIONS
@@ -274,11 +326,11 @@ def create_figure(
             go.Box(
                 x=costs_green_raw["scenario"],
                 y=costs_green_raw["values"],
-                name=f"Green {st.session_state['output_product_label']} cost range",
+                name=GREEN_NAME,
                 marker_color=GREEN_COLOR,
                 marker_size=3,
-                customdata=get_hoverdata(costs_green_raw),
-                hovertemplate="%{customdata}<extra></extra>",
+                customdata=costs_green_raw[list(HOVER_CUSTOM_DATA_COLS.keys())],
+                hovertemplate=HOVERTEMPLATE,
                 boxpoints="all",
             )
         )
@@ -291,11 +343,11 @@ def create_figure(
             go.Violin(
                 x=costs_green_raw["scenario"],
                 y=costs_green_raw["values"],
-                name=f"Green {st.session_state['output_product_label']} cost range",
+                name=GREEN_NAME,
                 marker_color=GREEN_COLOR,
                 marker_size=3,
-                customdata=get_hoverdata(costs_green_raw),
-                hovertemplate="%{customdata}<extra></extra>",
+                customdata=costs_green_raw[list(HOVER_CUSTOM_DATA_COLS.keys())],
+                hovertemplate=HOVERTEMPLATE,
                 points="all",
             )
         )
@@ -309,8 +361,8 @@ def create_figure(
                 x=costs_green_raw["scenario"],
                 y=costs_green_raw["values"],
                 boxpoints="all",
-                customdata=get_hoverdata(costs_green_raw),
-                hovertemplate="%{customdata}<extra></extra>",
+                customdata=costs_green_raw[list(HOVER_CUSTOM_DATA_COLS.keys())],
+                hovertemplate=HOVERTEMPLATE,
                 hoveron="points",
                 jitter=0.2,
                 pointpos=-0.5,
@@ -341,7 +393,7 @@ def create_figure(
                     "color": GREEN_COLOR,
                     "opacity": 0.5,
                 },
-                name=f"Green {st.session_state['output_product_label']} cost range",
+                name=GREEN_NAME,
                 legendgroup="green",
             )
         )
@@ -351,7 +403,7 @@ def create_figure(
         go.Scatter(
             x=costs_blue_raw["scenario"],
             y=costs_blue_raw["values"],
-            name=f"Blue {st.session_state['output_product_label']}",
+            name=f"Natural gas based {st.session_state['output_product_label']}",
             marker_color=BLUE_COLOR,
             mode="markers",
             marker={
@@ -379,14 +431,3 @@ def create_figure(
     )
 
     return fig
-
-
-def get_hoverdata(df):
-    df = df.drop(columns=["product_type", "values"])
-    return [
-        json.dumps(r, separators=("<br>", " = "), ensure_ascii=False)
-        .replace('"', "")
-        .replace("{", "")
-        .replace("}", "")
-        for r in df.to_dict(orient="records")
-    ]
