@@ -26,7 +26,6 @@ GREEN_COLOR = "#2fac66"
 BLUE_COLOR = "#1E83B3"
 
 COLUMN_NAME_MAP = {
-    "values": "values",
     "product_type": "Primary energy type",
     "scenario": "Scenario",
     "country": "Import country",
@@ -148,30 +147,31 @@ def get_green_results(
     for scenario in scenarios:
         for param_set in list(product_dict(**dimensions)):
             try:
-                costs = (
-                    calculate_cached(
-                        _api,
-                        user_data=None,  # we do not respect user data here
-                        optimize_flh=False,  # TODO revert to True when ready
-                        use_user_data_for_optimize_flh=False,
-                        scenario=scenario,
-                        country=import_country,
-                        output_unit=output_unit,
-                        tool_version_color="green",
-                        **param_set,
-                    )
-                    .costs["values"]
-                    .sum()
-                )
+                complete_param_set = param_set | {
+                    "scenario": scenario,
+                    "country": import_country,
+                }
+                costs = calculate_cached(
+                    _api,
+                    user_data=None,  # we do not respect user data here
+                    optimize_flh=False,  # TODO revert to True when ready
+                    use_user_data_for_optimize_flh=False,
+                    output_unit=output_unit,
+                    tool_version_color="green",
+                    **complete_param_set,
+                ).costs
 
-                raw.append(
-                    {
-                        "scenario": scenario,
-                        "country": import_country,
-                        "values": costs,
-                        **param_set,
-                    }
-                )
+                value = costs["values"].sum()
+                # get parameters from result df
+                result_record = costs.iloc[0].to_dict()
+                # update input parameters with result parameters
+                # they differ e.g. when pipeline transport was not possible
+                result_record = {
+                    k: result_record.get(k, v) for k, v in complete_param_set.items()
+                }
+                # add value to result record
+                result_record["values"] = value
+                raw.append(result_record)
             except Exception as exc:
                 logging.info(f"could not get data: {exc}")
 
