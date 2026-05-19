@@ -612,6 +612,7 @@ def create_bar_chart_results(
         y=res_costs.columns[:-1],
         height=500,
         color_discrete_map=discrete_colors(),
+        hover_data={"value": f":{float_format}"},
     )
 
     # ensure stacked bars
