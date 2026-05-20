@@ -268,14 +268,18 @@ def content_costs_comparison(api):
         # --------------------------
         # Display samples
         # --------------------------
+        st.divider()
+        st.markdown("##### Option 1: Boxplot")
         fig = create_figure(costs_blue_raw, costs_green_raw, green_display="box")
         st.plotly_chart(fig)
         st.divider()
 
+        st.markdown("##### Option 2: Violin")
         fig = create_figure(costs_blue_raw, costs_green_raw, green_display="violin")
         st.plotly_chart(fig)
         st.divider()
 
+        st.markdown("##### Option 3: Rectangle")
         fig = create_figure(costs_blue_raw, costs_green_raw, green_display="bar")
         st.plotly_chart(fig)
         # --------------------------
