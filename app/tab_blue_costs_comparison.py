@@ -39,6 +39,17 @@ COLUMN_NAME_MAP = {
 }
 
 
+@st.cache_data(show_spinner=False)
+def get_no_green_ptx_import_countries(_api: PtxboaAPI):
+    blue_countries = set(
+        _api.get_dimension(dim="country", tool_version_color="blue").index
+    )
+    green_countries = set(
+        _api.get_dimension(dim="country", tool_version_color="green").index
+    )
+    return blue_countries - green_countries
+
+
 def product_dict(**kwargs):
     """Yield the cartesian product of a dictionary of lists.
 
@@ -250,8 +261,20 @@ def content_costs_comparison(api):
         )
 
     with st.container(border=True):
+        # --------------------------
+        # Parameter checks
+        # --------------------------
+        is_invalid = False
+        if st.session_state["country"] in get_no_green_ptx_import_countries(api):
+            is_invalid = True
+            st.warning(
+                f"Renewable based cost data not available for "
+                f"{st.session_state['country']}. No comparison possible."
+            )
         if st.session_state["output_product"] == "STL-S":
+            is_invalid = True
             crude_steel_warning()
+        if is_invalid:
             return
 
         costs_blue_raw, costs_green_raw = get_data(
