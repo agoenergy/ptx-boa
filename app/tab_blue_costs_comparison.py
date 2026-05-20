@@ -156,6 +156,10 @@ def get_green_results(
     else:
         raise ValueError(f"Unknown {green_param_set=}")
 
+    if len(dimensions["chain"]) == 0:
+        st.error(f"Did not find chains corresponding to {output_product=}")
+        return None
+
     raw = []
 
     for scenario in scenarios:
@@ -190,6 +194,10 @@ def get_green_results(
                 logging.info(f"could not get data: {exc}")
 
     df = pd.DataFrame.from_records(raw)
+    if len(df) == 0:
+        st.error("No renewable based data.")
+        return None
+
     df.insert(0, "product_type", "Renewable based")
     # reorder columns
     df = df[["values"] + [c for c in df.columns if c != "values"]]
@@ -284,10 +292,14 @@ def content_costs_comparison(api):
             output_product=st.session_state["output_product"],
             output_unit=st.session_state["output_unit"],
         )
+
+        if costs_green_raw is None:
+            return
+
         title_string = (
-            f"Cost of importing "
-            f"{st.session_state['output_product_label']} to "
-            f"{st.session_state['country']}"
+            f"Cost comparison of {st.session_state['output_product_label'].lower()} "
+            f"imports to {st.session_state['country']}: "
+            "natural gas-based vs. renewable-based production"
         )
         st.subheader(title_string)
 
