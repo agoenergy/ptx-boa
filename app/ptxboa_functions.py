@@ -226,6 +226,7 @@ def calculate_results_list_blue(
     parameter_list: None | list | pd.Series | pd.Index = None,
     override_session_state: dict | None = None,
     apply_user_data: bool = True,
+    agg_costs: bool = True,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Blue version has fewer settings than green version: no res_gen, no data scenario.
@@ -463,7 +464,11 @@ def calculate_results_list_blue(
     emissions_mass_details = pd.concat(emissions_mass_list)
 
     return (
-        aggregate_costs(costs_details, parameter_to_change),
+        (
+            aggregate_costs(costs_details, parameter_to_change)
+            if agg_costs
+            else costs_details
+        ),
         emissions_details,
         emissions_mass_details,
     )

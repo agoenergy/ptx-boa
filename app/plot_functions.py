@@ -119,7 +119,10 @@ def plot_costs_on_map(
             df=res_costs,
             color_col=cost_component,
             custom_data_func=_make_per_column_hoverdata,
-            custom_data_func_kwargs={"unit": st.session_state["output_unit"]},
+            custom_data_func_kwargs={
+                "unit": st.session_state["output_unit"],
+                "float_precision": 0,
+            },
         )
 
     else:
@@ -129,7 +132,10 @@ def plot_costs_on_map(
             deep_dive_country=scope,
             color_col=cost_component,
             custom_data_func=_make_per_column_hoverdata,
-            custom_data_func_kwargs={"unit": st.session_state["output_unit"]},
+            custom_data_func_kwargs={
+                "unit": st.session_state["output_unit"],
+                "float_precision": 0,
+            },
         )
 
     return _set_map_layout(fig, colorbar_title=st.session_state["output_unit"])
@@ -162,7 +168,10 @@ def plot_emissions_on_map(
         df=aggregated_results,
         color_col=color_col,
         custom_data_func=_make_per_column_hoverdata,
-        custom_data_func_kwargs={"unit": st.session_state["emissions_output_unit"]},
+        custom_data_func_kwargs={
+            "unit": st.session_state["emissions_output_unit"],
+            "float_precision": 1,
+        },
     )
 
     return _set_map_layout(
@@ -540,8 +549,11 @@ def _make_inputs_hoverdata(df, data_type, map_variable, unit, float_precision):
     return [custom_hover_data]
 
 
-def _make_per_column_hoverdata(res_costs: pd.DataFrame, unit: str) -> list[pd.Series]:
-    custom_hover_data = res_costs.map("{:,.1f}".format).apply(
+def _make_per_column_hoverdata(
+    res_costs: pd.DataFrame, unit: str, float_precision: int
+) -> list[pd.Series]:
+    number_fmt = f"{{:.{float_precision}f}}"
+    custom_hover_data = res_costs.map(number_fmt.format).apply(
         lambda x: (
             f"<b>{x.name}</b><br><br>"
             + "<br>".join(
@@ -553,7 +565,7 @@ def _make_per_column_hoverdata(res_costs: pd.DataFrame, unit: str) -> list[pd.Se
                 + [
                     f"──────────<br><b>{res_costs.columns[-1]}</b>: "
                     f"{x[res_costs.columns[-1]]}"
-                    f"{unit}"
+                    f" {unit}"
                 ]
             )
         ),
@@ -587,6 +599,9 @@ def create_bar_chart_results(
     if res_costs.empty:  # nodata to plot (FIXME: migth not be required later)
         return go.Figure()
 
+    if output_unit is None:
+        output_unit = st.session_state["output_unit"]
+
     missing_colors = set(res_costs.columns[:-1]) - set(discrete_colors().keys())
     if missing_colors:
         logger.warning(f"Undefined colors for categories: {missing_colors}")
@@ -597,6 +612,7 @@ def create_bar_chart_results(
         y=res_costs.columns[:-1],
         height=500,
         color_discrete_map=discrete_colors(),
+        hover_data={"value": f":{float_format}"},
     )
 
     # ensure stacked bars
@@ -616,6 +632,10 @@ def create_bar_chart_results(
             lambda x: f"{x:{float_format}}"
         ),  # Use 'total' column values as text labels
         textposition="top center",  # Position of the text label above the marker
+        hovertemplate=(
+            "<b>%{x}</b><br><br>"
+            f"Total: %{{y:{float_format}}} {output_unit}<extra></extra>"
+        ),
     )
 
     fig.add_trace(scatter_trace)
@@ -645,9 +665,6 @@ def create_bar_chart_results(
     fig.update_yaxes(tickformat=",")
     fig.update_layout(separators=". ")
     fig.update_xaxes(type="category")
-
-    if output_unit is None:
-        output_unit = st.session_state["output_unit"]
 
     fig.update_layout(yaxis_title=output_unit)
     fig.update_layout(legend_traceorder="reversed")
@@ -686,7 +703,7 @@ def create_box_plot(
         highlighted_value = 0
 
     # Add the box plot to the subplot
-    fig.add_trace(go.Box(y=res_costs["Total"], name=label))
+    fig.add_trace(go.Box(y=res_costs["Total"], name=label, hoverinfo="skip"))
 
     # Add a scatter marker for the highlighted data point
     fig.add_trace(
@@ -697,6 +714,7 @@ def create_box_plot(
             marker={"size": 10, "color": "black"},
             name=highlighted_row_index,
             text=f"Value: {highlighted_value}",  # Add a text label
+            hoverinfo="skip",
         )
     )
 

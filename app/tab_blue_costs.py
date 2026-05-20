@@ -45,7 +45,8 @@ def content_costs(api: PtxboaAPI):
         title_string = (
             f"Cost of exporting "
             f"{st.session_state['output_product_label']} to "
-            f"{st.session_state['country']}"
+            f"{st.session_state['country']} "
+            f"in {st.session_state['scenario'].split(' ')[0]}"  # data year
         )
         st.subheader(title_string)
 

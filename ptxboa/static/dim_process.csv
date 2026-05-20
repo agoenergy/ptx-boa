@@ -86,7 +86,7 @@ RES-HYBR,Wind-PV-Hybrid,EL,,False,True,False,False,False,False,False,False,False
 SMR_52%#B,steam methane reformer with 52% carbon capture (blue),H2-G,NG-G,True,False,False,False,False,False,False,False,False,False,ELY,True,False,H2 production,CO2-C/EL,False,True
 SMR_52%_BF#B,existing steam methane reformer with retrofit 52% carbon capture (blue),H2-G,NG-G,True,False,False,False,False,False,False,False,False,False,ELY,True,False,H2 production,CO2-C/EL,False,True
 SOEC-EL,SOEC (high-temp) electrolysis,H2-G,EL,True,False,False,False,False,False,False,False,False,False,ELY,True,False,H2 production,H2O-L,True,False
-SYN-S,FT e-fuels ship (own fuel consumption),CHX-L,CHX-L,False,False,True,False,False,False,False,False,True,True,TRNSP-S,False,False,Transportation (Ship),,True,False
+SYN-S,FT e-fuels ship (own fuel consumption),CHX-L,CHX-L,False,False,True,False,False,False,False,False,True,True,TRNSP-S,False,False,Transportation (Ship),CHX-L,True,False
 SYN-S#B,FT e-fuels ship (own fuel consumption) (blue),CHX-L,CHX-L,False,False,True,False,False,False,False,False,True,True,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,False,True
 SYN-SB,FT e-fuels ship (bunker fuel consumption),CHX-L,CHX-L,False,False,True,False,False,False,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,True,False
 SYN-SB#B,FT e-fuels ship (bunker fuel consumption) (blue),CHX-L,CHX-L,False,False,True,False,False,False,False,False,True,False,TRNSP-S,False,False,Transportation (Ship),BFUEL-L,False,True
