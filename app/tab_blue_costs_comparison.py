@@ -266,8 +266,19 @@ def content_costs_comparison(api):
         st.subheader(title_string)
 
         # --------------------------
+        # Display samples
+        # --------------------------
         fig = create_figure(costs_blue_raw, costs_green_raw, green_display="box")
         st.plotly_chart(fig)
+        st.divider()
+
+        fig = create_figure(costs_blue_raw, costs_green_raw, green_display="violin")
+        st.plotly_chart(fig)
+        st.divider()
+
+        fig = create_figure(costs_blue_raw, costs_green_raw, green_display="bar")
+        st.plotly_chart(fig)
+        # --------------------------
 
         with st.expander("**Data**"):
             data = pd.concat([costs_blue_raw, costs_green_raw])
