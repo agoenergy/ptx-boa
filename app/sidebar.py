@@ -333,7 +333,7 @@ def main_settings_blue(api: PtxboaAPI):
         and st.session_state["region"] != st.session_state["country"]
     ):
         nh3_transport = st.toggle(
-            "Transport NH₃ and reconvert to H₂",
+            "Transport ammonia and reconvert to hydrogen",
             value=False,
             help=read_markdown_file(
                 "md/sidebar/helptext_sidebar_blue_transport_NH3_and_reconvert_to_H2.md"
