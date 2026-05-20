@@ -445,6 +445,7 @@ def create_figure(
             "title": {"text": st.session_state["output_unit"]},
             "range": [0, None],
             "tickformat": ",",
+            "rangemode": "tozero",
         },
         boxmode="group",
         separators=". ",
