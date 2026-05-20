@@ -77,6 +77,9 @@ def get_green_results(
     ]:
         raise ValueError(f"invalid {output_product=}")
 
+    green_blue_product_map = {"B-DRI-S": "DRI-S"}
+    green_output_product = green_blue_product_map.get(output_product, output_product)
+
     if green_param_set == "complete":
         # complete parame set is too slow without caching.
         dimensions = {
@@ -107,7 +110,7 @@ def get_green_results(
                 _api.get_dimension("chain", tool_version_color="green")
                 .loc[
                     _api.get_dimension("chain", tool_version_color="green")["flow_out"]
-                    == output_product
+                    == green_output_product
                 ]
                 .index.tolist()
             ),
@@ -134,7 +137,7 @@ def get_green_results(
                 _api.get_dimension("chain", tool_version_color="green")
                 .loc[
                     _api.get_dimension("chain", tool_version_color="green")["flow_out"]
-                    == output_product
+                    == green_output_product
                 ]
                 .index.tolist()
             ),
