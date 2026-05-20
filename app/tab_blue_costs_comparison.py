@@ -39,6 +39,17 @@ COLUMN_NAME_MAP = {
 }
 
 
+@st.cache_data(show_spinner=False)
+def get_no_green_ptx_import_countries(_api: PtxboaAPI):
+    blue_countries = set(
+        _api.get_dimension(dim="country", tool_version_color="blue").index
+    )
+    green_countries = set(
+        _api.get_dimension(dim="country", tool_version_color="green").index
+    )
+    return blue_countries - green_countries
+
+
 def product_dict(**kwargs):
     """Yield the cartesian product of a dictionary of lists.
 
@@ -77,6 +88,9 @@ def get_green_results(
     ]:
         raise ValueError(f"invalid {output_product=}")
 
+    green_blue_product_map = {"B-DRI-S": "DRI-S"}
+    green_output_product = green_blue_product_map.get(output_product, output_product)
+
     if green_param_set == "complete":
         # complete parame set is too slow without caching.
         dimensions = {
@@ -107,7 +121,7 @@ def get_green_results(
                 _api.get_dimension("chain", tool_version_color="green")
                 .loc[
                     _api.get_dimension("chain", tool_version_color="green")["flow_out"]
-                    == output_product
+                    == green_output_product
                 ]
                 .index.tolist()
             ),
@@ -134,13 +148,17 @@ def get_green_results(
                 _api.get_dimension("chain", tool_version_color="green")
                 .loc[
                     _api.get_dimension("chain", tool_version_color="green")["flow_out"]
-                    == output_product
+                    == green_output_product
                 ]
                 .index.tolist()
             ),
         }
     else:
         raise ValueError(f"Unknown {green_param_set=}")
+
+    if len(dimensions["chain"]) == 0:
+        st.error(f"Did not find chains corresponding to {output_product=}")
+        return None
 
     raw = []
 
@@ -176,6 +194,10 @@ def get_green_results(
                 logging.info(f"could not get data: {exc}")
 
     df = pd.DataFrame.from_records(raw)
+    if len(df) == 0:
+        st.error("No renewable based data.")
+        return None
+
     df.insert(0, "product_type", "Renewable based")
     # reorder columns
     df = df[["values"] + [c for c in df.columns if c != "values"]]
@@ -247,8 +269,20 @@ def content_costs_comparison(api):
         )
 
     with st.container(border=True):
+        # --------------------------
+        # Parameter checks
+        # --------------------------
+        is_invalid = False
+        if st.session_state["country"] in get_no_green_ptx_import_countries(api):
+            is_invalid = True
+            st.warning(
+                f"Renewable based cost data not available for "
+                f"{st.session_state['country']}. No comparison possible."
+            )
         if st.session_state["output_product"] == "STL-S":
+            is_invalid = True
             crude_steel_warning()
+        if is_invalid:
             return
 
         costs_blue_raw, costs_green_raw = get_data(
@@ -258,16 +292,35 @@ def content_costs_comparison(api):
             output_product=st.session_state["output_product"],
             output_unit=st.session_state["output_unit"],
         )
+
+        if costs_green_raw is None:
+            return
+
         title_string = (
-            f"Cost of importing "
-            f"{st.session_state['output_product_label']} to "
-            f"{st.session_state['country']}"
+            f"Cost comparison of {st.session_state['output_product_label'].lower()} "
+            f"imports to {st.session_state['country']}: "
+            "natural gas-based vs. renewable-based production"
         )
         st.subheader(title_string)
 
         # --------------------------
+        # Display samples
+        # --------------------------
+        st.divider()
+        st.markdown("##### Option 1: Boxplot")
         fig = create_figure(costs_blue_raw, costs_green_raw, green_display="box")
         st.plotly_chart(fig)
+        st.divider()
+
+        st.markdown("##### Option 2: Violin")
+        fig = create_figure(costs_blue_raw, costs_green_raw, green_display="violin")
+        st.plotly_chart(fig)
+        st.divider()
+
+        st.markdown("##### Option 3: Rectangle")
+        fig = create_figure(costs_blue_raw, costs_green_raw, green_display="bar")
+        st.plotly_chart(fig)
+        # --------------------------
 
         with st.expander("**Data**"):
             data = pd.concat([costs_blue_raw, costs_green_raw])
@@ -356,6 +409,7 @@ def create_figure(
                 hovertemplate=HOVERTEMPLATE,
                 points="all",
                 hoveron="points",
+                spanmode="hard",
             )
         )
 
@@ -434,6 +488,7 @@ def create_figure(
             "title": {"text": st.session_state["output_unit"]},
             "range": [0, None],
             "tickformat": ",",
+            "rangemode": "tozero",
         },
         boxmode="group",
         separators=". ",
