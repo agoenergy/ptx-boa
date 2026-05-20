@@ -367,6 +367,7 @@ def create_figure(
                 hovertemplate=HOVERTEMPLATE,
                 points="all",
                 hoveron="points",
+                spanmode="hard",
             )
         )
 
