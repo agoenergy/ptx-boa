@@ -115,7 +115,7 @@ def _create_fact_sheet_supply_country(context_data: dict, api: PtxboaAPI):
         if value == "n/a":
             st.markdown("no data")
         else:
-            st.markdown(f"**{float(value)}**\n\n*Source: {source}*")
+            st.markdown(f"**{value}**\n\n*Source: {source}*")
 
     with st.expander("**Electricity prices**"):
         value = data["elec_prices_IEA2020"]
