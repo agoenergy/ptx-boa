@@ -616,6 +616,11 @@ def create_bar_chart_results(
         hover_data={"value": f":{float_format}"},
     )
 
+    if len(res_costs.index) <= 6:
+        fig.update_traces(width=0.4)
+    if 5 < len(res_costs.index) < 10:
+        fig.update_traces(width=0.6)
+
     # ensure stacked bars
     fig.update_layout(barmode="relative")
     for trace in fig.data:
