@@ -28,7 +28,9 @@ from app.user_data_from_file import download_user_data, upload_user_data
 def update_note(current_date: date):
     valid_until = date(year=2026, month=9, day=1)
     if current_date < valid_until:
-        with st.expander("June 2026: Updated Version!", icon="📣"):
+        with st.expander(
+            "June 2026: Updated Version! Click here for more information.", icon="📣"
+        ):
             st.markdown(read_markdown_file("md/green_update_note_june_2026.md"))
 
 
