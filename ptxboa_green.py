@@ -22,6 +22,7 @@ from app.tab_green_optimization import content_optimization
 from app.tab_green_sustainability import content_sustainability
 from app.user_data import display_user_changes
 from app.user_data_from_file import download_user_data, upload_user_data
+from ptxboa import __version__
 
 
 @st.cache_data()
@@ -49,6 +50,7 @@ def green_page():
         st.session_state["edit_input_data"] = False
 
     st.title("PtX Business Opportunity Analyser")
+    st.markdown(f"_Version {__version__}_")
 
     update_note(date.today())
 
