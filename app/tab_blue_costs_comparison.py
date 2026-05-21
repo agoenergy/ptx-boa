@@ -260,6 +260,14 @@ def crude_steel_warning():
     )
 
 
+def conversion_location_demand_warning():
+    st.warning(
+        read_markdown_file(
+            "md/tab_blue_cost_comparison/conversion_location_demand_warning.md"
+        )
+    )
+
+
 def content_costs_comparison(api):
     with st.popover("*Help*", width="stretch"):
         st.markdown(
@@ -279,6 +287,9 @@ def content_costs_comparison(api):
                 f"Renewable based cost data not available for "
                 f"{st.session_state['country']}. No comparison possible."
             )
+        if st.session_state["conversion_location"] == "demand":
+            is_invalid = True
+            conversion_location_demand_warning()
         if st.session_state["output_product"] == "STL-S":
             is_invalid = True
             crude_steel_warning()
