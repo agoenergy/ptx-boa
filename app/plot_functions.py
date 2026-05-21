@@ -62,6 +62,7 @@ def discrete_colors_process_type() -> dict:
         "Bound in product",
         "Natural gas production",
         "CO2 transport and storage",
+        "Transportation (Pipeline)",
         # TODO: add missing category (GH #145)
     ]
     colors = read_agora_colors()
@@ -614,6 +615,11 @@ def create_bar_chart_results(
         color_discrete_map=discrete_colors(),
         hover_data={"value": f":{float_format}"},
     )
+
+    if len(res_costs.index) <= 6:
+        fig.update_traces(width=0.4)
+    if 5 < len(res_costs.index) < 10:
+        fig.update_traces(width=0.6)
 
     # ensure stacked bars
     fig.update_layout(barmode="relative")

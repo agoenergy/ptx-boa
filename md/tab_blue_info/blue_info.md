@@ -1,6 +1,6 @@
 ### About this app
 
-The PTX Business Opportunity Analyser (PTX BOA) is an interactive web application designed to assess production costs as well as greenhouse gas emissions of various hydrogen-based products across different countries.  
+The Low-Carbon Business Opportunity Analyser is an interactive web application designed to assess production costs as well as greenhouse gas emissions of various hydrogen-based products across different countries.  
 
 The analysis starts with the use of natural gas in the export country to produce products such as methanol, hydrogen, steel, iron, e-fuels, or ammonia. Users can calculate the delivered cost of molecules from an export country to an import country, including a detailed cost breakdown that highlights the competitive edge of one country against another.
 
@@ -48,12 +48,6 @@ We welcome anyone interested in contributing to this project.
 To report bugs, request features, or contribute directly, please visit our GitHub repository:
 
 <https://github.com/agoenergy/ptx-boa>
-
-#### Additional resources
-
-For data documentation, additional materials, and project updates, please visit:
-
-<https://www.agora-energiewende.de/en/publications/business-opportunity-analyser-boa>
 
 #### Disclaimer
 
