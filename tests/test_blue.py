@@ -721,6 +721,9 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "process_code": "EL",
                     "process_step": "MARKET:EL",
                 },
+                {"process_code": "NG-G", "process_step": "MARKET:NG-G"},
+                {"process_code": "NG-G", "process_step": "MARKET:NG-G"},
+                {"process_code": "NG-G", "process_step": "MARKET:NG-G"},
             ],
             # marks=pytest.mark.skip,  # noqa
         ),

@@ -644,7 +644,7 @@ class Process:
                 proc = self._link_in_main
                 flow_code = self.main_flow_code_in
 
-                # also for main flow in: # TODO: reuse code fromabove
+                # also for main flow in: # TODO: reuse code from above
                 res = results_emissions[proc]
                 if res:
                     g_co2_per_flow = res[em].co2_bound_in_product_per_output
@@ -1974,6 +1974,24 @@ def _create_graph(
             # special case: CSS (`CO2-T+S#B`) secondary processes can only get
             # their flows like EL from market, otherwise it can create loops
             if process.is_css:
+                provider = None  # so we will use market process
+
+            if process.is_main_in_transport_segment:
+                # TODO
+                if flow_code != "BFUEL-L":
+                    if flow_code == process.main_flow_code_in:
+                        logger.warning(
+                            "Transport process uses market instead of main in: %s, %s",
+                            process,
+                            flow_code,
+                        )
+                    else:
+                        logger.error(
+                            "Transport process other than BFUEL-L or main flow in: %s",
+                            process,
+                        )
+                        # maybe raise Exception()?
+
                 provider = None  # so we will use market process
 
             if provider:
