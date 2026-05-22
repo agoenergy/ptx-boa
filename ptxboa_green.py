@@ -1,11 +1,14 @@
 """Content of green Ptx subpage."""
 
+from datetime import date
+
 import streamlit as st
 import streamlit_antd_components as sac
 
 from app.cached_api import api
 from app.context_data import load_context_data
 from app.layout_elements import display_footer
+from app.ptxboa_functions import read_markdown_file
 from app.sidebar import make_sidebar_green
 from app.tab_green_certification_schemes import content_certification_schemes
 from app.tab_green_costs import content_costs
@@ -19,6 +22,17 @@ from app.tab_green_optimization import content_optimization
 from app.tab_green_sustainability import content_sustainability
 from app.user_data import display_user_changes
 from app.user_data_from_file import download_user_data, upload_user_data
+from ptxboa import __version__
+
+
+@st.cache_data()
+def update_note(current_date: date):
+    valid_until = date(year=2026, month=9, day=1)
+    if current_date < valid_until:
+        with st.expander(
+            "June 2026: Updated Version! Click here for more information.", icon="📣"
+        ):
+            st.markdown(read_markdown_file("md/green_update_note_june_2026.md"))
 
 
 def green_page():
@@ -36,6 +50,9 @@ def green_page():
         st.session_state["edit_input_data"] = False
 
     st.title("PtX Business Opportunity Analyser")
+    st.markdown(f"_Version {__version__}_")
+
+    update_note(date.today())
 
     with st.container():
         if st.session_state["edit_input_data"]:

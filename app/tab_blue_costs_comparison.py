@@ -454,6 +454,7 @@ def create_figure(
                     "color": GREEN_COLOR,
                     "opacity": 0.5,
                 },
+                width=0.4,
                 name=GREEN_NAME,
                 legendgroup="green",
             )

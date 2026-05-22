@@ -14,6 +14,7 @@ from app.tab_blue_info import content_info
 from app.tab_blue_input_data import content_input_data
 from app.user_data import display_user_changes
 from app.user_data_from_file import download_user_data, upload_user_data
+from ptxboa import __version__
 
 
 def blue_page():
@@ -27,6 +28,7 @@ def blue_page():
         st.session_state["edit_input_data"] = False
 
     st.title("Low-Carbon Business Opportunity Analyser")
+    st.markdown(f"_Version {__version__}_")
 
     with st.container():
         if st.session_state["edit_input_data"]:
