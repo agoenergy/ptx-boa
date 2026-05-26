@@ -959,7 +959,7 @@ def get_blue_demand_and_supply_regions(_api: PtxboaAPI):
 
 
 @st.cache_data
-def filter_blue_supply_regions(_api: PtxboaAPI, selected_region: str) -> list[str]:
+def filter_blue_supply_regions(_api: PtxboaAPI, selected: str) -> list[str]:
     """
     List of blue supply regions for cost/emissions comparison by region.
 
@@ -972,7 +972,8 @@ def filter_blue_supply_regions(_api: PtxboaAPI, selected_region: str) -> list[st
     # Exclude domestic-only regions
     regions = all_regions - NO_LNG_EXPORT
     # Ensure selected region is present
-    regions.add(selected_region)
+    if selected in NO_LNG_EXPORT:
+        regions.add(selected)
     return sorted(regions)
 
 
