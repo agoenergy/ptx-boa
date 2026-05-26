@@ -38,7 +38,7 @@ def content_costs(api: PtxboaAPI):
                 dim="region",
                 emissions_included=st.session_state["emissions_included"],
                 parameter_list=pd.Series(
-                    filter_blue_supply_regions(api, st.session_state["region"])
+                    filter_blue_supply_regions(api, st.session_state["country"])
                 ),
             )
 
