@@ -50,56 +50,75 @@ def content_costs(api: PtxboaAPI):
         )
         st.subheader(title_string)
 
-        st.markdown(read_markdown_file("md/tab_blue_costs/description_cost_map.md"))
-
-        fig_map = plot_costs_on_map(
-            api, results_per_region.costs, scope="world", cost_component="Total"
-        )
-        fig_map.update_layout(
-            margin={"l": 10, "r": 10, "t": 10, "b": 10},
-        )
-        st.plotly_chart(fig_map, width="stretch")
-
-        st.subheader(
-            read_markdown_file("md/tab_blue_costs/figure_title_cost_distribution.md")
-        )
-        st.markdown(
-            read_markdown_file(
-                "md/tab_blue_costs/figure_description_cost_distribution.md"
+        if st.session_state["conversion_location"] == "demand":
+            st.info(
+                read_markdown_file(
+                    "md/tab_blue_costs/info_conversion_location_demand.md"
+                )
             )
-        )
+            filtered_data = results_per_region.costs[
+                results_per_region.costs.index == st.session_state["region"]
+            ]
+            fig = create_bar_chart_results(filtered_data)
+            fig.update_layout(xaxis_title=None)
+            _, col, _ = st.columns([0.5, 1, 0.5])
+            with col:
+                st.plotly_chart(fig)
 
-        # create box plot and bar plot:
-        fig1 = create_box_plot(
-            results_per_region.costs, unit=st.session_state["output_unit"]
-        )
-        filtered_data = results_per_region.costs[
-            results_per_region.costs.index == st.session_state["region"]
-        ]
-        fig2 = create_bar_chart_results(filtered_data)
-        doublefig = make_subplots(rows=1, cols=2, shared_yaxes=True)
+        if st.session_state["conversion_location"] == "supply":
+            st.markdown(read_markdown_file("md/tab_blue_costs/description_cost_map.md"))
+            fig_map = plot_costs_on_map(
+                api, results_per_region.costs, scope="world", cost_component="Total"
+            )
+            fig_map.update_layout(
+                margin={"l": 10, "r": 10, "t": 10, "b": 10},
+            )
+            st.plotly_chart(fig_map, width="stretch")
 
-        for trace in fig1.data:
-            trace.showlegend = False
-            doublefig.add_trace(trace, row=1, col=1)
-        for trace in fig2.data:
-            doublefig.add_trace(trace, row=1, col=2)
+            st.subheader(
+                read_markdown_file(
+                    "md/tab_blue_costs/figure_title_cost_distribution.md"
+                )
+            )
+            st.markdown(
+                read_markdown_file(
+                    "md/tab_blue_costs/figure_description_cost_distribution.md"
+                )
+            )
 
-        doublefig.update_layout(barmode="stack")
-        doublefig.update_layout(legend_traceorder="reversed")
-        doublefig.update_yaxes(title_text=st.session_state["output_unit"], row=1, col=1)
-        doublefig.update_layout(
-            height=350,
-            margin={"l": 10, "r": 10, "t": 20, "b": 20},
-        )
+            # create box plot and bar plot:
+            fig1 = create_box_plot(
+                results_per_region.costs, unit=st.session_state["output_unit"]
+            )
+            filtered_data = results_per_region.costs[
+                results_per_region.costs.index == st.session_state["region"]
+            ]
+            fig2 = create_bar_chart_results(filtered_data)
+            doublefig = make_subplots(rows=1, cols=2, shared_yaxes=True)
 
-        # set ticklabel format:
-        doublefig.update_yaxes(tickformat=",")
-        doublefig.update_layout(separators=". ")
+            for trace in fig1.data:
+                trace.showlegend = False
+                doublefig.add_trace(trace, row=1, col=1)
+            for trace in fig2.data:
+                doublefig.add_trace(trace, row=1, col=2)
 
-        st.plotly_chart(doublefig, width="stretch")
+            doublefig.update_layout(barmode="stack")
+            doublefig.update_layout(legend_traceorder="reversed")
+            doublefig.update_yaxes(
+                title_text=st.session_state["output_unit"], row=1, col=1
+            )
+            doublefig.update_layout(
+                height=350,
+                margin={"l": 10, "r": 10, "t": 20, "b": 20},
+            )
 
-        what_is_a_boxplot()
+            # set ticklabel format:
+            doublefig.update_yaxes(tickformat=",")
+            doublefig.update_layout(separators=". ")
+
+            st.plotly_chart(doublefig, width="stretch")
+
+            what_is_a_boxplot()
 
     blue_chains = api.get_dimension("chain", "blue")
     blue_chain_labels = blue_chains["chain_name"].to_dict()
@@ -168,19 +187,20 @@ def content_costs(api: PtxboaAPI):
                 sorting="off",
             )
 
-    with st.container(border=True):
-        display_results_bar_and_table(
-            results_per_region.costs,
-            results_per_region.costs_not_modified,
-            "region",
-            titlestring=read_markdown_file(
-                "md/tab_blue_costs/figure_title_cost_per_region.md"
-            ),
-            help_string=read_markdown_file(
-                "md/tab_blue_costs/figure_description_cost_per_region.md"
-            ),
-            tool_version_color="blue",
-        )
+    if st.session_state["conversion_location"] == "supply":
+        with st.container(border=True):
+            display_results_bar_and_table(
+                results_per_region.costs,
+                results_per_region.costs_not_modified,
+                "region",
+                titlestring=read_markdown_file(
+                    "md/tab_blue_costs/figure_title_cost_per_region.md"
+                ),
+                help_string=read_markdown_file(
+                    "md/tab_blue_costs/figure_description_cost_per_region.md"
+                ),
+                tool_version_color="blue",
+            )
 
     with st.container(border=True):
         with st.spinner("Please wait. Calculating results for different WACC values."):
