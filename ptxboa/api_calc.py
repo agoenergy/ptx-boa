@@ -847,7 +847,7 @@ class ProcessTransport(Process):
             if flow_code not in {"BFUEL-L", self.main_flow_code_out}:
                 logger.error(
                     "CONV-OT in can only be bunker fuel or own fuel."
-                    "in transport input data: %s %s %s",
+                    "in transport input data: %s %s",
                     self,
                     flow_code,
                 )
