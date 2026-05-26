@@ -57,6 +57,9 @@ def display_results_bar_and_table(
         sort_ascending = True
 
     key_suffix = key_suffix.lower().replace(" ", "_")
+
+    float_precision = 0 if data_type == "costs" else 2
+
     st.subheader(titlestring)
 
     if help_string is not None:
@@ -175,7 +178,7 @@ def display_results_bar_and_table(
         df_res,
         current_selection=current_selection,
         output_unit=output_unit,
-        float_format=".0f" if data_type == "costs" else ".2f",
+        float_format=f".{float_precision}f",
     )
     if xaxis_title is not None:
         fig.update_layout(xaxis_title=xaxis_title)
@@ -203,7 +206,6 @@ def display_results_bar_and_table(
         st.caption(f"**Note**: {unit_note}{green_iron_note}")
 
     with st.expander("**Data**"):
-        float_precision = 1 if data_type == "costs" else 2
         column_config = config_number_columns(
             df_res, format=f"%.{float_precision}f {output_unit}"
         )

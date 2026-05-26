@@ -38,7 +38,7 @@ def content_costs(api: PtxboaAPI):
                 dim="region",
                 emissions_included=st.session_state["emissions_included"],
                 parameter_list=pd.Series(
-                    filter_blue_supply_regions(api, st.session_state["region"])
+                    filter_blue_supply_regions(api, st.session_state["country"])
                 ),
             )
 
@@ -50,137 +50,160 @@ def content_costs(api: PtxboaAPI):
         )
         st.subheader(title_string)
 
-        st.markdown(read_markdown_file("md/tab_blue_costs/description_cost_map.md"))
-
-        fig_map = plot_costs_on_map(
-            api, results_per_region.costs, scope="world", cost_component="Total"
-        )
-        fig_map.update_layout(
-            margin={"l": 10, "r": 10, "t": 10, "b": 10},
-        )
-        st.plotly_chart(fig_map, width="stretch")
-
-        st.subheader(
-            read_markdown_file("md/tab_blue_costs/figure_title_cost_distribution.md")
-        )
-        st.markdown(
-            read_markdown_file(
-                "md/tab_blue_costs/figure_description_cost_distribution.md"
+        if st.session_state["conversion_location"] == "demand":
+            st.info(
+                read_markdown_file(
+                    "md/tab_blue_costs/info_conversion_location_demand.md"
+                )
             )
-        )
+            filtered_data = results_per_region.costs[
+                results_per_region.costs.index == st.session_state["region"]
+            ]
+            fig = create_bar_chart_results(filtered_data)
+            fig.update_layout(xaxis_title=None)
+            _, col, _ = st.columns([0.5, 1, 0.5])
+            with col:
+                st.plotly_chart(fig)
 
-        # create box plot and bar plot:
-        fig1 = create_box_plot(
-            results_per_region.costs, unit=st.session_state["output_unit"]
-        )
-        filtered_data = results_per_region.costs[
-            results_per_region.costs.index == st.session_state["region"]
-        ]
-        fig2 = create_bar_chart_results(filtered_data)
-        doublefig = make_subplots(rows=1, cols=2, shared_yaxes=True)
+        if st.session_state["conversion_location"] == "supply":
+            st.markdown(read_markdown_file("md/tab_blue_costs/description_cost_map.md"))
+            fig_map = plot_costs_on_map(
+                api, results_per_region.costs, scope="world", cost_component="Total"
+            )
+            fig_map.update_layout(
+                margin={"l": 10, "r": 10, "t": 10, "b": 10},
+            )
+            st.plotly_chart(fig_map, width="stretch")
 
-        for trace in fig1.data:
-            trace.showlegend = False
-            doublefig.add_trace(trace, row=1, col=1)
-        for trace in fig2.data:
-            doublefig.add_trace(trace, row=1, col=2)
+            st.subheader(
+                read_markdown_file(
+                    "md/tab_blue_costs/figure_title_cost_distribution.md"
+                )
+            )
+            st.markdown(
+                read_markdown_file(
+                    "md/tab_blue_costs/figure_description_cost_distribution.md"
+                )
+            )
 
-        doublefig.update_layout(barmode="stack")
-        doublefig.update_layout(legend_traceorder="reversed")
-        doublefig.update_yaxes(title_text=st.session_state["output_unit"], row=1, col=1)
-        doublefig.update_layout(
-            height=350,
-            margin={"l": 10, "r": 10, "t": 20, "b": 20},
-        )
+            # create box plot and bar plot:
+            fig1 = create_box_plot(
+                results_per_region.costs, unit=st.session_state["output_unit"]
+            )
+            filtered_data = results_per_region.costs[
+                results_per_region.costs.index == st.session_state["region"]
+            ]
+            fig2 = create_bar_chart_results(filtered_data)
+            doublefig = make_subplots(rows=1, cols=2, shared_yaxes=True)
 
-        # set ticklabel format:
-        doublefig.update_yaxes(tickformat=",")
-        doublefig.update_layout(separators=". ")
+            for trace in fig1.data:
+                trace.showlegend = False
+                doublefig.add_trace(trace, row=1, col=1)
+            for trace in fig2.data:
+                doublefig.add_trace(trace, row=1, col=2)
 
-        st.plotly_chart(doublefig, width="stretch")
+            doublefig.update_layout(barmode="stack")
+            doublefig.update_layout(legend_traceorder="reversed")
+            doublefig.update_yaxes(
+                title_text=st.session_state["output_unit"], row=1, col=1
+            )
+            doublefig.update_layout(
+                height=350,
+                margin={"l": 10, "r": 10, "t": 20, "b": 20},
+            )
 
-        what_is_a_boxplot()
+            # set ticklabel format:
+            doublefig.update_yaxes(tickformat=",")
+            doublefig.update_layout(separators=". ")
+
+            st.plotly_chart(doublefig, width="stretch")
+
+            what_is_a_boxplot()
 
     blue_chains = api.get_dimension("chain", "blue")
     blue_chain_labels = blue_chains["chain_name"].to_dict()
 
-    with st.container(border=True):
-        conversion_location_title = read_markdown_file(
-            "md/tab_blue_costs/figure_title_cost_per_conversion_location.md"
-        )
-        conversion_location_help = read_markdown_file(
-            "md/tab_blue_costs/figure_description_cost_per_conversion_location.md"
-        )
-        if st.session_state["chain"].endswith("__transport_NH3-L"):
-            st.subheader(conversion_location_title)
-            st.markdown(conversion_location_help)
-            chain_label = blue_chain_labels.get(
-                st.session_state["chain"], st.session_state["chain"]
+    if st.session_state["region"] != st.session_state["country"]:
+        with st.container(border=True):
+            conversion_location_title = read_markdown_file(
+                "md/tab_blue_costs/figure_title_cost_per_conversion_location.md"
             )
-            st.warning(
-                f'For the conversion route "{chain_label}", '
-                "conversion can only take place in the supply country."
+            conversion_location_help = read_markdown_file(
+                "md/tab_blue_costs/figure_description_cost_per_conversion_location.md"
             )
-        else:
-            with st.spinner(
-                "Please wait. Calculating results for conversion locations."
-            ):
-                results_supply_demand = blue_results_over_dimension(
-                    api,
-                    dim="chain",
-                    emissions_included=st.session_state["emissions_included"],
-                    parameter_list=pd.Series(
-                        [
-                            st.session_state["chain"].replace(
-                                "__prod_in_demand", "__prod_in_supply"
-                            ),
-                            st.session_state["chain"].replace(
-                                "__prod_in_supply", "__prod_in_demand"
-                            ),
-                        ]
+            if st.session_state["chain"].endswith("__transport_NH3-L"):
+                st.subheader(conversion_location_title)
+                st.markdown(conversion_location_help)
+                chain_label = blue_chain_labels.get(
+                    st.session_state["chain"], st.session_state["chain"]
+                )
+                st.warning(
+                    f'For the conversion route "{chain_label}", '
+                    "conversion can only take place in the supply country."
+                )
+            else:
+                with st.spinner(
+                    "Please wait. Calculating results for conversion locations."
+                ):
+                    results_supply_demand = blue_results_over_dimension(
+                        api,
+                        dim="chain",
+                        emissions_included=st.session_state["emissions_included"],
+                        parameter_list=pd.Series(
+                            [
+                                st.session_state["chain"].replace(
+                                    "__prod_in_demand", "__prod_in_supply"
+                                ),
+                                st.session_state["chain"].replace(
+                                    "__prod_in_supply", "__prod_in_demand"
+                                ),
+                            ]
+                        ),
+                    )
+
+                supply = st.session_state["region"]
+                demand = st.session_state["country"]
+                xlabel_mapping = {
+                    k: (
+                        f"{v}<br>conversion in "
+                        f"{supply if 'prod_in_supply' in k else demand}"
+                    )
+                    for k, v in blue_chain_labels.items()
+                }
+
+                display_results_bar_and_table(
+                    results_supply_demand.costs.sort_index(ascending=False),
+                    (
+                        results_supply_demand.costs_not_modified.sort_index(
+                            ascending=False
+                        )
+                        if results_supply_demand.costs_not_modified is not None
+                        else None
                     ),
+                    key="chain",
+                    key_suffix="demand_supply",
+                    titlestring=conversion_location_title,
+                    help_string=conversion_location_help,
+                    x_label_mapping=xlabel_mapping,
+                    xaxis_title="Conversion location",
+                    tool_version_color="blue",
+                    sorting="off",
                 )
 
-            supply = st.session_state["region"]
-            demand = st.session_state["country"]
-            xlabel_mapping = {
-                k: (
-                    f"{v}<br>conversion in "
-                    f"{supply if 'prod_in_supply' in k else demand}"
-                )
-                for k, v in blue_chain_labels.items()
-            }
-
+    if st.session_state["conversion_location"] == "supply":
+        with st.container(border=True):
             display_results_bar_and_table(
-                results_supply_demand.costs.sort_index(ascending=False),
-                (
-                    results_supply_demand.costs_not_modified.sort_index(ascending=False)
-                    if results_supply_demand.costs_not_modified is not None
-                    else None
+                results_per_region.costs,
+                results_per_region.costs_not_modified,
+                "region",
+                titlestring=read_markdown_file(
+                    "md/tab_blue_costs/figure_title_cost_per_region.md"
                 ),
-                key="chain",
-                key_suffix="demand_supply",
-                titlestring=conversion_location_title,
-                help_string=conversion_location_help,
-                x_label_mapping=xlabel_mapping,
-                xaxis_title="Conversion location",
+                help_string=read_markdown_file(
+                    "md/tab_blue_costs/figure_description_cost_per_region.md"
+                ),
                 tool_version_color="blue",
-                sorting="off",
             )
-
-    with st.container(border=True):
-        display_results_bar_and_table(
-            results_per_region.costs,
-            results_per_region.costs_not_modified,
-            "region",
-            titlestring=read_markdown_file(
-                "md/tab_blue_costs/figure_title_cost_per_region.md"
-            ),
-            help_string=read_markdown_file(
-                "md/tab_blue_costs/figure_description_cost_per_region.md"
-            ),
-            tool_version_color="blue",
-        )
 
     with st.container(border=True):
         with st.spinner("Please wait. Calculating results for different WACC values."):
