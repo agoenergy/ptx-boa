@@ -227,7 +227,7 @@ def get_blue_results(api, scenarios):
 def get_data(
     api, scenarios: list[ScenarioType], import_country, output_product, output_unit
 ):
-    with st.spinner("Calculating green results"):
+    with st.spinner("Calculating renewable based results"):
         costs_green_raw = get_green_results(
             api,
             scenarios=scenarios,
@@ -303,24 +303,8 @@ def content_costs_comparison(api):
         )
         st.subheader(title_string)
 
-        # --------------------------
-        # Display samples
-        # --------------------------
-        st.divider()
-        st.markdown("##### Option 1: Boxplot")
-        fig = create_figure(costs_blue_raw, costs_green_raw, green_display="box")
-        st.plotly_chart(fig)
-        st.divider()
-
-        st.markdown("##### Option 2: Violin")
-        fig = create_figure(costs_blue_raw, costs_green_raw, green_display="violin")
-        st.plotly_chart(fig)
-        st.divider()
-
-        st.markdown("##### Option 3: Rectangle")
         fig = create_figure(costs_blue_raw, costs_green_raw, green_display="bar")
         st.plotly_chart(fig)
-        # --------------------------
 
         with st.expander("**Data**"):
             data = pd.concat([costs_blue_raw, costs_green_raw])
@@ -330,7 +314,7 @@ def content_costs_comparison(api):
                 column_config={
                     "values": st.column_config.NumberColumn(
                         label="Total cost",
-                        format=f"%.1f {st.session_state['output_unit']}",
+                        format=f"%.0f {st.session_state['output_unit']}",
                     ),
                     "Ship use product as own fuel": st.column_config.TextColumn(),
                 },
@@ -359,7 +343,7 @@ def create_figure(
         ]
     }
     HOVERTEMPLATE = (
-        "<b>Total cost: %{y:.1f} "
+        "<b>Total cost: %{y:.0f} "
         + st.session_state["output_unit"]
         + "</b><br><br>"
         + "<br>".join(
@@ -445,6 +429,12 @@ def create_figure(
             ["min", "max"]
         )
 
+        hovertext = [
+            "<b>Renewable based cost range</b><br><br>"
+            f"{r.min:.0f} - {r.max:.0f} {st.session_state['output_unit']}"
+            for r in scenario_min_max.itertuples()
+        ]
+
         fig.add_trace(
             go.Bar(
                 x=scenario_min_max.index,
@@ -457,6 +447,8 @@ def create_figure(
                 width=0.4,
                 name=GREEN_NAME,
                 legendgroup="green",
+                hoverinfo="text",
+                hovertext=hovertext,
             )
         )
 
