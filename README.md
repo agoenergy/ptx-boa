@@ -77,22 +77,24 @@ ssh ptxboa
 VERSION=2.3.6
 APP=app
 PORT=9000
+MODE=prod
 
 # is preview?
 IS_PREVIEW=1
 if [[ "$IS_PREVIEW" == "1" ]]; then
   PORT=9001
-  APP=$APP-preview
-  VERSION=$VERSION-preview
+  APP="$APP-preview"
+  VERSION="$VERSION-preview"
+  MODE=preview
 fi
 
 # pull latest image from dockerhub
 docker pull wingechr/ptx-boa:$VERSION
 # stop and delete the currently running container "app"
-docker stop $APP
-docker rm $APP
+docker stop $APP || true
+docker rm $APP || true
 # start the latest image as "app"
-docker run -d -p $PORT:80 -v /home/ptxboa/ptx-boa_offline_optimization/optimization_cache:/mnt/cache --name $APP --restart unless-stopped wingechr/ptx-boa:$VERSION
+docker run -d -p $PORT:80 -v /home/ptxboa/ptx-boa_offline_optimization/optimization_cache:/mnt/cache -e PTXBOA_MODE=$MODE --name $APP --restart unless-stopped wingechr/ptx-boa:$VERSION
 
 # see logs
 docker logs --follow $APP
