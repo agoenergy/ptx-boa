@@ -644,7 +644,7 @@ class Process:
                 proc = self._link_in_main
                 flow_code = self.main_flow_code_in
 
-                # also for main flow in: # TODO: reuse code fromabove
+                # also for main flow in: # TODO: reuse code from above
                 res = results_emissions[proc]
                 if res:
                     g_co2_per_flow = res[em].co2_bound_in_product_per_output
@@ -741,10 +741,10 @@ class ProcessTransport(Process):
 
     def _get_parameter_data_dist(
         self,
-        source_region_is_target_reason: bool,
+        source_region_is_target_region: bool,
         data: ProcessDataType,
     ) -> float:
-        if source_region_is_target_reason:
+        if source_region_is_target_region:
             return 0
 
         dist_ship: float = data.get("DST-S-D", 0)  # type: ignore
@@ -788,7 +788,7 @@ class ProcessTransport(Process):
         )
 
         dist_transport = self._get_parameter_data_dist(
-            source_region_is_target_reason=(
+            source_region_is_target_region=(
                 parameter_values["source_region_code"]
                 == parameter_values["target_country_code"]
             ),
@@ -847,7 +847,7 @@ class ProcessTransport(Process):
             if flow_code not in {"BFUEL-L", self.main_flow_code_out}:
                 logger.error(
                     "CONV-OT in can only be bunker fuel or own fuel."
-                    "in transport input data: %s %s %s",
+                    "in transport input data: %s %s",
                     self,
                     flow_code,
                 )
@@ -1976,6 +1976,24 @@ def _create_graph(
             if process.is_css:
                 provider = None  # so we will use market process
 
+            if process.is_main_in_transport_segment:
+                # TODO
+                if flow_code != "BFUEL-L":
+                    if flow_code == process.main_flow_code_in:
+                        logger.warning(
+                            "Transport process uses market instead of main in: %s, %s",
+                            process,
+                            flow_code,
+                        )
+                    else:
+                        logger.error(
+                            "Transport process other than BFUEL-L or main flow in: %s",
+                            process,
+                        )
+                        # maybe raise Exception()?
+
+                provider = None  # so we will use market process
+
             if provider:
                 add_edge_or_create_market(
                     proc_provider=provider, proc_recipient=process, in_main=in_main
@@ -2044,6 +2062,19 @@ def _get_dropped_transport_steps(
             drop_steps = drop_steps | {"SHP"}
         else:
             drop_steps = drop_steps | {"SHP_OWN"}
+    elif transport == "NONE":
+        drop_steps = {
+            "PRE_SHP",
+            "POST_SHP",
+            "SHP",
+            "SHP_OWN",
+            "PRE_PPL",
+            "PPLS",
+            "PPL",
+            "PPLX",
+            "PPLR",
+            "POST_PPL",
+        }
     else:
         raise NotImplementedError(transport)
 

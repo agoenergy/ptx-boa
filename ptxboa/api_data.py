@@ -59,6 +59,21 @@ def _load_scenario_data(data_dir, scenario: str) -> pd.DataFrame:
     )
 
 
+@cache
+def _get_allowed_pipeline_routes() -> (
+    set[tuple[SourceRegionCodeType, TargetCountryCodeType]]
+):
+    # pipeline distances is the same in all scenarios, so we take the first one.
+    _df = _load_scenario_data(data_dir=DEFAULT_DATA_DIR, scenario=ScenarioValues[0])
+    return {
+        tuple(x)
+        for x in _df.loc[
+            _df["parameter_code"] == "DST-S-DP",
+            ["source_region_code", "target_country_code"],
+        ].values
+    }
+
+
 def _load_dimensions() -> dict[DimensionType, pd.DataFrame]:
     dimensions = {}
 
@@ -829,7 +844,12 @@ class DataHandler:
 
     @classmethod
     def correct_transport(
-        cls, transport: TransportType, ship_own_fuel: bool, chain: ChainType
+        cls,
+        transport: TransportType,
+        ship_own_fuel: bool,
+        chain: ChainType,
+        source_region_code: SourceRegionCodeType,
+        target_country_code: TargetCountryCodeType,
     ) -> tuple[TransportType, bool]:
         """Validate / correct transport."""
         chain_data = cls.dimensions["chain"].loc[chain]
@@ -837,8 +857,28 @@ class DataHandler:
             logger.warning("Cannot use Pipeline - switching to Ship: %s", chain)
             transport = "Ship"
 
+        # check if countries can pipeline
+        if (
+            transport == "Pipeline"
+            and (source_region_code, target_country_code)
+            not in _get_allowed_pipeline_routes()
+        ):
+            logger.warning(
+                "Cannot use Pipeline - switching to Ship: %s => %s",
+                source_region_code,
+                target_country_code,
+            )
+            transport = "Ship"
+
         if ship_own_fuel and (transport != "Ship" or not bool(chain_data["SHP_OWN"])):
             logger.warning("Cannot use ship_own_fuel.")
+            ship_own_fuel = False
+
+        source_region_is_target_region = (
+            source_region_code[:3] == target_country_code[:3]
+        )
+        if source_region_is_target_region:
+            transport = "NONE"
             ship_own_fuel = False
 
         return transport, ship_own_fuel

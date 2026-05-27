@@ -1136,8 +1136,8 @@ ResultCostType = Literal["CAPEX", "OPEX", "FLOW", "LC"]
 ResultCostValues: list[ResultCostType] = ["CAPEX", "OPEX", "FLOW", "LC"]
 
 
-TransportType = Literal["Ship", "Pipeline"]
-TransportValues: list[TransportType] = ["Ship", "Pipeline"]
+TransportType = Literal["Ship", "Pipeline", "NONE"]
+TransportValues: list[TransportType] = ["Ship", "Pipeline", "NONE"]
 
 
 OutputUnitType = Literal["USD/MWh", "USD/t"]

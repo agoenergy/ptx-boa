@@ -1,5 +1,7 @@
 """Content of blue Ptx subpage."""
 
+import os
+
 import streamlit as st
 import streamlit_antd_components as sac
 
@@ -15,6 +17,10 @@ from app.tab_blue_input_data import content_input_data
 from app.user_data import display_user_changes
 from app.user_data_from_file import download_user_data, upload_user_data
 from ptxboa import __version__
+
+MODE = os.getenv("PTXBOA_MODE", "prod").lower()
+IS_PREVIEW = MODE == "preview"
+IS_DEV = MODE == "dev"
 
 
 def blue_page():
@@ -51,8 +57,9 @@ def blue_page():
         "Emissions",
         "Input data",
         "Cost comparison to renewable based product",
-        "Debugging",
     )
+    if IS_PREVIEW or IS_DEV:
+        tabs = tabs + ("Debugging",)
 
     tabs_icons = {
         "Costs": "house-fill",
