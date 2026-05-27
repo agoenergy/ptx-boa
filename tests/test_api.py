@@ -431,26 +431,48 @@ class TestRegression(unittest.TestCase):
         """
         # import region == export country:
         country_region = "Brazil"
+        for transport in {"Ship", "Pipeline"}:
+            param_set = {
+                "transport": transport,  # will be ignored / changed to "NONE"
+                "ship_own_fuel": True,
+                "secproc_water": "Specific costs",
+                "secproc_co2": "Direct Air Capture (blue)",
+                "scenario": "2030 (medium)",
+                "res_gen": None,
+                "chain": "H2-G__ATR_91%__prod_in_supply",
+                "country": country_region,
+                "region": country_region,
+            }
+
+            chain_def, _tool_version_color, _optimize_flh = (
+                _translate_and_validate_user_settings(**param_set, optimize_flh=False)
+            )
+            self.assertEqual(chain_def.transport, "NONE")
+
+            # api.calculate should work
+            api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR)
+            df_costs = api.calculate(**param_set, optimize_flh=False).costs
+
+            # we should not get transportation costs
+            assert not any(
+                "transportation" in x.lower() for x in df_costs["process_type"]
+            )
+
+    def test_switch_pipeline(self):
+        """Switch to Ship if pipeline does not exist."""
         param_set = {
-            "transport": "Ship",  # will be ignored / changed to "NONE"
+            "transport": "Pipeline",
             "ship_own_fuel": True,
             "secproc_water": "Specific costs",
             "secproc_co2": "Direct Air Capture (blue)",
             "scenario": "2030 (medium)",
             "res_gen": None,
             "chain": "H2-G__ATR_91%__prod_in_supply",
-            "country": country_region,
-            "region": country_region,
+            "region": "Australia",
+            "country": "Germany",
         }
 
         chain_def, _tool_version_color, _optimize_flh = (
             _translate_and_validate_user_settings(**param_set, optimize_flh=False)
         )
-        self.assertEqual(chain_def.transport, "NONE")
-
-        # api.calculate should work
-        api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR)
-        df_costs = api.calculate(**param_set, optimize_flh=False).costs
-
-        # we should not get transportation costs
-        assert not any("transportation" in x.lower() for x in df_costs["process_type"])
+        self.assertEqual(chain_def.transport, "Ship")

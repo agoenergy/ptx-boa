@@ -449,11 +449,7 @@ def _translate_and_validate_user_settings(
     target_country_code = DataHandler.get_dimensions_parameter_code("country", country)
 
     transport, ship_own_fuel = DataHandler.correct_transport(
-        transport,
-        ship_own_fuel,
-        chain,
-        # if country code of source == country code of target: no transport
-        no_transport=source_region_code[:3] == target_country_code[:3],
+        transport, ship_own_fuel, chain, source_region_code, target_country_code
     )
 
     # CSS defined in chain

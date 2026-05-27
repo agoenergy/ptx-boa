@@ -2042,14 +2042,14 @@ def _get_dropped_transport_steps(
 ) -> set[ProcessStepType | str]:
     """If shipping: remove pipeline (and pre/post), and vice versa."""
     # TODO: remove hard coded
-    if transport == "Pipeline" or transport == "NONE":
+    if transport == "Pipeline":
         drop_steps = {
             "PRE_SHP",
             "POST_SHP",
             "SHP",
             "SHP_OWN",
         }
-    elif transport == "Ship" or transport == "NONE":
+    elif transport == "Ship":
         drop_steps = {
             "PRE_PPL",
             "PPLS",
@@ -2062,6 +2062,19 @@ def _get_dropped_transport_steps(
             drop_steps = drop_steps | {"SHP"}
         else:
             drop_steps = drop_steps | {"SHP_OWN"}
+    elif transport == "NONE":
+        drop_steps = {
+            "PRE_SHP",
+            "POST_SHP",
+            "SHP",
+            "SHP_OWN",
+            "PRE_PPL",
+            "PPLS",
+            "PPL",
+            "PPLX",
+            "PPLR",
+            "POST_PPL",
+        }
     else:
         raise NotImplementedError(transport)
 
