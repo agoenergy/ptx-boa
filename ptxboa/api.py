@@ -445,8 +445,15 @@ def _translate_and_validate_user_settings(
     if transport not in TransportValues:
         logger.error(f"Invalid choice for transport: {transport}")
 
+    source_region_code = DataHandler.get_dimensions_parameter_code("region", region)
+    target_country_code = DataHandler.get_dimensions_parameter_code("country", country)
+
     transport, ship_own_fuel = DataHandler.correct_transport(
-        transport, ship_own_fuel, chain
+        transport,
+        ship_own_fuel,
+        chain,
+        # if country code of source == country code of target: no transport
+        no_transport=source_region_code[:3] == target_country_code[:3],
     )
 
     # CSS defined in chain
@@ -492,10 +499,8 @@ def _translate_and_validate_user_settings(
         chain_name=chain,
         secondary_processes=secondary_processes,
         process_res=DataHandler.get_dimensions_parameter_code("res_gen", res_gen),  # type: ignore # noqa
-        source_region_code=DataHandler.get_dimensions_parameter_code("region", region),  # type: ignore # noqa
-        target_country_code=DataHandler.get_dimensions_parameter_code(  # type: ignore # noqa
-            "country", country
-        ),
+        source_region_code=source_region_code,  # type: ignore
+        target_country_code=target_country_code,  # type: ignore
         transport=transport,
         ship_own_fuel=ship_own_fuel,
     )

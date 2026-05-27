@@ -7,8 +7,8 @@ from tempfile import TemporaryDirectory
 
 import numpy as np
 
-from ptxboa.api import PtxboaAPI
-from ptxboa.api_data import DataHandler
+from ptxboa.api import PtxboaAPI, _translate_and_validate_user_settings
+from ptxboa.api_data import DEFAULT_DATA_DIR, DataHandler
 from ptxboa.utils import annuity
 from tests.utils import assert_deep_equal_approx
 
@@ -419,3 +419,38 @@ class TestRegression(unittest.TestCase):
             df.index.is_unique,
             df.loc[df.index.duplicated()],
         )
+
+    def test_issue_823_no_transport(self):
+        """No transportation cost when supply_country == demand_country.
+
+        When transport distance is zero.
+        (e.g. supply_country = Brazil & demand_country = Brazil) there are still
+        costs associated with transportation in the results.
+        This is due to the pre- and post-transportation conversion processes,
+        which get calculated even though they are not necessary.
+        """
+        # import region == export country:
+        country_region = "Brazil"
+        param_set = {
+            "transport": "Ship",  # will be ignored / changed to "NONE"
+            "ship_own_fuel": True,
+            "secproc_water": "Specific costs",
+            "secproc_co2": "Direct Air Capture (blue)",
+            "scenario": "2030 (medium)",
+            "res_gen": None,
+            "chain": "H2-G__ATR_91%__prod_in_supply",
+            "country": country_region,
+            "region": country_region,
+        }
+
+        chain_def, _tool_version_color, _optimize_flh = (
+            _translate_and_validate_user_settings(**param_set, optimize_flh=False)
+        )
+        self.assertEqual(chain_def.transport, "NONE")
+
+        # api.calculate should work
+        api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR)
+        df_costs = api.calculate(**param_set, optimize_flh=False).costs
+
+        # we should not get transportation costs
+        assert not any("transportation" in x.lower() for x in df_costs["process_type"])

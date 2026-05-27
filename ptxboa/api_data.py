@@ -829,7 +829,11 @@ class DataHandler:
 
     @classmethod
     def correct_transport(
-        cls, transport: TransportType, ship_own_fuel: bool, chain: ChainType
+        cls,
+        transport: TransportType,
+        ship_own_fuel: bool,
+        chain: ChainType,
+        no_transport: bool = False,
     ) -> tuple[TransportType, bool]:
         """Validate / correct transport."""
         chain_data = cls.dimensions["chain"].loc[chain]
@@ -839,6 +843,10 @@ class DataHandler:
 
         if ship_own_fuel and (transport != "Ship" or not bool(chain_data["SHP_OWN"])):
             logger.warning("Cannot use ship_own_fuel.")
+            ship_own_fuel = False
+
+        if no_transport:
+            transport = "NONE"
             ship_own_fuel = False
 
         return transport, ship_own_fuel
