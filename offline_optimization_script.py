@@ -94,39 +94,62 @@ def generate_param_sets(
         )
 
     if regions is None:
-        regions = api.get_dimension("region")["region_name"].tolist()
+        regions = api.get_dimension("region", tool_version_color="green")[
+            "region_name"
+        ].tolist()
     else:
         check_all_params_defined(
-            regions, api.get_dimension("region")["region_name"].tolist()
+            regions,
+            api.get_dimension("region", tool_version_color="green")[
+                "region_name"
+            ].tolist(),
         )
 
     if chains is None:
         chains = [
             c
-            for c in api.get_dimension("chain").index.tolist()
+            for c in api.get_dimension(
+                "chain", tool_version_color="green"
+            ).index.tolist()
             if not c.endswith("+ reconv. to H2")
         ]
     else:
-        check_all_params_defined(chains, api.get_dimension("chain").index.tolist())
+        check_all_params_defined(
+            chains,
+            api.get_dimension("chain", tool_version_color="green").index.tolist(),
+        )
 
     if secprocs_water is None:
-        secprocs_water = api.get_dimension("secproc_water").index.tolist()
+        secprocs_water = api.get_dimension(
+            "secproc_water", tool_version_color="green"
+        ).index.tolist()
     else:
         check_all_params_defined(
-            secprocs_water, api.get_dimension("secproc_water").index.tolist()
+            secprocs_water,
+            api.get_dimension(
+                "secproc_water", tool_version_color="green"
+            ).index.tolist(),
         )
 
     if secprocs_co2 is None:
-        secprocs_co2 = api.get_dimension("secproc_co2").index.tolist()
+        secprocs_co2 = api.get_dimension(
+            "secproc_co2", tool_version_color="green"
+        ).index.tolist()
     else:
         check_all_params_defined(
-            secprocs_co2, api.get_dimension("secproc_co2").index.tolist()
+            secprocs_co2,
+            api.get_dimension("secproc_co2", tool_version_color="green").index.tolist(),
         )
 
     if res_gens is None:
-        res_gens = api.get_dimension("res_gen").index.tolist()
+        res_gens = api.get_dimension(
+            "res_gen", tool_version_color="green"
+        ).index.tolist()
     else:
-        check_all_params_defined(res_gens, api.get_dimension("res_gen").index.tolist())
+        check_all_params_defined(
+            res_gens,
+            api.get_dimension("res_gen", tool_version_color="green").index.tolist(),
+        )
 
     param_sets = []
     for region in regions:
@@ -229,12 +252,7 @@ def main(
         "w",
         encoding="utf-8",
     ) as file:
-        json.dump(
-            results,
-            file,
-            indent=2,
-            ensure_ascii=False,
-        )
+        json.dump(results, file, indent=2, ensure_ascii=False)
 
 
 if __name__ == "__main__":
