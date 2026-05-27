@@ -874,10 +874,10 @@ class DataHandler:
             logger.warning("Cannot use ship_own_fuel.")
             ship_own_fuel = False
 
-        source_region_is_target_reason = (
+        source_region_is_target_region = (
             source_region_code[:3] == target_country_code[:3]
         )
-        if source_region_is_target_reason:
+        if source_region_is_target_region:
             transport = "NONE"
             ship_own_fuel = False
 
