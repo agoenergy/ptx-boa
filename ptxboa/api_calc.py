@@ -741,10 +741,10 @@ class ProcessTransport(Process):
 
     def _get_parameter_data_dist(
         self,
-        source_region_is_target_reason: bool,
+        source_region_is_target_region: bool,
         data: ProcessDataType,
     ) -> float:
-        if source_region_is_target_reason:
+        if source_region_is_target_region:
             return 0
 
         dist_ship: float = data.get("DST-S-D", 0)  # type: ignore
@@ -788,7 +788,7 @@ class ProcessTransport(Process):
         )
 
         dist_transport = self._get_parameter_data_dist(
-            source_region_is_target_reason=(
+            source_region_is_target_region=(
                 parameter_values["source_region_code"]
                 == parameter_values["target_country_code"]
             ),
@@ -2062,6 +2062,19 @@ def _get_dropped_transport_steps(
             drop_steps = drop_steps | {"SHP"}
         else:
             drop_steps = drop_steps | {"SHP_OWN"}
+    elif transport == "NONE":
+        drop_steps = {
+            "PRE_SHP",
+            "POST_SHP",
+            "SHP",
+            "SHP_OWN",
+            "PRE_PPL",
+            "PPLS",
+            "PPL",
+            "PPLX",
+            "PPLR",
+            "POST_PPL",
+        }
     else:
         raise NotImplementedError(transport)
 

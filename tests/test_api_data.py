@@ -551,8 +551,11 @@ def test_validate_chains(
         # we want to validate the current chains
     )
 
-    transport, ship_own_fuel = DataHandler.correct_transport(
-        transport, ship_own_fuel, chain
+    source_region_code = "ESP"
+    target_country_code = "DEU"
+
+    transport, ship_own_fuel = dh.correct_transport(
+        transport, ship_own_fuel, chain, source_region_code, target_country_code
     )
 
     # _validate_process_chain called inside here
@@ -561,8 +564,8 @@ def test_validate_chains(
         secondary_processes={},
         chain_name=chain,
         process_res=process_res,
-        source_region_code="ESP",
-        target_country_code="DEU",
+        source_region_code=source_region_code,  # type: ignore
+        target_country_code=target_country_code,  # type: ignore
         transport=transport,
         ship_own_fuel=ship_own_fuel,
     )
