@@ -10,6 +10,7 @@ from app.context_data import load_context_data
 from app.layout_elements import display_footer
 from app.ptxboa_functions import read_markdown_file
 from app.sidebar import make_sidebar_green
+from app.tab_debugging import content_debugging
 from app.tab_green_certification_schemes import content_certification_schemes
 from app.tab_green_costs import content_costs
 from app.tab_green_country_fact_sheets import content_country_fact_sheets
@@ -22,7 +23,10 @@ from app.tab_green_optimization import content_optimization
 from app.tab_green_sustainability import content_sustainability
 from app.user_data import display_user_changes
 from app.user_data_from_file import download_user_data, upload_user_data
+from app.utils import get_app_mode
 from ptxboa import __version__
+
+MODE = get_app_mode()
 
 
 @st.cache_data()
@@ -81,6 +85,8 @@ def green_page():
         "Sustainability",
         "Literature",
     )
+    if MODE in {"dev", "preview"}:
+        tabs = tabs + ("Debugging",)
 
     tabs_icons = {
         "Costs": "house-fill",
@@ -150,5 +156,8 @@ def green_page():
 
     if st.session_state[st.session_state["tab_key"]] == "Optimization":
         content_optimization(api)
+
+    if st.session_state[st.session_state["tab_key"]] == "Debugging":
+        content_debugging(api, tool_version_color="green")
 
     display_footer(tool_version_color="green")
