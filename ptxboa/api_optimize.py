@@ -491,14 +491,6 @@ class PtxOpt:
 
         # also add flh_opt_hash if it exists so we can
         # retrieve the network later
-        if use_cache:
-            data["flh_opt_hash"] = {
-                "hash_md5": hash_sum,
-                "filepath": hash_filepath,
-            }
-        else:
-            data["flh_opt_hash"] = {
-                "hash_md5": hash_sum,
-            }
+        data["flh_opt_hash"] = {"hash_md5": hash_sum}
 
         return data
