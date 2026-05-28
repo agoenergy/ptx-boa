@@ -14,6 +14,7 @@ from ptxboa import logger
 from ptxboa.api_data import DataHandler
 from ptxboa.static import ProcessStepValues  # must be sorted
 from ptxboa.static import (
+    ChainType,
     EmissionType,
     FlowCodeType,
     ParameterCodeType,
@@ -1041,11 +1042,8 @@ class PtxCalc:
         if chain_color == "blue":
             initial_step = "NG_PROD"
             first_process_code = "NG-PROD#B"
-            # currently, we can have secondary processes only either inexport or import
-            production_in_import = (
-                "in_demand" in chain_def.chain_name
-            )  # TODO: ugly / unstable
-            if production_in_import:
+            # currently, we can have secondary processes only either in export or import
+            if _production_in_demand_country(chain_def.chain_name):
                 secondary_process_codes_import = secondary_process_codes_export
                 secondary_process_codes_export = []
         else:
@@ -2087,3 +2085,8 @@ def _add_step_and_code(process: Process, data: ProcessDataType) -> ProcessDataTy
         "step": process.process_step,
     }
     return result
+
+
+def _production_in_demand_country(chain_name: ChainType) -> bool:
+    # TODO: ugly / unstable
+    return "in_demand" in chain_name
