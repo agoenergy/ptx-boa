@@ -228,7 +228,9 @@ def network_green_iron(api) -> Tuple[pypsa.Network, dict, dict]:
     return n, metadata, settings
 
 
-@pytest.mark.xfail  # FIXME
+@pytest.mark.xfail(
+    reason="Electricity and H2 storage now create losses that change costs"
+)
 def test_issue_564(network_green_iron, api: PtxboaAPI):
     # calculate costs from optimization tab:
     n, metadata, settings = network_green_iron
@@ -343,6 +345,9 @@ def test_issue_564(network_green_iron, api: PtxboaAPI):
 
     # assert that differences between costs and opt tab are zero:
     # this currently fails
+
+    print(res_costs_agg["diff"])
+
     for i in res_costs_agg["diff"]:
         # higher tolerance (1.0) because not exacly equal
         assert i == pytest.approx(0, abs=1.0)
