@@ -8,6 +8,8 @@ from ptxboa.static import (
     DataQueryParameterType,
     EmissionType,
     FlowCodeType,
+    OutputUnitEmissionsType,
+    OutputUnitType,
     ParameterCodeType,
     ProcessCodeResType,
     ProcessCodeType,
@@ -47,6 +49,8 @@ class PtxCalcResult:
     df_results_cost: pd.DataFrame
     df_results_emissions_e_g_co2e: pd.DataFrame
     df_results_emissions_m_g_co2e: pd.DataFrame
+    unit_cost: OutputUnitType
+    unit_emissions: OutputUnitEmissionsType
     _internal_process_data: Optional[list] = None
     _internal_data: Optional[dict] = None
 
