@@ -1295,10 +1295,10 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "process_step": "MARKET:IMPORT:CH4-G",
                 },
                 {
-                    "costs": {"FLOW": 265.57269025},
+                    "costs": {"FLOW": 0.26557269},
                     "flows": {"main_flow_out": 1.36},
                     "is_in_import_segment": True,
-                    "parameter": {"SPECCOST": {"IOP-S": 195.27403695}},
+                    "parameter": {"SPECCOST": {"IOP-S": 0.19527404}},
                     "process_code": "IOP-S",
                     "process_step": "MARKET:IMPORT:IOP-S",
                 },
