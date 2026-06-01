@@ -641,6 +641,8 @@ class DataHandler:
             "region",
             "country",
             "process",
+            "secproc_co2",
+            "secproc_water",
         }:
             if tool_version_color == "blue":
                 df = df.loc[df["is_blue"].astype(bool)]

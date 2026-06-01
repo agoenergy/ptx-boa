@@ -151,6 +151,13 @@ def generate_param_sets(
             api.get_dimension("res_gen", tool_version_color="green").index.tolist(),
         )
 
+    print("regions:", len(regions))
+    print("scenarios:", len(scenarios))
+    print("chains:", len(chains))
+    print("res_gen:", len(api.get_dimension("res_gen")))
+    print("secprocs_co2:", len(secprocs_co2))
+    print("secprocs_water:", len(secprocs_water))
+
     param_sets = []
     for region in regions:
         # only get availabe technologies for this region
