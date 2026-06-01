@@ -49,8 +49,6 @@ class PtxCalcResult:
     df_results_cost: pd.DataFrame
     df_results_emissions_e_g_co2e: pd.DataFrame
     df_results_emissions_m_g_co2e: pd.DataFrame
-    unit_cost: OutputUnitType
-    unit_emissions: OutputUnitEmissionsType
     _internal_process_data: Optional[list] = None
     _internal_data: Optional[dict] = None
 
@@ -61,6 +59,8 @@ class ApiCalculateResult:
     costs: pd.DataFrame
     emissions_t_co2e: pd.DataFrame
     emission_mass_t_co2e: pd.DataFrame
+    unit_cost: OutputUnitType
+    unit_emissions: OutputUnitEmissionsType = "NA"
     _internal_process_data: Optional[list] = None
 
 

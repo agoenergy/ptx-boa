@@ -240,6 +240,8 @@ class PtxboaAPI:
         metadata = {"flh_opt_hash": data.get("flh_opt_hash")}  # does not always exist
 
         return ApiCalculateResult(
+            unit_cost=output_unit,
+            unit_emissions="NA",  # TODO
             metadata=metadata,
             costs=ptxcalc_result.df_results_cost,
             emissions_t_co2e=(
