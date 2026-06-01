@@ -439,8 +439,8 @@ def content_emissions(api: PtxboaAPI):
                     emissions_included=st.session_state["emissions_included"],
                     parameter_list=pd.Series(
                         [
-                            "CO2 from fossil source",
-                            "CO2 from sustainable source",
+                            "CO2 from other industrial sources",
+                            "CO2 from hard-to-abate or sustainable sources",
                             "Direct Air Capture (blue)",
                         ]
                     ),
@@ -468,8 +468,8 @@ def content_emissions(api: PtxboaAPI):
                 data_type="emissions",
                 x_label_mapping={
                     "Direct Air Capture (blue)": "Direct Air Capture",
-                    "CO2 from fossil source": "CO₂ from other industrial sources",
-                    "CO2 from sustainable source": "CO₂ from hard-to-abate or sustainable sources",  # noqa E501
+                    "CO2 from other industrial sources": "CO₂ from other industrial sources",  # noqa: E501
+                    "CO2 from hard-to-abate or sustainable sources": "CO₂ from hard-to-abate or sustainable sources",  # noqa: E501
                 },
                 xaxis_title="Secondary CO₂ source",
                 sorting="off",

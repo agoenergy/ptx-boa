@@ -425,7 +425,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                 "res_gen": None,
                 "transport": "Pipeline",
                 "ship_own_fuel": False,
-                "secproc_co2": "CO2 from fossil source",
+                "secproc_co2": "CO2 from other industrial sources",
                 "secproc_water": "Sea Water desalination",
             },
             [
@@ -1582,7 +1582,7 @@ def test_emissions_issue_775():
             ],
             "demand_supply": "demand",
             "mass_emission": "emission",
-            "secproc_co2": "CO2 from fossil source",
+            "secproc_co2": "CO2 from other industrial sources",
         },
         {
             "co2_bound_in_product": [
@@ -1600,7 +1600,7 @@ def test_emissions_issue_775():
             ],
             "demand_supply": "demand",
             "mass_emission": "mass",
-            "secproc_co2": "CO2 from fossil source",
+            "secproc_co2": "CO2 from other industrial sources",
         },
         {
             "co2_bound_in_product": [
@@ -1616,7 +1616,7 @@ def test_emissions_issue_775():
             ],
             "demand_supply": "supply",
             "mass_emission": "emission",
-            "secproc_co2": "CO2 from fossil source",
+            "secproc_co2": "CO2 from other industrial sources",
         },
         {
             "co2_bound_in_product": [
@@ -1632,7 +1632,7 @@ def test_emissions_issue_775():
             ],
             "demand_supply": "supply",
             "mass_emission": "mass",
-            "secproc_co2": "CO2 from fossil source",
+            "secproc_co2": "CO2 from other industrial sources",
         },
         {
             "co2_bound_in_product": [
@@ -1649,7 +1649,7 @@ def test_emissions_issue_775():
             ],
             "demand_supply": "demand",
             "mass_emission": "emission",
-            "secproc_co2": "CO2 from sustainable source",
+            "secproc_co2": "CO2 from hard-to-abate or sustainable sources",
         },
         {
             "co2_bound_in_product": [
@@ -1667,7 +1667,7 @@ def test_emissions_issue_775():
             ],
             "demand_supply": "demand",
             "mass_emission": "mass",
-            "secproc_co2": "CO2 from sustainable source",
+            "secproc_co2": "CO2 from hard-to-abate or sustainable sources",
         },
         {
             "co2_bound_in_product": [
@@ -1682,7 +1682,7 @@ def test_emissions_issue_775():
             ],
             "demand_supply": "supply",
             "mass_emission": "emission",
-            "secproc_co2": "CO2 from sustainable source",
+            "secproc_co2": "CO2 from hard-to-abate or sustainable sources",
         },
         {
             "co2_bound_in_product": [
@@ -1698,7 +1698,7 @@ def test_emissions_issue_775():
             ],
             "demand_supply": "supply",
             "mass_emission": "mass",
-            "secproc_co2": "CO2 from sustainable source",
+            "secproc_co2": "CO2 from hard-to-abate or sustainable sources",
         },
         {
             "co2_bound_in_product": [
