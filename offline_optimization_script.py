@@ -30,6 +30,7 @@ import json
 import logging
 import os
 import re
+from collections import defaultdict
 from pathlib import Path
 from typing import Literal
 
@@ -263,9 +264,6 @@ def main(
         json.dump(results, file, indent=2, ensure_ascii=False)
 
     return results
-
-
-from collections import defaultdict
 
 
 def find_hashsums_in_cache(cache_dir: str) -> dict[str, list[str]]:
