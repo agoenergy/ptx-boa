@@ -350,7 +350,6 @@ if __name__ == "__main__":
         help="only print number of parameter variations and quit.",
     )
     parser.add_argument(
-        "-n",
         "--delete_unused",
         action="store_true",
         help="delete unused files from cache.",
