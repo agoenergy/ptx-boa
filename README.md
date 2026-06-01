@@ -48,6 +48,17 @@ directory:
 pytest
 ```
 
+To start the app locally, run the following command:
+```
+streamlit run ptxboa_streamlit.py
+```
+
+To start the app with development mode, run the following command. 
+Development mode has a debugging tab in blue version, and no flh optimization in blue version.
+```
+set "PTXBOA_MODE=dev" & streamlit run ptxboa_streamlit.py
+```
+
 ### Download optimization cache for local development
 
 ```bash
@@ -74,7 +85,7 @@ scp -r ptxboa2:ptx-boa_offline_optimization/optimization_cache/* .
 ssh ptxboa
 
 # set variables
-VERSION=2.3.7
+VERSION=2.3.8
 APP=app
 PORT=9000
 MODE=prod

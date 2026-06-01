@@ -512,8 +512,6 @@ def test_get_calculation_data_w_opt(ptxdata_dir, scenario, kwargs, request):
         },
     }
 
-    del result["flh_opt_hash"]["filepath"]  # dont test this
-
     assert_deep_equal_approx(exp_result, result, allow_new_dict_items=True)
 
 

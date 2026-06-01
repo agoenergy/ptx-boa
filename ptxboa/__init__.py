@@ -5,7 +5,7 @@ import os
 import warnings
 from pathlib import Path
 
-__version__ = "2.3.7"
+__version__ = "2.3.8"
 
 KEY_SEPARATOR = ","
 

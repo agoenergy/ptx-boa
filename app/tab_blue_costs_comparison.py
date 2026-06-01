@@ -19,8 +19,16 @@ from app.ptxboa_functions import (
     calculate_results_list_blue,
     read_markdown_file,
 )
+from app.utils import get_app_mode
 from ptxboa.api import PtxboaAPI
 from ptxboa.static import OutputUnitType, ScenarioType, TargetCountryNameType
+
+MODE = get_app_mode()
+
+OPTIMIZE_FLH = MODE in {
+    "prod",
+    # "preview",  # TODO: uncomment when cache ready
+}
 
 GREEN_COLOR = "#2fac66"
 BLUE_COLOR = "#1E83B3"
@@ -172,7 +180,7 @@ def get_green_results(
                 costs = calculate_cached(
                     _api,
                     user_data=None,  # we do not respect user data here
-                    optimize_flh=False,  # TODO revert to True when ready
+                    optimize_flh=OPTIMIZE_FLH,
                     use_user_data_for_optimize_flh=False,
                     output_unit=output_unit,
                     tool_version_color="green",
@@ -276,7 +284,7 @@ def content_costs_comparison(api):
         if st.session_state["country"] in get_no_green_ptx_import_countries(api):
             is_invalid = True
             st.warning(
-                f"Renewable based cost data not available for "
+                f"Renewable based cost data not available for demand country "
                 f"{st.session_state['country']}. No comparison possible."
             )
         if st.session_state["output_product"] == "STL-S":

@@ -7,6 +7,8 @@ import pandas as pd
 import streamlit as st
 
 from app.ptxboa_functions import calculate_cached
+from ptxboa.api import PtxboaAPI
+from ptxboa.static import ToolVersionColorType
 from ptxboa.static._type_defs import ApiCalculateResult
 
 Mode = Literal["markdown", "streamlit_app"]
@@ -124,7 +126,7 @@ def debug_report(
     return None
 
 
-def content_debugging(api: Any) -> None:
+def content_debugging(api: PtxboaAPI, tool_version_color: ToolVersionColorType) -> None:
     required_keys = [
         "chain",
         "country",
@@ -183,7 +185,7 @@ def content_debugging(api: Any) -> None:
     st.download_button(
         "Download debug report as markdown",
         data=debug_report_md,
-        file_name="debug_log.md",
+        file_name=f"debug_log_{tool_version_color}.md",
         mime="text/markdown",
     )
 
