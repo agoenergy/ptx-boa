@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Layout elements that get reused in several tabs."""
 
+import logging
 from typing import Literal
 
 import pandas as pd
@@ -49,7 +50,7 @@ def display_results_bar_and_table(
     if data_type == "emissions":
         min_10_label = "Lowest 10"
         if output_unit is None:
-            output_unit: str = st.session_state["emissions_output_unit"]
+            logging.error(f"output_unit must not be None for {data_type=}")
 
     if sorting == "off":
         sort_ascending = False

@@ -145,6 +145,7 @@ def plot_costs_on_map(
 def plot_emissions_on_map(
     api: PtxboaAPI,
     aggregated_results: pd.DataFrame,
+    unit: str,
     color_col: str = "Total",
 ) -> go.Figure:
     """
@@ -170,14 +171,12 @@ def plot_emissions_on_map(
         color_col=color_col,
         custom_data_func=_make_per_column_hoverdata,
         custom_data_func_kwargs={
-            "unit": st.session_state["emissions_output_unit"],
-            "float_precision": 1,
+            "unit": unit,
+            "float_precision": 0,
         },
     )
 
-    return _set_map_layout(
-        fig, colorbar_title=st.session_state["emissions_output_unit"]
-    )
+    return _set_map_layout(fig, colorbar_title=unit)
 
 
 def plot_input_data_on_map(

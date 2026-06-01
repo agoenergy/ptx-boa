@@ -554,10 +554,6 @@ def unit_toggle_blue():
 
     st.session_state["output_unit"] = unit
 
-    st.session_state["emissions_output_unit"] = (
-        st.session_state["output_unit"].replace("USD", "gCO₂eq").replace("MWh", "GJ")
-    )
-
 
 def allow_pipeline_toggle(default_value: bool):
     allow_pipeline = st.toggle(
