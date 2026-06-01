@@ -29,6 +29,7 @@ import itertools
 import json
 import logging
 import os
+import re
 from pathlib import Path
 from typing import Literal
 
@@ -161,7 +162,7 @@ def generate_param_sets(
     param_sets = []
     for region in regions:
         # only get availabe technologies for this region
-        res_gens_region = [x for x in res_gens if x in api.get_res_technologies(region)]
+        res_gens_region = [x for x in res_gens if x in api.get_res_technologies(region)]  # type: ignore # noqa
         param_sets += [
             p | static_params | {"region": region}
             for p in product_dict(
@@ -177,11 +178,11 @@ def generate_param_sets(
 
 
 def main(
-    cache_dir: Path = DEFAULT_CACHE_DIR,
-    out_dir=None,
+    cache_dir: str,
+    out_dir: str | None = None,
     loglevel: Literal["debug", "info", "warning", "error"] = "info",
-    index_from: int = None,
-    index_to: int = None,
+    index_from: int | None = None,
+    index_to: int | None = None,
     count_only: bool = False,
     scenarios: list[str] | None = None,
     regions: list[str] | None = None,
@@ -189,14 +190,14 @@ def main(
     secprocs_water: list[str] | None = None,
     secprocs_co2: list[str] | None = None,
     res_gens: list[str] | None = None,
-):
-    cache_dir = Path(cache_dir)
-    cache_dir.mkdir(exist_ok=True)
+) -> list[dict]:
+    cache_path = Path(cache_dir)
+    cache_path.mkdir(exist_ok=True)
 
-    out_dir = Path(out_dir) if out_dir else cache_dir
-    out_dir.mkdir(exist_ok=True)
+    out_path = Path(out_dir or cache_dir)
+    out_path.mkdir(exist_ok=True)
 
-    api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR, cache_dir=cache_dir)
+    api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR, cache_dir=cache_path)
 
     param_sets = generate_param_sets(
         api,
@@ -210,7 +211,7 @@ def main(
 
     if count_only:
         print(f"Number of parameter variations: {len(param_sets)}")
-        return
+        return []
 
     # filter for batch
     index_from = index_from or 0
@@ -226,11 +227,11 @@ def main(
         datefmt=datefmt,
         handlers=[
             logging.FileHandler(
-                cache_dir / f"offline_optimization_script.{index_from}-{index_to}.log"
+                cache_path / f"offline_optimization_script.{index_from}-{index_to}.log"
             ),
         ],
     )
-    logging.info(f"starting offline optimization script with cache_dir: {cache_dir}")
+    logging.info(f"starting offline optimization script with cache_dir: {cache_path}")
 
     results = []  # save results
     for params in progress.bar.Bar(
@@ -255,11 +256,50 @@ def main(
 
     # save result
     with open(
-        out_dir / f"offline_optimization.results.{index_from}-{index_to}.json",
+        out_path / f"offline_optimization.results.{index_from}-{index_to}.json",
         "w",
         encoding="utf-8",
     ) as file:
         json.dump(results, file, indent=2, ensure_ascii=False)
+
+    return results
+
+
+def find_hashsums_in_cache(cache_dir: str) -> dict[str, list[str]]:
+    result = {}
+    for base, _ds, fs in os.walk(cache_dir):
+        for f in fs:
+            path = os.path.join(base, f)
+            if not re.match(r"^[0-9a-z]{32}\.pickle", f):
+                logging.warning("Ignoring file: %s", path)
+                continue
+            md5 = f[:32]
+            if md5 not in result:
+                result[md5] = []
+            result[md5].append(path)
+    return result
+
+
+def delete_unused(results: list[dict], cache_dir: str):
+    used_md5s = {x["result"]["hash_md5"] for x in results}
+    existing_files = find_hashsums_in_cache(cache_dir)
+    missing_md5s = used_md5s - set(existing_files)
+    # missing: should not happen if we ran over all combinations
+    if missing_md5s:
+        raise Exception(f"Missing md5s: {len(missing_md5s)}")
+
+    unused_md5s = set(existing_files) - used_md5s
+    if unused_md5s:
+        # ask for confirmation
+        r = input(f"Delete {len(unused_md5s)} of {len(existing_files)} hashs? [y|n]: ")
+        if r != "y":
+            return
+        for md5 in unused_md5s:
+            for path in existing_files[md5]:
+                print("Deleting", path)
+                # os.remove(path) # noqa
+
+    print("Finished")
 
 
 if __name__ == "__main__":
@@ -308,6 +348,12 @@ if __name__ == "__main__":
         "--count_only",
         action="store_true",
         help="only print number of parameter variations and quit.",
+    )
+    parser.add_argument(
+        "-n",
+        "--delete_unused",
+        action="store_true",
+        help="delete unused files from cache.",
     )
     parser.add_argument(
         "--scenarios",
@@ -371,4 +417,16 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    main(**vars(args))
+    kwargs = vars(args)
+
+    if kwargs.pop("delete_unused"):
+        # run for all combinations
+        results = main(
+            cache_dir=kwargs["cache_dir"],
+            out_dir=kwargs["out_dir"],
+            loglevel=kwargs["loglevel"],
+        )
+        delete_unused(results, cache_dir=kwargs["cache_dir"])
+
+    else:
+        main(**kwargs)
