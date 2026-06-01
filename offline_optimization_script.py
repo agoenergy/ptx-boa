@@ -297,7 +297,7 @@ def delete_unused(results: list[dict], cache_dir: str):
         for md5 in unused_md5s:
             for path in existing_files[md5]:
                 print("Deleting", path)
-                # os.remove(path) # noqa
+                os.remove(path)
 
     print("Finished")
 
