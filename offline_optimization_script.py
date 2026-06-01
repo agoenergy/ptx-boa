@@ -267,6 +267,7 @@ def main(
 
 from collections import defaultdict
 
+
 def find_hashsums_in_cache(cache_dir: str) -> dict[str, list[str]]:
     result = defaultdict(list)
     for base, _dirs, files in os.walk(cache_dir):
