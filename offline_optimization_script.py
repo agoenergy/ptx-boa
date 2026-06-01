@@ -265,17 +265,17 @@ def main(
     return results
 
 
+from collections import defaultdict
+
 def find_hashsums_in_cache(cache_dir: str) -> dict[str, list[str]]:
-    result = {}
-    for base, _ds, fs in os.walk(cache_dir):
-        for f in fs:
+    result = defaultdict(list)
+    for base, _dirs, files in os.walk(cache_dir):
+        for f in files:
             path = os.path.join(base, f)
             if not re.match(r"^[0-9a-z]{32}\.pickle", f):
                 logging.warning("Ignoring file: %s", path)
                 continue
             md5 = f[:32]
-            if md5 not in result:
-                result[md5] = []
             result[md5].append(path)
     return result
 
