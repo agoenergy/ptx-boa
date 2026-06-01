@@ -310,7 +310,7 @@ if __name__ == "__main__":
         help="only print number of parameter variations and quit.",
     )
     parser.add_argument(
-        "-scenarios",
+        "--scenarios",
         action="append",
         default=None,
         type=str,
@@ -320,7 +320,7 @@ if __name__ == "__main__":
         ),
     )
     parser.add_argument(
-        "-regions",
+        "--regions",
         action="append",
         default=None,
         type=str,
@@ -330,7 +330,7 @@ if __name__ == "__main__":
         ),
     )
     parser.add_argument(
-        "-chains",
+        "--chains",
         action="append",
         default=None,
         type=str,
@@ -340,7 +340,7 @@ if __name__ == "__main__":
         ),
     )
     parser.add_argument(
-        "-secprocs_water",
+        "--secprocs_water",
         action="append",
         default=None,
         type=str,
@@ -350,7 +350,7 @@ if __name__ == "__main__":
         ),
     )
     parser.add_argument(
-        "-secprocs_co2",
+        "--secprocs_co2",
         action="append",
         default=None,
         type=str,
@@ -360,7 +360,7 @@ if __name__ == "__main__":
         ),
     )
     parser.add_argument(
-        "-res_gens",
+        "--res_gens",
         action="append",
         default=None,
         type=str,
