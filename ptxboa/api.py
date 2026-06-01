@@ -14,6 +14,7 @@ from ptxboa.static import (
     ChainType,
     DimensionType,
     FlowCodeType,
+    OutputUnitEmissionsType,
     OutputUnitType,
     ProcessCodeType,
     ResGenType,
@@ -215,7 +216,7 @@ class PtxboaAPI:
         ptxcalc_result = ptx_calc.calculate(data)  # NEW # noqa
 
         # convert to output unit
-        _convert_to_output_unit_inplace(
+        emssions_unit = _convert_to_output_unit_inplace(
             ptxcalc_result,
             output_unit=output_unit,
             chain=chain,
@@ -241,7 +242,7 @@ class PtxboaAPI:
 
         return ApiCalculateResult(
             unit_cost=output_unit,
-            unit_emissions="NA",  # TODO
+            unit_emissions=emssions_unit,
             metadata=metadata,
             costs=ptxcalc_result.df_results_cost,
             emissions_t_co2e=(
@@ -516,7 +517,7 @@ def _get_output_conversion_factor(
     output_unit: OutputUnitType,
     chain: ChainType,
     data_handler: DataHandler,
-) -> float:
+) -> tuple[float, float, OutputUnitEmissionsType]:
     # conversion to output unit
     if output_unit not in {"USD/MWh", "USD/t"}:
         raise Exception(f"Invalid choice for output_unit: {output_unit}")
@@ -524,38 +525,55 @@ def _get_output_conversion_factor(
     flow_code_chain_out: FlowCodeType = data_handler.get_dimension("chain").loc[
         chain, "flow_out"
     ]  # type: ignore
-    flow_unit_chain_out: str = data_handler.get_dimension("flow").loc[
-        flow_code_chain_out, "unit"
-    ]  # type: ignore
+    flow_unit_chain_out: str = (
+        data_handler.get_dimension("flow").loc[flow_code_chain_out, "unit"].lower()  # type: ignore # noqa
+    )
 
     calor = data_handler._get_parameter_value(
         parameter_code="CALOR", flow_code=flow_code_chain_out, default=0
     )
 
-    if flow_unit_chain_out.lower().startswith("kwh"):
+    if flow_unit_chain_out.startswith("kwh"):
         if output_unit == "USD/MWh":
-            conversion = 1000  # kWh -> MWh
+            # kWh -> MWh
+            conversion = 1000
         else:
+            # kWh --CALOR-> kg -> t
             if not calor:
                 raise Exception(
                     "No conversion factor CALOR "
                     f"for {flow_code_chain_out} from kwh to kg"
                 )
-            conversion = 1000 * calor  # kWh -> kg and kg -> t
-    elif flow_unit_chain_out.lower().startswith("kg"):
+            conversion = 1000 * calor
+
+        # emission should be gCO2e/MJ
+        # kWh --> MJ  (1 kWh == 3.6 MJ)
+        # emissions are in gCO2e/kWh
+        emssions_unit = "gCO2e/MJ"
+        conversion_emission = 1 / 3.6
+
+    elif flow_unit_chain_out.startswith("kg"):
         if output_unit == "USD/t":
-            conversion = 1000  # kg -> t
+            # kg -> t
+            conversion = 1000
         else:
+            # kg --CALOR-> kWh -> Mwh
             if not calor:
                 raise Exception(
                     "No conversion factor CALOR "
                     f"for {flow_code_chain_out} from kg to kwh"
                 )
-            conversion = 1000 / calor  # kg -> kWh -> Mwh
+            conversion = 1000 / calor
+
+        # emission should be gCO2e/t:
+        # kg -> t
+        emssions_unit = "gCO2e/t"
+        conversion_emission = 1000
+
     else:
         raise ValueError("chain output unit must be either kWh or kg")
 
-    return conversion
+    return conversion, conversion_emission, emssions_unit
 
 
 def _convert_to_output_unit_inplace(
@@ -563,15 +581,19 @@ def _convert_to_output_unit_inplace(
     output_unit: OutputUnitType,
     chain: ChainType,
     data_handler: DataHandler,
-) -> None:
-    conversion = _get_output_conversion_factor(
+) -> OutputUnitEmissionsType:
+    conversion, conversion_emission, emssions_unit = _get_output_conversion_factor(
         output_unit=output_unit,
         chain=chain,
         data_handler=data_handler,
     )
-    for df in [
-        ptxcalc_result.df_results_cost,
-        ptxcalc_result.df_results_emissions_e_g_co2e,
-        ptxcalc_result.df_results_emissions_m_g_co2e,
-    ]:
-        df["values"] = df["values"] * conversion
+    ptxcalc_result.df_results_cost["values"] = (
+        ptxcalc_result.df_results_cost["values"] * conversion
+    )
+    ptxcalc_result.df_results_emissions_e_g_co2e["values"] = (
+        ptxcalc_result.df_results_emissions_e_g_co2e["values"] * conversion_emission
+    )
+    ptxcalc_result.df_results_emissions_m_g_co2e["values"] = (
+        ptxcalc_result.df_results_emissions_m_g_co2e["values"] * conversion_emission
+    )
+    return emssions_unit
