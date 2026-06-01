@@ -476,3 +476,28 @@ class TestRegression(unittest.TestCase):
             _translate_and_validate_user_settings(**param_set, optimize_flh=False)
         )
         self.assertEqual(chain_def.transport, "Ship")
+
+    def test_issue_844(self):
+        """Costs seem high."""
+        param_set = {
+            "chain": "B-DRI-S__NG-DRI-C__prod_in_supply",
+            "country": "Germany",
+            "output_unit": "USD/t",
+            "region": "Algeria",
+            "scenario": "2030 (medium)",
+            "secproc_co2": "Direct Air Capture (blue)",
+            "ship_own_fuel": False,
+            "transport": "Ship",
+            "secproc_water": "Specific costs",
+            "res_gen": None,
+        }
+        api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR)
+        res = api.calculate(**param_set)
+        dfc = res.costs
+        dfc = dfc.set_index(["process_type", "process_subtype", "cost_type"])
+        value = dfc.at[("Derivative production", "NG-DRI-C#B", "FLOW"), "values"]
+        speccost_iops = next(
+            x for x in res._internal_process_data if x["process_code"] == "IOP-S"
+        )["parameter"]["SPECCOST"]["IOP-S"]
+        self.assertTrue(speccost_iops < 100)
+        self.assertTrue(value < 100000)  # value was way too big

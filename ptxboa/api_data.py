@@ -641,6 +641,8 @@ class DataHandler:
             "region",
             "country",
             "process",
+            "secproc_co2",
+            "secproc_water",
         }:
             if tool_version_color == "blue":
                 df = df.loc[df["is_blue"].astype(bool)]
@@ -848,8 +850,8 @@ class DataHandler:
         transport: TransportType,
         ship_own_fuel: bool,
         chain: ChainType,
-        source_region_code: SourceRegionCodeType,
-        target_country_code: TargetCountryCodeType,
+        source_region_code: SourceRegionCodeType | str,
+        target_country_code: TargetCountryCodeType | str,
     ) -> tuple[TransportType, bool]:
         """Validate / correct transport."""
         chain_data = cls.dimensions["chain"].loc[chain]

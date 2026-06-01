@@ -489,12 +489,12 @@ def co2_source_toggle_blue():
         co2_source = st.radio(
             "Type of industrial CO₂ source:",
             [
-                "CO2 from sustainable source",
-                "CO2 from fossil source",
+                "CO2 from hard-to-abate or sustainable sources",
+                "CO2 from other industrial sources",
             ],
             format_func=lambda x: {
-                "CO2 from fossil source": "CO₂ from other industrial sources",
-                "CO2 from sustainable source": "CO₂ from hard-to-abate or sustainable sources",  # noqa E501
+                "CO2 from other industrial sources": "CO₂ from other industrial sources",  # noqa: E501
+                "CO2 from hard-to-abate or sustainable sources": "CO₂ from hard-to-abate or sustainable sources",  # noqa: E501
             }.get(x, x),
             horizontal=True,
             help=read_markdown_file(
@@ -504,8 +504,8 @@ def co2_source_toggle_blue():
 
     if co2_source not in [
         "Direct Air Capture (blue)",
-        "CO2 from fossil source",
-        "CO2 from sustainable source",
+        "CO2 from other industrial sources",
+        "CO2 from hard-to-abate or sustainable sources",
     ]:
         raise ValueError(f"invalid {co2_source=}")
 

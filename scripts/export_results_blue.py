@@ -199,8 +199,8 @@ def main(xlsx_filepath: str):
 
         dacs = [
             "Direct Air Capture (blue)",  # DAC#B
-            "CO2 from fossil source",  # CO2-INDF#B
-            "CO2 from sustainable source",  # CO2-INDS#B
+            "CO2 from other industrial sources",  # CO2-INDF#B
+            "CO2 from hard-to-abate or sustainable sources",  # CO2-INDS#B
         ]
         settings = {
             "chain": chain["chain"],

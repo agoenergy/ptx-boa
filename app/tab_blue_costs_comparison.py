@@ -284,7 +284,7 @@ def content_costs_comparison(api):
         if st.session_state["country"] in get_no_green_ptx_import_countries(api):
             is_invalid = True
             st.warning(
-                f"Renewable based cost data not available for "
+                f"Renewable based cost data not available for demand country "
                 f"{st.session_state['country']}. No comparison possible."
             )
         if st.session_state["output_product"] == "STL-S":

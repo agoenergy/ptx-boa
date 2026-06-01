@@ -7,7 +7,7 @@ import pandas as pd
 import pypsa
 
 from ptxboa import PROFILES_DIR, logger
-from ptxboa.api_calc import PtxCalc
+from ptxboa.api_calc import PtxCalc, _production_in_demand_country
 from ptxboa.api_data import DataHandler
 from ptxboa.api_optimize import PtxOpt
 from ptxboa.static import (
@@ -468,7 +468,11 @@ def _translate_and_validate_user_settings(
 
     if tool_version_color == "blue":
         secproc_heat = "Large scale Heatpump (blue)"
-        secproc_el = "Combined Cycle Gas Turbine with CCS (blue)"
+        # no gas turbine in demand country
+        if _production_in_demand_country(chain):
+            secproc_el = None
+        else:
+            secproc_el = "Combined Cycle Gas Turbine with CCS (blue)"
     else:
         secproc_heat = None
         secproc_el = None

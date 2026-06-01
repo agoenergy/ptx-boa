@@ -1,2 +1,2 @@
-Cannot compare crude steel with available green PtX output products.
+Cannot compare crude steel with available renewable based PtX output products.
 Please use iron instead.
