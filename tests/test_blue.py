@@ -430,7 +430,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
             },
             [
                 {
-                    "costs": {"OPEX": 0.01215573},
                     "emissions": {
                         "emission": {
                             "ch4_direct_co2e": 14.68312917,
@@ -614,7 +613,11 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "process_step": "PPLR",
                 },
                 {
-                    "costs": {"CAPEX": 0.01234524, "OPEX": 0.00354703},
+                    "costs": {
+                        "CAPEX": 0.01234524,
+                        "FLOW": 0.06644249,
+                        "OPEX": 0.00354703,
+                    },
                     "emissions": {
                         "emission": {
                             "co2_bound_in_product": 266.76000002,
@@ -650,6 +653,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "FLH": 7000,
                         "LIFETIME": 25.0,
                         "OPEX-F": 24.8292,
+                        "SPECCOST": {"NG-G": 0.03713946},
                         "WACC": 0.0423,
                         "process_code": "EFUELSYNC#B",
                         "step": "DERIV_I",
@@ -676,14 +680,12 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "process_step": "SECONDARY:IMPORT:CO2-C",
                 },
                 {
-                    "costs": {"FLOW": 6.228e-05},
                     "flows": {"main_flow_out": 0.00122321},
                     "parameter": {"SPECCOST": {"DIESEL-L": 0.05091429}},
                     "process_code": "DIESEL-L",
                     "process_step": "MARKET:DIESEL-L",
                 },
                 {
-                    "costs": {"FLOW": 0.00342178},
                     "flows": {"main_flow_out": 0.041147},
                     "parameter": {"SPECCOST": {"EL": 0.08316}},
                     "process_code": "EL",
@@ -905,7 +907,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
             },
             [
                 {
-                    "costs": {"OPEX": 0.013259},
                     "emissions": {
                         "emission": {
                             "ch4_direct_co2e": 102.55099429,
@@ -1016,6 +1017,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "process_step": "SHP",
                 },
                 {
+                    "costs": {"FLOW": 0.10942758},
                     "emissions": {
                         "emission": {
                             "co2_bound_in_product": 592.22579704,
@@ -1058,6 +1060,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         },
                         "FLH": 7000,
                         "LIFETIME": 20,
+                        "SPECCOST": {"NG-G": 0.03713946},
                         "WACC": 0.0423,
                         "process_code": "CH4-RGAS#B",
                         "step": "POST_SHP",
@@ -1183,21 +1186,18 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "process_step": "SECONDARY:IMPORT:CO2-C",
                 },
                 {
-                    "costs": {"FLOW": 0.00010582},
                     "flows": {"main_flow_out": 0.00207832},
                     "parameter": {"SPECCOST": {"DIESEL-L": 0.05091429}},
                     "process_code": "DIESEL-L",
                     "process_step": "MARKET:DIESEL-L",
                 },
                 {
-                    "costs": {"FLOW": 0.0006742},
                     "flows": {"main_flow_out": 0.00810722},
                     "parameter": {"SPECCOST": {"EL": 0.08316}},
                     "process_code": "EL",
                     "process_step": "MARKET:EL",
                 },
                 {
-                    "costs": {"FLOW": 6.663e-05},
                     "flows": {"main_flow_out": 0.02007471},
                     "parameter": {"SPECCOST": {"BFUEL-L": 0.00331934}},
                     "process_code": "BFUEL-L",

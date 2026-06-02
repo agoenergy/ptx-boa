@@ -14,6 +14,7 @@ from ptxboa import logger
 from ptxboa.api_data import DataHandler
 from ptxboa.static import ProcessStepValues  # must be sorted
 from ptxboa.static import (
+    CalculateCostType,
     ChainType,
     EmissionType,
     FlowCodeType,
@@ -84,6 +85,7 @@ class Process:
         is_secondary: bool,
         is_main: bool,
         is_main_in_transport_segment: bool,
+        calculate_cost_type: CalculateCostType,
         result_process_type: ResultClassType | None,
     ):
         # checks
@@ -104,6 +106,8 @@ class Process:
         self.is_main: bool = is_main
         self.is_main_in_transport_segment: bool = is_main_in_transport_segment
         self.result_process_type: ResultClassType | None = result_process_type
+        # 832: if landing costs: no costs in supply / transport
+        self.calculate_cost_type: CalculateCostType = calculate_cost_type
 
         # links - will be added by Chain
 
@@ -129,6 +133,8 @@ class Process:
         process_step: ProcessStepType | str | None = None,
         is_last: bool = False,
         is_in_import_segment: bool = False,
+        # 832: if landing costs: no costs in supply / transport
+        calculate_cost_type: CalculateCostType = "YES",
     ) -> "Process":
         """Create appropriate subclass of Process."""
         is_market = process_code in DataHandler.dimensions["flow"].index  # is flow code
@@ -203,6 +209,7 @@ class Process:
             is_main=is_main,
             is_main_in_transport_segment=is_main_in_transport_segment,
             result_process_type=result_process_type,
+            calculate_cost_type=calculate_cost_type,
         )
 
     def __str__(self):
@@ -278,6 +285,14 @@ class Process:
             }
 
         self._inplace_correct_eff_and_conv_with_loss(data)
+
+        if self.calculate_cost_type == "NG_LANDING":
+            if "SPECCOST" not in data:
+                data["SPECCOST"] = {}
+            # get natural gas speccost
+            data["SPECCOST"]["NG-G"] = parameter_getters["SPECCOST"](  # type: ignore
+                process_code=process_code, flow_code="NG-G", **parameter_values
+            )
 
         return data
 
@@ -395,6 +410,8 @@ class Process:
         results_costs: dict[Process, list[ProcessResultCostsType]],
     ) -> list[ProcessResultCostsType]:
         """Calculate costs."""
+        result = []
+
         parameters = parameter_data[self]
         flows = results_flows[self]
 
@@ -405,6 +422,24 @@ class Process:
         opex_o: float = parameters["OPEX-O"]  # type: ignore
         wacc: float = parameters["WACC"]  # type: ignore
         main_flow_out: float = flows.main_flow_out
+
+        # 832: if landing costs: no costs in supply / transport
+        if self.calculate_cost_type == "NO":
+            return []
+        elif self.calculate_cost_type == "NG_LANDING":
+            # add NG_PROD cost to main flow in
+
+            speccost_ng: float = parameters["SPECCOST"]["NG-G"]  # type: ignore
+            main_flow_in: float = flows.main_flow_in  # type: ignore
+
+            result.append(
+                ProcessResultCostsType(
+                    process_type="Natural gas production",
+                    process_subtype="NG-PROD#B",
+                    cost_type="FLOW",
+                    values=speccost_ng * main_flow_in,
+                )
+            )
 
         if "CAP_F" in parameters:
             # Storage unit: capacity
@@ -423,10 +458,11 @@ class Process:
         capex_ann = annuity(wacc, lifetime, capex)
         opex = opex_f * capacity + opex_o * main_flow_out
 
-        return [
+        result += [
             self._create_result_cost(cost_type="OPEX", values=opex),
             self._create_result_cost(cost_type="CAPEX", values=capex_ann),
         ]
+        return result
 
     def _calculate_emissions(
         self,
@@ -726,6 +762,10 @@ class ProcessTransport(Process):
         results_costs: dict[Process, list[ProcessResultCostsType]],
     ) -> list[ProcessResultCostsType]:
         """Calculate costs."""
+        if self.calculate_cost_type == "NO":
+            # 832: if landing costs: no costs in supply / transport
+            return []
+
         parameters = parameter_data[self]
         flows = results_flows[self]
 
@@ -893,6 +933,10 @@ class ProcessMarket(Process):
         results_costs: dict[Process, list[ProcessResultCostsType]],
     ) -> list[ProcessResultCostsType]:
         """Calculate costs."""
+        if self.calculate_cost_type == "NO":
+            # 832: if landing costs: no costs in supply / transport
+            return []
+
         parameters = parameter_data[self]
 
         speccost: float = parameters["SPECCOST"][self.main_flow_code_out]  # type: ignore # noqa
@@ -1039,11 +1083,16 @@ class PtxCalc:
         )
         secondary_process_codes_import: list[ProcessCodeType] = []
         first_process_code: ProcessCodeType
+
+        production_in_demand_country = _production_in_demand_country(
+            chain_def.chain_name
+        )
+
         if chain_color == "blue":
             initial_step = "NG_PROD"
             first_process_code = "NG-PROD#B"
             # currently, we can have secondary processes only either in export or import
-            if _production_in_demand_country(chain_def.chain_name):
+            if production_in_demand_country:
                 secondary_process_codes_import = secondary_process_codes_export
                 secondary_process_codes_export = []
         else:
@@ -1071,6 +1120,11 @@ class PtxCalc:
 
         is_in_import_segment = False
         _was_transport = False
+
+        calculate_cost_type: CalculateCostType = (
+            "NO" if production_in_demand_country else "YES"
+        )
+
         main_processes = []
         for i, (process_code, process_step) in enumerate(main_process_codes_steps):
             process = Process.create_with_subclass(
@@ -1078,14 +1132,25 @@ class PtxCalc:
                 process_step=process_step,
                 is_in_import_segment=is_in_import_segment,
                 is_last=(i + 1 == len(main_process_codes_steps)),
+                calculate_cost_type=calculate_cost_type,
             )
 
-            # is_in_import_segment: first non-transport step
-            if not process.is_main_in_transport_segment and _was_transport:
-                # FIXME: better way then re-creating process?
-                # we cannot change attribtue because of frozen dataclass
+            # first non-transport step in import
+            if (
+                not process.is_main_in_transport_segment
+                and _was_transport
+                and not is_in_import_segment
+            ):
+                calculate_cost_type = "YES"
+                if production_in_demand_country:
+                    assert process.main_flow_code_in in ("NG-G", "NG-L")
+                    calculate_cost_type = "NG_LANDING"
+
                 is_in_import_segment = True
+
                 process.is_in_import_segment = is_in_import_segment
+                process.calculate_cost_type = calculate_cost_type
+                calculate_cost_type = "YES"
 
             _was_transport = _was_transport or process.is_main_in_transport_segment
 
@@ -1093,13 +1158,18 @@ class PtxCalc:
 
         secondary_processes_export = [
             Process.create_with_subclass(
-                process_code=process_code, is_in_import_segment=False
+                process_code=process_code,
+                is_in_import_segment=False,
+                # 832: if landing costs: no costs in supply / transport
+                calculate_cost_type="NO" if production_in_demand_country else "YES",
             )
             for process_code in secondary_process_codes_export
         ]
         secondary_processes_import = [
             Process.create_with_subclass(
-                process_code=process_code, is_in_import_segment=True
+                process_code=process_code,
+                is_in_import_segment=True,
+                calculate_cost_type="YES",
             )
             for process_code in secondary_process_codes_import
         ]
@@ -1884,6 +1954,7 @@ def _create_graph(
         market_process = Process.create_with_subclass(
             process_code=flow_type,
             is_in_import_segment=is_in_import_segment,
+            calculate_cost_type=proc_recipient.calculate_cost_type,
         )
         graph.add_node(market_process)
         add_edge(
