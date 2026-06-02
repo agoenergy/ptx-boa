@@ -360,7 +360,7 @@ class Process:
                 if flow_code != "CO2-C" and flow_code != self._main_flow_code_in_or_out:
                     # for CSS: no warning - this is expected, because flow value is
                     # calulated in emission step
-                    logger.warning("Process with conv = 0 %s / %s", self, flow_code)
+                    logger.info("Process with conv = 0 %s / %s", self, flow_code)
                     if flow_code == "HEAT":
                         raise Exception()
 
@@ -1019,7 +1019,10 @@ class PtxCalc:
                 else:
                     assert other.main_flow_code_out not in process._links_in_secondary
                     process._links_in_secondary[other.main_flow_code_out] = other
-            assert set(process._links_in_secondary) == set(process.secondary_flow_types)
+
+            assert set(process._links_in_secondary) | {
+                process.main_flow_code_in
+            } == set(process.secondary_flow_types) | {process.main_flow_code_in}
 
     def _create_css_subgraph_processes_ordered_backwards(
         self,
@@ -2049,17 +2052,17 @@ def _create_graph(
                 # TODO
                 if flow_code != "BFUEL-L":
                     if flow_code == process.main_flow_code_in:
-                        logger.warning(
-                            "Transport process uses market instead of main in: %s, %s",
+                        logger.info(
+                            "Not linking main_flow_code_in in: %s, %s",
                             process,
                             flow_code,
                         )
+                        continue  # don't link to source, we will change efficiency
                     else:
-                        logger.error(
-                            "Transport process other than BFUEL-L or main flow in: %s",
-                            process,
+                        raise Exception(
+                            "Transport process other than BFUEL-L or main flow in: "
+                            f"{process}"
                         )
-                        # maybe raise Exception()?
 
                 provider = None  # so we will use market process
 
