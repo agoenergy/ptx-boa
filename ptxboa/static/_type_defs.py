@@ -57,8 +57,8 @@ class PtxCalcResult:
 class ApiCalculateResult:
     metadata: dict
     costs: pd.DataFrame
-    emissions_t_co2e: pd.DataFrame
-    emission_mass_t_co2e: pd.DataFrame
+    emissions_g_co2e: pd.DataFrame
+    emission_mass_g_co2e: pd.DataFrame
     unit_cost: OutputUnitType
     unit_emissions: OutputUnitEmissionsType
     _internal_process_data: Optional[list] = None
