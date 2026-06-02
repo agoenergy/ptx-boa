@@ -52,7 +52,9 @@ def content_emissions(api: PtxboaAPI):
         )
 
         fig_map = plot_emissions_on_map(
-            api, aggregate_emissions(results_per_region.emissions, "region")
+            api,
+            aggregate_emissions(results_per_region.emissions, "region"),
+            unit=results_per_region.unit_emissions,
         )
         fig_map.update_layout(
             margin={"l": 10, "r": 10, "t": 10, "b": 10},
@@ -73,7 +75,7 @@ def content_emissions(api: PtxboaAPI):
         # create box plot and bar plot:
         fig1 = create_box_plot(
             aggregate_emissions(results_per_region.emissions, index="region"),
-            unit=st.session_state["emissions_output_unit"],
+            unit=results_per_region.unit_emissions,
             label="Total emissions distribution",
         )
         current_region_data = results_per_region.emissions[
@@ -98,7 +100,9 @@ def content_emissions(api: PtxboaAPI):
                     aggregate_emissions(current_region_data, index="gas_type"),
                 ]
             ).sort_index(),
-            float_format=".2f",
+            float_format=(
+                ".0f" if results_per_region.unit_emissions == "gCO2e/MJ" else ".2f"
+            ),
         )
         doublefig = make_subplots(rows=1, cols=2, shared_yaxes=True)
 
@@ -111,7 +115,7 @@ def content_emissions(api: PtxboaAPI):
         doublefig.update_layout(barmode="stack")
         doublefig.update_layout(legend_traceorder="reversed")
         doublefig.update_yaxes(
-            title_text=st.session_state["emissions_output_unit"], row=1, col=1
+            title_text=results_per_region.unit_emissions, row=1, col=1
         )
         doublefig.update_xaxes(title_text=st.session_state["region"], row=1, col=2)
         doublefig.update_layout(
@@ -202,6 +206,7 @@ def content_emissions(api: PtxboaAPI):
                     tool_version_color="blue",
                     data_type="emissions",
                     sorting="off",
+                    output_unit=results_supply_demand.unit_emissions,
                 )
 
     with st.container(border=True):
@@ -246,6 +251,7 @@ def content_emissions(api: PtxboaAPI):
             tool_version_color="blue",
             data_type="emissions",
             sorting="off",
+            output_unit=results_per_region.unit_emissions,
         )
 
     with st.container(border=True):
@@ -268,6 +274,7 @@ def content_emissions(api: PtxboaAPI):
             ),
             tool_version_color="blue",
             data_type="emissions",
+            output_unit=results_per_region.unit_emissions,
         )
 
     with st.container(border=True):
@@ -302,6 +309,7 @@ def content_emissions(api: PtxboaAPI):
             ),
             tool_version_color="blue",
             data_type="emissions",
+            output_unit=results_per_region.unit_emissions,
         )
 
     with st.container(border=True):
@@ -350,6 +358,7 @@ def content_emissions(api: PtxboaAPI):
             x_label_mapping=blue_chain_labels,
             tool_version_color="blue",
             data_type="emissions",
+            output_unit=results_equal_output_product.unit_emissions,
         )
 
     with st.container(border=True):
@@ -408,7 +417,7 @@ def content_emissions(api: PtxboaAPI):
             help_string=read_markdown_file(
                 "md/tab_blue_emissions/figure_description_emission_equal_reformer.md"
             ),
-            output_unit=st.session_state["emissions_output_unit"].replace("/t", "/MWh"),
+            output_unit=results_equal_routes.unit_emissions,
             x_label_mapping=blue_chain_labels,
             tool_version_color="blue",
             data_type="emissions",
@@ -473,6 +482,7 @@ def content_emissions(api: PtxboaAPI):
                 },
                 xaxis_title="Secondary CO₂ source",
                 sorting="off",
+                output_unit=results_per_secproc_co2.unit_emissions,
             )
         else:
             st.subheader(secproc_co2_title)

@@ -1144,6 +1144,10 @@ OutputUnitType = Literal["USD/MWh", "USD/t"]
 OutputUnitValues: list[OutputUnitType] = ["USD/MWh", "USD/t"]
 
 
+OutputUnitEmissionsType = Literal["gCO2e/MJ", "tCO2e/t", "NA"]
+OutputUnitEmissionsValues: list[OutputUnitEmissionsType] = ["gCO2e/MJ", "tCO2e/t", "NA"]
+
+
 ToolVersionColorType = Literal["blue", "green"]
 ToolVersionColorValues: list[ToolVersionColorType] = ["blue", "green"]
 

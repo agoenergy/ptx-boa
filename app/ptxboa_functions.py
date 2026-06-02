@@ -12,6 +12,7 @@ import streamlit as st
 from ptxboa.api import ApiCalculateResult, PtxboaAPI
 from ptxboa.static import (
     ChainType,
+    OutputUnitEmissionsType,
     OutputUnitType,
     ResGenType,
     ScenarioType,
@@ -227,7 +228,7 @@ def calculate_results_list_blue(
     override_session_state: dict | None = None,
     apply_user_data: bool = True,
     agg_costs: bool = True,
-) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, OutputUnitEmissionsType]:
     """
     Blue version has fewer settings than green version: no res_gen, no data scenario.
 
@@ -281,6 +282,7 @@ def calculate_results_list_blue(
     costs_list = []
     emissions_list = []
     emissions_mass_list = []
+    unit_emissions = set()
 
     if parameter_to_change in ["region", "chain", "scenario", "secproc_co2"]:
         for change_factor in parameter_list:
@@ -310,8 +312,9 @@ def calculate_results_list_blue(
                     **settings,
                 )
                 costs_list.append(res_single.costs)
-                emissions_list.append(res_single.emissions_t_co2e)
-                emissions_mass_list.append(res_single.emission_mass_t_co2e)
+                emissions_list.append(res_single.emissions)
+                emissions_mass_list.append(res_single.emission_mass)
+                unit_emissions.add(res_single.unit_emissions)
 
             except Exception as exc:
                 logging.warning(
@@ -441,15 +444,17 @@ def calculate_results_list_blue(
                 costs_list.append(costs)
                 costs[parameter_to_change] = value_label
 
-                emissions = res_single.emissions_t_co2e
+                emissions = res_single.emissions
                 if emissions is not None:
                     emissions[parameter_to_change] = value_label
-                    emissions_list.append(res_single.emissions_t_co2e)
+                    emissions_list.append(res_single.emissions)
 
-                emissions_mass = res_single.emission_mass_t_co2e
+                emissions_mass = res_single.emission_mass
                 if emissions_mass is not None:
                     emissions_mass[parameter_to_change] = value_label
-                    emissions_mass_list.append(res_single.emission_mass_t_co2e)
+                    emissions_mass_list.append(res_single.emission_mass)
+
+                unit_emissions.add(res_single.unit_emissions)
 
             except Exception as exc:
                 logging.warning(
@@ -463,6 +468,11 @@ def calculate_results_list_blue(
     emissions_details = pd.concat(emissions_list)
     emissions_mass_details = pd.concat(emissions_mass_list)
 
+    if len(unit_emissions) != 1:
+        logger.error("Mixed emission units.")
+
+    unit_emissions = unit_emissions.pop()
+
     return (
         (
             aggregate_costs(costs_details, parameter_to_change)
@@ -471,6 +481,7 @@ def calculate_results_list_blue(
         ),
         emissions_details,
         emissions_mass_details,
+        unit_emissions,
     )
 
 
@@ -1194,6 +1205,7 @@ def green_costs_over_dimension(
 class BlueResultOverDimension:
     costs: pd.DataFrame
     emissions: pd.DataFrame
+    unit_emissions: OutputUnitEmissionsType
     costs_not_modified: Optional[pd.DataFrame] = None
     emissions_not_modified: Optional[pd.DataFrame] = None
 
@@ -1234,7 +1246,7 @@ def blue_results_over_dimension(
         if included == "upstream_and_final_use":
             return emissions
 
-    costs, emissions, _emissions_mass = calculate_results_list_blue(
+    costs, emissions, _emissions_mass, unit_emissions = calculate_results_list_blue(
         api,
         parameter_to_change=dim,
         parameter_list=parameter_list,
@@ -1243,12 +1255,14 @@ def blue_results_over_dimension(
     )
 
     if st.session_state["user_changes_df"] is not None:
-        costs_nm, emissions_nm, _emissions_mass_nm = calculate_results_list_blue(
-            api,
-            parameter_to_change=dim,
-            parameter_list=parameter_list,
-            apply_user_data=False,
-            override_session_state=override_session_state,
+        costs_nm, emissions_nm, _emissions_mass_nm, _unit_emissions_nm = (
+            calculate_results_list_blue(
+                api,
+                parameter_to_change=dim,
+                parameter_list=parameter_list,
+                apply_user_data=False,
+                override_session_state=override_session_state,
+            )
         )
     else:
         costs_nm = None
@@ -1257,6 +1271,7 @@ def blue_results_over_dimension(
     return BlueResultOverDimension(
         costs=costs,
         emissions=filter_co2_bound_in_product(emissions, included=emissions_included),
+        unit_emissions=unit_emissions,
         costs_not_modified=costs_nm,
         emissions_not_modified=filter_co2_bound_in_product(
             emissions_nm, included=emissions_included

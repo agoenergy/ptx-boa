@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Layout elements that get reused in several tabs."""
 
+import logging
 from typing import Literal
 
 import pandas as pd
@@ -45,11 +46,13 @@ def display_results_bar_and_table(
         min_10_label = "Cheapest 10"
         if output_unit is None:
             output_unit: str = st.session_state["output_unit"]
+        float_precision = 0
 
     if data_type == "emissions":
         min_10_label = "Lowest 10"
         if output_unit is None:
-            output_unit: str = st.session_state["emissions_output_unit"]
+            logging.error(f"output_unit must not be None for {data_type=}")
+        float_precision = 0 if output_unit == "gCO2e/MJ" else 2
 
     if sorting == "off":
         sort_ascending = False
@@ -57,8 +60,6 @@ def display_results_bar_and_table(
         sort_ascending = True
 
     key_suffix = key_suffix.lower().replace(" ", "_")
-
-    float_precision = 0 if data_type == "costs" else 2
 
     st.subheader(titlestring)
 
