@@ -27,7 +27,7 @@ MODE = get_app_mode()
 
 OPTIMIZE_FLH = MODE in {
     "prod",
-    # "preview",  # TODO: uncomment when cache ready
+    "preview",
 }
 
 GREEN_COLOR = "#2fac66"
