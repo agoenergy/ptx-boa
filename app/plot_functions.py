@@ -18,7 +18,7 @@ from app.ptxboa_functions import (
     select_subregions,
 )
 from ptxboa.api import PtxboaAPI
-from ptxboa.static import ToolVersionColorType
+from ptxboa.static import OutputUnitEmissionsType, ToolVersionColorType
 
 logger = logging.getLogger()
 
@@ -145,7 +145,7 @@ def plot_costs_on_map(
 def plot_emissions_on_map(
     api: PtxboaAPI,
     aggregated_results: pd.DataFrame,
-    unit: str,
+    unit: OutputUnitEmissionsType,
     color_col: str = "Total",
 ) -> go.Figure:
     """
@@ -172,7 +172,7 @@ def plot_emissions_on_map(
         custom_data_func=_make_per_column_hoverdata,
         custom_data_func_kwargs={
             "unit": unit,
-            "float_precision": 0,
+            "float_precision": 0 if unit == "gCO2e/MJ" else 2,
         },
     )
 
