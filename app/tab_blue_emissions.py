@@ -100,7 +100,9 @@ def content_emissions(api: PtxboaAPI):
                     aggregate_emissions(current_region_data, index="gas_type"),
                 ]
             ).sort_index(),
-            float_format=".2f",
+            float_format=(
+                ".0f" if results_per_region.unit_emissions == "gCO2e/MJ" else ".2f"
+            ),
         )
         doublefig = make_subplots(rows=1, cols=2, shared_yaxes=True)
 
