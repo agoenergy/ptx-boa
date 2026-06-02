@@ -187,6 +187,7 @@ def main():
         create_literal("ResultEmission", ["direct", "indirect"]),
         create_literal("Emission", ["mass", "emission"]),
         create_literal("ResultGas", ["CO2", "CH4"]),
+        create_literal("CalculateCost", ["YES", "NO", "NG_LANDING"]),
         create_literal(
             "DataQueryParameter",
             [

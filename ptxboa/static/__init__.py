@@ -1164,6 +1164,10 @@ ResultGasType = Literal["CO2", "CH4"]
 ResultGasValues: list[ResultGasType] = ["CO2", "CH4"]
 
 
+CalculateCostType = Literal["YES", "NO", "NG_LANDING"]
+CalculateCostValues: list[CalculateCostType] = ["YES", "NO", "NG_LANDING"]
+
+
 DataQueryParameterType = Literal[
     "parameter_code",
     "process_code",
