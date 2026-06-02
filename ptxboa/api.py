@@ -557,10 +557,13 @@ def _get_output_conversion_factor(
                 )
             conversion = 1000 / calor
 
-        # emission should be gCO2e/t:
-        # kg -> t
-        emssions_unit = "gCO2e/t"
-        conversion_emission = 1000
+        # emission should be tCO2e/t:
+        # Conversion factors for numerator and denominator
+        # gCO2e -> tCO2e: * 1e-6
+        # 1/kg -> 1/t: * 1e3
+        # resulting factor is 1e-6 * 1e3 -> 1e-3
+        emssions_unit = "tCO2e/t"
+        conversion_emission = 1e-3
 
     else:
         raise ValueError("chain output unit must be either kWh or kg")

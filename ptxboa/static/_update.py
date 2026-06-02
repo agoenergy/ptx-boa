@@ -182,7 +182,7 @@ def main():
         create_literal("ResultCost", ["CAPEX", "OPEX", "FLOW", "LC"]),
         create_literal("Transport", ["Ship", "Pipeline", "NONE"]),
         create_literal("OutputUnit", ["USD/MWh", "USD/t"]),
-        create_literal("OutputUnitEmissions", ["gCO2e/MJ", "gCO2e/t", "NA"]),
+        create_literal("OutputUnitEmissions", ["gCO2e/MJ", "tCO2e/t", "NA"]),
         create_literal("ToolVersionColor", ["blue", "green"]),
         create_literal("ResultEmission", ["direct", "indirect"]),
         create_literal("Emission", ["mass", "emission"]),
