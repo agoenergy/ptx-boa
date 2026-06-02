@@ -222,7 +222,7 @@ class PtxboaAPI:
             data_handler=data_handler,
         )
 
-        # add user settings
+        # add used settings
         for df in [
             ptxcalc_result.df_results_cost,
             ptxcalc_result.df_results_emissions_e_g_co2e,
@@ -235,7 +235,8 @@ class PtxboaAPI:
             df["res_gen"] = res_gen
             df["region"] = region
             df["country"] = country
-            df["transport"] = transport
+            df["transport"] = chain_def.transport
+            df["ship_own_fuel"] = chain_def.ship_own_fuel
 
         metadata = {"flh_opt_hash": data.get("flh_opt_hash")}  # does not always exist
 
