@@ -245,8 +245,8 @@ class PtxboaAPI:
             unit_emissions=emssions_unit,
             metadata=metadata,
             costs=ptxcalc_result.df_results_cost,
-            emissions_g_co2e=ptxcalc_result.df_results_emissions_e_g_co2e,
-            emission_mass_g_co2e=ptxcalc_result.df_results_emissions_m_g_co2e,
+            emissions=ptxcalc_result.df_results_emissions_e_g_co2e,
+            emission_mass=ptxcalc_result.df_results_emissions_m_g_co2e,
             _internal_process_data=ptxcalc_result._internal_process_data,
         )
 

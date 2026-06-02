@@ -98,12 +98,12 @@ def debug_report(
         ("Cost results", drop_debug_columns(result.costs), dataframe_print),
         (
             "Emission results",
-            drop_debug_columns(result.emissions_g_co2e),
+            drop_debug_columns(result.emissions),
             dataframe_print,
         ),
         (
             "Emission mass results",
-            drop_debug_columns(result.emission_mass_g_co2e),
+            drop_debug_columns(result.emission_mass),
             dataframe_print,
         ),
     ]

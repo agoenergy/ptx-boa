@@ -1485,8 +1485,8 @@ def test_emissions_issue_775():
 
             # get all co2_bound_in_product
             for mass_emission, df_e in [
-                ("emission", result.emissions_g_co2e),
-                ("mass", result.emission_mass_g_co2e),
+                ("emission", result.emissions),
+                ("mass", result.emission_mass),
             ]:
                 actual_result = {
                     "demand_supply": demand_supply,
