@@ -691,10 +691,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "process_code": "EL",
                     "process_step": "MARKET:EL",
                 },
-                {"process_code": "NG-G", "process_step": "MARKET:NG-G"},
-                {"process_code": "NG-G", "process_step": "MARKET:NG-G"},
-                {"process_code": "NG-G", "process_step": "MARKET:NG-G"},
-                {"process_code": "NG-G", "process_step": "MARKET:NG-G"},
                 {
                     "costs": {"FLOW": 0.00121377},
                     "flows": {"main_flow_out": 0.0115},
@@ -1203,7 +1199,6 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "process_code": "BFUEL-L",
                     "process_step": "MARKET:BFUEL-L",
                 },
-                {"process_code": "NG-L", "process_step": "MARKET:NG-L"},
                 {
                     "costs": {"FLOW": 9.301e-05},
                     "flows": {"main_flow_out": 0.00250444},
