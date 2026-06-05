@@ -1800,3 +1800,35 @@ def test_emissions_issue_776():
     # we have CH4 emissions from loss and CO2 emissions from burn off (conv)
     assert emissions["co2_direct"] > 0
     assert emissions["ch4_direct_co2e"] > 0
+
+
+def test_issue_854():
+    """emission_co2_direct should be the same for mass/emission for DRI (ship).
+
+    Reason: in emission balance (but not mass balance),
+    the emission factor for BFUEL-L was set to 0.
+
+
+
+    """
+    api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR)
+    result = api.calculate(
+        scenario="2040 (medium)",
+        secproc_co2=None,
+        secproc_water=None,
+        chain="B-DRI-S__ATR_91%_DRI__prod_in_demand",
+        res_gen=None,
+        region="Algeria",
+        country="Germany",
+        transport="Ship",
+        ship_own_fuel=False,
+        output_unit="USD/t",
+        optimize_flh=False,
+        tool_version_color="blue",
+    )
+    result_by_step = {x["process_step"]: x for x in result._internal_process_data}  # type: ignore # noqa
+
+    co2_direct_e = result_by_step["SHP"]["emissions"]["emission"]["co2_direct"]
+    co2_direct_m = result_by_step["SHP"]["emissions"]["mass"]["co2_direct"]
+
+    assert_deep_equal_approx(co2_direct_e, co2_direct_m)

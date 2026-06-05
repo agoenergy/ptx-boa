@@ -1479,6 +1479,7 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "DST-S-DP,,,VNM,IND",DST-S-DP,,,VNM,IND,3500.0,km,Research Susanne Krieger
 "DST-S-DP,,,VNM,JPN",DST-S-DP,,,VNM,JPN,4000.0,km,Research Susanne Krieger
 "DST-S-DP,,,VNM,KOR",DST-S-DP,,,VNM,KOR,5000.0,km,Research Susanne Krieger
+"EF_E,,BFUEL-L,,",EF_E,,BFUEL-L,,,292.68,gCO2e/kwh bunker fuel (l),
 "EF_E,,CH3OH-L,,",EF_E,,CH3OH-L,,,248.48751708127705,gCO2e/kWh CH3OH (l),
 "EF_E,,CH4-G,,",EF_E,,CH4-G,,,201.0,gCO2e/kWh CH4 (g),
 "EF_E,,CH4-L,,",EF_E,,CH4-L,,,201.0,gCO2e/kWh CH4 (l),
