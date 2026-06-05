@@ -643,7 +643,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "parameter": {
                         "CAPEX": 1317.77881242,
                         "CBOUND": {"NG-G": 0.07279681},
-                        "CH4SHARE": {"NG-G": 0.92080641},
+                        "CH4SHARE": {"NG-G": 0.909},
                         "CO2CPT-R": {"NG-G": 0.89},
                         "CO2CPT-S": {"NG-G": 0.25815306},
                         "CONV": {"EL": 0.0115},
@@ -982,7 +982,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                             "ch4_direct_co2e": 0.6186887,
                             "co2_bound_in_product": 592.22579704,
                             "co2_bound_in_product_per_output": 201.00000001,
-                            "co2_direct": 2.10933374,
+                            "co2_direct": 7.98480007,
                         },
                         "mass": {
                             "ch4_direct_co2e": 0.6186887,
@@ -1004,7 +1004,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "DST-S-D": 3174.14,
                         "DST-S-DP": 3000.0,
                         "EFF": 0.99633782,
-                        "EF_E": {"NG-L": 201.0},
+                        "EF_E": {"BFUEL-L": 292.68, "NG-L": 201.0},
                         "EF_M": {"BFUEL-L": 292.68, "NG-L": 201.0},
                         "LOSS": {"NG-L": 0.00011353},
                         "LOSS-T": 4e-08,
@@ -1042,7 +1042,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     },
                     "is_in_import_segment": True,
                     "parameter": {
-                        "CH4SHARE": {"NG-G": 0.92080641},
+                        "CH4SHARE": {"NG-G": 0.89953333, "NG-L": 0.89953333},
                         "CONV": {"DIESEL-L": 2e-06, "EL": 0.00048, "NG-G": 0.00085},
                         "EFF": 1.0,
                         "EF_E": {
@@ -1098,7 +1098,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "parameter": {
                         "CAPEX": 4123.26308627,
                         "CBOUND": {"NG-G": 0.04081161},
-                        "CH4SHARE": {"NG-G": 0.92080641},
+                        "CH4SHARE": {"NG-G": 0.89953333},
                         "CO2CPT-R": {"CH4-G": 0.9, "NG-G": 0.9},
                         "CO2CPT-S": {"CH4-G": 0.45, "NG-G": 0.45},
                         "CONV": {"EL": 0.47685859, "IOP-S": 1.37373737},
@@ -1150,7 +1150,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "parameter": {
                         "CAPEX": 2879.72718211,
                         "CBOUND": {"B-DRI-S": 0.004},
-                        "CH4SHARE": {"NG-G": 0.92080641},
+                        "CH4SHARE": {"NG-G": 0.89953333},
                         "CONV": {"EL": 0.651, "NG-G": 0.3},
                         "EFF": 1.01010101,
                         "EF_E": {"EL": 100.0, "NG-G": 201.0},
@@ -1800,3 +1800,64 @@ def test_emissions_issue_776():
     # we have CH4 emissions from loss and CO2 emissions from burn off (conv)
     assert emissions["co2_direct"] > 0
     assert emissions["ch4_direct_co2e"] > 0
+
+
+def test_issue_854():
+    """emission_co2_direct should be the same for mass/emission for DRI (ship).
+
+    Reason: in emission balance (but not mass balance),
+    the emission factor for BFUEL-L was set to 0.
+
+
+
+    """
+    api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR)
+    result = api.calculate(
+        scenario="2040 (medium)",
+        secproc_co2=None,
+        secproc_water=None,
+        chain="B-DRI-S__ATR_91%_DRI__prod_in_demand",
+        res_gen=None,
+        region="Algeria",
+        country="Germany",
+        transport="Ship",
+        ship_own_fuel=False,
+        output_unit="USD/t",
+        optimize_flh=False,
+        tool_version_color="blue",
+    )
+    result_by_step = {x["process_step"]: x for x in result._internal_process_data}  # type: ignore # noqa
+
+    co2_direct_e = result_by_step["SHP"]["emissions"]["emission"]["co2_direct"]
+    co2_direct_m = result_by_step["SHP"]["emissions"]["mass"]["co2_direct"]
+
+    assert_deep_equal_approx(co2_direct_e, co2_direct_m)
+
+
+def test_issue_855():
+    """CH4SHARE should always come from export country."""
+    api = PtxboaAPI(data_dir=DEFAULT_DATA_DIR)
+    result = api.calculate(
+        scenario="2040 (medium)",
+        secproc_co2=None,
+        secproc_water=None,
+        chain="CH3OH-L__SMR_52%_CH3OHSYN__prod_in_demand",
+        res_gen=None,
+        region="Algeria",
+        country="Germany",
+        transport="Ship",
+        ship_own_fuel=False,
+        output_unit="USD/t",
+        optimize_flh=False,
+        tool_version_color="blue",
+    )
+
+    ch4shares = []
+    for p in result._internal_process_data:  # type: ignore
+        CH4SHARE = p["parameter"].get("CH4SHARE", {})
+        if "NG-L" in CH4SHARE:
+            ch4shares.append(CH4SHARE["NG-L"])
+    # check that we have at least 2 and all are the same
+    assert len(ch4shares) > 1
+    for ch4share in ch4shares[1:]:
+        assert_deep_equal_approx(ch4shares[0], ch4share)

@@ -1177,6 +1177,9 @@ class PtxCalc:
             parameter_values=parameter_values,
         )
 
+        # see issue #855: CH4SHARE should always come from export country
+        _fix_ch4share_inplace(parameter_data)
+
         flh_opt_process: dict[ProcessCodeType, ProcessDataType] = {}
         speccost_for_flh_opt: dict[FlowCodeType, float] = {}
 
@@ -2136,3 +2139,22 @@ def _add_step_and_code(process: Process, data: ProcessDataType) -> ProcessDataTy
 def _production_in_demand_country(chain_name: ChainType) -> bool:
     # TODO: ugly / unstable
     return "in_demand" in chain_name
+
+
+def _fix_ch4share_inplace(parameter_data: dict[Process, ProcessDataType]):
+    """CH4SHARE should always come from export country.
+
+    See issue #856.
+
+    We iterate over all processes and use the first occuring CH4SHARE for each flow.
+    """
+    CH4SHARE = {}
+    for data in parameter_data.values():
+        ch4share = data.get("CH4SHARE", {})
+        for flow, value in list(ch4share.items()):  # type: ignore
+            if flow not in CH4SHARE:
+                # first occurance
+                CH4SHARE[flow] = value
+            else:
+                # make all the same for this flow
+                ch4share[flow] = CH4SHARE[flow]  # type: ignore
