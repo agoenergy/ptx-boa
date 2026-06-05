@@ -117,11 +117,6 @@ class Process:
         self._links_in_secondary: dict[FlowCodeType, Process] = {}
 
     @property
-    def is_pipeline_w_ch4_losses(self) -> bool:
-        """Is pipeline that can have CH4 losses."""
-        return False
-
-    @property
     def is_in_export_segment(self) -> bool:
         """Is in export segment."""
         return not (self.is_in_import_segment or self.is_main_in_transport_segment)
@@ -716,22 +711,6 @@ class ProcessSecondary(Process):
 
 
 class ProcessTransport(Process):
-    @property
-    def is_pipeline_w_ch4_losses(self) -> bool:
-        """Is pipeline that can have CH4 losses."""
-        # TODO: better system
-        return self.main_flow_code_out in {
-            "NG-G",
-            "NG-L",
-            "CH4-G",
-            "CH4-L",
-        } and self.process_step in {
-            "PPLS",
-            "PPL",
-            "PPLX",
-            "PPLR",
-        }
-
     _parameter_codes_process = ["OPEX-T", "LOSS-T", "OPEX-O"] + [
         # NOTE: these are the same for all transport steps - maybe get only once?
         "CAP-T",
@@ -835,24 +814,18 @@ class ProcessTransport(Process):
             ),
             data=data,
         )
+        data["DIST"] = dist_transport
 
         loss_t: float = data.get("LOSS-T", 0)  # type: ignore
-
         # TODO:NOTE: more accurately, it should be a exp function,
         # but input data was calibrated linear to distance
         loss = loss_t * dist_transport
-
-        if self.is_pipeline_w_ch4_losses:
-            # create loss factor so emissions can calculate direct CH4 emissions
-            data["EFF"] = 1
-            data["LOSS"] = {self.main_flow_code_out: loss}
-        else:
-            # correct EFF
-            data["EFF"] = 1 - loss
-            if data["EFF"] <= 0:
-                raise Exception("EFF <= 0 because of losses: %s", self)
-
-        data["DIST"] = dist_transport
+        # create loss factor (simplified)
+        data["LOSS"] = {self.main_flow_code_out: loss}
+        # correct EFF (simplified)
+        data["EFF"] = 1 - loss
+        if data["EFF"] <= 0:
+            raise Exception("EFF <= 0 because of losses: %s", self)
 
         # TODO: fixed in new data,but still to fix in test data
         for flow_code, conv in data["CONV"].items():  # type: ignore
