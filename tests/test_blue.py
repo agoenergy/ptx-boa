@@ -982,7 +982,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                             "ch4_direct_co2e": 0.6186887,
                             "co2_bound_in_product": 592.22579704,
                             "co2_bound_in_product_per_output": 201.00000001,
-                            "co2_direct": 2.10933374,
+                            "co2_direct": 7.98480007,
                         },
                         "mass": {
                             "ch4_direct_co2e": 0.6186887,
@@ -1004,7 +1004,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "DST-S-D": 3174.14,
                         "DST-S-DP": 3000.0,
                         "EFF": 0.99633782,
-                        "EF_E": {"NG-L": 201.0},
+                        "EF_E": {"BFUEL-L": 292.68, "NG-L": 201.0},
                         "EF_M": {"BFUEL-L": 292.68, "NG-L": 201.0},
                         "LOSS": {"NG-L": 0.00011353},
                         "LOSS-T": 4e-08,
@@ -1042,7 +1042,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     },
                     "is_in_import_segment": True,
                     "parameter": {
-                        "CH4SHARE": {"NG-G": 0.92080641},
+                        "CH4SHARE": {"NG-G": 0.92080641, "NG-L": 0.92080641},
                         "CONV": {"DIESEL-L": 2e-06, "EL": 0.00048, "NG-G": 0.00085},
                         "EFF": 1.0,
                         "EF_E": {
