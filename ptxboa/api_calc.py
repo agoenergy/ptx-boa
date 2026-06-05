@@ -502,10 +502,8 @@ class Process:
                 if flow_code in ("CH4-G", "CH4-L"):
                     logger.warning("missing CH4SHARE for CH4 - should be 1?")
                     ch4_kwh_per_flow = 1
-                else:
-                    logger.warning("missing CH4SHARE for %s", flow_code)
-                    ch4_kwh_per_flow = 0
-                    continue
+                elif flow_code in ("NG-G", "NG-L"):
+                    raise Exception(f"missing CH4SHARE for {flow_code}")
 
             value_net, value_loss = calculate_net_loss(
                 value_gross=value_gross, loss_factor=loss_factor
@@ -815,6 +813,7 @@ class ProcessTransport(Process):
             data=data,
         )
         data["DIST"] = dist_transport
+        data["EFF"] = 1
 
         loss_t: float = data.get("LOSS-T", 0)  # type: ignore
         # TODO:NOTE: more accurately, it should be a exp function,
@@ -823,7 +822,7 @@ class ProcessTransport(Process):
         # create loss factor (simplified)
         data["LOSS"] = {self.main_flow_code_out: loss}
         # correct EFF (simplified)
-        data["EFF"] = 1 - loss
+        data["EFF"] = data["EFF"] - loss
         if data["EFF"] <= 0:
             raise Exception("EFF <= 0 because of losses: %s", self)
 
@@ -834,22 +833,20 @@ class ProcessTransport(Process):
 
             # TODO: can be removed now?
             if data["CONV-OT"].get(flow_code):  # type: ignore
-                logger.error(
+                raise Exception(
                     "CONV instead of CONV-OT (already defined) "
-                    "in transport input data: %s %s %s",
-                    self,
-                    flow_code,
-                    conv,
+                    "in transport input data: %s %s %s"
+                    % (
+                        self,
+                        flow_code,
+                        conv,
+                    )
                 )
             else:
-                logger.error(
+                raise Exception(
                     "CONV instead of CONV-OT (overwriting) "
-                    "in transport input data: %s %s %s",
-                    self,
-                    flow_code,
-                    conv,
+                    "in transport input data: %s %s %s" % (self, flow_code, conv)
                 )
-                data["CONV-OT"][flow_code] = conv  # type: ignore
 
         # create CONV from DIST * CONV-OT
         if "CONV" not in data:
@@ -859,22 +856,24 @@ class ProcessTransport(Process):
                 continue
 
             if flow_code not in {"BFUEL-L", self.main_flow_code_out}:
-                logger.error(
+                raise Exception(
                     "CONV-OT in can only be bunker fuel or own fuel."
-                    "in transport input data: %s %s",
-                    self,
-                    flow_code,
+                    "in transport input data: %s %s" % (self, flow_code)
                 )
-                raise Exception()
 
             # TODO:NOTE: more accurately, it should be a exp function,
             # but input data was calibrated linear to distance
             conv = conv_ot * dist_transport
+            # !! do NOT add conv, because it's main flow
+            # data["CONV"][flow_code] = conv # noqa
 
             # correct EFF
             if flow_code == self.main_flow_code_out:
-                eff_correct = 1 / (1 + conv)
-                data["EFF"] *= eff_correct
+                # correct EFF (simplified)
+                data["EFF"] = data["EFF"] - conv
+                if data["EFF"] <= 0:
+                    raise Exception("EFF <= 0 because of losses: %s", self)
+
             elif flow_code != "BFUEL-L":
                 logger.error(
                     "CONV-OT in can only be bunker fuel or own fuel."

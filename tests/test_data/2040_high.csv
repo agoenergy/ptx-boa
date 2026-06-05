@@ -370,12 +370,12 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CAP-T,,,RUS,DEU",CAP-T,,,RUS,DEU,1.0,kWh/a,
 "CONV,AEL-EL,H2O-L,,",CONV,AEL-EL,H2O-L,,,0.3,kg H2O (l)/H2-G,
 "CONV,ATR,EL,,",CONV,ATR,EL,,,0.1077107710771077,kWh (el.)/H2-G,Oni et al. 2022
-"CONV,CH3OH-SB,BFUEL-L,,",CONV,CH3OH-SB,BFUEL-L,,,3.050988367317537e-06,kwh bunker fuel (l)/(km*CH3OH-L),calc_shipping
+"CONV-OT,CH3OH-SB,BFUEL-L,,",CONV-OT,CH3OH-SB,BFUEL-L,,,3.050988367317537e-06,kwh bunker fuel (l)/(km*CH3OH-L),calc_shipping
 "CONV,CH3OHSYN,CO2-G,,",CONV,CH3OHSYN,CO2-G,,,0.26448241206030154,kg CO2 (g)/kWh CH3OH (l),Frotier Economics 2021
 "CONV,CH3OHSYN,EL,,",CONV,CH3OHSYN,EL,,,0.039989420788151285,kWh (el.)/kWh CH3OH (l),Fasihi & Breyer 2018
 "CONV,CH4-COMP,EL,,",CONV,CH4-COMP,EL,,,0.04,kWh (el.)/CH4-G,DNV GL 2020
 "CONV,CH4-LIQ,EL,,",CONV,CH4-LIQ,EL,,,0.15789473684210525,kWh (el.)/CH4-L,Pospíšil et al. 2019
-"CONV,CH4-SB,BFUEL-L,,",CONV,CH4-SB,BFUEL-L,,,3.3002590965851548e-06,kwh bunker fuel (l)/(km*CH4-L),calc_shipping
+"CONV-OT,CH4-SB,BFUEL-L,,",CONV-OT,CH4-SB,BFUEL-L,,,3.3002590965851548e-06,kwh bunker fuel (l)/(km*CH4-L),calc_shipping
 "CONV,CH4SYN,CO2-G,,",CONV,CH4SYN,CO2-G,,,0.20196,kg CO2 (g)/kWh CH4 (g),
 "CONV,CH4SYN,H2O-L,,",CONV,CH4SYN,H2O-L,,,-0.1426332288401254,kg H2O (l)/kWh CH4 (g),Fasihi & Breyer 2018
 "CONV,CH4SYN,HEAT,,",CONV,CH4SYN,HEAT,,,-0.18495297805642633,kWh (heat)/kWh CH4 (g),Fasihi & Breyer 2018
@@ -390,21 +390,21 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CONV,EFUELSYN,HEAT,,",CONV,EFUELSYN,HEAT,,,-0.40397350993377484,kWh (heat)/kwh CHx (l),Fasihi & Breyer 2018
 "CONV,H2-COMP,EL,,",CONV,H2-COMP,EL,,,0.04,kWh (el.)/H2-G,DNV GL 2020
 "CONV,H2-LIQ,EL,,",CONV,H2-LIQ,EL,,,0.39013004334778256,kWh (el.)/H2-L,DNV GL 2020
-"CONV,H2-SB,BFUEL-L,,",CONV,H2-SB,BFUEL-L,,,7.956026573128753e-06,kwh bunker fuel (l)/(km*H2-L),calc_shipping
+"CONV-OT,H2-SB,BFUEL-L,,",CONV-OT,H2-SB,BFUEL-L,,,7.956026573128753e-06,kwh bunker fuel (l)/(km*H2-L),calc_shipping
 "CONV,H2-STR,EL,,",CONV,H2-STR,EL,,,0.08000000000000002,kWh (el.)/H2-G,
 "CONV,LOHC-CON,EL,,",CONV,LOHC-CON,EL,,,0.02,kWh (el.)/LOHC-L,DNV GL 2020
 "CONV,LOHC-REC,EL,,",CONV,LOHC-REC,EL,,,0.028502850285028507,kWh (el.)/H2-G,Staiß et al. 2022 nach Wasserscheid
 "CONV,LOHC-REC,HEAT,,",CONV,LOHC-REC,HEAT,,,0.4534534534534535,kWh (heat)/H2-G,DNV GL 2020
-"CONV,LOHC-SB,BFUEL-L,,",CONV,LOHC-SB,BFUEL-L,,,9.92041609041782e-06,kwh bunker fuel (l)/(km*LOHC-L),calc_shipping
+"CONV-OT,LOHC-SB,BFUEL-L,,",CONV-OT,LOHC-SB,BFUEL-L,,,9.92041609041782e-06,kwh bunker fuel (l)/(km*LOHC-L),calc_shipping
 "CONV,NH3-REC,EL,,",CONV,NH3-REC,EL,,,0.013923999999999999,kWh (el.)/H2-G,NGN; Equinor 2018
-"CONV,NH3-SB,BFUEL-L,,",CONV,NH3-SB,BFUEL-L,,,5.343656103416341e-06,kwh bunker fuel (l)/(km*NH3-L),calc_shipping
+"CONV-OT,NH3-SB,BFUEL-L,,",CONV-OT,NH3-SB,BFUEL-L,,,5.343656103416341e-06,kwh bunker fuel (l)/(km*NH3-L),calc_shipping
 "CONV,NH3SYN,EL,,",CONV,NH3SYN,EL,,,0.14192307692307693,kWh (el.)/kWh NH3 (l),Fasihi et al. 2021
 "CONV,NH3SYN,N2-G,,",CONV,NH3SYN,N2-G,,,0.15980769230769232,kg N2 (g)/kWh NH3 (l),Fasihi et al. 2021
 "CONV,PEM-EL,H2O-L,,",CONV,PEM-EL,H2O-L,,,0.3,kg H2O (l)/H2-G,
 "CONV,REGASATR,EL,,",CONV,REGASATR,EL,,,0.1077107710771077,kWh (el.)/H2-G,combined values
 "CONV,SOEC-EL,H2O-L,,",CONV,SOEC-EL,H2O-L,,,0.3,kg H2O (l)/H2-G,
 "CONV,SYN-S,CHX-L,,",CONV,SYN-S,CHX-L,,,1.264193639501289e-06,kwh CHx (l)/(km*CHX-L),calc_shipping
-"CONV,SYN-SB,BFUEL-L,,",CONV,SYN-SB,BFUEL-L,,,1.264193639501289e-06,kwh bunker fuel (l)/(km*CHX-L),calc_shipping
+"CONV-OT,SYN-SB,BFUEL-L,,",CONV-OT,SYN-SB,BFUEL-L,,,1.264193639501289e-06,kwh bunker fuel (l)/(km*CHX-L),calc_shipping
 "DST-S-D,,,ARE,CHN",DST-S-D,,,ARE,CHN,10367.8,,CERDI
 "DST-S-D,,,ARE,DEU",DST-S-D,,,ARE,DEU,12441.9,,CERDI
 "DST-S-D,,,ARE,ESP",DST-S-D,,,ARE,ESP,8992.74,,CERDI
@@ -2141,3 +2141,5 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "WACC,,,ZAF-NC,",WACC,,,ZAF-NC,,0.09,fraction,
 "WACC,,,ZAF-NW,",WACC,,,ZAF-NW,,0.09,fraction,
 "WACC,,,ZAF-WC,",WACC,,,ZAF-WC,,0.09,fraction,
+"CH4SHARE,,NG-G,,",CH4SHARE,,NG-G,,,0.9208064102564103,fraction,
+"CH4SHARE,,NG-L,,",CH4SHARE,,NG-L,,,0.9208064102564103,fraction,
