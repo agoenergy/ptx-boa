@@ -1521,7 +1521,7 @@ def test_emissions_issue_775():
                 except IndexError:
                     pass
 
-    expected_reults = [
+    expected_results = [
         {
             "co2_bound_in_product": [
                 {"process": "NG-PROD#B", "value": 351.31682574},
@@ -1717,4 +1717,4 @@ def test_emissions_issue_775():
             "secproc_co2": "Direct Air Capture (blue)",
         },
     ]
-    assert_deep_equal_approx(expected_reults, actual_results)
+    assert_deep_equal_approx(expected_results, actual_results)
