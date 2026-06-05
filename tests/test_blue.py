@@ -1065,7 +1065,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "process_step": "POST_SHP",
                 },
                 {
-                    "costs": {"CAPEX": 6.26e-06, "OPEX": 2.5e-06},
+                    "costs": {"CAPEX": 0.04378742, "OPEX": 0.01749442},
                     "emissions": {
                         "emission": {
                             "co2_bound_in_product": 148.05644926,
@@ -1093,7 +1093,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     },
                     "is_in_import_segment": True,
                     "parameter": {
-                        "CAPEX": 0.58903758,
+                        "CAPEX": 4123.26308627,
                         "CBOUND": {"NG-G": 0.04081161},
                         "CH4SHARE": {"NG-G": 0.92080641},
                         "CO2CPT-R": {"CH4-G": 0.9, "NG-G": 0.9},
@@ -1114,7 +1114,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         },
                         "FLH": 7000,
                         "LIFETIME": 20.0,
-                        "OPEX-F": 0.01767113,
+                        "OPEX-F": 123.69789259,
                         "WACC": 0.0423,
                         "process_code": "NG-DRI-C#B",
                         "step": "DERIV_I",
@@ -1123,7 +1123,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     "process_step": "DERIV_I",
                 },
                 {
-                    "costs": {"CAPEX": 4.41e-06, "OPEX": 0.18420736},
+                    "costs": {"CAPEX": 0.03089047, "OPEX": 0.19654728},
                     "emissions": {
                         "emission": {
                             "co2_bound_in_product": 14.65778518,
@@ -1145,7 +1145,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                     },
                     "is_in_import_segment": True,
                     "parameter": {
-                        "CAPEX": 0.4113896,
+                        "CAPEX": 2879.72718211,
                         "CBOUND": {"B-DRI-S": 0.004},
                         "CH4SHARE": {"NG-G": 0.92080641},
                         "CONV": {"EL": 0.651, "NG-G": 0.3},
@@ -1154,7 +1154,7 @@ def test_new_blue_chain_fixed_data(scenario, kwargs, api_kwargs):
                         "EF_M": {"EL": 100.0, "NG-G": 201.0},
                         "FLH": 7000,
                         "LIFETIME": 20.0,
-                        "OPEX-F": 0.01234169,
+                        "OPEX-F": 86.39181546,
                         "OPEX-O": 0.18420559,
                         "WACC": 0.0423,
                         "process_code": "EAF#B",
