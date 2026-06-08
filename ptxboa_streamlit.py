@@ -48,13 +48,19 @@ st.logo(
 page = st.navigation(
     [
         st.Page(
+            # TODO: should be landing page
             green_page,
             default=True,
             title="PtX Business Opportunity Analyser",
         ),
         st.Page(
+            green_page,
+            url_path="ptx",
+            title="PtX Business Opportunity Analyser",
+        ),
+        st.Page(
             blue_page,
-            url_path="blue",
+            url_path="lowcarbon",
             title="Low-Carbon Business Opportunity Analyser",
         ),
     ],
