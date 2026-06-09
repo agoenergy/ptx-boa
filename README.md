@@ -101,6 +101,8 @@ if [[ "$IS_PREVIEW" == "1" ]]; then
   VERSION="$VERSION-preview"
   MODE=preview
   CACHEDIR=/home/sshfs_remote/optimization_cache
+else
+  VERSION="$VERSION-main"
 fi
 
 # pull latest image from dockerhub
