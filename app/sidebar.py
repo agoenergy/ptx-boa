@@ -168,8 +168,8 @@ def main_settings_blue(api: PtxboaAPI):
         regions,
         help=read_markdown_file("md/sidebar/helptext_sidebar_blue_supply_region.md"),
         index=regions.index("Algeria"),  # Morocco not implemented in blue
-        key="region",
     )
+    st.session_state["region"] = region
 
     if region in NO_LNG_EXPORT:
         countries = [region]
@@ -179,14 +179,14 @@ def main_settings_blue(api: PtxboaAPI):
             "country", tool_version_color="blue"
         ).index.to_list()
 
-    st.selectbox(
+    country = st.selectbox(
         "Demand country",
         countries,
         help=read_markdown_file("md/sidebar/helptext_sidebar_blue_demand_country.md"),
         index=0 if region in NO_LNG_EXPORT else countries.index("Germany"),
         disabled=region in NO_LNG_EXPORT,
-        key="country",
     )
+    st.session_state["country"] = country
 
     if st.session_state["region"] != st.session_state["country"]:
         conversion_location = conversion_location_radio(
@@ -415,23 +415,23 @@ def additional_settings_expander():
 
 
 def edit_input_data_toggle_green():
-    st.sidebar.toggle(
+    edit_input_data = st.sidebar.toggle(
         "Edit input data",
         help=read_markdown_file("md/sidebar/helptext_sidebar_edit_input_data.md"),
         value=False,
-        key="edit_input_data",
         on_change=reset_user_changes,
     )
+    st.session_state["edit_input_data"] = edit_input_data
 
 
 def edit_input_data_toggle_blue():
-    st.sidebar.toggle(
+    edit_input_data = st.sidebar.toggle(
         "Edit input data (e.g. natural gas price)",
         help=read_markdown_file("md/sidebar/helptext_sidebar_blue_edit_input_data.md"),
         value=False,
-        key="edit_input_data",
         on_change=reset_user_changes,
     )
+    st.session_state["edit_input_data"] = edit_input_data
 
 
 def input_data_reset_notice():
