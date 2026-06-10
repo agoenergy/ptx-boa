@@ -11,8 +11,10 @@ import logging
 import pandas as pd
 import streamlit as st
 
-from ptxboa_blue import blue_page
-from ptxboa_green import green_page
+# load api into cache once
+from app.cached_api import api  # noqa: F401
+from ptxboa_blue import content_blue_page
+from ptxboa_green import content_green_page
 
 # setup logging
 # level can be changed on strartup with: --logger.level=LEVEL
@@ -45,24 +47,44 @@ st.logo(
     icon_image="img/Agora_Industry_logo_612x306.png",
 )
 
+
+green_page = st.Page(
+    content_green_page,
+    url_path="ptx",
+    title="PtX Business Opportunity Analyser",
+)
+
+blue_page = st.Page(
+    content_blue_page,
+    url_path="lowcarbon",
+    title="Low-Carbon Business Opportunity Analyser",
+)
+
+
+def content_landing_page():
+    st.set_page_config(page_icon="./data/favicon-16x16.png")
+    cols = st.columns([0.5, 1, 1, 0.5])
+    with cols[1]:
+        st.page_link(
+            green_page,
+            label="PtX Business Opportunity Analyser",
+        )
+    with cols[2]:
+        st.page_link(
+            blue_page,
+            label="Low-Carbon Business Opportunity Analyser",
+        )
+
+
 page = st.navigation(
     [
         st.Page(
-            # TODO: should be landing page
-            green_page,
+            content_landing_page,
             default=True,
             title="PtX Business Opportunity Analyser",
         ),
-        st.Page(
-            green_page,
-            url_path="ptx",
-            title="PtX Business Opportunity Analyser",
-        ),
-        st.Page(
-            blue_page,
-            url_path="lowcarbon",
-            title="Low-Carbon Business Opportunity Analyser",
-        ),
+        green_page,
+        blue_page,
     ],
     position="hidden",
 )

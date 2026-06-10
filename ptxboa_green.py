@@ -39,7 +39,7 @@ def update_note(current_date: date):
             st.markdown(read_markdown_file("md/green_update_note_june_2026.md"))
 
 
-def green_page():
+def content_green_page():
     st.set_page_config(
         page_icon="./data/favicon-16x16.png",
     )

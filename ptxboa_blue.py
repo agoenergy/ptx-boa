@@ -20,7 +20,7 @@ from ptxboa import __version__
 MODE = get_app_mode()
 
 
-def blue_page():
+def content_blue_page():
     st.set_page_config(
         page_icon="./data/favicon-16x16.png",
     )
