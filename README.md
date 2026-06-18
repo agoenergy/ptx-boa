@@ -98,11 +98,9 @@ IS_PREVIEW=1
 if [[ "$IS_PREVIEW" == "1" ]]; then
   PORT=9001
   APP="$APP-preview"
-  VERSION="$VERSION-preview"
   MODE=preview
-  CACHEDIR=/home/sshfs_remote/optimization_cache
-else
-  VERSION="$VERSION-main"
+  # optionally: separate CACHEDIR
+  # CACHEDIR=/home/sshfs_remote/optimization_cache
 fi
 
 # pull latest image from dockerhub
