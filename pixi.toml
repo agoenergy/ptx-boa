@@ -5,8 +5,7 @@ platforms = ["linux-64", "win-64"]
 channels = ["conda-forge"]
 
 [tasks]
-streamlit = "streamlit run ptxboa_streamlit.py --server.port=80 --server.address=0.0.0.0"
-streamlit_dev = "streamlit run ptxboa_streamlit.py --server.port=8501 --server.address=127.0.0.1 --logger.level=INFO"
+streamlit_prod = ""
 
 [environments]
 default = { features = ["default"] }
@@ -35,13 +34,6 @@ highspy = "==1.7.1"
 pytest = ">=7.1"
 pytest-cov = "*"
 
-[feature.test.tasks]
-# run pytest in test environment (for use in github action)
-test = "pytest -vv"
-
-[feature.dev.tasks]
-# run pytest in dev environment (for local use)
-test_dev = "pytest -vv"
 
 [feature.dev.dependencies]
 black = ">=23.11"
