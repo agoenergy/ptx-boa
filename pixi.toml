@@ -6,10 +6,9 @@ channels = ["conda-forge"]
 
 
 [environments]
-default = { features = ["default"] }
-test = { features = [ "default", "test"] }
-dev = { features = [ "default", "test", "dev"] }
-
+default = { features = ["default"], solve-group = "default"}
+test = { features = [ "default", "test"], solve-group = "default" }
+dev = { features = [ "default", "test", "dev"], solve-group = "default" }
 
 [dependencies]
 python = "3.11.*"
