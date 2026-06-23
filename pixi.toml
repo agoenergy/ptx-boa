@@ -1,0 +1,65 @@
+[workspace]
+authors = ["c.winger <c.winger@oeko.de>"]
+channels = ["conda-forge"]
+name = "ptx-boa"
+platforms = ["win-64"]
+version = "0.1.0"
+
+[tasks]
+streamlit = "streamlit run ptxboa_streamlit.py --server.port=80 --server.address=0.0.0.0"
+streamlit_dev = "streamlit run ptxboa_streamlit.py --server.port=8501 --server.address=127.0.0.1 --logger.level=INFO"
+
+[environments]
+default = { features = ["default"] }
+test = { features = [ "default", "test"] }
+dev = { features = [ "default", "test", "dev"] }
+
+
+[dependencies]
+python = "3.11.*"
+pandas = "==2.2.1"
+numpy = "==1.26.4"
+streamlit = "==1.51.0"
+openpyxl = "==3.1.2"
+plotly = "==5.22.0"
+xlsxwriter = "==3.2.0"
+pypsa = "==0.28"
+linopy = "==0.3.14"
+xarray = "==2024.2.0"
+netcdf4 = "==1.7.1"
+
+[pypi-dependencies]
+streamlit-antd-components = "==0.3.2"
+highspy = "==1.7.1"
+
+[feature.test.dependencies]
+pytest = ">=7.1"
+pytest-cov = "*"
+
+[feature.test.tasks]
+# run pytest in test environment (for use in github action)
+test = "pytest -vv"
+
+[feature.dev.tasks]
+# run pytest in dev environment (for local use)
+test_dev = "pytest -vv"
+
+[feature.dev.dependencies]
+black = ">=23.11"
+flake8 = ">=5.0"
+ipython = ">=8.9"
+isort = ">=5.12"
+pre-commit = ">=3.2"
+pylint = ">=2.17"
+bumpversion = ">=0.5"
+mkdocs = ">=1.5"
+mkdocs-material = ">=9.4"
+mkdocstrings-python = ">=1.7"
+progress = "*"
+#flake8-bandit = "*"
+#flake8-bugbear = "*"
+#flake8-builtins = "*"
+#flake8-comprehensions = "*"
+#flake8-docstrings = "*"
+#flake8-eradicate = "*"
+#flake8-isort = "*"
