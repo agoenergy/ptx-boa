@@ -4,8 +4,6 @@ version = "0.1.0"
 platforms = ["linux-64", "win-64"]
 channels = ["conda-forge"]
 
-[tasks]
-streamlit_prod = ""
 
 [environments]
 default = { features = ["default"] }
@@ -47,10 +45,3 @@ mkdocs = ">=1.5"
 mkdocs-material = ">=9.4"
 mkdocstrings-python = ">=1.7"
 progress = "*"
-#flake8-bandit = "*"
-#flake8-bugbear = "*"
-#flake8-builtins = "*"
-#flake8-comprehensions = "*"
-#flake8-docstrings = "*"
-#flake8-eradicate = "*"
-#flake8-isort = "*"

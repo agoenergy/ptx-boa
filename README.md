@@ -13,7 +13,7 @@ highlighting the competitive edge of one country against another.
 After cloning the repository, create a virtual python environment and install the necessary dependencies:
 
 ```bash
-pixi install -e dev
+pixi install --locked -e dev
 ```
 
 The code is autoformatted and checked with
@@ -36,20 +36,20 @@ In order to run the tests locally run [pytest](https://pytest.org) in the root
 directory:
 
 ```bash
-pixi run -e dev pytest -vv
+pixi run --locked -e dev pytest -vv
 ```
 
 To start the app locally, run the following command:
 
 ```bash
-pixi run streamlit run ptxboa_streamlit.py
+pixi run --locked -e dev streamlit run ptxboa_streamlit.py
 ```
 
 To start the app with development mode, run the following command.
 Development mode has a debugging tab in blue version, and no flh optimization in blue version.
 
-```
-set "PTXBOA_MODE=dev" & pixi run streamlit_dev
+```bash
+set "PTXBOA_MODE=dev" & pixi run --locked -e dev streamlit run ptxboa_streamlit.py"
 ```
 
 ### Download optimization cache for local development
