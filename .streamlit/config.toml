@@ -13,3 +13,9 @@ level = "WARNING"
 
 [browser]
 gatherUsageStats = false
+
+[server]
+fileWatcherType="none"
+
+[runner]
+fastReruns=false

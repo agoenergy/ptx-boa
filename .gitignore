@@ -173,3 +173,6 @@ tests/out
 test*.xlsx
 ~*
 chain_flowcharts/
+# pixi environments
+.pixi/*
+!.pixi/config.toml
