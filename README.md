@@ -10,19 +10,10 @@ highlighting the competitive edge of one country against another.
 
 ### Setup
 
-After cloning the repository, create a virtual python environment in a
-subdirectory `.env` and activate it:
+After cloning the repository, create a virtual python environment and install the necessary dependencies:
 
 ```bash
-python -m venv .\.env
-.env\Scripts\activate.bat
-```
-
-Install the necessary dependencies:
-
-```bash
-python -m pip install --upgrade pip
-pip install -r requirements-dev.txt
+pixi install --locked -e dev
 ```
 
 The code is autoformatted and checked with
@@ -45,20 +36,20 @@ In order to run the tests locally run [pytest](https://pytest.org) in the root
 directory:
 
 ```bash
-pytest
+pixi run --locked -e dev pytest -vv
 ```
 
 To start the app locally, run the following command:
 
-```
-streamlit run ptxboa_streamlit.py
+```bash
+pixi run --locked -e dev streamlit run ptxboa_streamlit.py
 ```
 
 To start the app with development mode, run the following command.
 Development mode has a debugging tab in blue version, and no flh optimization in blue version.
 
-```
-set "PTXBOA_MODE=dev" & streamlit run ptxboa_streamlit.py
+```bash
+set "PTXBOA_MODE=dev" & pixi run --locked -e dev streamlit run ptxboa_streamlit.py"
 ```
 
 ### Download optimization cache for local development
@@ -87,7 +78,7 @@ scp -r ptxboa2:ptx-boa_offline_optimization/optimization_cache/* .
 ssh ptxboa
 
 # set variables
-VERSION=3.0.1
+VERSION=3.0.2
 APP=app
 PORT=9000
 MODE=prod
@@ -98,9 +89,9 @@ IS_PREVIEW=1
 if [[ "$IS_PREVIEW" == "1" ]]; then
   PORT=9001
   APP="$APP-preview"
-  VERSION="$VERSION-preview"
   MODE=preview
-  CACHEDIR=/home/sshfs_remote/optimization_cache
+  # optionally: separate CACHEDIR
+  # CACHEDIR=/home/sshfs_remote/optimization_cache
 fi
 
 # pull latest image from dockerhub
