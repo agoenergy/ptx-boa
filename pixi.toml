@@ -1,0 +1,53 @@
+[workspace]
+name = "ptx-boa"
+version = "0.1.0"
+platforms = ["linux-64", "win-64"]
+channels = ["conda-forge"]
+
+
+[environments]
+default = { features = ["default"], solve-group = "default"}
+test = { features = [ "default", "test"], solve-group = "default" }
+dev = { features = [ "default", "test", "dev"], solve-group = "default" }
+
+[dependencies]
+python = "3.11.*"
+pandas = "==2.2.1"
+numpy = "==1.26.4"
+streamlit = "==1.51.0"
+openpyxl = "==3.1.2"
+plotly = "==5.22.0"
+xlsxwriter = "==3.2.0"
+pypsa = "==0.28"
+linopy = "==0.3.14"
+xarray = "==2024.2.0"
+netcdf4 = "==1.7.1"
+
+[pypi-dependencies]
+streamlit-antd-components = "==0.3.2"
+highspy = "==1.7.1"
+
+[feature.test.dependencies]
+pytest = ">=7.1"
+pytest-cov = "*"
+
+
+[feature.dev.dependencies]
+black = ">=23.11"
+flake8 = ">=5.0"
+ipython = ">=8.9"
+isort = ">=5.12"
+pre-commit = ">=3.2"
+pylint = ">=2.17"
+mkdocs = ">=1.5"
+mkdocs-material = ">=9.4"
+mkdocstrings-python = ">=1.7"
+progress = "*"
+
+[feature.dev.pypi-dependencies]
+bumpversion = ">=0.5"
+
+[feature.dev.tasks]
+bumpversion = "bumpversion"
+app = "streamlit run ptxboa_streamlit.py"
+dev-app = { cmd = "streamlit run ptxboa_streamlit.py", env = { PTXBOA_MODE = "dev" } }

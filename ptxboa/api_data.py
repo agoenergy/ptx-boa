@@ -856,7 +856,7 @@ class DataHandler:
         """Validate / correct transport."""
         chain_data = cls.dimensions["chain"].loc[chain]
         if transport == "Pipeline" and not chain_data["can_pipeline"]:  # type: ignore
-            logger.warning("Cannot use Pipeline - switching to Ship: %s", chain)
+            logger.info("Cannot use Pipeline - switching to Ship: %s", chain)
             transport = "Ship"
 
         # check if countries can pipeline
@@ -865,7 +865,7 @@ class DataHandler:
             and (source_region_code, target_country_code)
             not in _get_allowed_pipeline_routes()
         ):
-            logger.warning(
+            logger.info(
                 "Cannot use Pipeline - switching to Ship: %s => %s",
                 source_region_code,
                 target_country_code,
