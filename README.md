@@ -42,14 +42,14 @@ pixi run --locked -e dev pytest -vv
 To start the app locally, run the following command:
 
 ```bash
-pixi run --locked -e dev streamlit run ptxboa_streamlit.py
+pixi run --locked app
 ```
 
 To start the app with development mode, run the following command.
-Development mode has a debugging tab in blue version, and no flh optimization in blue version.
+Development mode has debugging tabs in blue and green version, and no flh optimization in blue version.
 
 ```bash
-set "PTXBOA_MODE=dev" & pixi run --locked -e dev streamlit run ptxboa_streamlit.py"
+pixi run --locked dev-app
 ```
 
 ### Download optimization cache for local development
@@ -64,7 +64,7 @@ scp -r ptxboa2:ptx-boa_offline_optimization/optimization_cache/* .
 - merge all relevant branches into develop
 - create a relase branch
 - change and commit `CHANGELOG.md` with description of changes
-- update version (`bumpversion patch|minor|major`). This creates automatically a
+- update version (`pixi run bumpversion patch|minor|major`). This creates automatically a
   commit
 - create pull requests to merge release into main
 - merging this will automatically (via git action) create and publish the new

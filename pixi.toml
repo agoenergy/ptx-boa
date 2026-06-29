@@ -46,3 +46,8 @@ progress = "*"
 
 [feature.dev.pypi-dependencies]
 bumpversion = ">=0.5"
+
+[feature.dev.tasks]
+bumpversion = "bumpversion"
+app = "streamlit run ptxboa_streamlit.py"
+dev-app = { cmd = "streamlit run ptxboa_streamlit.py", env = { PTXBOA_MODE = "dev" } }
