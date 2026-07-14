@@ -449,7 +449,7 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "CO2CPT-S,SMR_52%_BF#B,NG-G,,",CO2CPT-S,SMR_52%_BF#B,NG-G,,,0.6198467558379716,fraction,
 "CONV,AEL-EL,H2O-L,,",CONV,AEL-EL,H2O-L,,,0.3,kg H2O (l)/H2-G,
 "CONV,ATR,EL,,",CONV,ATR,EL,,,0.1077107710771077,,Oni et al. 2022
-"CONV,ATR_91%#B,EL,,",CONV,ATR_91%#B,EL,,,0.09420942094209422,kWh (el.)/kwh H2 LHV (gasous),
+"CONV,ATR_91%#B,EL,,",CONV,ATR_91%#B,EL,,,0.09420942094209422,kWh (el.)/kwh H2 LHV (gasous),based on IEA GHG 2022
 "CONV,CH3OHSYC#B,EL,,",CONV,CH3OHSYC#B,EL,,,0.0315,kWh (el)/kwh CH3OH,Concawe 2024
 "CONV,CH3OHSYN#B,CO2-G,,",CONV,CH3OHSYN#B,CO2-G,,,0.24848751708127706,kg CO2/kwh CH3OH,Concawe 2024
 "CONV,CH3OHSYN#B,EL,,",CONV,CH3OHSYN#B,EL,,,0.053687907676869054,kWh (el)/kwh CH3OH,Concawe 2024
@@ -1491,7 +1491,7 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "EF_E,,DIESEL-L,,",EF_E,,DIESEL-L,,,266.76,gCO2e/kWh diesel LHV,
 "EF_E,,EL,BRA,",EF_E,,EL,BRA,,71.0,gCO2e/kWh (el.),
 "EF_E,,EL,CHN,",EF_E,,EL,CHN,,371.0,gCO2e/kWh (el.),
-"EF_E,,EL,DEU,",EF_E,,EL,DEU,,100.0,gCO2e/kWh (el.),
+"EF_E,,EL,DEU,",EF_E,,EL,DEU,,123.0,gCO2e/kWh (el.),
 "EF_E,,EL,ESP,",EF_E,,EL,ESP,,57.0,gCO2e/kWh (el.),
 "EF_E,,EL,IND,",EF_E,,EL,IND,,534.0,gCO2e/kWh (el.),
 "EF_E,,EL,JPN,",EF_E,,EL,JPN,,288.0,gCO2e/kWh (el.),
@@ -1521,7 +1521,7 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "EF_M,,DIESEL-L,,",EF_M,,DIESEL-L,,,266.76,gCO2e/kWh diesel LHV,
 "EF_M,,EL,BRA,",EF_M,,EL,BRA,,71.0,gCO2e/kWh (el.),
 "EF_M,,EL,CHN,",EF_M,,EL,CHN,,371.0,gCO2e/kWh (el.),
-"EF_M,,EL,DEU,",EF_M,,EL,DEU,,100.0,gCO2e/kWh (el.),
+"EF_M,,EL,DEU,",EF_M,,EL,DEU,,123.0,gCO2e/kWh (el.),
 "EF_M,,EL,ESP,",EF_M,,EL,ESP,,57.0,gCO2e/kWh (el.),
 "EF_M,,EL,IND,",EF_M,,EL,IND,,534.0,gCO2e/kWh (el.),
 "EF_M,,EL,JPN,",EF_M,,EL,JPN,,288.0,gCO2e/kWh (el.),
@@ -1541,7 +1541,7 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "EF_M,,NG-L,,",EF_M,,NG-L,,,201.0,gCO2e/kWh natural gas LHV,
 "EFF,AEL-EL,,,",EFF,AEL-EL,,,,0.69,various (output per main input),
 "EFF,ATR,,,",EFF,ATR,,,,0.79992,various (output per main input),Oni et al. 2022
-"EFF,ATR_91%#B,,,",EFF,ATR_91%#B,,,,0.7785564120532585,kwh H2 LHV (gasous)/kWh natural gas LHV,
+"EFF,ATR_91%#B,,,",EFF,ATR_91%#B,,,,0.7785564120532585,kwh H2 LHV (gasous)/kWh natural gas LHV,based on IEA GHG 2022
 "EFF,CCGT-CC#B,,,",EFF,CCGT-CC#B,,,,0.5049112903225806,kwh (el.)/kWh natural gas LHV,
 "EFF,CH3OHSYC#B,,,",EFF,CH3OHSYC#B,,,,0.6093845216331505,kwh CH3OH/kWh natural gas LHV,Concawe 2024 (Irena 2021)
 "EFF,CH3OHSYN#B,,,",EFF,CH3OHSYN#B,,,,0.8605354058721933,kwh CH3OH/kWh H2,Concawe 2024
@@ -1600,7 +1600,7 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "EFF,NH3SYN,,,",EFF,NH3SYN,,,,0.8771929824561404,kwh NH3 (l)/kWh H2 (g),Concawe 2024
 "EFF,PEM-EL,,,",EFF,PEM-EL,,,,0.67,various (output per main input),
 "EFF,REGASATR,,,",EFF,REGASATR,,,,0.77992,various (output per main input),combined values
-"EFF,SMR_52%#B,,,",EFF,SMR_52%#B,,,,0.7610428446757533,kwh H2 LHV (gasous)/kWh natural gas LHV,
+"EFF,SMR_52%#B,,,",EFF,SMR_52%#B,,,,0.7610428446757533,kwh H2 LHV (gasous)/kWh natural gas LHV,based on IEA GHG 2017
 "EFF,SMR_52%_BF#B,,,",EFF,SMR_52%_BF#B,,,,0.7610428446757533,kwh H2 LHV (gasous)/kWh natural gas LHV,
 "EFF,SOEC-EL,,,",EFF,SOEC-EL,,,,0.73,various (output per main input),
 "FLH,AEL-EL,,,",FLH,AEL-EL,,,,3861.914191419142,h,average of PTX Atlas
@@ -2392,16 +2392,16 @@ key,parameter_code,process_code,flow_code,source_region_code,target_country_code
 "OPEX-O,CO2-T+S#B,,AUS,",OPEX-O,CO2-T+S#B,,AUS,,0.058903980017995704,USD2025/kgCO2,
 "OPEX-O,CO2-T+S#B,,BRA,",OPEX-O,CO2-T+S#B,,BRA,,0.07207537018779175,USD2025/kgCO2,
 "OPEX-O,CO2-T+S#B,,CHN,",OPEX-O,CO2-T+S#B,,CHN,,0.07207537018779175,USD2025/kgCO2,
-"OPEX-O,CO2-T+S#B,,DEU,",OPEX-O,CO2-T+S#B,,DEU,,0.17572952610497233,USD2025/kgCO2,
+"OPEX-O,CO2-T+S#B,,DEU,",OPEX-O,CO2-T+S#B,,DEU,,0.14792047651933699,USD2025/kgCO2,
 "OPEX-O,CO2-T+S#B,,DZA,",OPEX-O,CO2-T+S#B,,DZA,,0.1390866843988325,USD2025/kgCO2,
-"OPEX-O,CO2-T+S#B,,ESP,",OPEX-O,CO2-T+S#B,,ESP,,0.21087543132596678,USD2025/kgCO2,
+"OPEX-O,CO2-T+S#B,,ESP,",OPEX-O,CO2-T+S#B,,ESP,,0.17750457182320437,USD2025/kgCO2,
 "OPEX-O,CO2-T+S#B,,IDN,",OPEX-O,CO2-T+S#B,,IDN,,0.049166026078981226,USD2025/kgCO2,
 "OPEX-O,CO2-T+S#B,,IND,",OPEX-O,CO2-T+S#B,,IND,,0.049166026078981226,USD2025/kgCO2,
 "OPEX-O,CO2-T+S#B,,JPN,",OPEX-O,CO2-T+S#B,,JPN,,0.049166026078981226,USD2025/kgCO2,
 "OPEX-O,CO2-T+S#B,,KOR,",OPEX-O,CO2-T+S#B,,KOR,,0.049166026078981226,USD2025/kgCO2,
 "OPEX-O,CO2-T+S#B,,MYS,",OPEX-O,CO2-T+S#B,,MYS,,0.07207537018779175,USD2025/kgCO2,
-"OPEX-O,CO2-T+S#B,,NLD,",OPEX-O,CO2-T+S#B,,NLD,,0.17572952610497233,USD2025/kgCO2,
-"OPEX-O,CO2-T+S#B,,NOR,",OPEX-O,CO2-T+S#B,,NOR,,0.14058362088397786,USD2025/kgCO2,
+"OPEX-O,CO2-T+S#B,,NLD,",OPEX-O,CO2-T+S#B,,NLD,,0.14792047651933699,USD2025/kgCO2,
+"OPEX-O,CO2-T+S#B,,NOR,",OPEX-O,CO2-T+S#B,,NOR,,0.11833638121546959,USD2025/kgCO2,
 "OPEX-O,CO2-T+S#B,,OMN,",OPEX-O,CO2-T+S#B,,OMN,,0.03599463590918519,USD2025/kgCO2,
 "OPEX-O,CO2-T+S#B,,QAT,",OPEX-O,CO2-T+S#B,,QAT,,0.03599463590918519,USD2025/kgCO2,
 "OPEX-O,CO2-T+S#B,,SAU,",OPEX-O,CO2-T+S#B,,SAU,,0.03599463590918519,USD2025/kgCO2,
