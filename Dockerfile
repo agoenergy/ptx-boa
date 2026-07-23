@@ -1,5 +1,5 @@
 FROM ghcr.io/prefix-dev/pixi:0.70.2-bookworm
-LABEL version="3.0.4"
+LABEL version="3.0.5"
 
 WORKDIR ptx-boa
 COPY . .
