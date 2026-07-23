@@ -17,6 +17,8 @@ def make_sidebar_green(api: PtxboaAPI):
     st.sidebar.divider()
     edit_input_data_toggle_green()
     input_data_reset_notice()
+    st.sidebar.divider()
+    documentation_link_green()
 
 
 def make_sidebar_blue(api: PtxboaAPI):
@@ -28,6 +30,8 @@ def make_sidebar_blue(api: PtxboaAPI):
     st.sidebar.divider()
     edit_input_data_toggle_blue()
     input_data_reset_notice()
+    st.sidebar.divider()
+    documentation_link_blue()
 
 
 def main_settings_green(api: PtxboaAPI):
@@ -565,3 +569,24 @@ def allow_pipeline_toggle(default_value: bool):
         st.session_state["transport"] = "Pipeline"
     else:
         st.session_state["transport"] = "Ship"
+
+
+def pdf_documentation_link(url: str):
+    with st.sidebar:
+        st.link_button(
+            label="PDF Documentation",
+            url=url,
+            icon=":material/download:",
+        )
+
+
+def documentation_link_green():
+    pdf_documentation_link(
+        "https://www.agora-energiewende.org/fileadmin/Projekte/2022/2022-01_INT_PtX-Dialog/Oeko-Institut_2024_PTXBOA_Data_Documentation_v_2.2.pdf"  # noqa E501
+    )
+
+
+def documentation_link_blue():
+    pdf_documentation_link(
+        "https://www.agora-industry.org/fileadmin/Projekte/2022/2022-01_INT_PtX-Dialog/Oeko-Institut_Agora_Industry__2026__Data_Documentation_Low-Carbon_BOA_V1.pdf"  # noqa E501
+    )
