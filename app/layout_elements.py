@@ -98,9 +98,6 @@ def display_results_bar_and_table(
     else:
         df_res = df.copy()
 
-    if default_manual_select is None:
-        default_manual_select = df_res.index.values
-
     with c1:
         if len(df_res) < 7:
             show_which_data = "All"

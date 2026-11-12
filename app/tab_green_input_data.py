@@ -155,8 +155,8 @@ def content_input_data(api: PtxboaAPI) -> None:
         with st.expander("**Transportation (ships and pipelines)**"):
             st.caption(
                 (
-                    "The unit of levelized costs is USD/(t km) for Green iron ship "
-                    "(bunker fuel consumption) and USD/(kW km) for all other "
+                    "The unit of levelized costs is USD/(kg km) for Green iron ship "
+                    "(bunker fuel consumption) and USD/(kWh km) for all other "
                     "processes."
                 )
             )
