@@ -6,9 +6,9 @@ channels = ["conda-forge"]
 
 
 [environments]
-default = { features = ["default"], solve-group = "default"}
-test = { features = [ "default", "test"], solve-group = "default" }
-dev = { features = [ "default", "test", "dev"], solve-group = "default" }
+default = { features = ["default"], solve-group = "default" }
+test = { features = ["default", "test"], solve-group = "default" }
+dev = { features = ["default", "test", "dev"], solve-group = "default" }
 
 [dependencies]
 python = "3.11.*"
@@ -43,6 +43,8 @@ mkdocs = ">=1.5"
 mkdocs-material = ">=9.4"
 mkdocstrings-python = ">=1.7"
 progress = "*"
+pyodbc = ">=5.5.0,<6"
+sqlalchemy = ">=2.1.8,<3"
 
 [feature.dev.pypi-dependencies]
 bumpversion = ">=0.5"
@@ -51,3 +53,5 @@ bumpversion = ">=0.5"
 bumpversion = "bumpversion"
 app = "streamlit run ptxboa_streamlit.py"
 dev-app = { cmd = "streamlit run ptxboa_streamlit.py", env = { PTXBOA_MODE = "dev" } }
+data-update = " python -m ptxboa.data._update"
+static-update = " python -m ptxboa.static._update"
