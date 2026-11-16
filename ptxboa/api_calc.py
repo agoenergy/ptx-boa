@@ -12,8 +12,7 @@ from networkx.exception import HasACycle
 
 from ptxboa import logger
 from ptxboa.api_data import DataHandler
-from ptxboa.static import ProcessStepValues  # must be sorted
-from ptxboa.static import (
+from ptxboa.static import (  # must be sorted
     CalculateCostType,
     ChainType,
     EmissionType,
@@ -22,6 +21,7 @@ from ptxboa.static import (
     ParameterCodeValues,
     ProcessCodeType,
     ProcessStepType,
+    ProcessStepValues,
     ResultClassType,
     ResultCostType,
     ResultEmissionType,
